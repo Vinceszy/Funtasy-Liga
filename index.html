@@ -55,6 +55,21 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .matrix td,.matrix th{padding:5px 6px;text-align:center;font-family:'JetBrains Mono'}
 .matrix td.w{color:var(--win)} .matrix td.l{color:var(--lose)} .matrix td.d{color:var(--draw)} .matrix td.x{color:#3a5245}
 .note{color:var(--dim);font-size:12px;padding:12px 16px;line-height:1.5}
+
+.clickable{cursor:pointer} .clickable:hover{color:var(--amber)}
+.match{cursor:pointer} .match:hover{background:var(--panel2)}
+#squadDlg{max-width:900px}
+.sqwrap{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:760px){.sqwrap{grid-template-columns:1fr}}
+.sqcol h3{font-family:'Archivo Black';font-size:14px;letter-spacing:1px;color:var(--amber);
+  padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+.sqcol h3 span{font-family:'JetBrains Mono';color:var(--ink)}
+.plr{display:flex;align-items:center;gap:8px;padding:5px 6px;border-bottom:1px solid var(--panel2);font-size:13px}
+.plr .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plr .pts{font-family:'JetBrains Mono';font-weight:700;min-width:48px;text-align:right}
+.plr .cap{background:var(--magenta);color:#fff;font:700 9px Inter;border-radius:3px;padding:1px 4px}
+.subhead{font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:10px 0 4px}
+.dlgclose{position:absolute;top:12px;right:14px;background:none;border:0;color:var(--dim);font-size:22px;cursor:pointer}
 dialog{background:var(--panel);color:var(--ink);border:1px solid var(--amber);border-radius:10px;max-width:640px;width:92%;padding:20px}
 dialog::backdrop{background:rgba(0,0,0,.7)}
 dialog textarea{width:100%;height:200px;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:6px;font:12px 'JetBrains Mono';padding:10px;margin:12px 0}
@@ -141,7 +156,7 @@ function renderTable(){
   let h = `<tr><th></th><th>Szakvezető</th><th>M</th><th>GY</th><th>D</th><th>V</th><th>RG</th><th>KG</th><th>GK</th><th>Pont</th><th>Forma</th></tr>`;
   rows.forEach((r,i)=>{
     const form = r.form.slice(-5).map(f=>`<span class="dot ${f}"></span>`).join('');
-    h+=`<tr><td class="rank">${i+1}.</td><td class="name">${r.name}</td><td>${r.M}</td><td>${r.GY}</td><td>${r.D}</td><td>${r.V}</td>
+    h+=`<tr><td class="rank">${i+1}.</td><td class="name clickable" onclick="showSquad(['${r.name}'])">${r.name}</td><td>${r.M}</td><td>${r.GY}</td><td>${r.D}</td><td>${r.V}</td>
     <td>${fmt(r.RG)}</td><td>${fmt(r.KG)}</td><td class="${r.GK>=0?'pos':'neg'}">${fmt(r.GK)}</td>
     <td class="pont">${r.Pont}</td><td style="text-align:left"><span class="form">${form}</span></td></tr>`;
   });
@@ -156,7 +171,7 @@ function renderMatches(){
   for(const m of SCHEDULE[curRound]){
     const [ho,ve,hp,vp]=m; const p=played(m);
     const hw=p&&hp>vp, vw=p&&vp>hp;
-    h+=`<div class="match"><div class="h ${hw?'winner':''}">${ho}</div>
+    h+=`<div class="match" onclick="showSquad(['${ho}','${ve}'])"><div class="h ${hw?'winner':''}">${ho}</div>
       <div class="score">${p?`${fmt(hp)} <span style="color:var(--dim)">:</span> ${fmt(vp)}`:'<span class="na">— : —</span>'}</div>
       <div class="v ${vw?'winner':''}">${ve}</div></div>`;
   }
@@ -234,6 +249,7 @@ async function refresh(silent){
       catch(e){ if(!silent){ st.className='err'; st.textContent=`${name} (${uname}) nem jött le — ${e.message}`; } continue; }
       const row=(j.data||[]).find(d=>d.user_team?.user?.username===uname)||j.data?.[0];
       if(!row){ continue; }
+      if(row.user_team?.user?.id) USER_IDS[name]=row.user_team.user.id;
       got[name]={};
       for(const rs of (row.user_team?.round_statistics||[])) got[name][rs.round_number]=rs.points;
     }
@@ -255,6 +271,76 @@ async function refresh(silent){
 }
 
 
+
+
+// ===== Heti keretek megtekintése =====
+const USER_IDS = {};                       // név -> user_id (a ranglista-lekérésből)
+const SQUAD_CACHE = {};
+
+function deepName(o){                      // rugalmas névkeresés a válaszban
+  if(!o || typeof o!=='object') return null;
+  const first=o.first_name||o.firstname, last=o.last_name||o.lastname;
+  if(first||last) return [first,last].filter(Boolean).join(' ');
+  if(typeof o.name==='string') return o.name;
+  if(typeof o.short_name==='string') return o.short_name;
+  for(const k of Object.keys(o)){ const r=deepName(o[k]); if(r) return r; }
+  return null;
+}
+function deepTeam(o){
+  const t = o?.competition_player?.team;
+  return t?.short_name || t?.name || '';
+}
+async function getUserId(name){
+  if(USER_IDS[name]) return USER_IDS[name];
+  const uname = MEMBERS[name];
+  const u=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/rankings?include=user_team.user.id&page=1&per_page=5&filter%5Bsearch%5D=${encodeURIComponent(uname)}`;
+  const j=await apiGet(u, name);
+  const row=(j.data||[]).find(d=>d.user_team?.user?.username===uname)||j.data?.[0];
+  const id=row?.user_team?.user?.id;
+  if(id) USER_IDS[name]=id;
+  return id;
+}
+async function getSquad(name){
+  if(SQUAD_CACHE[name]) return SQUAD_CACHE[name];
+  const id = await getUserId(name);
+  if(!id) throw new Error('nincs user_id');
+  const inc='competition_player.player,competition_player.team,position';
+  const u=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/user-team-players-history?include=${encodeURIComponent(inc)}&filter%5Buser_id%5D=${id}`;
+  const j=await apiGet(u, name);
+  const list=(j.data||[]).map(d=>({
+    name: deepName(d.competition_player) || ('#'+(d.competition_player_id||d.id)),
+    team: deepTeam(d),
+    pos:  d.position?.short_name || d.position?.name || '',
+    cap:  !!d.is_captain,
+    sub:  d.type==='substitutes',
+    week: d.summary_statistics?.weekly_points ?? 0,
+    total:d.summary_statistics?.competition_points ?? 0
+  }));
+  SQUAD_CACHE[name]=list;
+  return list;
+}
+function squadHTML(name, list){
+  const starters=list.filter(p=>!p.sub), subs=list.filter(p=>p.sub);
+  const sum=starters.reduce((a,p)=>a+p.week*(p.cap?2:1),0)+subs.reduce((a,p)=>a+p.week/2,0);
+  const row=p=>`<div class="plr"><span class="nm">${p.name}${p.team?` <span style="color:var(--dim);font-size:11px">${p.team}</span>`:''}</span>
+    ${p.cap?'<span class="cap">C</span>':''}<span class="pts">${fmt(p.week)}</span></div>`;
+  return `<div class="sqcol"><h3>${name}<span>${fmt(sum)}</span></h3>
+    ${starters.map(row).join('')}
+    <div class="subhead">Cserepad (feleződik)</div>${subs.map(row).join('')}</div>`;
+}
+async function showSquad(names){
+  const dlg=document.getElementById('squadDlg'), body=document.getElementById('sqBody');
+  document.getElementById('sqTitle').textContent = names.join('  vs  ');
+  document.getElementById('sqSub').textContent = 'Aktuális keret · heti pontok (a kapitány duplázva számít a végösszegbe)';
+  body.innerHTML='<div style="color:var(--dim);padding:20px">Keret betöltése…</div>';
+  dlg.showModal();
+  try{
+    const lists = await Promise.all(names.map(getSquad));
+    body.innerHTML = names.map((n,i)=>squadHTML(n,lists[i])).join('');
+  }catch(e){
+    body.innerHTML='<div style="color:var(--lose);padding:20px">Nem sikerült betölteni: '+e.message+'</div>';
+  }
+}
 
 // ===== Induláskor: archívum betöltése, majd élő frissítés =====
 async function boot(){
