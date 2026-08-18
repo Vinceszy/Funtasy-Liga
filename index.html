@@ -201,19 +201,29 @@ const ROUTES = [
   {n:'corsproxy',  f:u=>'https://corsproxy.io/?url='+encodeURIComponent(u)}
 ];
 let goodRoute = null;
-async function apiGet(url){
+function fetchT(url, ms){                     // fetch időkorláttal
+  const c = new AbortController();
+  const t = setTimeout(()=>c.abort(), ms);
+  return fetch(url, {signal:c.signal, headers:{'Accept':'application/json'}})
+    .finally(()=>clearTimeout(t));
+}
+async function apiGet(url, label){
+  const st=document.getElementById('status');
   const order = goodRoute ? [goodRoute,...ROUTES.filter(r=>r!==goodRoute)] : ROUTES;
   const errs=[];
   for(const rt of order){
     try{
-      const res = await fetch(rt.f(url), {headers:{'Accept':'application/json'}});
+      if(st) st.textContent = `${label} — próba: ${rt.n}…`;
+      const res = await fetchT(rt.f(url), 8000);
       if(!res.ok){ errs.push(rt.n+':HTTP '+res.status); continue; }
       const txt = await res.text();
       let j; try{ j=JSON.parse(txt); }catch{ errs.push(rt.n+':nem JSON'); continue; }
       if(!j || !('data' in j)){ errs.push(rt.n+':hiányzó data'); continue; }
-      goodRoute = rt;                       // a működő útvonalat megjegyezzük
+      goodRoute = rt;
       return j;
-    }catch(e){ errs.push(rt.n+':'+(e.name==='TypeError'?'CORS/blokkolt':e.message)); }
+    }catch(e){
+      errs.push(rt.n+':'+(e.name==='AbortError'?'időtúllépés':(e.name==='TypeError'?'CORS/blokkolt':e.message)));
+    }
   }
   throw new Error(errs.join(' · '));
 }
@@ -221,12 +231,15 @@ async function refresh(){
   const st=document.getElementById('status'), btn=document.getElementById('refreshBtn');
   btn.disabled=true; st.className=''; let filled=0, got={};
   try{
+    let i=0, n=Object.keys(MEMBERS).length;
     for(const [name,uname] of Object.entries(MEMBERS)){
-      st.textContent='Lekérés: '+name+' ('+uname+')…';
+      i++;
       const u=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/rankings?include=user_team.user.id,summary_statistics,ranking,rounds,competition_rank&page=1&per_page=5&filter%5Bsearch%5D=${encodeURIComponent(uname)}`;
-      const j=await apiGet(u);
+      let j;
+      try{ j = await apiGet(u, `(${i}/${n}) ${name}`); }
+      catch(e){ st.className='err'; st.textContent=`${name} (${uname}) nem jött le — ${e.message}`; continue; }
       const row=(j.data||[]).find(d=>d.user_team?.user?.username===uname)||j.data?.[0];
-      if(!row){ st.textContent='Nem találom: '+uname; continue; }
+      if(!row){ continue; }
       got[name]={};
       for(const rs of (row.user_team?.round_statistics||[])) got[name][rs.round_number]=rs.points;
     }
