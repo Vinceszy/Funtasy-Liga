@@ -74,6 +74,12 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .plr .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .plr .tm{color:var(--dim);font-size:11px}
 .plr .pts{font-family:'JetBrains Mono';font-weight:700;min-width:52px;text-align:right}
+.u21{background:#2E6BE5;color:#fff;font:700 9px Inter;border-radius:3px;padding:1px 4px}
+.hun{font-size:11px}
+.bonus{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border:1px solid var(--line);
+  border-radius:6px;padding:8px 10px;margin:10px 0 6px;font-size:12px}
+.bonus b{font-family:'JetBrains Mono';font-size:14px}
+.bonus.ok b{color:var(--win)} .bonus.no b{color:var(--lose)}
 .cap{background:var(--magenta);color:#fff;font:700 9px Inter;border-radius:3px;padding:1px 4px}
 .subhead{font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:12px 0 4px}
 .loading{color:var(--dim);padding:26px;text-align:center}
@@ -93,7 +99,7 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
     <div class="panel">
       <h2>Tabella</h2>
       <table id="table"></table>
-      <div class="note">Győzelem 3 · döntetlen 1 · vereség 0. Holtversenynél a rúgott pont (RG) dönt, utána a különbség (GK).
+      <div class="note">Győzelem 3 · döntetlen 1 · vereség 0. Holtversenynél a pontkülönbség (GK) dönt, utána a rúgott (RG).
       <b>Kattints egy névre</b> a keret és a teljes szezon megtekintéséhez.</div>
     </div>
     <div class="panel">
@@ -170,7 +176,7 @@ function computeTable(){
     else {T[h].D++;T[v].D++;T[h].form.push('D');T[v].form.push('D');}
   }
   return Object.entries(T).map(([n,s])=>({name:n,...s,GK:s.RG-s.KG,Pont:s.GY*3+s.D}))
-    .sort((a,b)=>b.Pont-a.Pont||b.RG-a.RG||b.GK-a.GK);
+    .sort((a,b)=>b.Pont-a.Pont||b.GK-a.GK||b.RG-a.RG);
 }
 function renderTable(){
   let h=`<tr><th></th><th>Szakvezető</th><th>M</th><th>GY</th><th>D</th><th>V</th><th>RG</th><th>KG</th><th>GK</th><th>Pont</th><th>Forma</th></tr>`;
@@ -284,7 +290,7 @@ async function refresh(silent){
 
 // ---------- keret + szezon nézet ----------
 const SQUAD={};
-let SQUAD_FILE=null, SQUAD_FILE_AT=null;
+let SQUAD_FILE=null, SQUAD_FILE_AT=null, SQUAD_ROUND=null;
 async function loadSquadFile(){
   if(SQUAD_FILE!==null) return SQUAD_FILE;
   try{
@@ -307,15 +313,28 @@ async function getSquad(name){
   if(SQUAD[name]) return SQUAD[name];
   const f=await loadSquadFile();
   if(f && f[name] && f[name].length){ SQUAD[name]=f[name]; return SQUAD[name]; }
+  const rounds=await loadHistory();                       // tartalék: utolsó kitöltött forduló
+  const ks=Object.keys(rounds).map(Number).sort((a,b)=>b-a);
+  for(const k of ks){
+    const sq=(rounds[k]||{})[name];
+    if(sq && sq.length){ SQUAD[name]=sq; SQUAD_ROUND=k; return sq; }
+  }
   throw new Error('a keret még nem került be az adatgyűjtésbe');
+}
+function magyarBonus(starters){
+  const hun=starters.filter(p=>p.hun).length, u21=starters.filter(p=>p.hun&&p.u21).length;
+  return {hun,u21,ok:(hun>=5&&u21>=1),pts:(hun>=5&&u21>=1)?10:0};
 }
 function squadHTML(name,list){
   const st=list.filter(p=>!p.sub), sb=list.filter(p=>p.sub);
-  const sum=st.reduce((a,p)=>a+p.week*(p.cap?2:1),0)+sb.reduce((a,p)=>a+p.week/2,0);
-  const row=p=>`<div class="plr"><span class="nm">${esc(p.name)}${p.team?` <span class="tm">${esc(p.team)}</span>`:''}</span>
-    ${p.cap?'<span class="cap">C</span>':''}<span class="pts">${fmt(p.week)}</span></div>`;
-  return `<div class="sqcol"><h3>${esc(name)}<span>${fmt(sum)}</span></h3>
-    ${st.map(row).join('')}<div class="subhead">Cserepad (feleződik)</div>${sb.map(row).join('')}</div>`;
+  const base=st.reduce((a,p)=>a+p.week*(p.cap?2:1),0)+sb.reduce((a,p)=>a+p.week/2,0);
+  const mb=magyarBonus(st);
+  const row=p=>`<div class="plr"><span class="nm">${p.hun?'<span class="hun">🇭🇺</span> ':''}${esc(p.name)}${p.team?` <span class="tm">${esc(p.team)}</span>`:''}</span>
+    ${p.u21?'<span class="u21">U21</span>':''}${p.cap?'<span class="cap">C</span>':''}<span class="pts">${fmt(p.week)}</span></div>`;
+  return `<div class="sqcol"><h3>${esc(name)}<span>${fmt(base+mb.pts)}</span></h3>
+    ${st.map(row).join('')}
+    <div class="bonus ${mb.ok?'ok':'no'}"><span>Magyarszabály · ${mb.hun} magyar kezdő, ebből ${mb.u21} U21</span><b>${mb.ok?'+10':'0'}</b></div>
+    <div class="subhead">Cserepad (feleződik)</div>${sb.map(row).join('')}</div>`;
 }
 
 let HIST=null;
@@ -333,7 +352,7 @@ function playersHTML(name, rounds){
     const sq=(rounds[r]||{})[name]; if(!sq) continue;
     for(const p of sq){
       const k=p.name+'|'+(p.team||'');
-      const a=agg[k]||(agg[k]={name:p.name,team:p.team,pts:0,rounds:0,st:0,sb:0,cap:0});
+      const a=agg[k]||(agg[k]={name:p.name,team:p.team,hun:!!p.hun,u21:!!p.u21,pts:0,rounds:0,st:0,sb:0,cap:0});
       const eff = p.sub ? (p.week||0)/2 : (p.week||0)*(p.cap?2:1);
       a.pts+=eff; a.rounds++; p.sub?a.sb++:a.st++; if(p.cap)a.cap++;
     }
@@ -341,12 +360,23 @@ function playersHTML(name, rounds){
   const rows=Object.values(agg).sort((a,b)=>b.pts-a.pts);
   if(!rows.length) return '<div class="loading">Ehhez a szakvezetőhöz még nincs elmentett keret-előzmény.<br>Az adatgyűjtés a mostani fordulótól indul.</div>';
   const total=rows.reduce((x,r)=>x+r.pts,0);
-  let h=`<div style="font-size:13px;color:var(--dim);margin-bottom:8px">
+  let bonusRounds=0, bonusPts=0;
+  for(const r of rks){
+    const sq=(rounds[r]||{})[name]; if(!sq) continue;
+    const mb=magyarBonus(sq.filter(p=>!p.sub));
+    if(mb.ok){bonusRounds++;bonusPts+=10;}
+  }
+  const u21pts=rows.filter(r=>r.u21).reduce((x,r)=>x+r.pts,0);
+  const hunpts=rows.filter(r=>r.hun).reduce((x,r)=>x+r.pts,0);
+  let h=`<div style="font-size:13px;color:var(--dim);margin-bottom:10px">
     ${rows.length} játékos · ${rks.length} forduló (${rks[0]}–${rks[rks.length-1]}) · összesen ${fmt(total)} pont</div>
+    <div class="bonus ${bonusRounds===rks.length?'ok':'no'}">
+      <span>Magyarszabály bónusz · ${bonusRounds}/${rks.length} fordulóban teljesült</span><b>+${bonusPts}</b></div>
+    <div class="bonus"><span>Magyar játékosok pontja · ebből U21: ${fmt(u21pts)}</span><b>${fmt(hunpts)}</b></div>
     <table><tr><th></th><th>Játékos</th><th>F</th><th>Kezdő</th><th>Pad</th><th>C</th><th>Pont</th></tr>`;
   rows.forEach((r,i)=>{
     h+=`<tr><td class="rank">${i+1}.</td>
-      <td class="name">${esc(r.name)}${r.team?` <span class="tm">${esc(r.team)}</span>`:''}</td>
+      <td class="name">${r.hun?'<span class="hun">🇭🇺</span> ':''}${esc(r.name)}${r.u21?' <span class="u21">U21</span>':''}${r.team?` <span class="tm">${esc(r.team)}</span>`:''}</td>
       <td>${r.rounds}</td><td>${r.st}</td><td>${r.sb}</td><td>${r.cap||''}</td>
       <td class="pont">${fmt(r.pts)}</td></tr>`;
   });
@@ -393,7 +423,7 @@ async function showSquad(names,tab){
     return;
   }
   const at = SQUAD_FILE_AT ? ' · frissítve: '+new Date(SQUAD_FILE_AT).toLocaleString('hu-HU',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-  $('mSub').textContent='Aktuális keret · heti pontok (a kapitány duplázva)'+at;
+  $('mSub').textContent=(SQUAD_ROUND? SQUAD_ROUND+'. fordulós keret' : 'Aktuális keret')+' · heti pontok (a kapitány duplázva)'+at;
   $('mBody').innerHTML=`<div class="loading">Keret betöltése…</div>`;
   try{
     const lists=await Promise.all(names.map(getSquad));
