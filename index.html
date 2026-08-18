@@ -65,8 +65,8 @@ dialog textarea{width:100%;height:200px;background:var(--panel2);color:var(--ink
 <header>
   <h1><span class="fun">FUN</span>TASY <span class="tag">LIGA</span></h1>
   <div class="sub">NB I Fantasy · privát head-to-head · 8 szakvezető · 33 forduló</div>
-  <button class="btn" id="refreshBtn" onclick="refresh()">⟳ Frissítés az MLSZ-ből</button>
-  <button class="btn ghost" onclick="showExport()">Mentés</button>
+  <button class="btn" id="refreshBtn" onclick="refresh(false)">⟳ Frissítés most</button>
+  
   <div id="status"></div>
 </header>
 
@@ -96,13 +96,7 @@ dialog textarea{width:100%;height:200px;background:var(--panel2);color:var(--ink
 </div>
 </div>
 
-<dialog id="exportDlg">
-  <h2 style="font-family:'Archivo Black';color:var(--amber);margin-bottom:8px">Frissített eredményblokk</h2>
-  <p style="font-size:13px;color:var(--dim)">Az MLSZ API csak az utolsó két forduló bontását adja — hogy az archívum megmaradjon, frissítés után másold be ezt a blokkot a fájl <b>SCHEDULE</b> sora helyére, és mentsd el a fájlt.</p>
-  <textarea id="exportTxt" readonly></textarea>
-  <button class="btn" onclick="copyExport()">Másolás</button>
-  <button class="btn ghost" onclick="document.getElementById('exportDlg').close()">Bezár</button>
-</dialog>
+
 
 <script>
 // ====== KONFIGURÁCIÓ — itt szerkeszthető ======
@@ -213,7 +207,7 @@ async function apiGet(url, label){
   const errs=[];
   for(const rt of order){
     try{
-      if(st) st.textContent = `${label} — próba: ${rt.n}…`;
+      if(st) st.textContent = `Élő adatok lekérése… ${label}`;
       const res = await fetchT(rt.f(url), 8000);
       if(!res.ok){ errs.push(rt.n+':HTTP '+res.status); continue; }
       const txt = await res.text();
@@ -227,7 +221,7 @@ async function apiGet(url, label){
   }
   throw new Error(errs.join(' · '));
 }
-async function refresh(){
+async function refresh(silent){
   const st=document.getElementById('status'), btn=document.getElementById('refreshBtn');
   btn.disabled=true; st.className=''; let filled=0, got={};
   try{
@@ -237,7 +231,7 @@ async function refresh(){
       const u=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/rankings?include=user_team.user.id,summary_statistics,ranking,rounds,competition_rank&page=1&per_page=5&filter%5Bsearch%5D=${encodeURIComponent(uname)}`;
       let j;
       try{ j = await apiGet(u, `(${i}/${n}) ${name}`); }
-      catch(e){ st.className='err'; st.textContent=`${name} (${uname}) nem jött le — ${e.message}`; continue; }
+      catch(e){ if(!silent){ st.className='err'; st.textContent=`${name} (${uname}) nem jött le — ${e.message}`; } continue; }
       const row=(j.data||[]).find(d=>d.user_team?.user?.username===uname)||j.data?.[0];
       if(!row){ continue; }
       got[name]={};
@@ -249,23 +243,35 @@ async function refresh(){
     }
     renderTable();renderMatches();renderMatrix();
     st.className='ok';
-    st.textContent = (filled? `Kész — ${filled} meccseredmény frissült. Ne felejtsd: "Mentés" gombbal archiváld! `
-                            : 'Kész — nincs új lezárt eredmény az API-ban. ')
-                     + '(útvonal: '+(goodRoute?goodRoute.n:'?')+')';
+    const now = new Date().toLocaleString('hu-HU',{hour:'2-digit',minute:'2-digit'});
+    st.textContent = filled ? `Frissítve ${now} — ${filled} új meccseredmény érkezett.`
+                            : `Naprakész (utolsó ellenőrzés: ${now})`;
   }catch(e){
     st.className='err';
-    st.textContent='Egyik útvonal sem jött össze — '+e.message+
-      ' · Tipp: file:// helyett tedd fel egy tárhelyre (pl. Netlify Drop), vagy futtasd helyi szerverről.';
+    st.textContent = silent ? 'Az élő frissítés most nem elérhető — a tárolt állás látható.'
+                            : 'Egyik útvonal sem jött össze — '+e.message;
   }
   btn.disabled=false;
 }
-function showExport(){
-  document.getElementById('exportTxt').value='const SCHEDULE = '+JSON.stringify(SCHEDULE)+';';
-  document.getElementById('exportDlg').showModal();
-}
-function copyExport(){ navigator.clipboard.writeText(document.getElementById('exportTxt').value); }
 
-renderTable();renderMatches();renderMatrix();
+
+
+// ===== Induláskor: archívum betöltése, majd élő frissítés =====
+async function boot(){
+  const st=document.getElementById('status');
+  try{
+    const r = await fetch('results.json?t='+Date.now());
+    if(r.ok){
+      const j = await r.json();
+      if(j && j.schedule){
+        for(const k in j.schedule) SCHEDULE[k] = j.schedule[k];
+        renderTable(); renderMatches(); renderMatrix();
+      }
+    }
+  }catch(e){ /* nincs results.json — marad a beépített adat */ }
+  refresh(true);          // csendes élő frissítés
+}
+boot();
 </script>
 </body>
 </html>
