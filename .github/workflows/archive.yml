@@ -1,0 +1,30 @@
+name: Eredmények archiválása
+
+on:
+  schedule:
+    - cron: '0 4 * * 2'      # minden kedd 04:00 UTC (06:00 CEST) — a hétvégi forduló már lezárt
+  workflow_dispatch:          # kézzel is indítható az Actions fülről
+
+permissions:
+  contents: write
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Archiváló futtatása
+        run: python3 archive.py
+
+      - name: Változás commitolása
+        run: |
+          if [[ -n "$(git status --porcelain results.json)" ]]; then
+            git config user.name  "funtasy-archiver"
+            git config user.email "actions@github.com"
+            git add results.json
+            git commit -m "Eredmények archiválása ($(date -u +%Y-%m-%d))"
+            git push
+          else
+            echo "Nincs változás, nincs commit."
+          fi
