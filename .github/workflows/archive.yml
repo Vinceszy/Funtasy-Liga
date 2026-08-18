@@ -18,24 +18,25 @@ jobs:
     steps:
       - name: Repó letöltése
         uses: actions/checkout@v4
-        with:
-          persist-credentials: true
-          fetch-depth: 0
 
-      - name: Lekérés az MLSZ API-ból
-        run: python3 archive.py
+      - name: Python + Playwright telepítése
+        run: |
+          pip install --quiet playwright
+          playwright install --with-deps chromium
+
+      - name: Adatgyűjtés valódi böngészővel
+        run: python3 collect.py
 
       - name: Változás commitolása
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -x
           git config user.name  "funtasy-archiver"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git add -A results.json squads.json 2>/dev/null || true
+          git add -A results.json squads.json squad_history.json 2>/dev/null || true
           if git diff --cached --quiet; then
-            echo "Nincs változás, nincs commit."
+            echo "Nincs változás."
           else
             git commit -m "Adatfrissítés ($(date -u +'%Y-%m-%d %H:%M') UTC)"
             git push origin HEAD:${GITHUB_REF_NAME}
