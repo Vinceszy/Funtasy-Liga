@@ -93,7 +93,7 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
     <div class="panel">
       <h2>Tabella</h2>
       <table id="table"></table>
-      <div class="note">Győzelem 3 · döntetlen 1 · vereség 0. Holtversenynél pontkülönbség (GK), majd rúgott (RG).
+      <div class="note">Győzelem 3 · döntetlen 1 · vereség 0. Holtversenynél a rúgott pont (RG) dönt, utána a különbség (GK).
       <b>Kattints egy névre</b> a keret és a teljes szezon megtekintéséhez.</div>
     </div>
     <div class="panel">
@@ -170,7 +170,7 @@ function computeTable(){
     else {T[h].D++;T[v].D++;T[h].form.push('D');T[v].form.push('D');}
   }
   return Object.entries(T).map(([n,s])=>({name:n,...s,GK:s.RG-s.KG,Pont:s.GY*3+s.D}))
-    .sort((a,b)=>b.Pont-a.Pont||b.GK-a.GK||b.RG-a.RG);
+    .sort((a,b)=>b.Pont-a.Pont||b.RG-a.RG||b.GK-a.GK);
 }
 function renderTable(){
   let h=`<tr><th></th><th>Szakvezető</th><th>M</th><th>GY</th><th>D</th><th>V</th><th>RG</th><th>KG</th><th>GK</th><th>Pont</th><th>Forma</th></tr>`;
@@ -229,10 +229,7 @@ function renderMatrix(){
 const ROUTES=[
   {n:'direkt',f:u=>u},
   {n:'corsproxy',f:u=>'https://corsproxy.io/?url='+encodeURIComponent(u)},
-  {n:'allorigins',f:u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)},
-  {n:'codetabs',f:u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)},
-  {n:'jina',f:u=>'https://r.jina.ai/'+u},
-  {n:'thingproxy',f:u=>'https://thingproxy.freeboard.io/fetch/'+u}
+  {n:'allorigins',f:u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)}
 ];
 let goodRoute=null;
 function fetchT(u,ms){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);
@@ -306,50 +303,11 @@ function deepName(o,depth=0){
   for(const k in o){ const r=deepName(o[k],depth+1); if(r) return r; }
   return null;
 }
-async function getUserId(name){
-  if(USER_IDS[name]) return USER_IDS[name];
-  const uname=MEMBERS[name];
-  const u=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/rankings?include=user_team.user.id&page=1&per_page=5&filter%5Bsearch%5D=${encodeURIComponent(uname)}`;
-  const j=await apiGet(u,name);
-  const row=(j.data||[]).find(d=>d.user_team?.user?.username===uname)||j.data?.[0];
-  if(row?.user_team?.user?.id) USER_IDS[name]=row.user_team.user.id;
-  return USER_IDS[name];
-}
-function cacheKey(n){ return 'squad:'+n; }
-function cacheGet(n){
-  try{ const raw=localStorage.getItem(cacheKey(n)); if(!raw) return null;
-    const o=JSON.parse(raw); if(Date.now()-o.t > 6*3600*1000) return null; return o.v; }catch(e){ return null; }
-}
-function cacheSet(n,v){ try{ localStorage.setItem(cacheKey(n), JSON.stringify({t:Date.now(),v})); }catch(e){} }
-async function preloadSquads(){
-  for(const name of Object.keys(MEMBERS)){
-    if(SQUAD[name]) continue;
-    try{ await getSquad(name); }catch(e){ /* csendben tovább */ }
-  }
-}
 async function getSquad(name){
   if(SQUAD[name]) return SQUAD[name];
   const f=await loadSquadFile();
   if(f && f[name] && f[name].length){ SQUAD[name]=f[name]; return SQUAD[name]; }
-  const c=cacheGet(name);
-  if(c && c.length){ SQUAD[name]=c; return c; }
-  const id=await getUserId(name);
-  if(!id) throw new Error('nincs azonosító');
-  const base=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/user-team-players-history?filter%5Buser_id%5D=${id}`;
-  let j=null;
-  // előbb nevekkel; ha nem megy, csupaszon (az legalább a pontokat hozza)
-  for(const inc of ['&include=competition_player.player','']){
-    try{ j = await apiGet(base+inc, name, 20000); break; }catch(e){ j=null; }
-  }
-  if(!j) throw new Error('a keret lekérése nem sikerült');
-  SQUAD[name]=(j.data||[]).map(d=>({
-    name: deepName(d.competition_player)||('#'+(d.competition_player_id||d.id)),
-    team: d.competition_player?.team?.short_name||d.competition_player?.team?.name||'',
-    cap: !!d.is_captain, sub: d.type==='substitutes',
-    week: d.summary_statistics?.weekly_points ?? 0
-  }));
-  cacheSet(name, SQUAD[name]);
-  return SQUAD[name];
+  throw new Error('a keret még nem került be az adatgyűjtésbe');
 }
 function squadHTML(name,list){
   const st=list.filter(p=>!p.sub), sb=list.filter(p=>p.sub);
@@ -358,6 +316,41 @@ function squadHTML(name,list){
     ${p.cap?'<span class="cap">C</span>':''}<span class="pts">${fmt(p.week)}</span></div>`;
   return `<div class="sqcol"><h3>${esc(name)}<span>${fmt(sum)}</span></h3>
     ${st.map(row).join('')}<div class="subhead">Cserepad (feleződik)</div>${sb.map(row).join('')}</div>`;
+}
+
+let HIST=null;
+async function loadHistory(){
+  if(HIST!==null) return HIST;
+  try{ const r=await fetch('squad_history.json?t='+Date.now());
+       HIST = r.ok ? ((await r.json()).rounds||{}) : {}; }
+  catch(e){ HIST={}; }
+  return HIST;
+}
+function playersHTML(name, rounds){
+  const agg={};                      // játékos -> {pont, fordulók, kezdő, pad, kapitány}
+  const rks=Object.keys(rounds).map(Number).sort((a,b)=>a-b);
+  for(const r of rks){
+    const sq=(rounds[r]||{})[name]; if(!sq) continue;
+    for(const p of sq){
+      const k=p.name+'|'+(p.team||'');
+      const a=agg[k]||(agg[k]={name:p.name,team:p.team,pts:0,rounds:0,st:0,sb:0,cap:0});
+      const eff = p.sub ? (p.week||0)/2 : (p.week||0)*(p.cap?2:1);
+      a.pts+=eff; a.rounds++; p.sub?a.sb++:a.st++; if(p.cap)a.cap++;
+    }
+  }
+  const rows=Object.values(agg).sort((a,b)=>b.pts-a.pts);
+  if(!rows.length) return '<div class="loading">Ehhez a szakvezetőhöz még nincs elmentett keret-előzmény.<br>Az adatgyűjtés a mostani fordulótól indul.</div>';
+  const total=rows.reduce((x,r)=>x+r.pts,0);
+  let h=`<div style="font-size:13px;color:var(--dim);margin-bottom:8px">
+    ${rows.length} játékos · ${rks.length} forduló (${rks[0]}–${rks[rks.length-1]}) · összesen ${fmt(total)} pont</div>
+    <table><tr><th></th><th>Játékos</th><th>F</th><th>Kezdő</th><th>Pad</th><th>C</th><th>Pont</th></tr>`;
+  rows.forEach((r,i)=>{
+    h+=`<tr><td class="rank">${i+1}.</td>
+      <td class="name">${esc(r.name)}${r.team?` <span class="tm">${esc(r.team)}</span>`:''}</td>
+      <td>${r.rounds}</td><td>${r.st}</td><td>${r.sb}</td><td>${r.cap||''}</td>
+      <td class="pont">${fmt(r.pts)}</td></tr>`;
+  });
+  return h+'</table>';
 }
 function seasonHTML(name){
   let h=`<table><tr><th>F</th><th>Ellenfél</th><th>Pont</th><th>Ell.</th><th>Eredm.</th></tr>`;
@@ -384,8 +377,16 @@ async function showSquad(names,tab){
   $('mTitle').textContent = names.join('  vs  ');
   const single = names.length===1;
   $('mTabs').innerHTML = single
-    ? `<button class="tab ${tab!=='season'?'on':''}" data-tab="squad">Aktuális keret</button>
-       <button class="tab ${tab==='season'?'on':''}" data-tab="season">Teljes szezon</button>` : '';
+    ? `<button class="tab ${(!tab||tab==='squad')?'on':''}" data-tab="squad">Aktuális keret</button>
+       <button class="tab ${tab==='season'?'on':''}" data-tab="season">Fordulók</button>
+       <button class="tab ${tab==='players'?'on':''}" data-tab="players">Szezon játékosai</button>` : '';
+  if(single && tab==='players'){
+    $('mSub').textContent='A szezonban birtokolt játékosok és a nála termelt pontjuk (kezdő 1× · kapitány 2× · pad 0,5×)';
+    $('mBody').innerHTML='<div class="loading">Előzmények betöltése…</div>';
+    const rounds=await loadHistory();
+    $('mBody').innerHTML=playersHTML(names[0], rounds);
+    return;
+  }
   if(single && tab==='season'){
     $('mSub').textContent='Fordulónkénti eredmények';
     $('mBody').innerHTML=`<div class="sqwrap one" style="max-width:none">${seasonHTML(names[0])}</div>`;
@@ -432,7 +433,7 @@ async function boot(){
   }catch(e){}
   rPast=lastPlayedRound(); rNext=nextRound();
   renderTable(); renderMatches('past'); renderMatches('next'); renderMatrix();
-  refresh(true).then(preloadSquads);
+  refresh(true);
 }
 boot();
 </script>
