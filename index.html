@@ -74,6 +74,8 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .plr .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .plr .tm{color:var(--dim);font-size:11px}
 .plr .pts{font-family:'JetBrains Mono';font-weight:700;min-width:52px;text-align:right}
+.flag{display:inline-block;width:14px;height:9px;margin-left:6px;vertical-align:middle;border-radius:1px;
+  background:linear-gradient(to bottom,#CE2939 0 33.3%,#fff 33.3% 66.6%,#477050 66.6% 100%);border:1px solid rgba(0,0,0,.35)}
 .pos{display:inline-block;min-width:26px;text-align:center;background:var(--panel2);border:1px solid var(--line);
   border-radius:3px;font:700 9px 'JetBrains Mono';color:var(--dim);padding:2px 4px;margin-right:6px}
 .mult{font:600 10px Inter;color:var(--dim);margin-left:4px}
@@ -81,7 +83,7 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .raw{font-family:'JetBrains Mono';color:var(--dim);font-size:11px;min-width:42px;text-align:right}
 .sumline{display:flex;justify-content:space-between;padding:6px 4px;border-top:1px solid var(--line);margin-top:6px;font-size:12px;color:var(--dim)}
 .u21{background:#2E6BE5;color:#fff;font:700 9px Inter;border-radius:3px;padding:1px 4px}
-.hun{font-size:11px}
+
 .bonus{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border:1px solid var(--line);
   border-radius:6px;padding:8px 10px;margin:10px 0 6px;font-size:12px}
 .bonus b{font-family:'JetBrains Mono';font-size:14px}
@@ -327,33 +329,32 @@ async function getSquad(name){
   }
   throw new Error('a keret még nem került be az adatgyűjtésbe');
 }
+const POSMAP={'K':'GK','GK':'GK','KAPUS':'GK','H':'DEF','V':'DEF','D':'DEF','DEF':'DEF','HÁTVÉD':'DEF',
+ 'KP':'MID','M':'MID','MID':'MID','KÖZÉPPÁLYÁS':'MID','CS':'ST','T':'ST','F':'ST','ST':'ST','CSATÁR':'ST'};
+const posLabel=p=>POSMAP[String(p||'').toUpperCase()]||(p||'–');
+const posRank=p=>({GK:0,DEF:1,MID:2,ST:3}[posLabel(p)] ?? 9);
 function magyarBonus(starters){
   const hun=starters.filter(p=>p.hun).length, u21=starters.filter(p=>p.hun&&p.u21).length;
   return {hun,u21,ok:(hun>=5&&u21>=1),pts:(hun>=5&&u21>=1)?10:0};
 }
-function squadHTML(name,list){
+function squadHTML(name,list,realTotal){
   const st=list.filter(p=>!p.sub), sb=list.filter(p=>p.sub);
-  const order={'K':0,'H':1,'V':1,'KP':2,'CS':3,'T':3};
-  const srt=a=>[...a].sort((x,y)=>(order[x.pos]??9)-(order[y.pos]??9));
-  const stP=st.reduce((a,p)=>a+p.week*(p.cap?2:1),0);
-  const sbP=sb.reduce((a,p)=>a+p.week/2,0);
+  const srt=a=>[...a].sort((x,y)=>posRank(x.pos)-posRank(y.pos));
+  const S=a=>a.reduce((x,p)=>x+(p.week||0),0);
   const mb=magyarBonus(st);
-  const row=(p,half)=>{
-    const eff = half ? p.week/2 : p.week*(p.cap?2:1);
-    const mult = p.cap ? '<span class="mult">×2</span>' : (half ? '<span class="mult">×0,5</span>' : '');
-    return `<div class="plr">
-      <span class="pos">${esc(p.pos||'–')}</span>
-      <span class="nm">${p.hun?'🇭🇺 ':''}${esc(p.name)}${p.team?` <span class="tm">${esc(p.team)}</span>`:''}</span>
-      ${p.u21?'<span class="u21">U21</span>':''}${p.cap?'<span class="cap">C</span>':''}
-      <span class="raw">${fmt(p.week)}</span>${mult}<span class="eff">${fmt(eff)}</span></div>`;
-  };
-  return `<div class="sqcol"><h3>${esc(name)}<span>${fmt(stP+sbP+mb.pts)}</span></h3>
-    ${srt(st).map(p=>row(p,false)).join('')}
-    <div class="sumline"><span>Kezdők összesen</span><b>${fmt(stP)}</b></div>
+  const row=p=>`<div class="plr">
+      <span class="pos">${esc(posLabel(p.pos))}</span>
+      <span class="nm">${esc(p.name)}${p.hun?'<span class="flag" title="magyar"></span>':''}${p.team?` <span class="tm">${esc(p.team)}</span>`:''}</span>
+      ${p.u21?'<span class="u21">U21</span>':''}${p.cap?'<span class="cap" title="kapitány – az érték már duplázva">C ×2</span>':''}
+      <span class="pts">${fmt(p.week)}</span></div>`;
+  const head = realTotal!=null ? fmt(realTotal) : fmt(S(st)+S(sb)+mb.pts);
+  return `<div class="sqcol"><h3>${esc(name)}<span>${head}</span></h3>
+    ${srt(st).map(row).join('')}
+    <div class="sumline"><span>Kezdők</span><b>${fmt(S(st))}</b></div>
     <div class="bonus ${mb.ok?'ok':'no'}"><span>Magyarszabály · ${mb.hun} magyar kezdő, ebből ${mb.u21} U21</span><b>${mb.ok?'+10':'0'}</b></div>
-    <div class="subhead">Cserepad — pontjaik feleződnek</div>
-    ${srt(sb).map(p=>row(p,true)).join('')}
-    <div class="sumline"><span>Pad összesen (felezve)</span><b>${fmt(sbP)}</b></div>
+    <div class="subhead">Cserepad — a feltüntetett érték már felezve</div>
+    ${srt(sb).map(row).join('')}
+    <div class="sumline"><span>Pad</span><b>${fmt(S(sb))}</b></div>
   </div>`;
 }
 function seasonHTML(name){
@@ -385,7 +386,7 @@ async function showSquad(names,tab){
        <button class="tab ${tab==='season'?'on':''}" data-tab="season">Fordulók</button>
        <button class="tab ${tab==='players'?'on':''}" data-tab="players">Szezon játékosai</button>` : '';
   if(single && tab==='players'){
-    $('mSub').textContent='A szezonban birtokolt játékosok és a nála termelt pontjuk (kezdő 1× · kapitány 2× · pad 0,5×)';
+    $('mSub').textContent='A szezonban birtokolt játékosok és a nála termelt pontjuk (a kapitányi duplázás és a padfelezés már benne van)';
     $('mBody').innerHTML='<div class="loading">Előzmények betöltése…</div>';
     const rounds=await loadHistory();
     $('mBody').innerHTML=playersHTML(names[0], rounds);
@@ -397,11 +398,15 @@ async function showSquad(names,tab){
     return;
   }
   const at = SQUAD_FILE_AT ? ' · frissítve: '+new Date(SQUAD_FILE_AT).toLocaleString('hu-HU',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-  $('mSub').textContent=(SQUAD_ROUND? SQUAD_ROUND+'. fordulós keret' : 'Aktuális keret')+' · heti pontok (a kapitány duplázva)'+at;
+  $('mSub').textContent=(SQUAD_ROUND? SQUAD_ROUND+'. fordulós keret' : 'Aktuális keret')+' · a fejlécben a hivatalos fordulópontszám'+at;
   $('mBody').innerHTML=`<div class="loading">Keret betöltése…</div>`;
   try{
     const lists=await Promise.all(names.map(getSquad));
-    $('mBody').innerHTML=`<div class="sqwrap ${single?'one':''}">${names.map((n,i)=>squadHTML(n,lists[i])).join('')}</div>`;
+    const real={};
+    if(SQUAD_ROUND && SCHEDULE[SQUAD_ROUND]){
+      for(const m of SCHEDULE[SQUAD_ROUND]){ if(m[2]!=null){ real[m[0]]=m[2]; real[m[1]]=m[3]; } }
+    }
+    $('mBody').innerHTML=`<div class="sqwrap ${single?'one':''}">${names.map((n,i)=>squadHTML(n,lists[i],real[n])).join('')}</div>`;
   }catch(e){
     $('mBody').innerHTML=`<div class="loading" style="color:var(--lose)">Nem sikerült betölteni — ${esc(e.message)}</div>`;
   }
