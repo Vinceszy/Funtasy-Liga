@@ -246,7 +246,7 @@ async function apiGet(url,label,ms){
       const res=await fetchT(rt.f(url),ms);
       if(!res.ok){errs.push(rt.n+':HTTP '+res.status);continue;}
       const j=JSON.parse(await res.text());
-      if(!j||!('data' in j)){errs.push(rt.n+':hiányzó data');continue;}
+      if(!j||!Array.isArray(j.data)){errs.push(rt.n+':rossz formátum');continue;}
       goodRoute=rt; return j;
     }catch(e){errs.push(rt.n+':'+(e.name==='AbortError'?'időtúllépés':(e.name==='TypeError'?'CORS':e.message)));}
   }
@@ -283,6 +283,16 @@ async function refresh(silent){
 
 // ---------- keret + szezon nézet ----------
 const SQUAD={};
+let SQUAD_FILE=null, SQUAD_FILE_AT=null;
+async function loadSquadFile(){
+  if(SQUAD_FILE!==null) return SQUAD_FILE;
+  try{
+    const r=await fetch('squads.json?t='+Date.now());
+    if(r.ok){ const j=await r.json(); SQUAD_FILE=j.squads||{}; SQUAD_FILE_AT=j.updated||null; }
+    else SQUAD_FILE={};
+  }catch(e){ SQUAD_FILE={}; }
+  return SQUAD_FILE;
+}
 function deepName(o,depth=0){
   if(!o||typeof o!=='object'||depth>6) return null;
   const f=o.first_name||o.firstname, l=o.last_name||o.lastname;
@@ -303,6 +313,8 @@ async function getUserId(name){
 }
 async function getSquad(name){
   if(SQUAD[name]) return SQUAD[name];
+  const f=await loadSquadFile();
+  if(f && f[name] && f[name].length){ SQUAD[name]=f[name]; return SQUAD[name]; }
   const id=await getUserId(name);
   if(!id) throw new Error('nincs azonosító');
   const base=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/user-team-players-history?filter%5Buser_id%5D=${id}`;
@@ -360,7 +372,8 @@ async function showSquad(names,tab){
     $('mBody').innerHTML=`<div class="sqwrap one" style="max-width:none">${seasonHTML(names[0])}</div>`;
     return;
   }
-  $('mSub').textContent='Aktuális keret · heti pontok (a kapitány duplázva számít az összegbe)';
+  const at = SQUAD_FILE_AT ? ' · frissítve: '+new Date(SQUAD_FILE_AT).toLocaleString('hu-HU',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+  $('mSub').textContent='Aktuális keret · heti pontok (a kapitány duplázva)'+at;
   $('mBody').innerHTML=`<div class="loading">Keret betöltése…</div>`;
   try{
     const lists=await Promise.all(names.map(getSquad));
