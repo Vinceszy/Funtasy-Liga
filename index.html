@@ -228,19 +228,22 @@ function renderMatrix(){
 // ---------- API ----------
 const ROUTES=[
   {n:'direkt',f:u=>u},
+  {n:'corsproxy',f:u=>'https://corsproxy.io/?url='+encodeURIComponent(u)},
   {n:'allorigins',f:u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)},
   {n:'codetabs',f:u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)},
-  {n:'corsproxy',f:u=>'https://corsproxy.io/?url='+encodeURIComponent(u)}
+  {n:'jina',f:u=>'https://r.jina.ai/'+u},
+  {n:'thingproxy',f:u=>'https://thingproxy.freeboard.io/fetch/'+u}
 ];
 let goodRoute=null;
 function fetchT(u,ms){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);
   return fetch(u,{signal:c.signal,headers:{'Accept':'application/json'}}).finally(()=>clearTimeout(t));}
-async function apiGet(url,label){
+async function apiGet(url,label,ms){
+  ms = ms || 9000;
   const st=$('status'), order=goodRoute?[goodRoute,...ROUTES.filter(r=>r!==goodRoute)]:ROUTES, errs=[];
   for(const rt of order){
     try{
       if(st&&label) st.textContent=`Adatok lekérése… ${label}`;
-      const res=await fetchT(rt.f(url),9000);
+      const res=await fetchT(rt.f(url),ms);
       if(!res.ok){errs.push(rt.n+':HTTP '+res.status);continue;}
       const j=JSON.parse(await res.text());
       if(!j||!('data' in j)){errs.push(rt.n+':hiányzó data');continue;}
@@ -302,9 +305,13 @@ async function getSquad(name){
   if(SQUAD[name]) return SQUAD[name];
   const id=await getUserId(name);
   if(!id) throw new Error('nincs azonosító');
-  const inc='competition_player.player,competition_player.team,position';
-  const u=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/user-team-players-history?include=${encodeURIComponent(inc)}&filter%5Buser_id%5D=${id}`;
-  const j=await apiGet(u,name);
+  const base=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/user-team-players-history?filter%5Buser_id%5D=${id}`;
+  let j=null;
+  // előbb nevekkel; ha nem megy, csupaszon (az legalább a pontokat hozza)
+  for(const inc of ['&include=competition_player.player','']){
+    try{ j = await apiGet(base+inc, name, 20000); break; }catch(e){ j=null; }
+  }
+  if(!j) throw new Error('a keret lekérése nem sikerült');
   SQUAD[name]=(j.data||[]).map(d=>({
     name: deepName(d.competition_player)||('#'+(d.competition_player_id||d.id)),
     team: d.competition_player?.team?.short_name||d.competition_player?.team?.name||'',
