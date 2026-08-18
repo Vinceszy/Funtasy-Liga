@@ -76,7 +76,7 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .plr .pts{font-family:'JetBrains Mono';font-weight:700;min-width:52px;text-align:right}
 .flag{display:inline-block;width:14px;height:9px;margin-left:6px;vertical-align:middle;border-radius:1px;
   background:linear-gradient(to bottom,#CE2939 0 33.3%,#fff 33.3% 66.6%,#477050 66.6% 100%);border:1px solid rgba(0,0,0,.35)}
-.pos{display:inline-block;min-width:26px;text-align:center;background:var(--panel2);border:1px solid var(--line);
+.ppos{display:inline-block;min-width:26px;text-align:center;background:var(--panel2);border:1px solid var(--line);
   border-radius:3px;font:700 9px 'JetBrains Mono';color:var(--dim);padding:2px 4px;margin-right:6px}
 .mult{font:600 10px Inter;color:var(--dim);margin-left:4px}
 .eff{font-family:'JetBrains Mono';font-weight:700;min-width:52px;text-align:right}
@@ -343,7 +343,7 @@ function squadHTML(name,list,realTotal){
   const S=a=>a.reduce((x,p)=>x+(p.week||0),0);
   const mb=magyarBonus(st);
   const row=p=>`<div class="plr">
-      <span class="pos">${esc(posLabel(p.pos))}</span>
+      <span class="ppos">${esc(posLabel(p.pos))}</span>
       <span class="nm">${esc(p.name)}${p.hun?'<span class="flag" title="magyar"></span>':''}${p.team?` <span class="tm">${esc(p.team)}</span>`:''}</span>
       ${p.u21?'<span class="u21">U21</span>':''}${p.cap?'<span class="cap" title="kapitány – az érték már duplázva">C ×2</span>':''}
       <span class="pts">${fmt(p.week)}</span></div>`;
@@ -356,6 +356,50 @@ function squadHTML(name,list,realTotal){
     ${srt(sb).map(row).join('')}
     <div class="sumline"><span>Pad</span><b>${fmt(S(sb))}</b></div>
   </div>`;
+}
+let HIST=null;
+async function loadHistory(){
+  if(HIST!==null) return HIST;
+  try{ const r=await fetch('squad_history.json?t='+Date.now());
+       HIST = r.ok ? ((await r.json()).rounds||{}) : {}; }
+  catch(e){ HIST={}; }
+  return HIST;
+}
+function playersHTML(name, rounds){
+  const agg={};
+  const rks=Object.keys(rounds).map(Number).sort((a,b)=>a-b);
+  for(const r of rks){
+    const sq=(rounds[r]||{})[name]; if(!sq) continue;
+    for(const p of sq){
+      const k=p.name+'|'+(p.team||'');
+      const a=agg[k]||(agg[k]={name:p.name,team:p.team,pos:p.pos,hun:!!p.hun,u21:!!p.u21,pts:0,rounds:0,st:0,sb:0,cap:0});
+      a.pts+=(p.week||0); a.rounds++; p.sub?a.sb++:a.st++; if(p.cap)a.cap++;
+    }
+  }
+  const rows=Object.values(agg).sort((a,b)=>b.pts-a.pts);
+  if(!rows.length) return '<div class="loading">Ehhez a szakvezetőhöz még nincs elmentett keret-előzmény.</div>';
+  const total=rows.reduce((x,r)=>x+r.pts,0);
+  let bonusRounds=0,bonusPts=0;
+  for(const r of rks){
+    const sq=(rounds[r]||{})[name]; if(!sq) continue;
+    const mb=magyarBonus(sq.filter(p=>!p.sub));
+    if(mb.ok){bonusRounds++;bonusPts+=10;}
+  }
+  const u21pts=rows.filter(r=>r.u21).reduce((x,r)=>x+r.pts,0);
+  const hunpts=rows.filter(r=>r.hun).reduce((x,r)=>x+r.pts,0);
+  let h=`<div style="font-size:13px;color:var(--dim);margin-bottom:10px">
+    ${rows.length} játékos · ${rks.length} forduló (${rks[0]}–${rks[rks.length-1]}) · játékosok pontja összesen ${fmt(total)}</div>
+    <div class="bonus ${bonusRounds===rks.length?'ok':'no'}">
+      <span>Magyarszabály · ${bonusRounds}/${rks.length} fordulóban teljesült</span><b>+${bonusPts}</b></div>
+    <div class="bonus"><span>Magyar játékosok pontja · ebből U21: ${fmt(u21pts)}</span><b>${fmt(hunpts)}</b></div>
+    <table><tr><th></th><th>Játékos</th><th>F</th><th>Kezdő</th><th>Pad</th><th>C</th><th>Pont</th></tr>`;
+  rows.forEach((r,i)=>{
+    h+=`<tr><td class="rank">${i+1}.</td>
+      <td class="name"><span class="ppos">${esc(posLabel(r.pos))}</span>${esc(r.name)}${r.hun?'<span class="flag"></span>':''}${r.u21?' <span class="u21">U21</span>':''}${r.team?` <span class="tm">${esc(r.team)}</span>`:''}</td>
+      <td>${r.rounds}</td><td>${r.st}</td><td>${r.sb}</td><td>${r.cap||''}</td>
+      <td class="pont">${fmt(r.pts)}</td></tr>`;
+  });
+  return h+'</table>';
 }
 function seasonHTML(name){
   let h=`<table><tr><th>F</th><th>Ellenfél</th><th>Pont</th><th>Ell.</th><th>Eredm.</th></tr>`;
