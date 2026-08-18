@@ -13,14 +13,21 @@ MEMBERS = {
     "Csendi": "cspeti93", "Ádám": "siuu_1885",
 }
 BASE = "https://fantasy-api.mlsz.hu/competitions/{c}".format(c=COMPETITION)
-HDRS = {"Accept": "application/json", "User-Agent": "funtasy-liga-archiver/1.0",
-        "Referer": "https://fantasy.mlsz.hu/"}
+HDRS = {
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "hu-HU,hu;q=0.9,en;q=0.8",
+    "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                   "(KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"),
+    "Referer": "https://fantasy.mlsz.hu/",
+    "Origin": "https://fantasy.mlsz.hu",
+    "Sec-Fetch-Dest": "empty", "Sec-Fetch-Mode": "cors", "Sec-Fetch-Site": "same-site",
+}
 
 
-def get(url, retries=3):
+def get(url, retries=2):
     for i in range(retries):
         try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=HDRS), timeout=45) as r:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=HDRS), timeout=25) as r:
                 return json.loads(r.read().decode())
         except Exception as e:
             if i == retries - 1:
@@ -111,11 +118,16 @@ def main():
     for rnd, matches in schedule.items():
         r = int(rnd)
         for m in matches:
-            if m[2] is None and points.get(m[0], {}).get(r) is not None \
-                            and points.get(m[1], {}).get(r) is not None:
-                m[2], m[3] = points[m[0]][r], points[m[1]][r]
-                filled += 1
-                print("  + %d. fordulo: %s %s - %s %s" % (r, m[0], m[2], m[3], m[1]))
+            hp = points.get(m[0], {}).get(r)
+            vp = points.get(m[1], {}).get(r)
+            if m[2] is not None or hp is None or vp is None:
+                continue
+            if not hp and not vp:          # 0-0 = a fordulo meg nem zarult le
+                print("  . %d. fordulo meg nem lezart (%s-%s)" % (r, m[0], m[1]))
+                continue
+            m[2], m[3] = hp, vp
+            filled += 1
+            print("  + %d. fordulo: %s %s - %s %s" % (r, m[0], m[2], m[3], m[1]))
 
     stamp = time.strftime("%Y-%m-%dT%H:%M:%S%z")
     if filled:
@@ -125,6 +137,8 @@ def main():
     if squads:
         with open("squads.json", "w", encoding="utf-8") as f:
             json.dump({"updated": stamp, "squads": squads}, f, ensure_ascii=False, indent=0)
+    else:
+        print("  (keret-vegpont nem elerheto szerverrol - a bongeszo tolti be)")
     print("Kesz: %d uj eredmeny, %d keret mentve." % (filled, len(squads)))
     return 0
 

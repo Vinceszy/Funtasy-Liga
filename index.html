@@ -270,7 +270,11 @@ async function refresh(silent){
       for(const rs of (row.user_team?.round_statistics||[])) got[name][rs.round_number]=rs.points;
     }
     for(let r=1;r<=33;r++) for(const m of SCHEDULE[r]){
-      if(m[2]==null && got[m[0]]?.[r]!=null && got[m[1]]?.[r]!=null){ m[2]=got[m[0]][r]; m[3]=got[m[1]][r]; filled++; }
+      if(m[2]!=null) continue;
+      const hp=got[m[0]]?.[r], vp=got[m[1]]?.[r];
+      if(hp==null||vp==null) continue;
+      if(!hp && !vp) continue;              // 0-0 = még nem lezárt forduló
+      m[2]=hp; m[3]=vp; filled++;
     }
     rPast=lastPlayedRound(); rNext=nextRound();
     renderTable(); renderMatches('past'); renderMatches('next'); renderMatrix();
@@ -311,10 +315,24 @@ async function getUserId(name){
   if(row?.user_team?.user?.id) USER_IDS[name]=row.user_team.user.id;
   return USER_IDS[name];
 }
+function cacheKey(n){ return 'squad:'+n; }
+function cacheGet(n){
+  try{ const raw=localStorage.getItem(cacheKey(n)); if(!raw) return null;
+    const o=JSON.parse(raw); if(Date.now()-o.t > 6*3600*1000) return null; return o.v; }catch(e){ return null; }
+}
+function cacheSet(n,v){ try{ localStorage.setItem(cacheKey(n), JSON.stringify({t:Date.now(),v})); }catch(e){} }
+async function preloadSquads(){
+  for(const name of Object.keys(MEMBERS)){
+    if(SQUAD[name]) continue;
+    try{ await getSquad(name); }catch(e){ /* csendben tovább */ }
+  }
+}
 async function getSquad(name){
   if(SQUAD[name]) return SQUAD[name];
   const f=await loadSquadFile();
   if(f && f[name] && f[name].length){ SQUAD[name]=f[name]; return SQUAD[name]; }
+  const c=cacheGet(name);
+  if(c && c.length){ SQUAD[name]=c; return c; }
   const id=await getUserId(name);
   if(!id) throw new Error('nincs azonosító');
   const base=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/user-team-players-history?filter%5Buser_id%5D=${id}`;
@@ -330,6 +348,7 @@ async function getSquad(name){
     cap: !!d.is_captain, sub: d.type==='substitutes',
     week: d.summary_statistics?.weekly_points ?? 0
   }));
+  cacheSet(name, SQUAD[name]);
   return SQUAD[name];
 }
 function squadHTML(name,list){
@@ -413,7 +432,7 @@ async function boot(){
   }catch(e){}
   rPast=lastPlayedRound(); rNext=nextRound();
   renderTable(); renderMatches('past'); renderMatches('next'); renderMatrix();
-  refresh(true);
+  refresh(true).then(preloadSquads);
 }
 boot();
 </script>
