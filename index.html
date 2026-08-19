@@ -10,6 +10,8 @@
 :root{--bg:#0B1F16;--panel:#12291D;--panel2:#0E2418;--line:#2E4A38;--ink:#F2EFE6;--dim:#9DB3A4;
 --amber:#FFB020;--magenta:#E5378B;--win:#3DDC84;--lose:#E5533D;--draw:#9DB3A4}
 *{box-sizing:border-box;margin:0;padding:0}
+html,body{max-width:100%;overflow-x:hidden}
+img,table{max-width:100%}
 body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;min-height:100vh}
 .wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
 header{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px 20px;border-bottom:3px solid var(--amber);padding-bottom:14px;margin-bottom:22px}
@@ -48,7 +50,11 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .match .winner{color:var(--amber)}
 .score{font-family:'JetBrains Mono';font-weight:700;font-size:16px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;white-space:nowrap;min-width:130px;text-align:center}
 .score .na{color:var(--dim);font-weight:500}
-.matrix{padding:14px;overflow-x:auto}
+.matrix{padding:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+.tablewrap table{min-width:100%}
+.tablewrap td.name,.tablewrap th:nth-child(2){position:sticky;left:0;background:var(--panel);z-index:1}
+.tablewrap td.rank,.tablewrap th:first-child{position:sticky;left:0;background:var(--panel);z-index:2}
 .matrix table{font-size:11px}
 .matrix td,.matrix th{padding:5px 6px;text-align:center;font-family:'JetBrains Mono'}
 .matrix td.w{color:var(--win)}.matrix td.l{color:var(--lose)}.matrix td.d{color:var(--draw)}.matrix td.x{color:#3a5245}
@@ -107,14 +113,8 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
   .roundnav select{flex:1}
   .roundnav button{width:38px;height:38px}
 
-  /* tabella: a kevésbé fontos oszlopok elrejtése */
   table{font-size:13px}
-  th,td{padding:8px 5px}
-  #table th:nth-child(4),#table td:nth-child(4),      /* D */
-  #table th:nth-child(7),#table td:nth-child(7),      /* RG */
-  #table th:nth-child(8),#table td:nth-child(8),      /* KG */
-  #table th:nth-child(9),#table td:nth-child(9){display:none}   /* GK */
-  #table td.name{font-size:13px}
+  th,td{padding:8px 6px}
   .dot{width:7px;height:7px}
 
   /* meccsek */
@@ -142,8 +142,8 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 }
 @media(max-width:380px){
   .tm{display:none}
-  #table th:nth-child(3),#table td:nth-child(3),      /* M */
-  #table th:nth-child(6),#table td:nth-child(6){display:none}   /* V */
+  table{font-size:12px}
+  th,td{padding:7px 5px}
 }
 
 </style>
@@ -161,7 +161,7 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
   <div>
     <div class="panel">
       <h2>Tabella</h2>
-      <table id="table"></table>
+      <div class="tablewrap"><table id="table"></table></div>
       <div class="note">Győzelem 3 · döntetlen 1 · vereség 0. Holtversenynél a pontkülönbség (GK) dönt, utána a rúgott (RG).
       <b>Kattints egy névre</b> a keret és a teljes szezon megtekintéséhez.</div>
     </div>
@@ -454,7 +454,7 @@ function playersHTML(name, rounds){
       <td>${r.rounds}</td><td>${r.st}</td><td>${r.sb}</td><td>${r.cap||''}</td>
       <td class="pont">${fmt(r.pts)}</td></tr>`;
   });
-  return h+'</table>';
+  return '<div class="tablewrap">'+h+'</table></div>';
 }
 function seasonHTML(name){
   let h=`<table><tr><th>F</th><th>Ellenfél</th><th>Pont</th><th>Ell.</th><th>Eredm.</th></tr>`;
