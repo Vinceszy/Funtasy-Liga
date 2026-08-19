@@ -116,6 +116,16 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
   table{font-size:13px}
   th,td{padding:8px 6px}
   .dot{width:7px;height:7px}
+  /* semmi ne kényszerítsen szélességet */
+  .panel{overflow:visible}
+  .score{min-width:0}
+  .pts,.eff,.raw{min-width:0}
+  .ppos{min-width:0;padding:2px 3px}
+  .match{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);padding:11px 8px;gap:6px}
+  .match .h,.match .v{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nm{min-width:0}
+  td.name{max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sqcol h3{font-size:13px}
 
   /* meccsek */
   .match{padding:11px 10px;gap:6px}
