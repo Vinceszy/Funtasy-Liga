@@ -250,8 +250,11 @@
           esc(label(a)) + ' mérlege ' + esc(label(b)) + ' ellen: <b class="pos">' + gy +
           ' GY</b> · ' + d + ' D · <b class="neg">' + v + ' V</b></div>'
         : '<div style="font-size:13px;color:var(--dim);margin-bottom:8px">Még nem játszottak egymással.</div>';
-      return merleg + '<table><tr><th>F</th><th>' + esc(label(a)) + '</th><th>' +
-        esc(label(b)) + '</th><th>Eredm.</th></tr>' + sorok + '</table>';
+      // a 2. fejlec-oszlopot a kozos CSS balra igazitja (nevoszlopnak), itt
+      // viszont szamok vannak alatta jobbra igazitva - inline igazitas kell
+      return merleg + '<table><tr><th>F</th><th style="text-align:right">' + esc(label(a)) +
+        '</th><th style="text-align:right">' + esc(label(b)) +
+        '</th><th>Eredm.</th></tr>' + sorok + '</table>';
     };
 
     // ---------- navigáció ----------

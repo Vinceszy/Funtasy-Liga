@@ -272,6 +272,11 @@ Nincs build lépés, nincs függőség. A kód három rétegben él:
   `seasonHTML` / `playersHTML`, a PL-en `showTeam` / `showMatch` / `keretHTML` /
   `fordulokHTML` / `jatekosokHTML`).
 
+**Verziójelzés:** a két oldal a közös fájlokat `funtasy.css?v=N` / `funtasy.js?v=N`
+formában tölti. **Ha a `funtasy.css` vagy a `funtasy.js` változik, a `?v=` számot mindkét
+oldalon léptetni kell** — különben a böngészők a régi motort tölthetik az új oldal alá
+(oldal/motor verziócsúszás: az új HTML régi JS-sel fut, nehezen felismerhető hibákkal).
+
 **Vigyázat a CSS-osztálynevekkel:** a `.pos` a *pozitív számok zöld színe*, a poszt-címke
 `.ppos`. Egyszer már ütköztek, és emiatt a GY/V eredmények dobozkaként jelentek meg.
 
