@@ -27,7 +27,8 @@
     <div class="panel">
       <h2>Egymás ellen</h2>
       <div class="matrix" id="matrix"></div>
-      <div class="note">Sor vs oszlop: <span class="pos">GY</span>/<span style="color:var(--draw)">D</span>/<span class="neg">V</span></div>
+      <div class="note">Sor vs oszlop: <span class="pos">GY</span>/<span style="color:var(--draw)">D</span>/<span class="neg">V</span>.
+      <b>Kattints egy cellára</b> a két csapat egymás elleni meccseihez.</div>
     </div>
   </div>
   <div>
@@ -110,6 +111,7 @@ const T = FunTasy.create({
   matrixLabel: id => (ENTRIES[id] && ENTRIES[id].short) || ('#' + id),
   nameAttr:    id => `data-team="${id}"`,
   matchAttr:   (h, v, r) => `data-h="${h}" data-v="${v}" data-r="${r}"`,
+  onMatrixClick: (a, b) => showH2H(+a, +b),
   els: { table:'table', matrix:'matrix', mPast:'mPast', mNext:'mNext',
          selPast:'selPast', selNext:'selNext' }
 });
@@ -236,6 +238,15 @@ function showTeam(id, tab){
         $('mBody').innerHTML = keretHTML(id);
     });
   }
+}
+
+// Matrix-cellara kattintva a ket csapat egymas elleni meccsei.
+function showH2H(a, b){
+  mTeam = null; openModal();
+  $('mTitle').textContent = nev(a) + '  vs  ' + nev(b);
+  $('mSub').textContent = 'Egymás elleni meccsek — sorra kattintva a meccspanel odaugrik';
+  $('mTabs').innerHTML = '';
+  $('mBody').innerHTML = '<div class="sqwrap one" style="max-width:none">' + T.h2hHTML(a, b) + '</div>';
 }
 
 function showMatch(h, v, r){

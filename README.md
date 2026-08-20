@@ -42,7 +42,10 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 
 ### Egymás elleni mátrix
 8×8 rács, minden párosításnál `GY/D/V` az eddigi meccsekből. Mobilon vízszintesen
-görgethető, ragadós névoszloppal.
+görgethető, ragadós névoszloppal. **A cellára kattintva** modal nyílik a két csapat
+összes egymás elleni párosításával: lejátszott meccsek eredménnyel és GY/D/V-vel
+(a sor-játékos szemszögéből), élő meccs élő jelöléssel, jövőbeliek időponttal —
+a sorra kattintva a meccspanel az adott fordulóra ugrik. Mindkét oldalon így működik.
 
 ### Modal — három fül
 1. **Aktuális keret** — lezárt fordulónál a legutóbbi forduló kerete, a fejlécben a
@@ -255,7 +258,8 @@ Nincs build lépés, nincs függőség. A kód három rétegben él:
   rács, táblázat- és modal-stílus).
 - **`funtasy.js`** — a közös motor: `FunTasy.create({...})` kapja a konfigurációt
   (menetrend, résztvevők, elemazonosítók), és adja a `computeTable`, `renderTable`,
-  `renderMatches`, `renderMatrix` függvényeket meg az élő-jelölést.
+  `renderMatches`, `renderMatrix` függvényeket, az élő-jelölést és az egymás elleni
+  lista építőjét (`h2hHTML` — a mátrix-cella kattintása nyitja, `onMatrixClick`).
 - **`index.html` / `draft.html`** — csak az oldalspecifikus rész: konfiguráció, betöltés
   és élő frissítés, meg az oldal saját modalja (a főoldalon `showSquad` / `squadHTML` /
   `seasonHTML` / `playersHTML`, a PL-en `showTeam` / `showMatch` / `keretHTML` /

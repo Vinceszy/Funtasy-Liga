@@ -200,12 +200,57 @@
         names.forEach(function (b) {
           if (a === b) { t += '<td class="x">—</td>'; return; }
           var c = M[a][b], n = c[0] + c[1] + c[2];
-          t += '<td class="' + (n ? (c[0] > c[2] ? 'w' : (c[2] > c[0] ? 'l' : 'd')) : 'x') + '">' +
+          // az egesz cella kattinthato: megnyitja a ket csapat egymas
+          // elleni meccseinek listajat (opts.onMatrixClick)
+          t += '<td class="mx ' + (n ? (c[0] > c[2] ? 'w' : (c[2] > c[0] ? 'l' : 'd')) : 'x') + '"' +
+            ' data-mxa="' + esc(a) + '" data-mxb="' + esc(b) + '"' +
+            ' title="' + esc(label(a)) + ' vs ' + esc(label(b)) + '">' +
             (n ? c[0] + '/' + c[1] + '/' + c[2] : '·') + '</td>';
         });
         t += '</tr>';
       });
       el(ids.matrix).innerHTML = t + '</table>';
+    };
+
+    // ---------- egymas elleni lista ----------
+    // A ket csapat osszes egymas elleni parositasa a menetrendbol: lejatszott
+    // meccsek eredmennyel es GY/D/V-vel (az "a" szemszogebol), elo meccs elo
+    // jelolessel, jovobeliek "— : —"-mal. A sorok data-jump-ot kapnak, igy
+    // kattintasra a meccspanel az adott fordulora ugrik (mindket oldal
+    // meglevo data-jump kezeloje viszi).
+    api.h2hHTML = function (a, b) {
+      var sorok = '', gy = 0, d = 0, v = 0, jatszott = 0;
+      kor().forEach(function (r) {
+        vegleges(r).forEach(function (m, i) {
+          var eleje = (m[0] === a && m[1] === b), vege = (m[0] === b && m[1] === a);
+          if (!eleje && !vege) return;
+          var ap = eleje ? m[2] : m[3], bp = eleje ? m[3] : m[2];
+          var elo = false;
+          if (ap == null) {
+            var L = eloMeccs(r, i);
+            if (played(L)) { ap = eleje ? L[2] : L[3]; bp = eleje ? L[3] : L[2]; elo = true; }
+          }
+          var res = '—', cls = '';
+          if (ap != null && !elo) {
+            jatszott++;
+            if (ap > bp) { res = 'GY'; cls = 'pos'; gy++; }
+            else if (ap < bp) { res = 'V'; cls = 'neg'; v++; }
+            else { res = 'D'; d++; }
+          }
+          sorok += '<tr class="clickable" data-jump="' + r + '"><td class="rank">' + r + '.</td>' +
+            '<td>' + (ap != null ? fmt(ap) : '—') +
+            (elo ? ' <span class="elojel">élő</span>' : '') + '</td>' +
+            '<td>' + (bp != null ? fmt(bp) : '—') + '</td>' +
+            '<td class="' + cls + '">' + (elo ? 'élő' : res) + '</td></tr>';
+        });
+      });
+      var merleg = jatszott
+        ? '<div style="font-size:13px;color:var(--dim);margin-bottom:8px">' +
+          esc(label(a)) + ' mérlege ' + esc(label(b)) + ' ellen: <b class="pos">' + gy +
+          ' GY</b> · ' + d + ' D · <b class="neg">' + v + ' V</b></div>'
+        : '<div style="font-size:13px;color:var(--dim);margin-bottom:8px">Még nem játszottak egymással.</div>';
+      return merleg + '<table><tr><th>F</th><th>' + esc(label(a)) + '</th><th>' +
+        esc(label(b)) + '</th><th>Eredm.</th></tr>' + sorok + '</table>';
     };
 
     // ---------- navigáció ----------
@@ -226,7 +271,9 @@
     api.bindNav = function () {
       document.addEventListener('click', function (e) {
         var b = e.target.closest('[data-nav]');
-        if (b) api.nav(b.dataset.nav, +b.dataset.d);
+        if (b) { api.nav(b.dataset.nav, +b.dataset.d); return; }
+        var mx = e.target.closest('.matrix td.mx');
+        if (mx && opts.onMatrixClick) opts.onMatrixClick(mx.dataset.mxa, mx.dataset.mxb);
       });
       document.addEventListener('change', function (e) {
         if (e.target.id === ids.selPast) api.setRound('past', +e.target.value);

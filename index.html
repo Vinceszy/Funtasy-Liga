@@ -27,7 +27,8 @@
     <div class="panel">
       <h2>Egymás ellen</h2>
       <div class="matrix" id="matrix"></div>
-      <div class="note">Sor vs oszlop: <span class="pos">GY</span>/<span style="color:var(--draw)">D</span>/<span class="neg">V</span></div>
+      <div class="note">Sor vs oszlop: <span class="pos">GY</span>/<span style="color:var(--draw)">D</span>/<span class="neg">V</span>.
+      <b>Kattints egy cellára</b> a két csapat egymás elleni meccseihez.</div>
     </div>
   </div>
   <div>
@@ -111,6 +112,7 @@ const T = FunTasy.create({
   matrixOrder: () => Object.keys(MEMBERS),        // rogzitett sorrend, nem tabella szerinti
   nameAttr:    n => `data-member="${esc(n)}"`,
   matchAttr:   (h,v,r) => `data-h="${esc(h)}" data-v="${esc(v)}" data-r="${r}"`,
+  onMatrixClick: (a,b) => showH2H(a,b),
   els: { table:'table', matrix:'matrix', mPast:'mPast', mNext:'mNext',
          selPast:'selPast', selNext:'selNext' }
 });
@@ -316,6 +318,15 @@ function showEloUzenet(){
   $('mSub').textContent='';
   $('mTabs').innerHTML='';
   $('mBody').innerHTML='<div class="loading">A meccs még tart, a keretek által szerzett pontok a forduló zárta után elérhetőek.</div>';
+}
+
+// Matrix-cellara kattintva a ket csapat egymas elleni meccsei.
+function showH2H(a,b){
+  mCurrent=[a,b]; openModal();
+  $('mTitle').textContent=a+'  vs  '+b;
+  $('mSub').textContent='Egymás elleni meccsek — sorra kattintva a meccspanel odaugrik';
+  $('mTabs').innerHTML='';
+  $('mBody').innerHTML='<div class="sqwrap one" style="max-width:none">'+T.h2hHTML(a,b)+'</div>';
 }
 
 // Elo meccsre kattintva a ket keret jon, jatekosonkenti pontokkal.
