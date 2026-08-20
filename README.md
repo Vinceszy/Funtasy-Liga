@@ -5,8 +5,11 @@ Privát head-to-head liga követő oldal a **fantasy.mlsz.hu** (MLSZ NB I Fantas
 Az adatgyűjtés **teljesen automatikus** (GitHub Actions, 3 óránként) — a böngészős
 könyvjelző már csak tartalék.
 
-**Élő oldal:** https://vinceszy.github.io/Funtasy-Liga/
-**FPL Draft aloldal (rejtett, a főoldal nem hivatkozik rá):** https://vinceszy.github.io/Funtasy-Liga/draft.html
+**FunTasy NB1 (élő oldal):** https://vinceszy.github.io/Funtasy-Liga/
+**FunTasy PL (rejtett aloldal, a főoldal nem hivatkozik rá):** https://vinceszy.github.io/Funtasy-Liga/draft.html
+
+A résztvevőket mindkét oldalon a **monogram** azonosítja (a név mögött) — személyenként
+azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 
 ---
 

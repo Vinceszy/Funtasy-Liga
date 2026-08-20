@@ -32,6 +32,13 @@
     var el = function (id) { return document.getElementById(id); };
     var ids = opts.els || {};
     var label = opts.label || function (k) { return k; };
+    // Monogram a nev mogott (pl. "Vince VS", "HolVanSalah?! VS") - ez a
+    // resztvevo egyedi azonositoja, mindket ligaban ugyanaz a szemelyhez.
+    var tag = opts.tag || function () { return ''; };
+    var mgr = function (k) {
+      var t = tag(k);
+      return t ? ' <span class="mgr">' + esc(t) + '</span>' : '';
+    };
 
     var api = {
       rPast: opts.firstRound || 1,
@@ -107,9 +114,9 @@
         }).join('');
         var nev = esc(label(r.name));
         // A nev csak ott kattinthato, ahol van mit megnyitni (keret-modal).
-        var cella = opts.nameAttr
+        var cella = (opts.nameAttr
           ? '<span class="clickable" ' + opts.nameAttr(r.name) + '>' + nev + '</span>'
-          : nev;
+          : nev) + mgr(r.name);
         h += '<tr class="' + (i === 0 ? 'leader' : '') + '"><td class="rank">' + (i + 1) + '.</td>' +
           '<td class="name">' + cella + '</td>' +
           '<td>' + r.M + '</td><td>' + r.GY + '</td><td>' + r.D + '</td><td>' + r.V + '</td>' +
@@ -144,13 +151,13 @@
         var van = p || elo;
         var attr = opts.matchAttr ? ' ' + opts.matchAttr(m[0], m[1]) : '';
         h += '<div class="match' + (elo ? ' elo' : '') + '"' + attr + '>' +
-          '<div class="h ' + (van && hp > vp ? 'winner' : '') + '">' + esc(label(m[0])) + '</div>' +
+          '<div class="h ' + (van && hp > vp ? 'winner' : '') + '">' + esc(label(m[0])) + mgr(m[0]) + '</div>' +
           '<div class="score">' +
             (van ? fmt(hp) + ' <span style="color:var(--dim)">:</span> ' + fmt(vp) +
                    (elo ? '<span class="elojel">élő</span>' : '')
                  : '<span class="na">— : —</span>') +
           '</div>' +
-          '<div class="v ' + (van && vp > hp ? 'winner' : '') + '">' + esc(label(m[1])) + '</div></div>';
+          '<div class="v ' + (van && vp > hp ? 'winner' : '') + '">' + esc(label(m[1])) + mgr(m[1]) + '</div></div>';
       });
       el(which === 'past' ? ids.mPast : ids.mNext).innerHTML = h;
     };
@@ -171,11 +178,17 @@
           else { M[h][v][1]++; M[v][h][1]++; }
         });
       });
+      // matrixLabel: ha meg van adva (pl. monogram), az megy MINDKET
+      // tengelyre; kulonben oszlopra a nev eleje, sorra a teljes nev.
+      var mCim = function (n, sor) {
+        if (opts.matrixLabel) return opts.matrixLabel(n);
+        return sor ? label(n) : label(n).slice(0, 4);
+      };
       var t = '<table><tr><th></th>' + names.map(function (n) {
-        return '<th>' + esc(label(n).slice(0, 4)) + '</th>';
+        return '<th>' + esc(mCim(n, false)) + '</th>';
       }).join('') + '</tr>';
       names.forEach(function (a) {
-        t += '<tr><th style="text-align:left">' + esc(label(a)) + '</th>';
+        t += '<tr><th style="text-align:left">' + esc(mCim(a, true)) + '</th>';
         names.forEach(function (b) {
           if (a === b) { t += '<td class="x">—</td>'; return; }
           var c = M[a][b], n = c[0] + c[1] + c[2];

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FunTasy Draft — H2H</title>
+<title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="funtasy.css">
@@ -11,7 +11,7 @@
 <body>
 <div class="wrap">
 <header>
-  <h1><span class="fun">FUN</span>TASY <span class="tag">DRAFT</span></h1>
+  <h1><span class="fun">FUN</span>TASY <span class="tag">PL</span></h1>
   <div class="sub" id="sub">FPL Draft · privát head-to-head</div>
   <div id="status"></div>
 </header>
@@ -57,11 +57,12 @@
 <script src="funtasy.js"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
-// A ligán belüli azonosító (league_entry id) és az NB I-es oldal beceneve
-// közötti megfeleltetés — ugyanaz az ember a két ligában más néven szerepel.
-// A kulcs a league_entry "id", NEM az FPL "entry_id".
+// CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
+// (league_entry "id", NEM az FPL "entry_id") és az NB1-es oldal beceneve.
+// A megjelenítés itt NEM ezt használja (csapatnév + monogram megy), ez a
+// két liga résztvevőinek összekötését rögzíti.
 // Aki csak az egyik ligában játszik, az nem szerepel itt:
-//   csak a Draftban: 271009, 327399, 360593 · csak az NB I-ben: Sámsi
+//   csak a PL-ben: 271009, 327399, 360593 · csak az NB1-ben: Sámsi (SP)
 const NEVEK = {
   254810: "Bence", 254960: "Ádám",  267429: "Katyul", 267607: "Bazsa",
   267857: "Csendi", 268988: "Vince", 277905: "Csongi"
@@ -79,7 +80,9 @@ const T = FunTasy.create({
   firstRound: () => liga.start_event || 1,
   lastRound:  () => liga.stop_event  || 38,
   nameHeader: 'Csapat',
-  label:      id => NEVEK[id] || (ENTRIES[id] && ENTRIES[id].name) || ('#' + id),
+  label:       id => (ENTRIES[id] && ENTRIES[id].name) || ('#' + id),
+  tag:         id => (ENTRIES[id] && ENTRIES[id].short) || '',
+  matrixLabel: id => (ENTRIES[id] && ENTRIES[id].short) || ('#' + id),
   els: { table:'table', matrix:'matrix', mPast:'mPast', mNext:'mNext',
          selPast:'selPast', selNext:'selNext' }
 });
@@ -97,7 +100,7 @@ fetch('draft.json?t=' + Date.now())
 
     T.rPast = T.lastPlayedRound();
     T.rNext = T.nextRound();
-    $('sub').textContent = `FPL Draft · ${liga.name || ''} · ${Object.keys(ENTRIES).length} csapat · ${liga.stop_event || 38} forduló`;
+    $('sub').textContent = `FPL Draft · privát head-to-head · ${Object.keys(ENTRIES).length} csapat · ${liga.stop_event || 38} forduló`;
     const d = j.updated ? new Date(j.updated) : null;
     $('status').textContent = d ? ('Frissítve: ' + d.toLocaleString('hu-HU')) : '';
     $('status').className = 'ok';
