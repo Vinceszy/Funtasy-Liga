@@ -7,7 +7,7 @@ Ket dolgot gyujt 3 orankent (.github/workflows/archive.yml):
    ranglista-vegpontrol. A tabella egyetlen forrasa ez.
 2. KERETEK (squads.json, squad_history.json) - a keret-vegpontrol,
    pontosan abban a formatumban, ahogy korabban a bongeszos konyvjelzo
-   irta (az mostantol csak tartalek, lasd KERET-MENTES.md).
+   irta (az mostantol csak tartalek, lasd tartalek/KERET-MENTES.md).
 
 A KERET-VEGPONT TORTENETE: sokaig azt hittuk, szerverrol tiltott (GitHub
 Actionsbol, proxykon at, Playwrighttal is 403 volt). 2026-08-20-an kiderult:

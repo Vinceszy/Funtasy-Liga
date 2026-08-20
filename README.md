@@ -45,7 +45,10 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 görgethető, ragadós névoszloppal.
 
 ### Modal — három fül
-1. **Aktuális keret** — a legutóbb mentett forduló kerete: posztonként rendezve
+1. **Aktuális keret** — lezárt fordulónál a legutóbbi forduló kerete, a fejlécben a
+   **hivatalos fordulópontszámmal**; élő forduló közben az élő meccskeret, megnyitáskor
+   **percre frissre** húzott pontokkal (a felirat ilyenkor „élő pontösszeg"-et mond).
+   Posztonként rendezve
    (GK → DEF → MID → ST), magyar játékosoknál piros-fehér-zöld zászlócska (CSS-ből rajzolva,
    **nem emoji** — a Windows Chrome a zászló-emoji helyett „HU” betűpárt mutatna), U21-eseknél
    kék `U21` címke, kapitánynál `C ×2`. Külön **magyarszabály-sáv** (hány magyar kezdő, ebből
@@ -57,6 +60,16 @@ görgethető, ragadós névoszloppal.
 3. **Szezon játékosai** — minden játékos, aki valaha a keretben volt, a nála termelt ponttal,
    hány fordulóban volt nála, hányszor kezdő/pados, hányszor kapitány. Fent: hány fordulóban
    teljesült a magyarszabály (+10-ek összege), a magyar játékosok pontja, ebből az U21-eseké.
+
+### A FunTasy PL aloldal
+Ugyanaz a felépítés (tabella, meccspanelek, mátrix, modal három füllel, élő állások),
+a Premier League lila színvilágában, az FPL Draft sajátosságaival:
+- csapatnevek + monogram (a mátrixban csak monogramok), holtversenynél a szerzett pont dönt
+- nincs kapitány és magyarszabály; a pad pontjai nem számítanak a csapatnak
+- élő állás forduló közben: a kezdőcsapatok a forduló indulásakor rögzülnek (a repóban
+  vannak), a böngésző csak a nyilvános játékos-pontokat kéri le percre frissen, és abból
+  összegez minden meccset
+- a „Szezon játékosai" fül és a meccs-keretek a GW1 indulásától gyűlnek
 
 ### Mobil
 Teljes reszponzív átdolgozás: nincs vízszintes csúszkálás, és **minden oszlop megmarad** —
@@ -73,19 +86,18 @@ teljes képernyős, ragadós × gombbal.
 | `funtasy.css` | A közös stíluslap (`index.html` és `draft.html` is ezt tölti). |
 | `funtasy.js` | A közös motor: tabella, meccspanelek, mátrix, élő-jelölés (`FunTasy.create(...)`). |
 | `results.json` | H2H eredmények archívuma: `{updated, provisional:[...], schedule:{"1":[[hazai,vendég,hp,vp],...]}}`. Az oldal ebből tölt, felülírva a beégetett menetrendet. A `provisional` a még le nem zárult fordulók listája. |
-| `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása. |
+| `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. |
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. |
 | `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
-| `collect_draft.py` | GitHub Actions: az FPL Draft liga adatai → `draft.json`. Valódi neveket kiszűri (a repó publikus). |
+| `collect_draft.py` | GitHub Actions: az FPL Draft liga adatai. A résztvevők valódi nevét és az `entry_id`-t kiszűri (a repó publikus). |
 | `draft.json` | Az FPL Draft liga adatai (résztvevők, menetrend, eredmények) — a `draft.html` forrása. |
+| `draft_players.json` | FPL játékos-törzs: `{id: {n: név, t: klub, p: poszt}}` (599 játékos). |
+| `draft_squads.json` | A jelenlegi FPL-keretek (tulajdonlás): `{liga_id: [játékos_id,...]}`. |
+| `draft_history.json` | Fordulónkénti FPL-keretek pontokkal (`{rounds:{gw:{liga_id:[{e,b,pts},...]}}}`) — a GW1 indulásától gyűlik. |
 | `draft.html` | Az FPL Draft aloldal. A stílusa az `index.html`-ével közös (`funtasy.css`). |
 | `.github/workflows/archive.yml` | 3 óránként futó munkafolyamat: `collect.py` + commit. |
-| `.github/workflows/draft.yml` | Kézzel indítható munkafolyamat: `collect_draft.py` + commit. |
-| `GOMB-bookmarklet.txt` | **Tartalék**: a böngészős keret-mentő könyvjelző (`javascript:` URL, `IDE_A_TOKEN` helyőrzővel). Csak akkor kell, ha a szerveroldali gyűjtés elromlana. |
-| `GOMB-forras.js` | Ugyanaz olvasható forráskódként. **Módosítani ezt kell**, nem a fentit. |
-| `GOMB-epites.py` | A `GOMB-forras.js`-ből újragenerálja a `GOMB-bookmarklet.txt`-t. |
-| `KERET-MENTES.md` | A tartalék könyvjelző útmutatója (token, beállítás, használat). |
-| `BACKFILL.md` | Elavult: a régi kézi pótlási módszer és annak magyarázata, miért nem kell többé. |
+| `.github/workflows/draft.yml` | 3 óránként futó (és kézzel is indítható) munkafolyamat: `collect_draft.py` + commit. |
+| `tartalek/` | Minden, ami nem kell a napi működéshez: a tartalék könyvjelző (`GOMB-bookmarklet.txt`, forrása és építője), az útmutatója (`KERET-MENTES.md`) és az elavult kézi pótlás leírása (`BACKFILL.md`). A weboldal és a gyűjtők semmit nem olvasnak innen. |
 
 ---
 
@@ -105,11 +117,25 @@ Az `archive.yml` a `collect.py`-t futtatja, ami **mindent** frissít, teendő n�
 4. **Keresztellenőrzés**: a keretekből számolt pontszámot összeveti a hivatalossal, és a
    naplóban jelzi, ha az MLSZ utólag korrigált.
 
+### Az FPL Draft adatai (3 óránként, draft.yml)
+
+A `collect_draft.py` a liga-adatokon túl a játékos-törzset, a jelenlegi kereteket
+(tulajdonlás) és — a GW1 indulásától — a fordulónkénti kereteket gyűjti, pontokkal.
+A résztvevők valódi neve és `entry_id`-ja soha nem kerülhet a repóba (mentés előtti szűrő).
+
+### Élő frissítés a böngészőből (mindkét oldal)
+
+Betöltéskor mindkét oldal percre friss adatot kér CORS-proxykon át: az NB1 a
+ranglista-végpontról az eredményeket (és kattintásra a kereteket), a PL a játékosonkénti
+élő pontokat, amikből a meccsállásokat összegzi. Hiba esetén a tárolt (3 óránként
+frissülő) állapot marad, a státuszsávban jelzéssel; folyamatban lévő fordulónál a szöveg:
+*„Automata lekérés hiba: az állások a forduló végén frissülnek."*
+
 ### Tartalék: a böngészős könyvjelző
 
 Ha a szerveroldali gyűjtés elromlana (pl. az MLSZ tényleg letiltaná az adatközponti
 IP-ket), a keretek a `Keret mentés` könyvjelzővel menthetők a böngésződből — beállítása:
-[`KERET-MENTES.md`](KERET-MENTES.md). A könyvjelző fine-grained tokent használ (csak erre
+[`tartalek/KERET-MENTES.md`](tartalek/KERET-MENTES.md). A könyvjelző fine-grained tokent használ (csak erre
 a repóra, csak `Contents: Read and write`); a repóban a token mindig helyőrző.
 
 ---
@@ -185,6 +211,18 @@ adnak** — piaczárásig titkosak.
   (+1, +1, −2,5). Ezért a `collect.py` mindig a lekért értékhez szinkronizál, és a
   keretből számolt összeget összeveti a hivatalossal — eltérésnél a naplóban jelez.
 
+### Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva
+
+- `league/{id}/details` — résztvevők, menetrend, eredmények; **a valódi neveket is
+  tartalmazza**, ezért nyers válasz soha nem kerül a repóba
+- `bootstrap-static` — játekos-törzs (599 játékos, klubok, posztok)
+- `league/{id}/element-status` — ki birtokolja most az adott játékost; az `owner` mező
+  azonosító-terét futáskor kell felismerni (liga-id vagy entry_id lehet)
+- `entry/{entry_id}/event/{gw}` — heti keret (kezdő/pad); **a forduló indulásáig 404-et
+  ad**, ez várható viselkedés
+- `event/{gw}/live` — játékosonkénti heti pontok; nyilvános, ebből megy az élő állás
+- `game` — `current_event`: a folyamatban lévő forduló száma (vagy null)
+
 ---
 
 ## 5. Ismert korlátok, buktatók
@@ -199,7 +237,9 @@ adnak** — piaczárásig titkosak.
 - **Halasztott meccsek:** a Ferencváros európai kupaszereplése miatt az ellenfelének fordulója
   elmaradhat. Ilyenkor az érintett klub játékosai 0 pontot kapnak.
 - **A könyvjelző (tartalék) a böngésződ másolatából fut**, nem a repóból. Ha a
-  `GOMB-bookmarklet.txt` módosul, a böngészőben lévő könyvjelzőt kézzel kell frissíteni.
+  `tartalek/GOMB-bookmarklet.txt` módosul, a böngészőben lévő könyvjelzőt kézzel kell frissíteni.
+- **A PL-en a GW első óráiban** (amíg a gyűjtő először le nem tárolja a forduló kereteit,
+  legfeljebb ~3 óra) élő meccsállás még nem számolható — utána percre pontos.
 - **Élő lekérés a böngészőből:** az oldal betöltéskor közvetlenül is lekéri a friss
   eredményeket (CORS-proxykon át). Ha ez elromlik, a státuszsávban jelzi; folyamatban
   lévő fordulónál a szöveg: *„Automata lekérés hiba: az állások a forduló végén
@@ -223,9 +263,9 @@ Nincs build lépés, nincs függőség. A kód három rétegben él:
 **Vigyázat a CSS-osztálynevekkel:** a `.pos` a *pozitív számok zöld színe*, a poszt-címke
 `.ppos`. Egyszer már ütköztek, és emiatt a GY/V eredmények dobozkaként jelentek meg.
 
-**A könyvjelző módosítása:** szerkeszd a `GOMB-forras.js`-t, futtasd a
-`python3 GOMB-epites.py`-t, majd frissítsd a böngészőben lévő könyvjelzőt az új tartalommal.
-A `GOMB-bookmarklet.txt`-t soha ne szerkeszd kézzel.
+**A tartalék könyvjelző módosítása:** szerkeszd a `tartalek/GOMB-forras.js`-t, futtasd a
+mappában a `python3 GOMB-epites.py`-t, majd frissítsd a böngészőben lévő könyvjelzőt az új
+tartalommal. A `GOMB-bookmarklet.txt`-t soha ne szerkeszd kézzel.
 
 ---
 
