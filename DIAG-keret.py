@@ -1,128 +1,125 @@
 #!/usr/bin/env python3
-"""Egyszeri diagnosztika (IDEIGLENES fajl, torolheto): mit enged az MLSZ API
-szerverrol, ha HELYESEN kerdezzuk?
+"""FOPROBA (IDEIGLENES fajl, torolheto): a tervezett szerveroldali keretgyujtes
+teljes proba-utja, mielott a collect.py-ba beepulne.
 
-Miert kell: a korabbi szerveroldali probak mind 403-at kaptak, es ebbol az a
-kovetkeztetes szuletett, hogy a keret-vegpont szerverrol tiltott. Csakhogy azok
-a probak MEG A filter[round_id] kotelezoessegenek felfedezese ELOTT tortentek -
-es a bongeszoben is pont a hianyzo round_id okozta a 403-at. Lehet tehat, hogy
-nem az IP volt a baj, hanem a keres.
+Mit csinal (CSAK OLVAS es nyomtat, semmit nem ir):
+  1. Lekeri mind a 8 szakvezeto user_id-jat es hivatalos fordulopontszamait
+     a ranglista-vegpontrol.
+  2. Az 1-4. (lezart) fordulora lekeri mindenki keretet a keret-vegpontrol,
+     kiszamolja a fordulopontszamot (weekly_points osszeg + magyarszabaly),
+     es osszeveti a hivatalos ertekkel. 32 osszevetes - mind egyeznie kell.
+  3. Fordulonkent kiirja az is_played-alapu lezaras-iteletet (a 3. fordulos
+     halasztott ETO-Fradi jatekosai is is_played=True, 0 ponttal - igazolt).
+  4. Az 5. (el nem kezdodott) fordulora 403-at var.
 
-Ez a szkript CSAK OLVAS es nyomtat, semmilyen fajlt nem ir es nem modosit.
-Ket kerdesre keres valaszt:
-  A) Lekerheto-e a keret szerverrol a helyes parameterekkel?
-  B) Ad-e az API hasznalhato "fordulo lezarult" jelzest?
+Ezzel a valos terheles is kiderul: ~41 keres 150 ms szunetekkel.
 """
-import json, sys, urllib.parse, urllib.request
+import json, sys, time, urllib.error, urllib.parse, urllib.request
 
 BASE = "https://fantasy-api.mlsz.hu/competitions/3/"
-
-EGYSZERU = {"Accept": "application/json", "User-Agent": "funtasy-archiver/1.0",
-            "Referer": "https://fantasy.mlsz.hu/"}
-BONGESZOS = {
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Language": "hu-HU,hu;q=0.9,en;q=0.8",
-    "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                   "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"),
-    "Referer": "https://fantasy.mlsz.hu/",
-    "Origin": "https://fantasy.mlsz.hu",
+HDRS = {"Accept": "application/json", "User-Agent": "funtasy-archiver/1.0",
+        "Referer": "https://fantasy.mlsz.hu/"}
+MEMBERS = {
+    "Katyul": "peterkmrs", "Bence": "Dill Dough", "Sámsi": "samsonp",
+    "Vince": "HolVanSalah", "Bazsa": "Hoxha98", "Csongi": "szcsngr",
+    "Csendi": "cspeti93", "Ádám": "siuu_1885",
 }
-
 INCLUDE = ("position,position.alternatives,competition_player,"
            "competition_player.team,competition_player.countries,summary_statistics")
+rid = lambda n: 75 + 2 * n
 
 
-def get(url, headers):
+def get(url):
+    time.sleep(0.15)
     try:
-        req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=30) as r:
-            return r.status, r.headers.get("content-type", ""), r.read().decode("utf-8", "replace")
+        with urllib.request.urlopen(urllib.request.Request(url, headers=HDRS), timeout=30) as r:
+            return r.status, json.loads(r.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        body = ""
-        try:
-            body = e.read().decode("utf-8", "replace")
-        except Exception:
-            pass
-        return e.code, e.headers.get("content-type", "") if e.headers else "", body
+        return e.code, None
     except Exception as e:
-        return None, "", "%s: %s" % (type(e).__name__, e)
+        return None, str(e)
 
 
-def mutat(cim, status, ctype, body, n=700):
-    print("\n--- %s ---" % cim)
-    print("    HTTP %s | %s" % (status, ctype))
-    print("    " + body[:n].replace("\n", " "))
+def keret(user_id, r):
+    url = (BASE + "user-team-players-history?include=" + urllib.parse.quote(INCLUDE)
+           + "&filter%5Buser_id%5D=%d&filter%5Bround_id%5D=%d" % (user_id, rid(r)))
+    return get(url)
+
+
+def ertekel(data):
+    """Egy keret-valaszbol: (szamolt pontszam, lejatszott/osszes, jatekosszam)."""
+    ossz, jatszott, db = 0.0, 0, 0
+    hun_kezdo, u21_hun_kezdo = 0, 0
+    for d in data:
+        cp = d.get("competition_player") or {}
+        cr = cp.get("current_round") or {}
+        ss = d.get("summary_statistics") or {}
+        db += 1
+        ossz += ss.get("weekly_points") or 0
+        if cr.get("is_played"):
+            jatszott += 1
+        if d.get("type") == "starter":
+            hun = any((c.get("code") == "HUN") for c in (cp.get("countries") or []))
+            if hun:
+                hun_kezdo += 1
+                if cp.get("is_u21"):
+                    u21_hun_kezdo += 1
+    bonus = 10 if (hun_kezdo >= 5 and u21_hun_kezdo >= 1) else 0
+    return ossz + bonus, jatszott, db, bonus
 
 
 def main():
-    print("MLSZ API diagnosztika a GitHub Actions futojarol")
+    print("FOPROBA: szerveroldali keretgyujtes, 8 szakvezeto x 4 fordulo")
 
-    # ============ 1. Ranglista (referencia - ez eddig is ment) ============
-    url = (BASE + "rankings?include=user_team.user.id,summary_statistics,ranking,"
-           "rounds,competition_rank&page=1&per_page=5&filter%5Bsearch%5D="
-           + urllib.parse.quote("HolVanSalah"))
-    st, ct, body = get(url, EGYSZERU)
-    mutat("1. ranglista (referencia)", st, ct, body, 200)
+    # ---- 1. azonositok es hivatalos pontok ----
+    ids, hivatalos = {}, {}
+    for nev, uname in MEMBERS.items():
+        st, j = get(BASE + "rankings?include=user_team.user.id,rounds&per_page=5"
+                    + "&filter%5Bsearch%5D=" + urllib.parse.quote(uname))
+        if st != 200 or not j:
+            print("  ! ranglista-hiba: %s (HTTP %s)" % (nev, st)); continue
+        row = next((d for d in j.get("data") or []
+                    if ((d.get("user_team") or {}).get("user") or {}).get("username") == uname),
+                   (j.get("data") or [None])[0])
+        if not row:
+            print("  ! nincs talalat: %s" % nev); continue
+        ids[nev] = row["user_team"]["user"]["id"]
+        hivatalos[nev] = {s["round_number"]: s["points"]
+                          for s in (row["user_team"].get("round_statistics") or [])}
+    print("  azonositok: %d/8 megvan" % len(ids))
 
-    user_id = None
-    if st == 200:
-        try:
-            j = json.loads(body)
-            row = j["data"][0]
-            user_id = row["user_team"]["user"]["id"]
-            print("    user_id: %s" % user_id)
-            # B) kerdes: mit tudunk a fordulokrol ebbol a valaszbol?
-            rs = (row.get("user_team") or {}).get("round_statistics") or []
-            print("\n--- 1b. round_statistics[0] TELJES tartalma (fordulo-jelzest keresunk) ---")
-            print("    " + json.dumps(rs[0] if rs else {}, ensure_ascii=False)[:600])
-            print("\n--- 1c. a sor tobbi kulcsa ---")
-            print("    row: %s" % ", ".join(sorted(row.keys())))
-            print("    user_team: %s" % ", ".join(sorted((row.get("user_team") or {}).keys())))
-        except Exception as e:
-            print("    ! feldolgozasi hiba: %s" % e)
+    # ---- 2-3. keretek + osszevetes fordulonkent ----
+    egyezik, osszes_proba = 0, 0
+    for r in (1, 2, 3, 4):
+        print("\n=== %d. fordulo (round_id=%d) ===" % (r, rid(r)))
+        mind_jatszott, mind_megvan = True, True
+        for nev, uid in ids.items():
+            st, j = keret(uid, r)
+            if st != 200 or not isinstance(j, dict):
+                print("  ! %-8s HTTP %s" % (nev, st)); mind_megvan = False; continue
+            szamolt, jatszott, db, bonus = ertekel(j.get("data") or [])
+            hiv = hivatalos.get(nev, {}).get(r)
+            osszes_proba += 1
+            if hiv is not None and abs(szamolt - hiv) < 0.01:
+                egyezik += 1; jel = "OK"
+            else:
+                jel = "ELTER!"
+            if jatszott < db:
+                mind_jatszott = False
+            print("  %-8s szamolt=%-7.2f hivatalos=%-7s bonus=%-3d jatszott=%d/%d  %s"
+                  % (nev, szamolt, hiv, bonus, jatszott, db, jel))
+        print("  -> lezaras-itelet: %s"
+              % ("LEZART (minden jatekos jatszott)" if (mind_megvan and mind_jatszott)
+                 else "MEG TART / hianyos"))
 
-    # ============ 2. KERET szerverrol, HELYES parameterekkel ============
-    if user_id:
-        squad = (BASE + "user-team-players-history?include=" + urllib.parse.quote(INCLUDE)
-                 + "&filter%5Buser_id%5D=" + str(user_id) + "&filter%5Bround_id%5D=83")
-        st, ct, body = get(squad, EGYSZERU)
-        mutat("2a. keret (4. fordulo), egyszeru fejlecek", st, ct, body)
-        st, ct, body = get(squad, BONGESZOS)
-        mutat("2b. keret (4. fordulo), bongeszo-szeru fejlecek", st, ct, body)
-        # 2c. kontroll: round_id NELKUL - ha ez 403 es a 2a/2b nem, akkor
-        # bizonyitott, hogy a parameter szamit, nem az IP
-        rossz = (BASE + "user-team-players-history?include=" + urllib.parse.quote(INCLUDE)
-                 + "&filter%5Buser_id%5D=" + str(user_id))
-        st, ct, body = get(rossz, EGYSZERU)
-        mutat("2c. kontroll: keret round_id NELKUL (varhatoan 403)", st, ct, body, 200)
+    # ---- 4. el nem kezdodott fordulo ----
+    if ids:
+        st, _ = keret(next(iter(ids.values())), 5)
+        print("\n=== 5. fordulo (meg el sem kezdodott): HTTP %s — %s ==="
+              % (st, "vart 403, rendben" if st == 403 else "VARATLAN!"))
 
-    # ============ 3. A halasztott meccs esete ============
-    # A 3. fordulos ETO-Fradi maig nincs potolva. Ha az erintett jatekosok
-    # is_played-je emiatt false, azt a fordulo-lezaras szabalyanak kezelnie
-    # kell. Kiirjuk a 3. fordulo (round_id=81) es az 5. fordulo (85, meg el
-    # sem kezdodott) minden jatekosanak allapotat.
-    if user_id:
-        for rid, cimke in ((81, "3. fordulo - ebben van a halasztott ETO-Fradi"),
-                           (85, "5. fordulo - meg el sem kezdodott")):
-            u = (BASE + "user-team-players-history?include=" + urllib.parse.quote(INCLUDE)
-                 + "&filter%5Buser_id%5D=" + str(user_id) + "&filter%5Bround_id%5D=" + str(rid))
-            st, ct, body = get(u, EGYSZERU)
-            print("\n--- 3. %s (round_id=%d) HTTP %s ---" % (cimke, rid, st))
-            if st == 200:
-                try:
-                    for d in json.loads(body).get("data") or []:
-                        cp = d.get("competition_player") or {}
-                        cr = cp.get("current_round") or {}
-                        ss = d.get("summary_statistics") or {}
-                        print("    %-22s %-12s is_played=%-5s has_stats=%-5s first_played=%s week=%s"
-                              % ((cp.get("last_name") or "?"),
-                                 ((cp.get("team") or {}).get("short_name") or "?"),
-                                 cr.get("is_played"), cr.get("has_statistics"),
-                                 cr.get("first_played_at"), ss.get("weekly_points")))
-                except Exception as e:
-                    print("    ! feldolgozasi hiba: %s" % e)
-
-    print("\nDiagnosztika vege. Ez a szkript semmit nem irt es nem modositott.")
+    print("\nOSSZEGZES: %d/%d pontszam egyezik a hivatalossal." % (egyezik, osszes_proba))
+    print("Ez a szkript semmit nem irt es nem modositott.")
     return 0
 
 
