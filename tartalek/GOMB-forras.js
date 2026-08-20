@@ -1,5 +1,5 @@
 /* ==========================================================================
-   GOMB-forras.js — a heti keret-mentő könyvjelző OLVASHATÓ forráskódja
+   GOMB-forras.js — a TARTALÉK keret-mentő könyvjelző OLVASHATÓ forráskódja
    ==========================================================================
 
    Ez a fájl NEM fut sehol. A böngészőbe a GOMB-bookmarklet.txt tartalmát
@@ -16,6 +16,9 @@
 
    A token itt is helyőrző (IDE_A_TOKEN). Valódi tokent SOHA ne
    commitolj ebbe a fájlba.
+
+   2026-08-20 óta a kereteket a GitHub Actions gyűjti (collect.py) — ez a
+   könyvjelző csak tartalék arra az esetre, ha a szerveroldali út elromlana.
    ========================================================================== */
 
 // ==BOOKMARKLET-START==

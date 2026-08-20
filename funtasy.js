@@ -8,8 +8,10 @@
    A ket oldal adata azonos alaku:
      schedule = { "1": [[hazai, vendeg, hazai_pont, vendeg_pont], ...], ... }
    ahol a pont null, amig a meccs nincs lezarva. A resztvevok kulcsai
-   tetszolegesek (az NB I-nel becenev, a Draftnal szam), a megjelenitendo
-   nevet a hivo `label` fuggvenye adja.
+   tetszolegesek (az NB1-nel becenev, a PL-nel szam); a megjelenitest a
+   hivo opcioi adjak: `label` (nev), `tag` (monogram a nev mogott),
+   `matrixLabel` (a matrix tengelyei), `tiebreak` ('rg' = holtversenynel
+   a szerzett pont dont, alapertelmezetten a pontkulonbseg).
 
    ELO EREDMENY: a `live` overlay ugyanilyen alaku, de a benne levo
    eredmenyek NEM szamitanak bele a tabellaba es a matrixba - csak a

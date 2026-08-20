@@ -8,6 +8,10 @@ Ez a könyvjelző akkor kell, ha a szerveroldali gyűjtés elromlana (pl. az MLS
 letiltaná az adatközponti IP-ket): a fantasy.mlsz.hu-n futtatva lekéri mind a 8 keretet,
 és egyenesen a repóba menti.
 
+*Apró különbség a szerveres gyűjtéshez képest: a könyvjelző nem írja a `squads.json`
+`round` mezőjét, ezért az oldal „Aktuális keret" fülén a felirat forduló-szám nélkül
+jelenik meg. Működésbeli hibát nem okoz, a következő szerveres futás helyreállítja.*
+
 ---
 
 ## 1. Token létrehozása (egyszeri, 2 perc)
@@ -36,7 +40,7 @@ letiltaná az adatközponti IP-ket): a fantasy.mlsz.hu-n futtatva lekéri mind a
    - **URL:** ide illeszd be a módosított szöveget
 4. Húzd a könyvjelzősávra, hogy kéznél legyen
 
-## 3. Használat (hetente ~10 másodperc)
+## 3. Használat (amikor tartalékként kell, ~10 másodperc)
 
 1. Menj a **https://fantasy.mlsz.hu/** oldalra (elég betöltve lennie, bejelentkezve)
 2. Kattints a **Keret mentés** könyvjelzőre
@@ -59,4 +63,7 @@ egyszerre pótolja mindet.
 
 - *"Ezt a fantasy.mlsz.hu oldalon kell futtatni!"* → nem a jó oldalon vagy
 - *401/403 a mentésnél* → a token lejárt vagy nincs Contents: write joga
-- *Nem találom: <név>* → változott egy felhasználónév; írd át a könyvjelzőben és az `index.html`-ben is
+- *Nem találom: <név>* → változott egy fantasy-felhasználónév. A névsor HÁROM helyen él,
+  mindet át kell írni: `collect.py` (`MEMBERS` — ez az elsődleges, a gyűjtés ezen áll),
+  `index.html` (`MEMBERS`), és a könyvjelző (`M` konstans, majd újraépítés + csere a
+  böngészőben)

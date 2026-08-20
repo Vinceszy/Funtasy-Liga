@@ -5,9 +5,10 @@ Ket dolgot gyujt 3 orankent (.github/workflows/archive.yml):
 
 1. H2H EREDMENYEK (results.json) - a hivatalos fordulopontszamok a
    ranglista-vegpontrol. A tabella egyetlen forrasa ez.
-2. KERETEK (squads.json, squad_history.json) - a keret-vegpontrol,
-   pontosan abban a formatumban, ahogy korabban a bongeszos konyvjelzo
-   irta (az mostantol csak tartalek, lasd tartalek/KERET-MENTES.md).
+2. KERETEK (squads.json, squad_history.json) - a keret-vegpontrol, a
+   bongeszos konyvjelzo formatumaval kompatibilisen; egy tobblet van, a
+   squads.json "round" mezoje (hanyadik fordulo kerete). A konyvjelzo
+   mostantol csak tartalek, lasd tartalek/KERET-MENTES.md.
 
 A KERET-VEGPONT TORTENETE: sokaig azt hittuk, szerverrol tiltott (GitHub
 Actionsbol, proxykon at, Playwrighttal is 403 volt). 2026-08-20-an kiderult:

@@ -92,9 +92,11 @@ const fmt = FunTasy.fmt, esc = FunTasy.esc, played = FunTasy.played;
 const ROUNDS = Object.keys(SCHEDULE).map(Number).sort((a,b)=>a-b);
 const LAST_ROUND = ROUNDS[ROUNDS.length-1];
 
-// Elo, meg nem archivalt eredmenyek. A tabellaba es a matrixba NEM szamitanak
-// bele: amig a collect.py nem irta be a results.json-ba, nem tudjuk biztosan,
-// hogy a fordulo lezarult-e. A meccspanelen "elo" jelolessel jelennek meg.
+// A folyamatban levo fordulo elo eredmenyei. Ketfele forrasbol toltodik:
+// a results.json "provisional" fordulojabol (a gyujto 3 orankent irja) es a
+// bongeszos elo lekeresbol (percre friss). A tabellaba es a matrixba NEM
+// szamit bele - oda csak a lezart fordulo kerul. A meccspanelen "elo"
+// jelolessel jelenik meg.
 const LIVE = {};
 const eloMeccs = (r,i) => (LIVE[r] && LIVE[r][i]) || null;
 
