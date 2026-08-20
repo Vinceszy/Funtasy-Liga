@@ -12,6 +12,11 @@
    kiemeles, --magenta a masodlagos), az ertekuk temankent mas. */
 body.liga-pl{--bg:#150B22;--panel:#1F1233;--panel2:#180D29;--line:#3C2B5E;
   --amber:#00E08C;--magenta:#3EDBE0}
+/* Az NB1-oldal cime trikolor: FUN piros, TASY feher (alapszin), NB1 zold.
+   Csak a cim harom betucsoportja - kiemelesre a piros szandekosan nincs
+   hasznalva, hogy ne hasson felszolitasnak. */
+body.liga-nb1 h1 .fun{color:#E0433D}
+body.liga-nb1 h1 .tag{color:#43E27F}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{max-width:100%;overflow-x:hidden}
 img,table{max-width:100%}
