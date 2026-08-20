@@ -397,6 +397,21 @@ async function showSquad(names,tab){
     $('mSub').textContent=(SQUAD_ROUND? SQUAD_ROUND+'. fordulós keret' : 'Aktuális keret')
       +(hiv? ' · a fejlécben a hivatalos fordulópontszám'
            : ' · a fejlécben az élő pontösszeg')+at;
+    // Elo fordulo kozben ugyanaz a percre friss hattercsere jar ide is,
+    // mint az elo meccsre kattintaskor - kulonben ket frissesseg elne
+    // egymas mellett ugyanarrol az adatrol.
+    if(SQUAD_ROUND && (window.PROVISIONAL||[]).includes(SQUAD_ROUND)){
+      const kert=names.slice();
+      Promise.all(names.map(n=>eloKeret(n,SQUAD_ROUND))).then(friss=>{
+        if(!$('ov').classList.contains('open')) return;
+        if(mCurrent.length!==kert.length || mCurrent.some((n,i)=>n!==kert[i])) return;
+        const on=document.querySelector('#mTabs .tab.on');
+        if(single && (!on || on.dataset.tab!=='squad')) return;
+        if(friss.every(f=>!f||!f.length)) return;
+        $('mBody').innerHTML=`<div class="sqwrap ${single?'one':''}">${
+          names.map((n,i)=>squadHTML(n,(friss[i]&&friss[i].length)?friss[i]:lists[i],real[n])).join('')}</div>`;
+      });
+    }
     $('mBody').innerHTML=`<div class="sqwrap ${single?'one':''}">${names.map((n,i)=>squadHTML(n,lists[i],real[n])).join('')}</div>`;
   }catch(e){
     $('mBody').innerHTML=`<div class="loading" style="color:var(--lose)">Nem sikerült betölteni — ${esc(e.message)}</div>`;
