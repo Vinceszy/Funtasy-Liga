@@ -94,7 +94,22 @@ def main():
             print("   elements: %d jatekos (listakent); elso: %s"
                   % (len(el), json.dumps(el[0], ensure_ascii=False)[:250] if el else "-"))
 
-    # --- jatek-allapot (aktualis fordulo) ---
+    # --- tulajdonlas: kinel van most melyik jatekos? ---
+    st, j, meret = get("league/48093/element-status")
+    print("\n5. league/48093/element-status: HTTP %s (%d byte)" % (st, meret))
+    if st == 200:
+        es = j.get("element_status") or []
+        print("   elemek: %d; elso: %s" % (len(es), json.dumps(es[0], ensure_ascii=False) if es else "-"))
+        sajat = [x for x in es if x.get("owner") == 268988]
+        print("   a 268988 (HolVanSalah?!) tulajdonaban: %d jatekos; elso 3: %s"
+              % (len(sajat), json.dumps(sajat[:3], ensure_ascii=False)))
+
+    # --- tovabbi jeloltek ---
+    for p2 in ("entry/266687/public", "entry/266687/history", "entry/266687/my-team"):
+        st, j, meret = get(p2)
+        print("\n6. %s: HTTP %s (%d byte) %s" % (p2, st, meret, kulcsok(j) if isinstance(j, dict) else ""))
+
+    # --- jatek-allapot ---
     st, j, meret = get("game")
     print("\n5. game: HTTP %s (%d byte)" % (st, meret))
     if st == 200:
