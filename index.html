@@ -198,7 +198,8 @@ async function loadSquadFile(){
   if(SQUAD_FILE!==null) return SQUAD_FILE;
   try{
     const r=await fetch('squads.json?t='+Date.now());
-    if(r.ok){ const j=await r.json(); SQUAD_FILE=j.squads||{}; SQUAD_FILE_AT=j.updated||null; }
+    if(r.ok){ const j=await r.json(); SQUAD_FILE=j.squads||{}; SQUAD_FILE_AT=j.updated||null;
+              if(j.round) SQUAD_ROUND=j.round; }
     else SQUAD_FILE={};
   }catch(e){ SQUAD_FILE={}; }
   return SQUAD_FILE;
@@ -336,7 +337,7 @@ async function eloKeret(name, r){
   if(!uid) return null;
   const u=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/user-team-players-history`+
     `?include=${encodeURIComponent(KERET_INCLUDE)}&filter%5Buser_id%5D=${uid}&filter%5Bround_id%5D=${75+2*r}`;
-  try{ const j=await apiGet(u, `élő keret: ${name}`); return (j.data||[]).map(keretRekord); }
+  try{ const j=await apiGet(u); return (j.data||[]).map(keretRekord); }   // cimke nelkul: ne irja at a statuszsavot
   catch(e){ return null; }
 }
 async function showLiveMatch(h, v, r){
@@ -383,7 +384,6 @@ async function showSquad(names,tab){
     return;
   }
   const at = SQUAD_FILE_AT ? ' · frissítve: '+new Date(SQUAD_FILE_AT).toLocaleString('hu-HU',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-  $('mSub').textContent=(SQUAD_ROUND? SQUAD_ROUND+'. fordulós keret' : 'Aktuális keret')+' · a fejlécben a hivatalos fordulópontszám'+at;
   $('mBody').innerHTML=`<div class="loading">Keret betöltése…</div>`;
   try{
     const lists=await Promise.all(names.map(getSquad));
@@ -391,6 +391,12 @@ async function showSquad(names,tab){
     if(SQUAD_ROUND && SCHEDULE[SQUAD_ROUND]){
       for(const m of SCHEDULE[SQUAD_ROUND]){ if(m[2]!=null){ real[m[0]]=m[2]; real[m[1]]=m[3]; } }
     }
+    // A felirat mondja meg, mit latsz: lezart fordulonal a hivatalos
+    // pontszamot, folyamatban levonel az elo osszeget mutatja a fejlec.
+    const hiv = Object.keys(real).length;
+    $('mSub').textContent=(SQUAD_ROUND? SQUAD_ROUND+'. fordulós keret' : 'Aktuális keret')
+      +(hiv? ' · a fejlécben a hivatalos fordulópontszám'
+           : ' · a fejlécben az élő pontösszeg')+at;
     $('mBody').innerHTML=`<div class="sqwrap ${single?'one':''}">${names.map((n,i)=>squadHTML(n,lists[i],real[n])).join('')}</div>`;
   }catch(e){
     $('mBody').innerHTML=`<div class="loading" style="color:var(--lose)">Nem sikerült betölteni — ${esc(e.message)}</div>`;

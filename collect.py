@@ -280,7 +280,7 @@ def main():
         kompakt_iras("squad_history.json", {"updated": hist["updated"],
                                             "rounds": hist["rounds"]})
         utolso = max((int(r) for r in hist["rounds"]), default=0)
-        kompakt_iras("squads.json", {"updated": hist["updated"],
+        kompakt_iras("squads.json", {"updated": hist["updated"], "round": utolso,
                                      "squads": hist["rounds"].get(str(utolso)) or {}})
         print("  squad_history.json + squads.json frissitve (utolso fordulo: %d)" % utolso)
 
