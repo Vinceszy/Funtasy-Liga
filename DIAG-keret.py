@@ -70,57 +70,23 @@ def ertekel(data):
 
 
 def main():
-    print("FOPROBA: szerveroldali keretgyujtes, 8 szakvezeto x 4 fordulo")
-
-    # ---- 1. azonositok es hivatalos pontok ----
-    ids, hivatalos = {}, {}
+    print("Mit mond MOST hivatalosan az MLSZ az 1-4. fordulora?")
+    print("(teljes include-dal, mint a collect.py-ban)")
     for nev, uname in MEMBERS.items():
-        st, j = get(BASE + "rankings?include=user_team.user.id,rounds&per_page=5"
+        st, j = get(BASE + "rankings?include=user_team.user.id,summary_statistics,"
+                    "ranking,rounds,competition_rank&page=1&per_page=5"
                     + "&filter%5Bsearch%5D=" + urllib.parse.quote(uname))
         if st != 200 or not j:
-            print("  ! ranglista-hiba: %s (HTTP %s)" % (nev, st)); continue
+            print("  ! %s: HTTP %s" % (nev, st)); continue
         row = next((d for d in j.get("data") or []
                     if ((d.get("user_team") or {}).get("user") or {}).get("username") == uname),
                    (j.get("data") or [None])[0])
         if not row:
             print("  ! nincs talalat: %s" % nev); continue
-        ids[nev] = row["user_team"]["user"]["id"]
-        hivatalos[nev] = {s["round_number"]: s["points"]
-                          for s in (row["user_team"].get("round_statistics") or [])}
-    print("  azonositok: %d/8 megvan" % len(ids))
-
-    # ---- 2-3. keretek + osszevetes fordulonkent ----
-    egyezik, osszes_proba = 0, 0
-    for r in (1, 2, 3, 4):
-        print("\n=== %d. fordulo (round_id=%d) ===" % (r, rid(r)))
-        mind_jatszott, mind_megvan = True, True
-        for nev, uid in ids.items():
-            st, j = keret(uid, r)
-            if st != 200 or not isinstance(j, dict):
-                print("  ! %-8s HTTP %s" % (nev, st)); mind_megvan = False; continue
-            szamolt, jatszott, db, bonus = ertekel(j.get("data") or [])
-            hiv = hivatalos.get(nev, {}).get(r)
-            osszes_proba += 1
-            if hiv is not None and abs(szamolt - hiv) < 0.01:
-                egyezik += 1; jel = "OK"
-            else:
-                jel = "ELTER!"
-            if jatszott < db:
-                mind_jatszott = False
-            print("  %-8s szamolt=%-7.2f hivatalos=%-7s bonus=%-3d jatszott=%d/%d  %s"
-                  % (nev, szamolt, hiv, bonus, jatszott, db, jel))
-        print("  -> lezaras-itelet: %s"
-              % ("LEZART (minden jatekos jatszott)" if (mind_megvan and mind_jatszott)
-                 else "MEG TART / hianyos"))
-
-    # ---- 4. el nem kezdodott fordulo ----
-    if ids:
-        st, _ = keret(next(iter(ids.values())), 5)
-        print("\n=== 5. fordulo (meg el sem kezdodott): HTTP %s — %s ==="
-              % (st, "vart 403, rendben" if st == 403 else "VARATLAN!"))
-
-    print("\nOSSZEGZES: %d/%d pontszam egyezik a hivatalossal." % (egyezik, osszes_proba))
-    print("Ez a szkript semmit nem irt es nem modositott.")
+        rs = (row.get("user_team") or {}).get("round_statistics") or []
+        pontok = {s2["round_number"]: s2["points"] for s2 in rs}
+        print("  %-8s visszaadott fordulok=%s  pontok=%s"
+              % (nev, sorted(pontok), json.dumps(pontok, ensure_ascii=False)))
     return 0
 
 
