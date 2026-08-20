@@ -144,17 +144,27 @@ function sqcolHTML(id, lista, cim){
 }
 
 function keretHTML(id){
-  const gwk = Object.keys(HIST).map(Number).sort((a, b) => b - a);
-  for (const gw of gwk){
-    const sq = (HIST[gw] || {})[id];
-    if (sq && sq.length)
-      return `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">${gw}. forduló</div>`
-             + `<div class="sqwrap one">${sqcolHTML(id, sq)}</div>`;
+  // Folyo fordulo kozben az elo meccskeret jar, percre friss pontokkal -
+  // ugyanabbol a logikabol, mint a meccs-modal. Fordulok kozott a jelenlegi
+  // tulajdon (draft + igazolasok utani allapot) a helyes valasz.
+  const eloSq = LIVEGW && (HIST[LIVEGW] || {})[id];
+  if (eloSq && eloSq.length){
+    const sq = Object.keys(LIVEPTS).length
+      ? eloSq.map(x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts })) : eloSq;
+    return `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">${LIVEGW}. forduló · élő állás — a forduló még tart</div>`
+           + `<div class="sqwrap one">${sqcolHTML(id, sq)}</div>`;
   }
   const sq = SQUADS[id];
   if (sq && sq.length)
-    return `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">A draft utáni jelenlegi keret — pontok a szezon indulásától</div>`
+    return `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">A jelenlegi keret (draft és igazolások utáni állapot) — a heti pontok a fordulók nézetében</div>`
            + `<div class="sqwrap one">${sqcolHTML(id, sq)}</div>`;
+  const gwk = Object.keys(HIST).map(Number).sort((a, b) => b - a);
+  for (const gw of gwk){
+    const h = (HIST[gw] || {})[id];
+    if (h && h.length)
+      return `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">${gw}. forduló</div>`
+             + `<div class="sqwrap one">${sqcolHTML(id, h)}</div>`;
+  }
   return '<div class="loading">A keret még nem került be az adatgyűjtésbe.</div>';
 }
 
@@ -218,6 +228,14 @@ function showTeam(id, tab){
      <button class="tab ${tab === 'jatekosok' ? 'on' : ''}" data-tab="jatekosok">Szezon játékosai</button>`;
   $('mBody').innerHTML = tab === 'keret' ? keretHTML(id)
                        : tab === 'fordulok' ? fordulokHTML(id) : jatekosokHTML(id);
+  if (tab === 'keret' && LIVEGW && (HIST[LIVEGW] || {})[id]){
+    fetchLivePts().then(ok => {
+      const on = document.querySelector('#mTabs .tab.on');
+      if (ok && mTeam === id && $('ov').classList.contains('open')
+          && on && on.dataset.tab === 'keret')
+        $('mBody').innerHTML = keretHTML(id);
+    });
+  }
 }
 
 function showMatch(h, v, r){
@@ -236,6 +254,14 @@ function showMatch(h, v, r){
   }
   if (H && V){
     $('mBody').innerHTML = `<div class="sqwrap">${sqcolHTML(h, H)}${sqcolHTML(v, V)}</div>`;
+    if (r === LIVEGW){
+      const kert = $('mTitle').textContent;
+      fetchLivePts().then(ok => {
+        if (!ok || !$('ov').classList.contains('open') || $('mTitle').textContent !== kert) return;
+        const friss = x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts });
+        $('mBody').innerHTML = `<div class="sqwrap">${sqcolHTML(h, H.map(friss))}${sqcolHTML(v, V.map(friss))}</div>`;
+      });
+    }
     return;
   }
   const m = (SCHEDULE[r] || []).find(x => x[0] === h && x[1] === v);
@@ -292,6 +318,17 @@ function lekeresHiba(){
     ? 'Automata lekérés hiba: az állások a forduló végén frissülnek.'
     : 'Az élő frissítés most nem elérhető — a tárolt állás látható.';
 }
+async function fetchLivePts(){
+  // a folyo fordulo percre friss jatekos-pontjai; true, ha sikerult
+  if (!LIVEGW) return false;
+  const elo = await apiGet('https://draft.premierleague.com/api/event/' + LIVEGW + '/live');
+  if (!elo) return false;
+  LIVEPTS = {};
+  const el = elo.elements || {};
+  if (Array.isArray(el)) el.forEach(v => { LIVEPTS[v.id] = ((v.stats || {}).total_points) || 0; });
+  else for (const k in el) LIVEPTS[k] = (((el[k] || {}).stats) || {}).total_points || 0;
+  return true;
+}
 async function liveRefresh(){
   const st = $('status');
   const game = await apiGet('https://draft.premierleague.com/api/game');
@@ -299,12 +336,7 @@ async function liveRefresh(){
   const gw = game.current_event;
   if (!gw || game.current_event_finished) return;       // nincs folyo fordulo
   LIVEGW = gw;
-  const elo = await apiGet('https://draft.premierleague.com/api/event/' + gw + '/live');
-  if (!elo){ lekeresHiba(); return; }
-  LIVEPTS = {};
-  const el = elo.elements || {};
-  if (Array.isArray(el)) el.forEach(v => { LIVEPTS[v.id] = ((v.stats || {}).total_points) || 0; });
-  else for (const k in el) LIVEPTS[k] = (((el[k] || {}).stats) || {}).total_points || 0;
+  if (!await fetchLivePts()){ lekeresHiba(); return; }
   // meccsallasok a kezdok pontjaibol - csak ha a fordulo keretei mar a repoban vannak
   const keretek = HIST[gw];
   if (keretek){
