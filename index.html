@@ -59,6 +59,7 @@
 
 <div class="ov" id="ov">
   <div class="modal">
+    <button class="mback" id="ovBack" style="display:none" title="Vissza">‹ vissza</button>
     <button class="mclose" id="ovClose">×</button>
     <div class="mtitle" id="mTitle"></div>
     <div class="msub" id="mSub"></div>
@@ -304,7 +305,7 @@ function seasonHTML(name){
     if(own!=null&&ov!=null){
       if(own>ov){res='GY';cls='pos';gy++;} else if(own<ov){res='V';cls='neg';v++;} else {res='D';d++;}
     }
-    h+=`<tr class="clickable" data-jump="${r}"><td class="rank">${r}.</td><td class="name">${esc(opp)}</td>
+    h+=`<tr class="clickable" data-mh="${esc(m[0])}" data-mv="${esc(m[1])}" data-mr="${r}"><td class="rank">${r}.</td><td class="name">${esc(opp)}</td>
       <td>${own!=null?fmt(own):'—'}</td><td>${ov!=null?fmt(ov):'—'}</td><td class="${cls}">${res}</td></tr>`;
   }
   return `<div style="font-size:13px;color:var(--dim);margin-bottom:8px">Mérleg: <b class="pos">${gy} GY</b> · ${d} D · <b class="neg">${v} V</b> — ${gy*3+d} pont</div>`+h+'</table>';
@@ -321,10 +322,11 @@ function showEloUzenet(){
 }
 
 // Matrix-cellara kattintva a ket csapat egymas elleni meccsei.
-function showH2H(a,b){
+function showH2H(a,b,mode){
+  vShow(()=>showH2H(a,b,'noop'), mode);
   mCurrent=[a,b]; openModal();
   $('mTitle').textContent=a+'  vs  '+b;
-  $('mSub').textContent='Egymás elleni meccsek — sorra kattintva a meccspanel odaugrik';
+  $('mSub').textContent='Egymás elleni meccsek — sorra kattintva a meccs részletei';
   $('mTabs').innerHTML='';
   $('mBody').innerHTML='<div class="sqwrap one" style="max-width:none">'+T.h2hHTML(a,b)+'</div>';
 }
@@ -353,6 +355,36 @@ async function eloKeret(name, r){
   try{ const j=await apiGet(u); return (j.data||[]).map(keretRekord); }   // cimke nelkul: ne irja at a statuszsavot
   catch(e){ return null; }
 }
+// Egyseges meccs-nezet: fordulohu keretek. Elo fordulonal az elo folyamat
+// (tarolt + percre friss csere), lezartnal az AKKORI keretek a
+// squad_history-bol a hivatalos pontszamokkal, jovobelinel magyarazat.
+// Korabban a lezart meccs a mindenkori aktualis keretet mutatta - azota a
+// gyujto minden fordulot archival, igy az igazi kerdesre tudunk valaszolni:
+// "mivel jatszottak AZON a meccsen".
+async function showMatchRound(h, v, r, mode){
+  vShow(()=>showMatchRound(h,v,r,'noop'), mode);
+  const m=(SCHEDULE[r]||[]).find(x=>x[0]===h&&x[1]===v)||[h,v,null,null];
+  if(!played(m)){
+    if(LIVE[r] && LIVE[r].some(x=>x)) return showLiveMatch(h,v,r);   // a fordulo eppen zajlik
+    mCurrent=[h,v]; openModal();
+    $('mTitle').textContent=h+'  vs  '+v;
+    $('mSub').textContent=r+'. forduló';
+    $('mTabs').innerHTML='';
+    $('mBody').innerHTML='<div class="loading">A forduló még nem kezdődött el.</div>';
+    return;
+  }
+  mCurrent=[h,v]; openModal();
+  $('mTitle').textContent=h+'  vs  '+v;
+  $('mSub').textContent=r+'. fordulós keretek · a fejlécben a hivatalos fordulópontszám';
+  $('mTabs').innerHTML='';
+  $('mBody').innerHTML='<div class="loading">Keret betöltése…</div>';
+  const rounds=await loadHistory();
+  const H=(rounds[r]||{})[h], V=(rounds[r]||{})[v];
+  if(mCurrent[0]!==h||mCurrent[1]!==v||!$('ov').classList.contains('open')) return;
+  $('mBody').innerHTML = (H&&V)
+    ? `<div class="sqwrap">${squadHTML(h,H,m[2])}${squadHTML(v,V,m[3])}</div>`
+    : '<div class="loading">Ehhez a fordulóhoz nincs mentett keret-adat.</div>';
+}
 async function showLiveMatch(h, v, r){
   const rounds=await loadHistory();
   const tarolt=n=>((rounds[r]||{})[n]||null);
@@ -374,9 +406,26 @@ async function showLiveMatch(h, v, r){
   if(mCurrent[0]===h && mCurrent[1]===v && $('ov').classList.contains('open') && (FH||FV))
     rajz(FH||H, FV||V);
 }
+// ---------- nezet-verem: egy modal, amiben lapozni lehet ----------
+// Nem nyitunk modalt a modalban: a tartalom cserelodik, es a "vissza" gomb
+// az elozo nezetre lep. Az x / felrekattintas / Escape mindig mindent zar.
+const VSTACK=[];
+function vShow(thunk, mode){
+  if(mode==='noop') return;                       // a verembol ujrarajzolt nezet
+  if(!mode || mode==='root') VSTACK.length=0;     // uj belepesi pont
+  if(mode==='replace' && VSTACK.length) VSTACK[VSTACK.length-1]=thunk;
+  else VSTACK.push(thunk);
+  vBackGomb();
+}
+function vBack(){
+  if(VSTACK.length>1){ VSTACK.pop(); vBackGomb(); VSTACK[VSTACK.length-1](); }
+}
+function vBackGomb(){ $('ovBack').style.display = VSTACK.length>1 ? '' : 'none'; }
 function openModal(){ $('ov').classList.add('open'); document.body.style.overflow='hidden'; }
-function closeModal(){ $('ov').classList.remove('open'); document.body.style.overflow=''; }
-async function showSquad(names,tab){
+function closeModal(){ $('ov').classList.remove('open'); document.body.style.overflow='';
+  VSTACK.length=0; vBackGomb(); }
+async function showSquad(names,tab,mode){
+  vShow(()=>showSquad(names,tab,'noop'), mode);
   mCurrent=names; openModal();
   $('mTitle').textContent = names.join('  vs  ');
   const single = names.length===1;
@@ -392,7 +441,7 @@ async function showSquad(names,tab){
     return;
   }
   if(single && tab==='season'){
-    $('mSub').textContent='Fordulónkénti eredmények';
+    $('mSub').textContent='Fordulónkénti eredmények — sorra kattintva a meccs részletei';
     $('mBody').innerHTML=`<div class="sqwrap one" style="max-width:none">${seasonHTML(names[0])}</div>`;
     return;
   }
@@ -433,19 +482,15 @@ async function showSquad(names,tab){
 
 // ---------- események ----------
 document.addEventListener('click',e=>{
+  if(e.target===$('ovBack')){ vBack(); return; }
   const mem=e.target.closest('[data-member]');
   if(mem){ showSquad([mem.dataset.member]); return; }
   const tab=e.target.closest('[data-tab]');
-  if(tab){ showSquad(mCurrent, tab.dataset.tab); return; }
-  const jp=e.target.closest('[data-jump]');
-  if(jp){ closeModal(); T.rPast=+jp.dataset.jump; renderMatches('past');
-          document.getElementById('mPast').scrollIntoView({behavior:'smooth',block:'center'}); return; }
+  if(tab){ showSquad(mCurrent, tab.dataset.tab, 'replace'); return; }
+  const ms=e.target.closest('[data-mh]');
+  if(ms){ showMatchRound(ms.dataset.mh, ms.dataset.mv, +ms.dataset.mr, 'push'); return; }
   const mt=e.target.closest('.match');
-  if(mt){
-    if(mt.classList.contains('elo')) showLiveMatch(mt.dataset.h, mt.dataset.v, +mt.dataset.r);
-    else showSquad([mt.dataset.h, mt.dataset.v]);
-    return;
-  }
+  if(mt){ showMatchRound(mt.dataset.h, mt.dataset.v, +mt.dataset.r); return; }
 });
 $('ovClose').addEventListener('click',closeModal);
 $('ov').addEventListener('click',e=>{ if(e.target.id==='ov') closeModal(); });

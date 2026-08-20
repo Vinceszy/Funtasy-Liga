@@ -34,7 +34,9 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 - **„Legutóbbi forduló”** — automatikusan az utolsó lejátszottra áll
 - **„Következő forduló”** — automatikusan a soron következőre áll
 - Mindkettő külön lapozható (‹ › gombok + fordulóválasztó)
-- A meccssorra kattintva a két érintett keret egymás mellett jelenik meg
+- A meccssorra kattintva a két érintett keret egymás mellett jelenik meg —
+  **fordulóhűen**: az adott forduló akkori keretei, az akkori pontokkal, a fejlécben a
+  hivatalos fordulópontszámmal (jövőbeli fordulónál magyarázó szöveg)
 - **Élő (még tartó) meccsre kattintva** a két keret jön, játékosonkénti élő pontokkal:
   azonnal a tárolt (legfeljebb 3 órás) állapot, majd a háttérben percre frissre cserélve.
   Ha a fordulóhoz még semmilyen keret-adat nincs, tartalékként ez a szöveg jön:
@@ -44,8 +46,8 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 8×8 rács, minden párosításnál `GY/D/V` az eddigi meccsekből. Mobilon vízszintesen
 görgethető, ragadós névoszloppal. **A cellára kattintva** modal nyílik a két csapat
 összes egymás elleni párosításával: lejátszott meccsek eredménnyel és GY/D/V-vel
-(a sor-játékos szemszögéből), élő meccs élő jelöléssel, jövőbeliek időponttal —
-a sorra kattintva a meccspanel az adott fordulóra ugrik. Mindkét oldalon így működik.
+(a sor-játékos szemszögéből), élő meccs élő jelöléssel, jövőbeliek „— : —"-mal.
+A sorra kattintva a meccs részletei nyílnak meg. Mindkét oldalon így működik.
 
 ### Modal — három fül
 1. **Aktuális keret** — lezárt fordulónál a legutóbbi forduló kerete, a fejlécben a
@@ -58,8 +60,7 @@ a sorra kattintva a meccspanel az adott fordulóra ugrik. Mindkét oldalon így 
    hány U21, jár-e a +10), a fejlécben a **hivatalos fordulópontszám**, és külön összegsor a
    kezdőkre és a padra.
 2. **Fordulók** — a szakvezető teljes szezonja fordulónként (ellenfél, saját pont, ellenfél
-   pontja, GY/D/V), fent a mérleggel. Sorra kattintva bezárul a modal, és a „Legutóbbi
-   forduló” panel arra a fordulóra ugrik.
+   pontja, GY/D/V), fent a mérleggel. Sorra kattintva a meccs részletei nyílnak meg.
 3. **Szezon játékosai** — minden játékos, aki valaha a keretben volt, a nála termelt ponttal,
    hány fordulóban volt nála, hányszor kezdő/pados, hányszor kapitány. Fent: hány fordulóban
    teljesült a magyarszabály (+10-ek összege), a magyar játékosok pontja, ebből az U21-eseké.
@@ -73,6 +74,12 @@ a Premier League lila színvilágában, az FPL Draft sajátosságaival:
   vannak), a böngésző csak a nyilvános játékos-pontokat kéri le percre frissen, és abból
   összegez minden meccset
 - a „Szezon játékosai" fül és a meccs-keretek a GW1 indulásától gyűlnek
+
+### Navigáció a modalon belül
+A modal kis böngészőként működik: a listák soraira kattintva a tartalom cserélődik
+(pl. Fordulók → egy meccs két kerete), és a fejlécben megjelenő **‹ vissza** gomb az
+előző nézetre lép. Az ×, a félrekattintás és az Escape mindig az egészet zárja.
+Nincs modal a modalban. Mindkét oldalon ugyanígy működik.
 
 ### Mobil
 Teljes reszponzív átdolgozás: nincs vízszintes csúszkálás, és **minden oszlop megmarad** —

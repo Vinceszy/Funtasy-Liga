@@ -215,9 +215,9 @@
     // ---------- egymas elleni lista ----------
     // A ket csapat osszes egymas elleni parositasa a menetrendbol: lejatszott
     // meccsek eredmennyel es GY/D/V-vel (az "a" szemszogebol), elo meccs elo
-    // jelolessel, jovobeliek "— : —"-mal. A sorok data-jump-ot kapnak, igy
-    // kattintasra a meccspanel az adott fordulora ugrik (mindket oldal
-    // meglevo data-jump kezeloje viszi).
+    // jelolessel, jovobeliek "— : —"-mal. A sorok data-mh/mv/mr attributumot
+    // kapnak: kattintasra a meccs-nezet nyilik a modalon belul (vissza
+    // gombbal), mindket oldal sajat kezelojevel.
     api.h2hHTML = function (a, b) {
       var sorok = '', gy = 0, d = 0, v = 0, jatszott = 0;
       kor().forEach(function (r) {
@@ -237,7 +237,8 @@
             else if (ap < bp) { res = 'V'; cls = 'neg'; v++; }
             else { res = 'D'; d++; }
           }
-          sorok += '<tr class="clickable" data-jump="' + r + '"><td class="rank">' + r + '.</td>' +
+          sorok += '<tr class="clickable" data-mh="' + esc(m[0]) + '" data-mv="' + esc(m[1]) +
+            '" data-mr="' + r + '"><td class="rank">' + r + '.</td>' +
             '<td>' + (ap != null ? fmt(ap) : '—') +
             (elo ? ' <span class="elojel">élő</span>' : '') + '</td>' +
             '<td>' + (bp != null ? fmt(bp) : '—') + '</td>' +
