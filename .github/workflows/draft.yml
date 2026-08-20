@@ -1,0 +1,49 @@
+---
+name: FPL Draft felderites
+
+# Szandekosan CSAK kezzel indithato. Amig nem tudjuk, hogy a vegpont egyaltalan
+# elerheto-e szerverrol, nincs ertelme utemezni. Ha bevalik, atkerulhet az
+# archive.yml-be a tobbi gyujtes melle.
+on:
+  workflow_dispatch:
+    inputs:
+      league_id:
+        description: 'A Draft-liga azonositoja (ures = a szkript alapertelmezese)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: funtasy-draft
+  cancel-in-progress: false
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repo letoltese
+        uses: actions/checkout@v4
+
+      - name: FPL Draft liga lekerese
+        env:
+          DRAFT_LEAGUE_ID: ${{ inputs.league_id }}
+        run: |
+          if [ -z "$DRAFT_LEAGUE_ID" ]; then unset DRAFT_LEAGUE_ID; fi
+          python3 collect_draft.py
+
+      - name: Valtozas commitolasa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name  "funtasy-archiver"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add -A draft.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "Nincs valtozas."
+          else
+            git commit -m "Draft-adat frissites ($(date -u +'%Y-%m-%d %H:%M') UTC)"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
