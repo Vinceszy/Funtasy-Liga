@@ -41,7 +41,10 @@ jobs:
           git config user.name  "funtasy-archiver"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git add -A draft.json draft_players.json draft_squads.json draft_history.json 2>/dev/null || true
+          # a 'draft*.json' glob csak a letezo fajlokat fogja - a felsorolassal
+          # az volt a baj, hogy egyetlen meg nem letezo fajl az EGESZ add-ot
+          # ervenytelenitette, es a hibat a /dev/null elnyelte
+          git add -A -- 'draft*.json'
           if git diff --cached --quiet; then
             echo "Nincs valtozas."
           else
