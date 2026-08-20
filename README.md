@@ -35,9 +35,10 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 - **„Következő forduló”** — automatikusan a soron következőre áll
 - Mindkettő külön lapozható (‹ › gombok + fordulóválasztó)
 - A meccssorra kattintva a két érintett keret egymás mellett jelenik meg
-- **Élő (még tartó) meccsre kattintva** nem a legutóbbi mentett keret jön (az egy másik
-  fordulóé lenne), hanem: *„A meccs még tart, a keretek által szerzett pontok a forduló
-  zárta után elérhetőek.”*
+- **Élő (még tartó) meccsre kattintva** a két keret jön, játékosonkénti élő pontokkal:
+  azonnal a tárolt (legfeljebb 3 órás) állapot, majd a háttérben percre frissre cserélve.
+  Ha a fordulóhoz még semmilyen keret-adat nincs, tartalékként ez a szöveg jön:
+  *„A meccs még tart, a keretek által szerzett pontok a forduló zárta után elérhetőek.”*
 
 ### Egymás elleni mátrix
 8×8 rács, minden párosításnál `GY/D/V` az eddigi meccsekből. Mobilon vízszintesen

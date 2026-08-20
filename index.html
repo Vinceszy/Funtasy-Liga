@@ -108,7 +108,7 @@ const T = FunTasy.create({
   tag:         n => MONOGRAM[n] || '',
   matrixOrder: () => Object.keys(MEMBERS),        // rogzitett sorrend, nem tabella szerinti
   nameAttr:    n => `data-member="${esc(n)}"`,
-  matchAttr:   (h,v) => `data-h="${esc(h)}" data-v="${esc(v)}"`,
+  matchAttr:   (h,v,r) => `data-h="${esc(h)}" data-v="${esc(v)}" data-r="${r}"`,
   els: { table:'table', matrix:'matrix', mPast:'mPast', mNext:'mNext',
          selPast:'selPast', selNext:'selNext' }
 });
@@ -306,11 +306,59 @@ function seasonHTML(name){
 }
 let mCurrent=[];
 function showEloUzenet(){
+  // TARTALEK: csak akkor, ha az elo meccshez semmilyen keret-adat nincs meg
+  // (pl. a gyujto meg nem futott a piaczaras ota, es az elo lekeres is elhasalt)
   mCurrent=[]; openModal();
   $('mTitle').textContent='A meccs még tart';
   $('mSub').textContent='';
   $('mTabs').innerHTML='';
   $('mBody').innerHTML='<div class="loading">A meccs még tart, a keretek által szerzett pontok a forduló zárta után elérhetőek.</div>';
+}
+
+// Elo meccsre kattintva a ket keret jon, jatekosonkenti pontokkal.
+// Frissesseg ket lepcsoben: azonnal a tarolt (legfeljebb 3 oras) keret a
+// squad_history-bol, kozben a hatterben percre frissen lekerjuk a ket
+// keretet a keret-vegpontrol (proxyn at, mint minden elo lekeres), es ha
+// megjott, lecsereljuk. A weekly_points itt is kesz ertek - nincs ujraszorzas.
+const KERET_INCLUDE='position,position.alternatives,competition_player,'+
+  'competition_player.team,competition_player.countries,summary_statistics';
+function keretRekord(d){
+  const cp=d.competition_player||{}, po=d.position||{}, ss=d.summary_statistics||{},
+        cr=cp.current_round||{};
+  return {name:[cp.first_name,cp.last_name].filter(Boolean).join(' ')||('#'+(cp.id||d.id)),
+    team:(cp.team&&(cp.team.short_name||cp.team.name))||'', pos:po.monogram||po.name||'',
+    u21:!!cp.is_u21, hun:/magyar|hungar|"HUN"/i.test(JSON.stringify(cp.countries||cp.country||'')),
+    price:cr.market_price||null, cap:!!d.is_captain, sub:d.type==='substitutes',
+    week:ss.weekly_points||0, total:ss.competition_points||0};
+}
+async function eloKeret(name, r){
+  const uid=USER_IDS[name];
+  if(!uid) return null;
+  const u=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/user-team-players-history`+
+    `?include=${encodeURIComponent(KERET_INCLUDE)}&filter%5Buser_id%5D=${uid}&filter%5Bround_id%5D=${75+2*r}`;
+  try{ const j=await apiGet(u, `élő keret: ${name}`); return (j.data||[]).map(keretRekord); }
+  catch(e){ return null; }
+}
+async function showLiveMatch(h, v, r){
+  const rounds=await loadHistory();
+  const tarolt=n=>((rounds[r]||{})[n]||null);
+  let H=tarolt(h), V=tarolt(v);
+  if(!H && !V){
+    // tarolt adat nincs - megprobaljuk elobb elobol, kulonben jon a tartalek
+    [H,V]=await Promise.all([eloKeret(h,r), eloKeret(v,r)]);
+    if(!H || !V){ showEloUzenet(); return; }
+  }
+  mCurrent=[h,v]; openModal();
+  $('mTitle').textContent=h+'  vs  '+v;
+  $('mSub').textContent=r+'. forduló · élő állás — a meccs még tart';
+  $('mTabs').innerHTML='';
+  const rajz=(A,B)=>{ $('mBody').innerHTML=
+    `<div class="sqwrap">${A?squadHTML(h,A,null):''}${B?squadHTML(v,B,null):''}</div>`; };
+  rajz(H,V);
+  // hatterben: percre friss csere, ha a modal meg ugyanezen a meccsen all
+  const [FH,FV]=await Promise.all([eloKeret(h,r), eloKeret(v,r)]);
+  if(mCurrent[0]===h && mCurrent[1]===v && $('ov').classList.contains('open') && (FH||FV))
+    rajz(FH||H, FV||V);
 }
 function openModal(){ $('ov').classList.add('open'); document.body.style.overflow='hidden'; }
 function closeModal(){ $('ov').classList.remove('open'); document.body.style.overflow=''; }
@@ -360,9 +408,7 @@ document.addEventListener('click',e=>{
           document.getElementById('mPast').scrollIntoView({behavior:'smooth',block:'center'}); return; }
   const mt=e.target.closest('.match');
   if(mt){
-    // Meg tarto meccsnel nincs ertelme keretet mutatni: a mentett keret a
-    // legutobbi lezart fordulohoz tartozik, nem ehhez.
-    if(mt.classList.contains('elo')) showEloUzenet();
+    if(mt.classList.contains('elo')) showLiveMatch(mt.dataset.h, mt.dataset.v, +mt.dataset.r);
     else showSquad([mt.dataset.h, mt.dataset.v]);
     return;
   }
