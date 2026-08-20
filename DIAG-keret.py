@@ -96,10 +96,31 @@ def main():
         st, ct, body = get(rossz, EGYSZERU)
         mutat("2c. kontroll: keret round_id NELKUL (varhatoan 403)", st, ct, body, 200)
 
-    # ============ 3. Fordulo-vegpontok (B kerdeshez) ============
-    for utvonal in ("rounds", "rounds?page=1&per_page=50", ""):
-        st, ct, body = get(BASE + utvonal, EGYSZERU)
-        mutat("3. GET %s" % (BASE + utvonal), st, ct, body, 600)
+    # ============ 3. A halasztott meccs esete ============
+    # A 3. fordulos ETO-Fradi maig nincs potolva. Ha az erintett jatekosok
+    # is_played-je emiatt false, azt a fordulo-lezaras szabalyanak kezelnie
+    # kell. Kiirjuk a 3. fordulo (round_id=81) es az 5. fordulo (85, meg el
+    # sem kezdodott) minden jatekosanak allapotat.
+    if user_id:
+        for rid, cimke in ((81, "3. fordulo - ebben van a halasztott ETO-Fradi"),
+                           (85, "5. fordulo - meg el sem kezdodott")):
+            u = (BASE + "user-team-players-history?include=" + urllib.parse.quote(INCLUDE)
+                 + "&filter%5Buser_id%5D=" + str(user_id) + "&filter%5Bround_id%5D=" + str(rid))
+            st, ct, body = get(u, EGYSZERU)
+            print("\n--- 3. %s (round_id=%d) HTTP %s ---" % (cimke, rid, st))
+            if st == 200:
+                try:
+                    for d in json.loads(body).get("data") or []:
+                        cp = d.get("competition_player") or {}
+                        cr = cp.get("current_round") or {}
+                        ss = d.get("summary_statistics") or {}
+                        print("    %-22s %-12s is_played=%-5s has_stats=%-5s first_played=%s week=%s"
+                              % ((cp.get("last_name") or "?"),
+                                 ((cp.get("team") or {}).get("short_name") or "?"),
+                                 cr.get("is_played"), cr.get("has_statistics"),
+                                 cr.get("first_played_at"), ss.get("weekly_points")))
+                except Exception as e:
+                    print("    ! feldolgozasi hiba: %s" % e)
 
     print("\nDiagnosztika vege. Ez a szkript semmit nem irt es nem modositott.")
     return 0
