@@ -70,23 +70,35 @@ def ertekel(data):
 
 
 def main():
-    print("Mit mond MOST hivatalosan az MLSZ az 1-4. fordulora?")
-    print("(teljes include-dal, mint a collect.py-ban)")
-    for nev, uname in MEMBERS.items():
-        st, j = get(BASE + "rankings?include=user_team.user.id,summary_statistics,"
-                    "ranking,rounds,competition_rank&page=1&per_page=5"
-                    + "&filter%5Bsearch%5D=" + urllib.parse.quote(uname))
-        if st != 200 or not j:
-            print("  ! %s: HTTP %s" % (nev, st)); continue
-        row = next((d for d in j.get("data") or []
-                    if ((d.get("user_team") or {}).get("user") or {}).get("username") == uname),
-                   (j.get("data") or [None])[0])
+    print("Parameter-kereses: hogyan keri le a weboldal a REGI fordulokat?")
+    print("(a heti valaszto mukodik az oldalon, tehat van ra mod)")
+    alap = (BASE + "rankings?include=user_team.user.id,summary_statistics,"
+            "ranking,rounds,competition_rank&page=1&per_page=5"
+            + "&filter%5Bsearch%5D=cspeti93")
+    # a 2. fordulo round_id-ja 79; arulkodo jel: Csendi 2. fordulos pontja 52.88
+    jeloltek = [
+        ("nincs extra (referencia)", ""),
+        ("filter[round_id]=79",      "&filter%5Bround_id%5D=79"),
+        ("filter[round]=2",          "&filter%5Bround%5D=2"),
+        ("filter[round_number]=2",   "&filter%5Bround_number%5D=2"),
+        ("filter[week]=2",           "&filter%5Bweek%5D=2"),
+        ("round_id=79",              "&round_id=79"),
+        ("week=2",                   "&week=2"),
+    ]
+    for nev, extra in jeloltek:
+        st, j = get(alap + extra)
+        if st != 200 or not isinstance(j, dict):
+            print("  %-28s HTTP %s" % (nev, st)); continue
+        rows = j.get("data") or []
+        row = next((d for d in rows
+                    if ((d.get("user_team") or {}).get("user") or {}).get("username") == "cspeti93"),
+                   rows[0] if rows else None)
         if not row:
-            print("  ! nincs talalat: %s" % nev); continue
+            print("  %-28s HTTP 200, nincs talalat" % nev); continue
         rs = (row.get("user_team") or {}).get("round_statistics") or []
-        pontok = {s2["round_number"]: s2["points"] for s2 in rs}
-        print("  %-8s visszaadott fordulok=%s  pontok=%s"
-              % (nev, sorted(pontok), json.dumps(pontok, ensure_ascii=False)))
+        pontok = {x["round_number"]: x["points"] for x in rs}
+        print("  %-28s HTTP 200  fordulok=%s  pontok=%s  rank=%s"
+              % (nev, sorted(pontok), pontok, row.get("rank")))
     return 0
 
 
