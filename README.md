@@ -21,8 +21,8 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 - Holtverseny az NB1-ben: **1) pont → 2) KÜL (pontkülönbség) → 3) SP (szerzett pont)**;
   a PL-ben az FPL alappontozása szerint **a szerzett pont az első** holtverseny-szempont
   (a `tiebreak: 'rg'` opció a `draft.html`-ben)
-  *(A liga korábbi Excel-táblája is GK-elsős volt. Ha ezen változtatni kell, egyetlen sort
-  érint: a `funtasy.js`-ben a `computeTable()` végén a `.sort(...)`.)*
+  *(A liga korábbi Excel-táblája is pontkülönbség-elsős volt. Ha ezen változtatni kell,
+  egyetlen sort érint: a `funtasy.js`-ben a `computeTable()` végén a `.sort(...)`.)*
 - **A tabella csak lezárt fordulókból számol.** A folyamatban lévő forduló eredményei a
   meccspanelen látszanak, „élő” jelöléssel — a tabellát nem mozgatják, amíg a forduló
   le nem zárul.
@@ -257,8 +257,9 @@ Nincs build lépés, nincs függőség. A kód három rétegben él:
   (menetrend, résztvevők, elemazonosítók), és adja a `computeTable`, `renderTable`,
   `renderMatches`, `renderMatrix` függvényeket meg az élő-jelölést.
 - **`index.html` / `draft.html`** — csak az oldalspecifikus rész: konfiguráció, betöltés
-  (`boot()`), a főoldalon a modal (`showSquad`, `squadHTML`, `seasonHTML`, `playersHTML`)
-  és az élő frissítés (`refresh()`).
+  és élő frissítés, meg az oldal saját modalja (a főoldalon `showSquad` / `squadHTML` /
+  `seasonHTML` / `playersHTML`, a PL-en `showTeam` / `showMatch` / `keretHTML` /
+  `fordulokHTML` / `jatekosokHTML`).
 
 **Vigyázat a CSS-osztálynevekkel:** a `.pos` a *pozitív számok zöld színe*, a poszt-címke
 `.ppos`. Egyszer már ütköztek, és emiatt a GY/V eredmények dobozkaként jelentek meg.
@@ -271,9 +272,8 @@ tartalommal. A `GOMB-bookmarklet.txt`-t soha ne szerkeszd kézzel.
 
 ## 7. Tervezett, még nem elkészült
 
-- A Draft-aloldal bővítése (most: tabella, meccsek, mátrix — keret-adat még nincs hozzá)
-- Összesítő oldal a két liga (NB I + FPL Draft) közös követésére — a résztvevők
-  összekötése a `draft.html` `NEVEK` konstansában már megvan
+- Összesítő oldal a két liga (NB1 + PL) közös követésére — a résztvevők összekötése
+  (a `draft.html` `NEVEK` konstansa és a közös monogramok) már megvan
 - Kapitány-hatékonysági toplista
 - „Padon hagyott pontok” toplista
 - Ligán belüli tulajdonlási arányok
