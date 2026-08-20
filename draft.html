@@ -21,7 +21,8 @@
     <div class="panel">
       <h2>Tabella</h2>
       <div class="tablewrap"><table id="table"></table></div>
-      <div class="note">Győzelem 3 · döntetlen 1 · vereség 0. Holtversenynél a pontkülönbség (GK) dönt, utána a rúgott (RG).</div>
+      <div class="note">Győzelem 3 · döntetlen 1 · vereség 0. Holtversenynél a <b>szerzett pont</b> (SP) dönt — az FPL alappontozása szerint.
+      <b>Kattints egy csapatra</b> a keret és a teljes szezon megtekintéséhez.</div>
     </div>
     <div class="panel">
       <h2>Egymás ellen</h2>
@@ -49,9 +50,20 @@
         </span>
       </h2>
       <div id="mNext"></div>
+      <div class="note">Kattints egy meccsre a két keret összehasonlításához.</div>
     </div>
   </div>
 </div>
+</div>
+
+<div class="ov" id="ov">
+  <div class="modal">
+    <button class="mclose" id="ovClose">×</button>
+    <div class="mtitle" id="mTitle"></div>
+    <div class="msub" id="mSub"></div>
+    <div class="tabs" id="mTabs"></div>
+    <div id="mBody"></div>
+  </div>
 </div>
 
 <script src="funtasy.js"></script>
@@ -70,9 +82,17 @@ const NEVEK = {
 // ============================
 
 const $ = id => document.getElementById(id);
+const esc = FunTasy.esc, fmt = FunTasy.fmt, played = FunTasy.played;
 const ENTRIES = {};
 const SCHEDULE = {};
 let liga = {};
+let PLAYERS = {};   // jatekos-torzs: {id: {n,t,p}}
+let SQUADS = {};    // jelenlegi keretek: {liga_id: [element,...]}
+let HIST = {};      // fordulonkenti keretek: {gw: {liga_id: [{e,b,pts},...]}}
+
+const nev = id => (ENTRIES[id] && ENTRIES[id].name) || ('#' + id);
+const jat = e => PLAYERS[e] || { n: '#' + e, t: '', p: '' };
+const posRank = p => ({ GKP: 0, DEF: 1, MID: 2, FWD: 3 }[p] ?? 9);
 
 const T = FunTasy.create({
   entries:    () => Object.keys(ENTRIES).map(Number),
@@ -80,23 +100,168 @@ const T = FunTasy.create({
   firstRound: () => liga.start_event || 1,
   lastRound:  () => liga.stop_event  || 38,
   nameHeader: 'Csapat',
-  label:       id => (ENTRIES[id] && ENTRIES[id].name) || ('#' + id),
+  tiebreak:   'rg',       // FPL-alappontozas: holtversenynel a szerzett pont dont
+  label:       id => nev(id),
   tag:         id => (ENTRIES[id] && ENTRIES[id].short) || '',
   matrixLabel: id => (ENTRIES[id] && ENTRIES[id].short) || ('#' + id),
+  nameAttr:    id => `data-team="${id}"`,
+  matchAttr:   (h, v, r) => `data-h="${h}" data-v="${v}" data-r="${r}"`,
   els: { table:'table', matrix:'matrix', mPast:'mPast', mNext:'mNext',
          selPast:'selPast', selNext:'selNext' }
 });
 T.bindNav();
 
-// A draft.premierleague.com böngészőből CORS miatt nem hívható, ezért itt —
-// az index.html-lel ellentétben — nincs "Frissítés" gomb: az adatot a
-// collect_draft.py gyűjti szerveroldalon, 3 óránként.
-fetch('draft.json?t=' + Date.now())
-  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-  .then(j => {
+// ---------- modal ----------
+function openModal(){ $('ov').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal(){ $('ov').classList.remove('open'); document.body.style.overflow=''; }
+
+// Egy keret-oszlop. A lista {e,b,pts} rekordokbol all (fordulonkenti keret,
+// pontokkal), VAGY sima element-id-kbol (jelenlegi keret, pont nelkul).
+function sqcolHTML(id, lista, cim){
+  const gazdag = lista.length && typeof lista[0] === 'object';
+  const sor = x => {
+    const r = gazdag ? x : { e: x, b: false, pts: null };
+    const j = jat(r.e);
+    return `<div class="plr"><span class="ppos">${esc(j.p)}</span>
+      <span class="nm">${esc(j.n)}${j.t ? ` <span class="tm">${esc(j.t)}</span>` : ''}</span>
+      ${r.pts != null ? `<span class="pts">${fmt(r.pts)}</span>` : ''}</div>`;
+  };
+  const rendez = a => [...a].sort((x, y) =>
+    posRank(jat(gazdag ? x.e : x).p) - posRank(jat(gazdag ? y.e : y).p));
+  if (!gazdag)
+    return `<div class="sqcol"><h3>${esc(cim || nev(id))}</h3>${rendez(lista).map(sor).join('')}</div>`;
+  const st = lista.filter(x => !x.b), pad = lista.filter(x => x.b);
+  const S = a => a.reduce((s, x) => s + (x.pts || 0), 0);
+  return `<div class="sqcol"><h3>${esc(cim || nev(id))}<span>${fmt(S(st))}</span></h3>
+    ${rendez(st).map(sor).join('')}
+    <div class="sumline"><span>Kezdők</span><b>${fmt(S(st))}</b></div>
+    <div class="subhead">Pad — a pontjaik nem számítanak a csapatnak</div>
+    ${rendez(pad).map(sor).join('')}</div>`;
+}
+
+function keretHTML(id){
+  const gwk = Object.keys(HIST).map(Number).sort((a, b) => b - a);
+  for (const gw of gwk){
+    const sq = (HIST[gw] || {})[id];
+    if (sq && sq.length)
+      return `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">${gw}. forduló</div>`
+             + `<div class="sqwrap one">${sqcolHTML(id, sq)}</div>`;
+  }
+  const sq = SQUADS[id];
+  if (sq && sq.length)
+    return `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">A draft utáni jelenlegi keret — pontok a szezon indulásától</div>`
+           + `<div class="sqwrap one">${sqcolHTML(id, sq)}</div>`;
+  return '<div class="loading">A keret még nem került be az adatgyűjtésbe.</div>';
+}
+
+function fordulokHTML(id){
+  let h = `<table><tr><th>F</th><th>Ellenfél</th><th>Pont</th><th>Ell.</th><th>Eredm.</th></tr>`;
+  let gy = 0, d = 0, v = 0;
+  for (const r of Object.keys(SCHEDULE).map(Number).sort((a, b) => a - b))
+    for (const m of SCHEDULE[r]){
+      let opp, own, ov;
+      if (m[0] === id){ opp = m[1]; own = m[2]; ov = m[3]; }
+      else if (m[1] === id){ opp = m[0]; own = m[3]; ov = m[2]; }
+      else continue;
+      let res = '—', cls = '';
+      if (own != null && ov != null){
+        if (own > ov){ res = 'GY'; cls = 'pos'; gy++; }
+        else if (own < ov){ res = 'V'; cls = 'neg'; v++; }
+        else { res = 'D'; d++; }
+      }
+      h += `<tr class="clickable" data-jump="${r}"><td class="rank">${r}.</td>
+        <td class="name">${esc(nev(opp))}</td>
+        <td>${own != null ? fmt(own) : '—'}</td><td>${ov != null ? fmt(ov) : '—'}</td>
+        <td class="${cls}">${res}</td></tr>`;
+    }
+  return `<div style="font-size:13px;color:var(--dim);margin-bottom:8px">Mérleg: <b class="pos">${gy} GY</b> · ${d} D · <b class="neg">${v} V</b> — ${gy * 3 + d} pont</div>` + h + '</table>';
+}
+
+function jatekosokHTML(id){
+  const agg = {};
+  const gwk = Object.keys(HIST).map(Number).sort((a, b) => a - b);
+  for (const gw of gwk){
+    const sq = (HIST[gw] || {})[id];
+    if (!sq) continue;
+    for (const x of sq){
+      const a = agg[x.e] || (agg[x.e] = { e: x.e, pts: 0, rounds: 0, st: 0, pad: 0 });
+      a.rounds++; x.b ? a.pad++ : (a.st++, a.pts += (x.pts || 0));
+    }
+  }
+  const rows = Object.values(agg).sort((a, b) => b.pts - a.pts);
+  if (!rows.length)
+    return '<div class="loading">A szezon még nem kezdődött el — a fordulónkénti keretek az 1. forduló indulásától gyűlnek.</div>';
+  let h = `<div style="font-size:13px;color:var(--dim);margin-bottom:10px">${rows.length} játékos · ${gwk.length} forduló · a Pont oszlop a kezdőként szerzett pontokat összegzi</div>
+    <table><tr><th></th><th>Játékos</th><th>F</th><th>Kezdő</th><th>Pad</th><th>Pont</th></tr>`;
+  rows.forEach((r, i) => {
+    const j = jat(r.e);
+    h += `<tr><td class="rank">${i + 1}.</td>
+      <td class="name"><span class="ppos">${esc(j.p)}</span>${esc(j.n)}${j.t ? ` <span class="tm">${esc(j.t)}</span>` : ''}</td>
+      <td>${r.rounds}</td><td>${r.st}</td><td>${r.pad}</td><td class="pont">${fmt(r.pts)}</td></tr>`;
+  });
+  return '<div class="tablewrap">' + h + '</table></div>';
+}
+
+let mTeam = null;
+function showTeam(id, tab){
+  mTeam = id; openModal();
+  $('mTitle').textContent = nev(id) + ((ENTRIES[id] || {}).short ? ' · ' + ENTRIES[id].short : '');
+  $('mSub').textContent = NEVEK[id] ? NEVEK[id] : '';
+  tab = tab || 'keret';
+  $('mTabs').innerHTML =
+    `<button class="tab ${tab === 'keret' ? 'on' : ''}" data-tab="keret">Aktuális keret</button>
+     <button class="tab ${tab === 'fordulok' ? 'on' : ''}" data-tab="fordulok">Fordulók</button>
+     <button class="tab ${tab === 'jatekosok' ? 'on' : ''}" data-tab="jatekosok">Szezon játékosai</button>`;
+  $('mBody').innerHTML = tab === 'keret' ? keretHTML(id)
+                       : tab === 'fordulok' ? fordulokHTML(id) : jatekosokHTML(id);
+}
+
+function showMatch(h, v, r){
+  openModal();
+  $('mTitle').textContent = nev(h) + '  vs  ' + nev(v);
+  $('mSub').textContent = r + '. forduló';
+  $('mTabs').innerHTML = '';
+  const H = (HIST[r] || {})[h], V = (HIST[r] || {})[v];
+  if (H && V){
+    $('mBody').innerHTML = `<div class="sqwrap">${sqcolHTML(h, H)}${sqcolHTML(v, V)}</div>`;
+    return;
+  }
+  const m = (SCHEDULE[r] || []).find(x => x[0] === h && x[1] === v);
+  $('mBody').innerHTML = '<div class="loading">' + (played(m)
+    ? 'Ehhez a fordulóhoz nincs elmentett keret-adat.'
+    : 'A forduló még nem zárult le — a keretek és a pontok a meccsek után jelennek meg.') + '</div>';
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-team]');
+  if (t){ showTeam(+t.dataset.team); return; }
+  const mt = e.target.closest('.match');
+  if (mt && mt.dataset.h){ showMatch(+mt.dataset.h, +mt.dataset.v, +mt.dataset.r); return; }
+  const tab = e.target.closest('#mTabs .tab');
+  if (tab){ showTeam(mTeam, tab.dataset.tab); return; }
+  const jp = e.target.closest('[data-jump]');
+  if (jp){ closeModal(); T.rPast = +jp.dataset.jump; T.renderMatches('past'); return; }
+  if (e.target === $('ov') || e.target === $('ovClose')) closeModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ---------- betöltés ----------
+// A draft.premierleague.com böngészőből CORS miatt nem hívható: minden adatot
+// a collect_draft.py gyűjt szerveroldalon. A keret-fájlok hiánya nem hiba
+// (a szezon eleje előtt még nem léteznek) — az oldal enélkül is működik.
+const opcional = u => fetch(u + '?t=' + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null);
+Promise.all([
+  fetch('draft.json?t=' + Date.now()).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
+  opcional('draft_players.json'),
+  opcional('draft_squads.json'),
+  opcional('draft_history.json')
+]).then(([j, pl, sq, hi]) => {
     (j.entries || []).forEach(e => { ENTRIES[e.id] = e; });
     for (const k in (j.schedule || {})) SCHEDULE[k] = j.schedule[k];
     liga = j.league || {};
+    PLAYERS = (pl && pl.players) || {};
+    SQUADS = (sq && sq.squads) || {};
+    HIST = (hi && hi.rounds) || {};
 
     T.rPast = T.lastPlayedRound();
     T.rNext = T.nextRound();

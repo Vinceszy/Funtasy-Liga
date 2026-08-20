@@ -1,10 +1,11 @@
 ---
-name: FPL Draft felderites
+name: FPL Draft frissitese
 
-# Szandekosan CSAK kezzel indithato. Amig nem tudjuk, hogy a vegpont egyaltalan
-# elerheto-e szerverrol, nincs ertelme utemezni. Ha bevalik, atkerulhet az
-# archive.yml-be a tobbi gyujtes melle.
+# 3 orankent fut (az archive.yml-tol eltolt percben), es kezzel is
+# inditható. A vegpontok bizonyitottan mukodnek szerverrol.
 on:
+  schedule:
+    - cron: '47 */3 * * *'
   workflow_dispatch:
     inputs:
       league_id:
@@ -40,7 +41,7 @@ jobs:
           git config user.name  "funtasy-archiver"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git add -A draft.json 2>/dev/null || true
+          git add -A draft.json draft_players.json draft_squads.json draft_history.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "Nincs valtozas."
           else

@@ -99,15 +99,21 @@
         return { name: n, M: s.M, GY: s.GY, D: s.D, V: s.V, RG: s.RG, KG: s.KG,
                  form: s.form, GK: s.RG - s.KG, Pont: s.GY * 3 + s.D };
       }).sort(function (a, b) {
-        return b.Pont - a.Pont || b.GK - a.GK || b.RG - a.RG ||
-               label(a.name).localeCompare(label(b.name), 'hu');
+        // Holtverseny: az NB1-nel a pontkulonbseg (KUL) dont, utana a
+        // szerzett pont (SP); a PL-nel az FPL alappontozasa szerint a
+        // szerzett pont az elso (tiebreak: 'rg').
+        var t = (opts.tiebreak === 'rg')
+          ? (b.Pont - a.Pont || b.RG - a.RG || b.GK - a.GK)
+          : (b.Pont - a.Pont || b.GK - a.GK || b.RG - a.RG);
+        return t || label(a.name).localeCompare(label(b.name), 'hu');
       });
     };
 
     api.renderTable = function () {
       var h = '<tr><th></th><th>' + esc(opts.nameHeader || 'Szakvezető') +
-        '</th><th>M</th><th>GY</th><th>D</th><th>V</th><th>RG</th><th>KG</th>' +
-        '<th>GK</th><th>Pont</th><th>Forma</th></tr>';
+        '</th><th>M</th><th>GY</th><th>D</th><th>V</th>' +
+        '<th title="szerzett pont">SP</th><th title="kapott pont">KP</th>' +
+        '<th title="pontkülönbség">KÜL</th><th>Pont</th><th>Forma</th></tr>';
       api.computeTable().forEach(function (r, i) {
         var form = r.form.slice(-5).map(function (f) {
           return '<span class="dot ' + f + '"></span>';
@@ -149,7 +155,7 @@
           if (played(L)) { hp = L[2]; vp = L[3]; elo = true; }
         }
         var van = p || elo;
-        var attr = opts.matchAttr ? ' ' + opts.matchAttr(m[0], m[1]) : '';
+        var attr = opts.matchAttr ? ' ' + opts.matchAttr(m[0], m[1], r) : '';
         h += '<div class="match' + (elo ? ' elo' : '') + '"' + attr + '>' +
           '<div class="h ' + (van && hp > vp ? 'winner' : '') + '">' + esc(label(m[0])) + mgr(m[0]) + '</div>' +
           '<div class="score">' +

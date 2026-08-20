@@ -18,13 +18,16 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 ### Tabella
 - 8 szakvezető, 33 fordulós körmérkőzéses H2H menetrend
 - Pontozás: **győzelem 3 · döntetlen 1 · vereség 0**
-- Holtverseny: **1) pont → 2) GK (pontkülönbség) → 3) RG (rúgott pont)**
+- Holtverseny az NB1-ben: **1) pont → 2) KÜL (pontkülönbség) → 3) SP (szerzett pont)**;
+  a PL-ben az FPL alappontozása szerint **a szerzett pont az első** holtverseny-szempont
+  (a `tiebreak: 'rg'` opció a `draft.html`-ben)
   *(A liga korábbi Excel-táblája is GK-elsős volt. Ha ezen változtatni kell, egyetlen sort
   érint: a `funtasy.js`-ben a `computeTable()` végén a `.sort(...)`.)*
 - **A tabella csak lezárt fordulókból számol.** A folyamatban lévő forduló eredményei a
   meccspanelen látszanak, „élő” jelöléssel — a tabellát nem mozgatják, amíg a forduló
   le nem zárul.
-- Oszlopok: helyezés, név, M, GY, D, V, RG, KG, GK, Pont, Forma (utolsó 5 meccs pöttyökkel)
+- Oszlopok: helyezés, név, M, GY, D, V, SP (szerzett pont), KP (kapott pont),
+  KÜL (pontkülönbség), Pont, Forma (utolsó 5 meccs pöttyökkel)
 - A névre kattintva modal nyílik (lásd lentebb)
 
 ### Meccsek — két külön panel
