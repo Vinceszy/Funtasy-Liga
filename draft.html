@@ -136,11 +136,26 @@ td.pont{color:var(--cyan);font-weight:700;font-size:15px}
 
 <script>
 // ======= KONFIGURÁCIÓ =======
-// Megjelenítendő név felülírása a ligán belüli azonosító alapján.
-// Ez a leendő összesítő oldal csatolótáblájának a magja: itt kötjük össze a
-// Draft-csapatot azzal a becenévvel, amit az NB I-es oldal (index.html) használ.
-// Amíg üres, a csapatnév látszik. Példa:  268988: "Vince"
-const NEVEK = {};
+// A ligán belüli azonosító (league_entry id) és az NB I-es oldal beceneve
+// közötti megfeleltetés. Ez a leendő összesítő oldal csatolótáblájának a magja:
+// ugyanaz az ember a két ligában más néven szerepel, itt kötjük össze őket.
+//
+// A kulcs a league_entry "id", NEM az FPL "entry_id" — a draft.json is az
+// előbbit tartalmazza, és a matches/standings is arra hivatkozik.
+//
+// Aki csak az egyik ligában játszik, az nem szerepel itt:
+//   - csak a Draftban: Not arsenal (271009), LastYear'sProblem (327399),
+//     One More Last Ride (360593)
+//   - csak az NB I-ben: Sámsi
+const NEVEK = {
+  254810: "Bence",    // Első Legitim Bajnok
+  254960: "Ádám",     // Fixtop4
+  267429: "Katyul",   // Kiderül
+  267607: "Bazsa",    // Maduekinho
+  267857: "Csendi",   // Hol van a pénz?
+  268988: "Vince",    // HolVanSalah?!
+  277905: "Csongi",   // Egyperegy
+};
 // ============================
 
 const $ = id => document.getElementById(id);
@@ -161,6 +176,13 @@ function nev(id){
 function rovid(id){
   const e=ENTRIES[id];
   return e && e.short ? e.short : String(id).slice(-3);
+}
+// Másodlagos, halványan kiírt címke a név mellé: akinél becenevet mutatunk,
+// ott a csapatneve, a többieknél a monogramja.
+function masodik(id){
+  const e=ENTRIES[id];
+  if(!e) return '';
+  return NEVEK[id] ? (e.name||'') : (e.short||'');
 }
 
 function rounds(){ const a=[]; for(let r=R1;r<=RN;r++) a.push(r); return a; }
@@ -193,7 +215,7 @@ function renderTable(){
   sorok.forEach((r,i)=>{
     const form=r.form.slice(-5).map(f=>`<span class="dot ${f}"></span>`).join('');
     h+=`<tr><td class="rank">${i+1}.</td>
-    <td class="name">${esc(nev(r.id))} <span class="mono">${esc(rovid(r.id))}</span></td>
+    <td class="name">${esc(nev(r.id))} <span class="mono">${esc(masodik(r.id))}</span></td>
     <td>${r.M}</td><td>${r.GY}</td><td>${r.D}</td><td>${r.V}</td>
     <td>${fmt(r.RG)}</td><td>${fmt(r.KG)}</td>
     <td class="${r.GK>=0?'pos':'neg'}">${fmt(r.GK)}</td>
@@ -253,10 +275,11 @@ function renderMatrix(){
 
 // ---------- mezőny ----------
 function renderEntries(){
-  const lista=Object.values(ENTRIES).sort((a,b)=>(a.name||'').localeCompare(b.name||'','hu'));
+  const lista=Object.values(ENTRIES).sort((a,b)=>nev(a.id).localeCompare(nev(b.id),'hu'));
   let h='<table>';
   for(const e of lista){
-    h+=`<tr><td class="name">${esc(NEVEK[e.id]||e.name)}</td>
+    const csapat = NEVEK[e.id] ? ` <span class="mono">${esc(e.name)}</span>` : '';
+    h+=`<tr><td class="name">${esc(nev(e.id))}${csapat}</td>
         <td class="mono" style="text-align:right">${esc(e.short)}</td></tr>`;
   }
   $('entries').innerHTML=h+'</table>';
