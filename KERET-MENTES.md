@@ -1,11 +1,12 @@
-# Keret-mentés egy kattintással
+# Keret-mentés egy kattintással — TARTALÉK MEGOLDÁS
 
-Az MLSZ a keret-végpontot adatközponti IP-kről tiltja (403), ezért azt sem a GitHub,
-sem proxy nem tudja lekérni — **csak a te böngésződ**. Ez a könyvjelző ezt oldja meg:
-a fantasy.mlsz.hu-n futtatva lekéri mind a 8 keretet, és egyenesen a repóba menti.
+**Erre normál esetben nincs szükség.** 2026-08-20 óta a kereteket is a GitHub Actions
+gyűjti automatikusan, 3 óránként (kiderült, hogy a végpont szerverről is működik — a
+korábbi 403-akat nem IP-tiltás, hanem a hiányzó `filter[round_id]` paraméter okozta).
 
-A H2H-eredmények (tabella, meccsek) ettől függetlenül **automatikusan** frissülnek,
-azzal nincs teendőd.
+Ez a könyvjelző akkor kell, ha a szerveroldali gyűjtés elromlana (pl. az MLSZ tényleg
+letiltaná az adatközponti IP-ket): a fantasy.mlsz.hu-n futtatva lekéri mind a 8 keretet,
+és egyenesen a repóba menti.
 
 ---
 

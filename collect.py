@@ -1,11 +1,44 @@
 #!/usr/bin/env python3
-"""FunTasy Liga - H2H eredmenyek automatikus archivalasa.
+"""FunTasy Liga - automatikus adatgyujtes az MLSZ Fantasy API-bol.
 
-A ranglista-vegpont adatkozponti IP-rol is elerheto, ezert ez a resz teljesen automata.
-A KERETEK gyujtese NEM itt tortenik: azt a vegpontot az MLSZ 403-mal tiltja szerverrol,
-arra a bongeszos konyvjelzo valo (lasd KERET-MENTES.md).
+Ket dolgot gyujt 3 orankent (.github/workflows/archive.yml):
+
+1. H2H EREDMENYEK (results.json) - a hivatalos fordulopontszamok a
+   ranglista-vegpontrol. A tabella egyetlen forrasa ez.
+2. KERETEK (squads.json, squad_history.json) - a keret-vegpontrol,
+   pontosan abban a formatumban, ahogy korabban a bongeszos konyvjelzo
+   irta (az mostantol csak tartalek, lasd KERET-MENTES.md).
+
+A KERET-VEGPONT TORTENETE: sokaig azt hittuk, szerverrol tiltott (GitHub
+Actionsbol, proxykon at, Playwrighttal is 403 volt). 2026-08-20-an kiderult:
+a 403-at a hianyzo filter[round_id] parameter okozta - a korabbi szerveres
+probak meg a parameter felfedezese elott keszultek. Helyes keressel a
+vegpont barhonnan, bejelentkezes nelkul mukodik.
+
+TOVABBI MERESSEL IGAZOLT TENYEK (2026-08-20):
+
+- round_id = 75 + 2 x forduloszam.
+- A ranglista alapbol csak az utolso lezart es az aktualis fordulot adja
+  vissza; regebbi fordulo a filter[round_id] parameterrel kerheto le
+  (a valasz az adott fordulot ES az elozot tartalmazza).
+- A keret-vegpont a meg el nem kezdodott fordulora 403-at ad (piaczarasig
+  titkosak a keretek). Ez varhato viselkedes, nem hiba.
+- FORDULO-LEZARAS: egy fordulo akkor zarult le, ha minden szakvezeto minden
+  jatekosanal current_round.is_played igaz. A halasztott meccs jatekosait
+  az MLSZ lejatszottnak jeloli 0 ponttal (igazolva a 3. fordulos ETO-Fradi
+  eseten), tehat a halasztas nem akasztja meg a lezarast.
+- A le nem zarult fordulo szamai IDEIGLENESEK: a results.json "provisional"
+  listajaba kerulnek, es az oldal nem szamolja oket a tabellaba.
+- Az MLSZ utolag korrigalhat jatekos-statisztikat, es atvezeti a hivatalos
+  fordulo-osszegre is (megtortent: Csendi, 1-3. fordulo). Ezert a lekert
+  ertekhez MINDIG szinkronizalunk, es a keretbol szamolt osszeget
+  osszevetjuk a hivatalossal - elteresnel figyelmeztetes megy a naploba.
+- A jatekosok weekly_points erteke MAR KESZ: benne van a kapitanyi duplazas
+  es a pad felezese. Soha nem szorzunk ujra es nem felezunk.
+- A 0-0 vedelem marad: ha egy fordulo minden erteke 0, a fordulo el sem
+  kezdodott, nem kerulhet be lejatszott dontetlenkent.
 """
-import json, os, sys, time, urllib.parse, urllib.request
+import json, re, sys, time, urllib.error, urllib.parse, urllib.request
 
 COMPETITION = 3
 MEMBERS = {
@@ -13,118 +46,246 @@ MEMBERS = {
     "Vince": "HolVanSalah", "Bazsa": "Hoxha98", "Csongi": "szcsngr",
     "Csendi": "cspeti93", "Ádám": "siuu_1885",
 }
-API = ("https://fantasy-api.mlsz.hu/competitions/%d/rankings?include=user_team.user.id,"
-       "summary_statistics,ranking,rounds,competition_rank&page=1&per_page=5&filter%%5Bsearch%%5D=")
+BASE = "https://fantasy-api.mlsz.hu/competitions/%d/" % COMPETITION
 HDRS = {"Accept": "application/json", "User-Agent": "funtasy-archiver/1.0",
         "Referer": "https://fantasy.mlsz.hu/"}
+INCLUDE = ("position,position.alternatives,competition_player,"
+           "competition_player.team,competition_player.countries,summary_statistics")
+
+rid = lambda n: 75 + 2 * n
 
 
-def fetch(username, retries=3):
-    url = (API % COMPETITION) + urllib.parse.quote(username)
+def api_get(url, retries=3):
+    """(status, json) - halozati hibanal ujraprobal; 4xx-nel nem."""
     for i in range(retries):
+        time.sleep(0.15)
         try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=HDRS), timeout=30) as r:
-                return json.loads(r.read().decode())
+            req = urllib.request.Request(url, headers=HDRS)
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return r.status, json.loads(r.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            return e.code, None
         except Exception as e:
             if i == retries - 1:
-                print("  ! %s: %s" % (username, e), file=sys.stderr)
-                return None
+                print("  ! halozati hiba: %s" % e, file=sys.stderr)
+                return None, None
             time.sleep(3)
+    return None, None
+
+
+def rankings(uname, round_id=None):
+    url = (BASE + "rankings?include=user_team.user.id,summary_statistics,"
+           "ranking,rounds,competition_rank&page=1&per_page=5"
+           "&filter%5Bsearch%5D=" + urllib.parse.quote(uname))
+    if round_id:
+        url += "&filter%5Bround_id%5D=%d" % round_id
+    st, j = api_get(url)
+    if st != 200 or not j:
+        return None
+    rows = j.get("data") or []
+    return next((d for d in rows
+                 if ((d.get("user_team") or {}).get("user") or {}).get("username") == uname),
+                rows[0] if rows else None)
+
+
+def squad(user_id, round_no):
+    url = (BASE + "user-team-players-history?include=" + urllib.parse.quote(INCLUDE)
+           + "&filter%5Buser_id%5D=" + str(user_id)
+           + "&filter%5Bround_id%5D=" + str(rid(round_no)))
+    return api_get(url)
+
+
+def is_hun(cp):
+    """Ugyanaz a szabaly, mint a konyvjelzoben."""
+    szoveg = json.dumps(cp.get("countries") or cp.get("country") or "", ensure_ascii=False)
+    return bool(re.search(r'magyar|hungar|"HUN"', szoveg, re.I))
+
+
+def rekord(d):
+    """Egy jatekos rekordja - mezorol mezore a konyvjelzo formatuma."""
+    cp = d.get("competition_player") or {}
+    po = d.get("position") or {}
+    ss = d.get("summary_statistics") or {}
+    team = cp.get("team") or {}
+    cr = cp.get("current_round") or {}
+    nev = " ".join(x for x in (cp.get("first_name"), cp.get("last_name")) if x) \
+          or ("#%s" % (cp.get("id") or d.get("id")))
+    return {
+        "name": nev,
+        "team": team.get("short_name") or team.get("name") or "",
+        "pos": po.get("monogram") or po.get("name") or "",
+        "u21": bool(cp.get("is_u21")),
+        "hun": is_hun(cp),
+        "price": (cr.get("market_price") or None),
+        "cap": bool(d.get("is_captain")),
+        "sub": d.get("type") == "substitutes",
+        "week": ss.get("weekly_points") or 0,
+        "total": ss.get("competition_points") or 0,
+    }
+
+
+def keret_osszeg(sq):
+    """Fordulopontszam a keretbol: weekly_points osszeg + magyarszabaly."""
+    ossz = sum(p.get("week") or 0 for p in sq)
+    kezdok = [p for p in sq if not p.get("sub")]
+    hun = sum(1 for p in kezdok if p.get("hun"))
+    u21 = sum(1 for p in kezdok if p.get("hun") and p.get("u21"))
+    return ossz + (10 if (hun >= 5 and u21 >= 1) else 0)
+
+
+def kompakt_iras(path, obj):
+    """A konyvjelzoevel azonos, kompakt JSON-formatum."""
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, separators=(",", ":"))
+
+
+def stamp():
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
 def main():
     with open("results.json", encoding="utf-8") as f:
         data = json.load(f)
     schedule = data["schedule"]
+    try:
+        with open("squad_history.json", encoding="utf-8") as f:
+            hist = json.load(f)
+    except Exception:
+        hist = {"updated": None, "rounds": {}}
+    hist.setdefault("rounds", {})
+    hist_elotte = json.dumps(hist.get("rounds"), ensure_ascii=False, sort_keys=True)
 
-    points = {}
-    for name, uname in MEMBERS.items():
-        j = fetch(uname)
-        rows = (j or {}).get("data") or []
-        row = next((d for d in rows
-                    if ((d.get("user_team") or {}).get("user") or {}).get("username") == uname),
-                   rows[0] if rows else None)
+    # ---- 1. Azonositok es a friss hivatalos pontok ----
+    ids, pontok = {}, {n: {} for n in MEMBERS}
+    for nev, uname in MEMBERS.items():
+        row = rankings(uname)
         if not row:
-            print("  ! nincs talalat: %s" % uname, file=sys.stderr)
+            print("  ! nincs ranglista-adat: %s" % nev, file=sys.stderr)
             continue
-        stats = (row.get("user_team") or {}).get("round_statistics") or []
-        points[name] = {int(s["round_number"]): s["points"] for s in stats}
-        print("  %s: fordulok=%s" % (name, sorted(points[name])))
+        ids[nev] = ((row.get("user_team") or {}).get("user") or {}).get("id")
+        for s in (row.get("user_team") or {}).get("round_statistics") or []:
+            pontok[nev][int(s["round_number"])] = s["points"]
+    if not ids:
+        print("Nincs elerheto adat - a fajlok valtozatlanok.")
+        return 0
+    aktualis = max((r for p in pontok.values() for r in p), default=0)
+    print("  aktualis fordulo: %d | azonositok: %d/%d" % (aktualis, len(ids), len(MEMBERS)))
 
-    # --- Melyik fordulo tekintheto veglegesnek? ---
-    # A ranglista-vegpont nem ad "lezarult" jelzot, ezert kovetkeztetni kell.
-    # A fordulok nem fedik at egymast, tehat ha egy KESOBBI fordulonak mar van
-    # pontja, az elozo biztosan lezarult. A legutolso ilyen fordulo maga meg
-    # tarthat -> az IDEIGLENES.
-    #
-    # Ez azert szamit, mert korabban egy menet kozben elkapott reszeredmeny
-    # veglegesként kerult be, es soha nem javult (a "ha mar ki van tolve,
-    # hagyd ki" agy miatt). Most ket dolog valtozott:
-    #   1. az ideiglenes fordulo eredmenye MINDEN futasnal felulirodik, tehat
-    #      a reszeredmeny magatol helyesre javul;
-    #   2. a fajl megmondja, mely fordulo ideiglenes, es az oldal azt nem
-    #      szamolja bele a tabellaba.
-    minden_r = sorted(int(x) for x in schedule)
-    utolso_r = minden_r[-1] if minden_r else 0
-    elindult = [r for r in minden_r
-                if any(points.get(n, {}).get(r) for n in MEMBERS)]
-    max_elindult = max(elindult) if elindult else 0
+    # ---- 2. Kimaradt regi fordulok potlasa (filter[round_id]) ----
+    # A ranglista alapbol csak a friss fordulokat adja; ha egy regebbi
+    # fordulo eredmenye hianyzik (pl. tobb napos leallas utan), azt kulon
+    # kell lekerni. Normal esetben ez a lista ures.
+    hianyzo = sorted({int(r) for r, ms in schedule.items()
+                      if int(r) < aktualis and any(m[2] is None for m in ms)})
+    for r in hianyzo:
+        print("  potlas: %d. fordulo hivatalos pontjai" % r)
+        for nev, uname in MEMBERS.items():
+            row = rankings(uname, round_id=rid(r))
+            if not row:
+                continue
+            for s in (row.get("user_team") or {}).get("round_statistics") or []:
+                pontok[nev].setdefault(int(s["round_number"]), s["points"])
 
-    def veglegesnek_tekintheto(r):
-        if r < max_elindult:
-            return True                    # egy kesobbi fordulo mar elindult
-        if r == utolso_r == max_elindult:
-            # A szezon utolso fordulojanal nincs "kovetkezo", ami lezarna.
-            # Ilyenkor akkor tekintjuk lezartnak, ha MINDEN szakvezetonek van
-            # pontja - ez a szezon vegen mar biztonsagos.
-            return all(points.get(n, {}).get(r) for n in MEMBERS)
-        return False
-
-    beirt, javitott, ideiglenes = 0, 0, []
+    # ---- 3. Eredmenyek szinkronja (a vegpont az igazsag) ----
+    beirt, javitott = 0, 0
     for rnd, matches in schedule.items():
         r = int(rnd)
-        vegleges = veglegesnek_tekintheto(r)
-        if r in elindult and not vegleges:
-            ideiglenes.append(r)
         for m in matches:
-            hp, vp = points.get(m[0], {}).get(r), points.get(m[1], {}).get(r)
+            hp, vp = pontok.get(m[0], {}).get(r), pontok.get(m[1], {}).get(r)
             if hp is None or vp is None:
                 continue
             if not hp and not vp:          # 0-0 = a fordulo el sem kezdodott
                 continue
             if m[2] == hp and m[3] == vp:
-                continue                   # nincs valtozas
-            # A vegpont az igazsag: ha mas erteket ad, a tarolt volt hibas
-            # (pl. menet kozben elkapott reszeredmeny, vagy utolagos MLSZ-
-            # korrekcio). Ezert MINDIG szinkronizalunk hozza - ez az, ami
-            # korabban hianyzott, es amiatt ragadt be a reszeredmeny. Minden
-            # ilyen javitas naplozva van, es a commit diffjeben is latszik.
+                continue
             elozo = None if m[2] is None else (m[2], m[3])
             m[2], m[3] = hp, vp
             if elozo is None:
                 beirt += 1
-                print("  + %d. fordulo%s: %s %s - %s %s"
-                      % (r, "" if vegleges else " (ideiglenes)", m[0], hp, vp, m[1]))
+                print("  + %d. fordulo: %s %s - %s %s" % (r, m[0], hp, vp, m[1]))
             else:
                 javitott += 1
-                print("  ~ %d. fordulo%s: %s %s - %s %s  (volt: %s - %s)"
-                      % (r, "" if vegleges else " (ideiglenes)", m[0], hp, vp, m[1],
-                         elozo[0], elozo[1]))
+                print("  ~ %d. fordulo: %s %s - %s %s  (volt: %s - %s) - MLSZ-korrekcio?"
+                      % (r, m[0], hp, vp, m[1], elozo[0], elozo[1]))
 
-    ideiglenes = sorted(set(ideiglenes))
-    regi_ideiglenes = data.get("provisional") or []
-    valtozott = bool(beirt or javitott) or ideiglenes != regi_ideiglenes
+    # ---- 4. Keretek gyujtese ----
+    # Celfordulok: az aktualis (ha mar elindult), az utolso lezart (hogy az
+    # utolagos MLSZ-korrekciok atjojjenek), es ami hianyzik az elozmenybol.
+    celok = set()
+    if aktualis >= 1:
+        celok.add(aktualis)
+    if aktualis >= 2:
+        celok.add(aktualis - 1)
+    for r in range(1, aktualis + 1):
+        megvan = hist["rounds"].get(str(r)) or {}
+        if len(megvan) < len(MEMBERS):
+            celok.add(r)
 
-    if valtozott:
-        # Az oldal ebbol tudja, melyik fordulot ne szamolja a tabellaba.
-        data["provisional"] = ideiglenes
-        data["updated"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+    lezart = {}          # r -> True/False (minden jatekos jatszott-e)
+    for r in sorted(celok):
+        # olcso elovizsgalat egyetlen kerettel: 403 = a fordulo meg titkos
+        elso_id = next(iter(ids.values()))
+        st, _ = squad(elso_id, r)
+        if st == 403:
+            print("  . %d. fordulo keretei meg nem elerhetok (piaczaras elott)" % r)
+            continue
+        uj_fordulo, mind_jatszott, teljes = {}, True, True
+        for nev, uid in ids.items():
+            st, j = squad(uid, r)
+            if st != 200 or not isinstance(j, dict) or not j.get("data"):
+                print("  ! %d. fordulo / %s: HTTP %s" % (r, nev, st), file=sys.stderr)
+                teljes = False
+                continue
+            sq = [rekord(d) for d in j["data"]]
+            uj_fordulo[nev] = sq
+            for d in j["data"]:
+                cr = (d.get("competition_player") or {}).get("current_round") or {}
+                if not cr.get("is_played"):
+                    mind_jatszott = False
+        if not uj_fordulo:
+            continue
+        hist["rounds"][str(r)] = {**(hist["rounds"].get(str(r)) or {}), **uj_fordulo}
+        lezart[r] = teljes and mind_jatszott and len(uj_fordulo) == len(MEMBERS)
+        print("  keretek: %d. fordulo, %d/%d szakvezeto, %s"
+              % (r, len(uj_fordulo), len(MEMBERS),
+                 "lezart" if lezart[r] else "meg tart / hianyos"))
+
+        # keresztellenorzes: a keretbol szamolt osszeg vs hivatalos
+        for nev, sq in uj_fordulo.items():
+            hiv = pontok.get(nev, {}).get(r)
+            if hiv in (None, 0) or not lezart[r]:
+                continue
+            szamolt = keret_osszeg(sq)
+            if abs(szamolt - hiv) >= 0.005:
+                print("  ! ELTERES %d. fordulo / %s: keretbol %.2f, hivatalos %.2f"
+                      " - az MLSZ korrigalhatott" % (r, nev, szamolt, hiv), file=sys.stderr)
+
+    # ---- 5. Ideiglenes fordulok ----
+    # Csak az szamit ideiglenesnek, aminek mar van pontja, de a keretek
+    # szerint meg nem jatszott le minden jatekos.
+    provisional = sorted(r for r, kesz in lezart.items()
+                         if not kesz and any(pontok.get(n, {}).get(r) for n in MEMBERS))
+    regi_prov = data.get("provisional") or []
+
+    # ---- 6. Iras, csak ha valtozott ----
+    if beirt or javitott or provisional != regi_prov:
+        data["provisional"] = provisional
+        data["updated"] = stamp()
         with open("results.json", "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=0)
+        print("  results.json frissitve")
 
-    if ideiglenes:
-        print("  . ideiglenes (meg tarthat): %s. fordulo"
-              % ", ".join(str(r) for r in ideiglenes))
+    if json.dumps(hist.get("rounds"), ensure_ascii=False, sort_keys=True) != hist_elotte:
+        hist["updated"] = stamp()
+        kompakt_iras("squad_history.json", {"updated": hist["updated"],
+                                            "rounds": hist["rounds"]})
+        utolso = max((int(r) for r in hist["rounds"]), default=0)
+        kompakt_iras("squads.json", {"updated": hist["updated"],
+                                     "squads": hist["rounds"].get(str(utolso)) or {}})
+        print("  squad_history.json + squads.json frissitve (utolso fordulo: %d)" % utolso)
+
+    if provisional:
+        print("  ideiglenes (meg tart): %s. fordulo" % ", ".join(map(str, provisional)))
     print("Kesz: %d uj, %d javitott eredmeny." % (beirt, javitott))
     return 0
 

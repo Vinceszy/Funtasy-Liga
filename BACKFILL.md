@@ -18,9 +18,10 @@ round_id = 75 + 2 × fordulószám        (1.→77, 2.→79, 3.→81, 4.→83, 5
 Ezzel a **korábbi fordulók kerete is pontosan lekérhető**, nem csak az aktuális — épp
 az a korlát szűnt meg, ami miatt ez a fájl készült.
 
-A `GOMB-bookmarklet.txt` ezt magától elvégzi: megnézi, mely fordulók hiányoznak a
-`squad_history.json`-ból, és egyetlen kattintással pótolja mindet. Lásd:
-[`KERET-MENTES.md`](KERET-MENTES.md).
+A pótlást ma már a `collect.py` végzi el magától, szerveroldalon: minden futásnál
+megnézi, mely fordulók hiányoznak a `squad_history.json`-ból, és lekéri őket. A
+kimaradt **eredmények** is pótolhatók (a ranglista-végpont is fogad `filter[round_id]`-t).
+Tartaléknak megmaradt a könyvjelző is: [`KERET-MENTES.md`](KERET-MENTES.md).
 
 ## Miért nem működne a régi szkript
 

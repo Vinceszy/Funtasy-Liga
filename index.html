@@ -13,7 +13,6 @@
 <header>
   <h1><span class="fun">FUN</span>TASY <span class="tag">LIGA</span></h1>
   <div class="sub">NB I Fantasy · privát head-to-head · 8 szakvezető · 33 forduló</div>
-  <button class="btn" id="refreshBtn">⟳ Frissítés most</button>
   <div id="status"></div>
 </header>
 
@@ -75,7 +74,7 @@ const MEMBERS = {
   "Bazsa":"Hoxha98", "Csongi":"szcsngr", "Csendi":"cspeti93", "Ádám":"siuu_1885"
 };
 const COMPETITION = 3;
-const SCHEDULE = {"1": [["Bazsa", "Katyul", 50.75, 56.75], ["Csongi", "Bence", 48.5, 47.38], ["Csendi", "Vince", 47.0, 50.75], ["Sámsi", "Ádám", 45.0, 52.38]], "2": [["Bazsa", "Csongi", 62.0, 45.37], ["Katyul", "Bence", 71.13, 55.25], ["Csendi", "Sámsi", 51.88, 43.12], ["Vince", "Ádám", 55.01, 60.25]], "3": [["Bazsa", "Bence", 72.75, 73.0], ["Katyul", "Csongi", 66.13, 59.0], ["Csendi", "Ádám", 55.38, 47.25], ["Vince", "Sámsi", 60.88, 79.75]], "4": [["Bazsa", "Csendi", 51.63, 63.63], ["Katyul", "Vince", 81.25, 75.75], ["Csongi", "Sámsi", 67.13, 84.51], ["Bence", "Ádám", 82.38, 49.63]], "5": [["Bazsa", "Vince", null, null], ["Katyul", "Csendi", null, null], ["Csongi", "Ádám", null, null], ["Bence", "Sámsi", null, null]], "6": [["Bazsa", "Sámsi", null, null], ["Katyul", "Ádám", null, null], ["Csongi", "Csendi", null, null], ["Bence", "Vince", null, null]], "7": [["Bazsa", "Ádám", null, null], ["Katyul", "Sámsi", null, null], ["Csongi", "Vince", null, null], ["Bence", "Csendi", null, null]], "8": [["Bazsa", "Katyul", null, null], ["Csongi", "Bence", null, null], ["Csendi", "Vince", null, null], ["Sámsi", "Ádám", null, null]], "9": [["Bazsa", "Csongi", null, null], ["Katyul", "Bence", null, null], ["Csendi", "Sámsi", null, null], ["Vince", "Ádám", null, null]], "10": [["Bazsa", "Bence", null, null], ["Katyul", "Csongi", null, null], ["Csendi", "Ádám", null, null], ["Vince", "Sámsi", null, null]], "11": [["Bazsa", "Csendi", null, null], ["Katyul", "Vince", null, null], ["Csongi", "Sámsi", null, null], ["Bence", "Ádám", null, null]], "12": [["Bazsa", "Vince", null, null], ["Katyul", "Csendi", null, null], ["Csongi", "Ádám", null, null], ["Bence", "Sámsi", null, null]], "13": [["Bazsa", "Sámsi", null, null], ["Katyul", "Ádám", null, null], ["Csongi", "Csendi", null, null], ["Bence", "Vince", null, null]], "14": [["Bazsa", "Ádám", null, null], ["Katyul", "Sámsi", null, null], ["Csongi", "Vince", null, null], ["Bence", "Csendi", null, null]], "15": [["Bazsa", "Katyul", null, null], ["Csongi", "Bence", null, null], ["Csendi", "Vince", null, null], ["Sámsi", "Ádám", null, null]], "16": [["Bazsa", "Csongi", null, null], ["Katyul", "Bence", null, null], ["Csendi", "Sámsi", null, null], ["Vince", "Ádám", null, null]], "17": [["Bazsa", "Bence", null, null], ["Katyul", "Csongi", null, null], ["Csendi", "Ádám", null, null], ["Vince", "Sámsi", null, null]], "18": [["Bazsa", "Csendi", null, null], ["Katyul", "Vince", null, null], ["Csongi", "Sámsi", null, null], ["Bence", "Ádám", null, null]], "19": [["Bazsa", "Vince", null, null], ["Katyul", "Csendi", null, null], ["Csongi", "Ádám", null, null], ["Bence", "Sámsi", null, null]], "20": [["Bazsa", "Sámsi", null, null], ["Katyul", "Ádám", null, null], ["Csongi", "Csendi", null, null], ["Bence", "Vince", null, null]], "21": [["Bazsa", "Ádám", null, null], ["Katyul", "Sámsi", null, null], ["Csongi", "Vince", null, null], ["Bence", "Csendi", null, null]], "22": [["Bazsa", "Katyul", null, null], ["Csongi", "Bence", null, null], ["Csendi", "Vince", null, null], ["Sámsi", "Ádám", null, null]], "23": [["Bazsa", "Csongi", null, null], ["Katyul", "Bence", null, null], ["Csendi", "Sámsi", null, null], ["Vince", "Ádám", null, null]], "24": [["Bazsa", "Bence", null, null], ["Katyul", "Csongi", null, null], ["Csendi", "Ádám", null, null], ["Vince", "Sámsi", null, null]], "25": [["Bazsa", "Csendi", null, null], ["Katyul", "Vince", null, null], ["Csongi", "Sámsi", null, null], ["Bence", "Ádám", null, null]], "26": [["Bazsa", "Vince", null, null], ["Katyul", "Csendi", null, null], ["Csongi", "Ádám", null, null], ["Bence", "Sámsi", null, null]], "27": [["Bazsa", "Sámsi", null, null], ["Katyul", "Ádám", null, null], ["Csongi", "Csendi", null, null], ["Bence", "Vince", null, null]], "28": [["Bazsa", "Ádám", null, null], ["Katyul", "Sámsi", null, null], ["Csongi", "Vince", null, null], ["Bence", "Csendi", null, null]], "29": [["Bazsa", "Katyul", null, null], ["Csongi", "Bence", null, null], ["Csendi", "Vince", null, null], ["Sámsi", "Ádám", null, null]], "30": [["Bazsa", "Csongi", null, null], ["Katyul", "Bence", null, null], ["Csendi", "Sámsi", null, null], ["Vince", "Ádám", null, null]], "31": [["Bazsa", "Bence", null, null], ["Katyul", "Csongi", null, null], ["Csendi", "Ádám", null, null], ["Vince", "Sámsi", null, null]], "32": [["Bazsa", "Csendi", null, null], ["Katyul", "Vince", null, null], ["Csongi", "Sámsi", null, null], ["Bence", "Ádám", null, null]], "33": [["Bazsa", "Vince", null, null], ["Katyul", "Csendi", null, null], ["Csongi", "Ádám", null, null], ["Bence", "Sámsi", null, null]]};
+const SCHEDULE = {"1": [["Bazsa", "Katyul", 50.75, 56.75], ["Csongi", "Bence", 48.5, 47.38], ["Csendi", "Vince", 48.0, 50.75], ["Sámsi", "Ádám", 45.0, 52.38]], "2": [["Bazsa", "Csongi", 62.0, 45.37], ["Katyul", "Bence", 71.13, 55.25], ["Csendi", "Sámsi", 52.88, 43.12], ["Vince", "Ádám", 55.01, 60.25]], "3": [["Bazsa", "Bence", 72.75, 73.0], ["Katyul", "Csongi", 66.13, 59.0], ["Csendi", "Ádám", 52.88, 47.25], ["Vince", "Sámsi", 60.88, 79.75]], "4": [["Bazsa", "Csendi", 51.63, 63.63], ["Katyul", "Vince", 81.25, 75.75], ["Csongi", "Sámsi", 67.13, 84.51], ["Bence", "Ádám", 82.38, 49.63]], "5": [["Bazsa", "Vince", null, null], ["Katyul", "Csendi", null, null], ["Csongi", "Ádám", null, null], ["Bence", "Sámsi", null, null]], "6": [["Bazsa", "Sámsi", null, null], ["Katyul", "Ádám", null, null], ["Csongi", "Csendi", null, null], ["Bence", "Vince", null, null]], "7": [["Bazsa", "Ádám", null, null], ["Katyul", "Sámsi", null, null], ["Csongi", "Vince", null, null], ["Bence", "Csendi", null, null]], "8": [["Bazsa", "Katyul", null, null], ["Csongi", "Bence", null, null], ["Csendi", "Vince", null, null], ["Sámsi", "Ádám", null, null]], "9": [["Bazsa", "Csongi", null, null], ["Katyul", "Bence", null, null], ["Csendi", "Sámsi", null, null], ["Vince", "Ádám", null, null]], "10": [["Bazsa", "Bence", null, null], ["Katyul", "Csongi", null, null], ["Csendi", "Ádám", null, null], ["Vince", "Sámsi", null, null]], "11": [["Bazsa", "Csendi", null, null], ["Katyul", "Vince", null, null], ["Csongi", "Sámsi", null, null], ["Bence", "Ádám", null, null]], "12": [["Bazsa", "Vince", null, null], ["Katyul", "Csendi", null, null], ["Csongi", "Ádám", null, null], ["Bence", "Sámsi", null, null]], "13": [["Bazsa", "Sámsi", null, null], ["Katyul", "Ádám", null, null], ["Csongi", "Csendi", null, null], ["Bence", "Vince", null, null]], "14": [["Bazsa", "Ádám", null, null], ["Katyul", "Sámsi", null, null], ["Csongi", "Vince", null, null], ["Bence", "Csendi", null, null]], "15": [["Bazsa", "Katyul", null, null], ["Csongi", "Bence", null, null], ["Csendi", "Vince", null, null], ["Sámsi", "Ádám", null, null]], "16": [["Bazsa", "Csongi", null, null], ["Katyul", "Bence", null, null], ["Csendi", "Sámsi", null, null], ["Vince", "Ádám", null, null]], "17": [["Bazsa", "Bence", null, null], ["Katyul", "Csongi", null, null], ["Csendi", "Ádám", null, null], ["Vince", "Sámsi", null, null]], "18": [["Bazsa", "Csendi", null, null], ["Katyul", "Vince", null, null], ["Csongi", "Sámsi", null, null], ["Bence", "Ádám", null, null]], "19": [["Bazsa", "Vince", null, null], ["Katyul", "Csendi", null, null], ["Csongi", "Ádám", null, null], ["Bence", "Sámsi", null, null]], "20": [["Bazsa", "Sámsi", null, null], ["Katyul", "Ádám", null, null], ["Csongi", "Csendi", null, null], ["Bence", "Vince", null, null]], "21": [["Bazsa", "Ádám", null, null], ["Katyul", "Sámsi", null, null], ["Csongi", "Vince", null, null], ["Bence", "Csendi", null, null]], "22": [["Bazsa", "Katyul", null, null], ["Csongi", "Bence", null, null], ["Csendi", "Vince", null, null], ["Sámsi", "Ádám", null, null]], "23": [["Bazsa", "Csongi", null, null], ["Katyul", "Bence", null, null], ["Csendi", "Sámsi", null, null], ["Vince", "Ádám", null, null]], "24": [["Bazsa", "Bence", null, null], ["Katyul", "Csongi", null, null], ["Csendi", "Ádám", null, null], ["Vince", "Sámsi", null, null]], "25": [["Bazsa", "Csendi", null, null], ["Katyul", "Vince", null, null], ["Csongi", "Sámsi", null, null], ["Bence", "Ádám", null, null]], "26": [["Bazsa", "Vince", null, null], ["Katyul", "Csendi", null, null], ["Csongi", "Ádám", null, null], ["Bence", "Sámsi", null, null]], "27": [["Bazsa", "Sámsi", null, null], ["Katyul", "Ádám", null, null], ["Csongi", "Csendi", null, null], ["Bence", "Vince", null, null]], "28": [["Bazsa", "Ádám", null, null], ["Katyul", "Sámsi", null, null], ["Csongi", "Vince", null, null], ["Bence", "Csendi", null, null]], "29": [["Bazsa", "Katyul", null, null], ["Csongi", "Bence", null, null], ["Csendi", "Vince", null, null], ["Sámsi", "Ádám", null, null]], "30": [["Bazsa", "Csongi", null, null], ["Katyul", "Bence", null, null], ["Csendi", "Sámsi", null, null], ["Vince", "Ádám", null, null]], "31": [["Bazsa", "Bence", null, null], ["Katyul", "Csongi", null, null], ["Csendi", "Ádám", null, null], ["Vince", "Sámsi", null, null]], "32": [["Bazsa", "Csendi", null, null], ["Katyul", "Vince", null, null], ["Csongi", "Sámsi", null, null], ["Bence", "Ádám", null, null]], "33": [["Bazsa", "Vince", null, null], ["Katyul", "Csendi", null, null], ["Csongi", "Ádám", null, null], ["Bence", "Sámsi", null, null]]};
 // ============================
 
 const $ = id => document.getElementById(id);
@@ -139,16 +138,28 @@ async function apiGet(url,label,ms){
 
 // ---------- élő frissítés ----------
 const USER_IDS={};
-async function refresh(silent){
-  const st=$('status'), btn=$('refreshBtn'); btn.disabled=true; st.className='';
-  const got={}; let filled=0, i=0, n=Object.keys(MEMBERS).length;
+// Hiba eseten a statuszsavban jelezunk. Ha epp fordulo van folyamatban
+// (van elo eredmeny vagy a szerver ideiglenesnek jelolt fordulot), a
+// felhasznalot az erdekli, hogy az elo allas nem frissul - errol szol az
+// uzenet. Nyugalmi idoszakban a tarolt allas amugy is naprakesz.
+function lekeresHiba(){
+  const st=$('status'); st.className='err';
+  const vanElo = Object.keys(LIVE).length>0 || (window.PROVISIONAL||[]).length>0;
+  st.textContent = vanElo
+    ? 'Automata lekérés hiba: az állások a forduló végén frissülnek.'
+    : 'Az élő frissítés most nem elérhető — a tárolt állás látható.';
+}
+async function refresh(){
+  const st=$('status'); st.className='';
+  const got={}; let filled=0, i=0, ok=0, n=Object.keys(MEMBERS).length;
   try{
     for(const [name,uname] of Object.entries(MEMBERS)){
       i++;
       const u=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/rankings?include=user_team.user.id,summary_statistics,ranking,rounds,competition_rank&page=1&per_page=5&filter%5Bsearch%5D=${encodeURIComponent(uname)}`;
-      let j; try{ j=await apiGet(u,`(${i}/${n}) ${name}`);}catch(e){ if(!silent){st.className='err';st.textContent=`${name}: ${e.message}`;} continue; }
+      let j; try{ j=await apiGet(u,`(${i}/${n}) ${name}`);}catch(e){ continue; }
       const row=(j.data||[]).find(d=>d.user_team?.user?.username===uname)||j.data?.[0];
       if(!row) continue;
+      ok++;
       if(row.user_team?.user?.id) USER_IDS[name]=row.user_team.user.id;
       got[name]={};
       for(const rs of (row.user_team?.round_statistics||[])) got[name][rs.round_number]=rs.points;
@@ -163,13 +174,13 @@ async function refresh(silent){
       if(!hp && !vp) return;                // 0-0 = a fordulo el sem kezdodott
       (LIVE[r]=LIVE[r]||[])[i]=[m[0],m[1],hp,vp]; filled++;
     });
+    if(!ok){ lekeresHiba(); return; }
     T.rPast=lastPlayedRound(); T.rNext=nextRound();
     renderTable(); renderMatches('past'); renderMatches('next'); renderMatrix();
     st.className='ok';
     const now=new Date().toLocaleString('hu-HU',{hour:'2-digit',minute:'2-digit'});
     st.textContent = filled? `Frissítve ${now} — ${filled} élő eredmény (a tabella csak lezárt fordulókból számol).` : `Naprakész (ellenőrizve: ${now})`;
-  }catch(e){ st.className='err'; st.textContent = silent? 'Az élő frissítés most nem elérhető — a tárolt állás látható.' : e.message; }
-  btn.disabled=false;
+  }catch(e){ lekeresHiba(); }
 }
 
 // ---------- keret + szezon nézet ----------
@@ -351,7 +362,6 @@ document.addEventListener('click',e=>{
 $('ovClose').addEventListener('click',closeModal);
 $('ov').addEventListener('click',e=>{ if(e.target.id==='ov') closeModal(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
-$('refreshBtn').addEventListener('click',()=>refresh(false));
 
 // ---------- indulás ----------
 async function boot(){
@@ -364,6 +374,7 @@ async function boot(){
       // hanem a LIVE overlaybe: a tabellaba nem szamit bele, a meccspanelen
       // viszont latszik "elo" jelolessel.
       const ideiglenes = new Set((j&&j.provisional||[]).map(Number));
+      window.PROVISIONAL = [...ideiglenes];   // a lekeresHiba() hasznalja
       if(j&&j.schedule) for(const k in j.schedule){
         if(ideiglenes.has(+k))
           LIVE[k]=j.schedule[k].map(m=>played(m)?[m[0],m[1],m[2],m[3]]:null);
@@ -374,7 +385,7 @@ async function boot(){
   }catch(e){}
   T.rPast=lastPlayedRound(); T.rNext=nextRound();
   renderTable(); renderMatches('past'); renderMatches('next'); renderMatrix();
-  refresh(true);
+  refresh();
 }
 boot();
 </script>
