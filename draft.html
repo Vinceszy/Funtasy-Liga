@@ -89,6 +89,9 @@ let liga = {};
 let PLAYERS = {};   // jatekos-torzs: {id: {n,t,p}}
 let SQUADS = {};    // jelenlegi keretek: {liga_id: [element,...]}
 let HIST = {};      // fordulonkenti keretek: {gw: {liga_id: [{e,b,pts},...]}}
+const LIVE = {};    // elo eredmenyek a folyo fordulora - tabellaba NEM szamit
+let LIVEGW = null;  // a most zajlo fordulo szama (ha van)
+let LIVEPTS = {};   // percre friss jatekos-pontok: {element: pont}
 
 const nev = id => (ENTRIES[id] && ENTRIES[id].name) || ('#' + id);
 const jat = e => PLAYERS[e] || { n: '#' + e, t: '', p: '' };
@@ -100,6 +103,7 @@ const T = FunTasy.create({
   firstRound: () => liga.start_event || 1,
   lastRound:  () => liga.stop_event  || 38,
   nameHeader: 'Csapat',
+  live:       LIVE,
   tiebreak:   'rg',       // FPL-alappontozas: holtversenynel a szerzett pont dont
   label:       id => nev(id),
   tag:         id => (ENTRIES[id] && ENTRIES[id].short) || '',
@@ -221,7 +225,15 @@ function showMatch(h, v, r){
   $('mTitle').textContent = nev(h) + '  vs  ' + nev(v);
   $('mSub').textContent = r + '. forduló';
   $('mTabs').innerHTML = '';
-  const H = (HIST[r] || {})[h], V = (HIST[r] || {})[v];
+  let H = (HIST[r] || {})[h], V = (HIST[r] || {})[v];
+  // a folyo fordulon a repobeli (3 orankent frissulo) pontok helyett a
+  // percre friss ertekeket mutatjuk, ha az elo lekeres mar megjott
+  if (r === LIVEGW && Object.keys(LIVEPTS).length){
+    const friss = x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts });
+    if (H) H = H.map(friss);
+    if (V) V = V.map(friss);
+    $('mSub').textContent += ' · élő állás';
+  }
   if (H && V){
     $('mBody').innerHTML = `<div class="sqwrap">${sqcolHTML(h, H)}${sqcolHTML(v, V)}</div>`;
     return;
@@ -245,10 +257,72 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
+// ---------- élő frissítés ----------
+// A draft.premierleague.com közvetlenül CORS miatt nem hívható böngészőből,
+// de CORS-proxykon át igen — ugyanazokon, amiket az NB1-oldal is használ.
+// A trükk: a kezdőcsapatok a forduló indulásakor RÖGZÜLNEK (a repóban vannak,
+// draft_history.json), ezért élőben csak a nyilvános, játékosonkénti pontokat
+// kell lekérni (event/{gw}/live), és abból összegezhető minden meccs állása.
+// A tabellába az élő állás NEM számít bele. Ha a lekérés elhasal, a tárolt
+// (3 óránként frissülő) adat marad, hibajelzéssel.
+const ROUTES = [
+  { n:'direkt',     f:u => u },
+  { n:'corsproxy',  f:u => 'https://corsproxy.io/?url=' + encodeURIComponent(u) },
+  { n:'allorigins', f:u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u) },
+];
+let goodRoute = null;
+async function apiGet(url, ms){
+  ms = ms || 9000;
+  const sorrend = goodRoute ? [goodRoute, ...ROUTES.filter(r => r !== goodRoute)] : ROUTES;
+  for (const rt of sorrend){
+    try{
+      const c = new AbortController(); const t = setTimeout(() => c.abort(), ms);
+      const res = await fetch(rt.f(url), { signal:c.signal, headers:{ 'Accept':'application/json' } })
+        .finally(() => clearTimeout(t));
+      if (!res.ok) continue;
+      const j = JSON.parse(await res.text());
+      if (j && typeof j === 'object'){ goodRoute = rt; return j; }
+    }catch(e){ /* kovetkezo utvonal */ }
+  }
+  return null;
+}
+function lekeresHiba(){
+  const st = $('status'); st.className = 'err';
+  st.textContent = LIVEGW
+    ? 'Automata lekérés hiba: az állások a forduló végén frissülnek.'
+    : 'Az élő frissítés most nem elérhető — a tárolt állás látható.';
+}
+async function liveRefresh(){
+  const st = $('status');
+  const game = await apiGet('https://draft.premierleague.com/api/game');
+  if (!game){ lekeresHiba(); return; }
+  const gw = game.current_event;
+  if (!gw || game.current_event_finished) return;       // nincs folyo fordulo
+  LIVEGW = gw;
+  const elo = await apiGet('https://draft.premierleague.com/api/event/' + gw + '/live');
+  if (!elo){ lekeresHiba(); return; }
+  LIVEPTS = {};
+  const el = elo.elements || {};
+  if (Array.isArray(el)) el.forEach(v => { LIVEPTS[v.id] = ((v.stats || {}).total_points) || 0; });
+  else for (const k in el) LIVEPTS[k] = (((el[k] || {}).stats) || {}).total_points || 0;
+  // meccsallasok a kezdok pontjaibol - csak ha a fordulo keretei mar a repoban vannak
+  const keretek = HIST[gw];
+  if (keretek){
+    const osszeg = id => (keretek[id] || []).filter(x => !x.b)
+      .reduce((s, x) => s + (LIVEPTS[x.e] ?? x.pts ?? 0), 0);
+    LIVE[gw] = (SCHEDULE[gw] || []).map(m =>
+      played(m) ? null : [m[0], m[1], osszeg(m[0]), osszeg(m[1])]);
+    T.renderMatches('past'); T.renderMatches('next');
+  }
+  st.className = 'ok';
+  st.textContent = 'Élő pontok frissítve: '
+    + new Date().toLocaleTimeString('hu-HU', { hour:'2-digit', minute:'2-digit' })
+    + (keretek ? ' — a ' + gw + '. forduló még tart' : '');
+}
+
 // ---------- betöltés ----------
-// A draft.premierleague.com böngészőből CORS miatt nem hívható: minden adatot
-// a collect_draft.py gyűjt szerveroldalon. A keret-fájlok hiánya nem hiba
-// (a szezon eleje előtt még nem léteznek) — az oldal enélkül is működik.
+// A liga-adatokat a collect_draft.py gyűjti szerveroldalon 3 óránként; a
+// keret-fájlok hiánya nem hiba (a szezon eleje előtt még nem léteznek).
 const opcional = u => fetch(u + '?t=' + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null);
 Promise.all([
   fetch('draft.json?t=' + Date.now()).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
@@ -270,6 +344,7 @@ Promise.all([
     $('status').textContent = d ? ('Frissítve: ' + d.toLocaleString('hu-HU')) : '';
     $('status').className = 'ok';
     T.renderAll();
+    liveRefresh();
   })
   .catch(e => {
     $('status').textContent = 'Nem sikerült betölteni a draft.json-t: ' + e.message;
