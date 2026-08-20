@@ -51,27 +51,81 @@ def main():
         points[name] = {int(s["round_number"]): s["points"] for s in stats}
         print("  %s: fordulok=%s" % (name, sorted(points[name])))
 
-    filled = 0
+    # --- Melyik fordulo tekintheto veglegesnek? ---
+    # A ranglista-vegpont nem ad "lezarult" jelzot, ezert kovetkeztetni kell.
+    # A fordulok nem fedik at egymast, tehat ha egy KESOBBI fordulonak mar van
+    # pontja, az elozo biztosan lezarult. A legutolso ilyen fordulo maga meg
+    # tarthat -> az IDEIGLENES.
+    #
+    # Ez azert szamit, mert korabban egy menet kozben elkapott reszeredmeny
+    # veglegesként kerult be, es soha nem javult (a "ha mar ki van tolve,
+    # hagyd ki" agy miatt). Most ket dolog valtozott:
+    #   1. az ideiglenes fordulo eredmenye MINDEN futasnal felulirodik, tehat
+    #      a reszeredmeny magatol helyesre javul;
+    #   2. a fajl megmondja, mely fordulo ideiglenes, es az oldal azt nem
+    #      szamolja bele a tabellaba.
+    minden_r = sorted(int(x) for x in schedule)
+    utolso_r = minden_r[-1] if minden_r else 0
+    elindult = [r for r in minden_r
+                if any(points.get(n, {}).get(r) for n in MEMBERS)]
+    max_elindult = max(elindult) if elindult else 0
+
+    def veglegesnek_tekintheto(r):
+        if r < max_elindult:
+            return True                    # egy kesobbi fordulo mar elindult
+        if r == utolso_r == max_elindult:
+            # A szezon utolso fordulojanal nincs "kovetkezo", ami lezarna.
+            # Ilyenkor akkor tekintjuk lezartnak, ha MINDEN szakvezetonek van
+            # pontja - ez a szezon vegen mar biztonsagos.
+            return all(points.get(n, {}).get(r) for n in MEMBERS)
+        return False
+
+    beirt, javitott, ideiglenes = 0, 0, []
     for rnd, matches in schedule.items():
         r = int(rnd)
+        vegleges = veglegesnek_tekintheto(r)
+        if r in elindult and not vegleges:
+            ideiglenes.append(r)
         for m in matches:
-            if m[2] is not None:
-                continue
             hp, vp = points.get(m[0], {}).get(r), points.get(m[1], {}).get(r)
             if hp is None or vp is None:
                 continue
-            if not hp and not vp:          # 0-0 = a fordulo meg nem zarult le
-                print("  . %d. fordulo meg nem lezart (%s-%s)" % (r, m[0], m[1]))
+            if not hp and not vp:          # 0-0 = a fordulo el sem kezdodott
                 continue
+            if m[2] == hp and m[3] == vp:
+                continue                   # nincs valtozas
+            # A vegpont az igazsag: ha mas erteket ad, a tarolt volt hibas
+            # (pl. menet kozben elkapott reszeredmeny, vagy utolagos MLSZ-
+            # korrekcio). Ezert MINDIG szinkronizalunk hozza - ez az, ami
+            # korabban hianyzott, es amiatt ragadt be a reszeredmeny. Minden
+            # ilyen javitas naplozva van, es a commit diffjeben is latszik.
+            elozo = None if m[2] is None else (m[2], m[3])
             m[2], m[3] = hp, vp
-            filled += 1
-            print("  + %d. fordulo: %s %s - %s %s" % (r, m[0], hp, vp, m[1]))
+            if elozo is None:
+                beirt += 1
+                print("  + %d. fordulo%s: %s %s - %s %s"
+                      % (r, "" if vegleges else " (ideiglenes)", m[0], hp, vp, m[1]))
+            else:
+                javitott += 1
+                print("  ~ %d. fordulo%s: %s %s - %s %s  (volt: %s - %s)"
+                      % (r, "" if vegleges else " (ideiglenes)", m[0], hp, vp, m[1],
+                         elozo[0], elozo[1]))
 
-    if filled:
+    ideiglenes = sorted(set(ideiglenes))
+    regi_ideiglenes = data.get("provisional") or []
+    valtozott = bool(beirt or javitott) or ideiglenes != regi_ideiglenes
+
+    if valtozott:
+        # Az oldal ebbol tudja, melyik fordulot ne szamolja a tabellaba.
+        data["provisional"] = ideiglenes
         data["updated"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
         with open("results.json", "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=0)
-    print("Kesz: %d uj eredmeny." % filled)
+
+    if ideiglenes:
+        print("  . ideiglenes (meg tarthat): %s. fordulo"
+              % ", ".join(str(r) for r in ideiglenes))
+    print("Kesz: %d uj, %d javitott eredmeny." % (beirt, javitott))
     return 0
 
 

@@ -357,7 +357,20 @@ $('refreshBtn').addEventListener('click',()=>refresh(false));
 async function boot(){
   try{
     const r=await fetch('results.json?t='+Date.now());
-    if(r.ok){ const j=await r.json(); if(j&&j.schedule) for(const k in j.schedule) SCHEDULE[k]=j.schedule[k]; }
+    if(r.ok){
+      const j=await r.json();
+      // A collect.py megjeloli, mely fordulo lehet meg folyamatban
+      // ("provisional"). Az ilyen fordulo eredmenye NEM a menetrendbe kerul,
+      // hanem a LIVE overlaybe: a tabellaba nem szamit bele, a meccspanelen
+      // viszont latszik "elo" jelolessel.
+      const ideiglenes = new Set((j&&j.provisional||[]).map(Number));
+      if(j&&j.schedule) for(const k in j.schedule){
+        if(ideiglenes.has(+k))
+          LIVE[k]=j.schedule[k].map(m=>played(m)?[m[0],m[1],m[2],m[3]]:null);
+        else
+          SCHEDULE[k]=j.schedule[k];
+      }
+    }
   }catch(e){}
   T.rPast=lastPlayedRound(); T.rNext=nextRound();
   renderTable(); renderMatches('past'); renderMatches('next'); renderMatrix();
