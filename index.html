@@ -6,162 +6,7 @@
 <title>FunTasy Liga — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#0B1F16;--panel:#12291D;--panel2:#0E2418;--line:#2E4A38;--ink:#F2EFE6;--dim:#9DB3A4;
---amber:#FFB020;--magenta:#E5378B;--win:#3DDC84;--lose:#E5533D;--draw:#9DB3A4}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{max-width:100%;overflow-x:hidden}
-img,table{max-width:100%}
-body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;min-height:100vh}
-.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
-header{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px 20px;border-bottom:3px solid var(--amber);padding-bottom:14px;margin-bottom:22px}
-h1{font-family:'Archivo Black';font-size:clamp(26px,5vw,40px);letter-spacing:.5px}
-h1 .fun{color:var(--amber)}h1 .tag{color:var(--magenta)}
-.sub{color:var(--dim);font-size:13px}
-.btn{margin-left:auto;background:var(--amber);color:#1A1200;border:0;font:700 14px Inter;padding:10px 18px;border-radius:6px;cursor:pointer}
-.btn:hover{filter:brightness(1.08)}.btn:disabled{opacity:.5;cursor:wait}
-#status{font:500 12px 'JetBrains Mono';color:var(--dim);width:100%;min-height:16px}
-#status.err{color:var(--lose)}#status.ok{color:var(--win)}
-.grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:22px}
-.grid>*{min-width:0}
-.panel{min-width:0}
-@media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:22px}
-.panel h2{min-width:0;flex-wrap:wrap;font-family:'Archivo Black';font-size:15px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);
-padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th{font:600 11px Inter;letter-spacing:1px;text-transform:uppercase;color:var(--dim);text-align:right;padding:8px 10px;border-bottom:1px solid var(--line)}
-th:first-child,th:nth-child(2){text-align:left}
-td{padding:9px 10px;border-bottom:1px solid var(--panel2);text-align:right;font-family:'JetBrains Mono';font-size:13.5px}
-td.name{font-family:Inter;font-weight:700;text-align:left;font-size:14px}
-td.rank{text-align:left;color:var(--dim);width:30px}
-tr:nth-child(1) td.rank{color:var(--amber)}
-td.pont{color:var(--amber);font-weight:700;font-size:15px}
-.pos{color:var(--win)}.neg{color:var(--lose)}
-.clickable{cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
-.clickable:hover{color:var(--amber)}
-.form{display:inline-flex;gap:3px;vertical-align:middle}
-.dot{width:9px;height:9px;border-radius:2px;display:inline-block}
-.dot.GY{background:var(--win)}.dot.V{background:var(--lose)}.dot.D{background:var(--draw)}
-.roundnav{display:flex;align-items:center;gap:8px;margin-left:auto}
-.roundnav button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:15px}
-.roundnav select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:5px 8px;border-radius:6px;font:600 13px Inter}
-.match{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--panel2);cursor:pointer}
-.match:hover{background:var(--panel2)}
-.match .h{text-align:right;font-weight:700}.match .v{text-align:left;font-weight:700}
-.match .winner{color:var(--amber)}
-.score{font-family:'JetBrains Mono';font-weight:700;font-size:16px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;white-space:nowrap;min-width:130px;text-align:center}
-.score .na{color:var(--dim);font-weight:500}
-.matrix{padding:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
-.tablewrap table{min-width:100%}
-.tablewrap td.name,.tablewrap th:nth-child(2){position:sticky;left:0;background:var(--panel);z-index:1}
-.tablewrap td.rank,.tablewrap th:first-child{position:sticky;left:0;background:var(--panel);z-index:2}
-.matrix table{font-size:11px}
-.matrix td,.matrix th{padding:5px 6px;text-align:center;font-family:'JetBrains Mono'}
-.matrix td.w{color:var(--win)}.matrix td.l{color:var(--lose)}.matrix td.d{color:var(--draw)}.matrix td.x{color:#3a5245}
-.note{color:var(--dim);font-size:12px;padding:12px 16px;line-height:1.5}
-/* ===== overlay ===== */
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:50;overscroll-behavior:contain}
-.ov.open{display:flex}
-.modal{background:var(--panel);border:1px solid var(--amber);border-radius:10px;width:100%;max-width:940px;padding:20px;position:relative}
-.mclose{position:absolute;top:10px;right:14px;background:none;border:0;color:var(--dim);font-size:26px;cursor:pointer;line-height:1}
-.mclose:hover{color:var(--ink)}
-.mtitle{font-family:'Archivo Black';color:var(--amber);font-size:17px;margin-bottom:3px;padding-right:30px}
-.msub{font-size:12px;color:var(--dim);margin-bottom:14px}
-.tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
-.tab{background:var(--panel2);border:1px solid var(--line);color:var(--dim);padding:6px 14px;border-radius:6px;cursor:pointer;font:600 13px Inter}
-.tab.on{background:var(--amber);color:#1A1200;border-color:var(--amber)}
-.sqwrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
-.sqwrap>*{min-width:0}
-.sqwrap.one{grid-template-columns:1fr;max-width:460px}
-@media(max-width:760px){.sqwrap{grid-template-columns:minmax(0,1fr)}}
-.sqcol h3{font-family:'Archivo Black';font-size:14px;letter-spacing:1px;color:var(--amber);padding-bottom:8px;
-margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline}
-.sqcol h3 span{font-family:'JetBrains Mono';color:var(--ink);font-size:15px}
-.plr{display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid var(--panel2);font-size:13px}
-.plr .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.plr .tm{color:var(--dim);font-size:11px}
-.plr .pts{font-family:'JetBrains Mono';font-weight:700;min-width:52px;text-align:right}
-.flag{display:inline-block;width:14px;height:9px;margin-left:6px;vertical-align:middle;border-radius:1px;
-  background:linear-gradient(to bottom,#CE2939 0 33.3%,#fff 33.3% 66.6%,#477050 66.6% 100%);border:1px solid rgba(0,0,0,.35)}
-.ppos{display:inline-block;min-width:26px;text-align:center;background:var(--panel2);border:1px solid var(--line);
-  border-radius:3px;font:700 9px 'JetBrains Mono';color:var(--dim);padding:2px 4px;margin-right:6px}
-.mult{font:600 10px Inter;color:var(--dim);margin-left:4px}
-.eff{font-family:'JetBrains Mono';font-weight:700;min-width:52px;text-align:right}
-.raw{font-family:'JetBrains Mono';color:var(--dim);font-size:11px;min-width:42px;text-align:right}
-.sumline{display:flex;justify-content:space-between;padding:6px 4px;border-top:1px solid var(--line);margin-top:6px;font-size:12px;color:var(--dim)}
-.u21{background:#2E6BE5;color:#fff;font:700 9px Inter;border-radius:3px;padding:1px 4px}
-
-.bonus{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border:1px solid var(--line);
-  border-radius:6px;padding:8px 10px;margin:10px 0 6px;font-size:12px}
-.bonus b{font-family:'JetBrains Mono';font-size:14px}
-.bonus.ok b{color:var(--win)} .bonus.no b{color:var(--lose)}
-.cap{background:var(--magenta);color:#fff;font:700 9px Inter;border-radius:3px;padding:1px 4px}
-.subhead{font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:12px 0 4px}
-.loading{color:var(--dim);padding:26px;text-align:center}
-
-/* ================= MOBIL ================= */
-@media(max-width:640px){
-  .wrap{padding:12px 10px 40px}
-  header{gap:8px 12px;padding-bottom:10px;margin-bottom:14px}
-  h1{font-size:26px;width:100%}
-  .sub{font-size:11px;order:3;width:100%}
-  .btn{margin-left:0;order:2;padding:8px 14px;font-size:13px}
-  #status{font-size:11px;order:4}
-  .grid{gap:14px}
-  .panel{margin-bottom:14px;border-radius:8px}
-  .panel h2{font-size:13px;padding:10px 12px;flex-wrap:wrap;gap:8px}
-  .roundnav{width:100%;margin-left:0;justify-content:space-between}
-  .roundnav select{flex:1}
-  .roundnav button{width:38px;height:38px}
-
-  table{font-size:13px}
-  th,td{padding:8px 6px}
-  .dot{width:7px;height:7px}
-  /* semmi ne kényszerítsen szélességet */
-  .panel{overflow:visible}
-  .score{min-width:0}
-  .pts,.eff,.raw{min-width:0}
-  .ppos{min-width:0;padding:2px 3px}
-  .match{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);padding:11px 8px;gap:6px}
-  .match .h,.match .v{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .nm{min-width:0}
-  td.name{max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .sqcol h3{font-size:13px}
-
-  /* meccsek */
-  .match{padding:11px 10px;gap:6px}
-  .match .h,.match .v{font-size:13px}
-  .score{min-width:0;font-size:14px;padding:4px 7px}
-
-  /* mátrix: vízszintesen görgethető, ragadós első oszlop */
-  .matrix{padding:8px}
-  .matrix table{font-size:10px}
-  .matrix th:first-child{position:sticky;left:0;background:var(--panel);z-index:1}
-
-  /* modal: majdnem teljes képernyő */
-  .ov{padding:0;align-items:flex-start}
-  .modal{border-radius:0;border-left:0;border-right:0;min-height:100vh;height:auto;
-         padding:16px 12px calc(64px + env(safe-area-inset-bottom));max-width:none}
-  .mclose{position:sticky;top:0;float:right;margin:-8px -4px 0 0;background:var(--panel);border-radius:6px}
-  .mtitle{font-size:15px}
-  .tabs{gap:5px}
-  .tab{padding:7px 10px;font-size:12px;flex:1;text-align:center}
-  .sqwrap{grid-template-columns:minmax(0,1fr);gap:22px}
-  .plr{font-size:12.5px;padding:7px 2px}
-  .ppos{min-width:30px;font-size:9px}
-  .pts{min-width:44px}
-  .bonus{font-size:11px;padding:7px 8px}
-  .mclose{top:6px;right:8px;font-size:30px;padding:4px 8px}
-}
-@media(max-width:380px){
-  .tm{display:none}
-  table{font-size:12px}
-  th,td{padding:7px 5px}
-}
-
-</style>
+<link rel="stylesheet" href="funtasy.css">
 </head>
 <body>
 <div class="wrap">
@@ -222,6 +67,7 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
   </div>
 </div>
 
+<script src="funtasy.js"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -233,81 +79,38 @@ const SCHEDULE = {"1": [["Bazsa", "Katyul", 50.75, 56.75], ["Csongi", "Bence", 4
 // ============================
 
 const $ = id => document.getElementById(id);
-const fmt = x => (Math.round(x*100)/100).toLocaleString('hu-HU',{maximumFractionDigits:2});
-const played = m => m[2]!=null && m[3]!=null;
-const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = FunTasy.fmt, esc = FunTasy.esc, played = FunTasy.played;
 
-function lastPlayedRound(){ let r=0; for(let i=1;i<=33;i++) if(SCHEDULE[i].some(played)) r=i; return r||1; }
-function nextRound(){ const l=lastPlayedRound(); return Math.min(33, SCHEDULE[l].every(played)? l+1 : l); }
-let rPast = 1, rNext = 2;
+// A fordulok szama a menetrendbol jon. Korabban a 33-as szam kilenc helyen
+// volt beegetve; ha valaha valtozik, most eleg a menetrendet cserelni.
+const ROUNDS = Object.keys(SCHEDULE).map(Number).sort((a,b)=>a-b);
+const LAST_ROUND = ROUNDS[ROUNDS.length-1];
 
-// ---------- tabella ----------
-function computeTable(){
-  const T={}; Object.keys(MEMBERS).forEach(n=>T[n]={M:0,GY:0,D:0,V:0,RG:0,KG:0,form:[]});
-  for(let r=1;r<=33;r++) for(const m of SCHEDULE[r]){
-    if(!played(m)) continue;
-    const [h,v,hp,vp]=m;
-    if(!T[h]||!T[v]) continue;
-    T[h].M++;T[v].M++;T[h].RG+=hp;T[h].KG+=vp;T[v].RG+=vp;T[v].KG+=hp;
-    if(hp>vp){T[h].GY++;T[v].V++;T[h].form.push('GY');T[v].form.push('V');}
-    else if(vp>hp){T[v].GY++;T[h].V++;T[v].form.push('GY');T[h].form.push('V');}
-    else {T[h].D++;T[v].D++;T[h].form.push('D');T[v].form.push('D');}
-  }
-  return Object.entries(T).map(([n,s])=>({name:n,...s,GK:s.RG-s.KG,Pont:s.GY*3+s.D}))
-    .sort((a,b)=>b.Pont-a.Pont||b.GK-a.GK||b.RG-a.RG);
-}
-function renderTable(){
-  let h=`<tr><th></th><th>Szakvezető</th><th>M</th><th>GY</th><th>D</th><th>V</th><th>RG</th><th>KG</th><th>GK</th><th>Pont</th><th>Forma</th></tr>`;
-  computeTable().forEach((r,i)=>{
-    const form=r.form.slice(-5).map(f=>`<span class="dot ${f}"></span>`).join('');
-    h+=`<tr><td class="rank">${i+1}.</td>
-    <td class="name"><span class="clickable" data-member="${esc(r.name)}">${esc(r.name)}</span></td>
-    <td>${r.M}</td><td>${r.GY}</td><td>${r.D}</td><td>${r.V}</td>
-    <td>${fmt(r.RG)}</td><td>${fmt(r.KG)}</td>
-    <td class="${r.GK>=0?'pos':'neg'}">${fmt(r.GK)}</td>
-    <td class="pont">${r.Pont}</td><td style="text-align:left"><span class="form">${form}</span></td></tr>`;
-  });
-  $('table').innerHTML=h;
-}
+// Elo, meg nem archivalt eredmenyek. A tabellaba es a matrixba NEM szamitanak
+// bele: amig a collect.py nem irta be a results.json-ba, nem tudjuk biztosan,
+// hogy a fordulo lezarult-e. A meccspanelen "elo" jelolessel jelennek meg.
+const LIVE = {};
+const eloMeccs = (r,i) => (LIVE[r] && LIVE[r][i]) || null;
 
-// ---------- meccspanelek ----------
-function fillSelect(sel){ if(sel.options.length) return;
-  for(let r=1;r<=33;r++){const o=document.createElement('option');o.value=r;o.textContent=r+'. forduló';sel.appendChild(o);} }
-function renderMatches(which){
-  const r = which==='past'? rPast : rNext;
-  const sel = which==='past'? $('selPast') : $('selNext');
-  fillSelect(sel); sel.value=r;
-  let h='';
-  for(const m of SCHEDULE[r]){
-    const [ho,ve,hp,vp]=m,p=played(m);
-    h+=`<div class="match" data-h="${esc(ho)}" data-v="${esc(ve)}">
-      <div class="h ${p&&hp>vp?'winner':''}">${esc(ho)}</div>
-      <div class="score">${p?`${fmt(hp)} <span style="color:var(--dim)">:</span> ${fmt(vp)}`:'<span class="na">— : —</span>'}</div>
-      <div class="v ${p&&vp>hp?'winner':''}">${esc(ve)}</div></div>`;
-  }
-  (which==='past'? $('mPast') : $('mNext')).innerHTML=h;
-}
-
-// ---------- mátrix ----------
-function renderMatrix(){
-  const names=Object.keys(MEMBERS), M={};
-  names.forEach(a=>{M[a]={};names.forEach(b=>M[a][b]=[0,0,0]);});
-  for(let r=1;r<=33;r++) for(const m of SCHEDULE[r]){
-    if(!played(m))continue; const [h,v,hp,vp]=m; if(!M[h]||!M[v])continue;
-    if(hp>vp){M[h][v][0]++;M[v][h][2]++;} else if(vp>hp){M[v][h][0]++;M[h][v][2]++;} else {M[h][v][1]++;M[v][h][1]++;}
-  }
-  let t='<table><tr><th></th>'+names.map(n=>`<th>${esc(n.slice(0,4))}</th>`).join('')+'</tr>';
-  for(const a of names){
-    t+=`<tr><th style="text-align:left">${esc(a)}</th>`;
-    for(const b of names){
-      if(a===b){t+='<td class="x">—</td>';continue;}
-      const [w,d,l]=M[a][b], n=w+d+l;
-      t+=`<td class="${n? (w>l?'w':(l>w?'l':'d')) : 'x'}">${n? w+'/'+d+'/'+l : '·'}</td>`;
-    }
-    t+='</tr>';
-  }
-  $('matrix').innerHTML=t+'</table>';
-}
+const T = FunTasy.create({
+  entries:     () => Object.keys(MEMBERS),
+  schedule:    SCHEDULE,
+  live:        LIVE,
+  firstRound:  1,
+  lastRound:   LAST_ROUND,
+  nameHeader:  'Szakvezető',
+  matrixOrder: () => Object.keys(MEMBERS),        // rogzitett sorrend, nem tabella szerinti
+  nameAttr:    n => `data-member="${esc(n)}"`,
+  matchAttr:   (h,v) => `data-h="${esc(h)}" data-v="${esc(v)}"`,
+  els: { table:'table', matrix:'matrix', mPast:'mPast', mNext:'mNext',
+         selPast:'selPast', selNext:'selNext' }
+});
+T.bindNav();
+const renderTable     = () => T.renderTable();
+const renderMatches   = w  => T.renderMatches(w);
+const renderMatrix    = () => T.renderMatrix();
+const lastPlayedRound = () => T.lastPlayedRound();
+const nextRound       = () => T.nextRound();
 
 // ---------- API ----------
 const ROUTES=[
@@ -350,18 +153,21 @@ async function refresh(silent){
       got[name]={};
       for(const rs of (row.user_team?.round_statistics||[])) got[name][rs.round_number]=rs.points;
     }
-    for(let r=1;r<=33;r++) for(const m of SCHEDULE[r]){
-      if(m[2]!=null) continue;
+    // A lekert eredmeny NEM a menetrendbe kerul, hanem a LIVE overlaybe: nem
+    // tudjuk rola, hogy a fordulo lezarult-e, ezert a tabellaba nem szamit
+    // bele. Amint a collect.py archivalja, a results.json-bol jon veglegesen.
+    for(const r of ROUNDS) SCHEDULE[r].forEach((m,i)=>{
+      if(m[2]!=null) return;                // mar archivalt = vegleges
       const hp=got[m[0]]?.[r], vp=got[m[1]]?.[r];
-      if(hp==null||vp==null) continue;
-      if(!hp && !vp) continue;              // 0-0 = még nem lezárt forduló
-      m[2]=hp; m[3]=vp; filled++;
-    }
-    rPast=lastPlayedRound(); rNext=nextRound();
+      if(hp==null||vp==null) return;
+      if(!hp && !vp) return;                // 0-0 = a fordulo el sem kezdodott
+      (LIVE[r]=LIVE[r]||[])[i]=[m[0],m[1],hp,vp]; filled++;
+    });
+    T.rPast=lastPlayedRound(); T.rNext=nextRound();
     renderTable(); renderMatches('past'); renderMatches('next'); renderMatrix();
     st.className='ok';
     const now=new Date().toLocaleString('hu-HU',{hour:'2-digit',minute:'2-digit'});
-    st.textContent = filled? `Frissítve ${now} — ${filled} új eredmény.` : `Naprakész (ellenőrizve: ${now})`;
+    st.textContent = filled? `Frissítve ${now} — ${filled} élő eredmény (a tabella csak lezárt fordulókból számol).` : `Naprakész (ellenőrizve: ${now})`;
   }catch(e){ st.className='err'; st.textContent = silent? 'Az élő frissítés most nem elérhető — a tárolt állás látható.' : e.message; }
   btn.disabled=false;
 }
@@ -377,15 +183,6 @@ async function loadSquadFile(){
     else SQUAD_FILE={};
   }catch(e){ SQUAD_FILE={}; }
   return SQUAD_FILE;
-}
-function deepName(o,depth=0){
-  if(!o||typeof o!=='object'||depth>6) return null;
-  const f=o.first_name||o.firstname, l=o.last_name||o.lastname;
-  if(f||l) return [f,l].filter(Boolean).join(' ');
-  if(typeof o.name==='string'&&o.name.trim()) return o.name;
-  if(typeof o.short_name==='string'&&o.short_name.trim()) return o.short_name;
-  for(const k in o){ const r=deepName(o[k],depth+1); if(r) return r; }
-  return null;
 }
 async function getSquad(name){
   if(SQUAD[name]) return SQUAD[name];
@@ -474,7 +271,7 @@ function playersHTML(name, rounds){
 function seasonHTML(name){
   let h=`<table><tr><th>F</th><th>Ellenfél</th><th>Pont</th><th>Ell.</th><th>Eredm.</th></tr>`;
   let gy=0,d=0,v=0;
-  for(let r=1;r<=33;r++) for(const m of SCHEDULE[r]){
+  for(const r of ROUNDS) for(const m of SCHEDULE[r]){
     let opp,own,ov;
     if(m[0]===name){opp=m[1];own=m[2];ov=m[3];}
     else if(m[1]===name){opp=m[0];own=m[3];ov=m[2];}
@@ -489,6 +286,13 @@ function seasonHTML(name){
   return `<div style="font-size:13px;color:var(--dim);margin-bottom:8px">Mérleg: <b class="pos">${gy} GY</b> · ${d} D · <b class="neg">${v} V</b> — ${gy*3+d} pont</div>`+h+'</table>';
 }
 let mCurrent=[];
+function showEloUzenet(){
+  mCurrent=[]; openModal();
+  $('mTitle').textContent='A meccs még tart';
+  $('mSub').textContent='';
+  $('mTabs').innerHTML='';
+  $('mBody').innerHTML='<div class="loading">A meccs még tart, a keretek által szerzett pontok a forduló zárta után elérhetőek.</div>';
+}
 function openModal(){ $('ov').classList.add('open'); document.body.style.overflow='hidden'; }
 function closeModal(){ $('ov').classList.remove('open'); document.body.style.overflow=''; }
 async function showSquad(names,tab){
@@ -533,22 +337,20 @@ document.addEventListener('click',e=>{
   const tab=e.target.closest('[data-tab]');
   if(tab){ showSquad(mCurrent, tab.dataset.tab); return; }
   const jp=e.target.closest('[data-jump]');
-  if(jp){ closeModal(); rPast=+jp.dataset.jump; renderMatches('past');
+  if(jp){ closeModal(); T.rPast=+jp.dataset.jump; renderMatches('past');
           document.getElementById('mPast').scrollIntoView({behavior:'smooth',block:'center'}); return; }
   const mt=e.target.closest('.match');
-  if(mt){ showSquad([mt.dataset.h, mt.dataset.v]); return; }
-  const nav=e.target.closest('[data-nav]');
-  if(nav){
-    const d=+nav.dataset.d;
-    if(nav.dataset.nav==='past'){ rPast=Math.min(33,Math.max(1,rPast+d)); renderMatches('past'); }
-    else { rNext=Math.min(33,Math.max(1,rNext+d)); renderMatches('next'); }
+  if(mt){
+    // Meg tarto meccsnel nincs ertelme keretet mutatni: a mentett keret a
+    // legutobbi lezart fordulohoz tartozik, nem ehhez.
+    if(mt.classList.contains('elo')) showEloUzenet();
+    else showSquad([mt.dataset.h, mt.dataset.v]);
+    return;
   }
 });
 $('ovClose').addEventListener('click',closeModal);
 $('ov').addEventListener('click',e=>{ if(e.target.id==='ov') closeModal(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
-$('selPast').addEventListener('change',e=>{ rPast=+e.target.value; renderMatches('past'); });
-$('selNext').addEventListener('change',e=>{ rNext=+e.target.value; renderMatches('next'); });
 $('refreshBtn').addEventListener('click',()=>refresh(false));
 
 // ---------- indulás ----------
@@ -557,7 +359,7 @@ async function boot(){
     const r=await fetch('results.json?t='+Date.now());
     if(r.ok){ const j=await r.json(); if(j&&j.schedule) for(const k in j.schedule) SCHEDULE[k]=j.schedule[k]; }
   }catch(e){}
-  rPast=lastPlayedRound(); rNext=nextRound();
+  T.rPast=lastPlayedRound(); T.rNext=nextRound();
   renderTable(); renderMatches('past'); renderMatches('next'); renderMatrix();
   refresh(true);
 }
