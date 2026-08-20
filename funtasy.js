@@ -11,7 +11,9 @@
    tetszolegesek (az NB1-nel becenev, a PL-nel szam); a megjelenitest a
    hivo opcioi adjak: `label` (nev), `tag` (monogram a nev mogott),
    `matrixLabel` (a matrix tengelyei), `tiebreak` ('rg' = holtversenynel
-   a szerzett pont dont, alapertelmezetten a pontkulonbseg).
+   a szerzett pont dont, alapertelmezetten a pontkulonbseg),
+   `onMatrixClick(a,b)` (a matrix-cella kattintasa - a hivo nyitja ra a
+   sajat modaljat, tipikusan a h2hHTML(a,b) kimenetevel).
 
    ELO EREDMENY: a `live` overlay ugyanilyen alaku, de a benne levo
    eredmenyek NEM szamitanak bele a tabellaba es a matrixba - csak a

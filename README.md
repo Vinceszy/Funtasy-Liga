@@ -268,9 +268,11 @@ Nincs build lépés, nincs függőség. A kód három rétegben él:
   `renderMatches`, `renderMatrix` függvényeket, az élő-jelölést és az egymás elleni
   lista építőjét (`h2hHTML` — a mátrix-cella kattintása nyitja, `onMatrixClick`).
 - **`index.html` / `draft.html`** — csak az oldalspecifikus rész: konfiguráció, betöltés
-  és élő frissítés, meg az oldal saját modalja (a főoldalon `showSquad` / `squadHTML` /
-  `seasonHTML` / `playersHTML`, a PL-en `showTeam` / `showMatch` / `keretHTML` /
-  `fordulokHTML` / `jatekosokHTML`).
+  és élő frissítés, meg az oldal saját modalja (a főoldalon `showSquad` / `showMatchRound` /
+  `squadHTML` / `seasonHTML` / `playersHTML`, a PL-en `showTeam` / `showMatch` /
+  `keretHTML` / `fordulokHTML` / `jatekosokHTML`). A modalon belüli lapozást mindkét
+  oldalon ugyanaz a kis nézet-verem viszi (`vShow` / `vBack`): a belépési pont `root`,
+  a fülváltás `replace`, a listából nyíló nézet `push` — a vissza gomb ebből él.
 
 **Verziójelzés:** a két oldal a közös fájlokat `funtasy.css?v=N` / `funtasy.js?v=N`
 formában tölti. **Ha a `funtasy.css` vagy a `funtasy.js` változik, a `?v=` számot mindkét
