@@ -1,0 +1,20 @@
+---
+name: FPL Draft diagnosztika (ideiglenes)
+
+# IDEIGLENES: csak kezzel inditható, csak olvas, semmit nem commitol.
+# Ha a kerdesek eldoltek, ez a fajl es a DIAG-pl.py torolheto.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repo letoltese
+        uses: actions/checkout@v4
+
+      - name: FPL Draft diagnosztika
+        run: python3 DIAG-pl.py
