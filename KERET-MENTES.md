@@ -26,9 +26,10 @@ azzal nincs teendőd.
 
 ## 2. Könyvjelző létrehozása
 
-1. Nyisd meg a `bookmarklet.txt` fájlt, másold ki a **teljes tartalmát**
-2. A másolt szövegben cseréld ki az `IDE_JON_A_TOKEN` részt a saját tokenedre
-   *(a szöveg elején van, `token%3A%27IDE_JON_A_TOKEN%27` formában — csak a nagybetűs részt írd át)*
+1. Nyisd meg a `GOMB-bookmarklet.txt` fájlt, másold ki a **teljes tartalmát**
+2. A másolt szövegben cseréld ki az `IDE_A_TOKEN` részt a saját tokenedre
+   *(a szöveg elején van, `TOKEN%3D%27IDE_A_TOKEN%27` formában — csak az aposztrófok közötti
+   nagybetűs részt írd át, magukat az aposztrófokat ne)*
 3. Böngészőben: **Ctrl+Shift+O** (könyvjelzőkezelő) → jobb klikk → **Új könyvjelző**
    - **Név:** `Keret mentés`
    - **URL:** ide illeszd be a módosított szöveget
@@ -38,15 +39,20 @@ azzal nincs teendőd.
 
 1. Menj a **https://fantasy.mlsz.hu/** oldalra (elég betöltve lennie, bejelentkezve)
 2. Kattints a **Keret mentés** könyvjelzőre
-3. Jobb alul megjelenik a folyamat; a végén megkérdezi, **melyik fordulóhoz** mentse
-   (alapból a jelenlegit ajánlja — Enter)
-4. Kész: a repóban frissül a `squads.json` és a `squad_history.json`
+3. Jobb alul megjelenik a folyamat. A szkript **magától megállapítja**, mely fordulók
+   hiányoznak a `squad_history.json`-ból, és csak azokat kéri le — nem kérdez semmit
+4. Kész: a repóban frissül a `squad_history.json` és a `squads.json`
 
-**Mikor futtasd?** A forduló lezárása után, de az új piacnyitás előtt — akkor a keret
-még az adott fordulós állapotot mutatja.
+Ha már minden forduló megvan, ezt írja ki: *„Minden forduló naprakész (1–N).”* — ilyenkor
+nem nyúl a repóhoz.
 
-**Visszamenőleges pótlás:** korábbi fordulóhoz csak akkor tudsz menteni, ha a keret
-azóta nem változott — a fordulószám kézzel átírható a kérdésnél.
+**Mikor futtasd?** A forduló lezárása után. Nem kell kapkodni: a keret fordulónként
+visszamenőleg is lekérhető, tehát egy kihagyott hét később is pótolható.
+
+**Visszamenőleges pótlás:** automatikus. A keret-végpont fogad egy `filter[round_id]`
+paramétert (`round_id = 75 + 2 × fordulószám`), így a korábbi fordulók kerete is
+pontosan lekérhető, nem csak a mostani. Ha több hetet hagysz ki, a következő kattintás
+egyszerre pótolja mindet.
 
 ## Hibák
 

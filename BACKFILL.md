@@ -1,43 +1,42 @@
-# Visszamenőleges keret-gyűjtés (1–4. forduló)
+# Visszamenőleges keret-gyűjtés — **ELAVULT, nincs rá szükség**
 
-Az automata a mostani fordulótól kezdve mindent elment. A korábbi fordulók keretei
-csak kézzel pótolhatók — ehhez az alábbi kis szkript adja ki készen a JSON-t.
+Ez a fájl korábban egy kézi konzolszkriptet tartalmazott, amivel a régebbi fordulók
+kereteit lehetett pótolni: bemásolod a böngésző konzoljába, kimásolod a JSON-t, és
+kézzel beilleszted a `squad_history.json`-ba.
 
-## Így csináld
+**Ez a folyamat megszűnt.** A régi szkriptet azért távolítottuk el, mert mostanra nem
+csak fölösleges, hanem működésképtelen is — és félrevezető lett volna bent hagyni.
 
-1. Nyisd meg a **https://fantasy.mlsz.hu/** oldalt (bejelentkezve), és nyomj **F12 → Console**.
-2. Másold be az alábbi szkriptet, Enter.
-3. A konzol kiírja a kész JSON-blokkot — másold ki (jobb klikk → Copy object).
-4. A repóban a `squad_history.json` fájlban a `"rounds"` alá illeszd be az adott forduló
-   számával kulcsolva, pl. `"4": { ...ide a kimásolt objektum... }`.
+## Miért nem kell többé
 
-```js
-(async () => {
-  const MEMBERS = {"Katyul":"peterkmrs","Bence":"Dill Dough","Sámsi":"samsonp","Vince":"HolVanSalah",
-                   "Bazsa":"Hoxha98","Csongi":"szcsngr","Csendi":"cspeti93","Ádám":"siuu_1885"};
-  const C = 3, out = {};
-  const dn = (o,d=0) => { if(!o||typeof o!=='object'||d>6) return null;
-    const f=o.first_name,l=o.last_name; if(f||l) return [f,l].filter(Boolean).join(' ');
-    for(const k of ['name','short_name']) if(typeof o[k]==='string'&&o[k].trim()) return o[k].trim();
-    for(const k in o){ const r=dn(o[k],d+1); if(r) return r; } return null; };
-  for (const [name, uname] of Object.entries(MEMBERS)) {
-    const rk = await (await fetch(`https://fantasy-api.mlsz.hu/competitions/${C}/rankings?include=user_team.user.id&per_page=5&filter[search]=${encodeURIComponent(uname)}`)).json();
-    const row = (rk.data||[]).find(d=>d.user_team?.user?.username===uname) || rk.data?.[0];
-    const id = row?.user_team?.user?.id; if(!id){ console.warn('nincs id:', uname); continue; }
-    const j = await (await fetch(`https://fantasy-api.mlsz.hu/competitions/${C}/user-team-players-history?include=competition_player.player,competition_player.team&filter[user_id]=${id}`)).json();
-    out[name] = (j.data||[]).map(d => ({
-      name: dn(d.competition_player) || ('#'+(d.competition_player_id||d.id)),
-      team: d.competition_player?.team?.short_name || d.competition_player?.team?.name || '',
-      cap: !!d.is_captain, sub: d.type==='substitutes',
-      week: d.summary_statistics?.weekly_points ?? 0,
-      total: d.summary_statistics?.competition_points ?? 0
-    }));
-    console.log(name, out[name].length, 'fő');
-  }
-  console.log('--- MÁSOLD KI EZT ---');
-  console.log(JSON.stringify(out));
-})();
+Kiderült, hogy a keret-végpont fogad egy `filter[round_id]` paramétert, és hogy
+
+```
+round_id = 75 + 2 × fordulószám        (1.→77, 2.→79, 3.→81, 4.→83, 5.→85)
 ```
 
-**Fontos:** ez mindig az *aktuális* keretet adja vissza, tehát a hét lezárása után,
-de az új forduló piacnyitása előtt érdemes lefuttatni, ha egy adott fordulót akarsz rögzíteni.
+Ezzel a **korábbi fordulók kerete is pontosan lekérhető**, nem csak az aktuális — épp
+az a korlát szűnt meg, ami miatt ez a fájl készült.
+
+A `GOMB-bookmarklet.txt` ezt magától elvégzi: megnézi, mely fordulók hiányoznak a
+`squad_history.json`-ból, és egyetlen kattintással pótolja mindet. Lásd:
+[`KERET-MENTES.md`](KERET-MENTES.md).
+
+## Miért nem működne a régi szkript
+
+Ha valaki egy régi másolatból mégis elővenné, három okból sem adna használható adatot:
+
+1. **Nem küldött `filter[round_id]`-t** — a végpont enélkül ma **403 Forbidden**-nel
+   válaszol. (Korábban enélkül is ment, menet közben szigorítottak rajta.)
+2. **Rossz helyről olvasta a nevet.** A `competition_player.player` beágyazott objektumot
+   kérte, pedig a név közvetlenül a `competition_player`-ben van (`first_name` /
+   `last_name`).
+3. **Hiányos rekordokat gyártott:** nem gyűjtött `pos`, `u21`, `hun` és `price` mezőt,
+   amiket az oldal „Aktuális keret” és „Szezon játékosai” füle használ. A vele mentett
+   fordulók poszt- és magyarszabály-információ nélkül maradtak volna.
+
+## Ha valaha mégis kézzel kell
+
+A működő, bizonyítottan jó lekérési logika olvasható formában itt van:
+[`GOMB-forras.js`](GOMB-forras.js) — abból kimásolható a `fetch`-hívás a helyes
+`include` listával és `round_id` számítással.
