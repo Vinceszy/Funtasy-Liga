@@ -42,7 +42,8 @@ def get(url):
 
 def keret(user_id, r):
     url = (BASE + "user-team-players-history?include=" + urllib.parse.quote(INCLUDE)
-           + "&filter%5Buser_id%5D=%d&filter%5Bround_id%5D=%d" % (user_id, rid(r)))
+           + "&filter%5Buser_id%5D=" + str(user_id)
+           + "&filter%5Bround_id%5D=" + str(rid(r)))
     return get(url)
 
 
