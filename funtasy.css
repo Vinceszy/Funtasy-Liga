@@ -5,6 +5,13 @@
    ez egy sima statikus fajl, amit a bongeszo <link>-kel tolt be. */
 :root{--bg:#0B1F16;--panel:#12291D;--panel2:#0E2418;--line:#2E4A38;--ink:#F2EFE6;--dim:#9DB3A4;
 --amber:#FFB020;--magenta:#E5378B;--win:#3DDC84;--lose:#E5533D;--draw:#9DB3A4}
+/* ===== Liga-temak =====
+   Az alapertelmezett (a :root fenti szinei) az NB1-oldal. A PL-oldal a
+   body.liga-pl osztallyal a Premier League szinvilagara valt: lila alap,
+   PL-zold kiemeles, cian cimke. A valtozonevek tortenetiek (--amber a fo
+   kiemeles, --magenta a masodlagos), az ertekuk temankent mas. */
+body.liga-pl{--bg:#150B22;--panel:#1F1233;--panel2:#180D29;--line:#3C2B5E;
+  --amber:#00E08C;--magenta:#3EDBE0}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{max-width:100%;overflow-x:hidden}
 img,table{max-width:100%}
