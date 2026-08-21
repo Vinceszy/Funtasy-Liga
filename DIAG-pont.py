@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
-"""Egyszeri diagnosztika, 5. kor (IDEIGLENES): honnan jon a pont-BONTAS?
+"""Egyszeri diagnosztika, 6. kor (IDEIGLENES): honnan jon a pont-BONTAS?
 
-A 4. kor lelete: a felulet jJ() hivasa sima GET a players/{id}-re
-(include nelkul), es letezik stat-configs meg stat-leaders vegpont is.
-A players/{id} valaszt a hatalmas kep-mezok miatt nem lattuk vegig.
-
-Ez a kor a kep-mezoket kidobja es kiirja:
-  A) players/1305 teljes szerkezete
-  B) stat-configs (a statisztika-tipusok nevei/pontjai?)
-  C) stat-leaders roviden
+Az 5. kor kihozta a stat-configs neveket, de a players/{id} valasz
+elejet a log-vagas elvitte. Ez a kor a kep-mezok MELLETT a
+meccslistakat (games, next_game) is kidobja, es tomoren irja ki a
+players/1305 teljes maradek szerkezetet. Ha van benne fordulonkenti
+statisztika pontokkal, megvan a bontas forrasa.
 
 CSAK OLVAS es nyomtat.
 """
@@ -17,7 +14,8 @@ import json, sys, time, urllib.error, urllib.request
 M_BASE = "https://fantasy-api.mlsz.hu/competitions/3/"
 HDRS = {"Accept": "application/json", "User-Agent": "funtasy-archiver/1.0",
         "Referer": "https://fantasy.mlsz.hu/"}
-KEP_KULCSOK = {"profile_picture", "logo", "media", "background", "src", "srcset", "icon"}
+DOBANDO = {"profile_picture", "logo", "media", "background", "src", "srcset",
+           "icon", "games", "next_game"}
 
 
 def get(url):
@@ -32,36 +30,21 @@ def get(url):
         return None, str(e)
 
 
-def kepek_nelkul(x):
+def szur(x):
     if isinstance(x, dict):
-        return {k: kepek_nelkul(v) for k, v in x.items() if k not in KEP_KULCSOK}
+        return {k: szur(v) for k, v in x.items() if k not in DOBANDO}
     if isinstance(x, list):
-        return [kepek_nelkul(v) for v in x]
+        return [szur(v) for v in x]
     return x
 
 
 def main():
-    print("========== A) players/1305 (kep-mezok nelkul) ==========")
+    print("========== players/1305 (kepek es meccslistak nelkul) ==========")
     st, j = get(M_BASE + "players/1305")
     if st == 200:
-        print(json.dumps(kepek_nelkul(j), ensure_ascii=False, indent=1)[:9000])
+        print(json.dumps(szur(j), ensure_ascii=False)[:12000])
     else:
         print("HTTP %s" % st)
-
-    print("\n========== B) stat-configs ==========")
-    st, j = get(M_BASE + "stat-configs")
-    if st == 200:
-        print(json.dumps(kepek_nelkul(j), ensure_ascii=False)[:6000])
-    else:
-        print("HTTP %s" % st)
-
-    print("\n========== C) stat-leaders ==========")
-    st, j = get(M_BASE + "stat-leaders")
-    if st == 200:
-        print(json.dumps(kepek_nelkul(j), ensure_ascii=False)[:1200])
-    else:
-        print("HTTP %s" % st)
-
     print("\nDiagnosztika vege - semmit nem irt.")
     return 0
 
