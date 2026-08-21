@@ -31,6 +31,13 @@ TOVABBI MERESSEL IGAZOLT TENYEK (2026-08-20):
 - A current_round az ELO fordulo lekeresenel csak explicit
   competition_player.current_round include-dal jon vissza (lezart fordulonal
   enelkul is megjelenik) - ezert szerepel az INCLUDE-ban (2026-08-21).
+- KI NEM JATSZIK A FORDULOBAN: a competition_player.current_round.games
+  include adja meg biztosan - ures lista = a klubnak nincs meccse ebben a
+  forduloban (halasztas, pl. a Fradi kupameccse miatt). A first_played_at
+  ilyenkor a klub KOVETKEZO meccsere mutat (masik fordulo idopontjara),
+  tehat abbol nem lehet kovetkeztetni. A meccslistat csak az ELO fordulora
+  kerjuk: ott +2 KB, a lezartaknal viszont a kesz meccs melle bejonnek a
+  klublogok is base64-ben, es a valasz 17 KB-rol 118 KB-ra no.
 - PONT-BONTAS: a /game-player-stats vegpont (competitions elotag NELKUL)
   adja egy jatekos fordulonkenti teteles bontasat magyar cimkekkel:
   ?include=competition_stat_config&filter[competition_player_id]=<cp.id>
@@ -99,8 +106,15 @@ def rankings(uname, round_id=None):
                 rows[0] if rows else None)
 
 
-def squad(user_id, round_no):
-    url = (BASE + "user-team-players-history?include=" + urllib.parse.quote(INCLUDE)
+def squad(user_id, round_no, jatek=False):
+    """jatek=True: a meccslistat is kerjuk (ki NEM jatszik a forduloban).
+    Csak az ELO fordulora hasznaljuk: ott a meccsek meg 'scheduled'
+    allapotuak, es a valasz alig no (+2 KB). A lezart forduloknal viszont
+    a kesz meccs melle az API a ket csapatot is beteszi a klublogokkal
+    egyutt (base64 kepadat), es a valasz 17 KB-rol 118 KB-ra hizik -
+    ezert oda nem kerjuk; a jelzest a fordulo alatt mar elmentettuk."""
+    inc = INCLUDE + (",competition_player.current_round.games" if jatek else "")
+    url = (BASE + "user-team-players-history?include=" + urllib.parse.quote(inc)
            + "&filter%5Buser_id%5D=" + str(user_id)
            + "&filter%5Bround_id%5D=" + str(rid(round_no)))
     return api_get(url)
@@ -135,13 +149,40 @@ def rekord(d):
         # a konyvjelzo-formatumon felul: a pont-bontashoz es a
         # "jatszott mar?" jelzeshez (elo fordulonal a current_round csak
         # explicit include-dal jon, ezert szerepel az INCLUDE-ban).
-        # A "start" a jatekos adott fordulos meccsenek kezdese: ebbol tudja
-        # az oldal, hogy a 0 pont azert van-e, mert meg el sem kezdodott a
-        # meccs, vagy mert zajlik, vagy mert lejatszotta pont nelkul.
+        # A "start" a jatekos adott fordulos meccsenek kezdese; a "nogame"
+        # akkor kerul be, ha a klubnak NINCS meccse a forduloban (halasztas
+        # vagy elmaradas). Ezt a meccslista (games) mondja meg biztosan:
+        # ures lista = nincs meccs. A first_played_at ilyenkor a klub
+        # KOVETKEZO meccset adja (masik fordulo idopontjat), ezert nem
+        # hasznalhato ra - ez volt a "furcsa kezdesi ido" oka.
         "id": cp.get("id"),
         "played": bool(cr.get("is_played")),
-        "start": cr.get("first_played_at"),
+        **jatek_mezok(cr),
     }
+
+
+def jatek_mezok(cr):
+    games = cr.get("games")
+    if games is None:                       # nem kertuk a meccslistat
+        return {"start": cr.get("first_played_at")}
+    if not games:                           # nincs meccse ebben a forduloban
+        return {"start": None, "nogame": True}
+    return {"start": (games[0] or {}).get("start_at") or cr.get("first_played_at")}
+
+
+def orokit_nogame(regi_fordulo, uj_fordulo):
+    """A "nincs meccse a forduloban" jelzest a fordulo ALATT gyujtjuk be
+    (csak ott kerjuk a meccslistat). A lezaras utani ujralekeresek mar
+    nelkule jonnek, ezert a korabban rogzitett jelzest at kell hozni -
+    kulonben minden futas kitorolne. A meccs nelkuli jatekosnal a
+    first_played_at a KOVETKEZO fordulo meccsere mutat, ezert a start-ot
+    is a regi (ures) ertekre allitjuk vissza."""
+    for nev, sq in uj_fordulo.items():
+        regi = {p.get("name"): p for p in (regi_fordulo.get(nev) or [])}
+        for p in sq:
+            if "nogame" not in p and regi.get(p.get("name"), {}).get("nogame"):
+                p["nogame"] = True
+                p["start"] = None
 
 
 def keret_osszeg(sq):
@@ -251,7 +292,7 @@ def main():
             continue
         uj_fordulo, mind_jatszott, teljes = {}, True, True
         for nev, uid in ids.items():
-            st, j = squad(uid, r)
+            st, j = squad(uid, r, jatek=(r == aktualis))
             if st != 200 or not isinstance(j, dict) or not j.get("data"):
                 print("  ! %d. fordulo / %s: HTTP %s" % (r, nev, st), file=sys.stderr)
                 teljes = False
@@ -264,7 +305,9 @@ def main():
                     mind_jatszott = False
         if not uj_fordulo:
             continue
-        hist["rounds"][str(r)] = {**(hist["rounds"].get(str(r)) or {}), **uj_fordulo}
+        regi_fordulo = hist["rounds"].get(str(r)) or {}
+        orokit_nogame(regi_fordulo, uj_fordulo)
+        hist["rounds"][str(r)] = {**regi_fordulo, **uj_fordulo}
         lezart[r] = teljes and mind_jatszott and len(uj_fordulo) == len(MEMBERS)
         print("  keretek: %d. fordulo, %d/%d szakvezeto, %s"
               % (r, len(uj_fordulo), len(MEMBERS),

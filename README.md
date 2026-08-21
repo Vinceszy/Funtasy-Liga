@@ -89,12 +89,16 @@ Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő 
   pedig egy súgósor áll („A játékos nevére kattintva…”). A nyíl azért a név után van és nem
   a sor végén, mert ott védett: a szűk oszlopban az ellipszis előbb a klub-címkét vágja le.
   Egérrel a sor ki is világosodik, de a nyíl a lényeg — **telefonon nincs hover**.
-- **Ha nincs pontot érő esemény, az üzenet megmondja, miért** — négy eset, mert a 0-nak
-  négy különböző oka lehet: *a meccs még nem kezdődött el* (a kezdés időpontjával),
+- **Ha nincs pontot érő esemény, az üzenet megmondja, miért** — öt eset, mert a 0-nak
+  többféle oka lehet: *a klubnak nincs meccse ebben a fordulóban* (elmaradt/elhalasztott,
+  a PL-en üres forduló), *a meccs még nem kezdődött el* (a kezdés időpontjával),
   *a meccs zajlik, eddig nincs pontot érő eseménye*, *lejátszotta a meccset pont nélkül*,
-  vagy *nem lépett pályára*. Az első kettőt a meccs kezdési ideje és a lejátszottság dönti
-  el, az utolsó kettőt a bontás játszott-perc sora (ez 0 perccel is megjön, ha a játékos
-  végig a kispadon ült).
+  vagy *nem lépett pályára*. Az elsőt a forduló meccslistája mondja meg (lásd lent),
+  a következő kettőt a kezdési idő és a lejátszottság, az utolsó kettőt a bontás
+  játszott-perc sora (ez 0 perccel is megjön, ha a játékos végig a kispadon ült).
+- **Ahol a kezdés időpontja még nincs kitűzve**, ott csak a dátum jelenik meg
+  („kezdés: aug. 29. (időpont még nincs kitűzve)") — az MLSZ ilyenkor éjfélt ír, amit
+  hiba lenne valódi kezdésként kiírni.
 - **Élő forduló közben a 0 pontos játékosok kétfélék**: aki még nem játszott (a meccse el
   sem kezdődött), annak a pontja helyén **kötőjel** áll; aki épp játszik vagy már játszott
   és 0-n áll, annál **0** — a fantasy-oldalak szokása szerint. Az NB1-en ezt a keret-válasz
@@ -121,7 +125,7 @@ teljes képernyős, ragadós × gombbal.
 | `funtasy.css` | A közös stíluslap (`index.html` és `draft.html` is ezt tölti). |
 | `funtasy.js` | A közös motor: tabella, meccspanelek, mátrix, élő-jelölés (`FunTasy.create(...)`). |
 | `results.json` | H2H eredmények archívuma: `{updated, provisional:[...], schedule:{"1":[[hazai,vendég,hp,vp],...]}}`. Az oldal ebből tölt, felülírva a beégetett menetrendet. A `provisional` a még le nem zárult fordulók listája. |
-| `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”) és `start`-ot (az adott fordulós meccsének kezdése) is tartalmaz — a régebbi, e mezők nélküli rekordokat az oldal tolerálja. |
+| `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”), `start`-ot (az adott fordulós meccsének kezdése) és — ha a klubnak nincs meccse a fordulóban — `nogame: true`-t is tartalmaz. A régebbi, e mezők nélküli rekordokat az oldal tolerálja. |
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
 | `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
 | `collect_draft.py` | GitHub Actions: az FPL Draft liga adatai. A résztvevők valódi nevét és az `entry_id`-t kiszűri (a repó publikus). |
@@ -219,6 +223,29 @@ competition_player.countries,competition_player.current_round,summary_statistics
 **Fontos:** a név **közvetlenül a `competition_player`-ben** van (`first_name`/`last_name`),
 NEM egy beágyazott `player` objektumban. A poszt a `position.monogram` (K/H/KP/CS).
 
+### Ki nem játszik a fordulóban (a meccslista)
+A `competition_player.current_round.games` include játékosonként megadja a klub **adott
+fordulóbeli** meccsét (`start_at`, `status`, `round_number`). Ha a lista **üres**, a
+klubnak nincs meccse abban a fordulóban — ez a biztos jelzés az elmaradt/elhalasztott
+fordulóra (mérve: Honvéd, 5. forduló).
+
+**Fontos csapda:** ilyenkor a `first_played_at` a klub **következő** meccsére mutat, egy
+másik forduló időpontjára. Ebből tehát nem szabad a fordulóra következtetni — ez okozta
+a „furcsa kezdési időpont" hibát (Csontos, 5. forduló: aug. 29. 00:00, ami valójában a
+6. forduló dátuma, kitűzött időpont nélkül).
+
+**Az include ára fordulófüggő** (mérve, 15 játékos):
+
+| A forduló állapota | Alap | `games`-szel |
+|---|---|---|
+| élő (a meccsek `scheduled`) | 17,8 KB | 19,7 KB |
+| lezárt (a meccsek `completed`) | 17,5 KB | 118,8 KB |
+
+A különbség oka: a **lejátszott** meccs mellé az API a két csapat teljes objektumát is
+beteszi, benne a klublogóval, base64 képadatként. Ezért a gyűjtő a meccslistát **csak az
+élő fordulóra** kéri; a lezártakhoz a forduló alatt már elmentett jelzés marad meg
+(`collect.py` → `orokit_nogame`).
+
 ### Pont-bontás (game-player-stats)
 A felület játékos-modalja ezt hívja (a bundle-ből visszafejtve, 2026-08-21):
 ```
@@ -285,7 +312,9 @@ adnak** — piaczárásig titkosak.
   `kickoff_time`-mal és csapat-azonosítókkal; ebből tudjuk, kinek kezdődött már el a
   meccse (kötőjel vs 0) és mikor kezdődik. Az oldal klubonként **összevonja** az
   állapotokat: „indult", ha bármelyik meccse elkezdődött, „kész", ha mindegyik lement —
-  dupla fordulón ugyanis egy klubnak két meccse van
+  dupla fordulón ugyanis egy klubnak két meccse van. Ha egy klub **egyáltalán nem
+  szerepel** a forduló meccsei között, akkor üres fordulója van (blank gameweek): a
+  játékosai kötőjelet kapnak, és a bontás is ezt írja ki
 - `game` — `current_event`: a folyamatban lévő forduló száma (vagy null)
 
 ---
@@ -309,6 +338,10 @@ adnak** — piaczárásig titkosak.
   „még nem játszott” jelölés 2026-08-21-én került be). A bontás náluk is működik (az oldal
   név alapján oldja fel az azonosítót a forduló keretéből), de a kötőjel-jelölés csak az
   új gyűjtésű adatoknál él — a régi 0-k számként látszanak, ami lezárt fordulónál helyes is.
+- **A „nincs meccse a fordulóban" jelzés a forduló alatt rögzül**, és a lezárás után már
+  nem frissül (a lezárt fordulóra nem kérjük le a meccslistát, mert hatszor akkora
+  válasz jönne). Ez helyes is: az MLSZ az elmaradt meccs játékosait lejátszottnak jelöli
+  0 ponttal, tehát a pótlás nem ír már a forduló pontjaiba.
 - **A pont-bontás sorait a magyar eseménynév azonosítja** (pl. a „nem lépett pályára”
   eset a „Játszott perc” sor 0 értékéből derül ki). Az API nem ad stabil kulcsot ezekhez,
   úgyhogy ha az MLSZ átnevez egy eseményt, az oldal a részletesebb üzenet helyett az

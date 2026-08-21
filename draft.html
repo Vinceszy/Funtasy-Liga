@@ -6,7 +6,7 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="funtasy.css?v=4">
+<link rel="stylesheet" href="funtasy.css?v=5">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -68,7 +68,7 @@
   </div>
 </div>
 
-<script src="funtasy.js?v=4"></script>
+<script src="funtasy.js?v=5"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -156,7 +156,10 @@ function sqcolHTML(id, lista, cim, gw){
     const j = jat(r.e);
     const acc = (gazdag && gw) ? ` data-acc="1" data-e="${r.e}" data-gw="${gw}"` : '';
     const fx = (gw === LIVEGW && LIVEFX) ? LIVEFX[j.t] : null;
-    const nemJatszott = fx && !fx.indult && !(r.pts || 0);
+    // ha a fordulo meccsei kozott a klub egyaltalan nem szerepel, akkor
+    // ures fordulója van (blank gameweek) - o sem fog pontot szerezni
+    const nincsMeccs = gw === LIVEGW && LIVEFX && j.t && !fx;
+    const nemJatszott = ((fx && !fx.indult) || nincsMeccs) && !(r.pts || 0);
     const pts = r.pts == null ? ''
       : nemJatszott ? '<span class="pts" title="még nem játszott">–</span>'
       : `<span class="pts">${fmt(r.pts)}</span>`;
@@ -424,7 +427,11 @@ const idoFmt = s => new Date(s).toLocaleString('hu-HU',
 // fordulokra minden meccs kesz; hogy palyara lepett-e, a live 'minutes'
 // mutatja - ez 0 percnel is megjon, tehat megbizhato jelzes.
 function nincsPontUzenet(e, gw, perc){
-  const fx = (gw === LIVEGW && LIVEFX) ? LIVEFX[jat(e).t] : null;
+  const klub = jat(e).t;
+  const elo = gw === LIVEGW && LIVEFX;
+  const fx = elo ? LIVEFX[klub] : null;
+  if (elo && klub && !fx)
+    return 'Ebben a fordulóban nem játszik — a klubnak nincs meccse (üres forduló).';
   if (fx && !fx.indult)
     return 'A meccs még nem kezdődött el' + (fx.kezdes ? ' — kezdés: ' + idoFmt(fx.kezdes) : '.');
   if (fx && !fx.kesz) return 'A meccs zajlik — eddig nincs pontot érő eseménye.';

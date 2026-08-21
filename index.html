@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="funtasy.css?v=4">
+<link rel="stylesheet" href="funtasy.css?v=5">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -68,7 +68,7 @@
   </div>
 </div>
 
-<script src="funtasy.js?v=4"></script>
+<script src="funtasy.js?v=5"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -242,8 +242,10 @@ function squadHTML(name,list,realTotal,round){
   // a regiekhez nev alapjan oldjuk fel a fordulo keretebol. A "meg nem
   // jatszott" 0 kotojelkent jelenik meg (played===false), a regi,
   // jelzes nelkuli rekordok szamot mutatnak, mint eddig.
-  const acc=p=>round?` data-acc="1" data-own="${esc(name)}" data-nm="${esc(p.name)}" data-r="${round}"${p.id?` data-cp="${p.id}"`:''}${p.played===true?' data-pl="1"':(p.played===false?' data-pl="0"':'')}${p.start?` data-st="${esc(p.start)}"`:''}${p.cap?' data-cap="1"':''}${p.sub?' data-sub="1"':''}`:'';
-  const pont=p=>(p.played===false && !(p.week||0))
+  const acc=p=>round?` data-acc="1" data-own="${esc(name)}" data-nm="${esc(p.name)}" data-r="${round}"${p.id?` data-cp="${p.id}"`:''}${p.played===true?' data-pl="1"':(p.played===false?' data-pl="0"':'')}${p.start?` data-st="${esc(p.start)}"`:''}${p.nogame?' data-ng="1"':''}${p.cap?' data-cap="1"':''}${p.sub?' data-sub="1"':''}`:'';
+  const pont=p=>(p.nogame && !(p.week||0))
+    ? '<span class="pts" title="ebben a fordulóban nincs meccse">–</span>'
+    : (p.played===false && !(p.week||0))
     ? '<span class="pts" title="még nem játszott">–</span>'
     : `<span class="pts">${fmt(p.week)}</span>`;
   const row=p=>`<div class="plr"${acc(p)}>
@@ -354,21 +356,31 @@ function showH2H(a,b,mode){
 const KERET_INCLUDE='position,position.alternatives,competition_player,'+
   'competition_player.team,competition_player.countries,'+
   'competition_player.current_round,summary_statistics';
+// Az elo fordulora a meccslistat is kerjuk: ebbol latszik biztosan, kinek
+// NINCS meccse a forduloban (ures lista). Elo fordulon ez +2 KB, mert a
+// meccs meg 'scheduled'; lezartnal a kesz meccs melle a klublogok is
+// bejonnek base64-ben (+100 KB), ezert oda a sima include megy.
+const KERET_INCLUDE_JATEK=KERET_INCLUDE+',competition_player.current_round.games';
 function keretRekord(d){
   const cp=d.competition_player||{}, po=d.position||{}, ss=d.summary_statistics||{},
-        cr=cp.current_round||{};
+        cr=cp.current_round||{}, g=cr.games;
   return {name:[cp.first_name,cp.last_name].filter(Boolean).join(' ')||('#'+(cp.id||d.id)),
     team:(cp.team&&(cp.team.short_name||cp.team.name))||'', pos:po.monogram||po.name||'',
     u21:!!cp.is_u21, hun:/magyar|hungar|"HUN"/i.test(JSON.stringify(cp.countries||cp.country||'')),
     price:cr.market_price||null, cap:!!d.is_captain, sub:d.type==='substitutes',
     week:ss.weekly_points||0, total:ss.competition_points||0,
-    id:cp.id||null, played:!!cr.is_played, start:cr.first_played_at||null};
+    id:cp.id||null, played:!!cr.is_played,
+    // meccslista nelkul a first_played_at a tartalek - de ha nincs meccse a
+    // forduloban, az a KOVETKEZO fordulora mutat, ezert olyankor nincs kezdes
+    start: g ? (((g[0]||{}).start_at)||null) : (cr.first_played_at||null),
+    nogame: (Array.isArray(g) && !g.length) || undefined};
 }
-async function eloKeret(name, r){
+async function eloKeret(name, r, jatek){
   const uid=USER_IDS[name];
   if(!uid) return null;
+  const inc = jatek ? KERET_INCLUDE_JATEK : KERET_INCLUDE;
   const u=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/user-team-players-history`+
-    `?include=${encodeURIComponent(KERET_INCLUDE)}&filter%5Buser_id%5D=${uid}&filter%5Bround_id%5D=${75+2*r}`;
+    `?include=${encodeURIComponent(inc)}&filter%5Buser_id%5D=${uid}&filter%5Bround_id%5D=${75+2*r}`;
   try{ const j=await apiGet(u); return (j.data||[]).map(keretRekord); }   // cimke nelkul: ne irja at a statuszsavot
   catch(e){ return null; }
 }
@@ -384,12 +396,27 @@ async function keretNevrol(own,r,nm){
   if(!KERET_CACHE.has(k)) KERET_CACHE.set(k, eloKeret(own,r));
   return ((await KERET_CACHE.get(k))||[]).find(p=>p.name===nm)||null;
 }
-const idoFmt=s=>new Date(s).toLocaleString('hu-HU',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-// Ha egyetlen pontot ero esemeny sincs, a 0-nak negy kulonbozo oka lehet.
-// A meccs allapotat a kezdesi ido (start) es az is_played (played) donti el,
-// a "palyara lepett-e" kerdest a bontas "Jatszott perc" sora - ez akkor is
-// megjon 0 ertekkel, ha a jatekos vegig a kispadon ult.
-function nincsPontUzenet(played, start, nyers){
+// Az MLSZ ejfelt ir, ha a pontos kezdesi idot meg nem tuztek ki - ilyenkor
+// csak a datumot mutatjuk, kulonben hamis 00:00-t irnank ki. Ezt a datumot
+// a szovegbol olvassuk ki, nem a Date-bol: az ejfel mas idozonaban elozo
+// napra csuszna at (a bongeszo a sajat zonajaban jelenit meg).
+const idoFmt=s=>{
+  const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s||'');
+  if(!m) return s;
+  if(m[4]==='00'&&m[5]==='00')
+    return new Date(+m[1],+m[2]-1,+m[3]).toLocaleDateString('hu-HU',{month:'short',day:'numeric'})
+           +' (időpont még nincs kitűzve)';
+  const d=new Date(s);
+  return d.toLocaleDateString('hu-HU',{month:'short',day:'numeric'})+' '
+         +d.toLocaleTimeString('hu-HU',{hour:'2-digit',minute:'2-digit'});
+};
+// Ha egyetlen pontot ero esemeny sincs, a 0-nak tobb oka lehet. Elsokent a
+// "nincs is meccse ebben a forduloban" esetet zarjuk ki (ezt a meccslista
+// mondja meg, lasd keretRekord), utana a kezdesi ido es az is_played dont,
+// vegul a bontas "Jatszott perc" sora - ez akkor is megjon 0 ertekkel, ha a
+// jatekos vegig a kispadon ult.
+function nincsPontUzenet(played, start, nyers, nogame){
+  if(nogame) return 'Ebben a fordulóban nem játszik — a klubnak nincs meccse (elmaradt vagy elhalasztott forduló).';
   if(start && new Date(start)>new Date())
     return 'A meccs még nem kezdődött el — kezdés: '+idoFmt(start);
   if(played===false) return 'A meccs zajlik — eddig nincs pontot érő eseménye.';
@@ -402,10 +429,12 @@ async function bontasHTML(ds){
   const r=+ds.r;
   let cp=ds.cp?+ds.cp:null, start=ds.st||null;
   let played=ds.pl==='1'?true:(ds.pl==='0'?false:undefined);
+  const nogame=ds.ng==='1';
   if(!cp || played===undefined){                // regi rekordban nincs id/played
     const rec=await keretNevrol(ds.own,r,ds.nm);
     if(rec){ cp=cp||rec.id; start=start||rec.start; if(played===undefined) played=rec.played; }
   }
+  if(nogame) return FunTasy.accTable([], nincsPontUzenet(played,start,null,true));
   if(!cp) return null;
   const k=cp+'|'+r;
   if(!BONTAS.has(k)){
@@ -418,7 +447,7 @@ async function bontasHTML(ds){
   const nyers=BONTAS.get(k), sorok=nyers.filter(s=>s.points);
   if(sorok.length && ds.cap==='1') sorok.push({name:'Kapitány — a heti pontban már duplázva',value:'',points:'×2'});
   if(sorok.length && ds.sub==='1') sorok.push({name:'Pad — a heti pontban már felezve',value:'',points:'×0.5'});
-  return FunTasy.accTable(sorok, nincsPontUzenet(played,start,nyers));
+  return FunTasy.accTable(sorok, nincsPontUzenet(played,start,nyers,false));
 }
 // Egyseges meccs-nezet: fordulohu keretek. Elo fordulonal az elo folyamat
 // (tarolt + percre friss csere), lezartnal az AKKORI keretek a
@@ -456,7 +485,7 @@ async function showLiveMatch(h, v, r){
   let H=tarolt(h), V=tarolt(v);
   if(!H && !V){
     // tarolt adat nincs - megprobaljuk elobb elobol, kulonben jon a tartalek
-    [H,V]=await Promise.all([eloKeret(h,r), eloKeret(v,r)]);
+    [H,V]=await Promise.all([eloKeret(h,r,true), eloKeret(v,r,true)]);
     if(!H || !V){ showEloUzenet(); return; }
   }
   mCurrent=[h,v]; openModal();
@@ -467,7 +496,7 @@ async function showLiveMatch(h, v, r){
     `<div class="sqwrap">${A?squadHTML(h,A,null,r):''}${B?squadHTML(v,B,null,r):''}</div>`; };
   rajz(H,V);
   // hatterben: percre friss csere, ha a modal meg ugyanezen a meccsen all
-  const [FH,FV]=await Promise.all([eloKeret(h,r), eloKeret(v,r)]);
+  const [FH,FV]=await Promise.all([eloKeret(h,r,true), eloKeret(v,r,true)]);
   if(mCurrent[0]===h && mCurrent[1]===v && $('ov').classList.contains('open') && (FH||FV))
     rajz(FH||H, FV||V);
 }
@@ -529,7 +558,7 @@ async function showSquad(names,tab,mode){
     // egymas mellett ugyanarrol az adatrol.
     if(SQUAD_ROUND && (window.PROVISIONAL||[]).includes(SQUAD_ROUND)){
       const kert=names.slice();
-      Promise.all(names.map(n=>eloKeret(n,SQUAD_ROUND))).then(friss=>{
+      Promise.all(names.map(n=>eloKeret(n,SQUAD_ROUND,true))).then(friss=>{
         if(!$('ov').classList.contains('open')) return;
         if(mCurrent.length!==kert.length || mCurrent.some((n,i)=>n!==kert[i])) return;
         const on=document.querySelector('#mTabs .tab.on');
