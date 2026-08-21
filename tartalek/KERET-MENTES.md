@@ -69,5 +69,5 @@ egyszerre pótolja mindet.
 - *401/403 a mentésnél* → a token lejárt vagy nincs Contents: write joga
 - *Nem találom: <név>* → változott egy fantasy-felhasználónév. A névsor HÁROM helyen él,
   mindet át kell írni: `collect.py` (`MEMBERS` — ez az elsődleges, a gyűjtés ezen áll),
-  `index.html` (`MEMBERS`), és a könyvjelző (`M` konstans, majd újraépítés + csere a
+  `nb1/index.html` (`MEMBERS`), és a könyvjelző (`M` konstans, majd újraépítés + csere a
   böngészőben)

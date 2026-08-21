@@ -1,12 +1,17 @@
-# FunTasy Liga — H2H tabella az NB I Fantasy köré
+# FunTasy — privát fantasy-ligák H2H követése
 
-Privát head-to-head liga követő oldal a **fantasy.mlsz.hu** (MLSZ NB I Fantasy) adataira
-építve, 8 fős baráti ligához. Statikus oldal GitHub Pages-en: nincs build, nincs függőség.
-Az adatgyűjtés **teljesen automatikus** (GitHub Actions, 3 óránként) — a böngészős
-könyvjelző már csak tartalék.
+Privát head-to-head liga követő oldalak baráti ligákhoz: a **fantasy.mlsz.hu** (MLSZ NB I
+Fantasy) és az **FPL Draft** adataira építve. Statikus oldal GitHub Pages-en: nincs build,
+nincs függőség. Az adatgyűjtés **teljesen automatikus** (GitHub Actions, 3 óránként) — a
+böngészős könyvjelző már csak tartalék.
 
-**FunTasy NB1 (élő oldal):** https://vinceszy.github.io/Funtasy-Liga/
-**FunTasy PL (rejtett aloldal, a főoldal nem hivatkozik rá):** https://vinceszy.github.io/Funtasy-Liga/draft.html
+| Oldal | Cím |
+|---|---|
+| Kezdőlap (ligaválasztó) | https://vinceszy.github.io/Funtasy-Liga/ |
+| FunTasy NB1 | https://vinceszy.github.io/Funtasy-Liga/nb1/ |
+| FunTasy PL | https://vinceszy.github.io/Funtasy-Liga/pl/ |
+
+A régi `draft.html` cím átirányít a `/pl/`-re, hogy a korábbi linkek ne haljanak el.
 
 A résztvevőket mindkét oldalon a **monogram** azonosítja (a név mögött) — személyenként
 azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
@@ -20,7 +25,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 - Pontozás: **győzelem 3 · döntetlen 1 · vereség 0**
 - Holtverseny az NB1-ben: **1) pont → 2) KÜL (pontkülönbség) → 3) SP (szerzett pont)**;
   a PL-ben az FPL alappontozása szerint **a szerzett pont az első** holtverseny-szempont
-  (a `tiebreak: 'rg'` opció a `draft.html`-ben)
+  (a `tiebreak: 'rg'` opció a `pl/index.html`-ben)
   *(A liga korábbi Excel-táblája is pontkülönbség-elsős volt. Ha ezen változtatni kell,
   egyetlen sort érint: a `funtasy.js`-ben a `computeTable()` végén a `.sort(...)`.)*
 - **A tabella csak lezárt fordulókból számol.** A folyamatban lévő forduló eredményei a
@@ -127,19 +132,21 @@ teljes képernyős, ragadós × gombbal.
 
 | Fájl | Szerep |
 |---|---|
-| `index.html` | A főoldal. Csak az oldalspecifikus HTML + JS van benne; a menetrend a `SCHEDULE`, a tagok a `MEMBERS` konstansban beégetve. |
-| `funtasy.css` | A közös stíluslap (`index.html` és `draft.html` is ezt tölti). |
-| `funtasy.js` | A közös motor: tabella, meccspanelek, mátrix, élő-jelölés (`FunTasy.create(...)`). |
+| `index.html` | **Kezdőlap: ligaválasztó.** A kártyákat a `funtasy.js` `LIGAK` listájából rajzolja, saját adatot nem tölt. |
+| `nb1/index.html` | A FunTasy NB1 oldal (korábban a gyökér `index.html`). Csak az oldalspecifikus HTML + JS; a menetrend a `SCHEDULE`, a tagok a `MEMBERS` konstansban beégetve. |
+| `pl/index.html` | A FunTasy PL oldal (korábban `draft.html`). |
+| `draft.html` | Átirányító a régi PL-címről a `/pl/`-re. Új hivatkozás ne ide mutasson. |
+| `funtasy.css` | A közös stíluslap (mindhárom oldal ezt tölti). |
+| `funtasy.js` | A közös motor: tabella, meccspanelek, mátrix, élő-jelölés (`FunTasy.create(...)`), a pont-bontás accordionja és a **ligalista** (`LIGAK`), amiből a ligaváltó sáv és a kezdőlap kártyái készülnek. |
 | `results.json` | H2H eredmények archívuma: `{updated, provisional:[...], schedule:{"1":[[hazai,vendég,hp,vp],...]}}`. Az oldal ebből tölt, felülírva a beégetett menetrendet. A `provisional` a még le nem zárult fordulók listája. |
 | `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”), `start`-ot (az adott fordulós meccsének kezdése) és — ha a klubnak nincs meccse a fordulóban — `nogame: true`-t is tartalmaz. A régebbi, e mezők nélküli rekordokat az oldal tolerálja. |
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
 | `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
 | `collect_draft.py` | GitHub Actions: az FPL Draft liga adatai. A résztvevők valódi nevét és az `entry_id`-t kiszűri (a repó publikus). |
-| `draft.json` | Az FPL Draft liga adatai (résztvevők, menetrend, eredmények) — a `draft.html` forrása. |
+| `draft.json` | Az FPL Draft liga adatai (résztvevők, menetrend, eredmények) — a `pl/index.html` forrása. |
 | `draft_players.json` | FPL játékos-törzs: `{players: {id: {n: név, t: klub, p: poszt}}, teams: {csapat_id: rövidnév}}`. A `teams` a fixtures-válasz csapat-azonosítóinak feloldásához kell (kinek kezdődött el a meccse). |
 | `draft_squads.json` | A jelenlegi FPL-keretek (tulajdonlás): `{liga_id: [játékos_id,...]}`. |
 | `draft_history.json` | Fordulónkénti FPL-keretek pontokkal (`{rounds:{gw:{liga_id:[{e,b,pts},...]}}}`) — a GW1 indulásától gyűlik. |
-| `draft.html` | Az FPL Draft aloldal. A stílusa az `index.html`-ével közös (`funtasy.css`). |
 | `.github/workflows/archive.yml` | 3 óránként futó munkafolyamat: `collect.py` + commit. |
 | `.github/workflows/draft.yml` | 3 óránként futó (és kézzel is indítható) munkafolyamat: `collect_draft.py` + commit. |
 | `tartalek/` | Minden, ami nem kell a napi működéshez: a tartalék könyvjelző (`GOMB-bookmarklet.txt`, forrása és építője), az útmutatója (`KERET-MENTES.md`) és az elavult kézi pótlás leírása (`BACKFILL.md`). A weboldal és a gyűjtők semmit nem olvasnak innen. |
@@ -373,12 +380,39 @@ Nincs build lépés, nincs függőség. A kód három rétegben él:
   (`FunTasy.accToggle` — nyit/zár/egyszerre egy panel; `FunTasy.accTable` — a bontás
   táblázata); a tartalmat az oldalak saját `bontasHTML`-je adja, mert a forrás más
   (NB1: MLSZ `game-player-stats`, PL: FPL `event/{gw}/live` explain).
-- **`index.html` / `draft.html`** — csak az oldalspecifikus rész: konfiguráció, betöltés
+- **`nb1/index.html` / `pl/index.html`** — csak az oldalspecifikus rész: konfiguráció, betöltés
   és élő frissítés, meg az oldal saját modalja (a főoldalon `showSquad` / `showMatchRound` /
   `squadHTML` / `seasonHTML` / `playersHTML`, a PL-en `showTeam` / `showMatch` /
   `keretHTML` / `fordulokHTML` / `jatekosokHTML`). A modalon belüli lapozást mindkét
   oldalon ugyanaz a kis nézet-verem viszi (`vShow` / `vBack`): a belépési pont `root`,
   a fülváltás `replace`, a listából nyíló nézet `push` — a vissza gomb ebből él.
+
+### Új liga felvétele
+
+A webhely szerkezete mappánként egy liga, hogy a cím a ligáról szóljon és bővíthető legyen:
+
+```
+/            index.html      – kezdőlap (ligaválasztó)
+/nb1/        index.html      – FunTasy NB1
+/pl/         index.html      – FunTasy PL
+             funtasy.css/js  – közös réteg (a gyökérben)
+             *.json          – adatfájlok (a gyökérben, az oldalak ../ úton érik el)
+```
+
+Új liga hozzáadása:
+
+1. Egy új bejegyzés a `funtasy.js` **`LIGAK`** listájába (azonosító, név, mappa, cím,
+   leírás, téma). Ebből az **egy** listából készül a ligaváltó sáv minden oldal tetején
+   **és** a kezdőlap kártyája — máshol nem kell hozzányúlni.
+2. Új mappa a saját `index.html`-lel. A közös fájlokra `../funtasy.css?v=N` és
+   `../funtasy.js?v=N` hivatkozik, az adatra `../valami.json`, a sávot pedig egy sor
+   rajzolja ki: `FunTasy.renderNav('<azonosító>','../')`.
+3. Ha új témaszínek kellenek: egy `body.liga-<azonosító>` blokk a `funtasy.css`-ben
+   (a változónevek maradnak, csak az értékük más), és a kártya színe a
+   `.ligakartya[data-liga="<azonosító>"]` szabályokban.
+
+A linkek **relatívak** (`../pl/`), mert a GitHub Pages aloldalon szolgál ki
+(`/Funtasy-Liga/`), tehát abszolút `/pl/` út rossz helyre mutatna.
 
 **Verziójelzés:** a két oldal a közös fájlokat `funtasy.css?v=N` / `funtasy.js?v=N`
 formában tölti. **Ha a `funtasy.css` vagy a `funtasy.js` változik, a `?v=` számot mindkét
@@ -397,7 +431,7 @@ tartalommal. A `GOMB-bookmarklet.txt`-t soha ne szerkeszd kézzel.
 ## 7. Tervezett, még nem elkészült
 
 - Összesítő oldal a két liga (NB1 + PL) közös követésére — a résztvevők összekötése
-  (a `draft.html` `NEVEK` konstansa és a közös monogramok) már megvan
+  (a `pl/index.html` `NEVEK` konstansa és a közös monogramok) már megvan
 - Kapitány-hatékonysági toplista
 - „Padon hagyott pontok” toplista
 - Ligán belüli tulajdonlási arányok

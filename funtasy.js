@@ -1,5 +1,6 @@
 /* FunTasy Liga - kozos megjelenito mag.
-   Hasznalja: index.html (NB I Fantasy), draft.html (FPL Draft).
+   Hasznalja: nb1/index.html (NB I Fantasy), pl/index.html (FPL Draft) es a
+   kezdolap (index.html, ligavalaszto).
 
    Miert van kulon fajlban: a tabella, a matrix es a meccspanelek logikaja
    mindket oldalon ugyanaz volt, szo szerint lemasolva. Igy nem tudnak
@@ -25,6 +26,19 @@
    reszletek a fajl vegen. */
 (function (global) {
   'use strict';
+
+  /* ===== LIGAK - a bovites EGYETLEN helye =====
+     Uj liga felvetele: egy uj bejegyzes ide + egy uj mappa a sajat
+     index.html-jevel. A ligavalto sav (minden liga-oldal tetejen) es a
+     kezdolap kartyai is ebbol a listabol keszulnek, tehat sehol mashol
+     nem kell hozzanyulni. A `mappa` a webhely gyokeretol szamit; a
+     `tema` a body-ra kerulo osztaly (funtasy.css liga-temai). */
+  var LIGAK = [
+    { id: 'nb1', nev: 'NB1', mappa: 'nb1/', cim: 'NB I Fantasy',
+      leiras: 'privát head-to-head · 8 csapat · 33 forduló', tema: 'liga-nb1' },
+    { id: 'pl', nev: 'PL', mappa: 'pl/', cim: 'FPL Draft',
+      leiras: 'privát head-to-head · 10 csapat · 38 forduló', tema: 'liga-pl' }
+  ];
 
   var esc = function (s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -342,6 +356,26 @@
     return h + '</table>';
   }
 
+  /* Ligavalto sav. `aktiv` az eppen nyitott liga id-je (a kezdolapon null),
+     `gyoker` a webhely gyokerehez vezeto relativ ut ('../' egy liga-oldalrol,
+     '' a kezdolaprol) - a GitHub Pages aloldalon szolgal ki, ezert nem lehet
+     abszolut '/' utakat hasznalni. */
+  function navHTML(aktiv, gyoker) {
+    gyoker = gyoker || '';
+    var h = '<a class="markanev" href="' + gyoker + '">FunTasy</a><span class="ligak">';
+    for (var i = 0; i < LIGAK.length; i++) {
+      var l = LIGAK[i];
+      h += '<a class="ligalink' + (l.id === aktiv ? ' on' : '') + '" href="' + gyoker + l.mappa +
+           '" title="' + esc(l.cim) + '">' + esc(l.nev) + '</a>';
+    }
+    return h + '</span>';
+  }
+  function renderNav(aktiv, gyoker) {
+    var el = document.getElementById('liganav');
+    if (el) el.innerHTML = navHTML(aktiv, gyoker);
+  }
+
   global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played,
-                     accToggle: accToggle, accTable: accTable };
+                     accToggle: accToggle, accTable: accTable,
+                     LIGAK: LIGAK, navHTML: navHTML, renderNav: renderNav };
 })(window);
