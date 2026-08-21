@@ -1,74 +1,68 @@
 #!/usr/bin/env python3
-"""Egyszeri diagnosztika, 4. kor (IDEIGLENES): honnan jon a pont-BONTAS?
+"""Egyszeri diagnosztika, 5. kor (IDEIGLENES): honnan jon a pont-BONTAS?
 
-A 3. kor megtalalta a jatekos-vegpontot a bundle-ben:
-`${Qn}/${e}/players/${t}` -> competitions/3/players/{player_id}.
-A magyar cimkek (Kulcspassz, Gyozelem...) NINCSENEK a kliensben,
-tehat a bontas nevei az API-bol jonnek.
+A 4. kor lelete: a felulet jJ() hivasa sima GET a players/{id}-re
+(include nelkul), es letezik stat-configs meg stat-leaders vegpont is.
+A players/{id} valaszt a hatalmas kep-mezok miatt nem lattuk vegig.
 
-Ez a kor:
-  A) a bundle-bol kiszedi a players/${t} hivas kornyeki kodot
-     (ott a pontos include-lista es a parameterek)
-  B) rogton meg is hivja a players/1305 vegpontot: eloszor
-     csupaszon, majd a talalt include-okkal es round-szurovel
+Ez a kor a kep-mezoket kidobja es kiirja:
+  A) players/1305 teljes szerkezete
+  B) stat-configs (a statisztika-tipusok nevei/pontjai?)
+  C) stat-leaders roviden
 
 CSAK OLVAS es nyomtat.
 """
-import json, re, sys, time, urllib.error, urllib.parse, urllib.request
+import json, sys, time, urllib.error, urllib.request
 
 M_BASE = "https://fantasy-api.mlsz.hu/competitions/3/"
-UI = "https://fantasy.mlsz.hu/"
 HDRS = {"Accept": "application/json", "User-Agent": "funtasy-archiver/1.0",
         "Referer": "https://fantasy.mlsz.hu/"}
+KEP_KULCSOK = {"profile_picture", "logo", "media", "background", "src", "srcset", "icon"}
 
 
-def get(url, szoveg=False):
+def get(url):
     time.sleep(0.2)
     try:
         req = urllib.request.Request(url, headers=HDRS)
         with urllib.request.urlopen(req, timeout=30) as r:
-            adat = r.read().decode("utf-8", "replace")
-            return r.status, adat if szoveg else json.loads(adat)
+            return r.status, json.loads(r.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         return e.code, None
     except Exception as e:
         return None, str(e)
 
 
+def kepek_nelkul(x):
+    if isinstance(x, dict):
+        return {k: kepek_nelkul(v) for k, v in x.items() if k not in KEP_KULCSOK}
+    if isinstance(x, list):
+        return [kepek_nelkul(v) for v in x]
+    return x
+
+
 def main():
-    st, html = get(UI, szoveg=True)
-    js = ""
+    print("========== A) players/1305 (kep-mezok nelkul) ==========")
+    st, j = get(M_BASE + "players/1305")
     if st == 200:
-        for ut in re.findall(r'(?:src|href)="([^"]+\.js[^"]*)"', html):
-            teljes = ut if ut.startswith("http") else UI.rstrip("/") + "/" + ut.lstrip("/")
-            st2, adat = get(teljes, szoveg=True)
-            if st2 == 200 and isinstance(adat, str):
-                js += adat
+        print(json.dumps(kepek_nelkul(j), ensure_ascii=False, indent=1)[:9000])
+    else:
+        print("HTTP %s" % st)
 
-    print("========== A) a players/${t} hivas kornyeke ==========")
-    for m in re.finditer(re.escape("players/${t}"), js):
-        print("..." + js[max(0, m.start() - 700):m.end() + 900].replace("\n", " ") + "...")
-        print("-" * 70)
+    print("\n========== B) stat-configs ==========")
+    st, j = get(M_BASE + "stat-configs")
+    if st == 200:
+        print(json.dumps(kepek_nelkul(j), ensure_ascii=False)[:6000])
+    else:
+        print("HTTP %s" % st)
 
-    print("\n========== B) players/1305 probak ==========")
-    probak = [
-        "players/1305",
-        "players/1305?include=" + urllib.parse.quote(
-            "round_statistics,round_statistics.details"),
-        "players/1305?include=" + urllib.parse.quote(
-            "statistics,round_statistics,summary_statistics,current_round"),
-        "players/1305?filter%5Bround_id%5D=83",
-    ]
-    for p in probak:
-        st, j = get(M_BASE + p)
-        if st == 200 and isinstance(j, dict):
-            print("GET %s -> 200:" % p)
-            print(json.dumps(j, ensure_ascii=False)[:3000])
-        else:
-            print("GET %s -> HTTP %s" % (p, st))
-        print()
+    print("\n========== C) stat-leaders ==========")
+    st, j = get(M_BASE + "stat-leaders")
+    if st == 200:
+        print(json.dumps(kepek_nelkul(j), ensure_ascii=False)[:1200])
+    else:
+        print("HTTP %s" % st)
 
-    print("Diagnosztika vege - semmit nem irt.")
+    print("\nDiagnosztika vege - semmit nem irt.")
     return 0
 
 
