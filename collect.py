@@ -167,7 +167,14 @@ def jatek_mezok(cr):
         return {"start": cr.get("first_played_at")}
     if not games:                           # nincs meccse ebben a forduloban
         return {"start": None, "nogame": True}
-    return {"start": (games[0] or {}).get("start_at") or cr.get("first_played_at")}
+    g = games[0] or {}
+    mezok = {"start": g.get("start_at") or cr.get("first_played_at")}
+    # A meccs lefujasa es a pontok megjelenese kozott orak telhetnek el:
+    # ilyenkor az is_played meg hamis, de a meccs status-a mar "completed".
+    # E nelkul a lejatszott meccsre is azt irtuk, hogy "a meccs zajlik".
+    if g.get("status") == "completed":
+        mezok["vege"] = True
+    return mezok
 
 
 def orokit_nogame(regi_fordulo, uj_fordulo):

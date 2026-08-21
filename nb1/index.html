@@ -261,7 +261,7 @@ function squadHTML(name,list,realTotal,round){
   // a regiekhez nev alapjan oldjuk fel a fordulo keretebol. A "meg nem
   // jatszott" 0 kotojelkent jelenik meg (played===false), a regi,
   // jelzes nelkuli rekordok szamot mutatnak, mint eddig.
-  const acc=p=>round?` data-acc="1" data-own="${esc(name)}" data-nm="${esc(p.name)}" data-r="${round}"${p.id?` data-cp="${p.id}"`:''}${p.played===true?' data-pl="1"':(p.played===false?' data-pl="0"':'')}${p.start?` data-st="${esc(p.start)}"`:''}${p.nogame?' data-ng="1"':''}${p.cap?' data-cap="1"':''}${p.sub?' data-sub="1"':''}`:'';
+  const acc=p=>round?` data-acc="1" data-own="${esc(name)}" data-nm="${esc(p.name)}" data-r="${round}"${p.id?` data-cp="${p.id}"`:''}${p.played===true?' data-pl="1"':(p.played===false?' data-pl="0"':'')}${p.start?` data-st="${esc(p.start)}"`:''}${p.nogame?' data-ng="1"':''}${p.vege?' data-vg="1"':''}${p.cap?' data-cap="1"':''}${p.sub?' data-sub="1"':''}`:'';
   const pont=p=>(p.nogame && !(p.week||0))
     ? '<span class="pts" title="ebben a fordulóban nincs meccse">–</span>'
     : (p.played===false && !(p.week||0))
@@ -400,7 +400,8 @@ function keretRekord(d){
     // meccslista nelkul a first_played_at a tartalek - de ha nincs meccse a
     // forduloban, az a KOVETKEZO fordulora mutat, ezert olyankor nincs kezdes
     start: g ? (((g[0]||{}).start_at)||null) : (cr.first_played_at||null),
-    nogame: (Array.isArray(g) && !g.length) || undefined};
+    nogame: (Array.isArray(g) && !g.length) || undefined,
+    vege: (g && (g[0]||{}).status==='completed') || undefined};
 }
 async function eloKeret(name, r, jatek){
   const uid=USER_IDS[name];
@@ -442,11 +443,13 @@ const idoFmt=s=>{
 // mondja meg, lasd keretRekord), utana a kezdesi ido es az is_played dont,
 // vegul a bontas "Jatszott perc" sora - ez akkor is megjon 0 ertekkel, ha a
 // jatekos vegig a kispadon ult.
-function nincsPontUzenet(played, start, nyers, nogame){
+function nincsPontUzenet(played, start, nyers, nogame, vege){
   if(nogame) return 'Ebben a fordulóban nem játszik — a klubnak nincs meccse (elmaradt vagy elhalasztott forduló).';
   if(start && new Date(start)>new Date())
     return 'A meccs még nem kezdődött el — kezdés: '+idoFmt(start);
-  if(played===false) return 'A meccs zajlik — eddig nincs pontot érő eseménye.';
+  if(played===false) return vege
+    ? 'A meccs véget ért — a pontok feldolgozása még tart.'
+    : 'A meccs zajlik — eddig nincs pontot érő eseménye.';
   const perc=(nyers||[]).find(s=>s.name==='Játszott perc');
   if(perc && !perc.value) return 'Nem lépett pályára ebben a fordulóban.';
   if(played===true || (nyers||[]).length) return 'Lejátszotta a meccset, pontot érő esemény nélkül.';
@@ -461,7 +464,7 @@ async function bontasHTML(ds){
     const rec=await keretNevrol(ds.own,r,ds.nm);
     if(rec){ cp=cp||rec.id; start=start||rec.start; if(played===undefined) played=rec.played; }
   }
-  if(nogame) return FunTasy.accTable([], nincsPontUzenet(played,start,null,true));
+  if(nogame) return FunTasy.accTable([], nincsPontUzenet(played,start,null,true,false));
   if(!cp) return null;
   const k=cp+'|'+r;
   if(!BONTAS.has(k)){
@@ -474,7 +477,7 @@ async function bontasHTML(ds){
   const nyers=BONTAS.get(k), sorok=nyers.filter(s=>s.points);
   if(sorok.length && ds.cap==='1') sorok.push({name:'Kapitány — a heti pontban már duplázva',value:'',points:'×2'});
   if(sorok.length && ds.sub==='1') sorok.push({name:'Pad — a heti pontban már felezve',value:'',points:'×0.5'});
-  return FunTasy.accTable(sorok, nincsPontUzenet(played,start,nyers,false));
+  return FunTasy.accTable(sorok, nincsPontUzenet(played,start,nyers,false,ds.vg==='1'));
 }
 // Egyseges meccs-nezet: fordulohu keretek. Elo fordulonal az elo folyamat
 // (tarolt + percre friss csere), lezartnal az AKKORI keretek a

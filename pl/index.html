@@ -414,7 +414,11 @@ async function fetchLivePts(){
       const rov = TEAMS[t]; if (!rov) return;
       const a = LIVEFX[rov] || (LIVEFX[rov] = { indult:false, kesz:true, kezdes:null });
       a.indult = a.indult || !!m.started;
-      a.kesz   = a.kesz   && !!m.finished;
+      // A meccs KET lepesben zarul: a 'finished_provisional' a lefujaskor
+      // igaz, a 'finished' csak kesobb, a bonuszpontok veglegesitesekor.
+      // Csak az utobbit nezni azt jelentette, hogy a mar lejatszott meccsre
+      // is azt irtuk: "a meccs zajlik".
+      a.kesz   = a.kesz   && !!(m.finished || m.finished_provisional);
       if (!m.started && m.kickoff_time && (!a.kezdes || m.kickoff_time < a.kezdes))
         a.kezdes = m.kickoff_time;
     }));

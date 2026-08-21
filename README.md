@@ -100,13 +100,21 @@ Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő 
   pedig egy súgósor áll („A játékos nevére kattintva…”). A nyíl azért a név után van és nem
   a sor végén, mert ott védett: a szűk oszlopban az ellipszis előbb a klub-címkét vágja le.
   Egérrel a sor ki is világosodik, de a nyíl a lényeg — **telefonon nincs hover**.
-- **Ha nincs pontot érő esemény, az üzenet megmondja, miért** — öt eset, mert a 0-nak
+- **Ha nincs pontot érő esemény, az üzenet megmondja, miért** — hat eset, mert a 0-nak
   többféle oka lehet: *a klubnak nincs meccse ebben a fordulóban* (elmaradt/elhalasztott,
   a PL-en üres forduló), *a meccs még nem kezdődött el* (a kezdés időpontjával),
-  *a meccs zajlik, eddig nincs pontot érő eseménye*, *lejátszotta a meccset pont nélkül*,
-  vagy *nem lépett pályára*. Az elsőt a forduló meccslistája mondja meg (lásd lent),
-  a következő kettőt a kezdési idő és a lejátszottság, az utolsó kettőt a bontás
-  játszott-perc sora (ez 0 perccel is megjön, ha a játékos végig a kispadon ült).
+  *a meccs zajlik, eddig nincs pontot érő eseménye*, *a meccs véget ért, de a pontok
+  feldolgozása még tart*, *lejátszotta a meccset pont nélkül*, vagy *nem lépett pályára*. Az elsőt a forduló meccslistája mondja meg (lásd lent),
+  a következőket a kezdési idő, a meccs állapota és a lejátszottság, az utolsó kettőt a
+  bontás játszott-perc sora (ez 0 perccel is megjön, ha a játékos végig a kispadon ült).
+
+  **A lefújás és a pontok megjelenése között idő telik el**, és ez mindkét ligában
+  megtévesztő tud lenni. Az NB1-en az `is_played` órákkal a meccs vége után vált át, ezért
+  a meccslista `status` mezőjét is eltesszük (`vege`) — abból tudjuk, hogy a meccsnek már
+  vége, csak a pontok nincsenek meg. A PL-en az FPL **két lépésben** zárja a meccset:
+  a `finished_provisional` a lefújáskor igaz, a `finished` csak a bónuszpontok
+  véglegesítésekor — ezért a kettő közül bármelyik elég ahhoz, hogy lejátszottnak vegyük.
+  (Enélkül a már lejátszott meccsre is azt írtuk: „a meccs zajlik".)
 - **Ahol a kezdés időpontja még nincs kitűzve**, ott csak a dátum jelenik meg
   („kezdés: aug. 29. (időpont még nincs kitűzve)") — az MLSZ ilyenkor éjfélt ír, amit
   hiba lenne valódi kezdésként kiírni.
@@ -139,7 +147,7 @@ teljes képernyős, ragadós × gombbal.
 | `funtasy.css` | A közös stíluslap (mindhárom oldal ezt tölti). |
 | `funtasy.js` | A közös motor: tabella, meccspanelek, mátrix, élő-jelölés (`FunTasy.create(...)`), a pont-bontás accordionja és a **ligalista** (`LIGAK`), amiből a ligaváltó sáv és a kezdőlap kártyái készülnek. |
 | `results.json` | H2H eredmények archívuma: `{updated, provisional:[...], schedule:{"1":[[hazai,vendég,hp,vp],...]}}`. Az oldal ebből tölt, felülírva a beégetett menetrendet. A `provisional` a még le nem zárult fordulók listája. |
-| `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”), `start`-ot (az adott fordulós meccsének kezdése) és — ha a klubnak nincs meccse a fordulóban — `nogame: true`-t is tartalmaz. A régebbi, e mezők nélküli rekordokat az oldal tolerálja. |
+| `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”), `start`-ot (az adott fordulós meccsének kezdése), `vege: true`-t (a meccse már lement, akkor is, ha a pontok még nincsenek feldolgozva) és — ha a klubnak nincs meccse a fordulóban — `nogame: true`-t is tartalmaz. A régebbi, e mezők nélküli rekordokat az oldal tolerálja. |
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
 | `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
 | `collect_draft.py` | GitHub Actions: az FPL Draft liga adatai. A résztvevők valódi nevét és az `entry_id`-t kiszűri (a repó publikus). |
