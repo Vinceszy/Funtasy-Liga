@@ -76,7 +76,7 @@ A sorra kattintva a meccs részletei nyílnak meg. Mindkét oldalon így működ
    hány fordulóban volt nála, hányszor kezdő/pados, hányszor kapitány. Fent: hány fordulóban
    teljesült a magyarszabály (+10-ek összege), a magyar játékosok pontja, ebből az U21-eseké.
 
-### A FunTasy PL aloldal
+### A FunTasy PL oldal
 Ugyanaz a felépítés (tabella, meccspanelek, mátrix, modal három füllel, élő állások),
 a Premier League lila színvilágában, az FPL Draft sajátosságaival:
 - csapatnevek + monogram (a mátrixban csak monogramok), holtversenynél a szerzett pont dönt
@@ -409,9 +409,20 @@ A webhely szerkezete mappánként egy liga, hogy a cím a ligáról szóljon és
 
 Új liga hozzáadása:
 
-1. Egy új bejegyzés a `funtasy.js` **`LIGAK`** listájába (azonosító, név, mappa, cím,
-   leírás, téma). Ebből az **egy** listából készül a ligaváltó sáv minden oldal tetején
-   **és** a kezdőlap kártyája — máshol nem kell hozzányúlni.
+1. Egy új bejegyzés a `funtasy.js` **`LIGAK`** listájába. Ebből az **egy** listából
+   készül a ligaváltó sáv minden oldal tetején, a kezdőlap kártyája és a liga-oldal
+   alcíme is — máshol nem kell hozzányúlni. Mezők:
+
+   | Mező | Mire való |
+   |---|---|
+   | `id` | rövid azonosító, egyben a body-osztályok és a kártya alapja (`nb1`, `pl`) |
+   | `nev` | rövid név a ligaváltó sávban és a kártya tetején (`NB1`) |
+   | `mappa` | a webhely gyökeréhez képest (`nb1/`) |
+   | `cim` | a liga-oldal alcímének eleje (`NB1 salary cap fantasy`) |
+   | `leiras` | a folytatás: résztvevők, fordulók (`privát head-to-head · 8 csapat · 33 forduló`) |
+   | `tipus` | **játékmód** — `salary-cap` vagy `draft`, lásd lentebb |
+   | `tipusNev` | ennek olvasható neve a kártyán (`Salary cap`) |
+   | `tema` | a `body` osztálya a színvilághoz (`liga-nb1`) |
 2. Új mappa a saját `index.html`-lel. A közös fájlokra `../funtasy.css?v=N` és
    `../funtasy.js?v=N` hivatkozik, az adatra `../valami.json`, a sávot pedig egy sor
    rajzolja ki: `FunTasy.renderNav('<azonosító>','../')`.
@@ -421,6 +432,22 @@ A webhely szerkezete mappánként egy liga, hogy a cím a ligáról szóljon és
 
 A linkek **relatívak** (`../pl/`), mert a GitHub Pages aloldalon szolgál ki
 (`/Funtasy-Liga/`), tehát abszolút `/pl/` út rossz helyre mutatna.
+
+**A ligatípus nem címke, hanem tulajdonság.** Két játékmód van, és a szabályaik érdemben
+eltérnek — erre az oldalak külön megoldást adhatnak:
+
+| Típus | Mit jelent |
+|---|---|
+| `salary-cap` | közös játékospiac árkerettel; ugyanaz a játékos több csapatban is lehet; van kapitány (×2) és cserepad-felezés (NB1) |
+| `draft` | kizárólagos tulajdon: egy játékos egy csapatban; nincs kapitány, a pad pontjai nem számítanak (PL) |
+
+A típus két helyen fogható meg: a `body` megkapja a `tipus-<érték>` osztályt (CSS-ből
+használható), JS-ből pedig `FunTasy.liga('nb1').tipus` kérdezhető le. Mindkettőt a
+`FunTasy.renderNav(...)` állítja be, ugyanaz a hívás, ami a ligaváltó sávot kirajzolja.
+
+**A kezdőlapnak saját, semleges színvilága van** (`body.kezdolap`: grafit alap, ezüstös
+kiemelés). Enélkül az alapértelmezett palettát használná, vagyis úgy nézne ki, mintha az
+NB1 oldala volna. Így a lapon a két ligaszín (zöld / lila) az egyetlen színfolt.
 
 **Verziójelzés:** a két oldal a közös fájlokat `funtasy.css?v=N` / `funtasy.js?v=N`
 formában tölti. **Ha a `funtasy.css` vagy a `funtasy.js` változik, a `?v=` számot mindkét

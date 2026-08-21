@@ -6,9 +6,9 @@
 <title>FunTasy — ligák</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="funtasy.css?v=7">
+<link rel="stylesheet" href="funtasy.css?v=8">
 </head>
-<body>
+<body class="kezdolap">
 <div class="wrap">
 <header>
   <h1><span class="fun">FUN</span>TASY</h1>
@@ -23,14 +23,19 @@
 </div>
 </div>
 
-<script src="funtasy.js?v=7"></script>
+<script src="funtasy.js?v=8"></script>
 <script>
 // A kartyak ugyanabbol a listabol keszulnek, mint a liga-oldalak valtosavja
 // (funtasy.js -> LIGAK), tehat uj liga felvetele ott egyetlen sor.
+// A kartyan a liga neve mellett a JATEKMODJA is ott van (salary cap / draft),
+// mert az mondja meg, milyen szabalyok szerint megy. Ha egyszer sok liga lesz,
+// ugyanez a mezo (l.tipus) adja majd a csoportositast is.
 document.getElementById('ligak').innerHTML = FunTasy.LIGAK.map(l =>
-  `<a class="ligakartya" data-liga="${FunTasy.esc(l.id)}" href="${FunTasy.esc(l.mappa)}">
-     <h2>${FunTasy.esc(l.nev)}</h2>
-     <div class="kartyacim">${FunTasy.esc(l.cim)}</div>
+  `<a class="ligakartya" data-liga="${FunTasy.esc(l.id)}" data-tipus="${FunTasy.esc(l.tipus)}" href="${FunTasy.esc(l.mappa)}">
+     <div class="fejsor">
+       <h2>${FunTasy.esc(l.nev)}</h2>
+       <span class="tipuscimke">${FunTasy.esc(l.tipusNev)}</span>
+     </div>
      <div class="kartyaleiras">${FunTasy.esc(l.leiras)}</div>
      <span class="tovabb">Megnyitás →</span>
    </a>`).join('');

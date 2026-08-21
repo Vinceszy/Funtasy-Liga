@@ -6,14 +6,16 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=7">
+<link rel="stylesheet" href="../funtasy.css?v=8">
 </head>
 <body class="liga-pl">
 <div class="wrap">
 <nav class="liganav" id="liganav"></nav>
 <header>
   <h1><span class="fun">FUN</span>TASY <span class="tag">PL</span></h1>
-  <div class="sub" id="sub">FPL Draft · privát head-to-head</div>
+  <!-- Az alcímet a FunTasy.renderNav írja a közös LIGAK listából, majd a
+       betöltés után a valós csapat- és fordulószámmal frissül. -->
+  <div class="sub" id="sub">PL draft fantasy · privát head-to-head</div>
   <div id="status"></div>
 </header>
 
@@ -69,7 +71,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=7"></script>
+<script src="../funtasy.js?v=8"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -523,7 +525,7 @@ Promise.all([
 
     T.rPast = T.lastPlayedRound();
     T.rNext = T.nextRound();
-    $('sub').textContent = `FPL Draft · privát head-to-head · ${Object.keys(ENTRIES).length} csapat · ${liga.stop_event || 38} forduló`;
+    $('sub').textContent = `${FunTasy.liga('pl').cim} · privát head-to-head · ${Object.keys(ENTRIES).length} csapat · ${liga.stop_event || 38} forduló`;
     const d = j.updated ? new Date(j.updated) : null;
     $('status').textContent = d ? ('Frissítve: ' + d.toLocaleString('hu-HU')) : '';
     $('status').className = 'ok';

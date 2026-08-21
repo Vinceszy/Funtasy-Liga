@@ -12,6 +12,12 @@
    kiemeles, --magenta a masodlagos), az ertekuk temankent mas. */
 body.liga-pl{--bg:#150B22;--panel:#1F1233;--panel2:#180D29;--line:#3C2B5E;
   --amber:#00E08C;--magenta:#3EDBE0}
+/* A kezdolap egyik ligahoz sem tartozik, ezert sajat, SEMLEGES palettat kap
+   (grafit alap, ezustos kiemeles). Enelkul az alapertelmezett :root szineit
+   hasznalna, vagyis ugy nezne ki, mintha az NB1 oldala volna. Igy a lapon a
+   ket ligaszin (zold / lila) az egyetlen szinfolt - epp azt kell nezni. */
+body.kezdolap{--bg:#0E1114;--panel:#171B20;--panel2:#12161A;--line:#2A3138;
+  --ink:#F2EFE6;--dim:#95A1AC;--amber:#C3CBD3;--magenta:#8B98A5}
 /* Az NB1-oldal cime trikolor: FUN piros, TASY feher (alapszin), NB1 zold.
    Csak a cim harom betucsoportja - kiemelesre a piros szandekosan nincs
    hasznalva, hogy ne hasson felszolitasnak. */
@@ -92,9 +98,12 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
   border:1px solid var(--line);border-left:4px solid var(--dim);border-radius:10px;
   padding:20px 22px;transition:transform .12s,border-color .12s,background .12s}
 .ligakartya:hover{transform:translateY(-2px);background:var(--panel2)}
-.ligakartya h2{font-family:'Archivo Black';font-size:22px;letter-spacing:1px;margin-bottom:2px;
-  border:0;padding:0}
-.ligakartya .kartyacim{font-size:13px;color:var(--ink);margin-bottom:6px}
+.ligakartya .fejsor{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.ligakartya h2{font-family:'Archivo Black';font-size:22px;letter-spacing:1px;border:0;padding:0}
+/* A ligatipus (salary cap / draft) nem dísz: ez mondja meg, milyen szabalyok
+   szerint megy a liga. Ezert a kartyan is ott a helye, nem csak az alcimben. */
+.tipuscimke{font:700 9px Inter;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
+  border:1px solid var(--line);border-radius:999px;padding:4px 9px;white-space:nowrap}
 .ligakartya .kartyaleiras{font-size:12px;color:var(--dim);line-height:1.5}
 .ligakartya .tovabb{display:inline-block;margin-top:12px;font:700 11px Inter;letter-spacing:1px;
   text-transform:uppercase;color:var(--dim)}
