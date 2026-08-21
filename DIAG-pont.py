@@ -1,28 +1,33 @@
 #!/usr/bin/env python3
-"""Egyszeri diagnosztika, 10. kor (IDEIGLENES): a bontas cimkei II.
+"""Egyszeri diagnosztika, 11. kor (IDEIGLENES): vegso ellenorzes.
 
-A 9. kor igazolta a /game-player-stats szurest, de a sorokban nincs nev.
-Ez a kor:
-  A) kiirja a TELJES CompetitionPlayerStatsDialog chunkot (3.2 KB)
-  B) include-okat probal a /game-player-stats vegponton
+A 10. kor dekodolta a modalt: /game-player-stats +
+include=competition_stat_config adja a cimkezett bontast.
+Ez a kor igazolja, es a "jatszott mar?" jelzot meri:
+  A) game-player-stats cimkekkel (Umathum, 4. fordulo)
+  B) elo fordulo (85): is_played / first_played_at / has_statistics
+     nehany jatekosnal, akiknek MA volt meccse vs. vasarnap lesz
+  C) FPL: explain ures-e a meg nem jatszott jatekosoknal (GW1 elo)
 
 CSAK OLVAS es nyomtat.
 """
-import json, re, sys, time, urllib.error, urllib.request
+import json, sys, time, urllib.error, urllib.parse, urllib.request
 
 API = "https://fantasy-api.mlsz.hu/"
-UI = "https://fantasy.mlsz.hu/"
-HDRS = {"Accept": "*/*", "User-Agent": "funtasy-archiver/1.0",
+M_BASE = API + "competitions/3/"
+F_BASE = "https://draft.premierleague.com/api/"
+HDRS = {"Accept": "application/json", "User-Agent": "funtasy-archiver/1.0",
         "Referer": "https://fantasy.mlsz.hu/"}
+ALAP_INC = ("position,competition_player,competition_player.team,"
+            "competition_player.countries,summary_statistics")
 
 
-def get(url, szoveg=False):
+def get(url):
     time.sleep(0.3)
     try:
         req = urllib.request.Request(url, headers=HDRS)
         with urllib.request.urlopen(req, timeout=30) as r:
-            adat = r.read().decode("utf-8", "replace")
-            return r.status, adat if szoveg else json.loads(adat)
+            return r.status, json.loads(r.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         return e.code, None
     except Exception as e:
@@ -30,30 +35,53 @@ def get(url, szoveg=False):
 
 
 def main():
-    print("========== A) CompetitionPlayerStatsDialog teljes kodja ==========")
-    st, html = get(UI, szoveg=True)
-    fo = ""
-    if st == 200:
-        for ut in re.findall(r'(?:src|href)="([^"]+\.js[^"]*)"', html):
-            teljes = ut if ut.startswith("http") else UI.rstrip("/") + "/" + ut.lstrip("/")
-            st2, adat = get(teljes, szoveg=True)
-            if st2 == 200:
-                fo += adat
-    for ut in sorted(set(re.findall(r'assets/CompetitionPlayerStatsDialog[A-Za-z0-9_\-.]*\.js', fo))):
-        st, js = get(UI + ut, szoveg=True)
-        print("--- %s (HTTP %s) ---" % (ut, st))
-        if st == 200:
-            print(js)
+    print("========== A) game-player-stats cimkekkel ==========")
+    st, j = get(API + "game-player-stats?include=competition_stat_config"
+                "&filter%5Bcompetition_player_id%5D=1305&filter%5Bround_id%5D=83")
+    if st == 200 and j and j.get("data"):
+        for sor in j["data"]:
+            cfg = (sor.get("competition_stat_config") or {})
+            print("  %-40s value=%-6s points=%s" % (cfg.get("name"), sor.get("value"), sor.get("points")))
+    else:
+        print("HTTP %s" % st)
 
-    print("\n========== B) include-probak a game-player-stats-on ==========")
-    for inc in ("stat", "statistic", "stat_config", "game_statistic", "statistic_type", "stat.type"):
-        url = (API + "game-player-stats?filter%5Bgame_id%5D=433"
-               "&filter%5Bcompetition_player_id%5D=1305&include=" + inc)
-        st, j = get(url)
-        if st == 200 and isinstance(j, dict) and j.get("data"):
-            print("+%s -> 200; elso 2 sor: %s" % (inc, json.dumps(j["data"][:2], ensure_ascii=False)[:500]))
-        else:
-            print("+%s -> HTTP %s" % (inc, st))
+    print("\n========== B) elo fordulo (85): jatszott-jelzok ==========")
+    st, j = get(M_BASE + "user-team-players-history?include=" + urllib.parse.quote(ALAP_INC)
+                + "&filter%5Buser_id%5D=5483&filter%5Bround_id%5D=85")
+    if st == 200 and j and j.get("data"):
+        for d in j["data"]:
+            cp = d.get("competition_player") or {}
+            cr = cp.get("current_round") or {}
+            print("  %-22s %-8s is_played=%-5s has_stats=%-5s first_played_at=%s  hetipont=%s"
+                  % (cp.get("last_name"), (cp.get("team") or {}).get("short_name"),
+                     cr.get("is_played"), cr.get("has_statistics"), cr.get("first_played_at"),
+                     (d.get("summary_statistics") or {}).get("weekly_points")))
+    else:
+        print("HTTP %s" % st)
+
+    print("\n========== C) FPL: explain ures-e nem jatszottnal ==========")
+    st, j = get(F_BASE + "event/1/live")
+    if st == 200 and isinstance(j, dict):
+        el = j.get("elements") or {}
+        jatszott = nem = None
+        for k, v in el.items():
+            mins = ((v or {}).get("stats") or {}).get("minutes") or 0
+            if mins > 0 and jatszott is None:
+                jatszott = (k, v)
+            if mins == 0 and nem is None:
+                nem = (k, v)
+            if jatszott and nem:
+                break
+        for cimke, valasztott in (("JATSZOTT", jatszott), ("NEM JATSZOTT", nem)):
+            if not valasztott:
+                print("  %s: nincs ilyen elem" % cimke); continue
+            k, v = valasztott
+            print("  %s (#%s): minutes=%s total=%s explain=%s"
+                  % (cimke, k, (v.get("stats") or {}).get("minutes"),
+                     (v.get("stats") or {}).get("total_points"),
+                     json.dumps(v.get("explain"), ensure_ascii=False)[:200]))
+    else:
+        print("live HTTP %s" % st)
 
     print("\nDiagnosztika vege - semmit nem irt.")
     return 0
