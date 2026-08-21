@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""Egyszeri diagnosztika, 3. kor (IDEIGLENES): honnan jon a pont-BONTAS?
+"""Egyszeri diagnosztika, 4. kor (IDEIGLENES): honnan jon a pont-BONTAS?
 
-A 2. kor a bundle-bol include-okat talalt (current_round.games,
-round_statistics), de a teteles bontas vegpontjat nem: az utvonalak
-template-literalokban lehetnek. Ez a kor:
-  A) utvonal-szeru sztringek a bundle-bol (legalabb egy / jellel)
-  B) kodkontextus a *statistics elofordulasok korul
-  C) magyar cimkek (Kulcspassz, Gyozelem...) a kliensben vannak-e
-  D) a talalt igeretes include-ok azonnali kiprobalasa az API-n
+A 3. kor megtalalta a jatekos-vegpontot a bundle-ben:
+`${Qn}/${e}/players/${t}` -> competitions/3/players/{player_id}.
+A magyar cimkek (Kulcspassz, Gyozelem...) NINCSENEK a kliensben,
+tehat a bontas nevei az API-bol jonnek.
+
+Ez a kor:
+  A) a bundle-bol kiszedi a players/${t} hivas kornyeki kodot
+     (ott a pontos include-lista es a parameterek)
+  B) rogton meg is hivja a players/1305 vegpontot: eloszor
+     csupaszon, majd a talalt include-okkal es round-szurovel
 
 CSAK OLVAS es nyomtat.
 """
@@ -34,63 +37,38 @@ def get(url, szoveg=False):
 
 def main():
     st, html = get(UI, szoveg=True)
-    if st != 200:
-        print("fooldal HTTP %s" % st); return 0
-    utak = re.findall(r'(?:src|href)="([^"]+\.js[^"]*)"', html)
     js = ""
-    for ut in utak:
-        teljes = ut if ut.startswith("http") else UI.rstrip("/") + "/" + ut.lstrip("/")
-        st, adat = get(teljes, szoveg=True)
-        if st == 200 and isinstance(adat, str):
-            js += adat
-    print("bundle osszmeret: %d bajt" % len(js))
+    if st == 200:
+        for ut in re.findall(r'(?:src|href)="([^"]+\.js[^"]*)"', html):
+            teljes = ut if ut.startswith("http") else UI.rstrip("/") + "/" + ut.lstrip("/")
+            st2, adat = get(teljes, szoveg=True)
+            if st2 == 200 and isinstance(adat, str):
+                js += adat
 
-    print("\n========== A) utvonal-szeru sztringek ==========")
-    minta = re.compile(r'["\'`]((?:[a-z0-9_\-]|\$\{[^}]*\})+(?:/(?:[a-z0-9_\-]|\$\{[^}]*\})+)+)["\'`]')
-    for s in sorted(set(minta.findall(js))):
-        if re.search(r'(player|round|statistic|user|team|competition|point)', s):
-            print("  %s" % s)
+    print("========== A) a players/${t} hivas kornyeke ==========")
+    for m in re.finditer(re.escape("players/${t}"), js):
+        print("..." + js[max(0, m.start() - 700):m.end() + 900].replace("\n", " ") + "...")
+        print("-" * 70)
 
-    print("\n========== B) kontextus a statisztika-hivatkozasok korul ==========")
-    for kulcs in ("round_statistics", "competition_statistics", "has_statistics"):
-        for m in list(re.finditer(re.escape(kulcs), js))[:6]:
-            resz = js[max(0, m.start() - 160):m.end() + 160].replace("\n", " ")
-            print("[%s] ...%s..." % (kulcs, resz))
+    print("\n========== B) players/1305 probak ==========")
+    probak = [
+        "players/1305",
+        "players/1305?include=" + urllib.parse.quote(
+            "round_statistics,round_statistics.details"),
+        "players/1305?include=" + urllib.parse.quote(
+            "statistics,round_statistics,summary_statistics,current_round"),
+        "players/1305?filter%5Bround_id%5D=83",
+    ]
+    for p in probak:
+        st, j = get(M_BASE + p)
+        if st == 200 and isinstance(j, dict):
+            print("GET %s -> 200:" % p)
+            print(json.dumps(j, ensure_ascii=False)[:3000])
+        else:
+            print("GET %s -> HTTP %s" % (p, st))
         print()
 
-    print("========== C) magyar cimkek a kliensben? ==========")
-    for cimke in ("Kulcspassz", "Gy\\u0151zelem", "Győzelem", "p\\u00e1rharc", "párharc",
-                  "Percek a p", "Gólok", "G\\u00f3lok"):
-        db = js.count(cimke)
-        if db:
-            m = re.search(re.escape(cimke), js)
-            resz = js[max(0, m.start() - 120):m.end() + 200].replace("\n", " ")
-            print("'%s' x%d: ...%s..." % (cimke, db, resz))
-        else:
-            print("'%s': nincs" % cimke)
-
-    print("\n========== D) igeretes include-ok az API-n ==========")
-    probak = [
-        ("user-team-players-history", "competition_player.current_round.games,"
-         "competition_player.current_round.games.home_team,"
-         "competition_player.current_round.games.away_team"),
-        ("user-team-players-history", "competition_player.current_round.round"),
-        ("user-team-players-history", "competition_player.current_round.competition_player"),
-        ("user-team-players-history", "round_statistics"),
-        ("user-team-players-history", "competition_player.round_statistics.details"),
-        ("user-team-players-history", "competition_player.round_statistics.statistics"),
-    ]
-    for vegpont, inc in probak:
-        url = (M_BASE + vegpont + "?include=" + urllib.parse.quote(inc)
-               + "&filter%5Buser_id%5D=5483&filter%5Bround_id%5D=83")
-        st, j = get(url)
-        if st == 200 and j and j.get("data"):
-            print("+%s -> 200:" % inc)
-            print(json.dumps(j["data"][0], ensure_ascii=False)[:1500])
-        else:
-            print("+%s -> HTTP %s" % (inc, st))
-
-    print("\nDiagnosztika vege - semmit nem irt.")
+    print("Diagnosztika vege - semmit nem irt.")
     return 0
 
 
