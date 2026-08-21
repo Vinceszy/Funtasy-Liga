@@ -1,25 +1,20 @@
 #!/usr/bin/env python3
-"""Egyszeri diagnosztika, 11. kor (IDEIGLENES): vegso ellenorzes.
+"""Egyszeri diagnosztika, 12. kor (IDEIGLENES): a "jatszott mar?" jelzo forrasa.
 
-A 10. kor dekodolta a modalt: /game-player-stats +
-include=competition_stat_config adja a cimkezett bontast.
-Ez a kor igazolja, es a "jatszott mar?" jelzot meri:
-  A) game-player-stats cimkekkel (Umathum, 4. fordulo)
-  B) elo fordulo (85): is_played / first_played_at / has_statistics
-     nehany jatekosnal, akiknek MA volt meccse vs. vasarnap lesz
-  C) FPL: explain ures-e a meg nem jatszott jatekosoknal (GW1 elo)
+A 11. kor szerint az elo fordulonal a current_round (is_played) hianyzik
+az alap include-dal. Ez a kor:
+  A) elo fordulo (85) explicit competition_player.current_round include-dal
+  B) a fordulo meccslistaja egy hivassal: games?filter[round_id]
+  C) FPL: event/1/fixtures - meccs-allapotok a GW-ben
 
 CSAK OLVAS es nyomtat.
 """
 import json, sys, time, urllib.error, urllib.parse, urllib.request
 
-API = "https://fantasy-api.mlsz.hu/"
-M_BASE = API + "competitions/3/"
+M_BASE = "https://fantasy-api.mlsz.hu/competitions/3/"
 F_BASE = "https://draft.premierleague.com/api/"
 HDRS = {"Accept": "application/json", "User-Agent": "funtasy-archiver/1.0",
         "Referer": "https://fantasy.mlsz.hu/"}
-ALAP_INC = ("position,competition_player,competition_player.team,"
-            "competition_player.countries,summary_statistics")
 
 
 def get(url):
@@ -35,53 +30,39 @@ def get(url):
 
 
 def main():
-    print("========== A) game-player-stats cimkekkel ==========")
-    st, j = get(API + "game-player-stats?include=competition_stat_config"
-                "&filter%5Bcompetition_player_id%5D=1305&filter%5Bround_id%5D=83")
-    if st == 200 and j and j.get("data"):
-        for sor in j["data"]:
-            cfg = (sor.get("competition_stat_config") or {})
-            print("  %-40s value=%-6s points=%s" % (cfg.get("name"), sor.get("value"), sor.get("points")))
-    else:
-        print("HTTP %s" % st)
-
-    print("\n========== B) elo fordulo (85): jatszott-jelzok ==========")
-    st, j = get(M_BASE + "user-team-players-history?include=" + urllib.parse.quote(ALAP_INC)
+    print("========== A) elo fordulo explicit current_round include-dal ==========")
+    inc = ("competition_player,competition_player.team,"
+           "competition_player.current_round,summary_statistics")
+    st, j = get(M_BASE + "user-team-players-history?include=" + urllib.parse.quote(inc)
                 + "&filter%5Buser_id%5D=5483&filter%5Bround_id%5D=85")
     if st == 200 and j and j.get("data"):
-        for d in j["data"]:
+        for d in j["data"][:15]:
             cp = d.get("competition_player") or {}
             cr = cp.get("current_round") or {}
-            print("  %-22s %-8s is_played=%-5s has_stats=%-5s first_played_at=%s  hetipont=%s"
+            print("  %-22s %-8s is_played=%-5s has_stats=%-5s first_played_at=%-25s hetipont=%s"
                   % (cp.get("last_name"), (cp.get("team") or {}).get("short_name"),
                      cr.get("is_played"), cr.get("has_statistics"), cr.get("first_played_at"),
                      (d.get("summary_statistics") or {}).get("weekly_points")))
     else:
         print("HTTP %s" % st)
 
-    print("\n========== C) FPL: explain ures-e nem jatszottnal ==========")
-    st, j = get(F_BASE + "event/1/live")
-    if st == 200 and isinstance(j, dict):
-        el = j.get("elements") or {}
-        jatszott = nem = None
-        for k, v in el.items():
-            mins = ((v or {}).get("stats") or {}).get("minutes") or 0
-            if mins > 0 and jatszott is None:
-                jatszott = (k, v)
-            if mins == 0 and nem is None:
-                nem = (k, v)
-            if jatszott and nem:
-                break
-        for cimke, valasztott in (("JATSZOTT", jatszott), ("NEM JATSZOTT", nem)):
-            if not valasztott:
-                print("  %s: nincs ilyen elem" % cimke); continue
-            k, v = valasztott
-            print("  %s (#%s): minutes=%s total=%s explain=%s"
-                  % (cimke, k, (v.get("stats") or {}).get("minutes"),
-                     (v.get("stats") or {}).get("total_points"),
-                     json.dumps(v.get("explain"), ensure_ascii=False)[:200]))
-    else:
-        print("live HTTP %s" % st)
+    print("\n========== B) meccslista-vegpont probak ==========")
+    for p in ("games?filter%5Bround_id%5D=85",
+              "games?filter%5Bround_id%5D=85&include=home_team,away_team",
+              "rounds?filter%5Bid%5D=85&include=games",
+              "rounds/85?include=games,games.home_team,games.away_team"):
+        st, j = get(M_BASE + p)
+        rov = json.dumps(j, ensure_ascii=False)[:900] if st == 200 else ""
+        print("GET %s -> HTTP %s %s\n" % (p.split("?")[0], st, rov))
+
+    print("========== C) FPL fixtures ==========")
+    for p in ("event/1/fixtures", "fixtures?event=1"):
+        st, j = get(F_BASE + p)
+        if st == 200 and isinstance(j, list) and j:
+            print("GET %s -> 200; elso elem: %s" % (p, json.dumps(j[0], ensure_ascii=False)[:600]))
+            print("  osszesen %d meccs; kulcsok: %s" % (len(j), sorted(j[0].keys())))
+            break
+        print("GET %s -> HTTP %s" % (p, st))
 
     print("\nDiagnosztika vege - semmit nem irt.")
     return 0
