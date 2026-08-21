@@ -1,29 +1,25 @@
 #!/usr/bin/env python3
-"""Egyszeri diagnosztika, 8. kor (IDEIGLENES): a pont-bontas modal chunkja.
+"""Egyszeri diagnosztika, 9. kor (IDEIGLENES): a /game-player-stats vegpont.
 
-A 7. kor megtalalta a lazy-chunkokat; a jatekos-modal a
-CompetitionPlayerStatsDialog chunkban van. Ez a kor letolti a
-PlayerStatsDialog / PlayerCard / Player / GameRules chunkokat, es kiirja:
-  A) az ekezetes/magyar sztring-literalokat (cimkek)
-  B) az API-hivasok kornyeket (url:`...`)
-  C) a game_player_statistics feldolgozasat
+A 8. kor kiderítette: a jatekos-modal a /game-player-stats vegpontot
+hivja GET-tel, parameterekkel. Ez a kor a parameter-valtozatokat probalja
+(433 = DVSC-ETO a 4. fordulobol, 1305 = Umathum), es kiirja a valaszt.
 
 CSAK OLVAS es nyomtat.
 """
-import re, sys, time, urllib.error, urllib.request
+import json, sys, time, urllib.error, urllib.request
 
-UI = "https://fantasy.mlsz.hu/"
-HDRS = {"Accept": "*/*", "User-Agent": "funtasy-archiver/1.0",
+API = "https://fantasy-api.mlsz.hu/"
+HDRS = {"Accept": "application/json", "User-Agent": "funtasy-archiver/1.0",
         "Referer": "https://fantasy.mlsz.hu/"}
-CHUNKOK = ("CompetitionPlayerStatsDialog", "PlayerCard", "Player-", "GameRules")
 
 
 def get(url):
-    time.sleep(0.2)
+    time.sleep(0.3)
     try:
         req = urllib.request.Request(url, headers=HDRS)
         with urllib.request.urlopen(req, timeout=30) as r:
-            return r.status, r.read().decode("utf-8", "replace")
+            return r.status, json.loads(r.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         return e.code, None
     except Exception as e:
@@ -31,38 +27,23 @@ def get(url):
 
 
 def main():
-    st, html = get(UI)
-    fo = ""
-    if st == 200:
-        for ut in re.findall(r'(?:src|href)="([^"]+\.js[^"]*)"', html):
-            teljes = ut if ut.startswith("http") else UI.rstrip("/") + "/" + ut.lstrip("/")
-            st2, adat = get(teljes)
-            if st2 == 200:
-                fo += adat
-    utak = sorted(set(re.findall(r'assets/[A-Za-z0-9_\-.]+\.js', fo)))
-    kellenek = [u for u in utak if any(c in u for c in CHUNKOK)]
-    print("letoltendo chunkok: %s" % kellenek)
+    probak = [
+        "game-player-stats?filter%5Bgame_id%5D=433&filter%5Bcompetition_player_id%5D=1305",
+        "game-player-stats?filter%5Bcompetition_player_id%5D=1305",
+        "game-player-stats?game_id=433&competition_player_id=1305",
+        "game-player-stats?filter%5Bgame_id%5D=433",
+        "competitions/3/game-player-stats?filter%5Bgame_id%5D=433&filter%5Bcompetition_player_id%5D=1305",
+    ]
+    for p in probak:
+        st, j = get(API + p)
+        if st == 200 and isinstance(j, (dict, list)):
+            print("GET %s -> 200:" % p)
+            print(json.dumps(j, ensure_ascii=False)[:4000])
+        else:
+            print("GET %s -> HTTP %s" % (p, st))
+        print()
 
-    for ut in kellenek:
-        st, js = get(UI + ut)
-        if st != 200:
-            print("\n### %s -> HTTP %s" % (ut, st)); continue
-        print("\n### %s (%d bajt)" % (ut, len(js)))
-
-        print("-- magyar/ekezetes sztringek: --")
-        for s in sorted(set(re.findall(r'["\'`]([^"\'`]*[áéíóöőúüűÁÉÍÓÖŐÚÜŰ][^"\'`]*)["\'`]', js))):
-            if len(s) < 90:
-                print("   %r" % s)
-
-        print("-- url: kontextusok: --")
-        for m in re.finditer(r'url\s*:\s*`[^`]+`', js):
-            print("   ..." + js[max(0, m.start() - 120):m.end() + 60].replace("\n", " ") + "...")
-
-        print("-- game_player_statistics kontextus: --")
-        for m in re.finditer(re.escape("game_player_statistics"), js):
-            print("   ..." + js[max(0, m.start() - 350):m.end() + 500].replace("\n", " ") + "...")
-
-    print("\nDiagnosztika vege - semmit nem irt.")
+    print("Diagnosztika vege - semmit nem irt.")
     return 0
 
 
