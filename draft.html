@@ -6,7 +6,7 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="funtasy.css?v=2">
+<link rel="stylesheet" href="funtasy.css?v=3">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -68,7 +68,7 @@
   </div>
 </div>
 
-<script src="funtasy.js?v=2"></script>
+<script src="funtasy.js?v=3"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -94,6 +94,9 @@ let HIST = {};      // fordulonkenti keretek: {gw: {liga_id: [{e,b,pts},...]}}
 const LIVE = {};    // elo eredmenyek a folyo fordulora - tabellaba NEM szamit
 let LIVEGW = null;  // a most zajlo fordulo szama (ha van)
 let LIVEPTS = {};   // percre friss jatekos-pontok: {element: pont}
+let TEAMS = {};     // csapat-id -> rovidnev (draft_players.json "teams")
+let LIVESTART = null; // az elo fordulo mar ELKEZDODOTT meccseinek csapatai
+                      // (rovidnev-halmaz); null = nincs adat, nincs jeloles
 
 const nev = id => (ENTRIES[id] && ENTRIES[id].name) || ('#' + id);
 const jat = e => PLAYERS[e] || { n: '#' + e, t: '', p: '' };
@@ -140,14 +143,22 @@ function closeModal(){ $('ov').classList.remove('open'); document.body.style.ove
 
 // Egy keret-oszlop. A lista {e,b,pts} rekordokbol all (fordulonkenti keret,
 // pontokkal), VAGY sima element-id-kbol (jelenlegi keret, pont nelkul).
-function sqcolHTML(id, lista, cim){
+// A gw-vel hivott (fordulohoz kotott) valtozatban a jatekos-sorra kattintva
+// accordion nyilik a pont-bontassal, es az elo fordulo meg nem jatszott
+// jatekosainal a 0 helyett kotojel all (a meccse meg el sem kezdodott).
+function sqcolHTML(id, lista, cim, gw){
   const gazdag = lista.length && typeof lista[0] === 'object';
   const sor = x => {
     const r = gazdag ? x : { e: x, b: false, pts: null };
     const j = jat(r.e);
-    return `<div class="plr"><span class="ppos">${esc(j.p)}</span>
+    const acc = (gazdag && gw) ? ` data-acc="1" data-e="${r.e}" data-gw="${gw}"` : '';
+    const nemJatszott = gw === LIVEGW && LIVESTART && j.t && !LIVESTART.has(j.t) && !(r.pts || 0);
+    const pts = r.pts == null ? ''
+      : nemJatszott ? '<span class="pts" title="még nem játszott">–</span>'
+      : `<span class="pts">${fmt(r.pts)}</span>`;
+    return `<div class="plr"${acc}><span class="ppos">${esc(j.p)}</span>
       <span class="nm">${esc(j.n)}${j.t ? ` <span class="tm">${esc(j.t)}</span>` : ''}</span>
-      ${r.pts != null ? `<span class="pts">${fmt(r.pts)}</span>` : ''}</div>`;
+      ${pts}</div>`;
   };
   const rendez = a => [...a].sort((x, y) =>
     posRank(jat(gazdag ? x.e : x).p) - posRank(jat(gazdag ? y.e : y).p));
@@ -171,7 +182,7 @@ function keretHTML(id){
     const sq = Object.keys(LIVEPTS).length
       ? eloSq.map(x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts })) : eloSq;
     return `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">${LIVEGW}. forduló · élő állás — a forduló még tart</div>`
-           + `<div class="sqwrap one">${sqcolHTML(id, sq)}</div>`;
+           + `<div class="sqwrap one">${sqcolHTML(id, sq, null, LIVEGW)}</div>`;
   }
   const sq = SQUADS[id];
   if (sq && sq.length)
@@ -182,7 +193,7 @@ function keretHTML(id){
     const h = (HIST[gw] || {})[id];
     if (h && h.length)
       return `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">${gw}. forduló</div>`
-             + `<div class="sqwrap one">${sqcolHTML(id, h)}</div>`;
+             + `<div class="sqwrap one">${sqcolHTML(id, h, null, gw)}</div>`;
   }
   return '<div class="loading">A keret még nem került be az adatgyűjtésbe.</div>';
 }
@@ -284,13 +295,13 @@ function showMatch(h, v, r, mode){
     $('mSub').textContent += ' · élő állás';
   }
   if (H && V){
-    $('mBody').innerHTML = `<div class="sqwrap">${sqcolHTML(h, H)}${sqcolHTML(v, V)}</div>`;
+    $('mBody').innerHTML = `<div class="sqwrap">${sqcolHTML(h, H, null, r)}${sqcolHTML(v, V, null, r)}</div>`;
     if (r === LIVEGW){
       const kert = $('mTitle').textContent;
       fetchLivePts().then(ok => {
         if (!ok || !$('ov').classList.contains('open') || $('mTitle').textContent !== kert) return;
         const friss = x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts });
-        $('mBody').innerHTML = `<div class="sqwrap">${sqcolHTML(h, H.map(friss))}${sqcolHTML(v, V.map(friss))}</div>`;
+        $('mBody').innerHTML = `<div class="sqwrap">${sqcolHTML(h, H.map(friss), null, r)}${sqcolHTML(v, V.map(friss), null, r)}</div>`;
       });
     }
     return;
@@ -303,6 +314,8 @@ function showMatch(h, v, r, mode){
 
 document.addEventListener('click', e => {
   if (e.target === $('ovBack')){ vBack(); return; }
+  const pr = e.target.closest('.plr[data-acc]');
+  if (pr){ FunTasy.accToggle(pr, () => bontasHTML(+pr.dataset.e, +pr.dataset.gw)); return; }
   const t = e.target.closest('[data-team]');
   if (t){ showTeam(+t.dataset.team); return; }
   const tab = e.target.closest('#mTabs .tab');
@@ -351,15 +364,57 @@ function lekeresHiba(){
     : 'Az élő frissítés most nem elérhető — a tárolt állás látható.';
 }
 async function fetchLivePts(){
-  // a folyo fordulo percre friss jatekos-pontjai; true, ha sikerult
+  // a folyo fordulo percre friss jatekos-pontjai; true, ha sikerult.
+  // Mellette a fordulo meccs-allapotai (fixtures) is jonnek: ebbol tudjuk,
+  // kinek kezdodott mar el a meccse ("jatszott mar?" jelzes, kotojel vs 0).
   if (!LIVEGW) return false;
-  const elo = await apiGet('https://draft.premierleague.com/api/event/' + LIVEGW + '/live');
+  const [elo, fx] = await Promise.all([
+    apiGet('https://draft.premierleague.com/api/event/' + LIVEGW + '/live'),
+    apiGet('https://draft.premierleague.com/api/event/' + LIVEGW + '/fixtures'),
+  ]);
+  if (Array.isArray(fx) && fx.length && Object.keys(TEAMS).length){
+    LIVESTART = new Set();
+    fx.forEach(m => { if (m.started){
+      if (TEAMS[m.team_h]) LIVESTART.add(TEAMS[m.team_h]);
+      if (TEAMS[m.team_a]) LIVESTART.add(TEAMS[m.team_a]);
+    }});
+  }
   if (!elo) return false;
   LIVEPTS = {};
   const el = elo.elements || {};
   if (Array.isArray(el)) el.forEach(v => { LIVEPTS[v.id] = ((v.stats || {}).total_points) || 0; });
   else for (const k in el) LIVEPTS[k] = (((el[k] || {}).stats) || {}).total_points || 0;
   return true;
+}
+// ---------- pont-bontas (accordion a jatekos-sorok alatt) ----------
+// Forrasa az event/{gw}/live "explain" mezoje: esemenyenkent nev, darab es
+// pont. A nevek angolul jonnek, a stat-kulcs alapjan forditjuk; ismeretlen
+// kulcsnal az angol nev marad. Csak a pontot ero sorok latszanak, mint az
+// NB1-oldalon. A pad pontjai itt sem szamitanak a csapatnak - ezt a keret-
+// nezet felirata mondja, a bontas a nyers ertekeket mutatja.
+const STATNEV = { minutes:'Játszott percek', goals_scored:'Gólok', assists:'Gólpasszok',
+  clean_sheets:'Kapott gól nélkül', goals_conceded:'Kapott gólok', own_goals:'Öngól',
+  penalties_saved:'Kivédett büntetők', penalties_missed:'Kihagyott büntetők',
+  yellow_cards:'Sárga lap', red_cards:'Piros lap', saves:'Védések',
+  bonus:'Bónuszpontok', defensive_contribution:'Védekező munka' };
+const BONTASGW = new Map();   // gw -> {t, p}; az elo fordulot percenkent frissitjuk
+function gwElems(gw){
+  const most = Date.now(), rec = BONTASGW.get(gw);
+  if (rec && (gw !== LIVEGW || most - rec.t < 60000)) return rec.p;
+  const p = apiGet('https://draft.premierleague.com/api/event/' + gw + '/live')
+    .then(j => (j && j.elements) || null);
+  BONTASGW.set(gw, { t: most, p });
+  return p;
+}
+async function bontasHTML(e, gw){
+  const el = await gwElems(gw);
+  const v = el && (el[e] || el[String(e)]);
+  if (!v) return null;
+  const sorok = [];
+  (v.explain || []).forEach(fx => (fx && fx[0] || []).forEach(t => {
+    if (t.points) sorok.push({ name: STATNEV[t.stat] || t.name || '?', value: t.value, points: t.points });
+  }));
+  return FunTasy.accTable(sorok);
 }
 async function liveRefresh(){
   const st = $('status');
@@ -398,6 +453,7 @@ Promise.all([
     for (const k in (j.schedule || {})) SCHEDULE[k] = j.schedule[k];
     liga = j.league || {};
     PLAYERS = (pl && pl.players) || {};
+    TEAMS = (pl && pl.teams) || {};   // regi fajlban meg nincs: akkor nincs kotojel-jelzes sem
     SQUADS = (sq && sq.squads) || {};
     HIST = (hi && hi.rounds) || {};
 

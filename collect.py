@@ -28,6 +28,15 @@ TOVABBI MERESSEL IGAZOLT TENYEK (2026-08-20):
   jatekosanal current_round.is_played igaz. A halasztott meccs jatekosait
   az MLSZ lejatszottnak jeloli 0 ponttal (igazolva a 3. fordulos ETO-Fradi
   eseten), tehat a halasztas nem akasztja meg a lezarast.
+- A current_round az ELO fordulo lekeresenel csak explicit
+  competition_player.current_round include-dal jon vissza (lezart fordulonal
+  enelkul is megjelenik) - ezert szerepel az INCLUDE-ban (2026-08-21).
+- PONT-BONTAS: a /game-player-stats vegpont (competitions elotag NELKUL)
+  adja egy jatekos fordulonkenti teteles bontasat magyar cimkekkel:
+  ?include=competition_stat_config&filter[competition_player_id]=<cp.id>
+  &filter[round_id]=<round_id>. Ezt az oldal bongeszobol hivja, a gyujto
+  csak a hozza kello cp-azonositot ("id") es a "jatszott mar?" jelzot
+  ("played" = current_round.is_played) teszi a keret-rekordokba.
 - A le nem zarult fordulo szamai IDEIGLENESEK: a results.json "provisional"
   listajaba kerulnek, es az oldal nem szamolja oket a tabellaba.
 - Az MLSZ utolag korrigalhat jatekos-statisztikat, es atvezeti a hivatalos
@@ -51,7 +60,8 @@ BASE = "https://fantasy-api.mlsz.hu/competitions/%d/" % COMPETITION
 HDRS = {"Accept": "application/json", "User-Agent": "funtasy-archiver/1.0",
         "Referer": "https://fantasy.mlsz.hu/"}
 INCLUDE = ("position,position.alternatives,competition_player,"
-           "competition_player.team,competition_player.countries,summary_statistics")
+           "competition_player.team,competition_player.countries,"
+           "competition_player.current_round,summary_statistics")
 
 rid = lambda n: 75 + 2 * n
 
@@ -122,6 +132,11 @@ def rekord(d):
         "sub": d.get("type") == "substitutes",
         "week": ss.get("weekly_points") or 0,
         "total": ss.get("competition_points") or 0,
+        # a konyvjelzo-formatumon felul: a pont-bontashoz es a
+        # "jatszott mar?" jelzeshez (elo fordulonal a current_round csak
+        # explicit include-dal jon, ezert szerepel az INCLUDE-ban)
+        "id": cp.get("id"),
+        "played": bool(cr.get("is_played")),
     }
 
 

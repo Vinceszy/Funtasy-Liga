@@ -8,9 +8,12 @@ Ez a könyvjelző akkor kell, ha a szerveroldali gyűjtés elromlana (pl. az MLS
 letiltaná az adatközponti IP-ket): a fantasy.mlsz.hu-n futtatva lekéri mind a 8 keretet,
 és egyenesen a repóba menti.
 
-*Apró különbség a szerveres gyűjtéshez képest: a könyvjelző nem írja a `squads.json`
-`round` mezőjét, ezért az oldal „Aktuális keret" fülén a felirat forduló-szám nélkül
-jelenik meg. Működésbeli hibát nem okoz, a következő szerveres futás helyreállítja.*
+*Apró különbségek a szerveres gyűjtéshez képest: a könyvjelző nem írja a `squads.json`
+`round` mezőjét (az oldal „Aktuális keret" fülén a felirat forduló-szám nélkül jelenik
+meg), és a játékos-rekordokból hiányzik az `id` és a `played` mező (a pont-bontás
+accordionhoz és a „még nem játszott" kötőjelhez). Működésbeli hibát egyik sem okoz —
+az oldal e mezők nélkül is működik, a bontást név alapján oldja fel —, és a következő
+szerveres futás mindent helyreállít.*
 
 ---
 

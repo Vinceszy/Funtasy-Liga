@@ -18,7 +18,11 @@
    ELO EREDMENY: a `live` overlay ugyanilyen alaku, de a benne levo
    eredmenyek NEM szamitanak bele a tabellaba es a matrixba - csak a
    meccspanelen jelennek meg, "elo" jelolessel. Igy a meg le nem zart
-   fordulo nem latszik veglegesnek. */
+   fordulo nem latszik veglegesnek.
+
+   A create()-en kivul ket nevter-szintu segito is exportalodik a
+   pont-bontas accordionhoz (FunTasy.accToggle, FunTasy.accTable) -
+   reszletek a fajl vegen. */
 (function (global) {
   'use strict';
 
@@ -289,5 +293,52 @@
     return api;
   }
 
-  global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played };
+  /* PONT-BONTAS ACCORDION - kozos mechanika mindket oldalnak.
+     A keret-nezetek jatekos-soran (.plr[data-acc]) kattintva a sor ala
+     nyilik egy panel, ami megmutatja, mibol allt ossze a jatekos heti
+     pontja. A tartalom oldalfuggo (az NB1 az MLSZ game-player-stats
+     vegpontjat, a PL az FPL event/{gw}/live explain mezojet hasznalja),
+     ezert a hivo ad egy async `tolt` fuggvenyt, ami a kesz HTML-t adja.
+     Itt csak a viselkedes kozos: egyszerre egy panel lehet nyitva,
+     ujrakattintas zar, masik sorra kattintas oda nyit at. */
+  function accToggle(row, tolt) {
+    var nyitva = row.classList.contains('open');
+    document.querySelectorAll('.accpanel').forEach(function (x) { x.remove(); });
+    document.querySelectorAll('.plr.open').forEach(function (x) { x.classList.remove('open'); });
+    if (nyitva) return;
+    row.classList.add('open');
+    var p = document.createElement('div');
+    p.className = 'accpanel';
+    p.innerHTML = '<div class="accload">Bontás betöltése…</div>';
+    row.insertAdjacentElement('afterend', p);
+    Promise.resolve().then(tolt).then(function (html) {
+      if (!row.classList.contains('open') || !p.isConnected) return;
+      p.innerHTML = html || '<div class="accload">A pontok bontása nem érhető el ehhez a játékoshoz.</div>';
+    }, function () {
+      if (!row.classList.contains('open') || !p.isConnected) return;
+      p.innerHTML = '<div class="accload">A bontás lekérése nem sikerült.</div>';
+    });
+  }
+
+  /* Bontas-tabla: sorok = [{name, value, points}]. A points lehet szam
+     vagy kesz szoveg (pl. "×2" a kapitanynal). A 0 pontos sorokat a hivo
+     szuri ki - az MLSZ felulete is csak a pontot ero esemenyeket mutatja. */
+  function accTable(sorok) {
+    if (!sorok || !sorok.length)
+      return '<div class="accload">Ehhez a fordulóhoz (még) nincs rögzített esemény.</div>';
+    var h = '<table class="acctable"><tr><th>Esemény</th><th>Érték</th><th>Pont</th></tr>';
+    for (var i = 0; i < sorok.length; i++) {
+      var s = sorok[i];
+      var szam = (typeof s.points === 'number');
+      var cls = szam ? (s.points > 0 ? 'pos' : (s.points < 0 ? 'neg' : '')) : '';
+      h += '<tr><td class="ev">' + esc(s.name) + '</td>' +
+           '<td>' + (s.value == null || s.value === '' ? '' :
+                     (typeof s.value === 'number' ? fmt(s.value) : esc(String(s.value)))) + '</td>' +
+           '<td class="' + cls + '">' + (szam ? fmt(s.points) : esc(String(s.points))) + '</td></tr>';
+    }
+    return h + '</table>';
+  }
+
+  global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played,
+                     accToggle: accToggle, accTable: accTable };
 })(window);

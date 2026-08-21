@@ -171,9 +171,13 @@ def main():
                 "t": klub.get(el.get("team"), ""),
                 "p": poszt.get(el.get("element_type"), ""),
             }
+        # a "teams" (csapat-id -> rovidnev) az elo fixtures-valasz
+        # csapat-azonositoinak feloldasahoz kell a bongeszoben
+        # (jatszott mar? jelzes: a meccse elkezdodott-e)
         kiir_ha_valtozott("draft_players.json",
-                          {"updated": None, "players": players})
-        print("  jatekos-torzs: %d jatekos" % len(players))
+                          {"updated": None, "players": players,
+                           "teams": {str(k): v for k, v in klub.items()}})
+        print("  jatekos-torzs: %d jatekos, %d csapat" % (len(players), len(klub)))
     else:
         print("  ! bootstrap-static: HTTP %s - a torzsadat valtozatlan" % st,
               file=sys.stderr)

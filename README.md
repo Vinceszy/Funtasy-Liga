@@ -75,6 +75,21 @@ a Premier League lila színvilágában, az FPL Draft sajátosságaival:
   összegez minden meccset
 - a „Szezon játékosai" fül és a meccs-keretek a GW1 indulásától gyűlnek
 
+### Pont-bontás (accordion) és a „még nem játszott” jelölés
+Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő meccs):
+
+- **A játékos sorára kattintva** a sor alatt kinyílik a pont-bontás: esemény, érték, pont
+  (pl. „Győzelem · 1 · 3”, „Percek a pályán (több, mint 60 perc) · 90 · 2”). Csak a pontot
+  érő sorok látszanak, ahogy az MLSZ felülete is mutatja. A kapitány ×2 és a pad ×0,5 külön
+  sorként jelenik meg, mert a kiírt heti pont ezeket már tartalmazza, a bontás sorai viszont
+  a nyers értékek. Újrakattintás zár; másik játékosra kattintva az előző bezárul — egyszerre
+  egy panel van nyitva. A bontást a böngésző kéri le kattintáskor (ugyanazokon a
+  CORS-proxykon át, mint minden élő lekérés), és a megnyitott játékosokét megjegyzi.
+- **Élő forduló közben a 0 pontos játékosok kétfélék**: aki még nem játszott (a meccse el
+  sem kezdődött), annak a pontja helyén **kötőjel** áll; aki épp játszik vagy már játszott
+  és 0-n áll, annál **0** — a fantasy-oldalak szokása szerint. Az NB1-en ezt a keret-válasz
+  `is_played` mezője adja, a PL-en a forduló meccs-állapotai (fixtures).
+
 ### Navigáció a modalon belül
 A modal kis böngészőként működik: a listák soraira kattintva a tartalom cserélődik
 (pl. Fordulók → egy meccs két kerete), és a fejlécben megjelenő **‹ vissza** gomb az
@@ -96,12 +111,12 @@ teljes képernyős, ragadós × gombbal.
 | `funtasy.css` | A közös stíluslap (`index.html` és `draft.html` is ezt tölti). |
 | `funtasy.js` | A közös motor: tabella, meccspanelek, mátrix, élő-jelölés (`FunTasy.create(...)`). |
 | `results.json` | H2H eredmények archívuma: `{updated, provisional:[...], schedule:{"1":[[hazai,vendég,hp,vp],...]}}`. Az oldal ebből tölt, felülírva a beégetett menetrendet. A `provisional` a még le nem zárult fordulók listája. |
-| `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. |
-| `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. |
+| `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz) és `played`-et („játszott már?”) is tartalmaz — a régebbi, e mezők nélküli rekordokat az oldal tolerálja. |
+| `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
 | `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
 | `collect_draft.py` | GitHub Actions: az FPL Draft liga adatai. A résztvevők valódi nevét és az `entry_id`-t kiszűri (a repó publikus). |
 | `draft.json` | Az FPL Draft liga adatai (résztvevők, menetrend, eredmények) — a `draft.html` forrása. |
-| `draft_players.json` | FPL játékos-törzs: `{id: {n: név, t: klub, p: poszt}}` (599 játékos). |
+| `draft_players.json` | FPL játékos-törzs: `{players: {id: {n: név, t: klub, p: poszt}}, teams: {csapat_id: rövidnév}}`. A `teams` a fixtures-válasz csapat-azonosítóinak feloldásához kell (kinek kezdődött el a meccse). |
 | `draft_squads.json` | A jelenlegi FPL-keretek (tulajdonlás): `{liga_id: [játékos_id,...]}`. |
 | `draft_history.json` | Fordulónkénti FPL-keretek pontokkal (`{rounds:{gw:{liga_id:[{e,b,pts},...]}}}`) — a GW1 indulásától gyűlik. |
 | `draft.html` | Az FPL Draft aloldal. A stílusa az `index.html`-ével közös (`funtasy.css`). |
@@ -180,15 +195,36 @@ GET /user-team-players-history?include={INCLUDE}&filter[user_id]={id}&filter[rou
    **korábbi fordulók keretei visszamenőleg is lekérhetők**, nem csak az aktuális.
 3. **A `position` reláció csak akkor jön vissza, ha a `position.alternatives`-t is bekéred.**
    Enélkül a `position` mező egyszerűen hiányzik a válaszból, hibaüzenet nélkül.
+4. **A `competition_player.current_round` reláció élő fordulónál csak explicit include-dal
+   jön vissza** (lezárt fordulónál enélkül is megjelenik). Belőle jön az `is_played`
+   („játszott már?” jelzés és forduló-lezárás) — ezért kötelező eleme az include-nak.
 
 **Működő include (bizonyított):**
 ```
 position,position.alternatives,competition_player,competition_player.team,
-competition_player.countries,summary_statistics
+competition_player.countries,competition_player.current_round,summary_statistics
 ```
 
 **Fontos:** a név **közvetlenül a `competition_player`-ben** van (`first_name`/`last_name`),
 NEM egy beágyazott `player` objektumban. A poszt a `position.monogram` (K/H/KP/CS).
+
+### Pont-bontás (game-player-stats)
+A felület játékos-modalja ezt hívja (a bundle-ből visszafejtve, 2026-08-21):
+```
+GET https://fantasy-api.mlsz.hu/game-player-stats
+    ?include=competition_stat_config
+    &filter[competition_player_id]={cp_id}&filter[round_id]={rid}
+```
+**A `competitions/3/` előtag NÉLKÜL** — közvetlenül az API gyökerén él. Fordulónként
+22 sort ad: `{value, points, round_id, competition_stat_config:{name}}` — a `name` a
+magyar eseménynév („Győzelem”, „Kulcspasszok”, „Percek a pályán (több, mint 60 perc)”…).
+A felület a 0 pontos sorokat elrejti, a kapitány ×2 / csere ×0,5 sort a kliens teszi
+hozzá — mi is így csináljuk. A `cp_id` a keret-válasz `competition_player.id` mezője
+(az új keret-rekordokban `id` néven tárolva; a régiekhez az oldal név alapján oldja fel
+a forduló keretéből). Bárhonnan, bejelentkezés nélkül működik.
+
+Létezik még: `GET competitions/3/stat-configs` (a 10 szezonstatisztika-kategória neve) és
+`stat-leaders` (toplisták) — jelenleg egyiket sem használjuk.
 
 ### A pontszámítás kulcsa
 A `weekly_points` **már kész érték**: tartalmazza a kapitányi duplázást és a pad felezését.
@@ -230,7 +266,12 @@ adnak** — piaczárásig titkosak.
   azonosító-terét futáskor kell felismerni (liga-id vagy entry_id lehet)
 - `entry/{entry_id}/event/{gw}` — heti keret (kezdő/pad); **a forduló indulásáig 404-et
   ad**, ez várható viselkedés
-- `event/{gw}/live` — játékosonkénti heti pontok; nyilvános, ebből megy az élő állás
+- `event/{gw}/live` — játékosonkénti heti pontok; nyilvános, ebből megy az élő állás.
+  Az elemek `explain` mezője a kész pont-bontás (esemény, érték, pont — angol nevekkel;
+  az oldal a `stat` kulcs alapján fordítja magyarra). A még nem játszott játékosnál is van
+  `explain` (0 perccel), ezért a „játszott már?” jelzéshez nem elég — arra a fixtures való.
+- `event/{gw}/fixtures` — a forduló meccsei `started` / `finished` állapottal és
+  csapat-azonosítókkal; ebből tudjuk, kinek kezdődött már el a meccse (kötőjel vs 0)
 - `game` — `current_event`: a folyamatban lévő forduló száma (vagy null)
 
 ---
@@ -250,6 +291,10 @@ adnak** — piaczárásig titkosak.
   `tartalek/GOMB-bookmarklet.txt` módosul, a böngészőben lévő könyvjelzőt kézzel kell frissíteni.
 - **A PL-en a GW első óráiban** (amíg a gyűjtő először le nem tárolja a forduló kereteit,
   legfeljebb ~3 óra) élő meccsállás még nem számolható — utána percre pontos.
+- **A régi keret-rekordokban nincs `id` és `played` mező** (a pont-bontás és a
+  „még nem játszott” jelölés 2026-08-21-én került be). A bontás náluk is működik (az oldal
+  név alapján oldja fel az azonosítót a forduló keretéből), de a kötőjel-jelölés csak az
+  új gyűjtésű adatoknál él — a régi 0-k számként látszanak, ami lezárt fordulónál helyes is.
 - **Élő lekérés a böngészőből:** az oldal betöltéskor közvetlenül is lekéri a friss
   eredményeket (CORS-proxykon át). Ha ez elromlik, a státuszsávban jelzi; folyamatban
   lévő fordulónál a szöveg: *„Automata lekérés hiba: az állások a forduló végén
@@ -267,6 +312,10 @@ Nincs build lépés, nincs függőség. A kód három rétegben él:
   (menetrend, résztvevők, elemazonosítók), és adja a `computeTable`, `renderTable`,
   `renderMatches`, `renderMatrix` függvényeket, az élő-jelölést és az egymás elleni
   lista építőjét (`h2hHTML` — a mátrix-cella kattintása nyitja, `onMatrixClick`).
+  A create-en kívül itt él a pont-bontás accordion közös mechanikája is
+  (`FunTasy.accToggle` — nyit/zár/egyszerre egy panel; `FunTasy.accTable` — a bontás
+  táblázata); a tartalmat az oldalak saját `bontasHTML`-je adja, mert a forrás más
+  (NB1: MLSZ `game-player-stats`, PL: FPL `event/{gw}/live` explain).
 - **`index.html` / `draft.html`** — csak az oldalspecifikus rész: konfiguráció, betöltés
   és élő frissítés, meg az oldal saját modalja (a főoldalon `showSquad` / `showMatchRound` /
   `squadHTML` / `seasonHTML` / `playersHTML`, a PL-en `showTeam` / `showMatch` /

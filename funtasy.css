@@ -107,6 +107,20 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .sumline{display:flex;justify-content:space-between;padding:6px 4px;border-top:1px solid var(--line);margin-top:6px;font-size:12px;color:var(--dim)}
 .u21{background:#2E6BE5;color:#fff;font:700 9px Inter;border-radius:3px;padding:1px 4px}
 
+/* pont-bontas accordion: a data-acc jelolt jatekos-sor kattinthato, alatta
+   nyilik a panel (FunTasy.accToggle). A "meg nem jatszott" jelzes a .pts
+   helyen kotojelkent jelenik meg, kulon stilust nem kivan. */
+.plr[data-acc]{cursor:pointer}
+.plr[data-acc]:hover{background:rgba(255,255,255,.045)}
+.plr.open{background:rgba(255,255,255,.07)}
+.accpanel{margin:0 0 6px 24px;border-left:2px solid var(--line);padding:4px 10px 6px;background:var(--panel2);border-radius:0 0 6px 6px}
+.accload{font-size:12px;color:var(--dim);padding:4px 0}
+.acctable{width:100%;border-collapse:collapse;font-size:12px}
+.acctable th{text-align:right;color:var(--dim);font-weight:600;padding:3px 6px;border-bottom:1px solid var(--line);font-size:11px}
+.acctable td{text-align:right;padding:3px 6px;font-family:'JetBrains Mono';border-bottom:1px solid rgba(255,255,255,.04)}
+.acctable th:first-child,.acctable td.ev{text-align:left;font-family:Inter,sans-serif}
+.acctable tr:last-child td{border-bottom:0}
+
 .bonus{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border:1px solid var(--line);
   border-radius:6px;padding:8px 10px;margin:10px 0 6px;font-size:12px}
 .bonus b{font-family:'JetBrains Mono';font-size:14px}
