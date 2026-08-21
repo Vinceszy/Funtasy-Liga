@@ -1,0 +1,21 @@
+---
+name: Diagnosztika (IDEIGLENES)
+
+# Egyszeri, kezzel inditott diagnosztika: a DIAG-pont.py-t futtatja,
+# ami CSAK OLVAS (pont-bontas forrasanak felderitese). A futas utan
+# ez a fajl es a szkript is torlendo.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repo letoltese
+        uses: actions/checkout@v4
+
+      - name: Diagnosztika futtatasa
+        run: python3 DIAG-pont.py
