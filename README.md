@@ -188,8 +188,22 @@ A résztvevők valódi neve és `entry_id`-ja soha nem kerülhet a repóba (ment
 Betöltéskor mindkét oldal percre friss adatot kér CORS-proxykon át: az NB1 a
 ranglista-végpontról az eredményeket (és kattintásra a kereteket), a PL a játékosonkénti
 élő pontokat, amikből a meccsállásokat összegzi. Hiba esetén a tárolt (3 óránként
-frissülő) állapot marad, a státuszsávban jelzéssel; folyamatban lévő fordulónál a szöveg:
-*„Automata lekérés hiba: az állások a forduló végén frissülnek."*
+frissülő) állapot marad.
+
+**A státuszsáv szövegei közösek** (`funtasy.js` → `FunTasy.statusz`), hogy a két oldal
+ne beszéljen kétféleképpen ugyanarról az állapotról:
+
+| Állapot | Szöveg |
+|---|---|
+| lekérés közben | *Élő állás lekérése…* |
+| élő forduló, friss adattal | *Élő állás — 5. forduló · frissítve 21:07 (a tabella csak lezárt fordulókból számol)* |
+| nincs folyamatban lévő forduló | *Naprakész · ellenőrizve 21:07* |
+| a lekérés elhasalt, forduló közben | *Automata lekérés hiba: az állások a forduló végén frissülnek.* |
+| a lekérés elhasalt, nyugalmi időszakban | *Az élő frissítés most nem elérhető — a tárolt állás látható (mentve: aug. 21. 19:14).* |
+
+A „frissítve" itt **mindig az élő ellenőrzés ideje**, a „mentve" pedig a tárolt fájl kora.
+Korábban a PL a fájl korát írta ki „Frissítve" néven, az NB1 viszont az ellenőrzés idejét
+— ugyanaz a szó két különböző dolgot jelentett.
 
 ### Tartalék: a böngészős könyvjelző
 
@@ -368,9 +382,8 @@ adnak** — piaczárásig titkosak.
   úgyhogy ha az MLSZ átnevez egy eseményt, az oldal a részletesebb üzenet helyett az
   általánosabbra esik vissza — hibát nem okoz, de a szövegek pontatlanabbak lesznek.
 - **Élő lekérés a böngészőből:** az oldal betöltéskor közvetlenül is lekéri a friss
-  eredményeket (CORS-proxykon át). Ha ez elromlik, a státuszsávban jelzi; folyamatban
-  lévő fordulónál a szöveg: *„Automata lekérés hiba: az állások a forduló végén
-  frissülnek.”* A tárolt (3 óránként frissülő) adat ilyenkor is látszik.
+  eredményeket (CORS-proxykon át). Ha ez elromlik, a státuszsávban jelzi (a szövegeket
+  lásd a 3. fejezetben), és a tárolt (3 óránként frissülő) adat marad látható.
 
 ---
 

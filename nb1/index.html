@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=8">
+<link rel="stylesheet" href="../funtasy.css?v=9">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -71,7 +71,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=8"></script>
+<script src="../funtasy.js?v=9"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -146,7 +146,7 @@ async function apiGet(url,label,ms){
   const st=$('status'), order=goodRoute?[goodRoute,...ROUTES.filter(r=>r!==goodRoute)]:ROUTES, errs=[];
   for(const rt of order){
     try{
-      if(st&&label) st.textContent=`Adatok lekérése… ${label}`;
+      if(st&&label) st.textContent=FunTasy.statusz.keres(label);
       const res=await fetchT(rt.f(url),ms);
       if(!res.ok){errs.push(rt.n+':HTTP '+res.status);continue;}
       const j=JSON.parse(await res.text());
@@ -166,9 +166,8 @@ const USER_IDS={};
 function lekeresHiba(){
   const st=$('status'); st.className='err';
   const vanElo = Object.keys(LIVE).length>0 || (window.PROVISIONAL||[]).length>0;
-  st.textContent = vanElo
-    ? 'Automata lekérés hiba: az állások a forduló végén frissülnek.'
-    : 'Az élő frissítés most nem elérhető — a tárolt állás látható.';
+  st.textContent = vanElo ? FunTasy.statusz.hibaElo
+                          : FunTasy.statusz.hibaNyugodt(window.TAROLT_IDO);
 }
 async function refresh(){
   const st=$('status'); st.className='';
@@ -199,8 +198,9 @@ async function refresh(){
     T.rPast=lastPlayedRound(); T.rNext=nextRound();
     renderTable(); renderMatches('past'); renderMatches('next'); renderMatrix();
     st.className='ok';
-    const now=new Date().toLocaleString('hu-HU',{hour:'2-digit',minute:'2-digit'});
-    st.textContent = filled? `Frissítve ${now} — ${filled} élő eredmény (a tabella csak lezárt fordulókból számol).` : `Naprakész (ellenőrizve: ${now})`;
+    const eloR = Object.keys(LIVE).map(Number).sort((a,b)=>b-a)[0];
+    st.textContent = (filled && eloR) ? FunTasy.statusz.elo(eloR, Date.now())
+                                      : FunTasy.statusz.naprakesz(Date.now());
   }catch(e){ lekeresHiba(); }
 }
 
@@ -636,6 +636,7 @@ async function boot(){
       // ("provisional"). Az ilyen fordulo eredmenye NEM a menetrendbe kerul,
       // hanem a LIVE overlaybe: a tabellaba nem szamit bele, a meccspanelen
       // viszont latszik "elo" jelolessel.
+      window.TAROLT_IDO = j && j.updated;      // a statuszsav hibauzenetehez
       const ideiglenes = new Set((j&&j.provisional||[]).map(Number));
       window.PROVISIONAL = [...ideiglenes];   // a lekeresHiba() hasznalja
       if(j&&j.schedule) for(const k in j.schedule){

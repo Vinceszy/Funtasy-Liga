@@ -370,6 +370,38 @@
     return h + '</table>';
   }
 
+  /* ===== Statuszsav-szovegek (a fejlec alatti sor) =====
+     Mindket oldal INNEN veszi a mondatait, kulonben ugyanarra az allapotra
+     ketfele megfogalmazas kerulne ki. Korabban a "Frissitve" szo a ket
+     oldalon mast jelentett: az NB1-en az ellenorzes idejet, a PL-en a
+     tarolt fajl korat - ez volt a legfelrevezetobb.
+     Negy allapot van: lekeres alatt / elo fordulo friss adattal / nincs
+     folyo fordulo / az elo lekeres nem sikerult. */
+  var ora = function (d) {
+    return new Date(d).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
+  };
+  var datumOra = function (d) {
+    return new Date(d).toLocaleString('hu-HU',
+      { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+  var statusz = {
+    keres: function (reszlet) { return 'Élő állás lekérése…' + (reszlet ? ' ' + reszlet : ''); },
+    elo: function (fordulo, mikor) {
+      return 'Élő állás — ' + fordulo + '. forduló · frissítve ' + ora(mikor) +
+             ' (a tabella csak lezárt fordulókból számol)';
+    },
+    naprakesz: function (mikor) { return 'Naprakész · ellenőrizve ' + ora(mikor); },
+    // Ezt a szoveget a folyo fordulora Vince fogalmazta - ne irjuk at.
+    hibaElo: 'Automata lekérés hiba: az állások a forduló végén frissülnek.',
+    hibaNyugodt: function (mentve) {
+      return 'Az élő frissítés most nem elérhető — a tárolt állás látható' +
+             (mentve ? ' (mentve: ' + datumOra(mentve) + ')' : '') + '.';
+    },
+    betoltesHiba: function (mi, hiba) {
+      return 'Nem sikerült betölteni a liga adatait (' + mi + '): ' + hiba;
+    }
+  };
+
   /* Ligavalto sav. `aktiv` az eppen nyitott liga id-je (a kezdolapon null),
      `gyoker` a webhely gyokerehez vezeto relativ ut ('../' egy liga-oldalrol,
      '' a kezdolaprol) - a GitHub Pages aloldalon szolgal ki, ezert nem lehet
@@ -400,5 +432,6 @@
 
   global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played,
                      accToggle: accToggle, accTable: accTable,
-                     LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav };
+                     LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
+                     statusz: statusz };
 })(window);
