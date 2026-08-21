@@ -39,6 +39,10 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   hivatalos fordulópontszámmal (jövőbeli fordulónál magyarázó szöveg)
 - **Élő (még tartó) meccsre kattintva** a két keret jön, játékosonkénti élő pontokkal:
   azonnal a tárolt (legfeljebb 3 órás) állapot, majd a háttérben percre frissre cserélve.
+- **A meccs adatlapjának tetején eredménysor áll** (`Bazsa 41 : 36,63 Vince`), a főoldali
+  meccspanelekkel azonos megjelenéssel; élő meccsnél szaggatott kerettel és `élő` jelvénnyel.
+  Enélkül az állás csak a két keret-oszlop fejlécében szerepelt külön-külön. Az eredménysor
+  és az oszlopfejlécek **ugyanabból a számításból** jönnek, tehát nem mondhatnak mást.
   Ha a fordulóhoz még semmilyen keret-adat nincs, tartalékként ez a szöveg jön:
   *„A meccs még tart, a keretek által szerzett pontok a forduló zárta után elérhetőek.”*
 
@@ -61,6 +65,8 @@ A sorra kattintva a meccs részletei nyílnak meg. Mindkét oldalon így működ
    kezdőkre és a padra.
 2. **Fordulók** — a szakvezető teljes szezonja fordulónként (ellenfél, saját pont, ellenfél
    pontja, GY/D/V), fent a mérleggel. Sorra kattintva a meccs részletei nyílnak meg.
+   A **folyamatban lévő forduló sorában az élő állás** látszik `élő` jelöléssel; a mérlegbe
+   (GY/D/V) nem számít bele, ahogy a tabellába sem.
 3. **Szezon játékosai** — minden játékos, aki valaha a keretben volt, a nála termelt ponttal,
    hány fordulóban volt nála, hányszor kezdő/pados, hányszor kapitány. Fent: hány fordulóban
    teljesült a magyarszabály (+10-ek összege), a magyar játékosok pontja, ebből az U21-eseké.

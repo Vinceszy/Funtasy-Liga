@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="funtasy.css?v=5">
+<link rel="stylesheet" href="funtasy.css?v=6">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -68,7 +68,7 @@
   </div>
 </div>
 
-<script src="funtasy.js?v=5"></script>
+<script src="funtasy.js?v=6"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -101,6 +101,9 @@ const LAST_ROUND = ROUNDS[ROUNDS.length-1];
 // jelolessel jelenik meg.
 const LIVE = {};
 const eloMeccs = (r,i) => (LIVE[r] && LIVE[r][i]) || null;
+// ugyanaz nev szerint: a fordulo-lista es a meccs-adatlap innen veszi az
+// elo allast (ott nincs kezunkben a menetrendbeli sorszam)
+const eloAllas = (r,h,v) => ((LIVE[r]||[]).find(x=>x&&x[0]===h&&x[1]===v)) || null;
 
 const T = FunTasy.create({
   entries:     () => Object.keys(MEMBERS),
@@ -232,6 +235,19 @@ function magyarBonus(starters){
 // Sugosor a keret fole: a nyil melle szoban is elmondja, mi tortenik
 // kattintasra (az oldal maskor is igy tanit - "Kattints egy nevre...").
 const ACCHINT='<div class="acchint">A játékos nevére kattintva kinyílik, miből jött össze a pontja.</div>';
+// Eredmenysor a meccs-adatlap tetejere: ugyanaz a doboz, mint a fooldali
+// meccspanelen. Enelkul az allas csak a ket keret-oszlop fejleceben latszott,
+// kulon-kulon, es nem derult ki, hogy elo meccsrol van-e szo.
+function allasHTML(h,v,hp,vp,elo){
+  const sz=x=>x!=null?fmt(x):'—';
+  return `<div class="mscore${elo?' elo':''}"><span class="csapat">${esc(h)}</span>
+    <span class="score">${sz(hp)} <span style="color:var(--dim)">:</span> ${sz(vp)}${
+      elo?'<span class="elojel">élő</span>':''}</span>
+    <span class="csapat">${esc(v)}</span></div>`;
+}
+// A keret fordulopontszama - ugyanaz a szamitas, mint a keret-oszlop
+// fejleceben, hogy az eredmenysor es az oszlopok ne mondhassanak masat.
+const keretOsszeg=l=>l.reduce((x,p)=>x+(p.week||0),0)+magyarBonus(l.filter(p=>!p.sub)).pts;
 function squadHTML(name,list,realTotal,round){
   const st=list.filter(p=>!p.sub), sb=list.filter(p=>p.sub);
   const srt=a=>[...a].sort((x,y)=>posRank(x.pos)-posRank(y.pos));
@@ -253,7 +269,7 @@ function squadHTML(name,list,realTotal,round){
       <span class="nm">${esc(p.name)}${round?'<span class="accarr">▼</span>':''}${p.hun?'<span class="flag" title="magyar"></span>':''}${p.team?` <span class="tm">${esc(p.team)}</span>`:''}</span>
       ${p.u21?'<span class="u21">U21</span>':''}${p.cap?'<span class="cap" title="kapitány – az érték már duplázva">C ×2</span>':''}
       ${pont(p)}</div>`;
-  const head = realTotal!=null ? fmt(realTotal) : fmt(S(st)+S(sb)+mb.pts);
+  const head = realTotal!=null ? fmt(realTotal) : fmt(keretOsszeg(list));   // = az eredmenysor szama
   return `<div class="sqcol"><h3>${esc(name)}<span>${head}</span></h3>
     ${srt(st).map(row).join('')}
     <div class="sumline"><span>Kezdők</span><b>${fmt(S(st))}</b></div>
@@ -311,16 +327,24 @@ function seasonHTML(name){
   let h=`<table><tr><th>F</th><th>Ellenfél</th><th>Pont</th><th>Ell.</th><th>Eredm.</th></tr>`;
   let gy=0,d=0,v=0;
   for(const r of ROUNDS) for(const m of SCHEDULE[r]){
-    let opp,own,ov;
+    let opp,own,ov,elo=false;
     if(m[0]===name){opp=m[1];own=m[2];ov=m[3];}
     else if(m[1]===name){opp=m[0];own=m[3];ov=m[2];}
     else continue;
+    // A folyo fordulo allasa nem a menetrendben van, hanem az elo retegben
+    // (hogy a tabellaba ne szamitson) - de itt latszania kell.
+    if(own==null){
+      const L=eloAllas(r,m[0],m[1]);
+      if(L){ elo=true; own=(m[0]===name?L[2]:L[3]); ov=(m[0]===name?L[3]:L[2]); }
+    }
     let res='—',cls='';
     if(own!=null&&ov!=null){
-      if(own>ov){res='GY';cls='pos';gy++;} else if(own<ov){res='V';cls='neg';v++;} else {res='D';d++;}
+      if(own>ov){res='GY';cls='pos';} else if(own<ov){res='V';cls='neg';} else {res='D';}
+      if(!elo){ if(res==='GY')gy++; else if(res==='V')v++; else d++; }   // elo meccs a merlegbe nem szamit
     }
     h+=`<tr class="clickable" data-mh="${esc(m[0])}" data-mv="${esc(m[1])}" data-mr="${r}"><td class="rank">${r}.</td><td class="name">${esc(opp)}</td>
-      <td>${own!=null?fmt(own):'—'}</td><td>${ov!=null?fmt(ov):'—'}</td><td class="${cls}">${res}</td></tr>`;
+      <td>${own!=null?fmt(own):'—'}</td><td>${ov!=null?fmt(ov):'—'}</td>
+      <td class="${cls}">${res}${elo?'<span class="elojel">élő</span>':''}</td></tr>`;
   }
   return `<div style="font-size:13px;color:var(--dim);margin-bottom:8px">Mérleg: <b class="pos">${gy} GY</b> · ${d} D · <b class="neg">${v} V</b> — ${gy*3+d} pont</div>`+h+'</table>';
 }
@@ -476,7 +500,8 @@ async function showMatchRound(h, v, r, mode){
   const H=(rounds[r]||{})[h], V=(rounds[r]||{})[v];
   if(mCurrent[0]!==h||mCurrent[1]!==v||!$('ov').classList.contains('open')) return;
   $('mBody').innerHTML = (H&&V)
-    ? ACCHINT+`<div class="sqwrap">${squadHTML(h,H,m[2],r)}${squadHTML(v,V,m[3],r)}</div>`
+    ? allasHTML(h,v,m[2],m[3],false)+ACCHINT+
+      `<div class="sqwrap">${squadHTML(h,H,m[2],r)}${squadHTML(v,V,m[3],r)}</div>`
     : '<div class="loading">Ehhez a fordulóhoz nincs mentett keret-adat.</div>';
 }
 async function showLiveMatch(h, v, r){
@@ -492,7 +517,8 @@ async function showLiveMatch(h, v, r){
   $('mTitle').textContent=h+'  vs  '+v;
   $('mSub').textContent=r+'. forduló · élő állás — a meccs még tart';
   $('mTabs').innerHTML='';
-  const rajz=(A,B)=>{ $('mBody').innerHTML= ACCHINT+
+  const rajz=(A,B)=>{ $('mBody').innerHTML=
+    allasHTML(h,v,A?keretOsszeg(A):null,B?keretOsszeg(B):null,true)+ACCHINT+
     `<div class="sqwrap">${A?squadHTML(h,A,null,r):''}${B?squadHTML(v,B,null,r):''}</div>`; };
   rajz(H,V);
   // hatterben: percre friss csere, ha a modal meg ugyanezen a meccsen all
