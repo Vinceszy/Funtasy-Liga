@@ -85,10 +85,20 @@ Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő 
   a nyers értékek. Újrakattintás zár; másik játékosra kattintva az előző bezárul — egyszerre
   egy panel van nyitva. A bontást a böngésző kéri le kattintáskor (ugyanazokon a
   CORS-proxykon át, mint minden élő lekérés), és a megnyitott játékosokét megjegyzi.
+- **A kattinthatóságot a név után álló kis nyíl (▼) jelzi**, ami nyitáskor átfordul, fölötte
+  pedig egy súgósor áll („A játékos nevére kattintva…”). A nyíl azért a név után van és nem
+  a sor végén, mert ott védett: a szűk oszlopban az ellipszis előbb a klub-címkét vágja le.
+  Egérrel a sor ki is világosodik, de a nyíl a lényeg — **telefonon nincs hover**.
+- **Ha nincs pontot érő esemény, az üzenet megmondja, miért** — négy eset, mert a 0-nak
+  négy különböző oka lehet: *a meccs még nem kezdődött el* (a kezdés időpontjával),
+  *a meccs zajlik, eddig nincs pontot érő eseménye*, *lejátszotta a meccset pont nélkül*,
+  vagy *nem lépett pályára*. Az első kettőt a meccs kezdési ideje és a lejátszottság dönti
+  el, az utolsó kettőt a bontás játszott-perc sora (ez 0 perccel is megjön, ha a játékos
+  végig a kispadon ült).
 - **Élő forduló közben a 0 pontos játékosok kétfélék**: aki még nem játszott (a meccse el
   sem kezdődött), annak a pontja helyén **kötőjel** áll; aki épp játszik vagy már játszott
   és 0-n áll, annál **0** — a fantasy-oldalak szokása szerint. Az NB1-en ezt a keret-válasz
-  `is_played` mezője adja, a PL-en a forduló meccs-állapotai (fixtures).
+  `is_played` és `first_played_at` mezője adja, a PL-en a forduló meccs-állapotai (fixtures).
 
 ### Navigáció a modalon belül
 A modal kis böngészőként működik: a listák soraira kattintva a tartalom cserélődik
@@ -111,7 +121,7 @@ teljes képernyős, ragadós × gombbal.
 | `funtasy.css` | A közös stíluslap (`index.html` és `draft.html` is ezt tölti). |
 | `funtasy.js` | A közös motor: tabella, meccspanelek, mátrix, élő-jelölés (`FunTasy.create(...)`). |
 | `results.json` | H2H eredmények archívuma: `{updated, provisional:[...], schedule:{"1":[[hazai,vendég,hp,vp],...]}}`. Az oldal ebből tölt, felülírva a beégetett menetrendet. A `provisional` a még le nem zárult fordulók listája. |
-| `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz) és `played`-et („játszott már?”) is tartalmaz — a régebbi, e mezők nélküli rekordokat az oldal tolerálja. |
+| `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”) és `start`-ot (az adott fordulós meccsének kezdése) is tartalmaz — a régebbi, e mezők nélküli rekordokat az oldal tolerálja. |
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
 | `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
 | `collect_draft.py` | GitHub Actions: az FPL Draft liga adatai. A résztvevők valódi nevét és az `entry_id`-t kiszűri (a repó publikus). |
@@ -197,7 +207,8 @@ GET /user-team-players-history?include={INCLUDE}&filter[user_id]={id}&filter[rou
    Enélkül a `position` mező egyszerűen hiányzik a válaszból, hibaüzenet nélkül.
 4. **A `competition_player.current_round` reláció élő fordulónál csak explicit include-dal
    jön vissza** (lezárt fordulónál enélkül is megjelenik). Belőle jön az `is_played`
-   („játszott már?” jelzés és forduló-lezárás) — ezért kötelező eleme az include-nak.
+   („játszott már?” jelzés és forduló-lezárás) és a `first_played_at` (a játékos adott
+   fordulós meccsének kezdése) — ezért kötelező eleme az include-nak.
 
 **Működő include (bizonyított):**
 ```
@@ -270,8 +281,11 @@ adnak** — piaczárásig titkosak.
   Az elemek `explain` mezője a kész pont-bontás (esemény, érték, pont — angol nevekkel;
   az oldal a `stat` kulcs alapján fordítja magyarra). A még nem játszott játékosnál is van
   `explain` (0 perccel), ezért a „játszott már?” jelzéshez nem elég — arra a fixtures való.
-- `event/{gw}/fixtures` — a forduló meccsei `started` / `finished` állapottal és
-  csapat-azonosítókkal; ebből tudjuk, kinek kezdődött már el a meccse (kötőjel vs 0)
+- `event/{gw}/fixtures` — a forduló meccsei `started` / `finished` állapottal,
+  `kickoff_time`-mal és csapat-azonosítókkal; ebből tudjuk, kinek kezdődött már el a
+  meccse (kötőjel vs 0) és mikor kezdődik. Az oldal klubonként **összevonja** az
+  állapotokat: „indult", ha bármelyik meccse elkezdődött, „kész", ha mindegyik lement —
+  dupla fordulón ugyanis egy klubnak két meccse van
 - `game` — `current_event`: a folyamatban lévő forduló száma (vagy null)
 
 ---
@@ -291,10 +305,14 @@ adnak** — piaczárásig titkosak.
   `tartalek/GOMB-bookmarklet.txt` módosul, a böngészőben lévő könyvjelzőt kézzel kell frissíteni.
 - **A PL-en a GW első óráiban** (amíg a gyűjtő először le nem tárolja a forduló kereteit,
   legfeljebb ~3 óra) élő meccsállás még nem számolható — utána percre pontos.
-- **A régi keret-rekordokban nincs `id` és `played` mező** (a pont-bontás és a
+- **A régi keret-rekordokban nincs `id`, `played` és `start` mező** (a pont-bontás és a
   „még nem játszott” jelölés 2026-08-21-én került be). A bontás náluk is működik (az oldal
   név alapján oldja fel az azonosítót a forduló keretéből), de a kötőjel-jelölés csak az
   új gyűjtésű adatoknál él — a régi 0-k számként látszanak, ami lezárt fordulónál helyes is.
+- **A pont-bontás sorait a magyar eseménynév azonosítja** (pl. a „nem lépett pályára”
+  eset a „Játszott perc” sor 0 értékéből derül ki). Az API nem ad stabil kulcsot ezekhez,
+  úgyhogy ha az MLSZ átnevez egy eseményt, az oldal a részletesebb üzenet helyett az
+  általánosabbra esik vissza — hibát nem okoz, de a szövegek pontatlanabbak lesznek.
 - **Élő lekérés a böngészőből:** az oldal betöltéskor közvetlenül is lekéri a friss
   eredményeket (CORS-proxykon át). Ha ez elromlik, a státuszsávban jelzi; folyamatban
   lévő fordulónál a szöveg: *„Automata lekérés hiba: az állások a forduló végén

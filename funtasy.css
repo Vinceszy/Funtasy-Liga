@@ -109,10 +109,17 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 
 /* pont-bontas accordion: a data-acc jelolt jatekos-sor kattinthato, alatta
    nyilik a panel (FunTasy.accToggle). A "meg nem jatszott" jelzes a .pts
-   helyen kotojelkent jelenik meg, kulon stilust nem kivan. */
+   helyen kotojelkent jelenik meg, kulon stilust nem kivan.
+   A kattinthatosagot a nev utani nyil (.accarr) jelzi - azert ott, es nem a
+   sor vegen, mert a nev utani hely a legvedettebb: az ellipszis eloszor a
+   klub-cimket vagja le. Hover csak egerrel van, a nyil telefonon is latszik. */
 .plr[data-acc]{cursor:pointer}
 .plr[data-acc]:hover{background:rgba(255,255,255,.045)}
 .plr.open{background:rgba(255,255,255,.07)}
+.accarr{display:inline-block;margin-left:5px;color:var(--dim);font-size:9px;
+  transform:translateY(-1px);transition:transform .15s}
+.plr.open .accarr{transform:translateY(-1px) rotate(180deg)}
+.acchint{font-size:11.5px;color:var(--dim);margin:0 0 12px}
 .accpanel{margin:0 0 6px 24px;border-left:2px solid var(--line);padding:4px 10px 6px;background:var(--panel2);border-radius:0 0 6px 6px}
 .accload{font-size:12px;color:var(--dim);padding:4px 0}
 .acctable{width:100%;border-collapse:collapse;font-size:12px}

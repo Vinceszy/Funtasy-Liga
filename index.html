@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="funtasy.css?v=3">
+<link rel="stylesheet" href="funtasy.css?v=4">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -68,7 +68,7 @@
   </div>
 </div>
 
-<script src="funtasy.js?v=3"></script>
+<script src="funtasy.js?v=4"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -229,6 +229,9 @@ function magyarBonus(starters){
   const hun=starters.filter(p=>p.hun).length, u21=starters.filter(p=>p.hun&&p.u21).length;
   return {hun,u21,ok:(hun>=5&&u21>=1),pts:(hun>=5&&u21>=1)?10:0};
 }
+// Sugosor a keret fole: a nyil melle szoban is elmondja, mi tortenik
+// kattintasra (az oldal maskor is igy tanit - "Kattints egy nevre...").
+const ACCHINT='<div class="acchint">A játékos nevére kattintva kinyílik, miből jött össze a pontja.</div>';
 function squadHTML(name,list,realTotal,round){
   const st=list.filter(p=>!p.sub), sb=list.filter(p=>p.sub);
   const srt=a=>[...a].sort((x,y)=>posRank(x.pos)-posRank(y.pos));
@@ -239,13 +242,13 @@ function squadHTML(name,list,realTotal,round){
   // a regiekhez nev alapjan oldjuk fel a fordulo keretebol. A "meg nem
   // jatszott" 0 kotojelkent jelenik meg (played===false), a regi,
   // jelzes nelkuli rekordok szamot mutatnak, mint eddig.
-  const acc=p=>round?` data-acc="1" data-own="${esc(name)}" data-nm="${esc(p.name)}" data-r="${round}"${p.id?` data-cp="${p.id}"`:''}${p.cap?' data-cap="1"':''}${p.sub?' data-sub="1"':''}`:'';
+  const acc=p=>round?` data-acc="1" data-own="${esc(name)}" data-nm="${esc(p.name)}" data-r="${round}"${p.id?` data-cp="${p.id}"`:''}${p.played===true?' data-pl="1"':(p.played===false?' data-pl="0"':'')}${p.start?` data-st="${esc(p.start)}"`:''}${p.cap?' data-cap="1"':''}${p.sub?' data-sub="1"':''}`:'';
   const pont=p=>(p.played===false && !(p.week||0))
     ? '<span class="pts" title="még nem játszott">–</span>'
     : `<span class="pts">${fmt(p.week)}</span>`;
   const row=p=>`<div class="plr"${acc(p)}>
       <span class="ppos">${esc(posLabel(p.pos))}</span>
-      <span class="nm">${esc(p.name)}${p.hun?'<span class="flag" title="magyar"></span>':''}${p.team?` <span class="tm">${esc(p.team)}</span>`:''}</span>
+      <span class="nm">${esc(p.name)}${round?'<span class="accarr">▼</span>':''}${p.hun?'<span class="flag" title="magyar"></span>':''}${p.team?` <span class="tm">${esc(p.team)}</span>`:''}</span>
       ${p.u21?'<span class="u21">U21</span>':''}${p.cap?'<span class="cap" title="kapitány – az érték már duplázva">C ×2</span>':''}
       ${pont(p)}</div>`;
   const head = realTotal!=null ? fmt(realTotal) : fmt(S(st)+S(sb)+mb.pts);
@@ -359,7 +362,7 @@ function keretRekord(d){
     u21:!!cp.is_u21, hun:/magyar|hungar|"HUN"/i.test(JSON.stringify(cp.countries||cp.country||'')),
     price:cr.market_price||null, cap:!!d.is_captain, sub:d.type==='substitutes',
     week:ss.weekly_points||0, total:ss.competition_points||0,
-    id:cp.id||null, played:!!cr.is_played};
+    id:cp.id||null, played:!!cr.is_played, start:cr.first_played_at||null};
 }
 async function eloKeret(name, r){
   const uid=USER_IDS[name];
@@ -375,15 +378,34 @@ async function eloKeret(name, r){
 // pontot ero sorokat mutatjuk, ahogy az MLSZ felulete is; a kapitanyi
 // x2 / pad x0.5 kulon sorkent jelenik meg, mert a weekly_points mar
 // tartalmazza oket, a bontas sorai viszont a nyers ertekek.
-const BONTAS=new Map(), KERET_ID=new Map();
-async function cpIdNevrol(own,r,nm){
+const BONTAS=new Map(), KERET_CACHE=new Map();
+async function keretNevrol(own,r,nm){
   const k=own+'|'+r;
-  if(!KERET_ID.has(k)) KERET_ID.set(k, eloKeret(own,r));
-  const t=((await KERET_ID.get(k))||[]).find(p=>p.name===nm);
-  return (t&&t.id)||null;
+  if(!KERET_CACHE.has(k)) KERET_CACHE.set(k, eloKeret(own,r));
+  return ((await KERET_CACHE.get(k))||[]).find(p=>p.name===nm)||null;
 }
-async function bontasHTML(cp,r,own,nm,cap,sub){
-  if(!cp) cp=await cpIdNevrol(own,r,nm);        // regi rekordban nincs id
+const idoFmt=s=>new Date(s).toLocaleString('hu-HU',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+// Ha egyetlen pontot ero esemeny sincs, a 0-nak negy kulonbozo oka lehet.
+// A meccs allapotat a kezdesi ido (start) es az is_played (played) donti el,
+// a "palyara lepett-e" kerdest a bontas "Jatszott perc" sora - ez akkor is
+// megjon 0 ertekkel, ha a jatekos vegig a kispadon ult.
+function nincsPontUzenet(played, start, nyers){
+  if(start && new Date(start)>new Date())
+    return 'A meccs még nem kezdődött el — kezdés: '+idoFmt(start);
+  if(played===false) return 'A meccs zajlik — eddig nincs pontot érő eseménye.';
+  const perc=(nyers||[]).find(s=>s.name==='Játszott perc');
+  if(perc && !perc.value) return 'Nem lépett pályára ebben a fordulóban.';
+  if(played===true || (nyers||[]).length) return 'Lejátszotta a meccset, pontot érő esemény nélkül.';
+  return 'Ehhez a fordulóhoz nincs rögzített esemény.';
+}
+async function bontasHTML(ds){
+  const r=+ds.r;
+  let cp=ds.cp?+ds.cp:null, start=ds.st||null;
+  let played=ds.pl==='1'?true:(ds.pl==='0'?false:undefined);
+  if(!cp || played===undefined){                // regi rekordban nincs id/played
+    const rec=await keretNevrol(ds.own,r,ds.nm);
+    if(rec){ cp=cp||rec.id; start=start||rec.start; if(played===undefined) played=rec.played; }
+  }
   if(!cp) return null;
   const k=cp+'|'+r;
   if(!BONTAS.has(k)){
@@ -393,10 +415,10 @@ async function bontasHTML(cp,r,own,nm,cap,sub){
     BONTAS.set(k,(j.data||[]).map(s=>({name:(s.competition_stat_config||{}).name||'?',
                                        value:s.value, points:s.points})));
   }
-  const sorok=BONTAS.get(k).filter(s=>s.points);
-  if(sorok.length && cap) sorok.push({name:'Kapitány — a heti pontban már duplázva',value:'',points:'×2'});
-  if(sorok.length && sub) sorok.push({name:'Pad — a heti pontban már felezve',value:'',points:'×0.5'});
-  return FunTasy.accTable(sorok);
+  const nyers=BONTAS.get(k), sorok=nyers.filter(s=>s.points);
+  if(sorok.length && ds.cap==='1') sorok.push({name:'Kapitány — a heti pontban már duplázva',value:'',points:'×2'});
+  if(sorok.length && ds.sub==='1') sorok.push({name:'Pad — a heti pontban már felezve',value:'',points:'×0.5'});
+  return FunTasy.accTable(sorok, nincsPontUzenet(played,start,nyers));
 }
 // Egyseges meccs-nezet: fordulohu keretek. Elo fordulonal az elo folyamat
 // (tarolt + percre friss csere), lezartnal az AKKORI keretek a
@@ -425,7 +447,7 @@ async function showMatchRound(h, v, r, mode){
   const H=(rounds[r]||{})[h], V=(rounds[r]||{})[v];
   if(mCurrent[0]!==h||mCurrent[1]!==v||!$('ov').classList.contains('open')) return;
   $('mBody').innerHTML = (H&&V)
-    ? `<div class="sqwrap">${squadHTML(h,H,m[2],r)}${squadHTML(v,V,m[3],r)}</div>`
+    ? ACCHINT+`<div class="sqwrap">${squadHTML(h,H,m[2],r)}${squadHTML(v,V,m[3],r)}</div>`
     : '<div class="loading">Ehhez a fordulóhoz nincs mentett keret-adat.</div>';
 }
 async function showLiveMatch(h, v, r){
@@ -441,7 +463,7 @@ async function showLiveMatch(h, v, r){
   $('mTitle').textContent=h+'  vs  '+v;
   $('mSub').textContent=r+'. forduló · élő állás — a meccs még tart';
   $('mTabs').innerHTML='';
-  const rajz=(A,B)=>{ $('mBody').innerHTML=
+  const rajz=(A,B)=>{ $('mBody').innerHTML= ACCHINT+
     `<div class="sqwrap">${A?squadHTML(h,A,null,r):''}${B?squadHTML(v,B,null,r):''}</div>`; };
   rajz(H,V);
   // hatterben: percre friss csere, ha a modal meg ugyanezen a meccsen all
@@ -513,11 +535,11 @@ async function showSquad(names,tab,mode){
         const on=document.querySelector('#mTabs .tab.on');
         if(single && (!on || on.dataset.tab!=='squad')) return;
         if(friss.every(f=>!f||!f.length)) return;
-        $('mBody').innerHTML=`<div class="sqwrap ${single?'one':''}">${
+        $('mBody').innerHTML=ACCHINT+`<div class="sqwrap ${single?'one':''}">${
           names.map((n,i)=>squadHTML(n,(friss[i]&&friss[i].length)?friss[i]:lists[i],real[n],SQUAD_ROUND)).join('')}</div>`;
       });
     }
-    $('mBody').innerHTML=`<div class="sqwrap ${single?'one':''}">${names.map((n,i)=>squadHTML(n,lists[i],real[n],SQUAD_ROUND)).join('')}</div>`;
+    $('mBody').innerHTML=ACCHINT+`<div class="sqwrap ${single?'one':''}">${names.map((n,i)=>squadHTML(n,lists[i],real[n],SQUAD_ROUND)).join('')}</div>`;
   }catch(e){
     $('mBody').innerHTML=`<div class="loading" style="color:var(--lose)">Nem sikerült betölteni — ${esc(e.message)}</div>`;
   }
@@ -527,8 +549,7 @@ async function showSquad(names,tab,mode){
 document.addEventListener('click',e=>{
   if(e.target===$('ovBack')){ vBack(); return; }
   const pr=e.target.closest('.plr[data-acc]');
-  if(pr){ FunTasy.accToggle(pr, ()=>bontasHTML(pr.dataset.cp?+pr.dataset.cp:null,
-    +pr.dataset.r, pr.dataset.own, pr.dataset.nm, pr.dataset.cap==='1', pr.dataset.sub==='1')); return; }
+  if(pr){ FunTasy.accToggle(pr, ()=>bontasHTML(pr.dataset)); return; }
   const mem=e.target.closest('[data-member]');
   if(mem){ showSquad([mem.dataset.member]); return; }
   const tab=e.target.closest('[data-tab]');

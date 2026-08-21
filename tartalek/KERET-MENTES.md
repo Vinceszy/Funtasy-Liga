@@ -10,8 +10,9 @@ letiltaná az adatközponti IP-ket): a fantasy.mlsz.hu-n futtatva lekéri mind a
 
 *Apró különbségek a szerveres gyűjtéshez képest: a könyvjelző nem írja a `squads.json`
 `round` mezőjét (az oldal „Aktuális keret" fülén a felirat forduló-szám nélkül jelenik
-meg), és a játékos-rekordokból hiányzik az `id` és a `played` mező (a pont-bontás
-accordionhoz és a „még nem játszott" kötőjelhez). Működésbeli hibát egyik sem okoz —
+meg), és a játékos-rekordokból hiányzik az `id`, a `played` és a `start` mező (a
+pont-bontás accordionhoz, a „még nem játszott" kötőjelhez és a meccs-állapot
+üzeneteihez). Működésbeli hibát egyik sem okoz —
 az oldal e mezők nélkül is működik, a bontást név alapján oldja fel —, és a következő
 szerveres futás mindent helyreállít.*
 

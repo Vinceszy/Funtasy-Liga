@@ -134,9 +134,13 @@ def rekord(d):
         "total": ss.get("competition_points") or 0,
         # a konyvjelzo-formatumon felul: a pont-bontashoz es a
         # "jatszott mar?" jelzeshez (elo fordulonal a current_round csak
-        # explicit include-dal jon, ezert szerepel az INCLUDE-ban)
+        # explicit include-dal jon, ezert szerepel az INCLUDE-ban).
+        # A "start" a jatekos adott fordulos meccsenek kezdese: ebbol tudja
+        # az oldal, hogy a 0 pont azert van-e, mert meg el sem kezdodott a
+        # meccs, vagy mert zajlik, vagy mert lejatszotta pont nelkul.
         "id": cp.get("id"),
         "played": bool(cr.get("is_played")),
+        "start": cr.get("first_played_at"),
     }
 
 

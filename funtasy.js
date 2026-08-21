@@ -322,10 +322,13 @@
 
   /* Bontas-tabla: sorok = [{name, value, points}]. A points lehet szam
      vagy kesz szoveg (pl. "×2" a kapitanynal). A 0 pontos sorokat a hivo
-     szuri ki - az MLSZ felulete is csak a pontot ero esemenyeket mutatja. */
-  function accTable(sorok) {
+     szuri ki - az MLSZ felulete is csak a pontot ero esemenyeket mutatja.
+     Ha nincs egyetlen pontot ero sor sem, az `ures` szoveg jelenik meg: azt
+     a hivo szamolja ki, mert az ok oldalanként mas adatbol derul ki (meg nem
+     kezdodott a meccs / zajlik / lejatszotta pont nelkul / nem lepett palyara). */
+  function accTable(sorok, ures) {
     if (!sorok || !sorok.length)
-      return '<div class="accload">Ehhez a fordulóhoz (még) nincs rögzített esemény.</div>';
+      return '<div class="accload">' + esc(ures || 'Ehhez a fordulóhoz nincs rögzített esemény.') + '</div>';
     var h = '<table class="acctable"><tr><th>Esemény</th><th>Érték</th><th>Pont</th></tr>';
     for (var i = 0; i < sorok.length; i++) {
       var s = sorok[i];
