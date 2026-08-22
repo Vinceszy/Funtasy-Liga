@@ -350,6 +350,7 @@ def main():
             bizonytalan.add(r)
             continue
         uj_fordulo, mind_jatszott, teljes = {}, True, True
+        mind_lement = True          # a meccslista szerint minden meccs lement
         for nev, uid in ids.items():
             st, j = squad(uid, r, jatek=(r == aktualis))
             if st != 200 or not isinstance(j, dict) or not j.get("data"):
@@ -362,6 +363,15 @@ def main():
                 cr = (d.get("competition_player") or {}).get("current_round") or {}
                 if not cr.get("is_played"):
                     mind_jatszott = False
+                # Az is_played mar a meccs KOZBEN igazra vall - abbol tehat NEM
+                # kovetkezik, hogy a fordulo lement. Enelkul: amint a fordulo
+                # utolso meccse elkezdodott, mindenki "jatszott" lett, a gyujto
+                # lezartnak minositette a fordulot, es a felig kesz eredmeny
+                # veglegeskent kerult a tabellaba. A meccslista status-a a
+                # fogodzo; ha nem kertuk le (regi fordulo), marad az is_played.
+                g = cr.get("games")
+                if g and (g[0] or {}).get("status") != "completed":
+                    mind_lement = False
         if not uj_fordulo:
             bizonytalan.add(r)
             continue
@@ -370,7 +380,7 @@ def main():
         hist["rounds"][str(r)] = {**regi_fordulo, **uj_fordulo}
         hianytalan = teljes and len(uj_fordulo) == len(MEMBERS)
         if hianytalan:
-            lezart[r] = mind_jatszott
+            lezart[r] = mind_jatszott and mind_lement
         else:
             bizonytalan.add(r)
         print("  keretek: %d. fordulo, %d/%d szakvezeto, %s"
@@ -418,13 +428,22 @@ def main():
     # SCHEDULE-bol az elo retegbe - vagyis egy hetekkel korabbi, lejatszott
     # fordulo eltunne a tabellabol. Ideiglenes csak a most zajlo vagy eppen
     # most zarult fordulo lehet.
-    regi_prov = [int(x) for x in (data.get("provisional") or [])]
+    regi_prov = {int(x) for x in (data.get("provisional") or [])}
+
+    def van_pont(r):
+        return any(pontok.get(n, {}).get(r) for n in MEMBERS)
+
     prov = {r for r, kesz in lezart.items()
-            if not kesz and r >= aktualis - 1
-            and any(pontok.get(n, {}).get(r) for n in MEMBERS)}
-    # amit nem tudtunk kiertekelni, ott marad a korabbi allapot: sem uj
-    # ideiglenest nem talalunk ki, sem meglevot nem torlunk talalgatasbol
-    prov |= (set(regi_prov) & bizonytalan)
+            if not kesz and r >= aktualis - 1 and van_pont(r)}
+    # Amit nem tudtunk kiertekelni, ott nem talalgatunk - de nem is egyformak
+    # a tevedesek. Ha egy friss fordulot tevesen veglegesnek irunk be, a
+    # felig kesz eredmeny bekerul a tabellaba (csendes, hihetо, rossz). Ha
+    # tevesen ideiglenesnek, a fordulo atmenetileg kimarad (lathato, es a
+    # kovetkezo futas javitja). Ezert a friss fordulo alapertelmezetten
+    # ideiglenes marad, a regi pedig megtartja a korabbi allapotat.
+    for r in bizonytalan:
+        if r in regi_prov or (r >= aktualis - 1 and van_pont(r)):
+            prov.add(r)
     provisional = sorted(prov)
 
     # ---- 6. Iras, csak ha valtozott ----

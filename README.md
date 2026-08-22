@@ -241,9 +241,13 @@ Az `archive.yml` a `collect.py`-t futtatja, ami **mindent** frissít, teendő n�
    romolhatott az adat: egy hibás futás vagy kivett a tabellából egy lezárt fordulót, vagy
    — súlyosabb — kiürítette a `provisional` listát, és akkor az élő forduló
    **részeredménye véglegesként számított volna be**.
-4. **Forduló-lezárás**: egy forduló akkor végleges, ha minden szakvezető minden játékosa
-   lejátszotta a meccsét (`is_played`). Addig a forduló a `provisional` listában van, és az
-   oldal nem számolja a tabellába.
+4. **Forduló-lezárás**: egy forduló akkor végleges, ha minden szakvezető minden játékosának
+   **lement a meccse**. Ehhez két jelzés kell együtt: `is_played`, **és** a meccslista
+   `completed` státusza. Csak az `is_played`-re támaszkodni hibás volt: az MLSZ már a meccs
+   *közben* igazra billenti, tehát amint a forduló utolsó meccse elkezdődött, mindenki
+   „játszott" lett — a gyűjtő lezártnak minősítette a fordulót, és a **félig kész eredmény
+   véglegesként került a tabellába**. Amíg a forduló nem végleges, a `provisional` listában
+   van, és az oldal nem számolja a tabellába.
 5. **Keresztellenőrzés**: a keretekből számolt pontszámot összeveti a hivatalossal. Ha
    eltér, **nem jelzést ír, hanem javít**: újra lekéri a hivatalos értéket az adott
    fordulóra, és azt vezeti át.
@@ -342,8 +346,7 @@ A meccs vége után, amíg az MLSZ nem tette be a pontokat, a **sor 0-t mutat**,
 viszont megmondja az igazat („a pontok feldolgozása még tart"). Kötőjelet azért nem teszünk
 oda, mert a sor nem tudhatja, megérkezett-e már a bontás — kideríteni csak játékosonkénti
 lekéréssel lehetne (15 játékos × 8 keret fordulónként). Mivel a bontásból egy kattintással
-kiderül az igazság, ez nem éri meg a bonyolítást. Az állapottér-teszt ezt **elfogadott
-kivételként** ismeri, tehát ha egy későbbi változtatás kiszélesítené, az bukó teszt lesz.
+kiderül az igazság, ez nem éri meg a bonyolítást.
 
 **A státuszsáv szövegei közösek** (`funtasy.js` → `FunTasy.statusz`), hogy a két oldal
 ne beszéljen kétféleképpen ugyanarról az állapotról:
