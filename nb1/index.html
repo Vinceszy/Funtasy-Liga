@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=12">
+<link rel="stylesheet" href="../funtasy.css?v=13">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -71,7 +71,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=12"></script>
+<script src="../funtasy.js?v=13"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -495,52 +495,57 @@ let MECCS = null;        // az eppen mutatott meccs - a gomb ebbol rajzol ujra
 // pontja, tehat az NEM azonos sor.
 const szerepKulcs = p => p.name+'|'+(p.cap?'C':'')+(p.sub?'P':'');
 
-// A kozos tetelek EGYSZER szerepelnek, halvanyitva: mindket keretben
-// ugyanazt hozzak, tehat a meccs szempontjabol semlegesek. Az osszeguk a
-// lista ALATT all - szamokat lentrol olvas ossze az ember.
-// (Nem duplikaljuk oket a ket csapatoszlopba: ugyanaz a sor ketszer csak
-// zaj lenne, a lenyeg epp az, hogy ezek nem szamitanak.)
-function kozosBlokkHTML(kozos, own, round, szabaly){
-  const pont=osszeg(kozos)+(szabaly.kozos?szabaly.pts:0);
-  const szabalySor = (szabaly.kozos && szabaly.pts)
-    ? `<div class="plr szabalysor"><span class="ppos">HUN</span>
-        <span class="nm">Magyarszabály</span>
-        <span class="pts">+${fmt(szabaly.pts)}</span></div>`
-    : '';
-  return `<div class="kozosblokk">
-    <div class="kozoshead">Közös tételek · ${kozos.length} játékos${
-        (szabaly.kozos && szabaly.pts)?' + magyarszabály':''}</div>
-    <div class="kozossorok">${srtPoszt(kozos).map(p=>plrSorHTML(p,own,round)).join('')}${szabalySor}</div>
-    <div class="sumline kozososszeg"><span>Közös összesen — mindkét oldalon ugyanennyi</span>
-      <b>${fmt(pont)}</b></div>
-  </div>`;
-}
-// Egy csapat oszlopa a kulonbseg-nezetben: csak az eltero tetelek, alattuk
-// a szamla, ami visszaadja a csapat teljes pontszamat.
-function elteresOszlopHTML(name, list, kozosK, realTotal, round, szabaly){
-  const elt=list.filter(p=>!kozosK.has(szerepKulcs(p)));
-  const st=elt.filter(p=>!p.sub), sb=elt.filter(p=>p.sub);
-  const mb=magyarBonus(list.filter(p=>!p.sub));      // a TELJES keretbol
-  // ha a magyarszabaly nem kozos, akkor ITT eltero tetel: a sorok kozott a
-  // helye, es az eltero osszegbe is beleszamit
-  const sajatSzabaly = szabaly.kozos ? 0 : mb.pts;
-  const eltPont=osszeg(elt)+sajatSzabaly;
-  const kozosPont=osszeg(list)-osszeg(elt)+(szabaly.kozos?mb.pts:0);
-  const teljes = realTotal!=null ? realTotal : (eltPont+kozosPont);
-  const row=p=>plrSorHTML(p,name,round);
-  const szabalySor = szabaly.kozos ? '' :
-    `<div class="plr szabalysor${mb.ok?'':' nincs'}"><span class="ppos">HUN</span>
-      <span class="nm">Magyarszabály ${mb.ok?`(${mb.hun} magyar, ${mb.u21} U21)`:'— nem teljesül'}</span>
+// A ket oszlop VEGIG ugyanaz marad: bal oldal az egyik szakvezeto, jobb a
+// masik. Gepen a kozos jatekosok ezert MINDKET oszlopban ott vannak
+// (ugyanazokkal a szamokkal): a szem azonnal latja, hogy a ket resz egyezik,
+// es nem kell a megszokott bal/jobb szerkezetet elhagyni.
+// Mobilon viszont az oszlopok egymas ala kerulnek, ott a duplikalas csak
+// hosszabbitana a lapot - ezert ott egy kozos blokk all elol, utana a ket
+// szakvezeto sajat, eltero jatekosaival. A valtast CSS vegzi (.mobilkozos
+// es .kozosresz), igy nincs szukseg atmeretezes-figyelesre.
+function szabalySorHTML(mb){
+  return `<div class="plr szabalysor${mb.ok?'':' nincs'}"><span class="ppos">HUN</span>
+      <span class="nm">Magyarszabály${mb.ok?` (${mb.hun} magyar, ${mb.u21} U21)`:' — nem teljesül'}</span>
       <span class="pts">${mb.ok?'+'+fmt(mb.pts):'0'}</span></div>`;
+}
+function csoportHTML(lista, own, round, zaroSor){
+  const st=lista.filter(p=>!p.sub), sb=lista.filter(p=>p.sub);
+  const row=p=>plrSorHTML(p,own,round);
+  return srtPoszt(st).map(row).join('')
+    + (sb.length?`<div class="subhead">Cserepad — a feltüntetett érték már felezve</div>${srtPoszt(sb).map(row).join('')}`:'')
+    + (zaroSor||'');
+}
+function kozosSzakaszHTML(kozos, own, round, szabaly, mb, cim){
+  const pont=osszeg(kozos)+(szabaly.kozos?mb.pts:0);
+  return `<div class="szakasz">${cim}</div>
+    ${(kozos.length||szabaly.kozos)
+      ? csoportHTML(kozos, own, round, szabaly.kozos?szabalySorHTML(mb):'')
+      : '<div class="ureseltares">Nincs közös játékos.</div>'}
+    <div class="osszesito"><span>Közös összesen</span><b>${fmt(pont)}</b></div>`;
+}
+function kulonbsegOszlopHTML(name, list, kozosK, realTotal, round, szabaly){
+  const kozos=list.filter(p=>kozosK.has(szerepKulcs(p)));
+  const elt=list.filter(p=>!kozosK.has(szerepKulcs(p)));
+  const mb=magyarBonus(list.filter(p=>!p.sub));       // a TELJES keretbol
+  const kozosPont=osszeg(kozos)+(szabaly.kozos?mb.pts:0);
+  const eltPont=osszeg(elt)+(szabaly.kozos?0:mb.pts);
+  const teljes = realTotal!=null ? realTotal : (kozosPont+eltPont);
+  // Ha a hivatalos pontszam es a keretbol szamolt osszeg elter (pl. utolagos
+  // MLSZ-korrekcio utan, amig a keret-pillanatkep regi), azt kiirjuk, nem
+  // hagyjuk, hogy a szamla csendben ne jojjon ki.
+  const eltHiv = teljes-(kozosPont+eltPont);
+  const eltHivSor = Math.abs(eltHiv)>0.005
+    ? `<div class="osszesito jelzes"><span>Eltérés a hivatalos ponttól</span><b>${eltHiv>0?'+':''}${fmt(eltHiv)}</b></div>`
+    : '';
   return `<div class="sqcol"><h3>${esc(name)}<span>${fmt(teljes)}</span></h3>
-    ${st.length?srtPoszt(st).map(row).join(''):'<div class="ureseltares">Minden kezdője megegyezik a másik keretével.</div>'}
-    ${sb.length?`<div class="subhead">Cserepad — a feltüntetett érték már felezve</div>${srtPoszt(sb).map(row).join('')}`:''}
-    ${szabalySor}
-    <div class="szamla">
-      <div class="sumline kiemelt"><span>Eltérő összesen</span><b>${fmt(eltPont)}</b></div>
-      <div class="sumline halvany"><span>Közös tételek</span><b>${fmt(kozosPont)}</b></div>
-      <div class="sumline vegosszeg"><span>Összesen</span><b>${fmt(teljes)}</b></div>
-    </div>
+    <div class="kozosresz">${kozosSzakaszHTML(kozos,name,round,szabaly,mb,'Közös játékosok')}</div>
+    <div class="szakasz">Eltérő játékosok</div>
+    ${(elt.length||!szabaly.kozos)
+      ? csoportHTML(elt, name, round, szabaly.kozos?'':szabalySorHTML(mb))
+      : '<div class="ureseltares">Minden játékosa közös.</div>'}
+    <div class="osszesito"><span>Eltérő összesen</span><b>${fmt(eltPont)}</b></div>
+    ${eltHivSor}
+    <div class="osszesito vegso"><span>${esc(name)} összesen</span><b>${fmt(teljes)}</b></div>
   </div>`;
 }
 function meccsTest(){
@@ -555,20 +560,13 @@ function meccsTest(){
   const gomb = van
     ? `<div class="szurosor">
          <button class="szurogomb${CSAK_ELTERES?' on':''}" id="elteresGomb">Különbségek</button>
-         <span class="szuroinfo">${kozos.length} közös játékos${
-             (szabaly.kozos && szabaly.pts)?' és a magyarszabály':''} · ${
+         <span class="szuroinfo">${kozos.length} közös játékos · ${
              fmt(osszeg(kozos)+(szabaly.kozos?szabaly.pts:0))} pont mindkét oldalon</span>
        </div>`
     : '';
-  // az eltero szakasz fejlecebe kiirjuk a lenyeget: mennyi a kulonbseg
-  const kul = (hp!=null && vp!=null) ? hp-vp : null;
-  const kulSzoveg = kul==null ? '' : (Math.abs(kul)<0.005
-    ? ' — pillanatnyilag döntetlen'
-    : ` — a különbség dönt: ${esc(kul>0?h:v)} +${fmt(Math.abs(kul))}`);
   const test = (van && CSAK_ELTERES)
-    ? kozosBlokkHTML(kozos, h, r, szabaly) +
-      `<div class="szakaszcim">Eltérő tételek${kulSzoveg}</div>` +
-      `<div class="sqwrap">${elteresOszlopHTML(h,A,bK,hp,r,szabaly)}${elteresOszlopHTML(v,B,aK,vp,r,szabaly)}</div>`
+    ? `<div class="mobilkozos">${kozosSzakaszHTML(kozos,h,r,szabaly,mbA,'Közös játékosok — mindkét keretben')}</div>` +
+      `<div class="sqwrap">${kulonbsegOszlopHTML(h,A,bK,hp,r,szabaly)}${kulonbsegOszlopHTML(v,B,aK,vp,r,szabaly)}</div>`
     : ACCHINT + `<div class="sqwrap">${squadHTML(h,A,hp,r)}${squadHTML(v,B,vp,r)}</div>`;
   // az allas es a kapcsolo EGY dobozban all: igy nem harom kulon kozepre
   // zart sor lebeg egymas alatt, es a gomb is odatartozik, ahova valo

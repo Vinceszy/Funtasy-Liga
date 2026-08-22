@@ -51,28 +51,26 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   Ha a fordulóhoz még semmilyen keret-adat nincs, tartalékként ez a szöveg jön:
   *„A meccs még tart, a keretek által szerzett pontok a forduló zárta után elérhetőek.”*
 - **„Különbségek” nézet (csak salary cap ligában, tehát az NB1-en):** az állás alatti
-  kapcsoló szétszálazza a meccset arra, ami **közös**, és arra, ami **eldönti**:
+  kapcsoló két csoportra bontja a kereteket — **közös** és **eltérő** játékosokra —, mert
+  a közösek pontja kiüti egymást, a meccset az eltérők döntik el.
 
-  Az olvasási sorrend fentről lefelé:
+  **A bal/jobb szerkezet végig megmarad** (bal oszlop az egyik szakvezető, jobb a másik):
+  asztali gépen a közös játékosok **mindkét oszlopban** ott vannak, ugyanazokkal a
+  számokkal. A szem azonnal látja, hogy a két rész egyezik; ha külön blokkba emelnénk,
+  megtörne a megszokott elrendezés. **Mobilon** viszont az oszlopok egymás alá kerülnek,
+  ott a duplikálás csak hosszabbítaná a lapot: egy közös blokk áll elöl, utána a két
+  szakvezető a saját eltérő játékosaival. A váltást CSS végzi, nincs átméretezés-figyelés.
 
-  1. **A teljes meccsállás** és maga a gomb — egy dobozban, hogy ne lebegjen több
-     középre zárt sor egymás alatt.
-  2. **Közös tételek** halványan, **egyszer** felsorolva (nem kétszer, hiszen mindkét
-     keretben ugyanazt hozzák) — asztali gépen két hasábban, mobilon egyben.
-  3. **Közös összesen** — a lista *alatt*, mert számokat lentről olvas össze az ember.
-  4. **Eltérő tételek** szakaszcím, benne a lényeg: *„a különbség dönt: Csendi +12”*.
-  5. **A két oldal eltérő játékosai** oszloponként, alattuk a számla:
-     *eltérő összesen + közös tételek = a csapat pontszáma*. Semmi nem tűnik el, az
-     összeg végigkövethető.
-
-  A közös tételeket **nem** duplikáltam bele mindkét csapatoszlopba: ugyanaz a sor
-  kétszer csak zaj lenne, a lényeg épp az, hogy ezek nem számítanak.
+  Minden csoport alatt **összesítő sor** áll (a keret-fejléccel azonos megjelenéssel):
+  *Közös összesen*, *Eltérő összesen*, végül *<név> összesen* — az utolsó a csapat teljes
+  fordulópontszáma, és a fenti kettő összege pontosan ezt adja ki.
 
   **Az azonossághoz nem elég a névegyezés:** a kapitányság és a kezdő/pad szerep is
   számít, mert azoktól más a játékos pontja (Szalai kezdőként 10, kapitányként 20 — az nem
-  azonos tétel). **A magyarszabály (+10) ugyanígy viselkedik:** ha mindkét keret megkapja,
-  saját soron a közös tételek közé kerül; ha csak az egyik, akkor mindkét oszlopba
-  bekerül eltérő tételként (a másik oldalon 0-val), és az eltérő összegbe számít bele.
+  azonos tétel). **A magyarszabály (+10) ugyanúgy tétel:** ha mindkét keret megkapja, a
+  közös csoportba kerül; ha csak az egyik, akkor mindkét oldalon az eltérők közé (a
+  másiknál 0-val). Ha a hivatalos pontszám és a keretből számolt összeg mégis eltérne
+  (pl. utólagos MLSZ-korrekció után, amíg a keret-pillanatkép régi), külön sor jelzi.
 
   A PL-oldalon szándékosan nincs ilyen nézet: draft ligában egy játékos egy csapatban
   lehet, tehát közös tétel nem is fordulhat elő.

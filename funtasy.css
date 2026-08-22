@@ -189,39 +189,35 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .szurogomb.on{background:var(--amber);border-color:var(--amber);color:#12140F}
 .szuroinfo{font-size:11.5px;color:var(--dim);text-align:center}
 
-/* Kozos jatekosok blokkja: egyszer szerepelnek, halvanyitva - a ket keretben
-   ugyanazt hozzak, tehat a meccs szempontjabol semlegesek. */
-.kozosblokk{border:1px dashed var(--line);border-radius:10px;padding:0 12px 6px;margin-bottom:14px}
-.kozoshead{font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
-  padding:10px 2px 8px;border-bottom:1px solid var(--line)}
-/* a kozos osszeg a lista ALATT all - szamokat lentrol olvasunk ossze */
-.sumline.kozososszeg{border-top:1px solid var(--line);margin-top:4px;padding:8px 2px 4px}
-.sumline.kozososszeg b{font:700 14px 'JetBrains Mono';color:var(--ink)}
-/* az eltero szakasz fejlece: itt all a lenyeg, a kulonbseg */
-.szakaszcim{font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);
-  margin:0 0 8px;padding:0 2px}
-.kozosblokk .plr,.kozosblokk .pts,.kozosblokk .nm{color:var(--dim)}
-/* Szeles kepernyon tobb oszlopba rendezzuk, kulonben a pont messze
-   elszakadna a nevtol. A kinyilo bontas a teljes szelesseget kapja. */
-.kozossorok{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0 20px}
-.kozossorok .accpanel{grid-column:1/-1;margin-left:0}
-/* a magyarszabaly sora a kozos blokkban: nem jatekos, ezert sajat jelolese van */
-.szabalysor{cursor:default}
+/* A kulonbseg-nezet szakaszai a keret-oszlopon belul. A ket oszlop vegig
+   ugyanaz marad (bal/jobb szakvezeto), csak csoportokra bomlik. */
+.szakasz{font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
+  margin:14px 0 4px;padding:0 2px}
+.sqcol .szakasz:first-of-type{margin-top:10px}
+/* Osszesito sor - a keret-fejleccel azonos megjelenes, hogy jol lathato legyen. */
+.osszesito{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  margin-top:6px;padding:8px 2px 2px;border-top:1px solid var(--line);
+  font-family:'Archivo Black';font-size:12px;letter-spacing:.6px;color:var(--amber)}
+.osszesito b{font:700 15px 'JetBrains Mono';color:var(--ink)}
+.osszesito.vegso{border-top-width:2px;margin-top:10px}
+/* Gepen a kozos jatekosok mindket oszlopban ott vannak (a bal/jobb szerkezet
+   megmarad); mobilon viszont az oszlopok egymas ala kerulnek, ott eleg
+   egyszer, kulon blokkban - kulonben ugyanaz a nevsor ketszer futna le. */
+.mobilkozos{display:none}
+@media(max-width:760px){
+  .mobilkozos{display:block;border:1px solid var(--line);border-radius:10px;
+    padding:2px 12px 10px;margin-bottom:16px}
+  .mobilkozos .szakasz:first-child{margin-top:10px}
+  .sqcol .kozosresz{display:none}
+}
+.osszesito.vegso b{color:var(--amber)}
+.osszesito.jelzes,.osszesito.jelzes b{color:var(--lose);font-size:11.5px}
+.osszesito.jelzes{font-family:Inter;letter-spacing:0;border-top:0;padding-top:2px}
+/* a magyarszabaly sora: nem jatekos, ezert sajat jelolese van */
+.szabalysor{cursor:default;border-top:1px solid var(--line);margin-top:6px}
 .szabalysor .ppos{color:var(--win);border-color:var(--win)}
 .szabalysor.nincs .ppos{color:var(--dim);border-color:var(--line)}
 .szabalysor.nincs .nm,.szabalysor.nincs .pts{color:var(--dim)}
-.szabalysor .nm{font-size:12.5px}
-.meccsfej{padding:10px 14px}
-
-/* Szamla a kulonbseg-nezet oszlopa alatt: eltero + kozos + magyarszabaly =
-   a csapat teljes pontszama. Egy csoportban, hogy ne csikozzon. */
-.szamla{margin-top:10px;border-top:1px solid var(--line);padding-top:4px}
-.szamla .sumline{border-top:0;margin-top:0;padding:3px 4px}
-.szamla .sumline.kiemelt b{color:var(--ink);font-size:13.5px}
-.szamla .sumline.halvany{opacity:.7}
-.szamla .sumline.vegosszeg{border-top:1px solid var(--line);margin-top:5px;padding-top:7px}
-.szamla .sumline.vegosszeg span{color:var(--ink)}
-.szamla .sumline.vegosszeg b{color:var(--amber);font:700 15px 'JetBrains Mono'}
 .ureseltares{font-size:12px;color:var(--dim);padding:10px 4px;font-style:italic}
 .accpanel{margin:0 0 6px 24px;border-left:2px solid var(--line);padding:4px 10px 6px;background:var(--panel2);border-radius:0 0 6px 6px}
 .accload{font-size:12px;color:var(--dim);padding:4px 0}
