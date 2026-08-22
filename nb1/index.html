@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=18">
+<link rel="stylesheet" href="../funtasy.css?v=19">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -71,7 +71,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=18"></script>
+<script src="../funtasy.js?v=19"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -458,6 +458,13 @@ async function keretNevrol(own,r,nm){
 // csak a datumot mutatjuk, kulonben hamis 00:00-t irnank ki. Ezt a datumot
 // a szovegbol olvassuk ki, nem a Date-bol: az ejfel mas idozonaban elozo
 // napra csuszna at (a bongeszo a sajat zonajaban jelenit meg).
+// Az MLSZ ejfelt ir, ha a pontos kezdes meg nincs kituzve. Ez nem valodi
+// idopont: sem kiirni nem szabad oraval (lasd idoFmt), sem abbol kiindulni,
+// hogy a meccs elkezdodott (a placeholder datuma amugy is elmulhat).
+const kituzott=s=>{
+  const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s||'');
+  return !!m && !(m[4]==='00'&&m[5]==='00');
+};
 const idoFmt=s=>{
   const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s||'');
   if(!m) return s;
@@ -490,22 +497,44 @@ const MECCS_KOZBEN=ELO_PONTOK
 // azert kell, mert a `vege` nem mindig all rendelkezesre (a regi
 // keret-rekordokban meg nincs is ilyen mezo) - enelkul azokra mindenre azt
 // irnank, hogy zajlik. Ha nincs kezdesi ido, nem allitunk semmit.
-const MECCS_HOSSZ=150*60*1000;      // jatekido + szunet + hosszabbitas, boven
-function meccsFut(start, vege){
-  if(vege || !start) return false;
-  const k=new Date(start).getTime(), most=Date.now();
-  return most>=k && most<k+MECCS_HOSSZ;
+const MECCS_HOSSZ=180*60*1000;      // ennyi utan mar biztosan lement (keses is belefer)
+const MECCS_MINIMUM=100*60*1000;    // ennyi elott meg biztosan NEM erhetett veget
+// A meccs allapota EGY helyen dol el, hogy a jatekos-sor es a pont-bontas
+// soha ne mondjon mast ugyanarrol a meccsrol:
+//   'elotte'     - meg nem kezdodott (vagy nincs meg kituzve az idopont)
+//   'fut'        - elkezdodott, es nincs HITELES jelzes arrol, hogy vege
+//   'utana'      - biztosan lement
+//   'ismeretlen' - nincs kezdesi ido; ilyenkor nem allitunk semmit
+function meccsAllapot(start, vege){
+  if(!start) return 'ismeretlen';
+  if(!kituzott(start)) return 'elotte';        // ejfel = meg nincs kituzve
+  const eltelt=Date.now()-new Date(start).getTime();
+  if(eltelt<0) return 'elotte';
+  if(eltelt>=MECCS_HOSSZ) return 'utana';
+  // A `vege` (a meccslista 'completed' jelzoje) csak akkor hiheto, ha mar
+  // annyi ido eltelt, amennyi alatt egy meccs egyaltalan lemehet. Igy ha az
+  // MLSZ a meccs KOZBEN is 'completed'-et irna, az nem vezet felre - pont ez
+  // a hiba volt az is_played mezovel, es nem tudjuk ellenorizni, hogy a masik
+  // mezo mikor vall at.
+  if(vege && eltelt>=MECCS_MINIMUM) return 'utana';
+  return 'fut';
 }
+const meccsFut=(start, vege)=>meccsAllapot(start, vege)==='fut';
 function nincsPontUzenet(played, start, nyers, nogame, vege, elo){
   if(nogame) return 'Ebben a fordulóban nem játszik — a klubnak nincs meccse (elmaradt vagy elhalasztott forduló).';
-  if(start && new Date(start)>new Date())
-    return 'A meccs még nem kezdődött el — kezdés: '+idoFmt(start);
-  if(elo && meccsFut(start, vege)) return MECCS_KOZBEN;
+  const allapot=meccsAllapot(start, vege);
+  if(allapot==='elotte') return 'A meccs még nem kezdődött el — kezdés: '+idoFmt(start);
+  if(elo && allapot==='fut') return MECCS_KOZBEN;
   if(played===false) return 'A meccs véget ért — a pontok feldolgozása még tart.';
   const perc=(nyers||[]).find(s=>s.name==='Játszott perc');
   if(perc && !perc.value) return 'Nem lépett pályára ebben a fordulóban.';
-  if(played===true || (nyers||[]).length) return 'Lejátszotta a meccset, pontot érő esemény nélkül.';
-  return 'Ehhez a fordulóhoz nincs rögzített esemény.';
+  // A "lejatszotta" allitashoz BIZONYITEK kell: vagy lezart fordulot nezunk,
+  // vagy mar megjott a bontas. Elo forduloban, bizonyitek nelkul nem az
+  // is_played szavara mondjuk ki, hogy vege - az billen at a meccs kozben is.
+  if((nyers||[]).length || !elo) return 'Lejátszotta a meccset, pontot érő esemény nélkül.';
+  return allapot==='ismeretlen'
+    ? 'Ehhez a fordulóhoz nincs rögzített esemény.'
+    : 'A meccs véget ért — a pontok feldolgozása még tart.';
 }
 async function bontasHTML(ds){
   const r=+ds.r;
@@ -519,16 +548,21 @@ async function bontasHTML(ds){
   const elo=eloFordulo(r);
   if(nogame) return FunTasy.accTable([], nincsPontUzenet(played,start,null,true,false,elo));
   if(!cp) return null;
-  // Elo forduloban a bontas percenkent valtozhat, ezert ott a gyorsitotar 60
-  // masodperc utan lejar (a lezart fordulo bontasa mar nem valtozik).
+  // Elo forduloban a bontas percenkent valtozhat, ezert ott 60 masodperc utan
+  // ujra lekerjuk. A meglevo valaszt viszont csak akkor dobjuk el, ha az uj
+  // meg is jott: kulonben egy pillanatnyi halozati hiba miatt hibauzenet
+  // jonne a mar meglevo, alig regi adat helyett.
   const k=cp+'|'+r, most=Date.now(), rec=BONTAS.get(k);
-  if(rec && elo && most-rec.t>=60000) BONTAS.delete(k);
-  if(!BONTAS.has(k)){
+  if(!rec || (elo && most-rec.t>=60000)){
     const u='https://fantasy-api.mlsz.hu/game-player-stats?include=competition_stat_config'+
       `&filter%5Bcompetition_player_id%5D=${cp}&filter%5Bround_id%5D=${75+2*r}`;
-    const j=await apiGet(u);
-    BONTAS.set(k,{t:most, sorok:(j.data||[]).map(s=>({name:(s.competition_stat_config||{}).name||'?',
-                                                     value:s.value, points:s.points}))});
+    try{
+      const j=await apiGet(u);
+      BONTAS.set(k,{t:most, sorok:(j.data||[]).map(s=>({name:(s.competition_stat_config||{}).name||'?',
+                                                       value:s.value, points:s.points}))});
+    }catch(e){
+      if(!rec) throw e;            // nincs mire visszaesni
+    }
   }
   const nyers=BONTAS.get(k).sorok, sorok=nyers.filter(s=>s.points);
   if(sorok.length && ds.cap==='1') sorok.push({name:'Kapitány — a heti pontban már duplázva',value:'',points:'×2'});
@@ -732,8 +766,9 @@ async function showSquad(names,tab,mode){
     if(SQUAD_ROUND && (window.PROVISIONAL||[]).includes(SQUAD_ROUND)){
       const kert=names.slice();
       const jel=FunTasy.lassuJelzo($('mSub'));
-      Promise.all(names.map(n=>eloKeret(n,SQUAD_ROUND,true))).then(friss=>{
+      Promise.all(names.map(n=>eloKeret(n,SQUAD_ROUND,true))).catch(()=>[]).then(friss=>{
         jel();
+        if(!friss || !friss.length) return;
         if(!$('ov').classList.contains('open')) return;
         if(mCurrent.length!==kert.length || mCurrent.some((n,i)=>n!==kert[i])) return;
         const on=document.querySelector('#mTabs .tab.on');

@@ -388,8 +388,17 @@ def main():
     # ---- 5. Ideiglenes fordulok ----
     # Csak az szamit ideiglenesnek, aminek mar van pontja, de a keretek
     # szerint meg nem jatszott le minden jatekos.
+    #
+    # A fordulo-korlat NEM diszites: a rolling ellenorzes ota reg lezart
+    # fordulok is bekerulhetnek a `celok` koze (ha az MLSZ korrigalt), es ott
+    # egyetlen elhasalt keret-lekeres is `lezart[r]=False`-t adna. Az ilyen
+    # fordulo hibasan ideiglenesnek latszana, az oldal pedig kivenne a
+    # SCHEDULE-bol az elo retegbe - vagyis egy hetekkel korabbi, lejatszott
+    # fordulo eltunne a tabellabol. Ideiglenes csak a most zajlo vagy eppen
+    # most zarult fordulo lehet.
     provisional = sorted(r for r, kesz in lezart.items()
-                         if not kesz and any(pontok.get(n, {}).get(r) for n in MEMBERS))
+                         if not kesz and r >= aktualis - 1
+                         and any(pontok.get(n, {}).get(r) for n in MEMBERS))
     regi_prov = data.get("provisional") or []
 
     # ---- 6. Iras, csak ha valtozott ----

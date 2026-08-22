@@ -134,11 +134,26 @@ Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő 
   **Az `is_played` NEM azt jelenti, hogy a meccsnek vége.** Az MLSZ már a meccs *közben*
   igazra billenti. Emiatt írtuk élő forduló alatt gyakorlatilag mindenkire, hogy
   „lejátszotta a meccset, pontot érő esemény nélkül" — miközben a meccs javában ment.
-  Élő fordulóban ezért a **meccs állapota** dönt, nem a lejátszottság: a meccs fut, ha már
-  elkezdődött, és sem a meccslista `completed` jelzője (`vege`) nem mondja, hogy vége, sem
-  a kezdés óta nem telt el 2,5 óra. **Az időkorlát azért kell**, mert a `vege` nem mindig
-  áll rendelkezésre — a 2026-08-21 előtti keret-rekordokban nincs is ilyen mező —, enélkül
-  azokra mindenre azt írnánk, hogy zajlik. Ha nincs kezdési idő, nem állítunk semmit.
+
+  Élő fordulóban ezért a **meccs állapota** dönt, nem a lejátszottság. Egyetlen helyen,
+  a `meccsAllapot()`-ban, négy értékkel: *előtte* / *fut* / *utána* / *ismeretlen* — így a
+  játékos sora és a pont-bontás soha nem mondhat mást ugyanarról a meccsről.
+
+  A szabály **két időkorláton** áll, és mindkettőnek konkrét oka van:
+
+  - **100 perc alatt a `vege` jelzést nem hisszük el.** Egy meccs 2×45 perc + szünet +
+    hosszabbítás, tehát ennyi idő alatt fizikailag nem érhet véget. Azt ugyanis *nem
+    tudtuk ellenőrizni*, hogy az MLSZ mikor billenti át a meccslista `completed` mezőjét —
+    ha ugyanúgy tenné, mint az `is_played`-del (menet közben), akkor egy naiv javítás
+    semmit nem oldana meg. Így a javítás **független ettől a nyitott kérdéstől**.
+  - **180 perc után nem állítjuk, hogy fut**, akkor sem, ha `vege` jelzés nem érkezett.
+    A `vege` ugyanis nem mindig áll rendelkezésre (a 2026-08-21 előtti keret-rekordokban
+    nincs is ilyen mező).
+
+  Ezen felül a **„lejátszotta" állításhoz bizonyíték kell**: vagy lezárt fordulót nézünk,
+  vagy már megjött a pont-bontás. Élő fordulóban, bizonyíték nélkül nem az `is_played`
+  szavára mondjuk ki, hogy a meccsnek vége. Ha nincs kitűzött kezdési idő (az MLSZ ilyenkor
+  éjfélt ír), a meccset **nem** tekintjük elkezdettnek.
 
   **A lefújás és a pontok megjelenése között is idő telik el.** A PL-en az FPL **két
   lépésben** zárja a meccset: a `finished_provisional` a lefújáskor igaz, a `finished`
@@ -214,7 +229,10 @@ Az `archive.yml` a `collect.py`-t futtatja, ami **mindent** frissít, teendő n�
    *Önjavítás* lentebb).
 3. **Keretek** a keret-végpontról: az aktuális forduló (élő játékos-pontokkal), az utolsó
    lezárt, minden hiányzó forduló — és minden olyan régi forduló, amelynek a pontszáma
-   ebben a futásban változott (akkor ugyanis a keret-pillanatkép is elavult).
+   ebben a futásban változott (akkor ugyanis a keret-pillanatkép is elavult). **Egy régi,
+   újra lekért forduló ettől nem lehet „ideiglenes"**: ideiglenessé csak a most zajló vagy
+   éppen most zárult forduló válhat. Enélkül egyetlen elhasalt keret-lekérés kivehetett
+   volna egy hetekkel korábbi, lejátszott fordulót a tabellából.
 4. **Forduló-lezárás**: egy forduló akkor végleges, ha minden szakvezető minden játékosa
    lejátszotta a meccsét (`is_played`). Addig a forduló a `provisional` listában van, és az
    oldal nem számolja a tabellába.
@@ -286,6 +304,14 @@ lassúnál viszont a kiírt idő egyben mérés is arról, mennyibe kerül való
 
 Három helyen van ilyen csere, mindhárom kapott jelzést: az NB1 élő meccs-adatlapja, az NB1
 keret-nézete élő forduló közben, és a PL meccs-adatlapja.
+
+### Lezárult PL-forduló: az élő réteget el kell dobni
+
+Ha a forduló azóta zárult le, hogy a lapot betöltötted (például háttérben volt a fül), a
+visszatéréskori frissítés a státuszsávot naprakészre állítja — de a meccslistában bent
+maradnának a legutolsó lekérés számai **„élő" felirattal**, holott már végleges eredmény
+jár oda. Ezért ilyenkor az élő réteg törlődik, és a lista a tárolt eredményre esik vissza
+(azt a gyűjtő írja be a következő körben).
 
 ### A főoldali lista és a meccs-adatlap nem mondhat mást
 
