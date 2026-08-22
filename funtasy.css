@@ -192,10 +192,14 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 /* Kozos jatekosok blokkja: egyszer szerepelnek, halvanyitva - a ket keretben
    ugyanazt hozzak, tehat a meccs szempontjabol semlegesek. */
 .kozosblokk{border:1px dashed var(--line);border-radius:10px;padding:0 12px 6px;margin-bottom:14px}
-.kozoshead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
-  font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
+.kozoshead{font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
   padding:10px 2px 8px;border-bottom:1px solid var(--line)}
-.kozoshead b{font:700 12px 'JetBrains Mono';letter-spacing:0;text-transform:none;color:var(--dim)}
+/* a kozos osszeg a lista ALATT all - szamokat lentrol olvasunk ossze */
+.sumline.kozososszeg{border-top:1px solid var(--line);margin-top:4px;padding:8px 2px 4px}
+.sumline.kozososszeg b{font:700 14px 'JetBrains Mono';color:var(--ink)}
+/* az eltero szakasz fejlece: itt all a lenyeg, a kulonbseg */
+.szakaszcim{font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);
+  margin:0 0 8px;padding:0 2px}
 .kozosblokk .plr,.kozosblokk .pts,.kozosblokk .nm{color:var(--dim)}
 /* Szeles kepernyon tobb oszlopba rendezzuk, kulonben a pont messze
    elszakadna a nevtol. A kinyilo bontas a teljes szelesseget kapja. */
@@ -204,6 +208,8 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 /* a magyarszabaly sora a kozos blokkban: nem jatekos, ezert sajat jelolese van */
 .szabalysor{cursor:default}
 .szabalysor .ppos{color:var(--win);border-color:var(--win)}
+.szabalysor.nincs .ppos{color:var(--dim);border-color:var(--line)}
+.szabalysor.nincs .nm,.szabalysor.nincs .pts{color:var(--dim)}
 .szabalysor .nm{font-size:12.5px}
 .meccsfej{padding:10px 14px}
 

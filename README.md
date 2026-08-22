@@ -53,18 +53,26 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 - **„Különbségek” nézet (csak salary cap ligában, tehát az NB1-en):** az állás alatti
   kapcsoló szétszálazza a meccset arra, ami **közös**, és arra, ami **eldönti**:
 
-  - Felül az **eredménysor** (a teljes állás) és maga a gomb — egy dobozban, hogy ne
-    lebegjen több középre zárt sor egymás alatt.
-  - Alatta a **közös tételek** halványan, **egyszer** felsorolva (nem kétszer, hiszen
-    mindkét keretben ugyanazt hozzák), a saját pontjaikkal és az együttes összegükkel.
-  - Végül a **két oldal eltérő játékosai**, oszloponként egy kis számlával:
-    *eltérő játékosok + közös tételek + magyarszabály = a csapat pontszáma*. Az összeg
-    tehát nyomon követhető, nem tűnik el semmi.
+  Az olvasási sorrend fentről lefelé:
+
+  1. **A teljes meccsállás** és maga a gomb — egy dobozban, hogy ne lebegjen több
+     középre zárt sor egymás alatt.
+  2. **Közös tételek** halványan, **egyszer** felsorolva (nem kétszer, hiszen mindkét
+     keretben ugyanazt hozzák) — asztali gépen két hasábban, mobilon egyben.
+  3. **Közös összesen** — a lista *alatt*, mert számokat lentről olvas össze az ember.
+  4. **Eltérő tételek** szakaszcím, benne a lényeg: *„a különbség dönt: Csendi +12”*.
+  5. **A két oldal eltérő játékosai** oszloponként, alattuk a számla:
+     *eltérő összesen + közös tételek = a csapat pontszáma*. Semmi nem tűnik el, az
+     összeg végigkövethető.
+
+  A közös tételeket **nem** duplikáltam bele mindkét csapatoszlopba: ugyanaz a sor
+  kétszer csak zaj lenne, a lényeg épp az, hogy ezek nem számítanak.
 
   **Az azonossághoz nem elég a névegyezés:** a kapitányság és a kezdő/pad szerep is
   számít, mert azoktól más a játékos pontja (Szalai kezdőként 10, kapitányként 20 — az nem
   azonos tétel). **A magyarszabály (+10) ugyanígy viselkedik:** ha mindkét keret megkapja,
-  a közös tételek közé kerül; ha csak az egyik, akkor eltérésként, kiemelve.
+  saját soron a közös tételek közé kerül; ha csak az egyik, akkor mindkét oszlopba
+  bekerül eltérő tételként (a másik oldalon 0-val), és az eltérő összegbe számít bele.
 
   A PL-oldalon szándékosan nincs ilyen nézet: draft ligában egy játékos egy csapatban
   lehet, tehát közös tétel nem is fordulhat elő.
