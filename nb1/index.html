@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=19">
+<link rel="stylesheet" href="../funtasy.css?v=20">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -71,7 +71,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=19"></script>
+<script src="../funtasy.js?v=20"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -276,6 +276,10 @@ const nincsMegAdat=(p, round)=>
 function pontCellaHTML(p, round){
   if(p.week||0) return `<span class="pts">${fmt(p.week)}</span>`;
   if(p.nogame) return '<span class="pts" title="ebben a fordulóban nincs meccse">–</span>';
+  // A meg el sem kezdodott meccsnel a 0 hazugsag lenne - fuggetlenul attol,
+  // mit mond az is_played (az nem megbizhato, lasd meccsAllapot).
+  if(meccsAllapot(p.start, p.vege)==='elotte')
+    return '<span class="pts" title="a meccs még nem kezdődött el">–</span>';
   if(p.played===false) return '<span class="pts" title="még nem játszott">–</span>';
   if(nincsMegAdat(p,round))
     return '<span class="pts" title="a meccs zajlik — az MLSZ a pontokat a meccs végén rögzíti">–</span>';
@@ -525,7 +529,9 @@ function nincsPontUzenet(played, start, nyers, nogame, vege, elo){
   const allapot=meccsAllapot(start, vege);
   if(allapot==='elotte') return 'A meccs még nem kezdődött el — kezdés: '+idoFmt(start);
   if(elo && allapot==='fut') return MECCS_KOZBEN;
-  if(played===false) return 'A meccs véget ért — a pontok feldolgozása még tart.';
+  if(played===false) return allapot==='ismeretlen'
+    ? 'Ehhez a fordulóhoz nincs rögzített esemény.'
+    : 'A meccs véget ért — a pontok feldolgozása még tart.';
   const perc=(nyers||[]).find(s=>s.name==='Játszott perc');
   if(perc && !perc.value) return 'Nem lépett pályára ebben a fordulóban.';
   // A "lejatszotta" allitashoz BIZONYITEK kell: vagy lezart fordulot nezunk,
@@ -702,7 +708,9 @@ async function showLiveMatch(h, v, r){
   // hatterben: percre friss csere, ha a modal meg ugyanezen a meccsen all.
   // Amig tart, jelzest kap - kulonben a szamok szo nelkul ugranak at.
   const jel=FunTasy.lassuJelzo($('mSub'));
-  const [FH,FV]=await Promise.all([eloKeret(h,r,true), eloKeret(v,r,true)]);
+  // .catch: a jelzest hibas agon is le KELL venni, kulonben orokke ketyeg
+  const [FH,FV]=await Promise.all([eloKeret(h,r,true), eloKeret(v,r,true)])
+    .catch(()=>[null,null]);
   jel();
   if(mCurrent[0]===h && mCurrent[1]===v && $('ov').classList.contains('open') && (FH||FV))
     rajz(FH||H, FV||V);

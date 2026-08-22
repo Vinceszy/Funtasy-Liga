@@ -246,6 +246,13 @@ def main():
             elif isinstance(el, list):
                 for v in el:
                     pont[str((v or {}).get("id"))] = ((v or {}).get("stats") or {}).get("total_points") or 0
+        # D1: ha az elo pontok nem jottek meg, a fordulot KIHAGYJUK. Kulonben
+        # minden jatekos 0 ponttal irodna be, a fordulo "teljesnek" szamitana,
+        # es soha nem kernenk le ujra - a nullak veglegesen bennragadnanak.
+        if not pont:
+            print("  ! %d. fordulo: az elo pontok nem jottek meg (HTTP %s),"
+                  " a fordulot kihagyjuk" % (gw, st), file=sys.stderr)
+            continue
         uj = {}
         for eid, lid in entry2liga.items():
             if lid is None or eid is None:
@@ -255,7 +262,13 @@ def main():
                 print("  ! %d. fordulo / %s: HTTP %s" % (gw, lid, st), file=sys.stderr)
                 continue
             picks = ev.get("picks") or []
-            if picks and "element" not in picks[0]:
+            # D2: ures keretet nem tarolunk el - "teljes" rekordkent szamitana,
+            # es orokre ures maradna ehhez a fordulohoz
+            if not picks:
+                print("  ! %d. fordulo / %s: ures keret, kihagyva" % (gw, lid),
+                      file=sys.stderr)
+                continue
+            if "element" not in picks[0]:
                 print("  ! %d. fordulo: ismeretlen picks-szerkezet, kulcsok: %s"
                       % (gw, sorted(picks[0].keys())), file=sys.stderr)
                 continue

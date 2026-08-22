@@ -233,6 +233,14 @@ Az `archive.yml` a `collect.py`-t futtatja, ami **mindent** frissít, teendő n�
    újra lekért forduló ettől nem lehet „ideiglenes"**: ideiglenessé csak a most zajló vagy
    éppen most zárult forduló válhat. Enélkül egyetlen elhasalt keret-lekérés kivehetett
    volna egy hetekkel korábbi, lejátszott fordulót a tabellából.
+
+   **A hiányos adat nem jelent „még tart"-ot.** A gyűjtő külön kezeli a „tudjuk, hogy a
+   forduló még tart" és a „nem tudtuk lekérdezni" esetet. Amit nem tudott kiértékelni (403,
+   elhasalt keret-lekérés), ott a forduló **korábbi** ideiglenes-állapota marad érvényben —
+   sem újat nem talál ki, sem meglévőt nem töröl találgatásból. Enélkül két irányba is
+   romolhatott az adat: egy hibás futás vagy kivett a tabellából egy lezárt fordulót, vagy
+   — súlyosabb — kiürítette a `provisional` listát, és akkor az élő forduló
+   **részeredménye véglegesként számított volna be**.
 4. **Forduló-lezárás**: egy forduló akkor végleges, ha minden szakvezető minden játékosa
    lejátszotta a meccsét (`is_played`). Addig a forduló a `provisional` listában van, és az
    oldal nem számolja a tabellába.
@@ -305,7 +313,7 @@ lassúnál viszont a kiírt idő egyben mérés is arról, mennyibe kerül való
 Három helyen van ilyen csere, mindhárom kapott jelzést: az NB1 élő meccs-adatlapja, az NB1
 keret-nézete élő forduló közben, és a PL meccs-adatlapja.
 
-### Lezárult PL-forduló: az élő réteget el kell dobni
+### Fordulóhatár és lezárult PL-forduló: az élő réteget el kell dobni
 
 Ha a forduló azóta zárult le, hogy a lapot betöltötted (például háttérben volt a fül), a
 visszatéréskori frissítés a státuszsávot naprakészre állítja — de a meccslistában bent
@@ -313,13 +321,29 @@ maradnának a legutolsó lekérés számai **„élő" felirattal**, holott már
 jár oda. Ezért ilyenkor az élő réteg törlődik, és a lista a tárolt eredményre esik vissza
 (azt a gyűjtő írja be a következő körben).
 
+Ugyanez kell **fordulóhatáron** is: amikor az API átlép a következő fordulóra, az előzőt
+el kell engedni. Két baj származna belőle. Egyrészt a régi forduló panelja „élő"
+jelöléssel ragadna bent. Másrészt — és ez a rosszabb — a `LIVEPTS` és a `LIVEFX` csak
+**sikeres** lekéréskor frissül, tehát ha az új forduló első lekérése elhasal, az *előző*
+forduló pontjai jelentek volna meg az újé gyanánt, „élő állás" felirattal.
+
 ### A főoldali lista és a meccs-adatlap nem mondhat mást
 
 A meccs-adatlap megnyitáskor **saját** élő lekérést indít, a főoldali lista viszont csak
 betöltéskor és visszatéréskor számol. Így fordulhatott elő, hogy a listán 39 pont állt,
 rákattintva viszont 38 (a játékos időközben pontot bukott). Mostantól amit az adatlap
 lekér, azzal a **mögöttes lista is frissül** (`eloAllasFrissit`) — ugyanabból az adatból
-két különböző szám nem jöhet ki, és plusz hálózati kérésbe sem kerül.
+két különböző szám nem jöhet ki, és plusz hálózati kérésbe sem kerül. Ugyanez vonatkozik a
+csapat **keret-nézetére** is, aminek szintén van saját élő lekérése.
+
+### Ami tudatosan következetlen maradt
+
+A meccs vége után, amíg az MLSZ nem tette be a pontokat, a **sor 0-t mutat**, a pont-bontás
+viszont megmondja az igazat („a pontok feldolgozása még tart"). Kötőjelet azért nem teszünk
+oda, mert a sor nem tudhatja, megérkezett-e már a bontás — kideríteni csak játékosonkénti
+lekéréssel lehetne (15 játékos × 8 keret fordulónként). Mivel a bontásból egy kattintással
+kiderül az igazság, ez nem éri meg a bonyolítást. Az állapottér-teszt ezt **elfogadott
+kivételként** ismeri, tehát ha egy későbbi változtatás kiszélesítené, az bukó teszt lesz.
 
 **A státuszsáv szövegei közösek** (`funtasy.js` → `FunTasy.statusz`), hogy a két oldal
 ne beszéljen kétféleképpen ugyanarról az állapotról:

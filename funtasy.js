@@ -488,8 +488,13 @@
 
      A visszaadott fuggveny leveszi a jelzest, es visszaadja az eltelt idot
      ezredmasodpercben. Mindig meg kell hivni - hibas agon is. */
+  var aktivJelzok = new WeakMap();
   function lassuJelzo(cel, kesleltetes) {
     kesleltetes = (kesleltetes == null) ? 500 : kesleltetes;
+    // Egy helyen csak EGY jelzes lehet: ha ket meccs kozott gyorsan valtunk,
+    // kulonben ket "frissites..." cimke allna egymas mellett ugyanazon az
+    // alcimen, es a regi ora tovabb ketyegne.
+    if (cel) { var elozo = aktivJelzok.get(cel); if (elozo) elozo(); }
     var kezdet = Date.now(), el = null, tick = null;
     var idozit = setTimeout(function () {
       if (!cel || !cel.isConnected) return;
@@ -503,12 +508,15 @@
       cel.appendChild(el);
       tick = setInterval(ir, 100);
     }, kesleltetes);
-    return function vege() {
+    function vege() {
       clearTimeout(idozit);
       if (tick) clearInterval(tick);
       if (el && el.parentNode) el.parentNode.removeChild(el);
+      if (cel && aktivJelzok.get(cel) === vege) aktivJelzok['delete'](cel);
       return Date.now() - kezdet;
-    };
+    }
+    if (cel) aktivJelzok.set(cel, vege);
+    return vege;
   }
 
   global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played,

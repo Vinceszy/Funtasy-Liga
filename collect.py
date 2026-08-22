@@ -170,27 +170,34 @@ def jatek_mezok(cr):
         return {"start": None, "nogame": True}
     g = games[0] or {}
     mezok = {"start": g.get("start_at") or cr.get("first_played_at")}
-    # A meccs lefujasa es a pontok megjelenese kozott orak telhetnek el:
-    # ilyenkor az is_played meg hamis, de a meccs status-a mar "completed".
-    # E nelkul a lejatszott meccsre is azt irtuk, hogy "a meccs zajlik".
+    # A meccs status-a onallo jelzes az is_played mellett. Az utobbibol NEM
+    # kovetkezik, hogy a meccsnek vege: az MLSZ mar a meccs kozben igazra
+    # billenti (ezert irtuk egy ideig meccs kozben, hogy "lejatszotta").
     if g.get("status") == "completed":
         mezok["vege"] = True
     return mezok
 
 
-def orokit_nogame(regi_fordulo, uj_fordulo):
-    """A "nincs meccse a forduloban" jelzest a fordulo ALATT gyujtjuk be
-    (csak ott kerjuk a meccslistat). A lezaras utani ujralekeresek mar
-    nelkule jonnek, ezert a korabban rogzitett jelzest at kell hozni -
-    kulonben minden futas kitorolne. A meccs nelkuli jatekosnal a
-    first_played_at a KOVETKEZO fordulo meccsere mutat, ezert a start-ot
-    is a regi (ures) ertekre allitjuk vissza."""
+def orokit_meccsjelzok(regi_fordulo, uj_fordulo):
+    """A meccslistabol szarmazo jelzeseket at kell hozni a regi rekordbol.
+
+    A meccslistat (games) csak az ELO fordulora kerjuk le - a lezaras utani
+    ujralekeresek mar nelkule jonnek, tehat ami csak abbol szarmazik, az
+    kiesne. Ket ilyen mezo van:
+      nogame - a klubnak nincs meccse a forduloban (halasztas/elmaradas).
+               A first_played_at ilyenkor a KOVETKEZO meccset adja, ezert a
+               start-ot is a regi (ures) ertekre allitjuk vissza.
+      vege   - a meccs mar lement. Enelkul az oldal a 100-180 perces
+               ablakban visszaesne a "meccs zajlik" allapotba."""
     for nev, sq in uj_fordulo.items():
         regi = {p.get("name"): p for p in (regi_fordulo.get(nev) or [])}
         for p in sq:
-            if "nogame" not in p and regi.get(p.get("name"), {}).get("nogame"):
+            regi_p = regi.get(p.get("name")) or {}
+            if "nogame" not in p and regi_p.get("nogame"):
                 p["nogame"] = True
                 p["start"] = None
+            if "vege" not in p and regi_p.get("vege"):
+                p["vege"] = True
 
 
 def keret_osszeg(sq):
@@ -327,13 +334,20 @@ def main():
     # tartozo keret is elavult - azt is ujra le kell kerni
     celok |= valtozott
 
-    lezart = {}          # r -> True/False (minden jatekos jatszott-e)
+    # lezart: r -> True/False, de CSAK ha teljes az adat. Amit nem tudtunk
+    # kiertekelni (elhasalt lekeres, 403), az a `bizonytalan` halmazba kerul,
+    # es ott a fordulo korabbi allapota marad ervenyben. Enelkul egyetlen
+    # halozati hiba vagy veglegesnek szamitotta volna az elo fordulo
+    # reszeredmenyet (a provisional lista kiurulesevel), vagy ideiglenesse
+    # minositett volna egy mar lezart fordulot - mindketto rossz tabellat ad.
+    lezart, bizonytalan = {}, set()
     for r in sorted(celok):
         # olcso elovizsgalat egyetlen kerettel: 403 = a fordulo meg titkos
         elso_id = next(iter(ids.values()))
         st, _ = squad(elso_id, r)
         if st == 403:
             print("  . %d. fordulo keretei meg nem elerhetok (piaczaras elott)" % r)
+            bizonytalan.add(r)
             continue
         uj_fordulo, mind_jatszott, teljes = {}, True, True
         for nev, uid in ids.items():
@@ -349,19 +363,27 @@ def main():
                 if not cr.get("is_played"):
                     mind_jatszott = False
         if not uj_fordulo:
+            bizonytalan.add(r)
             continue
         regi_fordulo = hist["rounds"].get(str(r)) or {}
-        orokit_nogame(regi_fordulo, uj_fordulo)
+        orokit_meccsjelzok(regi_fordulo, uj_fordulo)
         hist["rounds"][str(r)] = {**regi_fordulo, **uj_fordulo}
-        lezart[r] = teljes and mind_jatszott and len(uj_fordulo) == len(MEMBERS)
+        hianytalan = teljes and len(uj_fordulo) == len(MEMBERS)
+        if hianytalan:
+            lezart[r] = mind_jatszott
+        else:
+            bizonytalan.add(r)
         print("  keretek: %d. fordulo, %d/%d szakvezeto, %s"
               % (r, len(uj_fordulo), len(MEMBERS),
-                 "lezart" if lezart[r] else "meg tart / hianyos"))
+                 ("lezart" if lezart[r] else "meg tart") if hianytalan
+                 else "HIANYOS adat - a lezartsag valtozatlan marad"))
 
-        # keresztellenorzes: a keretbol szamolt osszeg vs hivatalos
+        # keresztellenorzes: csak teljes es mar lezart fordulora van ertelme
+        if not (hianytalan and lezart[r]):
+            continue
         for nev, sq in uj_fordulo.items():
             hiv = pontok.get(nev, {}).get(r)
-            if hiv in (None, 0) or not lezart[r]:
+            if hiv in (None, 0):
                 continue
             szamolt = keret_osszeg(sq)
             if abs(szamolt - hiv) < 0.005:
@@ -396,10 +418,14 @@ def main():
     # SCHEDULE-bol az elo retegbe - vagyis egy hetekkel korabbi, lejatszott
     # fordulo eltunne a tabellabol. Ideiglenes csak a most zajlo vagy eppen
     # most zarult fordulo lehet.
-    provisional = sorted(r for r, kesz in lezart.items()
-                         if not kesz and r >= aktualis - 1
-                         and any(pontok.get(n, {}).get(r) for n in MEMBERS))
-    regi_prov = data.get("provisional") or []
+    regi_prov = [int(x) for x in (data.get("provisional") or [])]
+    prov = {r for r, kesz in lezart.items()
+            if not kesz and r >= aktualis - 1
+            and any(pontok.get(n, {}).get(r) for n in MEMBERS)}
+    # amit nem tudtunk kiertekelni, ott marad a korabbi allapot: sem uj
+    # ideiglenest nem talalunk ki, sem meglevot nem torlunk talalgatasbol
+    prov |= (set(regi_prov) & bizonytalan)
+    provisional = sorted(prov)
 
     # ---- 6. Iras, csak ha valtozott ----
     if beirt or javitott or provisional != regi_prov:
