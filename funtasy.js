@@ -474,8 +474,46 @@
     return inditsd;
   }
 
+  /* ===== Lassu lekeres jelzese =====
+     A meccs-adatlap es a keret-nezet eloszor a tarolt szamokkal rajzol, es
+     amikor a percre friss lekeres megjon, kicsereli oket. Gyors halon ez
+     eszre sem veheto; lassun viszont ugy nez ki, mintha a lap regi adatot
+     mutatna - vagy ami rosszabb, a szamok magutol atugranak az orrod elott.
+
+     Fix kuszobot nem lehet jol megvalasztani (a lekeres ideje halozattol es
+     a CORS-proxytol fugg, ugyanazon a keszuleken is szor), ezert a jelzes
+     MAGAT MERI: csak akkor jelenik meg, ha a lekeres tenyleg elhuzodik
+     (alapertelmezesben fel masodperc), es kiirja, mennyi ideje tart. Gyors
+     valasznal soha nem latszik, tehat nem villog feleslegesen.
+
+     A visszaadott fuggveny leveszi a jelzest, es visszaadja az eltelt idot
+     ezredmasodpercben. Mindig meg kell hivni - hibas agon is. */
+  function lassuJelzo(cel, kesleltetes) {
+    kesleltetes = (kesleltetes == null) ? 500 : kesleltetes;
+    var kezdet = Date.now(), el = null, tick = null;
+    var idozit = setTimeout(function () {
+      if (!cel || !cel.isConnected) return;
+      el = document.createElement('span');
+      el.className = 'frissjel';
+      var ir = function () {
+        el.textContent = 'frissítés… ' +
+          ((Date.now() - kezdet) / 1000).toFixed(1).replace('.', ',') + ' mp';
+      };
+      ir();
+      cel.appendChild(el);
+      tick = setInterval(ir, 100);
+    }, kesleltetes);
+    return function vege() {
+      clearTimeout(idozit);
+      if (tick) clearInterval(tick);
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+      return Date.now() - kezdet;
+    };
+  }
+
   global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played,
                      accToggle: accToggle, accTable: accTable,
                      LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
-                     statusz: statusz, ujraLathatokor: ujraLathatokor };
+                     statusz: statusz, ujraLathatokor: ujraLathatokor,
+                     lassuJelzo: lassuJelzo };
 })(window);

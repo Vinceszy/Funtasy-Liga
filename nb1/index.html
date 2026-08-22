@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=17">
+<link rel="stylesheet" href="../funtasy.css?v=18">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -71,7 +71,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=17"></script>
+<script src="../funtasy.js?v=18"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -665,8 +665,11 @@ async function showLiveMatch(h, v, r){
     $('mBody').innerHTML=allasHTML(h,v,A?keretOsszeg(A):null,B?keretOsszeg(B):null,true)+ACCHINT+
       `<div class="sqwrap">${A?squadHTML(h,A,null,r):''}${B?squadHTML(v,B,null,r):''}</div>`; };
   rajz(H,V);
-  // hatterben: percre friss csere, ha a modal meg ugyanezen a meccsen all
+  // hatterben: percre friss csere, ha a modal meg ugyanezen a meccsen all.
+  // Amig tart, jelzest kap - kulonben a szamok szo nelkul ugranak at.
+  const jel=FunTasy.lassuJelzo($('mSub'));
   const [FH,FV]=await Promise.all([eloKeret(h,r,true), eloKeret(v,r,true)]);
+  jel();
   if(mCurrent[0]===h && mCurrent[1]===v && $('ov').classList.contains('open') && (FH||FV))
     rajz(FH||H, FV||V);
 }
@@ -728,7 +731,9 @@ async function showSquad(names,tab,mode){
     // egymas mellett ugyanarrol az adatrol.
     if(SQUAD_ROUND && (window.PROVISIONAL||[]).includes(SQUAD_ROUND)){
       const kert=names.slice();
+      const jel=FunTasy.lassuJelzo($('mSub'));
       Promise.all(names.map(n=>eloKeret(n,SQUAD_ROUND,true))).then(friss=>{
+        jel();
         if(!$('ov').classList.contains('open')) return;
         if(mCurrent.length!==kert.length || mCurrent.some((n,i)=>n!==kert[i])) return;
         const on=document.querySelector('#mTabs .tab.on');

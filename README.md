@@ -271,6 +271,22 @@ között nincs megosztott gyorsítótár.
 Az NB1 pont-bontásának gyorsítótára is kapott lejáratot: **élő fordulóban 60 másodperc**
 (lezárt forduló bontása már nem változik), ahogy a PL-en is.
 
+### „frissítés… 1,2 mp" — a néma számcsere ellen
+
+A meccs-adatlap és (élő fordulóban) a keret-nézet **először a tárolt számokkal rajzol**,
+és amikor a percre friss lekérés megjön, kicseréli őket. Gyors hálón ez észre sem vehető;
+lassún viszont vagy régi adatot nézel anélkül, hogy tudnád, vagy a számok az orrod előtt
+ugranak át.
+
+Fix küszöböt nem lehet jól megválasztani — a lekérés ideje a hálózattól és a CORS-proxytól
+függ, és ugyanazon a készüléken is szór. Ezért a jelzés **magát méri**: csak akkor jelenik
+meg, ha a lekérés fél másodpercnél tovább tart, és kiírja, mennyi ideje fut
+(`FunTasy.lassuJelzo`). Gyors válasznál soha nem látszik, tehát nem villog feleslegesen —
+lassúnál viszont a kiírt idő egyben mérés is arról, mennyibe kerül valójában egy lekérés.
+
+Három helyen van ilyen csere, mindhárom kapott jelzést: az NB1 élő meccs-adatlapja, az NB1
+keret-nézete élő forduló közben, és a PL meccs-adatlapja.
+
 ### A főoldali lista és a meccs-adatlap nem mondhat mást
 
 A meccs-adatlap megnyitáskor **saját** élő lekérést indít, a főoldali lista viszont csak
