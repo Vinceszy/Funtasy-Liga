@@ -219,6 +219,19 @@ ranglista-végpontról az eredményeket (és kattintásra a kereteket), a PL a j
 élő pontokat, amikből a meccsállásokat összegzi. Hiba esetén a tárolt (3 óránként
 frissülő) állapot marad.
 
+**Visszatéréskor újra lekér** (`FunTasy.ujraLathatokor`). Ez sokáig hiányzott: az élő
+állást csak a betöltés kérte le, egyszer. Asztali gépen ez nem tűnt fel, mert oda
+általában friss betöltéssel térünk vissza — **mobilon viszont nem töltünk újra**, csak
+visszaváltunk a lapra, amit a böngésző memóriából állít vissza. Így a főoldali meccslista
+a betöltéskori álláson fagyott (39 pont), miközben a meccs-adatlap — aminek van saját,
+nyitáskori lekérése — már a frisset mutatta (38). A segítő a `visibilitychange`, a
+bfcache-es `pageshow` és a `focus` eseményre futtatja újra a frissítést, legfeljebb
+30 másodpercenként, és sosem párhuzamosan.
+
+**Időzített frissítés szándékosan nincs:** nyitva hagyott lapon nem megy lekérés a
+proxykon át (mobilon adat és akku). Ha nézni akarod, hogy változik, vissza kell térni
+a laphoz — vagy újratölteni.
+
 **A státuszsáv szövegei közösek** (`funtasy.js` → `FunTasy.statusz`), hogy a két oldal
 ne beszéljen kétféleképpen ugyanarról az állapotról:
 
@@ -455,7 +468,9 @@ Nincs build lépés, nincs függőség. A kód három rétegben él:
   A create-en kívül itt él a pont-bontás accordion közös mechanikája is
   (`FunTasy.accToggle` — nyit/zár/egyszerre egy panel; `FunTasy.accTable` — a bontás
   táblázata); a tartalmat az oldalak saját `bontasHTML`-je adja, mert a forrás más
-  (NB1: MLSZ `game-player-stats`, PL: FPL `event/{gw}/live` explain).
+  (NB1: MLSZ `game-player-stats`, PL: FPL `event/{gw}/live` explain). Szintén itt van a
+  `FunTasy.ujraLathatokor(frissites)`: a lapra visszatérve újra lefuttatja az élő
+  lekérést (fojtással, párhuzamos futás nélkül) — enélkül mobilon befagy az állás.
 - **`nb1/index.html` / `pl/index.html`** — csak az oldalspecifikus rész: konfiguráció, betöltés
   és élő frissítés, meg az oldal saját modalja (a főoldalon `showSquad` / `showMatchRound` /
   `squadHTML` / `seasonHTML` / `playersHTML`, a PL-en `showTeam` / `showMatch` /

@@ -430,8 +430,42 @@
     if (sub) sub.textContent = l.cim + ' · ' + l.leiras;
   }
 
+  /* ===== Ujrafrissites, amikor a lap ismet lathatova valik =====
+     Az oldalak az elo allast a betolteskor kerik le, egyszer. Asztali gepen
+     ez eleg, mert oda altalaban friss betoltessel terunk vissza. Mobilon
+     viszont nem toltunk ujra, csak visszavaltunk a lapra: a bongeszo
+     memoriabol allitja vissza, tehat a betolteskori allas befagy. Igy allt
+     elo, hogy a fooldali meccslista meg a regi pontot mutatta, mikozben a
+     meccs-adatlap - aminek sajat, nyitaskori lekerese van - mar a frisset.
+
+     Ez a segito ujra lefuttatja a kapott frissitest, amikor a lap ismet
+     lathatova valik. Ket vedelme van: legfeljebb minKoz ezredmasodpercenkent
+     indul (kulonben a lapok kozti kapkodas lekeresekkel verne a proxykat),
+     es sosem fut belole ketto egyszerre. Idozitett (percenkenti) frissites
+     szandekosan NINCS: nyitva hagyott lapon nem kerunk le semmit. */
+  function ujraLathatokor(fn, minKoz) {
+    minKoz = (minKoz == null) ? 30000 : minKoz;
+    var utolso = Date.now(), fut = false;
+    function inditsd() {
+      if (fut || document.visibilityState === 'hidden') return;
+      if (Date.now() - utolso < minKoz) return;
+      fut = true;
+      Promise.resolve().then(fn).catch(function () {}).then(function () {
+        fut = false;
+        utolso = Date.now();          // a kovetkezo ablak a BEFEJEZESTOL jar
+      });
+    }
+    document.addEventListener('visibilitychange', inditsd);
+    // iOS Safariban a bfcache-bol visszaallo lapnal nem mindig jon
+    // visibilitychange, pageshow (persisted) viszont igen.
+    window.addEventListener('pageshow', function (e) { if (e.persisted) inditsd(); });
+    // asztali gepen az ablakra visszakattintas sem valt visibilitychange-t
+    window.addEventListener('focus', inditsd);
+    return inditsd;
+  }
+
   global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played,
                      accToggle: accToggle, accTable: accTable,
                      LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
-                     statusz: statusz };
+                     statusz: statusz, ujraLathatokor: ujraLathatokor };
 })(window);
