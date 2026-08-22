@@ -6,7 +6,7 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=15">
+<link rel="stylesheet" href="../funtasy.css?v=16">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -71,7 +71,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=15"></script>
+<script src="../funtasy.js?v=16"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -337,7 +337,10 @@ function showMatch(h, v, r, mode){
     if (r === LIVEGW){
       const kert = $('mTitle').textContent;
       fetchLivePts().then(ok => {
-        if (!ok || !$('ov').classList.contains('open') || $('mTitle').textContent !== kert) return;
+        if (!ok) return;
+        // amit itt lekertunk, azzal a mogottes fooldali lista is frissul
+        eloAllasFrissit(r);
+        if (!$('ov').classList.contains('open') || $('mTitle').textContent !== kert) return;
         const friss = x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts });
         $('mBody').innerHTML = fej(H.map(friss), V.map(friss)) + ACCHINT +
           `<div class="sqwrap">${sqcolHTML(h, H.map(friss), null, r)}${sqcolHTML(v, V.map(friss), null, r)}</div>`;
@@ -375,10 +378,16 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
 // kell lekérni (event/{gw}/live), és abból összegezhető minden meccs állása.
 // A tabellába az élő állás NEM számít bele. Ha a lekérés elhasal, a tárolt
 // (3 óránként frissülő) adat marad, hibajelzéssel.
+// Idobelyeg minden retegre, kulonben megosztott gyorsitotarbol jon a valasz:
+// iPhone-on ugy alltunk, hogy akarhanyszor toltottuk ujra a lapot, ugyanaz a
+// jatekos-pont jott vissza (mas keszuleken kozben mar a friss). A `_` a
+// proxyt, az `fpl_` magat az FPL-kerest torli - az FPL az ismeretlen
+// parametert figyelmen kivul hagyja, tehat itt a belso URL-t is bontjuk.
+const fplFriss = u => u + (u.indexOf('?') < 0 ? '?' : '&') + 'fpl_=' + Date.now();
 const ROUTES = [
-  { n:'direkt',     f:u => u },
-  { n:'corsproxy',  f:u => 'https://corsproxy.io/?url=' + encodeURIComponent(u) },
-  { n:'allorigins', f:u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u) },
+  { n:'direkt',     f:u => fplFriss(u) },
+  { n:'corsproxy',  f:u => 'https://corsproxy.io/?url=' + encodeURIComponent(fplFriss(u)) + '&_=' + Date.now() },
+  { n:'allorigins', f:u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(fplFriss(u)) + '&_=' + Date.now() },
 ];
 let goodRoute = null;
 async function apiGet(url, ms){
@@ -387,7 +396,8 @@ async function apiGet(url, ms){
   for (const rt of sorrend){
     try{
       const c = new AbortController(); const t = setTimeout(() => c.abort(), ms);
-      const res = await fetch(rt.f(url), { signal:c.signal, headers:{ 'Accept':'application/json' } })
+      const res = await fetch(rt.f(url), { signal:c.signal, cache:'no-store',
+                                          headers:{ 'Accept':'application/json' } })
         .finally(() => clearTimeout(t));
       if (!res.ok) continue;
       const j = JSON.parse(await res.text());
@@ -461,6 +471,12 @@ const idoFmt = s => new Date(s).toLocaleString('hu-HU',
 // allapotat az elo fordulonal a fixtures adja (indult / kesz), a lezart
 // fordulokra minden meccs kesz; hogy palyara lepett-e, a live 'minutes'
 // mutatja - ez 0 percnel is megjon, tehat megbizhato jelzes.
+// Az FPL percrol percre adja a pontot (eloPontok:true a ligaban), tehat itt
+// a meccs alatti 0 tenyleg azt jelenti, hogy eddig nem volt pontot ero
+// esemenye. Az NB1-en ez nincs igy - lasd a liga eloPontok mezojet.
+const MECCS_KOZBEN = FunTasy.liga('pl').eloPontok
+  ? 'A meccs zajlik — eddig nincs pontot érő eseménye.'
+  : 'A meccs zajlik — a pontok a meccs végén kerülnek be.';
 function nincsPontUzenet(e, gw, perc){
   const klub = jat(e).t;
   const elo = gw === LIVEGW && LIVEFX;
@@ -469,7 +485,7 @@ function nincsPontUzenet(e, gw, perc){
     return 'Ebben a fordulóban nem játszik — a klubnak nincs meccse (üres forduló).';
   if (fx && !fx.indult)
     return 'A meccs még nem kezdődött el' + (fx.kezdes ? ' — kezdés: ' + idoFmt(fx.kezdes) : '.');
-  if (fx && !fx.kesz) return 'A meccs zajlik — eddig nincs pontot érő eseménye.';
+  if (fx && !fx.kesz) return MECCS_KOZBEN;
   if (perc === 0) return 'Nem lépett pályára ebben a fordulóban.';
   return 'Lejátszotta a meccset, pontot érő esemény nélkül.';
 }
@@ -485,6 +501,20 @@ async function bontasHTML(e, gw){
   }));
   return FunTasy.accTable(sorok, nincsPontUzenet(e, gw, perc));
 }
+// A fooldali meccslista allasa a LIVE retegben el (hogy a tabellaba ne
+// szamitson bele). Barki frissiti a LIVEPTS-t, ezt is at kell szamolni -
+// kulonben a lista es a meccs-adatlap mast mutat ugyanarrol a meccsrol
+// (a bejelentett eset: a listan 39, ravaltva 38).
+function eloAllasFrissit(gw){
+  const keretek = HIST[gw];
+  if (!keretek) return false;
+  const osszeg = id => (keretek[id] || []).filter(x => !x.b)
+    .reduce((s, x) => s + (LIVEPTS[x.e] ?? x.pts ?? 0), 0);
+  LIVE[gw] = (SCHEDULE[gw] || []).map(m =>
+    played(m) ? null : [m[0], m[1], osszeg(m[0]), osszeg(m[1])]);
+  T.renderMatches('past'); T.renderMatches('next');
+  return true;
+}
 async function liveRefresh(){
   const st = $('status');
   const game = await apiGet('https://draft.premierleague.com/api/game');
@@ -498,14 +528,7 @@ async function liveRefresh(){
   LIVEGW = gw;
   if (!await fetchLivePts()){ lekeresHiba(); return; }
   // meccsallasok a kezdok pontjaibol - csak ha a fordulo keretei mar a repoban vannak
-  const keretek = HIST[gw];
-  if (keretek){
-    const osszeg = id => (keretek[id] || []).filter(x => !x.b)
-      .reduce((s, x) => s + (LIVEPTS[x.e] ?? x.pts ?? 0), 0);
-    LIVE[gw] = (SCHEDULE[gw] || []).map(m =>
-      played(m) ? null : [m[0], m[1], osszeg(m[0]), osszeg(m[1])]);
-    T.renderMatches('past'); T.renderMatches('next');
-  }
+  const keretek = eloAllasFrissit(gw);
   st.className = 'ok';
   st.textContent = keretek ? FunTasy.statusz.elo(gw, Date.now())
                            : FunTasy.statusz.naprakesz(Date.now());

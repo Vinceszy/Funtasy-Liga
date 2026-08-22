@@ -131,13 +131,26 @@ Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő 
   a következőket a kezdési idő, a meccs állapota és a lejátszottság, az utolsó kettőt a
   bontás játszott-perc sora (ez 0 perccel is megjön, ha a játékos végig a kispadon ült).
 
-  **A lefújás és a pontok megjelenése között idő telik el**, és ez mindkét ligában
-  megtévesztő tud lenni. Az NB1-en az `is_played` órákkal a meccs vége után vált át, ezért
-  a meccslista `status` mezőjét is eltesszük (`vege`) — abból tudjuk, hogy a meccsnek már
-  vége, csak a pontok nincsenek meg. A PL-en az FPL **két lépésben** zárja a meccset:
-  a `finished_provisional` a lefújáskor igaz, a `finished` csak a bónuszpontok
-  véglegesítésekor — ezért a kettő közül bármelyik elég ahhoz, hogy lejátszottnak vegyük.
-  (Enélkül a már lejátszott meccsre is azt írtuk: „a meccs zajlik".)
+  **Az `is_played` NEM azt jelenti, hogy a meccsnek vége.** Az MLSZ már a meccs *közben*
+  igazra billenti. Emiatt írtuk élő forduló alatt gyakorlatilag mindenkire, hogy
+  „lejátszotta a meccset, pontot érő esemény nélkül" — miközben a meccs javában ment.
+  Élő fordulóban ezért a **meccs állapota** dönt, nem a lejátszottság: a meccs fut, ha már
+  elkezdődött, és sem a meccslista `completed` jelzője (`vege`) nem mondja, hogy vége, sem
+  a kezdés óta nem telt el 2,5 óra. **Az időkorlát azért kell**, mert a `vege` nem mindig
+  áll rendelkezésre — a 2026-08-21 előtti keret-rekordokban nincs is ilyen mező —, enélkül
+  azokra mindenre azt írnánk, hogy zajlik. Ha nincs kezdési idő, nem állítunk semmit.
+
+  **A lefújás és a pontok megjelenése között is idő telik el.** A PL-en az FPL **két
+  lépésben** zárja a meccset: a `finished_provisional` a lefújáskor igaz, a `finished`
+  csak a bónuszpontok véglegesítésekor — ezért a kettő közül bármelyik elég ahhoz, hogy
+  lejátszottnak vegyük. (Enélkül a már lejátszott meccsre is azt írtuk: „a meccs zajlik".)
+
+- **A „meccs zajlik" szövege ligánként más, mert a forrás is más** (`eloPontok` mező a
+  `LIGAK`-ban). A PL-en az FPL percről percre adja a pontot, tehát a 0 tényleg azt jelenti,
+  hogy *eddig* nem volt pontot érő eseménye. Az MLSZ viszont csak a meccs után rögzíti a
+  pontokat, ott ilyen állapot sosem áll elő — ezért az NB1-en az „eddig nincs pontot érő
+  eseménye" hamis ígéret volt, és helyette az áll, hogy *az MLSZ a pontokat a meccs végén
+  rögzíti*.
 - **Ahol a kezdés időpontja még nincs kitűzve**, ott csak a dátum jelenik meg
   („kezdés: aug. 29. (időpont még nincs kitűzve)") — az MLSZ ilyenkor éjfélt ír, amit
   hiba lenne valódi kezdésként kiírni.
@@ -231,6 +244,37 @@ bfcache-es `pageshow` és a `focus` eseményre futtatja újra a frissítést, le
 **Időzített frissítés szándékosan nincs:** nyitva hagyott lapon nem megy lekérés a
 proxykon át (mobilon adat és akku). Ha nézni akarod, hogy változik, vissza kell térni
 a laphoz — vagy újratölteni.
+
+### Gyorsítótár: miért ragadt be a pontszám iPhone-on
+
+Az élő lekérések sokáig **gyorsítótár-törés nélkül** mentek, és a `fetch` sem kapott
+`cache` beállítást. Emiatt állt elő, hogy iPhone-on *akárhányszor újratöltve* ugyanaz a
+játékos-pont jött vissza, miközben másik eszközön már a friss. Ez **megosztott**
+gyorsítótár volt (a CORS-proxyké), nem a készüléké — ezért nem is oldotta meg az
+újratöltés.
+
+Három rétegben törjük:
+
+| Réteg | Hogyan |
+|---|---|
+| böngésző | `cache:'no-store'` **minden** élő lekérésen (a repóból jövő JSON-oknak eddig is volt `?t=` bélyegük) |
+| CORS-proxy | a proxy URL-je `&_=<időbélyeg>`-et kap, tehát a proxy gyorsítótárkulcsa mindig más |
+| FPL | a **belső** URL is kap `fpl_=<időbélyeg>`-et (az FPL az ismeretlen paramétert figyelmen kívül hagyja) |
+
+Az **MLSZ saját URL-jéhez szándékosan nem nyúlunk**: nincs igazolva, hogy tűr egy
+ismeretlen paramétert, és ott a `no-store` amúgy is elég — a direkt kérés és az MLSZ
+között nincs megosztott gyorsítótár.
+
+Az NB1 pont-bontásának gyorsítótára is kapott lejáratot: **élő fordulóban 60 másodperc**
+(lezárt forduló bontása már nem változik), ahogy a PL-en is.
+
+### A főoldali lista és a meccs-adatlap nem mondhat mást
+
+A meccs-adatlap megnyitáskor **saját** élő lekérést indít, a főoldali lista viszont csak
+betöltéskor és visszatéréskor számol. Így fordulhatott elő, hogy a listán 39 pont állt,
+rákattintva viszont 38 (a játékos időközben pontot bukott). Mostantól amit az adatlap
+lekér, azzal a **mögöttes lista is frissül** (`eloAllasFrissit`) — ugyanabból az adatból
+két különböző szám nem jöhet ki, és plusz hálózati kérésbe sem kerül.
 
 **A státuszsáv szövegei közösek** (`funtasy.js` → `FunTasy.statusz`), hogy a két oldal
 ne beszéljen kétféleképpen ugyanarról az állapotról:
@@ -506,6 +550,7 @@ A webhely szerkezete mappánként egy liga, hogy a cím a ligáról szóljon és
    | `tipus` | **játékmód** — `salary-cap` vagy `draft`, lásd lentebb |
    | `tipusNev` | ennek olvasható neve a kártyán (`Salary cap`) |
    | `tema` | a `body` osztálya a színvilághoz (`liga-nb1`) |
+   | `eloPontok` | ad-e a forrás pontot **meccs közben** (FPL: igen, MLSZ: csak a meccs után). Ettől függ, mit szabad írni a 0 pontos játékosról a meccs alatt. |
 2. Új mappa a saját `index.html`-lel. A közös fájlokra `../funtasy.css?v=N` és
    `../funtasy.js?v=N` hivatkozik, az adatra `../valami.json`, a sávot pedig egy sor
    rajzolja ki: `FunTasy.renderNav('<azonosító>','../')`.

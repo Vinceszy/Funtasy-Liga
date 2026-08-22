@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=15">
+<link rel="stylesheet" href="../funtasy.css?v=16">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -71,7 +71,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=15"></script>
+<script src="../funtasy.js?v=16"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -133,14 +133,22 @@ const lastPlayedRound = () => T.lastPlayedRound();
 const nextRound       = () => T.nextRound();
 
 // ---------- API ----------
+// A proxy-URL-ekre idobelyeg kerul, kulonben a proxy a SAJAT gyorsitotarabol
+// szolgal ki: iPhone-on ugy alltunk, hogy akarhanyszor toltottuk ujra a lapot,
+// ugyanaz a jatekos-pont jott vissza. Ez megosztott gyorsitotar volt, nem a
+// keszuleke - ezert nem elegendo a no-store, a proxy kulcsat kell valtoztatni.
+// Az MLSZ sajat URL-jehez (direkt utvonal) szandekosan NEM nyulunk: nincs
+// igazolva, hogy tur egy ismeretlen parametert, es ott a no-store amugy is
+// eleg (kozbeeso megosztott gyorsitotar nincs).
 const ROUTES=[
   {n:'direkt',f:u=>u},
-  {n:'corsproxy',f:u=>'https://corsproxy.io/?url='+encodeURIComponent(u)},
-  {n:'allorigins',f:u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)}
+  {n:'corsproxy',f:u=>'https://corsproxy.io/?url='+encodeURIComponent(u)+'&_='+Date.now()},
+  {n:'allorigins',f:u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)+'&_='+Date.now()}
 ];
 let goodRoute=null;
 function fetchT(u,ms){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);
-  return fetch(u,{signal:c.signal,headers:{'Accept':'application/json'}}).finally(()=>clearTimeout(t));}
+  return fetch(u,{signal:c.signal,cache:'no-store',
+                  headers:{'Accept':'application/json'}}).finally(()=>clearTimeout(t));}
 async function apiGet(url,label,ms){
   ms = ms || 9000;
   const st=$('status'), order=goodRoute?[goodRoute,...ROUTES.filter(r=>r!==goodRoute)]:ROUTES, errs=[];
@@ -422,6 +430,10 @@ async function eloKeret(name, r, jatek){
 // pontot ero sorokat mutatjuk, ahogy az MLSZ felulete is; a kapitanyi
 // x2 / pad x0.5 kulon sorkent jelenik meg, mert a weekly_points mar
 // tartalmazza oket, a bontas sorai viszont a nyers ertekek.
+// Elo-e a fordulo? A LIVE reteg (percre friss allasok) es a gyujto altal
+// ideiglenesnek jelolt fordulok egyuttese adja. Ez donti el, hogy a meccs
+// allapotarol szabad-e barmit allitani a tarolt jelzokbol.
+const eloFordulo=r=>!!LIVE[r]||(window.PROVISIONAL||[]).map(Number).includes(+r);
 const BONTAS=new Map(), KERET_CACHE=new Map();
 async function keretNevrol(own,r,nm){
   const k=own+'|'+r;
@@ -442,18 +454,40 @@ const idoFmt=s=>{
   return d.toLocaleDateString('hu-HU',{month:'short',day:'numeric'})+' '
          +d.toLocaleTimeString('hu-HU',{hour:'2-digit',minute:'2-digit'});
 };
+// Az MLSZ a pontokat csak a meccs UTAN rogziti (eloPontok:false a ligaban),
+// ezert meccs kozben nem szabad ugy fogalmazni, mintha a 0 azt jelentene,
+// hogy "eddig" nem szerzett pontot - olyan allapot itt sosem all elo.
+const MECCS_KOZBEN=(FunTasy.liga('nb1')||{}).eloPontok
+  ? 'A meccs zajlik — eddig nincs pontot érő eseménye.'
+  : 'A meccs zajlik — az MLSZ a pontokat a meccs végén rögzíti.';
 // Ha egyetlen pontot ero esemeny sincs, a 0-nak tobb oka lehet. Elsokent a
 // "nincs is meccse ebben a forduloban" esetet zarjuk ki (ezt a meccslista
-// mondja meg, lasd keretRekord), utana a kezdesi ido es az is_played dont,
-// vegul a bontas "Jatszott perc" sora - ez akkor is megjon 0 ertekkel, ha a
-// jatekos vegig a kispadon ult.
-function nincsPontUzenet(played, start, nyers, nogame, vege){
+// mondja meg, lasd keretRekord), utana a kezdesi ido, majd a meccs allapota
+// dont, vegul a bontas "Jatszott perc" sora - ez akkor is megjon 0 ertekkel,
+// ha a jatekos vegig a kispadon ult.
+//
+// FONTOS: az is_played (`played`) NEM azt jelenti, hogy a meccs lement - az
+// MLSZ mar a meccs KOZBEN igazra billenti. Emiatt irtuk korabban meccs kozben
+// mindenkire, hogy "lejatszotta a meccset, pontot ero esemeny nelkul".
+//
+// Helyette a meccs allapotabol indulunk ki: akkor fut, ha mar elkezdodott, es
+// sem a meccslista `completed` jelzoje (`vege`) nem mondja, hogy vege, sem
+// annyi ido nem telt el, amennyi alatt egy meccs biztosan lemegy. Az idokorlat
+// azert kell, mert a `vege` nem mindig all rendelkezesre (a regi
+// keret-rekordokban meg nincs is ilyen mezo) - enelkul azokra mindenre azt
+// irnank, hogy zajlik. Ha nincs kezdesi ido, nem allitunk semmit.
+const MECCS_HOSSZ=150*60*1000;      // jatekido + szunet + hosszabbitas, boven
+function meccsFut(start, vege){
+  if(vege || !start) return false;
+  const k=new Date(start).getTime(), most=Date.now();
+  return most>=k && most<k+MECCS_HOSSZ;
+}
+function nincsPontUzenet(played, start, nyers, nogame, vege, elo){
   if(nogame) return 'Ebben a fordulóban nem játszik — a klubnak nincs meccse (elmaradt vagy elhalasztott forduló).';
   if(start && new Date(start)>new Date())
     return 'A meccs még nem kezdődött el — kezdés: '+idoFmt(start);
-  if(played===false) return vege
-    ? 'A meccs véget ért — a pontok feldolgozása még tart.'
-    : 'A meccs zajlik — eddig nincs pontot érő eseménye.';
+  if(elo && meccsFut(start, vege)) return MECCS_KOZBEN;
+  if(played===false) return 'A meccs véget ért — a pontok feldolgozása még tart.';
   const perc=(nyers||[]).find(s=>s.name==='Játszott perc');
   if(perc && !perc.value) return 'Nem lépett pályára ebben a fordulóban.';
   if(played===true || (nyers||[]).length) return 'Lejátszotta a meccset, pontot érő esemény nélkül.';
@@ -468,20 +502,24 @@ async function bontasHTML(ds){
     const rec=await keretNevrol(ds.own,r,ds.nm);
     if(rec){ cp=cp||rec.id; start=start||rec.start; if(played===undefined) played=rec.played; }
   }
-  if(nogame) return FunTasy.accTable([], nincsPontUzenet(played,start,null,true,false));
+  const elo=eloFordulo(r);
+  if(nogame) return FunTasy.accTable([], nincsPontUzenet(played,start,null,true,false,elo));
   if(!cp) return null;
-  const k=cp+'|'+r;
+  // Elo forduloban a bontas percenkent valtozhat, ezert ott a gyorsitotar 60
+  // masodperc utan lejar (a lezart fordulo bontasa mar nem valtozik).
+  const k=cp+'|'+r, most=Date.now(), rec=BONTAS.get(k);
+  if(rec && elo && most-rec.t>=60000) BONTAS.delete(k);
   if(!BONTAS.has(k)){
     const u='https://fantasy-api.mlsz.hu/game-player-stats?include=competition_stat_config'+
       `&filter%5Bcompetition_player_id%5D=${cp}&filter%5Bround_id%5D=${75+2*r}`;
     const j=await apiGet(u);
-    BONTAS.set(k,(j.data||[]).map(s=>({name:(s.competition_stat_config||{}).name||'?',
-                                       value:s.value, points:s.points})));
+    BONTAS.set(k,{t:most, sorok:(j.data||[]).map(s=>({name:(s.competition_stat_config||{}).name||'?',
+                                                     value:s.value, points:s.points}))});
   }
-  const nyers=BONTAS.get(k), sorok=nyers.filter(s=>s.points);
+  const nyers=BONTAS.get(k).sorok, sorok=nyers.filter(s=>s.points);
   if(sorok.length && ds.cap==='1') sorok.push({name:'Kapitány — a heti pontban már duplázva',value:'',points:'×2'});
   if(sorok.length && ds.sub==='1') sorok.push({name:'Pad — a heti pontban már felezve',value:'',points:'×0.5'});
-  return FunTasy.accTable(sorok, nincsPontUzenet(played,start,nyers,false,ds.vg==='1'));
+  return FunTasy.accTable(sorok, nincsPontUzenet(played,start,nyers,false,ds.vg==='1',elo));
 }
 // ---------- Különbségek nézet (salary cap liga) ----------
 // Salary cap ligaban ugyanaz a jatekos MINDKET keretben szerepelhet, es

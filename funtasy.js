@@ -41,13 +41,23 @@
                     csapatban is lehet; van kapitany es cserepad-felezes
        draft      - kizarolagos tulajdon (egy jatekos egy csapatban);
                     nincs kapitany, a pad pontjai nem szamitanak */
+  /* Az `eloPontok` azt mondja meg, hogy a liga forrasa MECCS KOZBEN is ad-e
+     mar pontot, vagy csak a meccs vegen. Nem kozmetika: ettol fugg, mit
+     szabad irni a 0 pontos jatekosrol a meccs alatt.
+       true  (FPL) - percrol percre jon a pont, tehat a 0 azt jelenti, hogy
+                     eddig nem volt pontot ero esemenye
+       false (MLSZ) - a pontok csak a meccs utan kerulnek be, tehat a 0 meccs
+                     kozben semmit nem jelent; nem szabad ugy fogalmazni,
+                     mintha "eddig" nem szerzett volna pontot */
   var LIGAK = [
     { id: 'nb1', nev: 'NB1', mappa: 'nb1/', cim: 'NB1 salary cap fantasy',
       leiras: 'privát head-to-head · 8 csapat · 33 forduló',
-      tipus: 'salary-cap', tipusNev: 'Salary cap', tema: 'liga-nb1' },
+      tipus: 'salary-cap', tipusNev: 'Salary cap', tema: 'liga-nb1',
+      eloPontok: false },
     { id: 'pl', nev: 'PL', mappa: 'pl/', cim: 'PL draft fantasy',
       leiras: 'privát head-to-head · 10 csapat · 38 forduló',
-      tipus: 'draft', tipusNev: 'Draft', tema: 'liga-pl' }
+      tipus: 'draft', tipusNev: 'Draft', tema: 'liga-pl',
+      eloPontok: true }
   ];
   function liga(id) {
     for (var i = 0; i < LIGAK.length; i++) if (LIGAK[i].id === id) return LIGAK[i];
