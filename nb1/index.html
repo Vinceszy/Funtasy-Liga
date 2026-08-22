@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=9">
+<link rel="stylesheet" href="../funtasy.css?v=10">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -71,7 +71,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=9"></script>
+<script src="../funtasy.js?v=10"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -253,7 +253,11 @@ function allasHTML(h,v,hp,vp,elo){
 // A keret fordulopontszama - ugyanaz a szamitas, mint a keret-oszlop
 // fejleceben, hogy az eredmenysor es az oszlopok ne mondhassanak masat.
 const keretOsszeg=l=>l.reduce((x,p)=>x+(p.week||0),0)+magyarBonus(l.filter(p=>!p.sub)).pts;
-function squadHTML(name,list,realTotal,round){
+// A `rejt` fuggveny (ha van) eldonti, mely sorok maradjanak ki a
+// megjelenitesbol - a Kulonbsegek szuro hasznalja. Az osszegek es a
+// magyarszabaly ilyenkor is a TELJES keretbol szamolnak: a szuro csak
+// a nezetet szukiti, az eredmenyt nem.
+function squadHTML(name,list,realTotal,round,rejt){
   const st=list.filter(p=>!p.sub), sb=list.filter(p=>p.sub);
   const srt=a=>[...a].sort((x,y)=>posRank(x.pos)-posRank(y.pos));
   const S=a=>a.reduce((x,p)=>x+(p.week||0),0);
@@ -276,11 +280,11 @@ function squadHTML(name,list,realTotal,round){
       ${pont(p)}</div>`;
   const head = realTotal!=null ? fmt(realTotal) : fmt(keretOsszeg(list));   // = az eredmenysor szama
   return `<div class="sqcol"><h3>${esc(name)}<span>${head}</span></h3>
-    ${srt(st).map(row).join('')}
+    ${srt(st).filter(p=>!(rejt&&rejt(p))).map(row).join('')}
     <div class="sumline"><span>Kezdők</span><b>${fmt(S(st))}</b></div>
     <div class="bonus ${mb.ok?'ok':'no'}"><span>Magyarszabály · ${mb.hun} magyar kezdő, ebből ${mb.u21} U21</span><b>${mb.ok?'+10':'0'}</b></div>
     <div class="subhead">Cserepad — a feltüntetett érték már felezve</div>
-    ${srt(sb).map(row).join('')}
+    ${srt(sb).filter(p=>!(rejt&&rejt(p))).map(row).join('')}
     <div class="sumline"><span>Pad</span><b>${fmt(S(sb))}</b></div>
   </div>`;
 }
@@ -481,6 +485,37 @@ async function bontasHTML(ds){
   if(sorok.length && ds.sub==='1') sorok.push({name:'Pad — a heti pontban már felezve',value:'',points:'×0.5'});
   return FunTasy.accTable(sorok, nincsPontUzenet(played,start,nyers,false,ds.vg==='1'));
 }
+// ---------- Különbségek szűrő (salary cap liga) ----------
+// Salary cap ligaban ugyanaz a jatekos MINDKET keretben szerepelhet, es
+// olyankor a pontja kiuti egymast: a meccset a kulonbsegek dontik el.
+// Draft ligaban ez nem fordulhat elo (egy jatekos egy csapatban), ezert
+// ott nincs ilyen gomb - lasd a ligak `tipus` mezojet a funtasy.js-ben.
+const SALARY_CAP = (FunTasy.liga('nb1')||{}).tipus === 'salary-cap';
+let CSAK_ELTERES = false;
+let MECCS = null;        // az eppen mutatott meccs - a szuro ebbol rajzol ujra
+// Nem eleg a nev: aki az egyik oldalon kapitany vagy pados, annal mas a
+// pontja, tehat az NEM azonos sor.
+const szerepKulcs = p => p.name+'|'+(p.cap?'C':'')+(p.sub?'P':'');
+function meccsTest(){
+  if(!MECCS) return;
+  const {h,v,A,B,hp,vp,r,elo} = MECCS;
+  const aK=new Set(A.map(szerepKulcs)), bK=new Set(B.map(szerepKulcs));
+  const azonos=A.filter(p=>bK.has(szerepKulcs(p)));
+  const azonosPont=azonos.reduce((x,p)=>x+(p.week||0),0);
+  const szur = SALARY_CAP && CSAK_ELTERES && azonos.length;
+  const sor = (SALARY_CAP && azonos.length)
+    ? `<div class="szurosor">
+         <button class="szurogomb${CSAK_ELTERES?' on':''}" id="elteresGomb">Különbségek</button>
+         <span class="szuroinfo">${CSAK_ELTERES
+           ? `${azonos.length} azonos sor elrejtve (mindkét oldalon ${fmt(azonosPont)} pont)`
+           : `${azonos.length} játékos mindkét keretben ugyanabban a szerepben — ${fmt(azonosPont)} pont, ami kiüti egymást`}</span>
+       </div>`
+    : '';
+  $('mBody').innerHTML = allasHTML(h,v,hp,vp,elo) + sor + ACCHINT +
+    `<div class="sqwrap">${squadHTML(h,A,hp,r, szur?(p=>bK.has(szerepKulcs(p))):null)}${
+      squadHTML(v,B,vp,r, szur?(p=>aK.has(szerepKulcs(p))):null)}</div>`;
+}
+
 // Egyseges meccs-nezet: fordulohu keretek. Elo fordulonal az elo folyamat
 // (tarolt + percre friss csere), lezartnal az AKKORI keretek a
 // squad_history-bol a hivatalos pontszamokkal, jovobelinel magyarazat.
@@ -507,10 +542,8 @@ async function showMatchRound(h, v, r, mode){
   const rounds=await loadHistory();
   const H=(rounds[r]||{})[h], V=(rounds[r]||{})[v];
   if(mCurrent[0]!==h||mCurrent[1]!==v||!$('ov').classList.contains('open')) return;
-  $('mBody').innerHTML = (H&&V)
-    ? allasHTML(h,v,m[2],m[3],false)+ACCHINT+
-      `<div class="sqwrap">${squadHTML(h,H,m[2],r)}${squadHTML(v,V,m[3],r)}</div>`
-    : '<div class="loading">Ehhez a fordulóhoz nincs mentett keret-adat.</div>';
+  if(H&&V){ MECCS={h,v,A:H,B:V,hp:m[2],vp:m[3],r,elo:false}; meccsTest(); }
+  else { MECCS=null; $('mBody').innerHTML='<div class="loading">Ehhez a fordulóhoz nincs mentett keret-adat.</div>'; }
 }
 async function showLiveMatch(h, v, r){
   const rounds=await loadHistory();
@@ -525,9 +558,11 @@ async function showLiveMatch(h, v, r){
   $('mTitle').textContent=h+'  vs  '+v;
   $('mSub').textContent=r+'. forduló · élő állás — a meccs még tart';
   $('mTabs').innerHTML='';
-  const rajz=(A,B)=>{ $('mBody').innerHTML=
-    allasHTML(h,v,A?keretOsszeg(A):null,B?keretOsszeg(B):null,true)+ACCHINT+
-    `<div class="sqwrap">${A?squadHTML(h,A,null,r):''}${B?squadHTML(v,B,null,r):''}</div>`; };
+  const rajz=(A,B)=>{
+    if(A&&B){ MECCS={h,v,A,B,hp:keretOsszeg(A),vp:keretOsszeg(B),r,elo:true}; meccsTest(); return; }
+    MECCS=null;
+    $('mBody').innerHTML=allasHTML(h,v,A?keretOsszeg(A):null,B?keretOsszeg(B):null,true)+ACCHINT+
+      `<div class="sqwrap">${A?squadHTML(h,A,null,r):''}${B?squadHTML(v,B,null,r):''}</div>`; };
   rajz(H,V);
   // hatterben: percre friss csere, ha a modal meg ugyanezen a meccsen all
   const [FH,FV]=await Promise.all([eloKeret(h,r,true), eloKeret(v,r,true)]);
@@ -611,6 +646,7 @@ async function showSquad(names,tab,mode){
 // ---------- események ----------
 document.addEventListener('click',e=>{
   if(e.target===$('ovBack')){ vBack(); return; }
+  if(e.target.id==='elteresGomb'){ CSAK_ELTERES=!CSAK_ELTERES; meccsTest(); return; }
   const pr=e.target.closest('.plr[data-acc]');
   if(pr){ FunTasy.accToggle(pr, ()=>bontasHTML(pr.dataset)); return; }
   const mem=e.target.closest('[data-member]');

@@ -50,6 +50,16 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   és az oszlopfejlécek **ugyanabból a számításból** jönnek, tehát nem mondhatnak mást.
   Ha a fordulóhoz még semmilyen keret-adat nincs, tartalékként ez a szöveg jön:
   *„A meccs még tart, a keretek által szerzett pontok a forduló zárta után elérhetőek.”*
+- **„Különbségek” gomb (csak salary cap ligában, tehát az NB1-en):** az eredménysor alatt
+  egy kapcsoló, ami elrejti azokat a sorokat, amik **mindkét keretben ugyanúgy** szerepelnek
+  — azok pontja kiüti egymást, a meccset a maradék dönti el. Nem elég a névegyezés:
+  **a kapitányság és a kezdő/pad szerep is számít**, mert azoktól más a játékos pontja
+  (Szalai kezdőként 10, kapitányként 20 — az nem azonos sor). A gomb mellett ott áll, hány
+  sort érint és mennyi pontot: pl. *„3 játékos mindkét keretben ugyanabban a szerepben —
+  8,25 pont, ami kiüti egymást”*. A szűrés **csak a nézetet szűkíti**: az összegek, a
+  magyarszabály és az eredménysor változatlanul a teljes keretből számolnak.
+  A PL-oldalon szándékosan nincs ilyen gomb: draft ligában egy játékos egy csapatban
+  lehet, tehát azonos sor nem is fordulhat elő.
 
 ### Egymás elleni mátrix
 8×8 rács, minden párosításnál `GY/D/V` az eddigi meccsekből. Mobilon vízszintesen

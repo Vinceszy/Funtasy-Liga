@@ -172,6 +172,15 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .mscore{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 14px;flex-wrap:wrap}
 .mscore .csapat{font-weight:700;font-size:14px}
 .mscore.elo .score{border-color:var(--amber);border-style:dashed}
+
+/* "Kulonbsegek" szuro a meccs-adatlapon (csak salary cap ligaban van ertelme:
+   ott szerepelhet ugyanaz a jatekos mindket keretben). */
+.szurosor{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.szurogomb{background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+  font:700 12px Inter;padding:7px 15px;border-radius:999px;cursor:pointer;transition:border-color .12s}
+.szurogomb:hover{border-color:var(--dim)}
+.szurogomb.on{background:var(--amber);border-color:var(--amber);color:#12140F}
+.szuroinfo{font-size:11.5px;color:var(--dim);text-align:center}
 .accpanel{margin:0 0 6px 24px;border-left:2px solid var(--line);padding:4px 10px 6px;background:var(--panel2);border-radius:0 0 6px 6px}
 .accload{font-size:12px;color:var(--dim);padding:4px 0}
 .acctable{width:100%;border-collapse:collapse;font-size:12px}
