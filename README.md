@@ -154,10 +154,13 @@ Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő 
 - **Ahol a kezdés időpontja még nincs kitűzve**, ott csak a dátum jelenik meg
   („kezdés: aug. 29. (időpont még nincs kitűzve)") — az MLSZ ilyenkor éjfélt ír, amit
   hiba lenne valódi kezdésként kiírni.
-- **Élő forduló közben a 0 pontos játékosok kétfélék**: aki még nem játszott (a meccse el
-  sem kezdődött), annak a pontja helyén **kötőjel** áll; aki épp játszik vagy már játszott
-  és 0-n áll, annál **0** — a fantasy-oldalak szokása szerint. Az NB1-en ezt a keret-válasz
-  `is_played` és `first_played_at` mezője adja, a PL-en a forduló meccs-állapotai (fixtures).
+- **Élő forduló közben a 0 pontos játékosoknál kötőjel áll, ha nincs róluk adat.** Két
+  ilyen eset van: aki még nem játszott (a meccse el sem kezdődött), és — **csak az
+  NB1-en** — akinek a meccse épp fut. Az MLSZ ugyanis a pontokat csak a meccs után
+  rögzíti (`eloPontok: false`), tehát a 0 ott nem „nulla pontot szerzett", hanem
+  „még nincs róla adat" — kötőjelként őszinte. A PL-en fordítva: az FPL percről percre
+  ad pontot, ezért ott a futó meccs 0-ja valódi 0, és **számként** marad. A kötőjel
+  magyarázata egérrel elolvasható (`title`).
 
 ### Navigáció a modalon belül
 A modal kis böngészőként működik: a listák soraira kattintva a tartalom cserélődik

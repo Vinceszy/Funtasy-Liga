@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=16">
+<link rel="stylesheet" href="../funtasy.css?v=17">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -71,7 +71,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=16"></script>
+<script src="../funtasy.js?v=17"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -263,17 +263,31 @@ function allasHTML(h,v,hp,vp,elo){
 const keretOsszeg=l=>l.reduce((x,p)=>x+(p.week||0),0)+magyarBonus(l.filter(p=>!p.sub)).pts;
 const srtPoszt=a=>[...a].sort((x,y)=>posRank(x.pos)-posRank(y.pos));
 const osszeg=a=>a.reduce((x,p)=>x+(p.week||0),0);
+// Ad-e a forras pontot MECCS KOZBEN? Az MLSZ nem: ott a pontok csak a meccs
+// utan kerulnek be (lasd a liga `eloPontok` mezojet a funtasy.js-ben).
+const ELO_PONTOK=(FunTasy.liga('nb1')||{}).eloPontok===true;
+// Ezert meccs kozben a 0 nem azt jelenti, hogy "nulla pontot szerzett", hanem
+// azt, hogy meg nincs rola adat - ilyenkor kotojel jar, ugyanugy, mint annal,
+// aki meg el sem kezdte a meccset. (A PL-en ez maskepp van: ott a 0 valodi.)
+const nincsMegAdat=(p, round)=>
+  !ELO_PONTOK && eloFordulo(round) && meccsFut(p.start, p.vege);
+// Egy jatekos-sor pont-cellaja. A kotojelnek harom oka lehet, mindegyikhez
+// sajat magyarazat tartozik (egerrel elolvashato).
+function pontCellaHTML(p, round){
+  if(p.week||0) return `<span class="pts">${fmt(p.week)}</span>`;
+  if(p.nogame) return '<span class="pts" title="ebben a fordulóban nincs meccse">–</span>';
+  if(p.played===false) return '<span class="pts" title="még nem játszott">–</span>';
+  if(nincsMegAdat(p,round))
+    return '<span class="pts" title="a meccs zajlik — az MLSZ a pontokat a meccs végén rögzíti">–</span>';
+  return `<span class="pts">${fmt(p.week)}</span>`;
+}
 // Egy jatekos-sor. Kulon fuggveny, mert harom helyrol kell: a teljes keret,
 // az eltero jatekosok oszlopa es a kozos jatekosok blokkja is ezt hasznalja.
 // A `own` a szakvezeto neve - a pont-bontas ebbol oldja fel a jatekost, ha a
 // rekordban meg nincs azonosito.
 function plrSorHTML(p, own, round){
   const acc=round?` data-acc="1" data-own="${esc(own)}" data-nm="${esc(p.name)}" data-r="${round}"${p.id?` data-cp="${p.id}"`:''}${p.played===true?' data-pl="1"':(p.played===false?' data-pl="0"':'')}${p.start?` data-st="${esc(p.start)}"`:''}${p.nogame?' data-ng="1"':''}${p.vege?' data-vg="1"':''}${p.cap?' data-cap="1"':''}${p.sub?' data-sub="1"':''}`:'';
-  const pont=(p.nogame && !(p.week||0))
-    ? '<span class="pts" title="ebben a fordulóban nincs meccse">–</span>'
-    : (p.played===false && !(p.week||0))
-    ? '<span class="pts" title="még nem játszott">–</span>'
-    : `<span class="pts">${fmt(p.week)}</span>`;
+  const pont=pontCellaHTML(p, round);
   return `<div class="plr"${acc}>
       <span class="ppos">${esc(posLabel(p.pos))}</span>
       <span class="nm">${esc(p.name)}${round?'<span class="accarr">▼</span>':''}${p.hun?'<span class="flag" title="magyar"></span>':''}${p.team?` <span class="tm">${esc(p.team)}</span>`:''}</span>
@@ -457,7 +471,7 @@ const idoFmt=s=>{
 // Az MLSZ a pontokat csak a meccs UTAN rogziti (eloPontok:false a ligaban),
 // ezert meccs kozben nem szabad ugy fogalmazni, mintha a 0 azt jelentene,
 // hogy "eddig" nem szerzett pontot - olyan allapot itt sosem all elo.
-const MECCS_KOZBEN=(FunTasy.liga('nb1')||{}).eloPontok
+const MECCS_KOZBEN=ELO_PONTOK
   ? 'A meccs zajlik — eddig nincs pontot érő eseménye.'
   : 'A meccs zajlik — az MLSZ a pontokat a meccs végén rögzíti.';
 // Ha egyetlen pontot ero esemeny sincs, a 0-nak tobb oka lehet. Elsokent a
