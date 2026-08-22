@@ -69,8 +69,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   számít, mert azoktól más a játékos pontja (Szalai kezdőként 10, kapitányként 20 — az nem
   azonos tétel). **A magyarszabály (+10) ugyanúgy tétel:** ha mindkét keret megkapja, a
   közös csoportba kerül; ha csak az egyik, akkor mindkét oldalon az eltérők közé (a
-  másiknál 0-val). Ha a hivatalos pontszám és a keretből számolt összeg mégis eltérne
-  (pl. utólagos MLSZ-korrekció után, amíg a keret-pillanatkép régi), külön sor jelzi.
+  másiknál 0-val).
 
   A PL-oldalon szándékosan nincs ilyen nézet: draft ligában egy játékos egy csapatban
   lehet, tehát közös tétel nem is fordulhat elő.
@@ -193,13 +192,19 @@ Az `archive.yml` a `collect.py`-t futtatja, ami **mindent** frissít, teendő n�
 
 1. **H2H eredmények** a ranglista-végpontról (hivatalos fordulópontszámok — ez a tabella
    egyetlen forrása).
-2. **Keretek** a keret-végpontról: az aktuális forduló (élő játékos-pontokkal), az utolsó
-   lezárt (hogy az utólagos MLSZ-korrekciók átjöjjenek), és minden hiányzó forduló.
-3. **Forduló-lezárás**: egy forduló akkor végleges, ha minden szakvezető minden játékosa
+2. **Régi fordulók újraellenőrzése**: a ranglista alapból csak a két legfrissebb fordulót
+   adja vissza, tehát egy régi forduló utólagos korrekciójáról magától nem értesülnénk.
+   Ezért minden futás **négy régi fordulót** kér le újra, körbeforgó sorrendben (lásd
+   *Önjavítás* lentebb).
+3. **Keretek** a keret-végpontról: az aktuális forduló (élő játékos-pontokkal), az utolsó
+   lezárt, minden hiányzó forduló — és minden olyan régi forduló, amelynek a pontszáma
+   ebben a futásban változott (akkor ugyanis a keret-pillanatkép is elavult).
+4. **Forduló-lezárás**: egy forduló akkor végleges, ha minden szakvezető minden játékosa
    lejátszotta a meccsét (`is_played`). Addig a forduló a `provisional` listában van, és az
    oldal nem számolja a tabellába.
-4. **Keresztellenőrzés**: a keretekből számolt pontszámot összeveti a hivatalossal, és a
-   naplóban jelzi, ha az MLSZ utólag korrigált.
+5. **Keresztellenőrzés**: a keretekből számolt pontszámot összeveti a hivatalossal. Ha
+   eltér, **nem jelzést ír, hanem javít**: újra lekéri a hivatalos értéket az adott
+   fordulóra, és azt vezeti át.
 
 ### Az FPL Draft adatai (3 óránként, draft.yml)
 
@@ -351,8 +356,34 @@ adnak** — piaczárásig titkosak.
   ETO–Fradi esetén), tehát a halasztás nem akasztja meg a lezárást.
 - **Az MLSZ utólag korrigálhat** játékos-statisztikát, és átvezeti a hivatalos
   fordulóösszegre is. Megtörtént: Csendi 1–3. fordulós pontjai a lezárás után változtak
-  (+1, +1, −2,5). Ezért a `collect.py` mindig a lekért értékhez szinkronizál, és a
-  keretből számolt összeget összeveti a hivatalossal — eltérésnél a naplóban jelez.
+  (+1, +1, −2,5).
+
+#### Önjavítás: ha az MLSZ korrigál, a gyűjtő is korrigál
+
+A `collect.py` nem jelzést ír a naplóba, hanem **átvezeti a változást — mindenhol**.
+Három egymást kiegészítő fogása van:
+
+1. **Körbeforgó újraellenőrzés.** A ranglista-végpont alapból csak a két legfrissebb
+   fordulót adja vissza, ezért minden futás **négy régi fordulót** kér le újra
+   (`ellenorzendo()`), a három óránkénti ciklushoz igazított kezdőponttal. Napi nyolc futás
+   × négy forduló = 32 ellenőrzés, a lista pedig legfeljebb 31 elemű (az utolsó két
+   fordulót amúgy is minden futás lekéri), tehát **egy napon belül** körbeér. A lekért
+   érték felülírja a tároltat (`setdefault` helyett értékadás): a végpont az igazság.
+2. **A javított forduló keretei is frissülnek.** Ha egy régi forduló pontszáma változott,
+   a hozzá tartozó keret-pillanatkép is elavult, ezért a gyűjtő azt is újra lekéri
+   (`celok |= valtozott`) — így a pont-bontás és a „Különbségek” nézet számlája is a
+   javított adattal jön ki.
+3. **A keresztellenőrzés is javít.** Ha a keretből számolt összeg eltér a tárolt
+   hivatalostól, a gyűjtő **újra lekéri a hivatalos értéket** arra a fordulóra, és ha
+   tényleg változott, beírja a `results.json`-ba (`beir_eredmeny()`). ELTÉRÉS-figyelmeztetés
+   már csak akkor megy a naplóba, ha a két forrás az újralekérés után **sem** egyezik —
+   az valódi ellentmondás, nem korrekció.
+
+Ehhez tartozott egy régi hiba is: a `rankings()` a `round_id` paramétert
+`"...filter%5Bround_id%5D=%d" % round_id` módon fűzte a linkre, amiben a `%5B`-t a Python
+formázó jelnek olvasta (`ValueError`). A backfill-ág addig sosem futott le élesben, ezért
+nem derült ki; a körbeforgó ellenőrzés viszont minden futásban használja, így javítva
+lett (sztring-összefűzésre).
 
 ### Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva
 

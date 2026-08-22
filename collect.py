@@ -96,7 +96,8 @@ def rankings(uname, round_id=None):
            "ranking,rounds,competition_rank&page=1&per_page=5"
            "&filter%5Bsearch%5D=" + urllib.parse.quote(uname))
     if round_id:
-        url += "&filter%5Bround_id%5D=%d" % round_id
+        # sztring-osszefuzes, NEM %-formazas: a %5B-t format-jelnek vennne
+        url += "&filter%5Bround_id%5D=" + str(round_id)
     st, j = api_get(url)
     if st != 200 or not j:
         return None
@@ -201,6 +202,32 @@ def keret_osszeg(sq):
     return ossz + (10 if (hun >= 5 and u21 >= 1) else 0)
 
 
+def ellenorzendo(regi, db=4):
+    """Rolling ellenorzes: minden futas mas nehany REGI fordulot ker le
+    ujra. Igy nem kell minden korben az osszeset lekerdezni, de egy nap
+    alatt mindegyik sorra kerul - ha az MLSZ utolag korrigal egy regi
+    fordulot, azt legkesobb egy napon belul atvezetjuk. (A ket legfrissebb
+    fordulot amugy is minden futas ellenorzi.)"""
+    if not regi:
+        return []
+    n = len(regi)
+    kezd = (int(time.time() // 10800) * db) % n      # 3 orankent lep
+    return sorted({regi[(kezd + i) % n] for i in range(min(db, n))})
+
+
+def beir_eredmeny(schedule, r, nev, ertek):
+    """Egy szakvezeto fordulopontszamat beirja a menetrendbe.
+    1-et ad vissza, ha tenylegesen valtozott."""
+    for m in schedule.get(str(r)) or []:
+        if m[0] == nev and m[2] != ertek:
+            m[2] = ertek
+            return 1
+        if m[1] == nev and m[3] != ertek:
+            m[3] = ertek
+            return 1
+    return 0
+
+
 def kompakt_iras(path, obj):
     """A konyvjelzoevel azonos, kompakt JSON-formatum."""
     with open(path, "w", encoding="utf-8") as f:
@@ -245,17 +272,24 @@ def main():
     # kell lekerni. Normal esetben ez a lista ures.
     hianyzo = sorted({int(r) for r, ms in schedule.items()
                       if int(r) < aktualis and any(m[2] is None for m in ms)})
-    for r in hianyzo:
-        print("  potlas: %d. fordulo hivatalos pontjai" % r)
+    # A ranglista alapbol csak a ket legfrissebb fordulot adja, tehat egy
+    # regi fordulo utolagos MLSZ-korrekciojarol magatol nem ertesulnenk.
+    # Ezert koronkent nehany regi fordulot ujra lekerunk (lasd ellenorzendo).
+    ujra = ellenorzendo([r for r in range(1, max(aktualis - 1, 1))])
+    for r in sorted(set(hianyzo) | set(ujra)):
+        print("  %s: %d. fordulo hivatalos pontjai"
+              % ("potlas" if r in hianyzo else "ellenorzes", r))
         for nev, uname in MEMBERS.items():
             row = rankings(uname, round_id=rid(r))
             if not row:
                 continue
             for s in (row.get("user_team") or {}).get("round_statistics") or []:
-                pontok[nev].setdefault(int(s["round_number"]), s["points"])
+                # a vegpont az igazsag: felulirjuk, nem csak potoljuk
+                pontok[nev][int(s["round_number"])] = s["points"]
 
     # ---- 3. Eredmenyek szinkronja (a vegpont az igazsag) ----
     beirt, javitott = 0, 0
+    valtozott = set()          # ezekhez a fordulokhoz a keret is elavult
     for rnd, matches in schedule.items():
         r = int(rnd)
         for m in matches:
@@ -273,7 +307,8 @@ def main():
                 print("  + %d. fordulo: %s %s - %s %s" % (r, m[0], hp, vp, m[1]))
             else:
                 javitott += 1
-                print("  ~ %d. fordulo: %s %s - %s %s  (volt: %s - %s) - MLSZ-korrekcio?"
+                valtozott.add(r)
+                print("  ~ %d. fordulo: %s %s - %s %s  (volt: %s - %s) - MLSZ-korrekcio"
                       % (r, m[0], hp, vp, m[1], elozo[0], elozo[1]))
 
     # ---- 4. Keretek gyujtese ----
@@ -288,6 +323,9 @@ def main():
         megvan = hist["rounds"].get(str(r)) or {}
         if len(megvan) < len(MEMBERS):
             celok.add(r)
+    # ha egy regi fordulo hivatalos pontja most valtozott, akkor a hozza
+    # tartozo keret is elavult - azt is ujra le kell kerni
+    celok |= valtozott
 
     lezart = {}          # r -> True/False (minden jatekos jatszott-e)
     for r in sorted(celok):
@@ -326,9 +364,26 @@ def main():
             if hiv in (None, 0) or not lezart[r]:
                 continue
             szamolt = keret_osszeg(sq)
+            if abs(szamolt - hiv) < 0.005:
+                continue
+            # A keret ebben a futasban frissult, tehat inkabb a hivatalos
+            # ertek elavult: kerjuk le ujra erre a fordulora, es ha valtozott,
+            # vezessuk at. Nem jelzunk, hanem javitunk.
+            row = rankings(MEMBERS[nev], round_id=rid(r))
+            friss = None
+            for st2 in ((row or {}).get("user_team") or {}).get("round_statistics") or []:
+                if int(st2["round_number"]) == r:
+                    friss = st2["points"]
+            if friss is not None and abs(friss - hiv) >= 0.005:
+                pontok[nev][r] = friss
+                javitott += beir_eredmeny(schedule, r, nev, friss)
+                print("  ~ %d. fordulo / %s: hivatalos pont frissitve %.2f -> %.2f"
+                      % (r, nev, hiv, friss))
+                hiv = friss
             if abs(szamolt - hiv) >= 0.005:
                 print("  ! ELTERES %d. fordulo / %s: keretbol %.2f, hivatalos %.2f"
-                      " - az MLSZ korrigalhatott" % (r, nev, szamolt, hiv), file=sys.stderr)
+                      " - a ket forras ujralekeres utan sem egyezik"
+                      % (r, nev, szamolt, hiv), file=sys.stderr)
 
     # ---- 5. Ideiglenes fordulok ----
     # Csak az szamit ideiglenesnek, aminek mar van pontja, de a keretek

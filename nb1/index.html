@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=13">
+<link rel="stylesheet" href="../funtasy.css?v=14">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -71,7 +71,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=13"></script>
+<script src="../funtasy.js?v=14"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -530,13 +530,6 @@ function kulonbsegOszlopHTML(name, list, kozosK, realTotal, round, szabaly){
   const kozosPont=osszeg(kozos)+(szabaly.kozos?mb.pts:0);
   const eltPont=osszeg(elt)+(szabaly.kozos?0:mb.pts);
   const teljes = realTotal!=null ? realTotal : (kozosPont+eltPont);
-  // Ha a hivatalos pontszam es a keretbol szamolt osszeg elter (pl. utolagos
-  // MLSZ-korrekcio utan, amig a keret-pillanatkep regi), azt kiirjuk, nem
-  // hagyjuk, hogy a szamla csendben ne jojjon ki.
-  const eltHiv = teljes-(kozosPont+eltPont);
-  const eltHivSor = Math.abs(eltHiv)>0.005
-    ? `<div class="osszesito jelzes"><span>Eltérés a hivatalos ponttól</span><b>${eltHiv>0?'+':''}${fmt(eltHiv)}</b></div>`
-    : '';
   return `<div class="sqcol"><h3>${esc(name)}<span>${fmt(teljes)}</span></h3>
     <div class="kozosresz">${kozosSzakaszHTML(kozos,name,round,szabaly,mb,'Közös játékosok')}</div>
     <div class="szakasz">Eltérő játékosok</div>
@@ -544,7 +537,6 @@ function kulonbsegOszlopHTML(name, list, kozosK, realTotal, round, szabaly){
       ? csoportHTML(elt, name, round, szabaly.kozos?'':szabalySorHTML(mb))
       : '<div class="ureseltares">Minden játékosa közös.</div>'}
     <div class="osszesito"><span>Eltérő összesen</span><b>${fmt(eltPont)}</b></div>
-    ${eltHivSor}
     <div class="osszesito vegso"><span>${esc(name)} összesen</span><b>${fmt(teljes)}</b></div>
   </div>`;
 }
