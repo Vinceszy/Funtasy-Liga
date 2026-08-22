@@ -50,16 +50,24 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   és az oszlopfejlécek **ugyanabból a számításból** jönnek, tehát nem mondhatnak mást.
   Ha a fordulóhoz még semmilyen keret-adat nincs, tartalékként ez a szöveg jön:
   *„A meccs még tart, a keretek által szerzett pontok a forduló zárta után elérhetőek.”*
-- **„Különbségek” gomb (csak salary cap ligában, tehát az NB1-en):** az eredménysor alatt
-  egy kapcsoló, ami elrejti azokat a sorokat, amik **mindkét keretben ugyanúgy** szerepelnek
-  — azok pontja kiüti egymást, a meccset a maradék dönti el. Nem elég a névegyezés:
-  **a kapitányság és a kezdő/pad szerep is számít**, mert azoktól más a játékos pontja
-  (Szalai kezdőként 10, kapitányként 20 — az nem azonos sor). A gomb mellett ott áll, hány
-  sort érint és mennyi pontot: pl. *„3 játékos mindkét keretben ugyanabban a szerepben —
-  8,25 pont, ami kiüti egymást”*. A szűrés **csak a nézetet szűkíti**: az összegek, a
-  magyarszabály és az eredménysor változatlanul a teljes keretből számolnak.
-  A PL-oldalon szándékosan nincs ilyen gomb: draft ligában egy játékos egy csapatban
-  lehet, tehát azonos sor nem is fordulhat elő.
+- **„Különbségek” nézet (csak salary cap ligában, tehát az NB1-en):** az állás alatti
+  kapcsoló szétszálazza a meccset arra, ami **közös**, és arra, ami **eldönti**:
+
+  - Felül az **eredménysor** (a teljes állás) és maga a gomb — egy dobozban, hogy ne
+    lebegjen több középre zárt sor egymás alatt.
+  - Alatta a **közös tételek** halványan, **egyszer** felsorolva (nem kétszer, hiszen
+    mindkét keretben ugyanazt hozzák), a saját pontjaikkal és az együttes összegükkel.
+  - Végül a **két oldal eltérő játékosai**, oszloponként egy kis számlával:
+    *eltérő játékosok + közös tételek + magyarszabály = a csapat pontszáma*. Az összeg
+    tehát nyomon követhető, nem tűnik el semmi.
+
+  **Az azonossághoz nem elég a névegyezés:** a kapitányság és a kezdő/pad szerep is
+  számít, mert azoktól más a játékos pontja (Szalai kezdőként 10, kapitányként 20 — az nem
+  azonos tétel). **A magyarszabály (+10) ugyanígy viselkedik:** ha mindkét keret megkapja,
+  a közös tételek közé kerül; ha csak az egyik, akkor eltérésként, kiemelve.
+
+  A PL-oldalon szándékosan nincs ilyen nézet: draft ligában egy játékos egy csapatban
+  lehet, tehát közös tétel nem is fordulhat elő.
 
 ### Egymás elleni mátrix
 8×8 rács, minden párosításnál `GY/D/V` az eddigi meccsekből. Mobilon vízszintesen
@@ -107,7 +115,7 @@ Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő 
   egy panel van nyitva. A bontást a böngésző kéri le kattintáskor (ugyanazokon a
   CORS-proxykon át, mint minden élő lekérés), és a megnyitott játékosokét megjegyzi.
 - **A kattinthatóságot a név után álló kis nyíl (▼) jelzi**, ami nyitáskor átfordul, fölötte
-  pedig egy súgósor áll („A játékos nevére kattintva…”). A nyíl azért a név után van és nem
+  pedig egy súgósor áll („Kattints egy játékosra a pontjai részletezéséhez.”). A nyíl azért a név után van és nem
   a sor végén, mert ott védett: a szűk oszlopban az ellipszis előbb a klub-címkét vágja le.
   Egérrel a sor ki is világosodik, de a nyíl a lényeg — **telefonon nincs hover**.
 - **Ha nincs pontot érő esemény, az üzenet megmondja, miért** — hat eset, mert a 0-nak

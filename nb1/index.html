@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=10">
+<link rel="stylesheet" href="../funtasy.css?v=11">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -71,7 +71,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=10"></script>
+<script src="../funtasy.js?v=11"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -227,7 +227,7 @@ async function getSquad(name){
     const sq=(rounds[k]||{})[name];
     if(sq && sq.length){ SQUAD[name]=sq; SQUAD_ROUND=k; return sq; }
   }
-  throw new Error('a keret még nem került be az adatgyűjtésbe');
+  throw new Error('ehhez a fordulóhoz még nincs mentett keret');
 }
 const POSMAP={'K':'GK','GK':'GK','KAPUS':'GK','H':'DEF','V':'DEF','D':'DEF','DEF':'DEF','HÁTVÉD':'DEF',
  'KP':'MID','M':'MID','MID':'MID','KÖZÉPPÁLYÁS':'MID','CS':'ST','T':'ST','F':'ST','ST':'ST','CSATÁR':'ST'};
@@ -239,7 +239,7 @@ function magyarBonus(starters){
 }
 // Sugosor a keret fole: a nyil melle szoban is elmondja, mi tortenik
 // kattintasra (az oldal maskor is igy tanit - "Kattints egy nevre...").
-const ACCHINT='<div class="acchint">A játékos nevére kattintva kinyílik, miből jött össze a pontja.</div>';
+const ACCHINT='<div class="acchint">Kattints egy játékosra a pontjai részletezéséhez.</div>';
 // Eredmenysor a meccs-adatlap tetejere: ugyanaz a doboz, mint a fooldali
 // meccspanelen. Enelkul az allas csak a ket keret-oszlop fejleceben latszott,
 // kulon-kulon, es nem derult ki, hogy elo meccsrol van-e szo.
@@ -253,39 +253,37 @@ function allasHTML(h,v,hp,vp,elo){
 // A keret fordulopontszama - ugyanaz a szamitas, mint a keret-oszlop
 // fejleceben, hogy az eredmenysor es az oszlopok ne mondhassanak masat.
 const keretOsszeg=l=>l.reduce((x,p)=>x+(p.week||0),0)+magyarBonus(l.filter(p=>!p.sub)).pts;
-// A `rejt` fuggveny (ha van) eldonti, mely sorok maradjanak ki a
-// megjelenitesbol - a Kulonbsegek szuro hasznalja. Az osszegek es a
-// magyarszabaly ilyenkor is a TELJES keretbol szamolnak: a szuro csak
-// a nezetet szukiti, az eredmenyt nem.
-function squadHTML(name,list,realTotal,round,rejt){
-  const st=list.filter(p=>!p.sub), sb=list.filter(p=>p.sub);
-  const srt=a=>[...a].sort((x,y)=>posRank(x.pos)-posRank(y.pos));
-  const S=a=>a.reduce((x,p)=>x+(p.week||0),0);
-  const mb=magyarBonus(st);
-  // A jatekosra kattintva a sor ala nyilik a pont-bontas (accordion).
-  // A lekereshez cp-azonosito kell: az uj rekordokban benne van (id),
-  // a regiekhez nev alapjan oldjuk fel a fordulo keretebol. A "meg nem
-  // jatszott" 0 kotojelkent jelenik meg (played===false), a regi,
-  // jelzes nelkuli rekordok szamot mutatnak, mint eddig.
-  const acc=p=>round?` data-acc="1" data-own="${esc(name)}" data-nm="${esc(p.name)}" data-r="${round}"${p.id?` data-cp="${p.id}"`:''}${p.played===true?' data-pl="1"':(p.played===false?' data-pl="0"':'')}${p.start?` data-st="${esc(p.start)}"`:''}${p.nogame?' data-ng="1"':''}${p.vege?' data-vg="1"':''}${p.cap?' data-cap="1"':''}${p.sub?' data-sub="1"':''}`:'';
-  const pont=p=>(p.nogame && !(p.week||0))
+const srtPoszt=a=>[...a].sort((x,y)=>posRank(x.pos)-posRank(y.pos));
+const osszeg=a=>a.reduce((x,p)=>x+(p.week||0),0);
+// Egy jatekos-sor. Kulon fuggveny, mert harom helyrol kell: a teljes keret,
+// az eltero jatekosok oszlopa es a kozos jatekosok blokkja is ezt hasznalja.
+// A `own` a szakvezeto neve - a pont-bontas ebbol oldja fel a jatekost, ha a
+// rekordban meg nincs azonosito.
+function plrSorHTML(p, own, round){
+  const acc=round?` data-acc="1" data-own="${esc(own)}" data-nm="${esc(p.name)}" data-r="${round}"${p.id?` data-cp="${p.id}"`:''}${p.played===true?' data-pl="1"':(p.played===false?' data-pl="0"':'')}${p.start?` data-st="${esc(p.start)}"`:''}${p.nogame?' data-ng="1"':''}${p.vege?' data-vg="1"':''}${p.cap?' data-cap="1"':''}${p.sub?' data-sub="1"':''}`:'';
+  const pont=(p.nogame && !(p.week||0))
     ? '<span class="pts" title="ebben a fordulóban nincs meccse">–</span>'
     : (p.played===false && !(p.week||0))
     ? '<span class="pts" title="még nem játszott">–</span>'
     : `<span class="pts">${fmt(p.week)}</span>`;
-  const row=p=>`<div class="plr"${acc(p)}>
+  return `<div class="plr"${acc}>
       <span class="ppos">${esc(posLabel(p.pos))}</span>
       <span class="nm">${esc(p.name)}${round?'<span class="accarr">▼</span>':''}${p.hun?'<span class="flag" title="magyar"></span>':''}${p.team?` <span class="tm">${esc(p.team)}</span>`:''}</span>
       ${p.u21?'<span class="u21">U21</span>':''}${p.cap?'<span class="cap" title="kapitány – az érték már duplázva">C ×2</span>':''}
-      ${pont(p)}</div>`;
+      ${pont}</div>`;
+}
+function squadHTML(name,list,realTotal,round){
+  const st=list.filter(p=>!p.sub), sb=list.filter(p=>p.sub);
+  const mb=magyarBonus(st);
+  const row=p=>plrSorHTML(p,name,round);
   const head = realTotal!=null ? fmt(realTotal) : fmt(keretOsszeg(list));   // = az eredmenysor szama
   return `<div class="sqcol"><h3>${esc(name)}<span>${head}</span></h3>
-    ${srt(st).filter(p=>!(rejt&&rejt(p))).map(row).join('')}
-    <div class="sumline"><span>Kezdők</span><b>${fmt(S(st))}</b></div>
+    ${srtPoszt(st).map(row).join('')}
+    <div class="sumline"><span>Kezdők</span><b>${fmt(osszeg(st))}</b></div>
     <div class="bonus ${mb.ok?'ok':'no'}"><span>Magyarszabály · ${mb.hun} magyar kezdő, ebből ${mb.u21} U21</span><b>${mb.ok?'+10':'0'}</b></div>
     <div class="subhead">Cserepad — a feltüntetett érték már felezve</div>
-    ${srt(sb).filter(p=>!(rejt&&rejt(p))).map(row).join('')}
-    <div class="sumline"><span>Pad</span><b>${fmt(S(sb))}</b></div>
+    ${srtPoszt(sb).map(row).join('')}
+    <div class="sumline"><span>Pad</span><b>${fmt(osszeg(sb))}</b></div>
   </div>`;
 }
 let HIST=null;
@@ -485,35 +483,86 @@ async function bontasHTML(ds){
   if(sorok.length && ds.sub==='1') sorok.push({name:'Pad — a heti pontban már felezve',value:'',points:'×0.5'});
   return FunTasy.accTable(sorok, nincsPontUzenet(played,start,nyers,false,ds.vg==='1'));
 }
-// ---------- Különbségek szűrő (salary cap liga) ----------
+// ---------- Különbségek nézet (salary cap liga) ----------
 // Salary cap ligaban ugyanaz a jatekos MINDKET keretben szerepelhet, es
 // olyankor a pontja kiuti egymast: a meccset a kulonbsegek dontik el.
 // Draft ligaban ez nem fordulhat elo (egy jatekos egy csapatban), ezert
 // ott nincs ilyen gomb - lasd a ligak `tipus` mezojet a funtasy.js-ben.
 const SALARY_CAP = (FunTasy.liga('nb1')||{}).tipus === 'salary-cap';
 let CSAK_ELTERES = false;
-let MECCS = null;        // az eppen mutatott meccs - a szuro ebbol rajzol ujra
+let MECCS = null;        // az eppen mutatott meccs - a gomb ebbol rajzol ujra
 // Nem eleg a nev: aki az egyik oldalon kapitany vagy pados, annal mas a
 // pontja, tehat az NEM azonos sor.
 const szerepKulcs = p => p.name+'|'+(p.cap?'C':'')+(p.sub?'P':'');
+
+// A kozos jatekosok EGYSZER szerepelnek, halvanyitva: a ket keretben
+// ugyanazt a pontot hozzak, tehat a meccs szempontjabol semlegesek.
+function kozosBlokkHTML(kozos, own, round, szabaly){
+  // A magyarszabaly is vagy kozos, vagy kulonbseg: ha mindket keretben
+  // ugyanannyit er, akkor ide tartozik (a meccs szempontjabol semleges).
+  const pont=osszeg(kozos)+(szabaly.kozos?szabaly.pts:0);
+  const szabalySor = (szabaly.kozos && szabaly.pts)
+    ? `<div class="plr szabalysor"><span class="ppos">HUN</span>
+        <span class="nm">Magyarszabály — mindkét keretben teljesül</span>
+        <span class="pts">+${fmt(szabaly.pts)}</span></div>`
+    : '';
+  return `<div class="kozosblokk">
+    <div class="kozoshead"><span>Közös · ${kozos.length} játékos${
+        (szabaly.kozos && szabaly.pts)?' + magyarszabály':''}</span>
+      <b>${fmt(pont)} pont mindkét oldalon</b></div>
+    <div class="kozossorok">${srtPoszt(kozos).map(p=>plrSorHTML(p,own,round)).join('')}${szabalySor}</div>
+  </div>`;
+}
+// Egy oszlop a kulonbseg-nezetben: csak az eltero jatekosok, alattuk a
+// szamla, ami visszaadja a csapat teljes pontszamat.
+function elteresOszlopHTML(name, list, kozosK, realTotal, round, szabaly){
+  const elt=list.filter(p=>!kozosK.has(szerepKulcs(p)));
+  const st=elt.filter(p=>!p.sub), sb=elt.filter(p=>p.sub);
+  const eltPont=osszeg(elt), kozosPont=osszeg(list)-eltPont;
+  const mb=magyarBonus(list.filter(p=>!p.sub));      // a TELJES keretbol
+  const teljes = realTotal!=null ? realTotal : (eltPont+kozosPont+mb.pts);
+  const row=p=>plrSorHTML(p,name,round);
+  // A magyarszabaly oda kerul, ahova tartozik: ha mindket oldalon ugyanannyi,
+  // akkor a kozos tetelek koze (halvanyan), ha nem, akkor az elterese kozE.
+  const szabalySor = szabaly.kozos
+    ? `<div class="sumline halvany"><span>Magyarszabály · közös</span><b>${mb.ok?'+10':'0'}</b></div>`
+    : `<div class="sumline kiemelt"><span>Magyarszabály · eltérés</span><b>${mb.ok?'+10':'0'}</b></div>`;
+  return `<div class="sqcol"><h3>${esc(name)}<span>${fmt(teljes)}</span></h3>
+    ${st.length?srtPoszt(st).map(row).join(''):'<div class="ureseltares">Minden kezdője megegyezik a másik keretével.</div>'}
+    ${sb.length?`<div class="subhead">Cserepad — a feltüntetett érték már felezve</div>${srtPoszt(sb).map(row).join('')}`:''}
+    <div class="szamla">
+      <div class="sumline kiemelt"><span>Eltérő játékosok</span><b>${fmt(eltPont)}</b></div>
+      ${szabaly.kozos?'':szabalySor}
+      <div class="sumline halvany"><span>Közös játékosok</span><b>${fmt(kozosPont)}</b></div>
+      ${szabaly.kozos?szabalySor:''}
+      <div class="sumline vegosszeg"><span>Összesen</span><b>${fmt(teljes)}</b></div>
+    </div>
+  </div>`;
+}
 function meccsTest(){
   if(!MECCS) return;
   const {h,v,A,B,hp,vp,r,elo} = MECCS;
   const aK=new Set(A.map(szerepKulcs)), bK=new Set(B.map(szerepKulcs));
-  const azonos=A.filter(p=>bK.has(szerepKulcs(p)));
-  const azonosPont=azonos.reduce((x,p)=>x+(p.week||0),0);
-  const szur = SALARY_CAP && CSAK_ELTERES && azonos.length;
-  const sor = (SALARY_CAP && azonos.length)
+  const kozos=A.filter(p=>bK.has(szerepKulcs(p)));
+  // a magyarszabaly akkor kozos, ha mindket keretben ugyanannyit er
+  const mbA=magyarBonus(A.filter(p=>!p.sub)), mbB=magyarBonus(B.filter(p=>!p.sub));
+  const szabaly={kozos: mbA.pts===mbB.pts, pts: mbA.pts};
+  const van = SALARY_CAP && (kozos.length || szabaly.kozos);
+  const gomb = van
     ? `<div class="szurosor">
          <button class="szurogomb${CSAK_ELTERES?' on':''}" id="elteresGomb">Különbségek</button>
-         <span class="szuroinfo">${CSAK_ELTERES
-           ? `${azonos.length} azonos sor elrejtve (mindkét oldalon ${fmt(azonosPont)} pont)`
-           : `${azonos.length} játékos mindkét keretben ugyanabban a szerepben — ${fmt(azonosPont)} pont, ami kiüti egymást`}</span>
+         <span class="szuroinfo">${kozos.length} közös játékos${
+             (szabaly.kozos && szabaly.pts)?' és a magyarszabály':''} · ${
+             fmt(osszeg(kozos)+(szabaly.kozos?szabaly.pts:0))} pont mindkét oldalon</span>
        </div>`
     : '';
-  $('mBody').innerHTML = allasHTML(h,v,hp,vp,elo) + sor + ACCHINT +
-    `<div class="sqwrap">${squadHTML(h,A,hp,r, szur?(p=>bK.has(szerepKulcs(p))):null)}${
-      squadHTML(v,B,vp,r, szur?(p=>aK.has(szerepKulcs(p))):null)}</div>`;
+  const test = (van && CSAK_ELTERES)
+    ? kozosBlokkHTML(kozos, h, r, szabaly) +
+      `<div class="sqwrap">${elteresOszlopHTML(h,A,bK,hp,r,szabaly)}${elteresOszlopHTML(v,B,aK,vp,r,szabaly)}</div>`
+    : ACCHINT + `<div class="sqwrap">${squadHTML(h,A,hp,r)}${squadHTML(v,B,vp,r)}</div>`;
+  // az allas es a kapcsolo EGY dobozban all: igy nem harom kulon kozepre
+  // zart sor lebeg egymas alatt, es a gomb is odatartozik, ahova valo
+  $('mBody').innerHTML = `<div class="meccsfej">${allasHTML(h,v,hp,vp,elo)}${gomb}</div>` + test;
 }
 
 // Egyseges meccs-nezet: fordulohu keretek. Elo fordulonal az elo folyamat

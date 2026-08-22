@@ -173,14 +173,50 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .mscore .csapat{font-weight:700;font-size:14px}
 .mscore.elo .score{border-color:var(--amber);border-style:dashed}
 
-/* "Kulonbsegek" szuro a meccs-adatlapon (csak salary cap ligaban van ertelme:
-   ott szerepelhet ugyanaz a jatekos mindket keretben). */
-.szurosor{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
-.szurogomb{background:var(--panel2);border:1px solid var(--line);color:var(--ink);
-  font:700 12px Inter;padding:7px 15px;border-radius:999px;cursor:pointer;transition:border-color .12s}
-.szurogomb:hover{border-color:var(--dim)}
+/* ===== Meccsfej: az allas es a "Kulonbsegek" kapcsolo EGY dobozban =====
+   Korabban harom kulon kozepre zart sor lebegett egymas alatt (allas, gomb,
+   sugosor), sok ures terrel; igy egy egysegkent olvashato blokk. */
+.meccsfej{background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+  padding:12px 14px;margin-bottom:14px}
+.meccsfej .mscore{margin:0}
+.meccsfej .score{background:var(--panel);font-size:18px}
+.szurosor{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;
+  margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
+.szurogomb{background:var(--panel);border:1px solid var(--dim);color:var(--ink);
+  font:700 12.5px Inter;padding:8px 18px;border-radius:999px;cursor:pointer;
+  transition:background .12s,border-color .12s,color .12s}
+.szurogomb:hover{border-color:var(--amber);color:var(--amber)}
 .szurogomb.on{background:var(--amber);border-color:var(--amber);color:#12140F}
 .szuroinfo{font-size:11.5px;color:var(--dim);text-align:center}
+
+/* Kozos jatekosok blokkja: egyszer szerepelnek, halvanyitva - a ket keretben
+   ugyanazt hozzak, tehat a meccs szempontjabol semlegesek. */
+.kozosblokk{border:1px dashed var(--line);border-radius:10px;padding:0 12px 6px;margin-bottom:14px}
+.kozoshead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
+  padding:10px 2px 8px;border-bottom:1px solid var(--line)}
+.kozoshead b{font:700 12px 'JetBrains Mono';letter-spacing:0;text-transform:none;color:var(--dim)}
+.kozosblokk .plr,.kozosblokk .pts,.kozosblokk .nm{color:var(--dim)}
+/* Szeles kepernyon tobb oszlopba rendezzuk, kulonben a pont messze
+   elszakadna a nevtol. A kinyilo bontas a teljes szelesseget kapja. */
+.kozossorok{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0 20px}
+.kozossorok .accpanel{grid-column:1/-1;margin-left:0}
+/* a magyarszabaly sora a kozos blokkban: nem jatekos, ezert sajat jelolese van */
+.szabalysor{cursor:default}
+.szabalysor .ppos{color:var(--win);border-color:var(--win)}
+.szabalysor .nm{font-size:12.5px}
+.meccsfej{padding:10px 14px}
+
+/* Szamla a kulonbseg-nezet oszlopa alatt: eltero + kozos + magyarszabaly =
+   a csapat teljes pontszama. Egy csoportban, hogy ne csikozzon. */
+.szamla{margin-top:10px;border-top:1px solid var(--line);padding-top:4px}
+.szamla .sumline{border-top:0;margin-top:0;padding:3px 4px}
+.szamla .sumline.kiemelt b{color:var(--ink);font-size:13.5px}
+.szamla .sumline.halvany{opacity:.7}
+.szamla .sumline.vegosszeg{border-top:1px solid var(--line);margin-top:5px;padding-top:7px}
+.szamla .sumline.vegosszeg span{color:var(--ink)}
+.szamla .sumline.vegosszeg b{color:var(--amber);font:700 15px 'JetBrains Mono'}
+.ureseltares{font-size:12px;color:var(--dim);padding:10px 4px;font-style:italic}
 .accpanel{margin:0 0 6px 24px;border-left:2px solid var(--line);padding:4px 10px 6px;background:var(--panel2);border-radius:0 0 6px 6px}
 .accload{font-size:12px;color:var(--dim);padding:4px 0}
 .acctable{width:100%;border-collapse:collapse;font-size:12px}
