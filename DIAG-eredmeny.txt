@@ -1,0 +1,35 @@
+=== a meres ideje: 2026-08-23 22:04 UTC
+=== draft game: {"current_event": 1, "current_event_finished": false, "next_event": 2, "processing_status": "n", "trades_time_for_approval": true, "waivers_processed": false}
+
+=== NAPONKENT (klasszikus FPL event-status) -> HTTP 200
+    2026-08-21  bonus_added=False points='p'
+    2026-08-22  bonus_added=False points='p'
+    2026-08-23  bonus_added=False points='p'
+    2026-08-24  bonus_added=False points=''
+    leagues=''
+
+=== MECCSENKENT (draft fixtures) -> HTTP 200
+    id=1   2026-08-21T19:00  started=True  finished_provisional=True  finished=False
+    id=4   2026-08-22T11:30  started=True  finished_provisional=True  finished=False
+    id=3   2026-08-22T14:00  started=True  finished_provisional=True  finished=False
+    id=5   2026-08-22T14:00  started=True  finished_provisional=True  finished=False
+    id=6   2026-08-22T14:00  started=True  finished_provisional=True  finished=False
+    id=2   2026-08-22T16:30  started=True  finished_provisional=True  finished=False
+    id=7   2026-08-23T13:00  started=True  finished_provisional=True  finished=False
+    id=8   2026-08-23T13:00  started=True  finished_provisional=True  finished=False
+    id=9   2026-08-23T15:30  started=True  finished_provisional=True  finished=False
+    id=10  2026-08-24T19:00  started=False finished_provisional=False finished=False
+
+=== MECCSENKENT (klasszikus FPL fixtures) -> HTTP 200
+    id=1    2026-08-21T19:00  started=True  finished_provisional=True  finished=False
+    id=4    2026-08-22T11:30  started=True  finished_provisional=True  finished=False
+    id=3    2026-08-22T14:00  started=True  finished_provisional=True  finished=False
+    id=5    2026-08-22T14:00  started=True  finished_provisional=True  finished=False
+    id=6    2026-08-22T14:00  started=True  finished_provisional=True  finished=False
+    id=2    2026-08-22T16:30  started=True  finished_provisional=True  finished=False
+    id=7    2026-08-23T13:00  started=True  finished_provisional=True  finished=False
+    id=8    2026-08-23T13:00  started=True  finished_provisional=True  finished=False
+    id=9    2026-08-23T15:30  started=True  finished_provisional=True  finished=False
+    id=10   2026-08-24T19:00  started=False finished_provisional=False finished=False
+
+--- vege ---
