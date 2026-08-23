@@ -123,13 +123,21 @@ Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő 
   pedig egy súgósor áll („Kattints egy játékosra a pontjai részletezéséhez.”). A nyíl azért a név után van és nem
   a sor végén, mert ott védett: a szűk oszlopban az ellipszis előbb a klub-címkét vágja le.
   Egérrel a sor ki is világosodik, de a nyíl a lényeg — **telefonon nincs hover**.
-- **Ha nincs pontot érő esemény, az üzenet megmondja, miért** — hat eset, mert a 0-nak
+- **Ha nincs pontot érő esemény, az üzenet megmondja, miért** — hét eset, mert a 0-nak
   többféle oka lehet: *a klubnak nincs meccse ebben a fordulóban* (elmaradt/elhalasztott,
   a PL-en üres forduló), *a meccs még nem kezdődött el* (a kezdés időpontjával),
-  *a meccs zajlik, eddig nincs pontot érő eseménye*, *a meccs véget ért, de a pontok
-  feldolgozása még tart*, *lejátszotta a meccset pont nélkül*, vagy *nem lépett pályára*. Az elsőt a forduló meccslistája mondja meg (lásd lent),
-  a következőket a kezdési idő, a meccs állapota és a lejátszottság, az utolsó kettőt a
-  bontás játszott-perc sora (ez 0 perccel is megjön, ha a játékos végig a kispadon ült).
+  *a meccs elmaradt, új időpontja nincs kitűzve*, *a meccs zajlik, eddig nincs pontot érő
+  eseménye*, *a meccs véget ért, de a pontok feldolgozása még tart*, *lejátszotta a
+  meccset pont nélkül*, vagy *nem lépett pályára*. Az elsőt a forduló meccslistája mondja
+  meg (lásd lent), a következőket a kezdési idő, a meccs állapota és a lejátszottság, az
+  utolsó kettőt a bontás játszott-perc sora (ez 0 perccel is megjön, ha a játékos végig a
+  kispadon ült).
+
+  Két helyen az **idő** is számít a szövegben. A „nincs meccse" lezárt fordulóban múlt
+  időben áll, mert a „nem játszik" hetekkel később hamis. A „még nem kezdődött el" pedig
+  csak addig szól kezdési időpontról, amíg a dátum a jövőben van: az MLSZ éjfélt ír a
+  kitűzetlen kezdésre, és az a nap el is múlhat — onnantól a mondat elmaradt meccsről
+  szól, nem ígér kezdést.
 
   **Az `is_played` NEM azt jelenti, hogy a meccsnek vége.** Az MLSZ már a meccs *közben*
   igazra billenti. Emiatt írtuk élő forduló alatt gyakorlatilag mindenkire, hogy
@@ -207,7 +215,7 @@ teljes képernyős, ragadós × gombbal.
 | `funtasy.css` | A közös stíluslap (mindhárom oldal ezt tölti). |
 | `funtasy.js` | A közös motor: tabella, meccspanelek, mátrix, élő-jelölés (`FunTasy.create(...)`), a pont-bontás accordionja és a **ligalista** (`LIGAK`), amiből a ligaváltó sáv és a kezdőlap kártyái készülnek. |
 | `results.json` | H2H eredmények archívuma: `{updated, provisional:[...], schedule:{"1":[[hazai,vendég,hp,vp],...]}}`. Az oldal ebből tölt, felülírva a beégetett menetrendet. A `provisional` a még le nem zárult fordulók listája. |
-| `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”), `start`-ot (az adott fordulós meccsének kezdése), `vege: true`-t (a meccse már lement, akkor is, ha a pontok még nincsenek feldolgozva) és — ha a klubnak nincs meccse a fordulóban — `nogame: true`-t is tartalmaz. A régebbi, e mezők nélküli rekordokat az oldal tolerálja. |
+| `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”), `start`-ot (az adott fordulós meccsének kezdése), `vege: true`-t (a meccse már lement, akkor is, ha a pontok még nincsenek feldolgozva) és — ha a klubnak nincs meccse a fordulóban — `nogame: true`-t is tartalmaz. A régebbi, e mezők nélküli rekordokat az oldal tolerálja, de a gyűjtő nem hagyja őket úgy: az olyan fordulót, amelynek a rekordjaiban nincs `played`, egyszer újra lekéri a meccslistával együtt, és pótolja a hiányzó mezőket. |
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
 | `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
 | `collect_draft.py` | GitHub Actions: az FPL Draft liga adatai. A résztvevők valódi nevét és az `entry_id`-t kiszűri (a repó publikus). |
@@ -453,9 +461,11 @@ időpont többé, hanem annyit jelent, hogy a meccs elmaradt és újat nem tűzt
 | lezárt (a meccsek `completed`) | 17,5 KB | 118,8 KB |
 
 A különbség oka: a **lejátszott** meccs mellé az API a két csapat teljes objektumát is
-beteszi, benne a klublogóval, base64 képadatként. Ezért a gyűjtő a meccslistát **csak az
-élő fordulóra** kéri; a lezártakhoz a forduló alatt már elmentett jelzés marad meg
-(`collect.py` → `orokit_nogame`).
+beteszi, benne a klublogóval, base64 képadatként. Ezért a gyűjtő a meccslistát rendes
+esetben **csak az élő fordulóra** kéri; a lezártakhoz a forduló alatt már elmentett
+jelzés marad meg (`collect.py` → `orokit_meccsjelzok()`). Egy kivétel van: a régi
+formátumú fordulót (nincs a rekordokban `played`) a gyűjtő **egyszer** meccslistával
+együtt kéri le, hogy a hiányzó jelzések bekerüljenek.
 
 ### Pont-bontás (game-player-stats)
 A felület játékos-modalja ezt hívja (a bundle-ből visszafejtve, 2026-08-21):
@@ -520,8 +530,9 @@ legközelebb pályára lép** — ami egy egész hetet is csúszhat.
 Ezért a lezárás-vizsgálat kihagyja azt, akinek nincs meccse (`nogame`). Enélkül az 5.
 forduló a Honvéd következő meccséig, nagyjából egy hétig a `provisional` listában maradt
 volna, pedig minden meccse lement. A jelzést a **tárolt keretből** olvassa, nem a friss
-válaszból: a meccslistát csak az élő fordulóra kérjük le, utána az `orokit_meccsjelzok()`
-hozza át a korábbi pillanatképből.
+válaszból: a meccslistát rendes esetben csak az élő fordulóra kérjük le (a lezárthoz
+hatszor akkora válasz jönne), utána az `orokit_meccsjelzok()` hozza át a korábbi
+pillanatképből.
 
 #### Biztonsági háló: az MLSZ saját forduló-objektuma
 

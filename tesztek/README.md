@@ -26,7 +26,7 @@ Az `api_get`-et mock váltja ki, a `collect.py` egy ideiglenes könyvtárban fut
 |---|---|
 | `gyujto_onjavitas.py` | Ha az MLSZ utólag korrigál egy régi fordulót, a gyűjtő átvezeti-e — az eredménybe, a keretbe és a keresztellenőrzésbe is. Ez találta meg a `rankings()` `%5B`-formázási hibáját, ami miatt a backfill-ág élesben sosem futott le. |
 | `gyujto_ideiglenes.py` | A `provisional` lista kezelése: mi kerül bele, mi kerül ki, és mi marad változatlan hiányos adatnál. |
-| `gyujto_lezaras.py` | A forduló-lezárás hét esete (lásd lent). |
+| `gyujto_lezaras.py` | A forduló-lezárás kilenc esete (lásd lent). |
 
 ### `gyujto_lezaras.py` esetei
 

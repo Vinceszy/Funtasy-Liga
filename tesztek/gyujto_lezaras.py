@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ot allitas ellenorzese a gyujto fordulo-lezarasarol.
+"""Kilenc allitas ellenorzese a gyujto fordulo-lezarasarol.
 
 R1: az ELSO futasnal, amikor meg nincs korabbi provisional bejegyzes, egy
     elhasalt keret-lekeres utan a fordulo veglegesnek irodik-e be.

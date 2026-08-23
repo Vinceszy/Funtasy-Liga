@@ -12,9 +12,10 @@ letiltaná az adatközponti IP-ket): a fantasy.mlsz.hu-n futtatva lekéri mind a
 `round` mezőjét (az oldal „Aktuális keret" fülén a felirat forduló-szám nélkül jelenik
 meg), és a játékos-rekordokból hiányzik az `id`, a `played`, a `start` és a `nogame`
 mező (a pont-bontás accordionhoz, a „még nem játszott" kötőjelhez és a meccs-állapot
-üzeneteihez). Működésbeli hibát egyik sem okoz —
-az oldal e mezők nélkül is működik, a bontást név alapján oldja fel —, és a következő
-szerveres futás mindent helyreállít.*
+üzeneteihez). Működésbeli hibát egyik sem okoz — az oldal e mezők nélkül is működik, a
+bontást név alapján oldja fel —, és a **következő szerveres futás pótolja őket**: a
+gyűjtő külön keresi az olyan fordulót, amelynek a rekordjaiban nincs `played`, és azt
+újra lekéri, a meccslistával együtt.*
 
 ---
 
