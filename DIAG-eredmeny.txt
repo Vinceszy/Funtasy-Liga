@@ -1,0 +1,16 @@
+=== aktualis fordulo az MLSZ szerint: {"id": 85, "round_number": 5, "start_at": "2026-08-18T10:00:00+02:00", "end_at": "2026-08-24T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-08-21T15:30:00+02:00"}
+=== peterkmrs user_id = None (HTTP 200)
+
+=== 3. fordulo (round_id=81) -> HTTP 200, 0 jatekos
+    jatekos                    csapat   played  pont    meccs
+    current_round kulcsok: []
+
+=== 4. fordulo (round_id=83) -> HTTP 200, 0 jatekos
+    jatekos                    csapat   played  pont    meccs
+    current_round kulcsok: []
+
+=== 5. fordulo (round_id=85) -> HTTP 200, 0 jatekos
+    jatekos                    csapat   played  pont    meccs
+    current_round kulcsok: []
+
+--- vege ---
