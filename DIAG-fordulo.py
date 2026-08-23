@@ -31,13 +31,15 @@ comp = next((c for c in ((j or {}).get("data") or []) if c.get("id") == 3), {})
 print("=== aktualis fordulo az MLSZ szerint: %s" % json.dumps(comp.get("current_round"), ensure_ascii=False))
 
 # felhasznalo-azonosito
-st, j = hoz(BASE + "rankings?include=user_team.user.id&page=1&per_page=50")
-uid = None
-for d in ((j or {}).get("data") or []):
-    u = ((d.get("user_team") or {}).get("user") or {})
-    if u.get("username") == "peterkmrs":
-        uid = u.get("id")
-print("=== peterkmrs user_id = %s (HTTP %s)" % (uid, st))
+UNAME = "peterkmrs"
+st, j = hoz(BASE + "rankings?include=user_team.user.id,summary_statistics,ranking,rounds,"
+            "competition_rank&page=1&per_page=5&filter%5Bsearch%5D=" + urllib.parse.quote(UNAME))
+rows = (j or {}).get("data") or []
+sor = next((d for d in rows
+            if ((d.get("user_team") or {}).get("user") or {}).get("username") == UNAME),
+           rows[0] if rows else {})
+uid = (((sor.get("user_team") or {}).get("user") or {}).get("id"))
+print("=== %s user_id = %s (HTTP %s, %d talalat)" % (UNAME, uid, st, len(rows)))
 
 for r_no in (3, 4, 5):
     rid = 75 + 2 * r_no
