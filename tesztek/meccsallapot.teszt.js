@@ -114,9 +114,11 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi } = require('./kozos');
   const GW = Object.keys(hist.rounds)[0];
   const elemek = [...new Set(Object.values(hist.rounds[GW]).flat().map(x => x.e))];
   let kesz = false;
-  await p2.route('**draft.premierleague.com/api/**', route => {
+  await p2.route('**premierleague.com/api/**', route => {
     const u = decodeURIComponent(route.request().url());
     const json = b => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
+    // a napi pontzaras (klasszikus FPL) - a PL-oldal ezt is lekeri
+    if (/event-status/.test(u)) return json({ status: [] });
     if (/\/api\/game/.test(u)) return json({ current_event: +GW, current_event_finished: kesz });
     if (/\/live/.test(u)){
       const el = {}; elemek.forEach(id => { el[id] = { stats: { total_points: 6, minutes: 90 }, explain: [] }; });

@@ -150,8 +150,11 @@ const ell = (cimke, kapott, vart) =>
   ];
   const page2 = await browser.newPage();
   page2.on('pageerror', e => hibak.push('PL pageerror: ' + e.message));
-  await page2.route('**://draft.premierleague.com/**', route => {
+  // A napi pontzaras a KLASSZIKUS FPL-rol jon (fantasy.premierleague.com),
+  // ezert nem eleg a draft hosztot elfogni.
+  await page2.route('**://*.premierleague.com/**', route => {
     const u = route.request().url();
+    if (u.includes('event-status')) return route.fulfill({ json: { status: [] } });
     // a lekeresek gyorsitotar-toro parametert kapnak, tehat nem lehet a
     // vegzodesre illeszteni ("/game" helyett "/game?fpl_=...")
     if (/\/game(\?|$)/.test(u)) return route.fulfill({ json: { current_event: 1, current_event_finished: false } });

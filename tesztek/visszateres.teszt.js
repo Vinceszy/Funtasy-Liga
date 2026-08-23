@@ -78,9 +78,11 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi } = require('./kozos');
   const hist = require(require('path').join(__dirname,'..','draft_history.json'));
   const GW = Object.keys(hist.rounds)[0];
   const elemek = [...new Set(Object.values(hist.rounds[GW]).flat().map(x => x.e))];
-  await p.route('**draft.premierleague.com/api/**', route => {
+  await p.route('**premierleague.com/api/**', route => {
     const u = route.request().url();
     const json = b => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
+    // a napi pontzaras (klasszikus FPL) - a PL-oldal ezt is lekeri
+    if (/event-status/.test(u)) return json({ status: [] });
     if (/\/api\/game/.test(u)) return json({ current_event: +GW, current_event_finished: false });
     if (/\/live/.test(u)){
       liveHivas++; pont++;

@@ -70,7 +70,7 @@ function keret(opts){
 
   // =============== 1-2) gyorsitotar-tores ===============
   console.log('\n--- Gyorsítótár: minden lekérés friss URL-re megy ---');
-  for (const [liga, minta] of [['nb1', '**fantasy-api.mlsz.hu/**'], ['pl', '**draft.premierleague.com/**']]){
+  for (const [liga, minta] of [['nb1', '**fantasy-api.mlsz.hu/**'], ['pl', '**premierleague.com/**']]){
     const p = await br.newPage();
     const urlek = [], cacheMod = new Set();
     await p.route(minta, route => {
@@ -79,6 +79,7 @@ function keret(opts){
       const json = b => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
       const u = decodeURIComponent(req.url());
       if (liga === 'pl'){
+        if (/event-status/.test(u)) return json({ status: [] });
         if (/\/api\/game/.test(u)) return json({ current_event: 1, current_event_finished: false });
         if (/\/live/.test(u)) return json({ elements: {} });
         if (/\/fixtures/.test(u)) return json([]);

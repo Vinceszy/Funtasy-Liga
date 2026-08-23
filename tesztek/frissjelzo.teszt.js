@@ -18,9 +18,11 @@ async function plMeccs(br, keses){
   const GW = Object.keys(hist.rounds)[0];
   const elemek = [...new Set(Object.values(hist.rounds[GW]).flat().map(x => x.e))];
   let elsoKesz = false;
-  await p.route('**draft.premierleague.com/api/**', async route => {
+  await p.route('**premierleague.com/api/**', async route => {
     const u = decodeURIComponent(route.request().url());
     const json = b => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
+    // a napi pontzaras (klasszikus FPL) - a PL-oldal ezt is lekeri
+    if (/event-status/.test(u)) return json({ status: [] });
     if (/\/api\/game/.test(u)) return json({ current_event: +GW, current_event_finished: false });
     if (/\/live/.test(u)){
       // a betoltesi lekerest nem lassitjuk, csak a modalbol indulot

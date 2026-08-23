@@ -591,16 +591,41 @@ A bónusz nem úgy végleges, mint a többi pont. Az FPL **a meccs alatt is szá
 BPS-táblából, és bele is teszi a `live` végpont `explain` mezőjébe (`stat: "bonus"`) —
 tehát az oldalunk kiírja, miközben még változhat. Három állapot van, a meccs jelzőiből:
 
-| állapot | a meccs jelzői | mit jelent |
+| állapot | miből látszik | mit jelent |
 |---|---|---|
-| a meccs alatt még változik | `started`, még nem `finished_provisional` | percről percre változhat |
-| lefújva, még nem hivatalos | `finished_provisional`, még nem `finished` | rögzült, de az FPL még átnézi |
-| hivatalos | `finished` | végleges |
+| a meccs alatt még változik | a meccs `started`, de még nem `finished_provisional` | percről percre változhat |
+| lefújva, a nap zárásáig nem hivatalos | a meccs `finished_provisional`, de a **napja** még nincs lezárva | rögzült, de a napzárásig még módosulhat |
+| fix | a **nap** le van zárva (`bonus_added`) | innentől nem változik |
 
 A pont-bontásban a bónusz sora **színt és rövid szöveget** kap az első két állapotban; a
 harmadik szándékosan **jelöletlen**. A szezon nagy részében minden bónusz végleges, így a
 jelölés ritka, és ezért feltűnő. Szín önmagában sosem áll: minden jelöléshez tartozik
 szöveg is.
+
+**A harmadik állapotot a NAP mondja meg, nem a meccs.** Az FPL naponta zár: az adott este
+egyszerre nézi át az aznapi összes meccset, és onnantól a bónusz fix. Erre külön végpont
+van — de **csak a klasszikus FPL-ben**, a Draftban `event-status` 404-et ad:
+
+```
+GET https://fantasy.premierleague.com/api/event-status/
+{"status":[{"bonus_added":false,"date":"2026-08-21","event":1,"points":"p"}, ...]}
+```
+
+A `points: "p"` a PROVISIONAL, és a `bonus_added` billen igazra a napzáráskor. Ez ugyanaz,
+amit a Draft saját felülete is kiír naponként („Day / Match Points / Bonus Points" táblázat,
+PROVISIONAL felirattal). Ugyanarról a bajnokságról van szó: a bónuszt egyszer véglegesítik,
+mindkét játék abból él.
+
+Először a meccs `finished` mezőjét használtuk erre — az **nem ugyanaz**. Méréskor
+(2026-08-23 este) mind a kilenc lejátszott meccs `finished_provisional`, de egyik sem
+`finished`, a péntek esti sem, két nappal később. A meccs jelzője csak **tartalék**: ha a
+napi adat nem jön meg, arra esünk vissza (inkább jelezzünk feleslegesen, mint hogy fixnek
+mondjunk valamit, ami még változhat).
+
+**A napi lekérést nem várjuk meg.** Másodlagos jelzés, csak a bónusz sorának jelöléséhez
+kell, amit a felhasználó kattintásra lát — ha a pontfrissítés megvárná, egy lassú vagy
+elhasalt lekérés a főfrissítést is lassítaná (a „frissítés…" jelzés akkor is felvillanna,
+amikor a pontok már rég megjöttek).
 
 **A sort a saját meccséhez kötjük.** Az `explain` fordulónként meccsekre bontva jön,
 `[[stat-lista, meccs_id]]` alakban — a második elem a meccs azonosítója. Ez dupla
