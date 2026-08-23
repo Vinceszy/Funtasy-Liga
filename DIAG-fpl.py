@@ -40,18 +40,13 @@ for s in srcs[:10]:
         print("    + %s (%s byte)" % (s[:70], len(t)))
 print("=== osszes JS: %s byte" % len(js))
 
-for szo in ("PROVISIONAL", "Provisional", "provisional", "Bonus Points", "Match Points",
-            "bonus_added", "event-status", "eventStatus"):
-    db = js.count(szo)
-    print("\n=== %-14s %sx" % (szo, db))
-    if not db:
-        continue
-    latott = set()
-    for m in list(re.finditer(re.escape(szo), js))[:6]:
-        k = js[max(0, m.start() - 180):m.start() + 180].replace("\n", " ")
-        if k in latott:
-            continue
-        latott.add(k)
-        print("    ...%s..." % k)
+# a sor-komponens TELJESEN: mit ir a ket oszlop
+for szo, elotte, utana in (("hasBonusAdded", 200, 1400),
+                           ("Bonus Points", 300, 1500),
+                           ("l:`Live`", 200, 600)):
+    print("\n=== %s (%sx)" % (szo, js.count(szo)))
+    for m in list(re.finditer(re.escape(szo), js))[:2]:
+        print("    %s" % js[max(0, m.start() - elotte):m.start() + utana].replace("\n", " "))
+        print("    " + "-" * 60)
 
 print("\n--- vege ---")
