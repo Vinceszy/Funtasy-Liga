@@ -1,66 +1,36 @@
-=== JS-csomag: 1008554 byte
+=== competitions?include=rounds,current_round -> HTTP 200
+    verseny kulcsok: ['current_round', 'end_at', 'has_competition_break', 'id', 'is_active', 'name', 'priority', 'rounds', 'selector_icon', 'selector_icon_color', 'start_at', 'teams']
 
-=== 1) Minden 'round'-ot tartalmazo azonosito a csomagban
-      Round                                  5x
-      Rounds                                 4x
-      allowed_substitution_in_current_round  2x
-      around                                 1x
-      background                             112x
-      backgroundColor                        86x
-      backgroundColorClasses                 41x
-      backgroundColorStyles                  41x
-      backgroundImage                        1x
-      currentCompetitionRounds               1x
-      current_round                          20x
-      foreground                             1x
-      hideDelimiterBackground                2x
-      is_allowed_to_purchase_player_in_current_round 1x
-      is_allowed_to_sell_player_in_current_round 1x
-      linear__background                     1x
-      noRounds                               2x
-      round                                  281x
-      roundPlayedPlayerCount                 2x
-      roundRank                              2x
-      roundValue                             6x
-      round_number                           2x
-      round_played_player_count              1x
-      round_short                            1x
-      round_statistics                       1x
-      rounded                                64x
-      roundedBar                             2x
-      roundedClasses                         28x
-      rounding                               11x
-      roundingIncrement                      1x
-      roundingMethod                         5x
-      roundingMode                           1x
-      roundingPriority                       1x
-      rounds                                 9x
-      track__background                      2x
-      withBackground                         2x
+--- current_round ---
+    {
+ "id": 85,
+ "round_number": 5,
+ "start_at": "2026-08-18T10:00:00+02:00",
+ "end_at": "2026-08-24T10:00:00+02:00",
+ "is_transfers_closed": true,
+ "closed_transfers_at": "2026-08-21T15:30:00+02:00"
+}
 
-=== 2) A 'competitions' szo minden elofordulasanak kornyeke
-      ...t e.getUserInfo(),t.value=!0}catch(u){console.error(u)}finally{n.value=!1}})(),o)}}),Qn="/competitions";function $H(){return Ht({url:`${Qn}?include=teams,teams.media,rounds,current_round`,method:"get"...
-      ...urn e&&!si.value.length&&a(),{fetch:a,rounds:Ul,maleTeams:Nm,isFetching:hc,femaleTeams:Mm,competitions:si,maleCompetitionId:Lm,femaleCompetitionId:M_,fetchUserTeamHistory:async s=>{if(!(L_.value===s.i...
-      ...si.value.find(c=>c.id===s))==null?void 0:u.rounds}}},Wi=ne(),ay=()=>{const e=Gd(),t=Ro(),{competitions:n}=qx(),a=I(()=>n.value.find(i=>i.id==Wi.value)),r=async(i,l=!0)=>{const o=Number(i);Number.isFin...
-      ...Form:n}=jj(),a=IH("post","https://fantasy-api.mlsz.hu/login",n()),r=Gd(),i=Ro(),l=ne(!1),{competitions:o}=qx(),{setActiveCompetition:s,activeCompetitionId:u}=ay();return{login:async()=>{try{if(l.value...
+--- rounds: 5 db ---
+    egy fordulo osszes mezoje:
+{
+ "id": 77,
+ "round_number": 1,
+ "start_at": "2026-07-21T10:00:00+02:00",
+ "end_at": "2026-07-28T10:00:00+02:00",
+ "is_transfers_closed": true,
+ "closed_transfers_at": "2026-07-24T18:00:00+02:00"
+}
 
-=== 3) Lezartsagra utalo mezonevek
-    \bis_[a-z_]*\b           ['is_allowed_to_purchase_player_in_current_round', 'is_allowed_to_sell_player_in_current_round', 'is_can_be_purchased', 'is_data_handling_consent_accepted', 'is_marketing_consent_accepted', 'is_terms_and_conditions_accepted', 'is_transfers_closed', 'is_weekly_transfers_resettable']
-    \b[a-z_]*closed[a-z_]*\b ['closed', 'is_transfers_closed']
-    \b[a-z_]*finish[a-z_]*\b ['finish', 'finished', 'onfinish']
-    \b[a-z_]*deadline[a-z_]*\b []
-    \b[a-z_]*status[a-z_]*\b ['status']
+    minden mezonev: ['closed_transfers_at', 'end_at', 'id', 'is_transfers_closed', 'round_number', 'start_at']
 
-=== 4) A ranglista a kovetkezo fordulokra
-    fordulo 4 (round_id=83) HTTP 404   pont=None     fordulok=[]
-    fordulo 5 (round_id=85) HTTP 404   pont=None     fordulok=[]
-    fordulo 6 (round_id=87) HTTP 404   pont=None     fordulok=[]
-    fordulo 7 (round_id=89) HTTP 404   pont=None     fordulok=[]
+    fordulonkent (elso 12):
+      {"closed_transfers_at": "2026-07-24T18:00:00+02:00", "end_at": "2026-07-28T10:00:00+02:00", "id": 77, "is_transfers_closed": true, "round_number": 1, "start_at": "2026-07-21T10:00:00+02:00"}
+      {"closed_transfers_at": "2026-07-31T18:00:00+02:00", "end_at": "2026-08-04T10:00:00+02:00", "id": 79, "is_transfers_closed": true, "round_number": 2, "start_at": "2026-07-28T10:00:00+02:00"}
+      {"closed_transfers_at": "2026-08-07T15:30:00+02:00", "end_at": "2026-08-10T10:00:00+02:00", "id": 81, "is_transfers_closed": true, "round_number": 3, "start_at": "2026-08-04T10:00:00+02:00"}
+      {"closed_transfers_at": "2026-08-14T15:30:00+02:00", "end_at": "2026-08-18T10:00:00+02:00", "id": 83, "is_transfers_closed": true, "round_number": 4, "start_at": "2026-08-10T10:00:00+02:00"}
+      {"closed_transfers_at": "2026-08-21T15:30:00+02:00", "end_at": "2026-08-24T10:00:00+02:00", "id": 85, "is_transfers_closed": true, "round_number": 5, "start_at": "2026-08-18T10:00:00+02:00"}
 
-=== 5) A ranglista teljes user_team objektuma (elso helyezett)
-    data kulcsok: []
-    user_team kulcsok: []
-    round_statistics[0]: {}
-    meta: null
+=== kontroll: rankings HTTP 200, fordulok=[(5, 119.51), (4, 108.51)]
 
 --- vege ---
