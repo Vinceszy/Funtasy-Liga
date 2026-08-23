@@ -4,7 +4,8 @@
    fajlba, hogy a lapok ne tudjanak elcsuszni egymastol. Nincs build lepes:
    ez egy sima statikus fajl, amit a bongeszo <link>-kel tolt be. */
 :root{--bg:#0B1F16;--panel:#12291D;--panel2:#0E2418;--line:#2E4A38;--ink:#F2EFE6;--dim:#9DB3A4;
---amber:#FFB020;--magenta:#E5378B;--win:#3DDC84;--lose:#E5533D;--draw:#9DB3A4}
+--amber:#FFB020;--magenta:#E5378B;--win:#3DDC84;--lose:#E5533D;--draw:#9DB3A4;
+--valtozo:#FFC24B;--ideiglenes:#FF8A3D}
 /* ===== Liga-temak =====
    Az alapertelmezett (a :root fenti szinei) az NB1-oldal. A PL-oldal a
    body.liga-pl osztallyal a Premier League szinvilagara valt: lila alap,
@@ -51,6 +52,17 @@ td.rank{text-align:left;color:var(--dim);width:30px}
 tr.leader td.rank{color:var(--amber)}
 td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .pos{color:var(--win)}.neg{color:var(--lose)}
+/* A pont-bontas egy sora kaphat allapot-jelzest. Ma egy hasznalja: a PL
+   bonusz-sora. Az FPL a bonuszt a meccs alatt is szamolja a BPS-tablabol
+   (tehat percrol percre valtozhat), lefujaskor rogzul, es csak kesobb, az
+   atnezes utan lesz hivatalos. A HARMADIK allapot - a mar hivatalos bonusz -
+   szandekosan JELOLETLEN: a szezon nagy reszeben minden bonusz vegleges,
+   igy a jeloles ritka, es ezert feltuno.
+   A ket szin temafuggetlen (az --amber ligankent mast jelent), es sosem all
+   magaban: a sor neve melle mindig kerul rovid magyarazo szoveg is. */
+.acctable td.b-valtozik,.acctable .sormegj.b-valtozik{color:var(--valtozo)}
+.acctable td.b-ideiglenes,.acctable .sormegj.b-ideiglenes{color:var(--ideiglenes)}
+.acctable .sormegj{font-size:11px;font-weight:500}
 .clickable{cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .clickable:hover{color:var(--amber)}
 .form{display:inline-flex;gap:3px;vertical-align:middle}

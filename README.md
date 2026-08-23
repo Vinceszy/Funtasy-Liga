@@ -585,6 +585,34 @@ formázó jelnek olvasta (`ValueError`). A backfill-ág addig sosem futott le é
 nem derült ki; a körbeforgó ellenőrzés viszont minden futásban használja, így javítva
 lett (sztring-összefűzésre).
 
+### A bónuszpontok három állapota (PL)
+
+A bónusz nem úgy végleges, mint a többi pont. Az FPL **a meccs alatt is számolja** a
+BPS-táblából, és bele is teszi a `live` végpont `explain` mezőjébe (`stat: "bonus"`) —
+tehát az oldalunk kiírja, miközben még változhat. Három állapot van, a meccs jelzőiből:
+
+| állapot | a meccs jelzői | mit jelent |
+|---|---|---|
+| a meccs alatt még változik | `started`, még nem `finished_provisional` | percről percre változhat |
+| lefújva, még nem hivatalos | `finished_provisional`, még nem `finished` | rögzült, de az FPL még átnézi |
+| hivatalos | `finished` | végleges |
+
+A pont-bontásban a bónusz sora **színt és rövid szöveget** kap az első két állapotban; a
+harmadik szándékosan **jelöletlen**. A szezon nagy részében minden bónusz végleges, így a
+jelölés ritka, és ezért feltűnő. Szín önmagában sosem áll: minden jelöléshez tartozik
+szöveg is.
+
+**A sort a saját meccséhez kötjük.** Az `explain` fordulónként meccsekre bontva jön,
+`[[stat-lista, meccs_id]]` alakban — a második elem a meccs azonosítója. Ez dupla
+fordulónál számít, ahol egy játékosnak két meccse van, és a kettő külön állapotban lehet
+(mérve: az egyik lefújva, a másik még megy). Klub szerint összevonva ez elmosódna, ezért
+a bónusz állapota **meccsenként** (`LIVEMECCS`) áll, nem klubonként (`LIVEFX`).
+
+**Zsákutca, hogy ne kelljen újra megjárni:** a meccs saját `stats` tömbjében is van egy
+`bonus` tétel (a három legjobb BPS), de az **mindig ott van**, tehát a megléte nem jelzi,
+hogy a bónuszt véglegesítették. A Draft API-ban ez a tömb `{s, h, a}` alakú, nincs benne
+`identifier` kulcs, mint a klasszikus FPL-ben.
+
 ### Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva
 
 - `league/{id}/details` — résztvevők, menetrend, eredmények; **a valódi neveket is
@@ -675,7 +703,7 @@ tehát invazívabb átalakítás — külön körben érdemes.
 tesztek/futtat.sh
 ```
 
-Elindít egy helyi kiszolgálót a repó gyökerére, lefuttat mindent (3 gyűjtő- és 11
+Elindít egy helyi kiszolgálót a repó gyökerére, lefuttat mindent (3 gyűjtő- és 12
 böngészős tesztet), és összegez; a kilépőkód a bukott tesztek száma. Tesztenkénti
 bontás: `tesztek/README.md`.
 

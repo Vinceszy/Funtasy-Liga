@@ -56,4 +56,5 @@ Az `api_get`-et mock váltja ki, a `collect.py` egy ideiglenes könyvtárban fut
 | `keretbetoltes.teszt.js` | A meccs megnyitása a **fordulónkénti** keret-fájlt tölti-e le a teljes előzmény helyett — és a visszaesési út is működik-e. |
 | `kulonbseg.teszt.js` | A Különbségek nézet szerkezete gépen (két oszlop) és mobilon (közös blokk + két oszlop). |
 | `magyarszabaly.teszt.js` | A magyarszabály (+10) hol jelenik meg: közös tétel, ha mindkét keret kapja, különben mindkét oldalon az eltérők közt. |
+| `bonuszallapot.teszt.js` | A bónusz három állapota a PL-en: a meccs alatt még változik, lefújva még nem hivatalos, hivatalos = jelöletlen. Dupla fordulónál a két sor külön állapotot kaphat. |
 | `szurkites.teszt.js` | A közös játékosok halványítása gépen és mobilon — és hogy a halvány sor is nyitható marad. |

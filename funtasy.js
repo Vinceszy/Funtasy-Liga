@@ -364,6 +364,11 @@
      Ha nincs egyetlen pontot ero sor sem, az `ures` szoveg jelenik meg: azt
      a hivo szamolja ki, mert az ok oldalanként mas adatbol derul ki (meg nem
      kezdodott a meccs / zajlik / lejatszotta pont nelkul / nem lepett palyara). */
+  /* Egy sor kaphat allapot-jelzest: `jelzes` a szinosztaly toldaleka
+     (pl. "valtozik" -> b-valtozik), `megjegyzes` a nev melle kerulo rovid
+     szoveg. A PL-oldal bonusz-sora hasznalja: az FPL a bonuszt a meccs
+     alatt is szamolja, es csak kesobb veglegesiti. A szin egyedul nem
+     ertheto, ezert mindig szoveg is tartozik hozza. */
   function accTable(sorok, ures) {
     if (!sorok || !sorok.length)
       return '<div class="accload">' + esc(ures || 'Ehhez a fordulóhoz nincs rögzített esemény.') + '</div>';
@@ -372,7 +377,11 @@
       var s = sorok[i];
       var szam = (typeof s.points === 'number');
       var cls = szam ? (s.points > 0 ? 'pos' : (s.points < 0 ? 'neg' : '')) : '';
-      h += '<tr><td class="ev">' + esc(s.name) + '</td>' +
+      var jel = s.jelzes ? ' b-' + s.jelzes : '';
+      if (jel) cls += jel;
+      var megj = s.megjegyzes
+        ? ' <span class="sormegj' + jel + '">(' + esc(s.megjegyzes) + ')</span>' : '';
+      h += '<tr><td class="ev">' + esc(s.name) + megj + '</td>' +
            '<td>' + (s.value == null || s.value === '' ? '' :
                      (typeof s.value === 'number' ? fmt(s.value) : esc(String(s.value)))) + '</td>' +
            '<td class="' + cls + '">' + (szam ? fmt(s.points) : esc(String(s.points))) + '</td></tr>';
