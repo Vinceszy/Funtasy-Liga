@@ -1,0 +1,59 @@
+=== user_id = 5299
+
+=== 3. fordulo, az oldal include-ja (games nelkul) -> HTTP 200
+    Nfansu Njie            ETO   is_played=True  has_statistics=False pont=0     
+        first_played_at = 2026-08-15T00:00:00+02:00
+        round_id a valaszban = 81 | games = nem kertuk
+    Ádám Umathum           ETO   is_played=True  has_statistics=False pont=0     
+        first_played_at = 2026-08-15T00:00:00+02:00
+        round_id a valaszban = 81 | games = nem kertuk
+    Artúr Horváth          MTK   is_played=True  has_statistics=False pont=0     
+        first_played_at = 2026-08-07T17:30:00+02:00
+        round_id a valaszban = 81 | games = nem kertuk
+    Kristóf Hinora         MTK   is_played=True  has_statistics=False pont=0     
+        first_played_at = 2026-08-07T17:30:00+02:00
+        round_id a valaszban = 81 | games = nem kertuk
+
+=== 4. fordulo, az oldal include-ja (games nelkul) -> HTTP 200
+    Ádám Umathum           ETO   is_played=True  has_statistics=True  pont=4     
+        first_played_at = 2026-08-16T16:30:00+02:00
+        round_id a valaszban = 83 | games = nem kertuk
+    Artúr Horváth          MTK   is_played=True  has_statistics=False pont=0     
+        first_played_at = 2026-08-15T16:30:00+02:00
+        round_id a valaszban = 83 | games = nem kertuk
+    Kristóf Hinora         MTK   is_played=True  has_statistics=True  pont=2     
+        first_played_at = 2026-08-15T16:30:00+02:00
+        round_id a valaszban = 83 | games = nem kertuk
+    Zalán Márk Kerezsi     MTK   is_played=True  has_statistics=True  pont=6     
+        first_played_at = 2026-08-15T16:30:00+02:00
+        round_id a valaszban = 83 | games = nem kertuk
+
+=== 3. fordulo, meccslistaval -> HTTP 200
+    Nfansu Njie            ETO   is_played=True  has_statistics=False pont=0     
+        first_played_at = 2026-08-15T00:00:00+02:00
+        round_id a valaszban = 81 | games = [{"id": 493, "start_at": "2026-08-23T17:30:00+02:00", "status": "completed", "away_score": 0, "home_score": 3, "round_number": "5F", "home_team": {"id": 39, "name": "ETO", "short_name": "ETO", "logo":
+    Ádám Umathum           ETO   is_played=True  has_statistics=False pont=0     
+        first_played_at = 2026-08-15T00:00:00+02:00
+        round_id a valaszban = 81 | games = [{"id": 493, "start_at": "2026-08-23T17:30:00+02:00", "status": "completed", "away_score": 0, "home_score": 3, "round_number": "5F", "home_team": {"id": 39, "name": "ETO", "short_name": "ETO", "logo":
+    Artúr Horváth          MTK   is_played=True  has_statistics=False pont=0     
+        first_played_at = 2026-08-07T17:30:00+02:00
+        round_id a valaszban = 81 | games = [{"id": 425, "start_at": "2026-08-07T17:30:00+02:00", "status": "completed", "away_score": 3, "home_score": 2, "round_number": "3F", "home_team": {"id": 41, "name": "MTK", "short_name": "MTK", "logo":
+    Kristóf Hinora         MTK   is_played=True  has_statistics=False pont=0     
+        first_played_at = 2026-08-07T17:30:00+02:00
+        round_id a valaszban = 81 | games = [{"id": 425, "start_at": "2026-08-07T17:30:00+02:00", "status": "completed", "away_score": 3, "home_score": 2, "round_number": "3F", "home_team": {"id": 41, "name": "MTK", "short_name": "MTK", "logo":
+
+=== 4. fordulo, meccslistaval -> HTTP 200
+    Ádám Umathum           ETO   is_played=True  has_statistics=True  pont=4     
+        first_played_at = 2026-08-16T16:30:00+02:00
+        round_id a valaszban = 83 | games = [{"id": 433, "start_at": "2026-08-16T16:30:00+02:00", "status": "completed", "away_score": 1, "home_score": 1, "round_number": "4F", "home_team": {"id": 25, "name": "DVSC", "short_name": "DVSC", "logo
+    Artúr Horváth          MTK   is_played=True  has_statistics=False pont=0     
+        first_played_at = 2026-08-15T16:30:00+02:00
+        round_id a valaszban = 83 | games = [{"id": 437, "start_at": "2026-08-15T16:30:00+02:00", "status": "completed", "away_score": 1, "home_score": 1, "round_number": "4F", "home_team": {"id": 37, "name": "ÚJPEST", "short_name": "ÚJPEST", "
+    Kristóf Hinora         MTK   is_played=True  has_statistics=True  pont=2     
+        first_played_at = 2026-08-15T16:30:00+02:00
+        round_id a valaszban = 83 | games = [{"id": 437, "start_at": "2026-08-15T16:30:00+02:00", "status": "completed", "away_score": 1, "home_score": 1, "round_number": "4F", "home_team": {"id": 37, "name": "ÚJPEST", "short_name": "ÚJPEST", "
+    Zalán Márk Kerezsi     MTK   is_played=True  has_statistics=True  pont=6     
+        first_played_at = 2026-08-15T16:30:00+02:00
+        round_id a valaszban = 83 | games = [{"id": 437, "start_at": "2026-08-15T16:30:00+02:00", "status": "completed", "away_score": 1, "home_score": 1, "round_number": "4F", "home_team": {"id": 37, "name": "ÚJPEST", "short_name": "ÚJPEST", "
+
+--- vege ---
