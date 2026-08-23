@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""EGYSZERI felderites: a bonuszpontok harom allapota az FPL Draft API-ban.
+"""EGYSZERI felderites, 2. kor: hol latszik, hogy a bonusz mar hivatalos?
 
-Amit tudni akarunk:
- 1) a fixtures harom jelzoje (started / finished_provisional / finished)
-    tenyleg harom allapotot ad-e ki, es most eppen melyik hol tart;
- 2) az event/{gw}/live "explain" mezoje MILYEN szerkezetu - benne van-e a
-    meccs azonositoja, hogy egy bonusz-sort a sajat meccsehez tudjunk kotni
-    (dupla fordulonal ez donti el, melyik sor melyik allapotban van);
- 3) megjelenik-e a bonusz az explain-ben mar a meccs alatt.
+Az 1. kor: az explain szerkezete [[stat-lista, meccs_id]] - a sort tehat a
+sajat meccsehez lehet kotni. Minden lejatszott meccs most
+finished_provisional=True, finished=False.
+
+Most azt nezzuk:
+ a) van-e egyaltalan bonusz-sor az explain-ben (olyan jatekost keresunk,
+    akinek bonus > 0);
+ b) a MECCS sajat "stats" tombje mit tartalmaz - az FPL-ben ide a "bonus"
+    tetel csak akkor kerul be, amikor a bonuszt veglegesitettek, addig csak
+    "bps" van. Ha igy van, ez a keresett harmadik allapot jelzese.
 Csak olvas.
 """
 import json, urllib.request
@@ -25,41 +28,30 @@ def hoz(ut, timeout=60):
 
 
 st, game = hoz("game")
-print("=== game -> HTTP %s" % st)
-print("    %s" % json.dumps(game, ensure_ascii=False)[:400])
 gw = (game or {}).get("current_event")
+print("=== game: current_event=%s current_event_finished=%s processing_status=%s"
+      % (gw, (game or {}).get("current_event_finished"), (game or {}).get("processing_status")))
 
-for cimke, g in (("aktualis", gw), ("elozo", (gw - 1) if gw and gw > 1 else None)):
-    if not g:
-        continue
-    st, fx = hoz("event/%d/fixtures" % g)
-    print("\n=== %s fordulo (%s) fixtures -> HTTP %s, %s meccs" % (cimke, g, st, len(fx or [])))
-    if isinstance(fx, list) and fx:
-        print("    egy meccs OSSZES mezoje: %s" % sorted(fx[0]))
-        for m in fx:
-            print("      id=%-6s started=%-5s finished_prov=%-5s finished=%-5s kickoff=%s"
-                  % (m.get("id"), m.get("started"), m.get("finished_provisional"),
-                     m.get("finished"), m.get("kickoff_time")))
+st, fx = hoz("event/%d/fixtures" % gw)
+print("\n=== a MECCSEK sajat stats tombje (mi van benne, es benne van-e a bonus?)")
+for m in (fx or []):
+    stats = m.get("stats") or []
+    azonositok = [s.get("identifier") for s in stats]
+    print("    id=%-3s started=%-5s fin_prov=%-5s finished=%-5s  stats: %s"
+          % (m.get("id"), m.get("started"), m.get("finished_provisional"),
+             m.get("finished"), azonositok or "(ures)"))
+    if "bonus" in azonositok:
+        b = next(s for s in stats if s.get("identifier") == "bonus")
+        print("        bonus tetel: %s" % json.dumps(b, ensure_ascii=False)[:300])
 
-st, live = hoz("event/%d/live" % gw) if gw else (None, None)
+st, live = hoz("event/%d/live" % gw)
 el = (live or {}).get("elements") or {}
-print("\n=== aktualis fordulo live -> HTTP %s, %s jatekos" % (st, len(el)))
-minta = el.items() if isinstance(el, dict) else enumerate(el)
-db = 0
-for k, v in minta:
-    stats = (v or {}).get("stats") or {}
-    if not (stats.get("bonus") or stats.get("bps")):
-        continue
-    print("\n    elem %s: bonus=%s bps=%s total=%s"
-          % (k, stats.get("bonus"), stats.get("bps"), stats.get("total_points")))
-    print("      stats kulcsok: %s" % sorted(stats))
-    print("      explain NYERSEN: %s" % json.dumps(v.get("explain"), ensure_ascii=False)[:700])
-    db += 1
-    if db >= 3:
-        break
-if not db:
-    print("    (egy jatekosnak sincs bonus/bps erteke - a fordulo valoszinuleg meg el sem kezdodott)")
-    for k, v in list(minta)[:1]:
-        print("      minta elem %s: %s" % (k, json.dumps(v, ensure_ascii=False)[:500]))
+tetelek = el.items() if isinstance(el, dict) else list(enumerate(el))
+bonuszosak = [(k, v) for k, v in tetelek if ((v or {}).get("stats") or {}).get("bonus")]
+print("\n=== %s jatekosbol %s-nek van bonusza (bonus > 0)" % (len(tetelek), len(bonuszosak)))
+for k, v in bonuszosak[:4]:
+    s = v.get("stats") or {}
+    print("\n    elem %s: bonus=%s bps=%s total=%s" % (k, s.get("bonus"), s.get("bps"), s.get("total_points")))
+    print("      explain: %s" % json.dumps(v.get("explain"), ensure_ascii=False)[:600])
 
 print("\n--- vege ---")
