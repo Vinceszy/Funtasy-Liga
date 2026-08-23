@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-"""EGYSZERI felderites, 3. kor: HOL van a fordulo-szintu lezartsag?
+"""EGYSZERI felderites, 4. kor: mit tud a FORDULOROL az MLSZ frontendje?
 
-1-2. kor: nincs onallo rounds-vegpont (404), a verseny-objektum sincs
-kozvetlenul (404), a competitions lista nem ad fordulo-informaciot.
-Tehat ne talalgassuk a vegpontokat: toltsuk le az MLSZ SAJAT frontendjenek
-JS-csomagjait, es olvassuk ki beloluk, milyen utvonalakat hiv. Ami ott
-szerepel, az letezik. Csak olvas, semmit nem ir.
+A 3. kor letoltotte a frontend JS-csomagjat (1,5 MB), de a mintam tul szuk
+volt: minifikalva a vegpontok osszefuzessel epulnek. Most:
+  a) osszeszedjuk a csomagbol az OSSZES "round"-ot tartalmazo azonositot
+     (mezonevek!), es minden "competitions/" elofordulas kornyeket,
+  b) megnezzuk, mit ad a ranglista a KOVETKEZO fordulora.
+Csak olvas.
 """
 import json, re, urllib.parse, urllib.request
 
 API = "https://fantasy-api.mlsz.hu/"
 WEB = "https://fantasy.mlsz.hu/"
-HDRS = {"Accept": "*/*", "User-Agent": "Mozilla/5.0 funtasy-diag/1.0",
-        "Referer": WEB}
+HDRS = {"Accept": "*/*", "User-Agent": "Mozilla/5.0 funtasy-diag/1.0", "Referer": WEB}
 
 
-def hoz(url, nyers=False, timeout=40):
+def hoz(url, nyers=False, timeout=60):
     try:
         with urllib.request.urlopen(urllib.request.Request(url, headers=HDRS), timeout=timeout) as r:
             b = r.read()
@@ -24,51 +24,56 @@ def hoz(url, nyers=False, timeout=40):
         return getattr(e, "code", None) or ("%s: %s" % (type(e).__name__, e)), None
 
 
-# ---------------------------------------------------------------- 1. a SPA
-print("=== 1) Az MLSZ frontend JS-csomagjaiban szereplo API-utvonalak")
 st, html = hoz(WEB, nyers=True)
-print("    fooldal HTTP %s, %s byte" % (st, len(html or "")))
-srcs = re.findall(r'<script[^>]+src="([^"]+)"', html or "")
-srcs += re.findall(r'"(/(?:assets|js|_nuxt)/[^"]+\.js)"', html or "")
-srcs = list(dict.fromkeys(srcs))
-print("    talalt script-ek: %s" % (srcs[:20] or "nincs"))
+srcs = [s for s in re.findall(r'<script[^>]+src="([^"]+)"', html or "") if "mlsz.hu" in s or s.startswith("/")]
+js = ""
+for s in srcs:
+    st2, t = hoz(urllib.parse.urljoin(WEB, s), nyers=True)
+    if t:
+        js += t
+print("=== JS-csomag: %s byte" % len(js))
 
-MINTA = re.compile(r'''["'`](competitions?/[^"'`\s]{0,80}|/?(?:rounds?|games?|fixtures?|standings|deadline)[a-z0-9\-/_]{0,40})["'`]''')
-utak, meret = set(), 0
-for s in srcs[:12]:
-    u = urllib.parse.urljoin(WEB, s)
-    st2, js = hoz(u, nyers=True)
-    if not js:
-        print("    - %s -> HTTP %s" % (s[:80], st2))
+print("\n=== 1) Minden 'round'-ot tartalmazo azonosito a csomagban")
+azon = sorted(set(re.findall(r'\b[A-Za-z_]*[Rr]ound[A-Za-z_]*\b', js)))
+for a in azon:
+    print("      %-38s %sx" % (a, js.count(a)))
+
+print("\n=== 2) A 'competitions' szo minden elofordulasanak kornyeke")
+latott = set()
+for m in re.finditer(r'competitions', js):
+    k = js[max(0, m.start() - 90):m.start() + 110].replace("\n", " ")
+    kulcs = re.sub(r'[A-Za-z_$][A-Za-z0-9_$]{0,2}(?=[,)\]}])', '#', k)
+    if kulcs in latott:
         continue
-    meret += len(js)
-    # API-utvonalnak latszo sztringek
-    for m in re.findall(MINTA, js):
-        utak.add(m)
-    # a "round" szot tartalmazo mezonevek
-print("    letoltott JS: %s byte, talalt utvonal-jelolt: %s" % (meret, len(utak)))
-for u in sorted(utak)[:120]:
-    print("      %s" % u)
+    latott.add(kulcs)
+    print("      ...%s..." % k)
+    if len(latott) > 40:
+        break
 
-# ---------------------------------------------------------------- 2. tippek
-print("\n=== 2) Kozvetlen vegpont-probak")
-JELOLTEK = [
-    "competitions/3/games",
-    "competitions/3/games?filter%5Bround_id%5D=85",
-    "games?filter%5Bround_id%5D=85",
-    "competitions/3/rounds?page=1",
-    "competition-rounds?filter%5Bcompetition_id%5D=3",
-    "rounds?filter%5Bcompetition_id%5D=3",
-    "competitions/3/fixtures",
-    "competitions/3/settings",
-    "competitions/3/deadline",
-    "competitions/3/current-round",
-    "competitions/3/statistics",
-    "competitions/3/rankings?page=1&per_page=1",
-]
-for ut in JELOLTEK:
-    st, j = hoz(API + ut)
-    fej = json.dumps(j, ensure_ascii=False)[:400] if isinstance(j, dict) else ""
-    print("    %-52s HTTP %-5s %s" % (ut[:52], st, fej))
+print("\n=== 3) Lezartsagra utalo mezonevek")
+for minta in (r'\bis_[a-z_]*\b', r'\b[a-z_]*closed[a-z_]*\b', r'\b[a-z_]*finish[a-z_]*\b',
+              r'\b[a-z_]*deadline[a-z_]*\b', r'\b[a-z_]*status[a-z_]*\b'):
+    tal = sorted(set(x for x in re.findall(minta, js) if len(x) > 4))
+    print("    %-24s %s" % (minta, tal[:40]))
+
+print("\n=== 4) A ranglista a kovetkezo fordulokra")
+for r_no in (4, 5, 6, 7):
+    rid = 75 + 2 * r_no
+    st, j = hoz(API + "rankings?include=user_team.user.id,summary_statistics,ranking,rounds,"
+                "competition_rank&page=1&per_page=1&filter%5Bround_id%5D=" + str(rid))
+    d = ((j or {}).get("data") or [{}])[0]
+    ut_ = d.get("user_team") or {}
+    print("    fordulo %s (round_id=%s) HTTP %-5s pont=%-8s fordulok=%s" % (
+        r_no, rid, st, d.get("points"),
+        [(s.get("round_number"), s.get("points")) for s in (ut_.get("round_statistics") or [])]))
+
+print("\n=== 5) A ranglista teljes user_team objektuma (elso helyezett)")
+st, j = hoz(API + "rankings?include=user_team.user.id,summary_statistics,ranking,rounds,"
+            "competition_rank&page=1&per_page=1")
+d = ((j or {}).get("data") or [{}])[0]
+print("    data kulcsok: %s" % sorted(d))
+print("    user_team kulcsok: %s" % sorted(d.get("user_team") or {}))
+print("    round_statistics[0]: %s" % json.dumps(((d.get("user_team") or {}).get("round_statistics") or [{}])[0], ensure_ascii=False))
+print("    meta: %s" % json.dumps((j or {}).get("meta"), ensure_ascii=False)[:400])
 
 print("\n--- vege ---")
