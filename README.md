@@ -217,6 +217,8 @@ teljes képernyős, ragadós × gombbal.
 | `results.json` | H2H eredmények archívuma: `{updated, provisional:[...], schedule:{"1":[[hazai,vendég,hp,vp],...]}}`. Az oldal ebből tölt, felülírva a beégetett menetrendet. A `provisional` a még le nem zárult fordulók listája. |
 | `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”), `start`-ot (az adott fordulós meccsének kezdése), `vege: true`-t (a meccse már lement, akkor is, ha a pontok még nincsenek feldolgozva) és — ha a klubnak nincs meccse a fordulóban — `nogame: true`-t is tartalmaz. A régebbi, e mezők nélküli rekordokat az oldal tolerálja, de a gyűjtő nem hagyja őket úgy: az olyan fordulót, amelynek a rekordjaiban nincs `played`, egyszer újra lekéri a meccslistával együtt, és pótolja a hiányzó mezőket. |
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
+| `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. |
+| `valtozasok/index.html` | A változásnapló oldala („Mi újult meg?"). |
 | `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
 | `collect_draft.py` | GitHub Actions: az FPL Draft liga adatai. A résztvevők valódi nevét és az `entry_id`-t kiszűri (a repó publikus). |
 | `draft.json` | Az FPL Draft liga adatai (résztvevők, menetrend, eredmények) — a `pl/index.html` forrása. |
@@ -739,13 +741,33 @@ is az egészet igényli — az viszont ritkán megnyitott, tudatosan nehéz néz
 4 KB, a 38. fordulóra ~159 KB). Kisebb tét, és ott a `HIST` több helyen szinkron használt,
 tehát invazívabb átalakítás — külön körben érdemes.
 
+## 5/a2. Változásnapló („Mi újult meg?")
+
+Felhasználói napló, nem technikai: **csak az kerül bele, amit a használó lát vagy
+érzékel**. Ami tisztán háttérmunka (átszervezés, gyűjtő-belső, teszt), az nem.
+
+- **Két típus:** *új funkció* és *javítás*.
+- **A liga címke, nem kategória.** Egy bejegyzéshez több liga is tartozhat, és
+  **bármelyikre szűrve előjön**. Ez azért fontos, mert nem mindenki játszik minden
+  ligában — és minél több liga lesz, annál kevésbé.
+- **Egy nap, egy téma, egy bejegyzés.** Ha egy megoldás több nekifutásból állt össze, csak
+  a végső állapot kerül be; a közbenső próbálkozások a használót nem érdeklik.
+- **Dátumozva**, naponként csoportosítva, a legfrissebb elöl. A napló 2026-08-23 estétől
+  indul, a korábbi változások nincsenek benne.
+
+Az adat a `valtozasok.json`-ban van, kézzel bővítjük. A szűrők a `LIGAK` listából
+készülnek, tehát egy új liga felvétele itt sem igényel külön munkát.
+
+Elérés: a kezdőlapról (kártya) és minden oldal **láblécéből** (`FunTasy.renderLablec`).
+A naplón magán nincs lábléc, mert önmagára mutatna.
+
 ## 5/b. Tesztek
 
 ```bash
 tesztek/futtat.sh
 ```
 
-Elindít egy helyi kiszolgálót a repó gyökerére, lefuttat mindent (3 gyűjtő- és 12
+Elindít egy helyi kiszolgálót a repó gyökerére, lefuttat mindent (3 gyűjtő- és 13
 böngészős tesztet), és összegez; a kilépőkód a bukott tesztek száma. Tesztenkénti
 bontás: `tesztek/README.md`.
 

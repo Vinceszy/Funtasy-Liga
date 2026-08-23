@@ -63,6 +63,63 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .acctable td.b-valtozik,.acctable .sormegj.b-valtozik{color:var(--valtozo)}
 .acctable td.b-ideiglenes,.acctable .sormegj.b-ideiglenes{color:var(--ideiglenes)}
 .acctable .sormegj{font-size:11px;font-weight:500}
+/* ===== Lablec (mindharom oldalon + a valtozasnaplon) ===== */
+.lablec{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--dim);text-align:center}
+.lablec a{color:var(--dim);text-decoration:none;border-bottom:1px solid var(--line)}
+.lablec a:hover{color:var(--ink);border-bottom-color:var(--dim)}
+
+/* ===== Valtozasnaplo =====
+   Felhasznaloi naplo, ket szurosorral: tipus es liga. A liga CIMKE, tehat
+   egy bejegyzes tobbhoz is tartozhat, es barmelyikre szurve elojon. */
+.vlt-szurok{display:flex;flex-wrap:wrap;gap:12px 28px;padding:0 0 16px;
+  border-bottom:1px solid var(--line);margin-bottom:6px}
+.vlt-szurocsoport{display:flex;align-items:center;gap:10px}
+/* A ket szurosor kulon-kulon "Mind" gombbal indul; felirat nelkul nem
+   derulne ki, melyik mihez tartozik. */
+.vlt-szurocim{font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--dim)}
+.vlt-szurosor{display:flex;flex-wrap:wrap;gap:6px}
+.vlt-chip{background:var(--panel2);border:1px solid var(--line);color:var(--dim);
+  padding:5px 13px;border-radius:999px;cursor:pointer;font:600 12px Inter}
+.vlt-chip:hover{color:var(--ink);border-color:var(--dim)}
+.vlt-chip.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.vlt-nap{padding:16px 0 4px;border-bottom:1px solid var(--line)}
+.vlt-nap:last-child{border-bottom:0}
+.vlt-datum{font:700 11px 'JetBrains Mono';letter-spacing:1px;text-transform:uppercase;
+  color:var(--dim);margin-bottom:12px}
+.vlt-tetel{padding:0 0 18px}
+.vlt-tetel:last-child{padding-bottom:6px}
+.vlt-fejsor{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}
+.vlt-tipus{font:700 9px Inter;letter-spacing:1.5px;text-transform:uppercase;
+  padding:3px 9px;border-radius:999px;border:1px solid currentColor}
+.vlt-tipus.t-funkcio{color:var(--win)}
+.vlt-tipus.t-bugfix{color:var(--valtozo)}
+.vlt-liga{font:700 9px 'JetBrains Mono';letter-spacing:1px;text-transform:uppercase;
+  color:var(--dim);background:var(--panel2);border:1px solid var(--line);
+  padding:3px 8px;border-radius:999px}
+.vlt-tetel h3{font:700 15px Inter;margin:0 0 4px}
+.vlt-tetel p{font-size:13px;color:var(--dim);line-height:1.55;margin:0;max-width:70ch}
+/* A kezdolapi sor a naplohoz. Szandekosan NEM liga-kartya: a ligak a fo
+   dolog a lapon, ez csak egy melleklet - ugyanakkora kartyakent elvinne a
+   figyelmet. */
+.ujdonsagsor{display:flex;align-items:baseline;gap:12px;margin-top:14px;
+  padding:12px 16px;background:var(--panel);border:1px solid var(--line);
+  border-radius:10px;text-decoration:none;color:var(--dim)}
+.ujdonsagsor:hover{border-color:var(--dim)}
+.ujdonsagsor:hover .cim{color:var(--ink)}
+.ujdonsagsor .cim{font:700 14px Inter;color:var(--ink)}
+.ujdonsagsor .leiras{font-size:12.5px;flex:1}
+.ujdonsagsor .tovabb{font:700 14px Inter}
+@media(max-width:520px){
+  .ujdonsagsor{flex-direction:column;gap:4px}
+  .ujdonsagsor .tovabb{display:none}
+}
+@media(max-width:520px){
+  .vlt-szurok{gap:10px 0;flex-direction:column}
+  .vlt-szurocsoport{align-items:flex-start;flex-direction:column;gap:6px}
+  .vlt-tetel p{font-size:12.5px}
+}
 .clickable{cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .clickable:hover{color:var(--amber)}
 .form{display:inline-flex;gap:3px;vertical-align:middle}

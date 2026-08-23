@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FunTasy — mi újult meg?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../funtasy.css?v=25">
+</head>
+<body class="kezdolap">
+<div class="wrap">
+<div class="liganav" id="liganav"></div>
+<header>
+  <h1><span class="fun">FUN</span>TASY</h1>
+  <div class="sub">Mi újult meg? — új funkciók és javítások</div>
+</header>
+
+<div class="panel">
+  <div class="vlt-szurok">
+    <div class="vlt-szurocsoport">
+      <span class="vlt-szurocim">Típus</span>
+      <div class="vlt-szurosor" id="tipusSzuro"></div>
+    </div>
+    <div class="vlt-szurocsoport">
+      <span class="vlt-szurocim">Liga</span>
+      <div class="vlt-szurosor" id="ligaSzuro"></div>
+    </div>
+  </div>
+  <div id="lista"><div class="note">Betöltés…</div></div>
+</div>
+</div>
+
+<script src="../funtasy.js?v=25"></script>
+<script>
+// ======= VÁLTOZÁSNAPLÓ =======
+// Felhasznaloi naplo, nem technikai: csak az kerul bele, amit a hasznalo lat
+// vagy erzekel. Ket tipus van (uj funkcio / javitas), es a ligak CIMKEKENT
+// mukodnek: egy bejegyzeshez tobb liga is tartozhat, es barmelyikre szurve
+// elojon. Ez azert szamit, mert nem mindenki jatszik minden ligaban.
+//
+// Az adat a ../valtozasok.json-ban van, kezzel irjuk. Egy nap egy temarol
+// EGY bejegyzes keszul: ha egy megoldas tobb nekifutasbol allt ossze, csak a
+// vegso allapot kerul be - a hasznalot a kozbenso probalkozasok nem erdeklik.
+FunTasy.renderNav(null, '../');   // ligavalto sav; lablec itt nincs, mert
+                                  // onmagara mutatna
+
+const TIPUSOK = [
+  { id: 'funkcio', nev: 'Új funkció' },
+  { id: 'bugfix',  nev: 'Javítás' },
+];
+const tipusNev = t => (TIPUSOK.find(x => x.id === t) || {}).nev || t;
+
+let BEJEGYZESEK = [];
+let tipusSzuro = null;      // null = mind
+let ligaSzuro  = null;
+
+const HONAP = ['január','február','március','április','május','június',
+               'július','augusztus','szeptember','október','november','december'];
+// A datumot a szovegbol olvassuk ki, nem Date-bol: az UTC-s ejfel a
+// bongeszo zonajaban elozo napra csuszhatna at.
+function datumFmt(s){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+  if (!m) return s || '';
+  return `${+m[1]}. ${HONAP[+m[2] - 1]} ${+m[3]}.`;
+}
+
+// Egy szurosor. A gombok a MOSTANI allapotbol keszulnek, ezert valasztas utan
+// ujra kell rajzolni oket - ezt a szurokRajzol() intezi, egy helyen.
+function chipSor(azon, elemek, aktiv, kivalaszt){
+  const elem = document.getElementById(azon);
+  const gomb = (id, nev) =>
+    `<button class="vlt-chip${aktiv === id ? ' on' : ''}" data-ert="${FunTasy.esc(id == null ? '' : id)}">`
+    + FunTasy.esc(nev) + '</button>';
+  elem.innerHTML = gomb(null, 'Mind') + elemek.map(x => gomb(x.id, x.nev)).join('');
+  elem.querySelectorAll('.vlt-chip').forEach(b => b.addEventListener('click', () => {
+    kivalaszt(b.dataset.ert || null);
+    szurokRajzol();
+    rajzol();
+  }));
+}
+function szurokRajzol(){
+  chipSor('tipusSzuro', TIPUSOK, tipusSzuro, v => { tipusSzuro = v; });
+  chipSor('ligaSzuro', FunTasy.LIGAK.map(l => ({ id: l.id, nev: l.nev })),
+          ligaSzuro, v => { ligaSzuro = v; });
+}
+
+function szurt(){
+  return BEJEGYZESEK.filter(b =>
+    (!tipusSzuro || b.tipus === tipusSzuro) &&
+    // a liga CIMKE: eleg, ha a bejegyzes ligai kozott szerepel
+    (!ligaSzuro  || (b.ligak || []).includes(ligaSzuro)));
+}
+
+function tetelHTML(b){
+  const cimkek = (b.ligak || []).map(id => {
+    const l = FunTasy.liga(id);
+    return `<span class="vlt-liga" data-liga="${FunTasy.esc(id)}">${FunTasy.esc(l ? l.nev : id)}</span>`;
+  }).join('');
+  return `<div class="vlt-tetel" data-tipus="${FunTasy.esc(b.tipus)}">
+    <div class="vlt-fejsor">
+      <span class="vlt-tipus t-${FunTasy.esc(b.tipus)}">${FunTasy.esc(tipusNev(b.tipus))}</span>
+      ${cimkek}
+    </div>
+    <h3>${FunTasy.esc(b.cim)}</h3>
+    <p>${FunTasy.esc(b.leiras)}</p>
+  </div>`;
+}
+
+function rajzol(){
+  const lista = szurt();
+  const el = document.getElementById('lista');
+  if (!lista.length){
+    el.innerHTML = '<div class="note">Ehhez a szűréshez nincs bejegyzés.</div>';
+    return;
+  }
+  // datum szerint csoportositva, a legfrissebb elol
+  const napok = [];
+  lista.forEach(b => {
+    const utolso = napok[napok.length - 1];
+    if (utolso && utolso.datum === b.datum) utolso.tetelek.push(b);
+    else napok.push({ datum: b.datum, tetelek: [b] });
+  });
+  el.innerHTML = napok.map(n =>
+    `<div class="vlt-nap"><div class="vlt-datum">${FunTasy.esc(datumFmt(n.datum))}</div>`
+    + n.tetelek.map(tetelHTML).join('') + '</div>').join('');
+}
+
+(async () => {
+  try {
+    const r = await fetch('../valtozasok.json?t=' + Date.now(), { cache: 'no-store' });
+    const j = await r.json();
+    BEJEGYZESEK = (j.bejegyzesek || []).slice()
+      .sort((a, b) => (a.datum < b.datum ? 1 : a.datum > b.datum ? -1 : 0));
+  } catch (e) {
+    document.getElementById('lista').innerHTML =
+      '<div class="note">A változásnapló most nem elérhető.</div>';
+    return;
+  }
+  szurokRajzol();
+  rajzol();
+})();
+</script>
+</body>
+</html>

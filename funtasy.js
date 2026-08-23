@@ -435,6 +435,18 @@
     }
     return h + '</span>';
   }
+  /* ===== Lablec =====
+     Minden oldal aljan ugyanaz a sor. Azert kozos, mert harom oldalra
+     lemasolva a kovetkezo linknel mar biztosan elcsuszna valamelyik. */
+  function lablecHTML(gyoker) {
+    gyoker = gyoker || '';
+    return '<a href="' + gyoker + 'valtozasok/">Mi újult meg?</a>';
+  }
+  function renderLablec(gyoker) {
+    var el = document.getElementById('lablec');
+    if (el) el.innerHTML = lablecHTML(gyoker);
+  }
+
   /* Egy hivas beallitja a kozos fejlec-reszeket: a ligavalto savot, a liga
      tipusat (body-osztalykent, hogy CSS-bol es JS-bol is fogodzo legyen) es
      az alcimet. Igy a liga neve/leirasa egyetlen helyen, a LIGAK listaban
@@ -692,6 +704,7 @@
   global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played,
                      accToggle: accToggle, accTable: accTable,
                      LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
+                     lablecHTML: lablecHTML, renderLablec: renderLablec,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
                      lassuJelzo: lassuJelzo, allasHTML: allasHTML,
                      nezetVerem: nezetVerem, lekero: lekero,
