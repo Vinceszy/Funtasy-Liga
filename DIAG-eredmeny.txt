@@ -1,21 +1,25 @@
+=== 1) Az MLSZ frontend JS-csomagjaiban szereplo API-utvonalak
+    fooldal HTTP 200, 1039 byte
+    talalt script-ek: ['https://www.googletagmanager.com/gtag/js?id=G-ESDZGHNFRR', '/assets/index-DKzRWh8E.js']
+    letoltott JS: 1516243 byte, talalt utvonal-jelolt: 5
+      round
+      round_played_player_count
+      round_statistics
+      rounded
+      rounded-0
 
-=== competitions/3  ->  HTTP 404
-
-=== competitions/3?include=current_round,next_round,last_round,rounds  ->  HTTP 404
-
-=== competitions  ->  HTTP 200
-    {"data": [{"id": 3, "name": "OTP Bank Liga", "priority": 0, "start_at": "2026-07-21T08:15:00+02:00", "end_at": "2027-07-09T08:15:00+02:00", "is_active": true, "has_competition_break": false, "selector_icon": "mdi-gender-male", "selector_icon_color": "#ffffff"}], "links": [{"url": null, "label": "&laquo; Previous", "page": null, "active": false}, {"url": "https://fantasy-api.mlsz.hu/competitions?page=1", "label": "1", "page": 1, "active": true}, {"url": null, "label": "Next &raquo;", "page": null, "active": false}], "meta": {"current_page": 1, "first_page_url": "https://fantasy-api.mlsz.hu/competitions?page=1", "from": 1, "last_page": 1, "last_page_url": "https://fantasy-api.mlsz.hu/competitions?page=1", "next_page_url": null, "path": "https://fantasy-api.mlsz.hu/competitions", "per_page": 15, "prev_page_url": null, "to": 1, "total": 1}}
-
-=== rankings (per_page=3) -> HTTP 200
-    Gyűrűsfarkú Makik round_played_player_count=15  utolso ket fordulo: [(5, 119.51), (4, 108.51)]
-    Zaz004         round_played_player_count=14  utolso ket fordulo: [(5, 106.88), (4, 102.26)]
-    Durtmars       round_played_player_count=15  utolso ket fordulo: [(5, 123.51), (4, 106.38)]
-
-=== keret-valasz teteje -> HTTP 200
-    valasz kulcsok: ['data', 'links', 'meta']
-    meta: {"current_page": 1, "first_page_url": "https://fantasy-api.mlsz.hu/competitions/3/user-team-players-history?page=1", "from": 1, "last_page": 1, "last_page_url": "https://fantasy-api.mlsz.hu/competitions/3/user-team-players-history?page=1", "next_page_url": null, "path": "https://fantasy-api.mlsz.hu/competitions/3/user-team-players-history", "per_page": 15, "prev_page_url": null, "to": 15, "total": 15}
-    links: [{"url": null, "label": "&laquo; Previous", "page": null, "active": false}, {"url": "https://fantasy-api.mlsz.hu/competitions/3/user-team-players-history?page=1", "label": "1", "page": 1, "active": true}, {"url": null, "label": "Next &raquo;", "page": null, "active": false}]
-    current_round kulcsok: ['first_played_at', 'has_statistics', 'id', 'is_played', 'market_price', 'round_id']
-    current_round: {"id": 36345, "round_id": 85, "market_price": 7.4, "is_played": true, "first_played_at": "2026-08-22T15:30:00+02:00", "has_statistics": true}
+=== 2) Kozvetlen vegpont-probak
+    competitions/3/games                                 HTTP 404   
+    competitions/3/games?filter%5Bround_id%5D=85         HTTP 404   
+    games?filter%5Bround_id%5D=85                        HTTP 404   
+    competitions/3/rounds?page=1                         HTTP 404   
+    competition-rounds?filter%5Bcompetition_id%5D=3      HTTP 404   
+    rounds?filter%5Bcompetition_id%5D=3                  HTTP 404   
+    competitions/3/fixtures                              HTTP 404   
+    competitions/3/settings                              HTTP 404   
+    competitions/3/deadline                              HTTP 404   
+    competitions/3/current-round                         HTTP 404   
+    competitions/3/statistics                            HTTP 404   
+    competitions/3/rankings?page=1&per_page=1            HTTP 200   {"data": [{"id": 31753, "rank": 1, "points": 511.55, "last_week_rank": 1, "user_team": {"round_played_player_count": 15, "user": {"id": 6713, "username": "Gyűrűsfarkú Makik"}, "round_statistics": [{"id": 5123697, "round_id": 85, "round_number": 5, "points": 119.51}, {"id": 3520175, "round_id": 83, "round_number": 4, "points": 108.51}], "summary_statistics": {"competition_statistics": {"id": 265263
 
 --- vege ---
