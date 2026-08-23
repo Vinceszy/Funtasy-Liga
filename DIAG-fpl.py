@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-"""EGYSZERI felderites, 2. kor: hol latszik, hogy a bonusz mar hivatalos?
+"""EGYSZERI felderites, 3. kor: mi van a meccs stats tombjeben?
 
-Az 1. kor: az explain szerkezete [[stat-lista, meccs_id]] - a sort tehat a
-sajat meccsehez lehet kotni. Minden lejatszott meccs most
-finished_provisional=True, finished=False.
+Az elozo kor: a bonusz OTT VAN az explain-ben (stat: "bonus"), es a sor a
+sajat meccsehez kotheto (explain = [[stat-lista, meccs_id]]). A meccs sajat
+"stats" tombjeben viszont nincs "identifier" kulcs - mas az alakja, mint a
+klasszikus FPL-ben. Most nyersen kiirjuk, hatha ott van a bonusz, es abbol
+latszik, hogy mar veglegesitettek.
 
-Most azt nezzuk:
- a) van-e egyaltalan bonusz-sor az explain-ben (olyan jatekost keresunk,
-    akinek bonus > 0);
- b) a MECCS sajat "stats" tombje mit tartalmaz - az FPL-ben ide a "bonus"
-    tetel csak akkor kerul be, amikor a bonuszt veglegesitettek, addig csak
-    "bps" van. Ha igy van, ez a keresett harmadik allapot jelzese.
+Kulon kerdes: a pentek esti meccs (id=1) ket nappal kesobb is
+finished=False. Ez azt jelentene, hogy a "finished" nem meccsenkent, hanem
+a fordulo vegen billen at - ezt a holnapi meres donti el.
 Csak olvas.
 """
 import json, urllib.request
@@ -28,30 +27,30 @@ def hoz(ut, timeout=60):
 
 
 st, game = hoz("game")
+print("=== game: %s" % json.dumps(game, ensure_ascii=False))
 gw = (game or {}).get("current_event")
-print("=== game: current_event=%s current_event_finished=%s processing_status=%s"
-      % (gw, (game or {}).get("current_event_finished"), (game or {}).get("processing_status")))
 
 st, fx = hoz("event/%d/fixtures" % gw)
-print("\n=== a MECCSEK sajat stats tombje (mi van benne, es benne van-e a bonus?)")
-for m in (fx or []):
-    stats = m.get("stats") or []
-    azonositok = [s.get("identifier") for s in stats]
-    print("    id=%-3s started=%-5s fin_prov=%-5s finished=%-5s  stats: %s"
-          % (m.get("id"), m.get("started"), m.get("finished_provisional"),
-             m.get("finished"), azonositok or "(ures)"))
-    if "bonus" in azonositok:
-        b = next(s for s in stats if s.get("identifier") == "bonus")
-        print("        bonus tetel: %s" % json.dumps(b, ensure_ascii=False)[:300])
+m = (fx or [{}])[0]
+print("\n=== egy lement meccs (id=%s) TELJES stats tombje" % m.get("id"))
+print(json.dumps(m.get("stats"), ensure_ascii=False, indent=1)[:2500])
 
-st, live = hoz("event/%d/live" % gw)
-el = (live or {}).get("elements") or {}
-tetelek = el.items() if isinstance(el, dict) else list(enumerate(el))
-bonuszosak = [(k, v) for k, v in tetelek if ((v or {}).get("stats") or {}).get("bonus")]
-print("\n=== %s jatekosbol %s-nek van bonusza (bonus > 0)" % (len(tetelek), len(bonuszosak)))
-for k, v in bonuszosak[:4]:
-    s = v.get("stats") or {}
-    print("\n    elem %s: bonus=%s bps=%s total=%s" % (k, s.get("bonus"), s.get("bps"), s.get("total_points")))
-    print("      explain: %s" % json.dumps(v.get("explain"), ensure_ascii=False)[:600])
+print("\n=== minden meccs: hany stats tetel, es milyen kulcsok")
+for m in (fx or []):
+    st_ = m.get("stats") or []
+    kulcsok = sorted({k for t in st_ if isinstance(t, dict) for k in t})
+    ertekek = [t.get("s") or t.get("identifier") or t.get("name") for t in st_ if isinstance(t, dict)]
+    print("    id=%-3s fin_prov=%-5s finished=%-5s  %s tetel, kulcsok=%s, s-ertekek=%s"
+          % (m.get("id"), m.get("finished_provisional"), m.get("finished"),
+             len(st_), kulcsok, ertekek))
+
+# a bootstrap-static parja a Draftban: van-e benne fordulo-szintu jelzes
+for ut in ("bootstrap-static", "event/%d/live" % gw):
+    st, j = hoz(ut)
+    if ut == "bootstrap-static" and isinstance(j, dict):
+        print("\n=== bootstrap-static kulcsok: %s" % sorted(j)[:20])
+        ev = next((e for e in (j.get("events") or {}).get("data", []) if e.get("id") == gw), None) \
+            if isinstance(j.get("events"), dict) else None
+        print("    a fordulo objektuma: %s" % json.dumps(ev, ensure_ascii=False)[:500])
 
 print("\n--- vege ---")
