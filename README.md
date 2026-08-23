@@ -577,6 +577,29 @@ lett (sztring-összefűzésre).
 
 ---
 
+## 5/b. Tesztek
+
+```bash
+tesztek/futtat.sh
+```
+
+Elindít egy helyi kiszolgálót a repó gyökerére, lefuttat mindent (3 gyűjtő- és 10
+böngészős tesztet), és összegez; a kilépőkód a bukott tesztek száma. Részletek:
+`tesztek/README.md`.
+
+Két elv, amit érdemes megtartani:
+
+- **Nincsenek fixtúra-másolatok** — minden teszt a repóban lévő **valódi** adaton fut.
+  Korábban lemásolt JSON-ok álltak külön könyvtárakban; azok elavultak, és a teszt akkor
+  is zöld maradt, ha közben a valódi adat megváltozott.
+- **A különleges állapotokat a teszt állítja elő menet közben** (a Playwright elfogja a
+  kérést és átírja a választ), nem tárolt fájlból. Így holnap is ugyanazt méri.
+
+A legtöbbet két teszt adja: az `allapotter.teszt.js` a „0 pont" logika **mind az 576
+kombinációját** végigfuttatja öt invariánssal (ez talált meg olyan hibákat, amikre nem
+gondoltunk tesztet írni), a `tabella.teszt.js` pedig **függetlenül újraszámolja** a
+tabellát és a mátrixot a nyers adatból.
+
 ## 6. Ha módosítani kell
 
 Nincs build lépés, nincs függőség. A kód három rétegben él:
