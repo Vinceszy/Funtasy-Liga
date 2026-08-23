@@ -1,0 +1,8 @@
+name: Egyszeri felderítés (forduló-állapot)
+on: { workflow_dispatch: }
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 DIAG-fordulo.py
