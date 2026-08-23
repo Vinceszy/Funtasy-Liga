@@ -1,0 +1,31 @@
+=== game -> HTTP 200
+    {"current_event": 1, "current_event_finished": false, "next_event": 2, "processing_status": "n", "trades_time_for_approval": true, "waivers_processed": false}
+
+=== aktualis fordulo (1) fixtures -> HTTP 200, 10 meccs
+    egy meccs OSSZES mezoje: ['code', 'event', 'finished', 'finished_provisional', 'id', 'kickoff_time', 'minutes', 'provisional_start_time', 'pulse_id', 'started', 'stats', 'team_a', 'team_a_score', 'team_h', 'team_h_score']
+      id=1      started=True  finished_prov=True  finished=False kickoff=2026-08-21T19:00:00Z
+      id=4      started=True  finished_prov=True  finished=False kickoff=2026-08-22T11:30:00Z
+      id=3      started=True  finished_prov=True  finished=False kickoff=2026-08-22T14:00:00Z
+      id=5      started=True  finished_prov=True  finished=False kickoff=2026-08-22T14:00:00Z
+      id=6      started=True  finished_prov=True  finished=False kickoff=2026-08-22T14:00:00Z
+      id=2      started=True  finished_prov=True  finished=False kickoff=2026-08-22T16:30:00Z
+      id=7      started=True  finished_prov=True  finished=False kickoff=2026-08-23T13:00:00Z
+      id=8      started=True  finished_prov=True  finished=False kickoff=2026-08-23T13:00:00Z
+      id=9      started=True  finished_prov=True  finished=False kickoff=2026-08-23T15:30:00Z
+      id=10     started=False finished_prov=False finished=False kickoff=2026-08-24T19:00:00Z
+
+=== aktualis fordulo live -> HTTP 200, 609 jatekos
+
+    elem 1: bonus=0 bps=24 total=6
+      stats kulcsok: ['assists', 'bonus', 'bps', 'clean_sheets', 'clearances_blocks_interceptions', 'creativity', 'defensive_contribution', 'expected_assists', 'expected_goal_involvements', 'expected_goals', 'expected_goals_conceded', 'goals_conceded', 'goals_scored', 'ict_index', 'in_dreamteam', 'influence', 'minutes', 'own_goals', 'penalties_missed', 'penalties_saved', 'recoveries', 'red_cards', 'saves', 'starts', 'tackles', 'threat', 'total_points', 'yellow_cards']
+      explain NYERSEN: [[[{"name": "Minutes played", "points": 2, "value": 90, "stat": "minutes"}, {"name": "Clean sheets", "points": 4, "value": 1, "stat": "clean_sheets"}], 1]]
+
+    elem 4: bonus=0 bps=21 total=5
+      stats kulcsok: ['assists', 'bonus', 'bps', 'clean_sheets', 'clearances_blocks_interceptions', 'creativity', 'defensive_contribution', 'expected_assists', 'expected_goal_involvements', 'expected_goals', 'expected_goals_conceded', 'goals_conceded', 'goals_scored', 'ict_index', 'in_dreamteam', 'influence', 'minutes', 'own_goals', 'penalties_missed', 'penalties_saved', 'recoveries', 'red_cards', 'saves', 'starts', 'tackles', 'threat', 'total_points', 'yellow_cards']
+      explain NYERSEN: [[[{"name": "Minutes played", "points": 2, "value": 90, "stat": "minutes"}, {"name": "Clean sheets", "points": 4, "value": 1, "stat": "clean_sheets"}, {"name": "Yellow cards", "points": -1, "value": 1, "stat": "yellow_cards"}], 1]]
+
+    elem 7: bonus=0 bps=15 total=3
+      stats kulcsok: ['assists', 'bonus', 'bps', 'clean_sheets', 'clearances_blocks_interceptions', 'creativity', 'defensive_contribution', 'expected_assists', 'expected_goal_involvements', 'expected_goals', 'expected_goals_conceded', 'goals_conceded', 'goals_scored', 'ict_index', 'in_dreamteam', 'influence', 'minutes', 'own_goals', 'penalties_missed', 'penalties_saved', 'recoveries', 'red_cards', 'saves', 'starts', 'tackles', 'threat', 'total_points', 'yellow_cards']
+      explain NYERSEN: [[[{"name": "Minutes played", "points": 2, "value": 90, "stat": "minutes"}, {"name": "Clean sheets", "points": 1, "value": 1, "stat": "clean_sheets"}], 1]]
+
+--- vege ---
