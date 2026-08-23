@@ -1,0 +1,29 @@
+=== a meres ideje: 2026-08-23 22:06:33 UTC
+=== draft game: {"current_event": 1, "current_event_finished": false, "next_event": 2, "processing_status": "n", "trades_time_for_approval": true, "waivers_processed": false}
+
+=== NAPONKENT -> HTTP 200
+    2026-08-21  bonus_added=False points='p'
+    2026-08-22  bonus_added=False points='p'
+    2026-08-23  bonus_added=False points='p'
+    2026-08-24  bonus_added=False points=''
+    leagues=''
+
+=== MECCSENKENT -> HTTP 200
+    id=1   2026-08-21T19:00  started=True  fin_prov=True  finished=False
+    id=4   2026-08-22T11:30  started=True  fin_prov=True  finished=False
+    id=3   2026-08-22T14:00  started=True  fin_prov=True  finished=False
+    id=5   2026-08-22T14:00  started=True  fin_prov=True  finished=False
+    id=6   2026-08-22T14:00  started=True  fin_prov=True  finished=False
+    id=2   2026-08-22T16:30  started=True  fin_prov=True  finished=False
+    id=7   2026-08-23T13:00  started=True  fin_prov=True  finished=False
+    id=8   2026-08-23T13:00  started=True  fin_prov=True  finished=False
+    id=9   2026-08-23T15:30  started=True  fin_prov=True  finished=False
+    id=10  2026-08-24T19:00  started=False fin_prov=False finished=False
+
+=== ellenorzo jatekosok (a 21:04-es meresbol)
+    elem 10   bonus=2 bps=37 total=11
+    elem 12   bonus=1 bps=36 total=9
+    elem 15   bonus=3 bps=41 total=11
+    elem 68   bonus=3 bps=32 total=10
+
+--- vege ---
