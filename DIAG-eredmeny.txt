@@ -1,0 +1,53 @@
+
+=== https://draft.premierleague.com/api/event-status -> HTTP 404
+
+=== https://draft.premierleague.com/api/event-status/ -> HTTP 404
+
+=== https://fantasy.premierleague.com/api/event-status/ -> HTTP 200
+    {
+ "status": [
+  {
+   "bonus_added": false,
+   "date": "2026-08-21",
+   "event": 1,
+   "points": "p"
+  },
+  {
+   "bonus_added": false,
+   "date": "2026-08-22",
+   "event": 1,
+   "points": "p"
+  },
+  {
+   "bonus_added": false,
+   "date": "2026-08-23",
+   "event": 1,
+   "points": "p"
+  },
+  {
+   "bonus_added": false,
+   "date": "2026-08-24",
+   "event": 1,
+   "points": ""
+  }
+ ],
+ "leagues": ""
+}
+
+=== https://draft.premierleague.com/api/game -> HTTP 200
+    {
+ "current_event": 1,
+ "current_event_finished": false,
+ "next_event": 2,
+ "processing_status": "n",
+ "trades_time_for_approval": true,
+ "waivers_processed": false
+}
+
+=== draft bootstrap-static -> HTTP 200
+    kulcsok: ['element_stats', 'element_types', 'elements', 'events', 'fixtures', 'settings', 'teams']
+    events kulcsok: ['current', 'data', 'next']
+      fordulo: {"average_entry_score": null, "deadline_time": "2026-08-21T17:30:00Z", "id": 1, "name": "Gameweek 1", "finished": false, "highest_scoring_entry": null, "trades_time": "2026-08-19T17:30:00Z", "waivers_time": "2026-08-20T17:30:00Z"}
+      fordulo: {"average_entry_score": null, "deadline_time": "2026-08-28T17:30:00Z", "id": 2, "name": "Gameweek 2", "finished": false, "highest_scoring_entry": null, "trades_time": "2026-08-26T17:30:00Z", "waivers_time": "2026-08-27T17:30:00Z"}
+
+--- vege ---
