@@ -6,11 +6,14 @@ const { BASE, jo, hibak, inditas, vege } = require('./kozos');
 //   megy a meccs                          -> a bonusz percrol percre valtozhat
 //   lefujva, de a NAPZARAS meg hatravan   -> rogzult, de meg valtozhat
 //   napzaras utan                         -> fix, JELOLETLEN
-// A harmadikat a NAP sajat jelzoje mondja meg, nem a meccse: az FPL naponta
-// zar, egyszerre az aznapi osszes meccsre. A jelzes a klasszikus FPL
-// event-status vegpontjabol jon ({date, bonus_added, points}), mert a Draft
-// API-ban nincs ilyen. A Draft sajat felulete ugyanezt irja ki naponkent
-// PROVISIONAL-kent.
+// A harmadikat a NAP allapota mondja meg, nem a meccse: az FPL naponta zar,
+// egyszerre az aznapi osszes meccsre. A jelzes a klasszikus FPL event-status
+// vegpontjabol jon, a "points" mezobol, ami a nap haladasat koveti:
+//   ""  - a napon meg nem jatszottak
+//   "l" - mennek a meccsek
+//   "p" - a napot LEZARTAK (a "provisional" itt a zaras UTANI allapot)
+// A meccs sajat finished mezoje erre nem jo: a pentek esti meccs vasarnap
+// este is finished=false volt, pedig a napja mar reg lezarult.
 // Az explain szerkezete [[stat-lista, meccs_id]] - a bonusz-sor ezert a
 // SAJAT meccsehez, azon at a sajat NAPJAHOZ kotheto.
 
@@ -27,9 +30,11 @@ const MECCSEK = [
   { id: 13, started: true,  finished_provisional: true,  finished: false,
     kickoff_time: ZART_NAP + 'T14:00:00Z', team_h: 5, team_a: 6 },
 ];
+// A lezart nap "p"-t mutat, a meg futo nap "l"-t. A bonus_added szandekosan
+// hamis mindkettonel: meresre az sosem billent at, tehat nem hasznaljuk.
 const NAPOK = { status: [
-  { date: ZART_NAP,     event: GW, bonus_added: true,  points: 'r' },
-  { date: NYITOTT_NAP,  event: GW, bonus_added: false, points: 'p' },
+  { date: ZART_NAP,     event: GW, bonus_added: false, points: 'p' },
+  { date: NYITOTT_NAP,  event: GW, bonus_added: false, points: 'l' },
 ] };
 // jatekosonkent: melyik meccs(ek)ben szerepel es mennyi bonuszt kapott
 const JATEKOSOK = {
@@ -101,11 +106,11 @@ let napokKi = true;   // a napi zaras adata megjon-e (a tartalek-ag tesztelésé
   console.log('   hivatalos       ->', JSON.stringify(kesz));
   jo(/b-valtozik/.test(fut.cls) && /változik/.test(fut.megj),
     'futó meccs: a bónusz sor jelölt, és megmondja, hogy még változik');
-  jo(/b-ideiglenes/.test(lefujva.cls) && /nem hivatalos/.test(lefujva.megj),
-    'lefújt meccs: külön jelölés, "még nem hivatalos"');
+  jo(/b-ideiglenes/.test(lefujva.cls) && /még változhat/.test(lefujva.megj),
+    'lefújt meccs, még nyitott nap: külön jelölés');
   jo(!/b-valtozik|b-ideiglenes/.test(kesz.cls) && kesz.megj === '',
     'napzárás után: semmilyen jelölés (a jelöletlen = fix)');
-  jo(/nem hivatalos/.test(lefujva.megj) && kesz.megj === '',
+  jo(/még változhat/.test(lefujva.megj) && kesz.megj === '',
     'ugyanaz a meccs-állapot (lefújva, finished=false) más jelölést kap a lezárt napon');
   jo(fut.cls !== lefujva.cls, 'a két jelölt állapot nem ugyanaz');
 

@@ -396,7 +396,14 @@ const lekeresHiba = FunTasy.hibajelzo({
 // 404), a klasszikus FPL-ben viszont van, es pontosan azt adja vissza, amit a
 // Draft sajat felulete is kiir naponkent:
 //   {"bonus_added": false, "date": "2026-08-21", "event": 1, "points": "p"}
-// A "p" a PROVISIONAL; a bonus_added billen igazra a napi zaraskor.
+//
+// A "points" mezo a nap HALADASAT koveti, nem azt, hogy hatra van-e meg
+// valami: ures, amig a napon nem jatszottak; "l", amig a meccsek mennek;
+// "p" (provisional), amikor a napot LEZARTAK. A "provisional" itt tehat a
+// napi zaras UTANI allapot - a fordulo vegi vegleges megerositesig.
+// Bizonyitek az ures ertek: 2026-08-24-en meg nem jatszottak, es a nap ""-t
+// mutat, nem "p"-t. (A bonus_added ehhez nem hasznalhato: minden lezart
+// napon is hamis maradt.)
 const EVENT_STATUS = 'https://fantasy.premierleague.com/api/event-status/';
 // A napi pontzaras allapota. A Draft API nem adja (event-status ott 404), a
 // KLASSZIKUS FPL viszont igen - ugyanarrol a bajnoksagrol van szo, a bonuszt
@@ -412,7 +419,13 @@ async function napiZarasFrissit(){
   if (gw !== LIVEGW) return;                 // kozben fordulot valtottunk
   if (!j || !Array.isArray(j.status)) return;   // marad az elozo (vagy null)
   const uj = {};
-  j.status.forEach(n => { if (n && n.date) uj[n.date] = { lezart: !!n.bonus_added }; });
+  // Lezart a nap, ha a points mar nem ures es nem "l". Igy egy kesobbi, meg
+  // nem latott ertek (pl. a fordulo vegi megerosites jelzese) is lezartnak
+  // szamit - inkabb ismeretlen ertekre ne jelezzunk, mint hogy oroken
+  // kint maradjon a jeloles.
+  j.status.forEach(n => {
+    if (n && n.date) uj[n.date] = { lezart: !!n.points && n.points !== 'l' };
+  });
   LIVENAP = uj;
 }
 async function fetchLivePts(){
@@ -507,15 +520,17 @@ function nincsPontUzenet(e, gw, perc){
 // rogzul, de hivatalossa csak a NAPI PONTZARASKOR valik. Harom allapot,
 // ebbol kettot jelolunk - a hivatalos a jeloletlen alap.
 //
-// A napi zarast a nap sajat jelzoje (bonus_added) mondja meg, NEM a meccse:
-// az FPL naponta zar, egyszerre az aznapi osszes meccsre. Meresre: 2026-08-23
-// este mindharom lejatszott nap "p" (provisional) volt, es a meccsek
-// finished mezoje is hamis - a ketto egyutt mozog, de a nap az, amit az FPL
-// sajat felulete is kiir. Ha a napi adat nem jon meg, a meccs finished
-// mezojere esunk vissza.
+// A ketto kozotti hatart a NAP allapota mondja meg (event-status "points"),
+// nem a meccse: az FPL naponta zar, egyszerre az aznapi osszes meccsre.
+// A meccs sajat finished mezoje erre NEM jo - meresre (2026-08-23, negy
+// lekeres 21:04 es 22:06 UTC kozott) a pentek esti meccs is finished=false
+// maradt, pedig a napja mar reg lezarult.
 //
-// Regi fordulora nincs elo adatunk, de ott nincs is mit jelolni: az mar rég
-// hivatalos.
+// Ha a napi adat nem jon meg, a meccs finished mezojere esunk vissza:
+// pontatlanabb (tovabb hagyja kint a jelolest), de nem allit valotlant.
+//
+// Regi fordulora nincs elo adatunk, de ott nincs is mit jelolni: az mar reg
+// lezarult.
 function bonuszAllapot(gw, meccsId){
   if (gw !== LIVEGW || !LIVEMECCS || meccsId == null) return null;
   const m = LIVEMECCS[meccsId];
@@ -525,7 +540,7 @@ function bonuszAllapot(gw, meccsId){
   const nap = LIVENAP && m.nap ? LIVENAP[m.nap] : null;
   const hivatalos = nap ? nap.lezart : m.hivatalos;
   return hivatalos ? null
-    : { jelzes: 'ideiglenes', megjegyzes: 'lefújva, a nap zárásáig nem hivatalos' };
+    : { jelzes: 'ideiglenes', megjegyzes: 'lefújva — a nap zárásáig még változhat' };
 }
 async function bontasHTML(e, gw){
   const el = await gwElems(gw);

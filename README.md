@@ -594,8 +594,8 @@ tehát az oldalunk kiírja, miközben még változhat. Három állapot van, a me
 | állapot | miből látszik | mit jelent |
 |---|---|---|
 | a meccs alatt még változik | a meccs `started`, de még nem `finished_provisional` | percről percre változhat |
-| lefújva, a nap zárásáig nem hivatalos | a meccs `finished_provisional`, de a **napja** még nincs lezárva | rögzült, de a napzárásig még módosulhat |
-| fix | a **nap** le van zárva (`bonus_added`) | innentől nem változik |
+| lefújva — a nap zárásáig még változhat | a meccs `finished_provisional`, de a **napja** még nincs lezárva | rögzült, de a napzárásig még módosulhat |
+| fix | a **nap** le van zárva | innentől nem változik |
 
 A pont-bontásban a bónusz sora **színt és rövid szöveget** kap az első két állapotban; a
 harmadik szándékosan **jelöletlen**. A szezon nagy részében minden bónusz végleges, így a
@@ -611,16 +611,33 @@ GET https://fantasy.premierleague.com/api/event-status/
 {"status":[{"bonus_added":false,"date":"2026-08-21","event":1,"points":"p"}, ...]}
 ```
 
-A `points: "p"` a PROVISIONAL, és a `bonus_added` billen igazra a napzáráskor. Ez ugyanaz,
-amit a Draft saját felülete is kiír naponként („Day / Match Points / Bonus Points" táblázat,
-PROVISIONAL felirattal). Ugyanarról a bajnokságról van szó: a bónuszt egyszer véglegesítik,
-mindkét játék abból él.
+**A `points` mező a nap haladását követi, nem azt, hogy hátra van-e még valami:**
 
-Először a meccs `finished` mezőjét használtuk erre — az **nem ugyanaz**. Méréskor
-(2026-08-23 este) mind a kilenc lejátszott meccs `finished_provisional`, de egyik sem
-`finished`, a péntek esti sem, két nappal később. A meccs jelzője csak **tartalék**: ha a
-napi adat nem jön meg, arra esünk vissza (inkább jelezzünk feleslegesen, mint hogy fixnek
-mondjunk valamit, ami még változhat).
+| érték | mit jelent |
+|---|---|
+| `""` | a napon még nem játszottak |
+| `"l"` | mennek a meccsek |
+| `"p"` | a napot **lezárták** |
+
+A „provisional" itt tehát a napi zárás **utáni** állapot — a forduló végi végleges
+megerősítésig. Ez elsőre félrevezető: a szó azt sugallja, hogy még hátra van a zárás.
+A bizonyíték az üres érték: 2026-08-24-en még nem játszottak, és a nap `""`-t mutat, nem
+`"p"`-t — ha a `"p"` azt jelentené, „még nincs lezárva", a le sem játszott nap is azt
+mutatná. Ugyanezt írja ki a Draft saját felülete is naponként („Day / Match Points /
+Bonus Points" táblázat).
+
+A kódban ezért **nem** a `"p"`-re illesztünk, hanem arra, hogy az érték már nem üres és
+nem `"l"` — így egy később bevezetett érték (pl. a forduló végi megerősítésé) is lezártnak
+számít. Inkább ismeretlen értékre ne jelezzünk, mint hogy örökre kint maradjon a jelölés.
+
+**Két mező, ami erre NEM jó**, hogy ne kelljen újra megjárni:
+
+- A meccs `finished` mezője. Mérésre (2026-08-23, négy lekérés 21:04 és 22:06 UTC között)
+  mind a kilenc lejátszott meccs `finished_provisional`, de egyik sem `finished` — a
+  péntek esti sem, két nappal később, jóval a napja lezárása után. Ez csak **tartalék**:
+  ha a napi adat nem jön meg, erre esünk vissza (pontatlanabb, tovább hagyja kint a
+  jelölést, de nem állít valótlant).
+- A `bonus_added`. Mind a négy mérésben hamis maradt, a már lezárt napokon is.
 
 **A napi lekérést nem várjuk meg.** Másodlagos jelzés, csak a bónusz sorának jelöléséhez
 kell, amit a felhasználó kattintásra lát — ha a pontfrissítés megvárná, egy lassú vagy
