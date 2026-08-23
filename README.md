@@ -215,6 +215,7 @@ teljes képernyős, ragadós × gombbal.
 | `draft_players.json` | FPL játékos-törzs: `{players: {id: {n: név, t: klub, p: poszt}}, teams: {csapat_id: rövidnév}}`. A `teams` a fixtures-válasz csapat-azonosítóinak feloldásához kell (kinek kezdődött el a meccse). |
 | `draft_squads.json` | A jelenlegi FPL-keretek (tulajdonlás): `{liga_id: [játékos_id,...]}`. |
 | `draft_history.json` | Fordulónkénti FPL-keretek pontokkal (`{rounds:{gw:{liga_id:[{e,b,pts},...]}}}`) — a GW1 indulásától gyűlik. |
+| `keretek/<forduló>.json` | Egy forduló keretei külön fájlban (`{round, squads}`). A meccs-nézet **ezt** tölti le, nem a teljes előzményt. |
 | `.github/workflows/archive.yml` | 3 óránként futó munkafolyamat: `collect.py` + commit. |
 | `.github/workflows/draft.yml` | 3 óránként futó (és kézzel is indítható) munkafolyamat: `collect_draft.py` + commit. |
 | `tartalek/` | Minden, ami nem kell a napi működéshez: a tartalék könyvjelző (`GOMB-bookmarklet.txt`, forrása és építője), az útmutatója (`KERET-MENTES.md`) és az elavult kézi pótlás leírása (`BACKFILL.md`). A weboldal és a gyűjtők semmit nem olvasnak innen. |
@@ -576,6 +577,32 @@ lett (sztring-összefűzésre).
   lásd a 3. fejezetben), és a tárolt (3 óránként frissülő) adat marad látható.
 
 ---
+
+## 5/a. Miért van fordulónként külön keret-fájl
+
+A `squad_history.json` fordulónként ~19 KB-tal nő: 5 forduló után 95 KB, a 33 fordulós
+szezon végére **~630 KB**. Az oldalnak viszont egy meccs megnyitásához **egyetlen forduló**
+keretei kellenek — az egészet letölteni pazarlás, mobilneten érezhetően az.
+
+Ezért a gyűjtő fordulónként is kiírja a kereteket (`keretek/<forduló>.json`), és a
+meccs-nézet onnan olvas. Most 95 KB helyett 24 KB, a szezon végén 630 KB helyett
+**változatlanul ~24 KB**.
+
+Két részlet, ami fontos:
+
+- **A fordulónkénti fájlokban nincs időbélyeg.** Ha benne lenne, minden gyűjtő-futásnál
+  mind a 33 fájl megváltozna, és a repó feleslegesen hízna. Így egy forduló fájlja csak
+  akkor változik, ha a keretek tényleg változtak.
+- **Van visszaesési út.** Ha a fordulónkénti fájl hiányzik (régi commit, elgépelt út), az
+  oldal a teljes előzményre esik vissza — lassabb lesz, de nem romlik el. Teszt fedi
+  mindkét ágat.
+
+A teljes előzmény megmarad: a gyűjtő abból tudja, mi hiányzik, és a „Szezon játékosai" fül
+is az egészet igényli — az viszont ritkán megnyitott, tudatosan nehéz nézet.
+
+**A PL-oldalon ez még nincs meg:** a `draft_history.json` minden betöltéskor lejön (most
+4 KB, a 38. fordulóra ~159 KB). Kisebb tét, és ott a `HIST` több helyen szinkron használt,
+tehát invazívabb átalakítás — külön körben érdemes.
 
 ## 5/b. Tesztek
 

@@ -128,6 +128,28 @@ kesz = json.load(open("squad_history.json"))
 all("2" in kesz["rounds"] and len(kesz["rounds"]["2"]) == len(NEVEK),
     "a 2. fordulo keret-elozmenye teljes")
 
+# A gyujto irja-e a fordulonkenti keret-fajlokat, es egyeznek-e a teljes
+# elozmennyel? (Az oldal egy meccs megnyitasakor ezekbol olvas.)
+if os.path.isdir("keretek"):
+    fajlok = sorted(os.listdir("keretek"))
+    all(len(fajlok) == len(kesz["rounds"]),
+        "minden fordulohoz keszult keret-fajl (%d db)" % len(fajlok))
+    baj = []
+    for r, keret in kesz["rounds"].items():
+        try:
+            egy = json.load(open(os.path.join("keretek", "%s.json" % r)))
+        except Exception as e:
+            baj.append("%s: %s" % (r, e)); continue
+        if egy.get("squads") != keret or egy.get("round") != int(r):
+            baj.append(r)
+    all(not baj, "a fordulonkenti fajlok egyeznek az elozmennyel" + (" (%s)" % baj if baj else ""))
+    # az idobelyeg SZANDEKOSAN nincs bennuk: kulonben minden futasnal
+    # valtozna mind a 33 fajl, es feleslegesen hizna a repo
+    egy = json.load(open(os.path.join("keretek", fajlok[0])))
+    all("updated" not in egy, "nincs benne idobelyeg (kulonben minden futasnal valtozna)")
+else:
+    all(False, "a gyujto nem irt keretek/ konyvtarat")
+
 print("\nkeret-lekeresek fordulonkent:",
       {r: sum(1 for x, _ in KERET_HIVAS if x == r) for r in sorted({x for x, _ in KERET_HIVAS})})
 shutil.rmtree(MUNKA, ignore_errors=True)

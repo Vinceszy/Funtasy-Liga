@@ -55,7 +55,7 @@ TOVABBI MERESSEL IGAZOLT TENYEK (2026-08-20):
 - A 0-0 vedelem marad: ha egy fordulo minden erteke 0, a fordulo el sem
   kezdodott, nem kerulhet be lejatszott dontetlenkent.
 """
-import json, re, sys, time, urllib.error, urllib.parse, urllib.request
+import json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 
 COMPETITION = 3
 MEMBERS = {
@@ -461,7 +461,18 @@ def main():
         utolso = max((int(r) for r in hist["rounds"]), default=0)
         kompakt_iras("squads.json", {"updated": hist["updated"], "round": utolso,
                                      "squads": hist["rounds"].get(str(utolso)) or {}})
-        print("  squad_history.json + squads.json frissitve (utolso fordulo: %d)" % utolso)
+        # Fordulonkenti keret-fajlok. A teljes elozmeny fordulonkent ~19 KB-tal
+        # no, a szezon vegere ~630 KB - egy meccs megnyitasahoz az oldalnak
+        # nem kell az egesz. A `updated` mezo SZANDEKOSAN nincs bennuk: ha
+        # minden futasnal belekerulne az idobelyeg, mind a 33 fajl valtozna
+        # minden korben, es a repo feleslegesen hizna. Igy egy fordulo fajlja
+        # csak akkor valtozik, ha a keretek tenylegesen valtoztak.
+        os.makedirs("keretek", exist_ok=True)
+        for r, keret in hist["rounds"].items():
+            kompakt_iras(os.path.join("keretek", "%s.json" % r),
+                         {"round": int(r), "squads": keret})
+        print("  squad_history.json + squads.json + keretek/ frissitve"
+              " (utolso fordulo: %d)" % utolso)
 
     if provisional:
         print("  ideiglenes (meg tart): %s. fordulo" % ", ".join(map(str, provisional)))

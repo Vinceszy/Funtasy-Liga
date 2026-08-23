@@ -44,11 +44,15 @@ const szam = t => parseFloat(String(t).replace(/[^\d,.-]/g, '').replace(/\.(?=\d
       const alap = jeloltek.kozos;
       if (!alap) { console.log('\n(nincs vizsgalhato meccs)'); continue; }
       const [h0, v0, r0] = alap;
-      // A HIST mar be van toltve az elozo meccs megnyitasakor: kozvetlenul
-      // atirjuk, majd ujrarajzoltatjuk a meccset.
-      await p.evaluate(([r0, h0]) => {
-        HIST[String(r0)][h0].forEach(x => { x.hun = false; x.u21 = false; });
-      }, [r0, h0]);
+      // A meccs-nezet a FORDULONKENTI keret-fajlbol olvas, ezert azt fogjuk
+      // el es irjuk at (a HIST patchelese mar nem hatna).
+      await p.route('**/keretek/*.json*', async route => {
+        const j = await (await route.fetch()).json();
+        (j.squads[h0] || []).forEach(x => { x.hun = false; x.u21 = false; });
+        route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(j) });
+      });
+      await p.goto(BASE + 'nb1/');
+      await p.waitForSelector('#table tr td', { timeout: 20000 });
       szintetikus = true;
       jeloltek.kulon = alap;
       console.log(`\n(szintetikus eset: ${h0} keretebol kivettuk a magyar jelolest)`);
