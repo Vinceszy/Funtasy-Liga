@@ -1,16 +1,61 @@
 === aktualis fordulo az MLSZ szerint: {"id": 85, "round_number": 5, "start_at": "2026-08-18T10:00:00+02:00", "end_at": "2026-08-24T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-08-21T15:30:00+02:00"}
-=== peterkmrs user_id = None (HTTP 200)
+=== peterkmrs user_id = 5299 (HTTP 200, 1 talalat)
 
-=== 3. fordulo (round_id=81) -> HTTP 200, 0 jatekos
+=== 3. fordulo (round_id=81) -> HTTP 200, 15 jatekos
     jatekos                    csapat   played  pont    meccs
-    current_round kulcsok: []
+    Nfansu Njie                ETO      True    0       completed @ 2026-08-23T17:30:00+02:00
+    Balázs Manner              NYÍREGY  True    0       completed @ 2026-08-09T17:30:00+02:00
+    Ádám Umathum               ETO      True    0       completed @ 2026-08-23T17:30:00+02:00
+    Georgi Harutyunyan         PAFC     True    9.75    completed @ 2026-08-07T17:30:00+02:00
+    Ábel György Krajcsovics    ÚJPEST   True    6.5     completed @ 2026-08-08T17:30:00+02:00
+    Milán László Tóth          VASAS    True    3.13    completed @ 2026-08-08T15:30:00+02:00
+    Illia Popovych             VÁRDA    True    -2.25   completed @ 2026-08-08T17:30:00+02:00
+    Pablo García Ruiz          HONVÉD   True    0       completed @ 2026-08-09T15:30:00+02:00
+    Artúr Horváth              MTK      True    0       completed @ 2026-08-07T17:30:00+02:00
+    Matija Ljujić              ÚJPEST   True    7.75    completed @ 2026-08-08T17:30:00+02:00
+    Milán Győrfi               PAKS     True    2.25    completed @ 2026-08-09T15:30:00+02:00
+    Kristóf Hinora             MTK      True    0       completed @ 2026-08-07T17:30:00+02:00
+    József Szalai              PAKS     True    18.5    completed @ 2026-08-09T15:30:00+02:00
+    Martin Barbarics           ZTE      True    0       completed @ 2026-08-08T15:30:00+02:00
+    Krisztofer György Horváth  ÚJPEST   True    10.5    completed @ 2026-08-08T17:30:00+02:00
+    current_round kulcsok: ['first_played_at', 'games', 'has_statistics', 'id', 'is_played', 'market_price', 'round_id']
 
-=== 4. fordulo (round_id=83) -> HTTP 200, 0 jatekos
+=== 4. fordulo (round_id=83) -> HTTP 200, 15 jatekos
     jatekos                    csapat   played  pont    meccs
-    current_round kulcsok: []
+    Ádám Umathum               ETO      True    4       completed @ 2026-08-16T16:30:00+02:00
+    Georgi Harutyunyan         PAFC     True    4.25    completed @ 2026-08-16T17:30:00+02:00
+    Milán László Tóth          VASAS    True    4.5     completed @ 2026-08-14T17:30:00+02:00
+    Illia Popovych             VÁRDA    True    4.25    completed @ 2026-08-15T17:30:00+02:00
+    Pablo García Ruiz          HONVÉD   True    -0.75   completed @ 2026-08-14T17:30:00+02:00
+    Artúr Horváth              MTK      True    0       completed @ 2026-08-15T16:30:00+02:00
+    Matija Ljujić              ÚJPEST   True    7.75    completed @ 2026-08-15T16:30:00+02:00
+    Milán Győrfi               PAKS     True    3.25    completed @ 2026-08-16T17:30:00+02:00
+    Kristóf Hinora             MTK      True    2       completed @ 2026-08-15T16:30:00+02:00
+    József Szalai              PAKS     True    20      completed @ 2026-08-16T17:30:00+02:00
+    Martin Barbarics           ZTE      True    0       completed @ 2026-08-17T17:30:00+02:00
+    Krisztofer György Horváth  ÚJPEST   True    5.75    completed @ 2026-08-15T16:30:00+02:00
+    Jozef Urblík               VASAS    True    6.25    completed @ 2026-08-14T17:30:00+02:00
+    Etienne Amenyido           ÚJPEST   True    4       completed @ 2026-08-15T16:30:00+02:00
+    Zalán Márk Kerezsi         MTK      True    6       completed @ 2026-08-15T16:30:00+02:00
+    current_round kulcsok: ['first_played_at', 'games', 'has_statistics', 'id', 'is_played', 'market_price', 'round_id']
 
-=== 5. fordulo (round_id=85) -> HTTP 200, 0 jatekos
+=== 5. fordulo (round_id=85) -> HTTP 200, 15 jatekos
     jatekos                    csapat   played  pont    meccs
-    current_round kulcsok: []
+    Jozef Urblík               VASAS    True    3.75    completed @ 2026-08-22T15:30:00+02:00
+    Kristóf Hinora             MTK      True    6       completed @ 2026-08-22T17:30:00+02:00
+    Artúr Horváth              MTK      True    0       completed @ 2026-08-22T17:30:00+02:00
+    Krisztofer György Horváth  ÚJPEST   True    4.5     completed @ 2026-08-21T17:30:00+02:00
+    Márk István Engedi         VASAS    True    2.75    completed @ 2026-08-22T15:30:00+02:00
+    Georgi Harutyunyan         PAFC     True    9.75    completed @ 2026-08-22T15:30:00+02:00
+    Zalán Márk Kerezsi         MTK      True    6.25    completed @ 2026-08-22T17:30:00+02:00
+    Matija Ljujić              ÚJPEST   True    1.75    completed @ 2026-08-21T17:30:00+02:00
+    Milán Pető                 PAKS     True    4.75    completed @ 2026-08-21T17:30:00+02:00
+    József Szalai              PAKS     True    21      completed @ 2026-08-21T17:30:00+02:00
+    Milán László Tóth          VASAS    True    2.13    completed @ 2026-08-22T15:30:00+02:00
+    Martin Barbarics           ZTE      True    0       completed @ 2026-08-23T17:30:00+02:00
+    Daniel Štefulj             ETO      True    15.25   completed @ 2026-08-23T17:30:00+02:00
+    Etienne Amenyido           ÚJPEST   True    3.5     completed @ 2026-08-21T17:30:00+02:00
+    Pablo García Ruiz          HONVÉD   False   0       NINCS MECCSE
+    current_round kulcsok: ['first_played_at', 'games', 'has_statistics', 'id', 'is_played', 'market_price', 'round_id']
 
 --- vege ---
