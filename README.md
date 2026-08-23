@@ -248,13 +248,16 @@ Az `archive.yml` a `collect.py`-t futtatja, ami **mindent** frissít, teendő n�
    romolhatott az adat: egy hibás futás vagy kivett a tabellából egy lezárt fordulót, vagy
    — súlyosabb — kiürítette a `provisional` listát, és akkor az élő forduló
    **részeredménye véglegesként számított volna be**.
-4. **Forduló-lezárás**: egy forduló akkor végleges, ha minden szakvezető minden játékosának
-   **lement a meccse**. Ehhez két jelzés kell együtt: `is_played`, **és** a meccslista
+4. **Forduló-lezárás**: egy forduló akkor végleges, ha minden játékosnak, **akinek van
+   meccse**, lement a meccse. Ehhez két jelzés kell együtt: `is_played`, **és** a meccslista
    `completed` státusza. Csak az `is_played`-re támaszkodni hibás volt: az MLSZ már a meccs
    *közben* igazra billenti, tehát amint a forduló utolsó meccse elkezdődött, mindenki
    „játszott" lett — a gyűjtő lezártnak minősítette a fordulót, és a **félig kész eredmény
-   véglegesként került a tabellába**. Amíg a forduló nem végleges, a `provisional` listában
-   van, és az oldal nem számolja a tabellába.
+   véglegesként került a tabellába**. Akinek **nincs meccse** a fordulóban (halasztás), az
+   nem számít bele — lásd lentebb, hogy miért. Mögötte biztonsági háló áll: ha a
+   játékos-szintű kép mégsem áll össze, de az MLSZ már továbblépett a fordulón, a gyűjtő
+   akkor is lezárja. Amíg a forduló nem végleges, a `provisional` listában van, és az oldal
+   nem számolja a tabellába.
 5. **Keresztellenőrzés**: a keretekből számolt pontszámot összeveti a hivatalossal. Ha
    eltér, **nem jelzést ír, hanem javít**: újra lekéri a hivatalos értéket az adott
    fordulóra, és azt vezeti át.
@@ -487,9 +490,51 @@ adnak** — piaczárásig titkosak.
 
 ### Forduló-lezárás és utólagos MLSZ-korrekciók
 - A keret-válasz `current_round.is_played` mezője megmondja, lejátszotta-e a játékos a
-  meccsét. **Egy forduló akkor zárult le, ha mindenkinél mindenki játszott.** A halasztott
-  meccs játékosait az MLSZ lejátszottnak jelöli 0 ponttal (igazolva a 3. fordulós
-  ETO–Fradi esetén), tehát a halasztás nem akasztja meg a lezárást.
+  meccsét. **Egy forduló akkor zárult le, ha mindenki játszott, akinek volt meccse** — és a
+  meccse `completed` státuszú.
+
+#### Akinek nincs meccse, az nem akaszthatja meg a lezárást
+
+Sokáig azt hittük, hogy a halasztott meccs játékosait az MLSZ lejátszottnak jelöli 0
+ponttal, tehát a halasztás magától megoldódik. **A 2026-08-23-i mérés ezt megcáfolta:**
+
+| eset | `is_played` | meccslista |
+|---|---|---|
+| 5. forduló, Honvéd (nincs meccse, élő forduló) | `false` | üres |
+| 3. forduló, ETO (nem volt meccse, régi forduló) | `true`, 0 ponttal | a klub **legutóbbi** meccse |
+
+A régi fordulónál látott `true` tehát nem a forduló lezárásából jön: ha a klubnak nem volt
+meccse abban a fordulóban, az API a klub **legutóbbi** meccsére esik vissza (ugyanaz a
+visszaesés, ami a „furcsa kezdési időpont" hibát okozta), és onnan örökli a jelzést is. Az
+`is_played` tehát nem akkor billen át, amikor a forduló véget ér, hanem amikor **a klub
+legközelebb pályára lép** — ami egy egész hetet is csúszhat.
+
+Ezért a lezárás-vizsgálat kihagyja azt, akinek nincs meccse (`nogame`). Enélkül az 5.
+forduló a Honvéd következő meccséig, nagyjából egy hétig a `provisional` listában maradt
+volna, pedig minden meccse lement. A jelzést a **tárolt keretből** olvassa, nem a friss
+válaszból: a meccslistát csak az élő fordulóra kérjük le, utána az `orokit_meccsjelzok()`
+hozza át a korábbi pillanatképből.
+
+#### Biztonsági háló: az MLSZ saját forduló-objektuma
+
+Ha a játékos-szintű kép mégsem áll össze, a fordulónak akkor sem szabad örökre nyitva
+maradnia. A tartalék jelzés az MLSZ saját forduló-objektuma. **Önálló forduló-végpont
+nincs** (`rounds`, `competitions/3/rounds`, `competition-rounds` — mind 404); a fordulólista
+a **versenylistán** keresztül jön, ugyanazzal a hívással, amit az MLSZ frontendje használ:
+
+```
+GET https://fantasy-api.mlsz.hu/competitions?include=rounds,current_round
+```
+
+Egy forduló mezői: `id`, `round_number`, `start_at`, `end_at`, `is_transfers_closed`,
+`closed_transfers_at`. **Lezártság-jelző nincs köztük** — az MLSZ-nél a forduló naptári
+határ (az egyik `end_at`-je a következő `start_at`-je), és az `end_at` elteltével lép
+tovább a `current_round`. Ezért csak háló, nem elsődleges forrás.
+
+A szabály: a `current_round` az erősebb jel. Ha az MLSZ szerint **még ez** az aktuális
+forduló, akkor az `end_at` eltelte sem zárja le — a futó fordulót lezárni a rosszabb téves
+lépés, mert a félig kész eredmény csendben bekerülne a tabellába. Az `end_at` csak akkor
+dönt, ha a `current_round` egyáltalán nem jött meg.
 - **Az MLSZ utólag korrigálhat** játékos-statisztikát, és átvezeti a hivatalos
   fordulóösszegre is. Megtörtént: Csendi 1–3. fordulós pontjai a lezárás után változtak
   (+1, +1, −2,5).
@@ -610,9 +655,9 @@ tehát invazívabb átalakítás — külön körben érdemes.
 tesztek/futtat.sh
 ```
 
-Elindít egy helyi kiszolgálót a repó gyökerére, lefuttat mindent (3 gyűjtő- és 10
-böngészős tesztet), és összegez; a kilépőkód a bukott tesztek száma. Részletek:
-`tesztek/README.md`.
+Elindít egy helyi kiszolgálót a repó gyökerére, lefuttat mindent (3 gyűjtő- és 11
+böngészős tesztet), és összegez; a kilépőkód a bukott tesztek száma. Tesztenkénti
+bontás: `tesztek/README.md`.
 
 Két elv, amit érdemes megtartani:
 

@@ -24,10 +24,26 @@ TOVABBI MERESSEL IGAZOLT TENYEK (2026-08-20):
   (a valasz az adott fordulot ES az elozot tartalmazza).
 - A keret-vegpont a meg el nem kezdodott fordulora 403-at ad (piaczarasig
   titkosak a keretek). Ez varhato viselkedes, nem hiba.
-- FORDULO-LEZARAS: egy fordulo akkor zarult le, ha minden szakvezeto minden
-  jatekosanal current_round.is_played igaz. A halasztott meccs jatekosait
-  az MLSZ lejatszottnak jeloli 0 ponttal (igazolva a 3. fordulos ETO-Fradi
-  eseten), tehat a halasztas nem akasztja meg a lezarast.
+- FORDULO-LEZARAS: egy fordulo akkor zarult le, ha minden olyan jatekos,
+  AKINEK VAN MECCSE, lejatszotta (current_round.is_played), es a meccse le
+  is ment (games[0].status == "completed"). Akinek nincs meccse a
+  forduloban (nogame), az nem szamit bele.
+  Korabban a nogame-esek is szamitottak, arra a - 2026-08-23-an megmert -
+  teves feltevesre, hogy az MLSZ oket is lejatszottnak jeloli 0 ponttal.
+  A meres ezt megcafolta: az 5. fordulos Honved-jatekosoknal (nincs meccs)
+  is_played=false, a 3. fordulos ETO-jatekosoknal viszont mar igaz - de
+  csak azert, mert a regi fordulo lekeresenel az API a klub LEGUTOBBI
+  meccsere esik vissza (ugyanaz a visszaeses, ami a "furcsa kezdesi
+  idopont" hibat okozta). A jelzo tehat nem a fordulo lezarasakor billen at,
+  hanem amikor a klub legkozelebb jatszik - ami egy egesz hetet is csuszhat.
+- BIZTONSAGI HALO A LEZARASHOZ: az MLSZ sajat fordulo-objektuma. Onallo
+  rounds-vegpont nincs (404), a fordulolista a versenylistan keresztul jon:
+  competitions?include=rounds,current_round - ezt hivja a frontendje is.
+  Mezoi: id, round_number, start_at, end_at, is_transfers_closed,
+  closed_transfers_at. LEZARTSAG-JELZO NINCS BENNE: az MLSZ-nel a fordulo
+  naptari hatar (az egyik end_at-je a kovetkezo start_at-je), ezert ez csak
+  tartalek - ha a jatekos-szintu kep megsem all ossze, a fordulo akkor sem
+  marad orokre ideiglenes.
 - A current_round az ELO fordulo lekeresenel csak explicit
   competition_player.current_round include-dal jon vissza (lezart fordulonal
   enelkul is megjelenik) - ezert szerepel az INCLUDE-ban (2026-08-21).
@@ -55,7 +71,7 @@ TOVABBI MERESSEL IGAZOLT TENYEK (2026-08-20):
 - A 0-0 vedelem marad: ha egy fordulo minden erteke 0, a fordulo el sem
   kezdodott, nem kerulhet be lejatszott dontetlenkent.
 """
-import json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
+import datetime, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 
 COMPETITION = 3
 MEMBERS = {
@@ -63,7 +79,8 @@ MEMBERS = {
     "Vince": "HolVanSalah", "Bazsa": "Hoxha98", "Csongi": "szcsngr",
     "Csendi": "cspeti93", "Ádám": "siuu_1885",
 }
-BASE = "https://fantasy-api.mlsz.hu/competitions/%d/" % COMPETITION
+ROOT = "https://fantasy-api.mlsz.hu/"
+BASE = ROOT + "competitions/%d/" % COMPETITION
 HDRS = {"Accept": "application/json", "User-Agent": "funtasy-archiver/1.0",
         "Referer": "https://fantasy.mlsz.hu/"}
 INCLUDE = ("position,position.alternatives,competition_player,"
@@ -71,6 +88,55 @@ INCLUDE = ("position,position.alternatives,competition_player,"
            "competition_player.current_round,summary_statistics")
 
 rid = lambda n: 75 + 2 * n
+
+
+def versenyfordulok():
+    """Az MLSZ sajat fordulo-objektuma - a lezaras BIZTONSAGI HALOJA.
+
+    Onallo rounds-vegpont NINCS (minden ilyen ut 404); a fordulolista a
+    VERSENYLISTAN keresztul jon, ugyanazzal a hivassal, amit az MLSZ sajat
+    frontendje hasznal. Egy fordulo mezoi: id, round_number, start_at,
+    end_at, is_transfers_closed, closed_transfers_at.
+
+    LEZARTSAG-JELZO NINCS KOZTUK: az MLSZ-nel a fordulo naptari hatar, az
+    end_at eltelteig tart, utana lep tovabb a current_round. Ezert ez csak
+    tartalek a jatekos-szintu jel mogott, nem az elsodleges forras.
+
+    Visszaad: (aktualis forduloszam vagy None, {forduloszam: end_at}).
+    Hibanal (None, {}) - a hivo ilyenkor csak a jatekos-szintu jelre epit."""
+    st, j = api_get(ROOT + "competitions?include=rounds,current_round")
+    if st != 200 or not isinstance(j, dict):
+        return None, {}
+    comp = next((c for c in (j.get("data") or [])
+                 if c.get("id") == COMPETITION), None) or {}
+    akt = ((comp.get("current_round") or {}).get("round_number"))
+    vegek = {}
+    for r in comp.get("rounds") or []:
+        if r.get("round_number") and r.get("end_at"):
+            vegek[int(r["round_number"])] = r["end_at"]
+    return akt, vegek
+
+
+def mlsz_lezarta(r, mlsz_akt, mlsz_vegek):
+    """Igaz, ha az MLSZ szerint az r. fordulo mar nem tart.
+
+    Az elsodleges jel a current_round: ha az MLSZ tovabblepett, a fordulo
+    lement. Ez erosebb, mint a naptar - ha a current_round szerint MEG EZ az
+    aktualis fordulo, akkor az end_at eltelte sem zarja le (a ket adat
+    atmenetileg elterhet, es a futo fordulot lezarni a rosszabb teves lepes:
+    a felig kesz eredmeny csendben bekerulne a tabellaba).
+
+    Az end_at csak akkor dont, ha a current_round egyaltalan nem jott meg."""
+    if mlsz_akt is not None:
+        return mlsz_akt > r
+    veg = mlsz_vegek.get(r)
+    if not veg:
+        return False
+    try:
+        return datetime.datetime.now(datetime.timezone.utc) > \
+            datetime.datetime.fromisoformat(veg)
+    except ValueError:
+        return False
 
 
 def api_get(url, retries=3):
@@ -341,6 +407,8 @@ def main():
     # reszeredmenyet (a provisional lista kiurulesevel), vagy ideiglenesse
     # minositett volna egy mar lezart fordulot - mindketto rossz tabellat ad.
     lezart, bizonytalan = {}, set()
+    mlsz_akt, mlsz_vegek = versenyfordulok()
+    print("  az MLSZ szerinti aktualis fordulo: %s" % (mlsz_akt if mlsz_akt else "nem elerheto"))
     for r in sorted(celok):
         # olcso elovizsgalat egyetlen kerettel: 403 = a fordulo meg titkos
         elso_id = next(iter(ids.values()))
@@ -349,7 +417,7 @@ def main():
             print("  . %d. fordulo keretei meg nem elerhetok (piaczaras elott)" % r)
             bizonytalan.add(r)
             continue
-        uj_fordulo, mind_jatszott, teljes = {}, True, True
+        uj_fordulo, teljes = {}, True
         mind_lement = True          # a meccslista szerint minden meccs lement
         for nev, uid in ids.items():
             st, j = squad(uid, r, jatek=(r == aktualis))
@@ -357,12 +425,9 @@ def main():
                 print("  ! %d. fordulo / %s: HTTP %s" % (r, nev, st), file=sys.stderr)
                 teljes = False
                 continue
-            sq = [rekord(d) for d in j["data"]]
-            uj_fordulo[nev] = sq
+            uj_fordulo[nev] = [rekord(d) for d in j["data"]]
             for d in j["data"]:
                 cr = (d.get("competition_player") or {}).get("current_round") or {}
-                if not cr.get("is_played"):
-                    mind_jatszott = False
                 # Az is_played mar a meccs KOZBEN igazra vall - abbol tehat NEM
                 # kovetkezik, hogy a fordulo lement. Enelkul: amint a fordulo
                 # utolso meccse elkezdodott, mindenki "jatszott" lett, a gyujto
@@ -378,15 +443,28 @@ def main():
         regi_fordulo = hist["rounds"].get(str(r)) or {}
         orokit_meccsjelzok(regi_fordulo, uj_fordulo)
         hist["rounds"][str(r)] = {**regi_fordulo, **uj_fordulo}
+        # A "mindenki jatszott" vizsgalat a MAR OSSZEFESULT rekordokbol dol
+        # el, nem a nyers valaszbol: a "nincs meccse" jelzes csak ott van meg.
+        # (A meccslistat csak az elo fordulora kerjuk le, utana a
+        # orokit_meccsjelzok hozza at a korabbi pillanatkepbol.)
+        mind_jatszott = all(p.get("played") or p.get("nogame")
+                            for sq in uj_fordulo.values() for p in sq)
         hianytalan = teljes and len(uj_fordulo) == len(MEMBERS)
+        halo = ""
         if hianytalan:
-            lezart[r] = mind_jatszott and mind_lement
+            kesz = mind_jatszott and mind_lement
+            # Biztonsagi halo: ha valamiert megsem all ossze a jatekos-szintu
+            # kep, de az MLSZ mar tovabblepett a fordulon, akkor lezart. Igy
+            # egy fordulo nem tud vegtelen ideig ideiglenes maradni.
+            if not kesz and mlsz_lezarta(r, mlsz_akt, mlsz_vegek):
+                kesz, halo = True, " (az MLSZ szerint lezarult)"
+            lezart[r] = kesz
         else:
             bizonytalan.add(r)
-        print("  keretek: %d. fordulo, %d/%d szakvezeto, %s"
+        print("  keretek: %d. fordulo, %d/%d szakvezeto, %s%s"
               % (r, len(uj_fordulo), len(MEMBERS),
                  ("lezart" if lezart[r] else "meg tart") if hianytalan
-                 else "HIANYOS adat - a lezartsag valtozatlan marad"))
+                 else "HIANYOS adat - a lezartsag valtozatlan marad", halo))
 
         # keresztellenorzes: csak teljes es mar lezart fordulora van ertelme
         if not (hianytalan and lezart[r]):
