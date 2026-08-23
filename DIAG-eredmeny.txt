@@ -1,29 +1,255 @@
-=== game: current_event=1 current_event_finished=False processing_status=n
+=== game: {"current_event": 1, "current_event_finished": false, "next_event": 2, "processing_status": "n", "trades_time_for_approval": true, "waivers_processed": false}
 
-=== a MECCSEK sajat stats tombje (mi van benne, es benne van-e a bonus?)
-    id=1   started=True  fin_prov=True  finished=False  stats: [None, None, None, None, None, None, None, None, None, None, None]
-    id=4   started=True  fin_prov=True  finished=False  stats: [None, None, None, None, None, None, None, None, None, None, None]
-    id=3   started=True  fin_prov=True  finished=False  stats: [None, None, None, None, None, None, None, None, None, None, None]
-    id=5   started=True  fin_prov=True  finished=False  stats: [None, None, None, None, None, None, None, None, None, None, None]
-    id=6   started=True  fin_prov=True  finished=False  stats: [None, None, None, None, None, None, None, None, None, None, None]
-    id=2   started=True  fin_prov=True  finished=False  stats: [None, None, None, None, None, None, None, None, None, None, None]
-    id=7   started=True  fin_prov=True  finished=False  stats: [None, None, None, None, None, None, None, None, None, None, None]
-    id=8   started=True  fin_prov=True  finished=False  stats: [None, None, None, None, None, None, None, None, None, None, None]
-    id=9   started=True  fin_prov=True  finished=False  stats: [None, None, None, None, None, None, None, None, None, None, None]
-    id=10  started=False fin_prov=False finished=False  stats: (ures)
+=== egy lement meccs (id=1) TELJES stats tombje
+[
+ {
+  "s": "goals_scored",
+  "h": [
+   {
+    "element": 12,
+    "value": 1
+   },
+   {
+    "element": 15,
+    "value": 1
+   },
+   {
+    "element": 26,
+    "value": 1
+   }
+  ],
+  "a": []
+ },
+ {
+  "s": "assists",
+  "h": [
+   {
+    "element": 8,
+    "value": 1
+   },
+   {
+    "element": 10,
+    "value": 1
+   },
+   {
+    "element": 554,
+    "value": 1
+   }
+  ],
+  "a": []
+ },
+ {
+  "s": "own_goals",
+  "h": [],
+  "a": []
+ },
+ {
+  "s": "penalties_saved",
+  "h": [],
+  "a": []
+ },
+ {
+  "s": "penalties_missed",
+  "h": [],
+  "a": []
+ },
+ {
+  "s": "yellow_cards",
+  "h": [
+   {
+    "element": 4,
+    "value": 1
+   }
+  ],
+  "a": [
+   {
+    "element": 574,
+    "value": 1
+   }
+  ]
+ },
+ {
+  "s": "red_cards",
+  "h": [],
+  "a": []
+ },
+ {
+  "s": "saves",
+  "h": [
+   {
+    "element": 1,
+    "value": 1
+   }
+  ],
+  "a": [
+   {
+    "element": 110,
+    "value": 2
+   }
+  ]
+ },
+ {
+  "s": "bonus",
+  "h": [
+   {
+    "element": 15,
+    "value": 3
+   },
+   {
+    "element": 10,
+    "value": 2
+   },
+   {
+    "element": 12,
+    "value": 1
+   }
+  ],
+  "a": []
+ },
+ {
+  "s": "bps",
+  "h": [
+   {
+    "element": 15,
+    "value": 41
+   },
+   {
+    "element": 10,
+    "value": 37
+   },
+   {
+    "element": 12,
+    "value": 36
+   },
+   {
+    "element": 26,
+    "value": 34
+   },
+   {
+    "element": 8,
+    "value": 31
+   },
+   {
+    "element": 554,
+    "value": 30
+   },
+   {
+    "element": 11,
+    "value": 27
+   },
+   {
+    "element": 1,
+    "value": 24
+   },
+   {
+    "element": 4,
+    "value": 21
+   },
+   {
+    "element": 7,
+    "value": 15
+   },
+   {
+    "element": 13,
+    "value": 10
+   },
+   {
+    "element": 16,
+    "value": 8
+   },
+   {
+    "element": 17,
+    "value": 5
+   },
+   {
+    "element": 14,
+    "value": 4
+   },
+   {
+    "element": 9,
+    "value": 3
+   },
+   {
+    "element": 19,
+    "value": 3
+   }
+  ],
+  "a": [
+   {
+    "element": 184,
+    "value": 14
+   },
+   {
+    "element": 173,
+    "value": 11
+   },
+   {
+    "element": 190,
+    "value": 11
+   },
+   {
+    "element": 194,
+    "value": 9
+   },
+   {
+    "element": 104,
+    "value": 8
+   },
+   {
+    "element": 188,
+    "value": 8
+   },
+   {
+    "element": 195,
+    "value": 7
+   },
+   {
+    "element": 492,
+    "value": 4
+   },
+   {
+    "element": 183,
+    "value": 3
+   },
+   {
+    "element": 584,
+    "value": 3
+   },
+   {
+    "element": 574,
+    "value": 2
+   },
+   {
+    "element": 182,
+    "value": 1
+   },
+   {
+    "element": 176,
+    "value": -4
+   },
+   {
+    "element": 175,
+    "value": -8
+   }
+  ]
+ },
+ {
+  "s": "defensive_contribution",
 
-=== 609 jatekosbol 29-nek van bonusza (bonus > 0)
 
-    elem 10: bonus=2 bps=37 total=11
-      explain: [[[{"name": "Minutes played", "points": 2, "value": 90, "stat": "minutes"}, {"name": "Assists", "points": 3, "value": 1, "stat": "assists"}, {"name": "Clean sheets", "points": 4, "value": 1, "stat": "clean_sheets"}, {"name": "Bonus", "points": 2, "value": 2, "stat": "bonus"}], 1]]
+=== minden meccs: hany stats tetel, es milyen kulcsok
+    id=1   fin_prov=True  finished=False  11 tetel, kulcsok=['a', 'h', 's'], s-ertekek=['goals_scored', 'assists', 'own_goals', 'penalties_saved', 'penalties_missed', 'yellow_cards', 'red_cards', 'saves', 'bonus', 'bps', 'defensive_contribution']
+    id=4   fin_prov=True  finished=False  11 tetel, kulcsok=['a', 'h', 's'], s-ertekek=['goals_scored', 'assists', 'own_goals', 'penalties_saved', 'penalties_missed', 'yellow_cards', 'red_cards', 'saves', 'bonus', 'bps', 'defensive_contribution']
+    id=3   fin_prov=True  finished=False  11 tetel, kulcsok=['a', 'h', 's'], s-ertekek=['goals_scored', 'assists', 'own_goals', 'penalties_saved', 'penalties_missed', 'yellow_cards', 'red_cards', 'saves', 'bonus', 'bps', 'defensive_contribution']
+    id=5   fin_prov=True  finished=False  11 tetel, kulcsok=['a', 'h', 's'], s-ertekek=['goals_scored', 'assists', 'own_goals', 'penalties_saved', 'penalties_missed', 'yellow_cards', 'red_cards', 'saves', 'bonus', 'bps', 'defensive_contribution']
+    id=6   fin_prov=True  finished=False  11 tetel, kulcsok=['a', 'h', 's'], s-ertekek=['goals_scored', 'assists', 'own_goals', 'penalties_saved', 'penalties_missed', 'yellow_cards', 'red_cards', 'saves', 'bonus', 'bps', 'defensive_contribution']
+    id=2   fin_prov=True  finished=False  11 tetel, kulcsok=['a', 'h', 's'], s-ertekek=['goals_scored', 'assists', 'own_goals', 'penalties_saved', 'penalties_missed', 'yellow_cards', 'red_cards', 'saves', 'bonus', 'bps', 'defensive_contribution']
+    id=7   fin_prov=True  finished=False  11 tetel, kulcsok=['a', 'h', 's'], s-ertekek=['goals_scored', 'assists', 'own_goals', 'penalties_saved', 'penalties_missed', 'yellow_cards', 'red_cards', 'saves', 'bonus', 'bps', 'defensive_contribution']
+    id=8   fin_prov=True  finished=False  11 tetel, kulcsok=['a', 'h', 's'], s-ertekek=['goals_scored', 'assists', 'own_goals', 'penalties_saved', 'penalties_missed', 'yellow_cards', 'red_cards', 'saves', 'bonus', 'bps', 'defensive_contribution']
+    id=9   fin_prov=True  finished=False  11 tetel, kulcsok=['a', 'h', 's'], s-ertekek=['goals_scored', 'assists', 'own_goals', 'penalties_saved', 'penalties_missed', 'yellow_cards', 'red_cards', 'saves', 'bonus', 'bps', 'defensive_contribution']
+    id=10  fin_prov=False finished=False  0 tetel, kulcsok=[], s-ertekek=[]
 
-    elem 12: bonus=1 bps=36 total=9
-      explain: [[[{"name": "Minutes played", "points": 2, "value": 67, "stat": "minutes"}, {"name": "Goals scored", "points": 5, "value": 1, "stat": "goals_scored"}, {"name": "Clean sheets", "points": 1, "value": 1, "stat": "clean_sheets"}, {"name": "Bonus", "points": 1, "value": 1, "stat": "bonus"}], 1]]
-
-    elem 15: bonus=3 bps=41 total=11
-      explain: [[[{"name": "Minutes played", "points": 2, "value": 75, "stat": "minutes"}, {"name": "Goals scored", "points": 5, "value": 1, "stat": "goals_scored"}, {"name": "Clean sheets", "points": 1, "value": 1, "stat": "clean_sheets"}, {"name": "Bonus", "points": 3, "value": 3, "stat": "bonus"}], 1]]
-
-    elem 68: bonus=3 bps=32 total=10
-      explain: [[[{"name": "Minutes played", "points": 2, "value": 90, "stat": "minutes"}, {"name": "Goals scored", "points": 5, "value": 1, "stat": "goals_scored"}, {"name": "Bonus", "points": 3, "value": 3, "stat": "bonus"}], 8]]
+=== bootstrap-static kulcsok: ['element_stats', 'element_types', 'elements', 'events', 'fixtures', 'settings', 'teams']
+    a fordulo objektuma: {"average_entry_score": null, "deadline_time": "2026-08-21T17:30:00Z", "id": 1, "name": "Gameweek 1", "finished": false, "highest_scoring_entry": null, "trades_time": "2026-08-19T17:30:00Z", "waivers_time": "2026-08-20T17:30:00Z"}
 
 --- vege ---
