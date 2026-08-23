@@ -150,10 +150,16 @@ Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő 
     A `vege` ugyanis nem mindig áll rendelkezésre (a 2026-08-21 előtti keret-rekordokban
     nincs is ilyen mező).
 
-  Ezen felül a **„lejátszotta" állításhoz bizonyíték kell**: vagy lezárt fordulót nézünk,
-  vagy már megjött a pont-bontás. Élő fordulóban, bizonyíték nélkül nem az `is_played`
-  szavára mondjuk ki, hogy a meccsnek vége. Ha nincs kitűzött kezdési idő (az MLSZ ilyenkor
-  éjfélt ír), a meccset **nem** tekintjük elkezdettnek.
+  Ha nincs kitűzött kezdési idő (az MLSZ ilyenkor éjfélt ír), a meccset **nem** tekintjük
+  elkezdettnek.
+
+  **Mért tény: az MLSZ a 0 pontos játékosra ÜRES pont-bontást ad vissza.** Bizonyíték:
+  Heitor (Újpest) 0 ponttal üres listát kapott, miközben klubtársa, Ljujić — ugyanabból a
+  meccsből — 1,75-öt, tehát a meccs fel volt dolgozva. Az üres bontás tehát **nem** jelent
+  feldolgozatlan meccset. Egy ideig erre alapoztunk („a lejátszotta állításhoz kell egy
+  bontás-sor"), és emiatt a valóban 0 pontos, rég lement meccsű játékosra azt írtuk, hogy
+  „a pontok feldolgozása még tart". A meccs közbeni tévedés ellen nem ez véd, hanem a
+  fenti állapot-kapu.
 
   **A lefújás és a pontok megjelenése között is idő telik el.** A PL-en az FPL **két
   lépésben** zárja a meccset: a `finished_provisional` a lefújáskor igaz, a `finished`

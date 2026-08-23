@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=20">
+<link rel="stylesheet" href="../funtasy.css?v=21">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -71,7 +71,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=20"></script>
+<script src="../funtasy.js?v=21"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -534,13 +534,14 @@ function nincsPontUzenet(played, start, nyers, nogame, vege, elo){
     : 'A meccs véget ért — a pontok feldolgozása még tart.';
   const perc=(nyers||[]).find(s=>s.name==='Játszott perc');
   if(perc && !perc.value) return 'Nem lépett pályára ebben a fordulóban.';
-  // A "lejatszotta" allitashoz BIZONYITEK kell: vagy lezart fordulot nezunk,
-  // vagy mar megjott a bontas. Elo forduloban, bizonyitek nelkul nem az
-  // is_played szavara mondjuk ki, hogy vege - az billen at a meccs kozben is.
-  if((nyers||[]).length || !elo) return 'Lejátszotta a meccset, pontot érő esemény nélkül.';
-  return allapot==='ismeretlen'
-    ? 'Ehhez a fordulóhoz nincs rögzített esemény.'
-    : 'A meccs véget ért — a pontok feldolgozása még tart.';
+  // MERT MEGMERTUK: az MLSZ a 0 pontos jatekosra URES bontast ad vissza -
+  // Heitor (Ujpest) 0 ponttal ures bontast kapott, mikozben klubtarsa,
+  // Ljujic ugyanabbol a meccsbol 1,75-ot, tehat a meccs FEL VOLT dolgozva.
+  // A "nincs sor" tehat NEM jelent feldolgozatlant; erre alapozni hiba volt.
+  // A meccs kozbeni tevedes ellen nem ez ved, hanem a fenti allapot-kapu.
+  if(played===true || (nyers||[]).length)
+    return 'Lejátszotta a meccset, pontot érő esemény nélkül.';
+  return 'Ehhez a fordulóhoz nincs rögzített esemény.';
 }
 async function bontasHTML(ds){
   const r=+ds.r;
