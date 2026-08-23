@@ -428,14 +428,22 @@ NEM egy beágyazott `player` objektumban. A poszt a `position.monogram` (K/H/KP/
 
 ### Ki nem játszik a fordulóban (a meccslista)
 A `competition_player.current_round.games` include játékosonként megadja a klub **adott
-fordulóbeli** meccsét (`start_at`, `status`, `round_number`). Ha a lista **üres**, a
-klubnak nincs meccse abban a fordulóban — ez a biztos jelzés az elmaradt/elhalasztott
-fordulóra (mérve: Honvéd, 5. forduló).
+fordulóbeli** meccsét (`start_at`, `status`, `round_number`). A „nincs meccse" **két
+alakban** jön, és mindkettőt kezelni kell:
 
-**Fontos csapda:** ilyenkor a `first_played_at` a klub **következő** meccsére mutat, egy
-másik forduló időpontjára. Ebből tehát nem szabad a fordulóra következtetni — ez okozta
-a „furcsa kezdési időpont" hibát (Csontos, 5. forduló: aug. 29. 00:00, ami valójában a
-6. forduló dátuma, kitűzött időpont nélkül).
+1. **Üres lista** — az élő fordulónál ez jön (mérve: Honvéd, 5. forduló).
+2. **Másik forduló meccse** — régi fordulónál az API a klub **legutóbbi** meccsére esik
+   vissza a hiányzó helyett. Ezt maga a meccs árulja el: a `round_number` mezője `"3F"` /
+   `"5F"` alakú, és ha nem a kért fordulóra mutat, akkor a klubnak nincs meccse benne.
+   (Mérve: a 3. fordulóra lekért ETO-játékosoknál a meccs `round_number`-e `"5F"`.)
+
+**Fontos csapda:** a `first_played_at` egyik esetben sem használható. Vagy a klub
+**következő** meccsére mutat — ez okozta a „furcsa kezdési időpont" hibát (Csontos, 5.
+forduló: aug. 29. 00:00, ami valójában a 6. forduló dátuma) —, vagy egy **éjféles
+helyőrzőre**, aminek a napja akár már el is múlt: a 3. fordulós ETO-játékosoknál
+`2026-08-15T00:00`, amitől az oldal hetekkel később is azt írta, hogy „a meccs még nem
+kezdődött el — kezdés: aug. 15.". Ha a helyőrző napja elmúlt, a dátum nem kezdési
+időpont többé, hanem annyit jelent, hogy a meccs elmaradt és újat nem tűztek ki.
 
 **Az include ára fordulófüggő** (mérve, 15 játékos):
 
@@ -605,14 +613,15 @@ lett (sztring-összefűzésre).
   `tartalek/GOMB-bookmarklet.txt` módosul, a böngészőben lévő könyvjelzőt kézzel kell frissíteni.
 - **A PL-en a GW első óráiban** (amíg a gyűjtő először le nem tárolja a forduló kereteit,
   legfeljebb ~3 óra) élő meccsállás még nem számolható — utána percre pontos.
-- **A régi keret-rekordokban nincs `id`, `played` és `start` mező** (a pont-bontás és a
-  „még nem játszott” jelölés 2026-08-21-én került be). A bontás náluk is működik (az oldal
-  név alapján oldja fel az azonosítót a forduló keretéből), de a kötőjel-jelölés csak az
-  új gyűjtésű adatoknál él — a régi 0-k számként látszanak, ami lezárt fordulónál helyes is.
+- **A régi keret-rekordokban nem volt `id`, `played`, `start` és `nogame` mező** (ezek
+  2026-08-21-én kerültek be). Emiatt az oldal a pont-bontáshoz élő lekérést volt kénytelen
+  indítani, és a „nincs meccse" jelölés teljesen hiányzott — a 3. fordulós ETO-játékosoknál
+  ezért írta az oldal egy már elmúlt helyőrző dátummal, hogy a meccs még nem kezdődött el.
+  A gyűjtő azóta **egyszer újra lekéri** az ilyen fordulót, a meccslistával együtt, és a
+  hiányzó mezőket pótolja; utána a feltétel már nem teljesül, tehát nem ismétlődik.
 - **A „nincs meccse a fordulóban" jelzés a forduló alatt rögzül**, és a lezárás után már
-  nem frissül (a lezárt fordulóra nem kérjük le a meccslistát, mert hatszor akkora
-  válasz jönne). Ez helyes is: az MLSZ az elmaradt meccs játékosait lejátszottnak jelöli
-  0 ponttal, tehát a pótlás nem ír már a forduló pontjaiba.
+  nem kérjük le újra a meccslistát (hatszor akkora válasz jönne), hanem az
+  `orokit_meccsjelzok()` hozza át a korábbi pillanatképből.
 - **A pont-bontás sorait a magyar eseménynév azonosítja** (pl. a „nem lépett pályára”
   eset a „Játszott perc” sor 0 értékéből derül ki). Az API nem ad stabil kulcsot ezekhez,
   úgyhogy ha az MLSZ átnevez egy eseményt, az oldal a részletesebb üzenet helyett az

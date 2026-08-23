@@ -12,6 +12,11 @@ R3b: ugyanez akkor is, ha a fordulo mar nem az aktualis, tehat a meccslistat
 R4: biztonsagi halo - ha a jatekos-szintu kep nem all ossze, de az MLSZ mar
     tovabblepett a fordulon, lezartnak kell lennie.
 R5: ...de amig az MLSZ szerint a fordulo AZ AKTUALIS, a halo nem sulhet el.
+R6: ha a meccslistaban MASIK fordulo meccse jon vissza (regi fordulonal az
+    API a klub legutobbi meccsere esik vissza), az nogame - es a masik
+    fordulobol valo meccs allapota nem akaszthatja meg a lezarast.
+R7: a regi formatumu keretet (nincs benne "played") a gyujto ujra lekeri, es
+    a potolt rekordban ott a played, az id es a nogame is.
 """
 import importlib.util, json, os, sys, tempfile, urllib.parse
 
@@ -29,7 +34,7 @@ parok = [(NEVEK[0], NEVEK[1]), (NEVEK[2], NEVEK[3]), (NEVEK[4], NEVEK[5]), (NEVE
 hibak = []
 
 
-def keret(r, nev, status, nogame=False, games=True):
+def keret(r, nev, status, nogame=False, games=True, meccs_fordulo=None):
     """15 jatekos; a meccs status-a allithato (scheduled = meg tart).
 
     nogame=True: a klubnak nincs meccse a forduloban - ures meccslista, es az
@@ -43,7 +48,8 @@ def keret(r, nev, status, nogame=False, games=True):
     else:
         meccs = {"is_played": True}
         if games:
-            meccs["games"] = [{"start_at": "2026-08-23T17:30:00+02:00", "status": status}]
+            meccs["games"] = [{"start_at": "2026-08-23T17:30:00+02:00", "status": status,
+                               "round_number": "%dF" % (meccs_fordulo or r)}]
     return {"data": [{
         "id": 1000 + i, "is_captain": False,
         "type": "starter" if i < 11 else "substitutes",
@@ -66,7 +72,7 @@ def keszit(prov, akt=AKT, tortenet=None):
     json.dump({"updated": None, "rounds": rounds}, open("squad_history.json", "w"))
 
 
-def futtat(status, bukjon_e, cimke, nogame_nevek=(), mlsz=None, akt=AKT):
+def futtat(status, bukjon_e, cimke, nogame_nevek=(), mlsz=None, akt=AKT, meccs_fordulo=None):
     """status: a meccs allapota; bukjon_e: egy keret-lekeres elhasal-e;
     nogame_nevek: kiknek nincs meccsuk; mlsz: az MLSZ szerinti aktualis
     fordulo szama (None = a verseny-vegpont nem elerheto)."""
@@ -91,7 +97,8 @@ def futtat(status, bukjon_e, cimke, nogame_nevek=(), mlsz=None, akt=AKT):
             if bukjon_e and (nev, r) == (NEVEK[2], akt):
                 return 500, None
             return 200, keret(r, nev, status, nogame=(nev in nogame_nevek),
-                              games="current_round.games" in urllib.parse.unquote(url))
+                              games="current_round.games" in urllib.parse.unquote(url),
+                              meccs_fordulo=meccs_fordulo)
         return 404, None
     c.api_get = mock
     c.ellenorzendo = lambda regi, db=4: []
@@ -166,5 +173,33 @@ prov = futtat("scheduled", False, "R5: meccs meg tart, az MLSZ szerint is ez az 
 print("provisional:", prov)
 allit(AKT in prov, "a halo nem sult el a futo fordulora",
     "lezarta a futo fordulot - felig kesz eredmeny kerul a tabellaba", "R5")
+
+# ---- R6: a meccslistaban MASIK fordulo meccse jon vissza
+#      A status szandekosan "scheduled": ha a masik fordulobol valo meccset
+#      elfogadnank, az meg le sem ment - a lezarast is megakasztana.
+os.chdir(tempfile.mkdtemp()); keszit([AKT])
+prov = futtat("scheduled", False, "R6: a meccslistaban a klub masik fordulos meccse",
+              meccs_fordulo=AKT + 3)
+print("provisional:", prov)
+allit(AKT not in prov, "a masik fordulo meccse nogame-nek szamit, es nem akasztja meg",
+      "ideiglenes maradt - a masik fordulobol valo meccs allapota megtevesztett", "R6")
+
+# ---- R7: regi formatumu keret potlasa
+#      A 2026-08-21 elotti rekordokban nincs "played"/"id"/"start". Az ilyen
+#      fordulot a gyujto ujra lekeri, meccslistaval egyutt.
+os.chdir(tempfile.mkdtemp())
+regi_formatum = {n: [{"name": "J%d %s" % (i, n), "team": "XYZ", "pos": "H", "week": 0,
+                      "total": 1, "hun": True, "u21": i < 2, "cap": False,
+                      "sub": i >= 11, "price": 5} for i in range(15)]
+                 for n in NEVEK}
+keszit([], tortenet={1: regi_formatum})
+futtat("completed", False, "R7: regi formatumu 1. fordulo potlasa", meccs_fordulo=AKT)
+uj = json.load(open("squad_history.json"))["rounds"]["1"][NEVEK[0]][0]
+print("a potolt rekord mezoi:", sorted(uj))
+allit("played" in uj and "id" in uj, "a potolt rekordban ott a played es az id",
+      "a regi formatumu fordulo nem lett potolva: %s" % sorted(uj), "R7")
+allit(uj.get("nogame") is True,
+      "a meccslistabol a nogame is bekerult (a meccs masik fordulohoz tartozott)",
+      "a nogame nem kerult be a potolt rekordba", "R7-nogame")
 
 sys.exit(1 if hibak else 0)

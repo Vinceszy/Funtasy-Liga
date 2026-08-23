@@ -261,7 +261,9 @@ function pontCellaHTML(p, round){
   // A meg el sem kezdodott meccsnel a 0 hazugsag lenne - fuggetlenul attol,
   // mit mond az is_played (az nem megbizhato, lasd meccsAllapot).
   if(meccsAllapot(p.start, p.vege)==='elotte')
-    return '<span class="pts" title="a meccs még nem kezdődött el">–</span>';
+    return '<span class="pts" title="'+(lejartHelyorzo(p.start)
+      ? 'a meccs elmaradt, új időpontja nincs kitűzve'
+      : 'a meccs még nem kezdődött el')+'">–</span>';
   if(p.played===false) return '<span class="pts" title="még nem játszott">–</span>';
   if(nincsMegAdat(p,round))
     return '<span class="pts" title="a meccs zajlik — az MLSZ a pontokat a meccs végén rögzíti">–</span>';
@@ -412,9 +414,18 @@ const KERET_INCLUDE='position,position.alternatives,competition_player,'+
 // meccs meg 'scheduled'; lezartnal a kesz meccs melle a klublogok is
 // bejonnek base64-ben (+100 KB), ezert oda a sima include megy.
 const KERET_INCLUDE_JATEK=KERET_INCLUDE+',competition_player.current_round.games';
-function keretRekord(d){
+// "Nincs meccse ebben a forduloban" ket alakban jon: ures meccslista, vagy -
+// regi fordulonal - a klub LEGUTOBBI meccse a hianyzo helyett. Az utobbit a
+// meccs sajat round_number mezoje arulja el ("3F" / "5F"): ha nem ehhez a
+// fordulohoz tartozik, akkor a klubnak nincs meccse benne.
+function maserol(g, r){
+  if(!Array.isArray(g) || !g.length || r==null) return false;
+  const m=/^\s*(\d+)/.exec(String((g[0]||{}).round_number||''));
+  return !!m && +m[1]!==+r;
+}
+function keretRekord(d, r){
   const cp=d.competition_player||{}, po=d.position||{}, ss=d.summary_statistics||{},
-        cr=cp.current_round||{}, g=cr.games;
+        cr=cp.current_round||{}, g=cr.games, mas=maserol(g,r), nincs=Array.isArray(g)&&(!g.length||mas);
   return {name:[cp.first_name,cp.last_name].filter(Boolean).join(' ')||('#'+(cp.id||d.id)),
     team:(cp.team&&(cp.team.short_name||cp.team.name))||'', pos:po.monogram||po.name||'',
     u21:!!cp.is_u21, hun:/magyar|hungar|"HUN"/i.test(JSON.stringify(cp.countries||cp.country||'')),
@@ -423,9 +434,9 @@ function keretRekord(d){
     id:cp.id||null, played:!!cr.is_played,
     // meccslista nelkul a first_played_at a tartalek - de ha nincs meccse a
     // forduloban, az a KOVETKEZO fordulora mutat, ezert olyankor nincs kezdes
-    start: g ? (((g[0]||{}).start_at)||null) : (cr.first_played_at||null),
-    nogame: (Array.isArray(g) && !g.length) || undefined,
-    vege: (g && (g[0]||{}).status==='completed') || undefined};
+    start: nincs ? null : (g ? (((g[0]||{}).start_at)||null) : (cr.first_played_at||null)),
+    nogame: nincs || undefined,
+    vege: (g && !mas && (g[0]||{}).status==='completed') || undefined};
 }
 async function eloKeret(name, r, jatek){
   const uid=USER_IDS[name];
@@ -433,7 +444,7 @@ async function eloKeret(name, r, jatek){
   const inc = jatek ? KERET_INCLUDE_JATEK : KERET_INCLUDE;
   const u=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/user-team-players-history`+
     `?include=${encodeURIComponent(inc)}&filter%5Buser_id%5D=${uid}&filter%5Bround_id%5D=${75+2*r}`;
-  try{ const j=await apiGet(u); return (j.data||[]).map(keretRekord); }   // cimke nelkul: ne irja at a statuszsavot
+  try{ const j=await apiGet(u); return (j.data||[]).map(d=>keretRekord(d,r)); }   // cimke nelkul: ne irja at a statuszsavot
   catch(e){ return null; }
 }
 // ---------- pont-bontas (accordion a jatekos-sorok alatt) ----------
@@ -462,6 +473,14 @@ async function keretNevrol(own,r,nm){
 const kituzott=s=>{
   const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s||'');
   return !!m && !(m[4]==='00'&&m[5]==='00');
+};
+// Az ejfeles helyorzo datuma el is mulhat. Olyankor nem kezdesi idopont
+// tobbe: a meccs elmaradt, es uj idopontot nem tuztek ki. (A 3. fordulos
+// ETO-meccs helyorzoje aug. 15. - az oldal ezert allitotta hetekkel kesobb
+// is, hogy a meccs meg hatravan.)
+const lejartHelyorzo=s=>{
+  const m=/^(\d{4})-(\d{2})-(\d{2})T00:00/.exec(s||'');
+  return !!m && Date.now() > new Date(+m[1],+m[2]-1,+m[3],23,59,59).getTime();
 };
 const idoFmt=s=>{
   const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s||'');
@@ -519,9 +538,16 @@ function meccsAllapot(start, vege){
 }
 const meccsFut=(start, vege)=>meccsAllapot(start, vege)==='fut';
 function nincsPontUzenet(played, start, nyers, nogame, vege, elo){
-  if(nogame) return 'Ebben a fordulóban nem játszik — a klubnak nincs meccse (elmaradt vagy elhalasztott forduló).';
+  // A sorban kotojel all, tehat az uzenet sem allithatja, hogy a 0 vegleges -
+  // csak azt mondjuk el, amit a kotojel jelent. Elo forduloban jelen ido, a
+  // mar lezartban mult (a 3. fordulora "nem jatszik" hetekkel kesobb hamis).
+  if(nogame) return elo
+    ? 'Ebben a fordulóban nem játszik — a klubnak nincs meccse (elmaradt vagy elhalasztott forduló).'
+    : 'Ebben a fordulóban nem volt meccse a klubnak (elmaradt vagy elhalasztott forduló).';
   const allapot=meccsAllapot(start, vege);
-  if(allapot==='elotte') return 'A meccs még nem kezdődött el — kezdés: '+idoFmt(start);
+  if(allapot==='elotte') return lejartHelyorzo(start)
+    ? 'A meccs elmaradt, új időpontja nincs kitűzve.'
+    : 'A meccs még nem kezdődött el — kezdés: '+idoFmt(start);
   if(elo && allapot==='fut') return MECCS_KOZBEN;
   if(played===false) return allapot==='ismeretlen'
     ? 'Ehhez a fordulóhoz nincs rögzített esemény.'

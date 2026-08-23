@@ -60,12 +60,13 @@ const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
     // I3: lezart forduloban nem allithatjuk, hogy zajlik
     if (!s.elo && /A meccs zajlik/.test(s.uzenet))
       sert('I3 — lezárt fordulóban azt írja, hogy zajlik', kulcs + '  ->  ' + s.uzenet);
-    // I4: nincs meccse -> mindig ugyanaz
-    if (s.nogame && !/nem játszik/.test(s.uzenet))
+    // I4: nincs meccse -> mindig azt mondja, hogy a klubnak nincs/nem volt
+    // meccse (elo forduloban jelen, lezartban mult idoben)
+    if (s.nogame && !/nem játszik|nem volt meccse/.test(s.uzenet))
       sert('I4 — nincs meccse, mégis mást ír', kulcs + '  ->  ' + s.uzenet);
     // I5: a sor kotojele es az uzenet nem mondhat mast. "Nincs adat" minden
     // olyan uzenet, ami NEM allitja, hogy a jatekos pontszama vegleges.
-    const uzenetSzerintNincsAdat = /nem játszik|még nem kezdődött|A meccs zajlik|nincs rögzített esemény|feldolgozása még tart/.test(s.uzenet);
+    const uzenetSzerintNincsAdat = /nem játszik|nem volt meccse|még nem kezdődött|elmaradt|A meccs zajlik|nincs rögzített esemény|feldolgozása még tart/.test(s.uzenet);
     if (s.kotojel !== uzenetSzerintNincsAdat) {
       // ELFOGADOTT KIVETEL (N3, Vince dontese): a meccs lement, de az MLSZ meg
       // nem tette be a pontokat -> a sor 0-t mutat, a bontas megmondja az

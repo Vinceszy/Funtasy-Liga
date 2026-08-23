@@ -39,6 +39,8 @@ Az `api_get`-et mock váltja ki, a `collect.py` egy ideiglenes könyvtárban fut
 | R3b | Ugyanez akkor is, ha a forduló már nem az aktuális, tehát a meccslistát nem kérjük le — a jelzés a **tárolt** keretből jön. |
 | R4 | **Biztonsági háló:** ha a játékos-szintű kép nem áll össze, de az MLSZ már továbblépett a fordulón, akkor is lezárul. |
 | R5 | …de amíg az MLSZ szerint **ez** az aktuális forduló, a háló nem sül el. |
+| R6 | Ha a meccslistában **másik forduló** meccse jön vissza (régi fordulónál az API a klub legutóbbi meccsére esik vissza), az is „nincs meccse" — és annak a meccsnek az állapota nem akaszthatja meg a lezárást. |
+| R7 | A **régi formátumú** keretet (nincs benne `played`) a gyűjtő újra lekéri, és a pótolt rekordban ott az `id`, a `played` és a `nogame` is. |
 
 ## Böngészős tesztek (Playwright)
 
@@ -47,7 +49,7 @@ Az `api_get`-et mock váltja ki, a `collect.py` egy ideiglenes könyvtárban fut
 | `allapotter.teszt.js` | A „mit írjunk a 0 pontos játékosról" logika **teljes állapottere**: mind az 576 kombináció, öt invariánssal. Ez talált meg olyan hibákat, amikre nem gondoltunk tesztet írni. |
 | `tabella.teszt.js` | A tabellát és a H2H-mátrixot **függetlenül újraszámolja** a `results.json`-ból, és összeveti azzal, amit az oldal kirajzol. |
 | `nullapont.teszt.js` | A négy „0 pont" állapot és a kattinthatóság-jelzés mindkét oldalon. |
-| `meccsallapot.teszt.js` | A `meccsAllapot()` négy értéke és a két időkorlát (100 / 180 perc). |
+| `meccsallapot.teszt.js` | A `meccsAllapot()` négy értéke és a két időkorlát (100 / 180 perc); a lejárt éjféles helyőrző (nem ígér kezdési időt); a `round_number`-ből felismert „nincs meccse". |
 | `uzenetek.teszt.js` | Gyorsítótár-kerülés az élő lekéréseknél, és hogy meccs közben nem írjuk, hogy „lejátszotta pont nélkül". |
 | `visszateres.teszt.js` | A lap láthatóvá válásakor újra lekér-e (`FunTasy.ujraLathatokor`) — egységteszt és e2e is. |
 | `frissjelzo.teszt.js` | A „frissítés…" jelzés lassú lekérésnél megjelenik, gyorsnál nem villan fel. |

@@ -48,10 +48,15 @@ TOVABBI MERESSEL IGAZOLT TENYEK (2026-08-20):
   competition_player.current_round include-dal jon vissza (lezart fordulonal
   enelkul is megjelenik) - ezert szerepel az INCLUDE-ban (2026-08-21).
 - KI NEM JATSZIK A FORDULOBAN: a competition_player.current_round.games
-  include adja meg biztosan - ures lista = a klubnak nincs meccse ebben a
-  forduloban (halasztas, pl. a Fradi kupameccse miatt). A first_played_at
-  ilyenkor a klub KOVETKEZO meccsere mutat (masik fordulo idopontjara),
-  tehat abbol nem lehet kovetkeztetni. A meccslistat csak az ELO fordulora
+  include adja meg biztosan, KET alakban (2026-08-23-i meres):
+    * ures lista - az ELO fordulonal ez jon, ha a klubnak nincs meccse;
+    * MASIK fordulo meccse - regi fordulonal az API a klub legutobbi
+      meccsere esik vissza a hianyzo helyett. Maga a meccs-objektum arulja
+      el: a round_number mezoje "3F" / "5F" alaku, es ha nem a kert
+      fordulora mutat, akkor a klubnak nincs meccse benne.
+  A first_played_at ilyenkor sem hasznalhato: vagy a klub KOVETKEZO meccsere
+  mutat, vagy egy ejfeles helyorzore (a 3. fordulos ETO-nal 2026-08-15T00:00,
+  vagyis egy mar elmult nap kituzetlen idoponttal). A meccslistat csak az ELO fordulora
   kerjuk: ott +2 KB, a lezartaknal viszont a kesz meccs melle bejonnek a
   klublogok is base64-ben, es a valasz 17 KB-rol 118 KB-ra no.
 - PONT-BONTAS: a /game-player-stats vegpont (competitions elotag NELKUL)
@@ -193,7 +198,14 @@ def is_hun(cp):
     return bool(re.search(r'magyar|hungar|"HUN"', szoveg, re.I))
 
 
-def rekord(d):
+def meccs_forduloja(g):
+    """A meccs-objektum megmondja, MELYIK fordulohoz tartozik: a round_number
+    mezoje "3F" / "5F" alaku. Szam vagy None, ha nincs benne."""
+    m = re.match(r"\s*(\d+)", str((g or {}).get("round_number") or ""))
+    return int(m.group(1)) if m else None
+
+
+def rekord(d, fordulo=None):
     """Egy jatekos rekordja - mezorol mezore a konyvjelzo formatuma."""
     cp = d.get("competition_player") or {}
     po = d.get("position") or {}
@@ -224,17 +236,24 @@ def rekord(d):
         # hasznalhato ra - ez volt a "furcsa kezdesi ido" oka.
         "id": cp.get("id"),
         "played": bool(cr.get("is_played")),
-        **jatek_mezok(cr),
+        **jatek_mezok(cr, fordulo),
     }
 
 
-def jatek_mezok(cr):
+def jatek_mezok(cr, fordulo=None):
     games = cr.get("games")
     if games is None:                       # nem kertuk a meccslistat
         return {"start": cr.get("first_played_at")}
     if not games:                           # nincs meccse ebben a forduloban
         return {"start": None, "nogame": True}
     g = games[0] or {}
+    # Ures lista nem az egyetlen jelzes: regi fordulonal az API a klub
+    # LEGUTOBBI meccsere esik vissza a hianyzo helyett. Maga a meccs-objektum
+    # arulja el (round_number), hogy nem ehhez a fordulohoz tartozik - ez is
+    # azt jelenti, hogy a klubnak nincs meccse ebben a forduloban.
+    mf = meccs_forduloja(g)
+    if fordulo is not None and mf is not None and mf != fordulo:
+        return {"start": None, "nogame": True}
     mezok = {"start": g.get("start_at") or cr.get("first_played_at")}
     # A meccs status-a onallo jelzes az is_played mellett. Az utobbibol NEM
     # kovetkezik, hogy a meccsnek vege: az MLSZ mar a meccs kozben igazra
@@ -399,6 +418,20 @@ def main():
     # ha egy regi fordulo hivatalos pontja most valtozott, akkor a hozza
     # tartozo keret is elavult - azt is ujra le kell kerni
     celok |= valtozott
+    # REGI FORMATUM POTLASA. A 2026-08-21 elotti keret-rekordokban meg nincs
+    # "id", "played" es "start" - emiatt az oldal a pont-bontashoz elohivast
+    # kenytelen inditani, es a "nincs meccse" jelzes teljesen hianyzik (a 3.
+    # fordulos ETO-jatekosoknal ezert irta az oldal, hogy a meccs meg nem
+    # kezdodott el, egy mar elmult helyorzo datummal). Az ilyen fordulot
+    # egyszer ujra lekerjuk - a meccslistaval egyutt, hogy a nogame is
+    # bekerulhessen. Utana a feltetel mar nem teljesul, tehat nem ismetlodik.
+    migralando = {int(r) for r, keret in hist["rounds"].items()
+                  if keret and any("played" not in p
+                                   for sq in keret.values() for p in sq)}
+    if migralando:
+        print("  regi formatumu keretek potlasa: %s. fordulo"
+              % ", ".join(str(x) for x in sorted(migralando)))
+    celok |= migralando
 
     # lezart: r -> True/False, de CSAK ha teljes az adat. Amit nem tudtunk
     # kiertekelni (elhasalt lekeres, 403), az a `bizonytalan` halmazba kerul,
@@ -420,12 +453,12 @@ def main():
         uj_fordulo, teljes = {}, True
         mind_lement = True          # a meccslista szerint minden meccs lement
         for nev, uid in ids.items():
-            st, j = squad(uid, r, jatek=(r == aktualis))
+            st, j = squad(uid, r, jatek=(r == aktualis or r in migralando))
             if st != 200 or not isinstance(j, dict) or not j.get("data"):
                 print("  ! %d. fordulo / %s: HTTP %s" % (r, nev, st), file=sys.stderr)
                 teljes = False
                 continue
-            uj_fordulo[nev] = [rekord(d) for d in j["data"]]
+            uj_fordulo[nev] = [rekord(d, r) for d in j["data"]]
             for d in j["data"]:
                 cr = (d.get("competition_player") or {}).get("current_round") or {}
                 # Az is_played mar a meccs KOZBEN igazra vall - abbol tehat NEM
@@ -434,8 +467,12 @@ def main():
                 # lezartnak minositette a fordulot, es a felig kesz eredmeny
                 # veglegeskent kerult a tabellaba. A meccslista status-a a
                 # fogodzo; ha nem kertuk le (regi fordulo), marad az is_played.
+                # ...es csak akkor, ha a meccs tenyleg EHHEZ a fordulohoz
+                # tartozik: a masik fordulobol visszaeso meccs allapota nem
+                # mondhat semmit errol a forduloról.
                 g = cr.get("games")
-                if g and (g[0] or {}).get("status") != "completed":
+                if g and meccs_forduloja(g[0]) in (None, r) \
+                        and (g[0] or {}).get("status") != "completed":
                     mind_lement = False
         if not uj_fordulo:
             bizonytalan.add(r)

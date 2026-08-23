@@ -1,4 +1,4 @@
-const { BASE, jo, cim, hibak, inditas, vege, apiKi } = require('./kozos');
+const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozos');
 // A negy bejelentett hiba tesztje.
 //  1-2) gyorsitotar: minden elo lekeres MAS URL-re megy es no-store-ral
 //  3)   meccs kozben nem szabad azt irni, hogy "lejatszotta pont nelkul"
@@ -30,6 +30,10 @@ function keret(opts){
   for (const eset of esetek){
     const p = await br.newPage();
     const perr = []; p.on('pageerror', x => perr.push(x.message));
+    // A teszt elofeltetele, hogy az 5. fordulo ELO legyen. Ezt kimondjuk, nem
+    // remeljuk: korabban a valodi results.json provisional listajara epult, es
+    // a teszt attol bukott meg, hogy a gyujto kozben lezarta az 5. fordulot.
+    await jsonAtir(p, '**/results.json*', j => Object.assign(j, { provisional: [5] }));
     // a meccs 1 oraja tart (mult ideju kezdes)
     const start = new Date(Date.now() - eset.ora * 3600000).toISOString().replace('Z', '+00:00');
     await p.route('**fantasy-api.mlsz.hu/**', route => {
