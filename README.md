@@ -606,7 +606,29 @@ Nincs build lépés, nincs függőség. A kód három rétegben él:
 
 - **`funtasy.css`** — a közös stíluslap (mindkét oldal ezt tölti; itt van minden szín,
   rács, táblázat- és modal-stílus).
-- **`funtasy.js`** — a közös motor: `FunTasy.create({...})` kapja a konfigurációt
+- **`funtasy.js`** — a közös réteg. **Ami nem liga-specifikus, ide tartozik**, és ez nem
+  kozmetika: korábban tizenkét azonos nevű függvény élt külön példányban a két
+  liga-oldalon, és emiatt ugyanazt a hibát többször kellett javítani (a
+  gyorsítótár-törést két különböző alakú `apiGet`-be; a „listán 39, ráváltva 38"
+  eltérést előbb a meccs-adatlapon, majd külön a keret-nézetben). Egy harmadik liga ezt
+  megháromszorozta volna. Most **kettő** maradt külön (`bontasHTML`, `nincsPontUzenet`) —
+  azok valóban ligánként mások, mert más API-ból jönnek.
+
+  A közösbe került, ligától független darabok:
+
+  | Hívás | Mit ad |
+  |---|---|
+  | `FunTasy.lekero({...})` | lekérés CORS-proxyn át: három útvonal sorban, a bevált megjegyzése, gyorsítótár-törés három rétegben. Beállítható, hogy a **belső** URL is kapjon-e időbélyeget (az FPL tűri, az MLSZ-nél nincs igazolva), mi számít érvényes válasznak, és teljes kudarcnál dobjon-e. |
+  | `FunTasy.nezetVerem({...})` | a modal és a benne lapozás (`mutat` / `vissza` / `nyit` / `zar`). |
+  | `FunTasy.allasHTML(...)` | az eredménysor doboza. |
+  | `FunTasy.eloKereso(LIVE)` | élő állás kikeresése a live rétegből. |
+  | `FunTasy.hibajelzo({...})` | a státuszsáv hibaüzenete; a „van-e élő forduló" kérdést a hívó dönti el. |
+  | `FunTasy.h2hNezo({...})` | az egymás elleni nézet; a névfeloldás beállítható. |
+  | `FunTasy.ujraLathatokor(fn)` | újrafrissítés, amikor a lap ismét látszik. |
+  | `FunTasy.lassuJelzo(cel)` | a „frissítés… N mp" jelző lassú lekérésnél. |
+  | `FunTasy.accToggle/accTable` | a pont-bontás accordion mechanikája. |
+
+  Emellett `FunTasy.create({...})` kapja a konfigurációt
   (menetrend, résztvevők, elemazonosítók), és adja a `computeTable`, `renderTable`,
   `renderMatches`, `renderMatrix` függvényeket, az élő-jelölést és az egymás elleni
   lista építőjét (`h2hHTML` — a mátrix-cella kattintása nyitja, `onMatrixClick`).

@@ -488,6 +488,167 @@
 
      A visszaadott fuggveny leveszi a jelzest, es visszaadja az eltelt idot
      ezredmasodpercben. Mindig meg kell hivni - hibas agon is. */
+  /* ===== Eredmenysor (a meccs-adatlap tetejen) =====
+     Ugyanaz a doboz, mint a fooldali meccspanelen, hogy a ket helyen ne
+     nezhessen ki maskepp. A neveket mar feloldva varja: a PL-en azonositobol
+     kell nevet csinalni, az NB1-en a nev maga a kulcs. */
+  function allasHTML(h, v, hp, vp, elo) {
+    var sz = function (x) { return x != null ? fmt(x) : '—'; };
+    return '<div class="mscore' + (elo ? ' elo' : '') + '">' +
+      '<span class="csapat">' + esc(h) + '</span>' +
+      '<span class="score">' + sz(hp) + ' <span style="color:var(--dim)">:</span> ' + sz(vp) +
+      (elo ? '<span class="elojel">élő</span>' : '') + '</span>' +
+      '<span class="csapat">' + esc(v) + '</span></div>';
+  }
+
+  /* ===== Nezet-verem: egy modal, amiben lapozni lehet =====
+     Nem nyitunk modalt a modalban: a tartalom cserelodik, es a "vissza" gomb
+     az elozo nezetre lep. Az x / felrekattintas / Escape mindig mindent zar.
+     A belepesi pont 'root', a fulvaltas 'replace', a listabol nyilo nezet
+     'push'; a 'noop' a verembol ujrarajzolt nezet (nem tolunk ra semmit).
+
+     Mindket liga-oldal ugyanezt hasznalta, kulon-kulon lemasolva - egy uj
+     liga harmadszor is lemasolta volna. */
+  function nezetVerem(azon) {
+    var verem = [];
+    function gomb() {
+      var b = document.getElementById(azon.vissza);
+      if (b) b.style.display = verem.length > 1 ? '' : 'none';
+    }
+    function nyit() {
+      var o = document.getElementById(azon.ov);
+      if (o) o.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    return {
+      verem: verem,
+      mutat: function (thunk, mod) {
+        if (mod === 'noop') return;
+        if (!mod || mod === 'root') verem.length = 0;
+        if (mod === 'replace' && verem.length) verem[verem.length - 1] = thunk;
+        else verem.push(thunk);
+        gomb();
+      },
+      vissza: function () {
+        if (verem.length > 1) { verem.pop(); gomb(); verem[verem.length - 1](); }
+      },
+      nyit: nyit,
+      zar: function () {
+        var o = document.getElementById(azon.ov);
+        if (o) o.classList.remove('open');
+        document.body.style.overflow = '';
+        verem.length = 0;
+        gomb();
+      }
+    };
+  }
+
+  /* ===== Lekeres CORS-proxyn at =====
+     Harom utvonalat probal sorban (direkt -> corsproxy -> allorigins), es
+     megjegyzi, melyik valt be: a munkamenet tobbi kerese mar azzal indul.
+
+     Gyorsitotar-tores harom retegben, mert enelkul iPhone-on befagyott az
+     allas: `cache:'no-store'` a bongeszonek, `&_=<ido>` a proxynak (az a
+     SAJAT gyorsitotarabol szolgalt ki, es az megosztott - ezert nem segitett
+     az ujratoltes), es opcionalisan a belso URL-en is idobelyeg.
+
+     Beallitasok:
+       belsoBelyeg  parameter neve a BELSO (cel) URL-en, vagy ures. Az FPL
+                    turi az ismeretlen parametert; az MLSZ-nel ez nincs
+                    igazolva, ezert ott nem hasznaljuk.
+       ervenyes(j)  mikor fogadjuk el a valaszt (az MLSZ-nel kell a data tomb)
+       hiba         'dob' -> kivetel, kulonben null a visszateres
+       jelez(cimke) opcionalis: statuszsav-frissites probalkozas kozben */
+  function lekero(be) {
+    be = be || {};
+    var belyeg = function (u) {
+      return be.belsoBelyeg ? u + (u.indexOf('?') < 0 ? '?' : '&') +
+        be.belsoBelyeg + '=' + Date.now() : u;
+    };
+    var utak = [
+      { n: 'direkt', f: function (u) { return belyeg(u); } },
+      { n: 'corsproxy', f: function (u) {
+          return 'https://corsproxy.io/?url=' + encodeURIComponent(belyeg(u)) + '&_=' + Date.now(); } },
+      { n: 'allorigins', f: function (u) {
+          return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(belyeg(u)) + '&_=' + Date.now(); } }
+    ];
+    var ervenyes = be.ervenyes || function (j) { return j && typeof j === 'object'; };
+    var bevalt = null;
+    return async function (url, cimke, ms) {
+      ms = ms || 9000;
+      var sorrend = bevalt ? [bevalt].concat(utak.filter(function (r) { return r !== bevalt; })) : utak;
+      var hibak = [];
+      for (var i = 0; i < sorrend.length; i++) {
+        var rt = sorrend[i];
+        try {
+          if (cimke && be.jelez) be.jelez(cimke);
+          var c = new AbortController();
+          var t = setTimeout(function () { c.abort(); }, ms);
+          var res = await fetch(rt.f(url), { signal: c.signal, cache: 'no-store',
+                                             headers: { 'Accept': 'application/json' } })
+            .finally(function () { clearTimeout(t); });
+          if (!res.ok) { hibak.push(rt.n + ':HTTP ' + res.status); continue; }
+          var j = JSON.parse(await res.text());
+          if (!ervenyes(j)) { hibak.push(rt.n + ':rossz formátum'); continue; }
+          bevalt = rt;
+          return j;
+        } catch (e) {
+          hibak.push(rt.n + ':' + (e.name === 'AbortError' ? 'időtúllépés'
+                     : e.name === 'TypeError' ? 'CORS' : e.message));
+        }
+      }
+      if (be.hiba === 'dob') throw new Error(hibak.join(' · '));
+      return null;
+    };
+  }
+
+  /* ===== Elo allas kikeresese =====
+     A folyo fordulo allasa nem a menetrendben van, hanem az elo retegben
+     (hogy a tabellaba ne szamitson bele) - a fordulo-listanak es a
+     meccs-adatlapnak viszont onnan kell elovennie. */
+  function eloKereso(live) {
+    return function (r, h, v) {
+      var l = live[r] || [];
+      for (var i = 0; i < l.length; i++) {
+        if (l[i] && l[i][0] === h && l[i][1] === v) return l[i];
+      }
+      return null;
+    };
+  }
+
+  /* ===== Statuszsav hibauzenet =====
+     Ha epp fordulo van folyamatban, a felhasznalot az erdekli, hogy az elo
+     allas nem frissul. Nyugalmi idoszakban a tarolt allas amugy is naprakesz,
+     ott csak annyit mondunk, mikori. A "van-e folyo fordulo" kerdest a hivo
+     oldal dönti el, mert mindenhol masbol latszik. */
+  function hibajelzo(be) {
+    return function () {
+      var st = document.getElementById(be.statusz || 'status');
+      if (!st) return;
+      st.className = 'err';
+      st.textContent = be.eloE() ? statusz.hibaElo : statusz.hibaNyugodt(be.taroltIdo());
+    };
+  }
+
+  /* ===== Egymas elleni nezet =====
+     A matrix cellajara kattintva nyilik. A ket oldal csak abban ter el, hogy
+     az azonositobol hogyan lesz nev, es hogy nyitaskor mit kell nullazni. */
+  function h2hNezo(be) {
+    function mutat(a, b, mod) {
+      be.nezet.mutat(function () { mutat(a, b, 'noop'); }, mod);
+      if (be.elokeszit) be.elokeszit(a, b);
+      be.nezet.nyit();
+      var nv = be.nev || function (x) { return x; };
+      document.getElementById('mTitle').textContent = nv(a) + '  vs  ' + nv(b);
+      document.getElementById('mSub').textContent =
+        'Egymás elleni meccsek — sorra kattintva a meccs részletei';
+      document.getElementById('mTabs').innerHTML = '';
+      document.getElementById('mBody').innerHTML =
+        '<div class="sqwrap one" style="max-width:none">' + be.tartalom(a, b) + '</div>';
+    }
+    return mutat;
+  }
+
   var aktivJelzok = new WeakMap();
   function lassuJelzo(cel, kesleltetes) {
     kesleltetes = (kesleltetes == null) ? 500 : kesleltetes;
@@ -523,5 +684,7 @@
                      accToggle: accToggle, accTable: accTable,
                      LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
-                     lassuJelzo: lassuJelzo };
+                     lassuJelzo: lassuJelzo, allasHTML: allasHTML,
+                     nezetVerem: nezetVerem, lekero: lekero,
+                     eloKereso: eloKereso, hibajelzo: hibajelzo, h2hNezo: h2hNezo };
 })(window);

@@ -6,7 +6,7 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=21">
+<link rel="stylesheet" href="../funtasy.css?v=22">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -71,7 +71,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=21"></script>
+<script src="../funtasy.js?v=22"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -89,6 +89,10 @@ const NEVEK = {
 FunTasy.renderNav('pl','../');   // ligavalto sav a kozos listabol
 
 const $ = id => document.getElementById(id);
+// A modal es a nezet-verem a kozos retegbol jon (funtasy.js). Korai
+// deklaracio: a lentebbi nezetek (pl. showH2H) mar hivatkoznak ra.
+const NEZET = FunTasy.nezetVerem({ov:'ov', vissza:'ovBack'});
+const vShow=NEZET.mutat, vBack=NEZET.vissza, openModal=NEZET.nyit, closeModal=NEZET.zar;
 const esc = FunTasy.esc, fmt = FunTasy.fmt, played = FunTasy.played;
 const ENTRIES = {};
 const SCHEDULE = {};
@@ -131,35 +135,15 @@ T.bindNav();
 // ---------- nezet-verem: egy modal, amiben lapozni lehet ----------
 // (ugyanaz a minta, mint az index.html-en: tartalomcsere + vissza gomb;
 // az x / felrekattintas / Escape mindent zar)
-const VSTACK=[];
-function vShow(thunk, mode){
-  if(mode==='noop') return;
-  if(!mode || mode==='root') VSTACK.length=0;
-  if(mode==='replace' && VSTACK.length) VSTACK[VSTACK.length-1]=thunk;
-  else VSTACK.push(thunk);
-  vBackGomb();
-}
-function vBack(){
-  if(VSTACK.length>1){ VSTACK.pop(); vBackGomb(); VSTACK[VSTACK.length-1](); }
-}
-function vBackGomb(){ $('ovBack').style.display = VSTACK.length>1 ? '' : 'none'; }
-function openModal(){ $('ov').classList.add('open'); document.body.style.overflow='hidden'; }
-function closeModal(){ $('ov').classList.remove('open'); document.body.style.overflow='';
-  VSTACK.length=0; vBackGomb(); }
 
 // A folyo fordulo allasa nem a menetrendben van, hanem az elo retegben
 // (hogy a tabellaba ne szamitson) - a fordulo-listanak es a meccs-adatlapnak
 // viszont onnan kell elovennie.
-const eloAllas = (r, h, v) => ((LIVE[r] || []).find(x => x && x[0] === h && x[1] === v)) || null;
+const eloAllas = FunTasy.eloKereso(LIVE);
 // Eredmenysor a meccs-adatlap tetejere - ugyanaz a doboz, mint a fooldali
 // meccspanelen (az NB1-oldalon is igy nez ki).
-function allasHTML(h, v, hp, vp, elo){
-  const sz = x => x != null ? fmt(x) : '—';
-  return `<div class="mscore${elo ? ' elo' : ''}"><span class="csapat">${esc(nev(h))}</span>
-    <span class="score">${sz(hp)} <span style="color:var(--dim)">:</span> ${sz(vp)}${
-      elo ? '<span class="elojel">élő</span>' : ''}</span>
-    <span class="csapat">${esc(nev(v))}</span></div>`;
-}
+// kozos doboz; itt azonositobol kell nevet oldani, ezert a nev() burkolat
+const allasHTML = (h, v, hp, vp, elo) => FunTasy.allasHTML(nev(h), nev(v), hp, vp, elo);
 
 // Az NB1-oldal meccs-nezeteben van "Kulonbsegek" szuro (az azonos sorok
 // elrejtese). Itt szandekosan NINCS: a draft ligaban egy jatekos egy
@@ -309,14 +293,12 @@ function showTeam(id, tab, mode){
 }
 
 // Matrix-cellara kattintva a ket csapat egymas elleni meccsei.
-function showH2H(a, b, mode){
-  vShow(()=>showH2H(a, b, 'noop'), mode);
-  mTeam = null; openModal();
-  $('mTitle').textContent = nev(a) + '  vs  ' + nev(b);
-  $('mSub').textContent = 'Egymás elleni meccsek — sorra kattintva a meccs részletei';
-  $('mTabs').innerHTML = '';
-  $('mBody').innerHTML = '<div class="sqwrap one" style="max-width:none">' + T.h2hHTML(a, b) + '</div>';
-}
+const showH2H = FunTasy.h2hNezo({
+  nezet: NEZET,
+  nev: id => nev(id),
+  tartalom: (a,b) => T.h2hHTML(a,b),
+  elokeszit: () => { mTeam = null; },
+});
 
 function showMatch(h, v, r, mode){
   vShow(()=>showMatch(h, v, r, 'noop'), mode);
@@ -392,34 +374,15 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
 // jatekos-pont jott vissza (mas keszuleken kozben mar a friss). A `_` a
 // proxyt, az `fpl_` magat az FPL-kerest torli - az FPL az ismeretlen
 // parametert figyelmen kivul hagyja, tehat itt a belso URL-t is bontjuk.
-const fplFriss = u => u + (u.indexOf('?') < 0 ? '?' : '&') + 'fpl_=' + Date.now();
-const ROUTES = [
-  { n:'direkt',     f:u => fplFriss(u) },
-  { n:'corsproxy',  f:u => 'https://corsproxy.io/?url=' + encodeURIComponent(fplFriss(u)) + '&_=' + Date.now() },
-  { n:'allorigins', f:u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(fplFriss(u)) + '&_=' + Date.now() },
-];
-let goodRoute = null;
-async function apiGet(url, ms){
-  ms = ms || 9000;
-  const sorrend = goodRoute ? [goodRoute, ...ROUTES.filter(r => r !== goodRoute)] : ROUTES;
-  for (const rt of sorrend){
-    try{
-      const c = new AbortController(); const t = setTimeout(() => c.abort(), ms);
-      const res = await fetch(rt.f(url), { signal:c.signal, cache:'no-store',
-                                          headers:{ 'Accept':'application/json' } })
-        .finally(() => clearTimeout(t));
-      if (!res.ok) continue;
-      const j = JSON.parse(await res.text());
-      if (j && typeof j === 'object'){ goodRoute = rt; return j; }
-    }catch(e){ /* kovetkezo utvonal */ }
-  }
-  return null;
-}
-function lekeresHiba(){
-  const st = $('status'); st.className = 'err';
-  st.textContent = LIVEGW ? FunTasy.statusz.hibaElo
-                          : FunTasy.statusz.hibaNyugodt(TAROLT_IDO);
-}
+// A proxys lekeres a kozos retegben el (funtasy.js -> FunTasy.lekero).
+// Az FPL figyelmen kivul hagyja az ismeretlen parametert, ezert itt a BELSO
+// URL is kap idobelyeget - igy a proxy upstream-gyorsitotara sem szolgalhat
+// ki regi valaszt. (Az MLSZ-nel ez nincs igazolva, ott nem csinaljuk.)
+const apiGet = FunTasy.lekero({ belsoBelyeg: 'fpl_' });
+const lekeresHiba = FunTasy.hibajelzo({
+  eloE: () => !!LIVEGW,
+  taroltIdo: () => TAROLT_IDO,
+});
 async function fetchLivePts(){
   // a folyo fordulo percre friss jatekos-pontjai; true, ha sikerult.
   // Mellette a fordulo meccs-allapotai (fixtures) is jonnek: ebbol tudjuk,
