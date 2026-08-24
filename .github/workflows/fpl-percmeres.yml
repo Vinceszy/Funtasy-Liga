@@ -38,7 +38,9 @@ jobs:
           while [ "$(date +%s)" -lt "$veg" ]; do
             python3 naplo/fpl-perc-meres.py || true
             n=$((n + 1))
-            [ $((n % 15)) -eq 0 ] && ment
+            # az ELSO mintat rogton mentjuk, utana felorankent - igy egy kezi
+            # inditas azonnal ad adatot, nem kell fel orat varni ra
+            { [ $n -eq 1 ] || [ $((n % 15)) -eq 0 ]; } && ment
             sleep 120
           done
           ment
