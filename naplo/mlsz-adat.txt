@@ -1,0 +1,76 @@
+=== 1) keret-valasz a 1. fordulora (meccslistaval) -> HTTP 200
+=== 4) current_round OSSZES kulcsa: ['first_played_at', 'games', 'has_statistics', 'id', 'is_played', 'market_price', 'round_id']
+    (a meccs Nfansu Njie jatekosanal)
+--- a meccs-objektum TELJES tartalma ---
+{
+ "id": 397,
+ "start_at": "2026-07-26T15:45:00+02:00",
+ "status": "completed",
+ "away_score": 2,
+ "home_score": 2,
+ "round_number": "1F",
+ "home_team": {
+  "id": 27,
+  "name": "VASAS",
+  "short_name": "VASAS",
+  "logo": {
+   "src": "https://fantasy-api.mlsz.hu/storage/1499/01KXDE57T6SN2M324XB2FEEKEF.png",
+   "srcset": "<3121 karakteres szoveg>",
+   "width": "500",
+   "height": "500",
+   "alt": "Vasas_SC-eredeti-formatum-svg"
+  },
+  "background": null,
+  "color_hex": null
+ },
+ "away_team": {
+  "id": 39,
+  "name": "ETO",
+  "short_name": "ETO",
+  "logo": {
+   "src": "https://fantasy-api.mlsz.hu/storage/1489/01KXDDV9E1BMPM009CC5ND84ZP.png",
+   "srcset": "<2811 karakteres szoveg>",
+   "width": "500",
+   "height": "500",
+   "alt": "eto"
+  },
+  "background": null,
+  "color_hex": null
+ }
+}
+=== 2) game-player-stats round-only -> HTTP 200, sorok: 50
+--- elso sor ---
+{
+ "value": 0,
+ "points": 0,
+ "round_id": 77,
+ "competition_stat_config": {
+  "id": 59,
+  "name": "Győzelem"
+ }
+}
+=== 2) game-player-stats round+competition -> HTTP 400, sorok: None
+=== 3) Nfansu Njie (ETO, 12 pont) -> HTTP 200
+    Győzelem                                      ertek=0      pont=0
+    Döntetlen                                     ertek=1      pont=1
+    Gólok                                         ertek=0      pont=0
+    Gólpasszok                                    ertek=0      pont=0
+    Percek a pályán (több, mint 60 perc)          ertek=64     pont=2
+    Percek a pályán (kevesebb, mint 60 perc)      ertek=64     pont=0
+    Megnyert támadó párharcok                     ertek=7      pont=1.75
+    Kulcspasszok                                  ertek=1      pont=0.5
+    Passzpontosság (min. 30 perc játékidő 90% felett) ertek=0.59   pont=0
+    Megnyert védekező párharcok                   ertek=3      pont=0.75
+    Védett lövések                                ertek=0      pont=0
+    Tizenegyes hárítások                          ertek=0      pont=0
+    Kapott gólok                                  ertek=0      pont=0
+    Sárga lap                                     ertek=0      pont=0
+    Piros lap                                     ertek=0      pont=0
+    Kihagyott büntető                             ertek=0      pont=0
+    Öngól                                         ertek=0      pont=0
+    Mesterhármas                                  ertek=0      pont=0
+    Győztes gólok                                 ertek=0      pont=0
+    Kapott gól nélküli mérkőzések                 ertek=0      pont=0
+    Játszott perc                                 ertek=64     pont=0
+=== 3) Soma Szuhodovszki (MTK, 0 pont) -> HTTP 200
+=== stat-nevek osszesen: ['Döntetlen', 'Győzelem', 'Győztes gólok', 'Gólok', 'Gólpasszok', 'Játszott perc', 'Kapott gól nélküli mérkőzések', 'Kapott gólok', 'Kihagyott büntető', 'Kulcspasszok', 'Megnyert támadó párharcok', 'Megnyert védekező párharcok', 'Mesterhármas', 'Passzpontosság (min. 30 perc játékidő 90% felett)', 'Percek a pályán (kevesebb, mint 60 perc)', 'Percek a pályán (több, mint 60 perc)', 'Piros lap', 'Sárga lap', 'Tizenegyes hárítások', 'Védett lövések', 'Öngól']
