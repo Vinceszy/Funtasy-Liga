@@ -6,7 +6,7 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=25">
+<link rel="stylesheet" href="../funtasy.css?v=26">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -72,7 +72,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=25"></script>
+<script src="../funtasy.js?v=26"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -113,6 +113,9 @@ let LIVEMECCS = null;  // ugyanaz MECCSENKENT: {meccs_id: {indult, lefujva,
                     // hivatalos, nap}}. A bonusz-sor allapotahoz kell: a klub
                     // szerinti osszevonas dupla fordulonal elmosna, hogy a
                     // ket meccs kulon allapotban lehet.
+let LIVEPERC = {};  // jatekosonkent {perc, kezdo}: hany percet jatszott, es
+                    // kezdo volt-e. Az elo lekeres ugyanabbol a valaszbol adja,
+                    // amibol a pontokat - nem kell hozza kulon keres.
 let LIVENAP = null; // a NAPI pontzaras allapota: {"2026-08-21": {lezart}}.
                     // Az FPL naponta zarja a pontokat, es a bonuszt is akkor
                     // veglegesiti - a sajat felulete is naponkent irja ki,
@@ -167,6 +170,28 @@ const ACCHINT = '<div class="acchint">Kattints egy játékosra a pontjai részle
 // A gw-vel hivott (fordulohoz kotott) valtozatban a jatekos-sorra kattintva
 // accordion nyilik a pont-bontassal, es az elo fordulo meg nem jatszott
 // jatekosainal a 0 helyett kotojel all (a meccse meg el sem kezdodott).
+// A jatekos harom szama az elo forduloban: hany percet jatszott, hol jar a
+// meccse, kezdo volt-e. Szandekosan NYERS ertekek: nem ertelmezunk helyette
+// ("lecserelve"), mert ahhoz tureshatar kellene, es egy egyperces csuszas a
+// ket vegpont kozott hamis allitast szulne. A ket szambol a nezo maga latja,
+// hogy palyan van-e: ha egyeznek, igen.
+//
+// A meccsora 45-nel es 90-nel megall, ezert a 90 onmagaban nem arulja el,
+// hogy vege van-e - ott a cella "vege"-t ir.
+function percCellakHTML(e, gw){
+  if (gw !== LIVEGW || !LIVEMECCS || !LIVEFX) return '';
+  const fx = LIVEFX[jat(e).t];
+  if (!fx || !fx.meccsek || !fx.meccsek.length) return '';
+  const p = LIVEPERC[e] || LIVEPERC[String(e)];
+  if (!p) return '';
+  const meccsek = fx.meccsek.map(mid => LIVEMECCS[mid]).filter(Boolean);
+  if (!meccsek.length || !meccsek.some(m => m.indult)) return '';
+  const mora = meccsek.map(m => m.lefujva ? 'vége' : (m.perc == null ? '?' : m.perc + "'")).join('|');
+  return `<span class="perc">${fmt(p.perc)}'</span>`
+       + `<span class="perc mora">${esc(mora)}</span>`
+       + `<span class="kezd" title="${p.kezdo ? 'kezdőként lépett pályára' : 'nem kezdőként'}">`
+       + (p.kezdo ? 'K' : '–') + '</span>';
+}
 function sqcolHTML(id, lista, cim, gw){
   const gazdag = lista.length && typeof lista[0] === 'object';
   const sor = x => {
@@ -183,7 +208,7 @@ function sqcolHTML(id, lista, cim, gw){
       : `<span class="pts">${fmt(r.pts)}</span>`;
     return `<div class="plr"${acc}><span class="ppos">${esc(j.p)}</span>
       <span class="nm">${esc(j.n)}${acc ? '<span class="accarr">▼</span>' : ''}${j.t ? ` <span class="tm">${esc(j.t)}</span>` : ''}</span>
-      ${pts}</div>`;
+      ${percCellakHTML(r.e, gw)}${pts}</div>`;
   };
   const rendez = a => [...a].sort((x, y) =>
     posRank(jat(gazdag ? x.e : x).p) - posRank(jat(gazdag ? y.e : y).p));
@@ -431,6 +456,28 @@ async function napiZarasFrissit(){
   });
   LIVENAP = uj;
 }
+// A MECCSORAT a jatekosok perceibol szamoljuk, nem a meccs sajat mezojebol.
+// MERVE (2026-08-24, elo meccs alatt): a fixtures "minutes" mezoje MINDIG 0 -
+// meg a mar lement meccseknel is. A jatekosok percei viszont egyutt ketyegnek:
+// a futo meccsen minden palyan levo kezdo ugyanazt a szamot mutatta (40').
+//
+// A legnagyobb ertek a meccs oraja. Ez nem becsles: 11 kezdo es legfeljebb 5
+// csere mellett mindig marad olyan jatekos a palyan, aki a kezdes ota ott van,
+// es a ket klub jatekosai egyutt kerulnek a mezonybe.
+function meccsoraFrissit(){
+  if (!LIVEMECCS) return;
+  const percKlub = {};                       // klub -> a legnagyobb percszam
+  for (const e in LIVEPERC){
+    const t = jat(e).t; if (!t) continue;
+    const p = LIVEPERC[e].perc || 0;
+    if (p > (percKlub[t] || 0)) percKlub[t] = p;
+  }
+  for (const id in LIVEMECCS){
+    const m = LIVEMECCS[id];
+    const ertekek = (m.klubok || []).map(k => percKlub[k]).filter(x => x != null);
+    m.perc = ertekek.length ? Math.max(...ertekek) : null;
+  }
+}
 async function fetchLivePts(){
   // a folyo fordulo percre friss jatekos-pontjai; true, ha sikerult.
   // Mellette a fordulo meccs-allapotai (fixtures) is jonnek: ebbol tudjuk,
@@ -453,10 +500,14 @@ async function fetchLivePts(){
     LIVEMECCS = {};
     fx.forEach(m => { LIVEMECCS[m.id] = { indult: !!m.started,
       lefujva: !!(m.finished_provisional || m.finished), hivatalos: !!m.finished,
-      nap: (m.kickoff_time || '').slice(0, 10) }; });
+      nap: (m.kickoff_time || '').slice(0, 10),
+      // a ket klub, hogy a meccsorat a jatekosok perceibol szamolhassuk
+      klubok: [TEAMS[m.team_h], TEAMS[m.team_a]].filter(Boolean),
+      perc: null }; });
     fx.forEach(m => [m.team_h, m.team_a].forEach(t => {
       const rov = TEAMS[t]; if (!rov) return;
-      const a = LIVEFX[rov] || (LIVEFX[rov] = { indult:false, kesz:true, kezdes:null });
+      const a = LIVEFX[rov] || (LIVEFX[rov] = { indult:false, kesz:true, kezdes:null, meccsek:[] });
+      a.meccsek.push(m.id);
       a.indult = a.indult || !!m.started;
       // A meccs KET lepesben zarul: a 'finished_provisional' a lefujaskor
       // igaz, a 'finished' csak kesobb, a bonuszpontok veglegesitesekor.
@@ -468,10 +519,17 @@ async function fetchLivePts(){
     }));
   }
   if (!elo) return false;
-  LIVEPTS = {};
+  LIVEPTS = {}; LIVEPERC = {};
   const el = elo.elements || {};
-  if (Array.isArray(el)) el.forEach(v => { LIVEPTS[v.id] = ((v.stats || {}).total_points) || 0; });
-  else for (const k in el) LIVEPTS[k] = (((el[k] || {}).stats) || {}).total_points || 0;
+  // Ugyanabbol a valaszbol, amibol a pontok: a percek es a "kezdo volt-e".
+  // Eddig eldobtuk oket.
+  const be = (id, st) => {
+    LIVEPTS[id] = (st.total_points) || 0;
+    LIVEPERC[id] = { perc: st.minutes || 0, kezdo: !!st.starts };
+  };
+  if (Array.isArray(el)) el.forEach(v => be(v.id, v.stats || {}));
+  else for (const k in el) be(k, ((el[k] || {}).stats) || {});
+  meccsoraFrissit();
   return true;
 }
 // ---------- pont-bontas (accordion a jatekos-sorok alatt) ----------
@@ -604,7 +662,7 @@ async function liveRefresh(){
   // uje gyanant - a LIVEPTS/LIVEFX ugyanis csak sikeres lekereskor frissul.
   if (LIVEGW && LIVEGW !== gw){
     delete LIVE[LIVEGW];
-    LIVEPTS = {}; LIVEFX = null; LIVEMECCS = null; LIVENAP = null;
+    LIVEPTS = {}; LIVEPERC = {}; LIVEFX = null; LIVEMECCS = null; LIVENAP = null;
     T.renderMatches('past'); T.renderMatches('next');
   }
   LIVEGW = gw;

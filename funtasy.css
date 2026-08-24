@@ -221,6 +221,13 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .plr{display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid var(--panel2);font-size:13px}
 .plr .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .plr .tm{color:var(--dim);font-size:11px}
+/* A jatekos harom szama elo forduloban (PL): jatszott perc, a meccs oraja,
+   kezdo volt-e. Nyers ertekek - a ketto osszehasonlitasabol latszik, hogy
+   palyan van-e; nem ertelmezunk helyette. */
+.plr .perc{font-family:'JetBrains Mono';font-size:11.5px;color:var(--dim);
+  text-align:right;white-space:nowrap;min-width:30px}
+.plr .perc.mora{min-width:34px}
+.plr .kezd{font:700 9px Inter;color:var(--dim);min-width:14px;text-align:center}
 .plr .pts{font-family:'JetBrains Mono';font-weight:700;min-width:52px;text-align:right}
 .flag{display:inline-block;width:14px;height:9px;margin-left:6px;vertical-align:middle;border-radius:1px;
   background:linear-gradient(to bottom,#CE2939 0 33.3%,#fff 33.3% 66.6%,#477050 66.6% 100%);border:1px solid rgba(0,0,0,.35)}
