@@ -6,7 +6,7 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=29">
+<link rel="stylesheet" href="../funtasy.css?v=30">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -72,7 +72,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=29"></script>
+<script src="../funtasy.js?v=30"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -533,6 +533,22 @@ function meccsoraFrissit(){
     m.perc = ertekek.length ? Math.max(...ertekek) : null;
   }
 }
+// Egy meccs a fixtures valaszabol. Az elo es a lezart fordulo UGYANEZT
+// hasznalja, hogy a ket helyen ne csusszon el az ertelmezes.
+function meccsRekord(m){
+  return {
+    indult: !!m.started,
+    lefujva: !!(m.finished_provisional || m.finished),
+    hivatalos: !!m.finished,
+    nap: (m.kickoff_time || '').slice(0, 10),
+    // a ket klub, hogy a meccsorat a jatekosok perceibol szamolhassuk
+    klubok: [TEAMS[m.team_h], TEAMS[m.team_a]].filter(Boolean),
+    hazai: TEAMS[m.team_h] || null, vendeg: TEAMS[m.team_a] || null,
+    hp: m.team_h_score, vp: m.team_a_score,
+    perc: null,
+  };
+}
+
 async function fetchLivePts(){
   // a folyo fordulo percre friss jatekos-pontjai; true, ha sikerult.
   // Mellette a fordulo meccs-allapotai (fixtures) is jonnek: ebbol tudjuk,
@@ -553,12 +569,7 @@ async function fetchLivePts(){
     // = lefujva, a bonusz rogzult, de az FPL meg atnezi; finished =
     // hivatalos. A bonusz-sor jelzese ebbol jon.
     LIVEMECCS = {};
-    fx.forEach(m => { LIVEMECCS[m.id] = { indult: !!m.started,
-      lefujva: !!(m.finished_provisional || m.finished), hivatalos: !!m.finished,
-      nap: (m.kickoff_time || '').slice(0, 10),
-      // a ket klub, hogy a meccsorat a jatekosok perceibol szamolhassuk
-      klubok: [TEAMS[m.team_h], TEAMS[m.team_a]].filter(Boolean),
-      perc: null }; });
+    fx.forEach(m => { LIVEMECCS[m.id] = meccsRekord(m); });
     fx.forEach(m => [m.team_h, m.team_a].forEach(t => {
       const rov = TEAMS[t]; if (!rov) return;
       const a = LIVEFX[rov] || (LIVEFX[rov] = { indult:false, kesz:true, kezdes:null, meccsek:[] });
@@ -607,6 +618,46 @@ function gwElems(gw){
   BONTASGW.set(gw, { t: most, p });
   return p;
 }
+// Egy fordulo meccsei, klub-rovidnev szerint csoportositva. Elo forduloban a
+// mar meglevo LIVEMECCS-bol, lezart forduloban egy fordulonkent
+// gyorsitotarazott fixtures-lekeresbol. A hivo (bontasHTML) amugy is aszinkron,
+// ezert itt nem kell utantoltes: mire a lenyilo tartalma elkeszul, ez is megvan.
+const REGIFX = {};   // gw -> {meccs_id: meccsRekord}
+async function forduloMeccsei(gw){
+  if (gw == null) return null;
+  if (gw === LIVEGW && LIVEMECCS) return LIVEMECCS;
+  if (REGIFX[gw]) return REGIFX[gw];
+  if (!Object.keys(TEAMS).length) return null;
+  const fx = await apiGet('https://draft.premierleague.com/api/event/' + gw + '/fixtures');
+  if (!Array.isArray(fx) || !fx.length) return null;
+  const t = {};
+  fx.forEach(m => { t[m.id] = meccsRekord(m); });
+  REGIFX[gw] = t;
+  return t;
+}
+
+// A jatekos meccse(i) a pont-bontas folott: "ARS 2-1 BRE - 70. perc".
+// Dupla forduloban ket sor. Az allas a fixtures valaszabol jon, tehat lezart
+// forduloban a vegeredmenyt mutatja.
+function meccsFejHTML(e, meccsek){
+  if (!meccsek) return '';
+  const klub = jat(e).t;
+  if (!klub) return '';
+  const sajat = Object.values(meccsek)
+    .filter(m => m.hazai === klub || m.vendeg === klub);
+  if (!sajat.length) return '';
+  return sajat.map(m => {
+    const jobb = !m.indult ? 'még nem kezdődött'
+               : m.lefujva ? 'vége'
+               : (m.perc == null ? '' : m.perc + '. perc');
+    const allas = (m.hp == null || m.vp == null)
+      ? `${esc(m.hazai || '?')}–${esc(m.vendeg || '?')}`
+      : `${esc(m.hazai || '?')} <b>${fmt(m.hp)}–${fmt(m.vp)}</b> ${esc(m.vendeg || '?')}`;
+    return `<div class="meccsfej"><span>${allas}</span>`
+         + `<span class="ora">${esc(jobb)}</span></div>`;
+  }).join('');
+}
+
 // A lezart fordulo perceit menet kozben toltjuk be. Aszinkron, tehat a modal
 // eloszor perc-oszlopok nelkul jelenik meg, es amikor megjon az adat,
 // ujrarajzoljuk - ugyanaz a minta, mint a percre friss pontoknal.
@@ -681,9 +732,10 @@ function bonuszAllapot(gw, meccsId){
     : { jelzes: 'ideiglenes', megjegyzes: 'lefújva — a forduló végéig még változhat' };
 }
 async function bontasHTML(e, gw){
-  const el = await gwElems(gw);
+  const [el, meccsek] = await Promise.all([gwElems(gw), forduloMeccsei(gw)]);
   const v = el && (el[e] || el[String(e)]);
   if (!v) return null;
+  const fej = meccsFejHTML(e, meccsek);
   const sorok = [];
   let perc = null;
   // Az explain fordulonkent MECCSEKRE bontva jon: [[stat-lista, meccs_id]].
@@ -699,7 +751,7 @@ async function bontasHTML(e, gw){
       sorok.push(sor);
     });
   });
-  return FunTasy.accTable(sorok, nincsPontUzenet(e, gw, perc));
+  return fej + FunTasy.accTable(sorok, nincsPontUzenet(e, gw, perc));
 }
 // A fooldali meccslista allasa a LIVE retegben el (hogy a tabellaba ne
 // szamitson bele). Barki frissiti a LIVEPTS-t, ezt is at kell szamolni -

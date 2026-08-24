@@ -15,12 +15,22 @@ const BONTAS = {
         { value: 90, points: 0, ...cfg('Játszott perc') }],
 };
 
+// A panel szovege a MECCS-FEJLEC NELKUL: ez a teszt az uzenetekrol szol, a
+// fejlecet (allas + meccsora) a meccsfej.teszt.js meri. Igy maradhat szigoru
+// az illesztes (startsWith), ahelyett hogy "tartalmazza"-ra gyengulne.
 const panelSzoveg = async page => {
   await page.waitForFunction(() => {
     const p = document.querySelector('.accpanel');
     return p && !p.textContent.includes('betöltése');
   }, null, { timeout: 15000 });
-  return (await page.locator('.accpanel').innerText()).trim();
+  return page.evaluate(() => {
+    const p = document.querySelector('.accpanel').cloneNode(true);
+    p.querySelectorAll('.meccsfej').forEach(x => x.remove());
+    document.body.appendChild(p);
+    const t = p.innerText.trim();
+    p.remove();
+    return t;
+  });
 };
 const ell = (cimke, kapott, vart) =>
   jo(kapott.startsWith(vart), cimke + ' -> ' + JSON.stringify(kapott.slice(0, 70)));
@@ -147,10 +157,13 @@ const ell = (cimke, kapott, vart) =>
   elems[D] = { stats: { total_points: 0, minutes: 90 },
     explain: [[[{ name: 'Minutes played', points: 0, value: 90, stat: 'minutes' }], 1]] };
   const most = Date.now();
+  // Az "id" NEM elhagyhato: a lap meccsenkent tartja nyilvan az allapotot
+  // (LIVEMECCS), tehat id nelkul mind a harom ugyanarra a kulcsra irodna, es
+  // a mock csendben egyetlen meccsre olvadna ossze.
   const fixtures = [
-    { started: false, finished: false, kickoff_time: new Date(most + 20 * 3600e3).toISOString(), team_h: rov2id[klub(A)], team_a: 0 },
-    { started: true,  finished: false, kickoff_time: new Date(most - 3600e3).toISOString(),      team_h: rov2id[klub(B)], team_a: 0 },
-    { started: true,  finished: false, finished_provisional: true, kickoff_time: new Date(most - 7200e3).toISOString(),      team_h: rov2id[klub(C)], team_a: rov2id[klub(D)] },
+    { id: 1, started: false, finished: false, kickoff_time: new Date(most + 20 * 3600e3).toISOString(), team_h: rov2id[klub(A)], team_a: 0 },
+    { id: 2, started: true,  finished: false, kickoff_time: new Date(most - 3600e3).toISOString(),      team_h: rov2id[klub(B)], team_a: 0 },
+    { id: 3, started: true,  finished: false, finished_provisional: true, kickoff_time: new Date(most - 7200e3).toISOString(),      team_h: rov2id[klub(C)], team_a: rov2id[klub(D)] },
   ];
   const page2 = await browser.newPage();
   page2.on('pageerror', e => oldalHiba.push('PL pageerror: ' + e.message));

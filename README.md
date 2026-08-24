@@ -728,6 +728,29 @@ Fejléc csak ott jelenik meg, ahol van is perc-cella (élő forduló, elkezdőd�
 lezárt fordulóban nincs mit címkézni. A címke nem lehet szélesebb a saját oszlopánál,
 különben elcsúszik a számoktól; a teszt középpontra méri.
 
+### A meccs állása a pont-bontás fölött (PL)
+
+A játékosra kattintva a pontok fölött egy sor: `ARS 2–1 BRE · 70. perc`. Lefújás után
+`vége`, el nem kezdődött meccsnél nincs állás, csak a két klub — **0–0-t nem írunk ki**,
+mert az állítás lenne, nem adat. Kettős fordulóban mindkét meccs külön sort kap.
+
+Az állás a **fixtures** válasz `team_h_score` / `team_a_score` mezőjéből jön:
+
+- **élő fordulóban** a már meglévő `LIVEMECCS`-ből, tehát nincs miatta plusz lekérés;
+- **lezárt fordulóban** egy fordulónként gyorsítótárazott `event/{gw}/fixtures` kérésből
+  (`forduloMeccsei` → `REGIFX`). Itt nem kell utántöltés, mint a perc-oszlopoknál: a
+  `bontasHTML` amúgy is aszinkron, tehát mire a lenyíló tartalma elkészül, ez is megvan.
+
+A fixtures válasz értelmezése **egy helyen** él (`meccsRekord`), hogy az élő és a lezárt
+forduló ne csússzon el egymástól.
+
+**Miért a lenyílóban, és nem oszlopban.** Kimérve (360px): egy állás-oszlop a névnek
+maradó helyet 112 → 70px-re vinné, tehát a nevek látható része csonkulna; a név alatti
+második sor a sormagasságot 31 → 51px-re. A lenyíló ezzel szemben ingyen van, és ott az
+állás a bontást is olvashatóvá teszi (a „Kapott gólok 3" az `AVL 0–3 BHA` alatt már
+mond valamit). A keretlistában a *pillantásra* szóló kérdésre — kezdett-e, pályán
+van-e még — a perc-oszlopok felelnek, azt ez nem váltja ki.
+
 ### A pad sorrendje (PL) — és ami még nyitott
 
 **A pad sorrendje az FPL csere-sorrendje**, nem díszítés: a forduló végén az FPL az első

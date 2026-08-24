@@ -2,6 +2,15 @@
  "bejegyzesek": [
   {
    "datum": "2026-08-24",
+   "tipus": "funkcio",
+   "ligak": [
+    "pl"
+   ],
+   "cim": "A pontrészletező fölött ott a meccs állása",
+   "leiras": "A játékosra kattintva a pontok fölött megjelenik a meccse: a két klub, az állás és a meccsóra, lefújás után „vége”. Lezárt fordulóban a végeredmény áll ott. Kettős fordulóban mindkét meccs külön sort kap."
+  },
+  {
+   "datum": "2026-08-24",
    "tipus": "bugfix",
    "ligak": [
     "pl"
