@@ -68,6 +68,26 @@ with open(NAPLO, "a", encoding="utf-8") as f:
         f.write("# Elo meccs perc-merese. Minden minta egy sor (UTC).\n"
                 "# mora = a meccs oraja | dt = a ket vegpont lekerese kozt eltelt ms\n"
                 "# jatekos: <id>:<perc>[k=kezdo, b=csere, R=piros]\n")
+        # Egyszer kiirjuk NYERSEN egy kezdo es egy csere explain-jet. Ez a dupla
+        # fordulo tervezesehez kell: az explain meccsekre bontva jon, es a
+        # kerdes az, hogy a "starts" szerepel-e benne. Ha csak a pontot ero
+        # tetelek vannak ott, akkor dupla forduloban nem tudjuk meccsenkent,
+        # hogy kezdo volt-e - csak azt, hogy a kettobol egyet kezdett.
+        for m in elok:
+            h2, a2 = CSAPAT.get(m.get("team_h"), "?"), CSAPAT.get(m.get("team_a"), "?")
+            minta = [e for e, k in KLUB.items() if k in (h2, a2)]
+            kezdo = next((e for e in minta if (st(e).get("starts") or 0)), None)
+            csere = next((e for e in minta
+                          if not (st(e).get("starts") or 0) and (st(e).get("minutes") or 0)), None)
+            for cimke, e in (("KEZDO", kezdo), ("CSERE", csere)):
+                if e is None:
+                    continue
+                v = el.get(str(e)) or el.get(e) or {}
+                f.write("# %s explain (id=%s): %s\n"
+                        % (cimke, e, json.dumps(v.get("explain"), ensure_ascii=False)[:900]))
+                f.write("# %s stats.starts=%s minutes=%s\n"
+                        % (cimke, (v.get("stats") or {}).get("starts"),
+                           (v.get("stats") or {}).get("minutes")))
     for m in elok:
         h, a = CSAPAT.get(m.get("team_h"), "?"), CSAPAT.get(m.get("team_a"), "?")
         jatekosok = [e for e, klub in KLUB.items() if klub in (h, a)]
