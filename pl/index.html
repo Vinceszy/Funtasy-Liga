@@ -6,7 +6,7 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=27">
+<link rel="stylesheet" href="../funtasy.css?v=28">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -72,7 +72,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=27"></script>
+<script src="../funtasy.js?v=28"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -116,6 +116,10 @@ let LIVEMECCS = null;  // ugyanaz MECCSENKENT: {meccs_id: {indult, lefujva,
 let LIVEPERC = {};  // jatekosonkent {perc, kezdo}: hany percet jatszott, es
                     // kezdo volt-e. Az elo lekeres ugyanabbol a valaszbol adja,
                     // amibol a pontokat - nem kell hozza kulon keres.
+const REGIPERC = {}; // ugyanez a LEZART fordulokra: {gw: {element: {perc,
+                    // kezdo}}}. Forrasa a gwElems(gw) valasza - ugyanaz a
+                    // (fordulonkent gyorsitotarazott) keres, amibol a
+                    // pont-bontas is jon, tehat nincs miatta plusz lekeres.
 let LIVENAP = null; // a NAPI pontzaras allapota: {"2026-08-21": {lezart}}.
                     // Az FPL naponta zarja a pontokat, es a bonuszt is akkor
                     // veglegesiti - a sajat felulete is naponkent irja ki,
@@ -178,8 +182,23 @@ const ACCHINT = '<div class="acchint">Kattints egy játékosra a pontjai részle
 //
 // A meccsora 45-nel es 90-nel megall, ezert a 90 onmagaban nem arulja el,
 // hogy vege van-e - ott a cella "vege"-t ir.
+const percHTML = (p, mora) =>
+  `<span class="perc">${fmt(p.perc)}'</span>`
+  + (mora == null ? '' : `<span class="perc mora">${esc(mora)}</span>`)
+  + `<span class="kezd" title="${p.kezdo ? 'kezdőként lépett pályára' : 'nem kezdőként'}">`
+  + (p.kezdo ? 'K' : '–') + '</span>';
+
 function percCellakHTML(e, gw){
-  if (gw !== LIVEGW || !LIVEMECCS || !LIVEFX) return '';
+  if (gw == null) return '';
+  // Lezart fordulo: a percek ugyanugy erdekesek (ki mennyit jatszott), de a
+  // meccsora ott mar mindenkinel "vege" lenne - azt az oszlopot elhagyjuk.
+  if (gw !== LIVEGW){
+    const t = REGIPERC[gw];
+    if (!t) return '';
+    const p = t[e] || t[String(e)];
+    return p ? percHTML(p, null) : '';
+  }
+  if (!LIVEMECCS || !LIVEFX) return '';
   const fx = LIVEFX[jat(e).t];
   if (!fx || !fx.meccsek || !fx.meccsek.length) return '';
   const p = LIVEPERC[e] || LIVEPERC[String(e)];
@@ -187,19 +206,19 @@ function percCellakHTML(e, gw){
   const meccsek = fx.meccsek.map(mid => LIVEMECCS[mid]).filter(Boolean);
   if (!meccsek.length || !meccsek.some(m => m.indult)) return '';
   const mora = meccsek.map(m => m.lefujva ? 'vége' : (m.perc == null ? '?' : m.perc + "'")).join('|');
-  return `<span class="perc">${fmt(p.perc)}'</span>`
-       + `<span class="perc mora">${esc(mora)}</span>`
-       + `<span class="kezd" title="${p.kezdo ? 'kezdőként lépett pályára' : 'nem kezdőként'}">`
-       + (p.kezdo ? 'K' : '–') + '</span>';
+  return percHTML(p, mora);
 }
 // A harom perc-oszlop fejlece. Ugyanaz a .plr racs, csak cimkekkel, hogy a
 // felirat pontosan a maga oszlopa fole essen. Csak ott jelenik meg, ahol
 // van is perc-cella - lezart forduloban vagy meccs elott nincs mit cimkezni.
-const PERCFEJ = '<div class="plr plrfej"><span class="nm"></span>'
-  + '<span class="perc">perc</span><span class="perc mora">meccs</span>'
+const PERCFEJ = mora => '<div class="plr plrfej"><span class="nm"></span>'
+  + '<span class="perc">perc</span>'
+  + (mora ? '<span class="perc mora">meccs</span>' : '')
   + '<span class="kezd">kezdő</span><span class="pts">pont</span></div>';
 const vanPercOszlop = (lista, gw) =>
   lista.some(x => x && typeof x === 'object' && percCellakHTML(x.e, gw));
+const percFejHTML = (lista, gw) =>
+  vanPercOszlop(lista, gw) ? PERCFEJ(gw === LIVEGW) : '';
 
 function sqcolHTML(id, lista, cim, gw){
   const gazdag = lista.length && typeof lista[0] === 'object';
@@ -225,13 +244,22 @@ function sqcolHTML(id, lista, cim, gw){
     return `<div class="sqcol"><h3>${esc(cim || nev(id))}</h3>${rendez(lista).map(sor).join('')}</div>`;
   const st = lista.filter(x => !x.b), pad = lista.filter(x => x.b);
   const S = a => a.reduce((s, x) => s + (x.pts || 0), 0);
-  const fejSt = vanPercOszlop(st, gw) ? PERCFEJ : '';
-  const fejPad = vanPercOszlop(pad, gw) ? PERCFEJ : '';
+  const fejSt = percFejHTML(st, gw), fejPad = percFejHTML(pad, gw);
   return `<div class="sqcol"><h3>${esc(cim || nev(id))}<span>${fmt(S(st))}</span></h3>
     ${fejSt}${rendez(st).map(sor).join('')}
     <div class="sumline"><span>Kezdők</span><b>${fmt(S(st))}</b></div>
     <div class="subhead">Pad — a pontjaik nem számítanak a csapatnak</div>
     ${fejPad}${rendez(pad).map(sor).join('')}</div>`;
+}
+
+// Melyik fordulot mutatja a "keret" ful? A percek utantoltesehez kell
+// tudni - a keretHTML-lel EGYUTT kell modositani.
+function keretGW(id){
+  if (LIVEGW && ((HIST[LIVEGW] || {})[id] || []).length) return LIVEGW;
+  if ((SQUADS[id] || []).length) return null;   // a jelenlegi keret nem fordulohoz kotott
+  const gwk = Object.keys(HIST).map(Number).sort((a, b) => b - a);
+  for (const gw of gwk) if (((HIST[gw] || {})[id] || []).length) return gw;
+  return null;
 }
 
 function keretHTML(id){
@@ -325,16 +353,20 @@ function showTeam(id, tab, mode){
      <button class="tab ${tab === 'jatekosok' ? 'on' : ''}" data-tab="jatekosok">Szezon játékosai</button>`;
   $('mBody').innerHTML = tab === 'keret' ? keretHTML(id)
                        : tab === 'fordulok' ? fordulokHTML(id) : jatekosokHTML(id);
+  const keretLatszik = () => {
+    const on = document.querySelector('#mTabs .tab.on');
+    return mTeam === id && $('ov').classList.contains('open')
+           && on && on.dataset.tab === 'keret';
+  };
+  if (tab === 'keret')
+    percUtantoltes(keretGW(id), () => { if (keretLatszik()) $('mBody').innerHTML = keretHTML(id); });
   if (tab === 'keret' && LIVEGW && (HIST[LIVEGW] || {})[id]){
     fetchLivePts().catch(() => false).then(ok => {
       // amit itt lekertunk, azzal a mogottes fooldali lista is frissul -
       // kulonben ugyanaz a "listan 39, ravaltva 38" elteres allna elo, mint
       // a meccs-adatlapnal
       if (ok) eloAllasFrissit(LIVEGW);
-      const on = document.querySelector('#mTabs .tab.on');
-      if (ok && mTeam === id && $('ov').classList.contains('open')
-          && on && on.dataset.tab === 'keret')
-        $('mBody').innerHTML = keretHTML(id);
+      if (ok && keretLatszik()) $('mBody').innerHTML = keretHTML(id);
     });
   }
 }
@@ -365,8 +397,16 @@ function showMatch(h, v, r, mode){
   if (H && V){
     const S = a => a.filter(x => !x.b).reduce((s, x) => s + (x.pts || 0), 0);   // a pad nem szamit
     const fej = (A, B) => allasHTML(h, v, S(A), S(B), r === LIVEGW);
-    $('mBody').innerHTML = fej(H, V) + ACCHINT +
-      `<div class="sqwrap">${sqcolHTML(h, H, null, r)}${sqcolHTML(v, V, null, r)}</div>`;
+    const test = (A, B) => fej(A, B) + ACCHINT +
+      `<div class="sqwrap">${sqcolHTML(h, A, null, r)}${sqcolHTML(v, B, null, r)}</div>`;
+    $('mBody').innerHTML = test(H, V);
+    // Lezart fordulonal a percek utolag jonnek meg (egy keres, fordulonkent
+    // gyorsitotarazva) - akkor ujrarajzoljuk, ha meg ugyanez a meccs latszik.
+    const cim = $('mTitle').textContent, alcim = $('mSub').textContent;
+    percUtantoltes(r, () => {
+      if ($('mTitle').textContent === cim && $('mSub').textContent === alcim)
+        $('mBody').innerHTML = test(H, V);
+    });
     if (r === LIVEGW){
       const kert = $('mTitle').textContent;
       // amig a percre friss lekeres tart, jelzest kap - kulonben a szamok
@@ -380,8 +420,7 @@ function showMatch(h, v, r, mode){
         eloAllasFrissit(r);
         if (!$('ov').classList.contains('open') || $('mTitle').textContent !== kert) return;
         const friss = x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts });
-        $('mBody').innerHTML = fej(H.map(friss), V.map(friss)) + ACCHINT +
-          `<div class="sqwrap">${sqcolHTML(h, H.map(friss), null, r)}${sqcolHTML(v, V.map(friss), null, r)}</div>`;
+        $('mBody').innerHTML = test(H.map(friss), V.map(friss));
       });
     }
     return;
@@ -563,6 +602,29 @@ function gwElems(gw){
   BONTASGW.set(gw, { t: most, p });
   return p;
 }
+// A lezart fordulo perceit menet kozben toltjuk be. Aszinkron, tehat a modal
+// eloszor perc-oszlopok nelkul jelenik meg, es amikor megjon az adat,
+// ujrarajzoljuk - ugyanaz a minta, mint a percre friss pontoknal.
+// Igazzal ter vissza, ha ujra kell rajzolni; null, ha nincs mit tolteni.
+function regiPercBetolt(gw){
+  if (gw == null || gw === LIVEGW || REGIPERC[gw]) return null;
+  return gwElems(gw).then(el => {
+    if (!el) return false;
+    const t = {};
+    const be = (id, st) => { t[id] = { perc: st.minutes || 0, kezdo: !!st.starts }; };
+    if (Array.isArray(el)) el.forEach(v => be(v.id, v.stats || {}));
+    else for (const k in el) be(k, ((el[k] || {}).stats) || {});
+    REGIPERC[gw] = t;
+    return true;
+  }).catch(() => false);
+}
+// A visszateres percekkel telhet, kozben a nezo mashova lephet - az
+// ujrarajzolo fuggveny sajat maga ellenorzi, hogy meg ugyanaz latszik-e.
+function percUtantoltes(gw, ujrarajzol){
+  const p = regiPercBetolt(gw);
+  if (p) p.then(ok => { if (ok && $('ov').classList.contains('open')) ujrarajzol(); });
+}
+
 const idoFmt = s => new Date(s).toLocaleString('hu-HU',
   { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
 // Ha egyetlen pontot ero esemeny sincs, a 0-nak negy oka lehet. A meccs

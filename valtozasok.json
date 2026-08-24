@@ -6,8 +6,8 @@
    "ligak": [
     "pl"
    ],
-   "cim": "Az élő fordulóban látszik, hány percet játszott a játékos",
-   "leiras": "A keretben és a meccs nézetében három új oszlop áll a pont mellett: a játékos percei, a meccsóra és az, hogy kezdőként lépett-e pályára. A kettő összevetéséből látszik, pályán van-e még, anélkül hogy más oldalt kellene megnyitni. Kettős fordulóban mindkét meccs értéke szerepel, függőleges vonallal elválasztva."
+   "cim": "Látszik, hány percet játszott a játékos",
+   "leiras": "A keretben és a meccs nézetében a pont mellett ott a játékos percei és az, hogy kezdőként lépett-e pályára. Az élő fordulóban a meccsóra is — a kettő összevetéséből látszik, pályán van-e még, anélkül hogy más oldalt kellene megnyitni; kettős fordulóban mindkét meccs értéke szerepel, függőleges vonallal elválasztva. Lezárt fordulóban a meccsóra elmarad, a percek és a kezdő jelzés megmarad."
   },
   {
    "datum": "2026-08-24",

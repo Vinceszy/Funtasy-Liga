@@ -671,16 +671,31 @@ a bónusz állapota **meccsenként** (`LIVEMECCS`) áll, nem klubonként (`LIVEF
 hogy a bónuszt véglegesítették. A Draft API-ban ez a tömb `{s, h, a}` alakú, nincs benne
 `identifier` kulcs, mint a klasszikus FPL-ben.
 
-### Ki van még a pályán (PL, élő forduló)
+### Ki van még a pályán (PL)
 
-A pont mellett három szám áll a keretben és a meccs nézetében, **fejléccel**
-(`perc · meccs · kezdő · pont`), mert három cimkézetlen szám elsőre rejtély:
+A pont mellett ott a játékos percei és az, hogy kezdőként lépett-e pályára — a keretben
+és a meccs nézetében, **fejléccel** (`perc · meccs · kezdő · pont`), mert a címkézetlen
+szám elsőre rejtély:
 
-| oszlop | mit mutat |
-|---|---|
-| `perc` | a játékos lejátszott percei (`stats.minutes`) |
-| `meccs` | a meccsóra, lefújás után `vége` |
-| `kezdő` | `K`, ha kezdőként lépett pályára, egyébként `–` |
+| oszlop | mit mutat | mikor |
+|---|---|---|
+| `perc` | a játékos lejátszott percei (`stats.minutes`) | mindig |
+| `meccs` | a meccsóra, lefújás után `vége` | **csak az élő fordulóban** |
+| `kezdő` | `K`, ha kezdőként lépett pályára, egyébként `–` | mindig |
+
+**Lezárt fordulóban a meccsóra elmarad** — ott minden meccs lement, tehát mindenkinél
+`vége` állna. A fejléc is két oszlopra rövidül. Az adat forrása ilyenkor **nem** az élő
+lekérés (`LIVEPERC`), hanem az adott forduló saját `event/{gw}/live` válasza
+(`regiPercBetolt` → `REGIPERC[gw]`) — ugyanaz a kérés, amiből a pont-részletező is jön,
+fordulónként gyorsítótárazva, tehát nincs miatta plusz lekérés. Aszinkron, ezért a modal
+**előbb jön fel, mint a percek**, és az adat megérkeztével rajzolja újra magát
+(`percUtantoltes`); az újrarajzolás csak akkor fut le, ha közben nem lépett máshova a
+néző. A `draft_history.json` percet nem tárol, ezért kell a lekérés.
+
+**Akinek nincs adata, annál üresek a cellák, és ez nem csúsztat el semmit:** a `.pts`
+jobbra zárt és utolsó, a `.nm` pedig `flex:1`, tehát a pont oszlopa akkor is a helyén
+marad, ha a perc-cellák hiányoznak (élő fordulóban ez a még el nem kezdődött meccsek
+játékosainál látszik).
 
 **Nyers értékeket mutatunk, nem értelmezünk a néző helyett.** A „lecserélve" felirathoz
 tűréshatár kellene, és egy egyperces csúszás a két végpont között hamis állítást szülne.
