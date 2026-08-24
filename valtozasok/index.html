@@ -17,6 +17,7 @@
 </header>
 
 <div class="panel">
+  <h2>Változások</h2>
   <div class="vlt-szurok">
     <div class="vlt-szurocsoport">
       <span class="vlt-szurocim">Típus</span>
@@ -27,7 +28,7 @@
       <div class="vlt-szurosor" id="ligaSzuro"></div>
     </div>
   </div>
-  <div id="lista"><div class="note">Betöltés…</div></div>
+  <div id="lista"><div class="vlt-ures">Betöltés…</div></div>
 </div>
 </div>
 
@@ -52,8 +53,11 @@ const TIPUSOK = [
 const tipusNev = t => (TIPUSOK.find(x => x.id === t) || {}).nev || t;
 
 let BEJEGYZESEK = [];
-let tipusSzuro = null;      // null = mind
-let ligaSzuro  = null;
+let tipusSzuro = null;      // null = mind (a ket tipus egymast kizarja)
+// A ligak KULON kapcsolhatok: aki tobb ligaban jatszik, tobbet is kijelolhet.
+// Ures halmaz = mind. A kivalasztottak kozott VAGY van: egy bejegyzes akkor
+// latszik, ha barmelyik kijelolt ligat erinti.
+const ligaSzuro = new Set();
 
 const HONAP = ['január','február','március','április','május','június',
                'július','augusztus','szeptember','október','november','december'];
@@ -67,11 +71,12 @@ function datumFmt(s){
 
 // Egy szurosor. A gombok a MOSTANI allapotbol keszulnek, ezert valasztas utan
 // ujra kell rajzolni oket - ezt a szurokRajzol() intezi, egy helyen.
-function chipSor(azon, elemek, aktiv, kivalaszt){
+// aktivE(id) mondja meg, ki van-e emelve; a "Mind" gomb id-je null.
+function chipSor(azon, elemek, aktivE, kivalaszt){
   const elem = document.getElementById(azon);
   const gomb = (id, nev) =>
-    `<button class="vlt-chip${aktiv === id ? ' on' : ''}" data-ert="${FunTasy.esc(id == null ? '' : id)}">`
-    + FunTasy.esc(nev) + '</button>';
+    `<button class="vlt-chip${aktivE(id) ? ' on' : ''}" data-ert="${FunTasy.esc(id == null ? '' : id)}"`
+    + ` aria-pressed="${aktivE(id)}">` + FunTasy.esc(nev) + '</button>';
   elem.innerHTML = gomb(null, 'Mind') + elemek.map(x => gomb(x.id, x.nev)).join('');
   elem.querySelectorAll('.vlt-chip').forEach(b => b.addEventListener('click', () => {
     kivalaszt(b.dataset.ert || null);
@@ -80,16 +85,25 @@ function chipSor(azon, elemek, aktiv, kivalaszt){
   }));
 }
 function szurokRajzol(){
-  chipSor('tipusSzuro', TIPUSOK, tipusSzuro, v => { tipusSzuro = v; });
+  // tipus: a ketto egymast kizarja, tehat egyszerre egy lehet aktiv
+  chipSor('tipusSzuro', TIPUSOK, id => tipusSzuro === id, v => { tipusSzuro = v; });
+  // liga: KULON kapcsolhatok, tobb is lehet egyszerre. A "Mind" nem egy
+  // valasztas a tobbi mellett, hanem a kijelolesek torlese.
   chipSor('ligaSzuro', FunTasy.LIGAK.map(l => ({ id: l.id, nev: l.nev })),
-          ligaSzuro, v => { ligaSzuro = v; });
+          id => (id === null ? ligaSzuro.size === 0 : ligaSzuro.has(id)),
+          v => {
+            if (v === null) ligaSzuro.clear();
+            else if (ligaSzuro.has(v)) ligaSzuro.delete(v);
+            else ligaSzuro.add(v);
+          });
 }
 
 function szurt(){
   return BEJEGYZESEK.filter(b =>
     (!tipusSzuro || b.tipus === tipusSzuro) &&
-    // a liga CIMKE: eleg, ha a bejegyzes ligai kozott szerepel
-    (!ligaSzuro  || (b.ligak || []).includes(ligaSzuro)));
+    // A liga CIMKE, es tobbet is ki lehet jelolni: eleg, ha a bejegyzes
+    // BARMELYIK kijelolt ligat erinti. Ures kijeloles = mind.
+    (ligaSzuro.size === 0 || (b.ligak || []).some(x => ligaSzuro.has(x))));
 }
 
 function tetelHTML(b){
@@ -111,7 +125,7 @@ function rajzol(){
   const lista = szurt();
   const el = document.getElementById('lista');
   if (!lista.length){
-    el.innerHTML = '<div class="note">Ehhez a szűréshez nincs bejegyzés.</div>';
+    el.innerHTML = '<div class="vlt-ures">Ehhez a szűréshez nincs bejegyzés.</div>';
     return;
   }
   // datum szerint csoportositva, a legfrissebb elol
@@ -134,7 +148,7 @@ function rajzol(){
       .sort((a, b) => (a.datum < b.datum ? 1 : a.datum > b.datum ? -1 : 0));
   } catch (e) {
     document.getElementById('lista').innerHTML =
-      '<div class="note">A változásnapló most nem elérhető.</div>';
+      '<div class="vlt-ures">A változásnapló most nem elérhető.</div>';
     return;
   }
   szurokRajzol();

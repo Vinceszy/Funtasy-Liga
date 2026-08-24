@@ -42,6 +42,16 @@ const cim = t => t.replace(/\s+/g, ' ').trim();
     'a dátum magyarul, csoportfejlécként jelenik meg');
   jo(datumok.length === 2, 'a két nap külön csoportban van');
 
+  // A .panel-nek nincs sajat belso margoja, a gyerekei adjak - ha egy sav
+  // kifelejti, a szoveg a keretnek er. Ezt egyszer mar elrontottam.
+  const margok = await p.evaluate(() => {
+    const bal = s => parseFloat(getComputedStyle(document.querySelector(s)).paddingLeft);
+    return { szuro: bal('.vlt-szurok'), datum: bal('.vlt-datum'), tetel: bal('.vlt-tetel') };
+  });
+  console.log('   bal belső margók:', JSON.stringify(margok));
+  jo(Object.values(margok).every(x => x >= 12),
+    'minden sávnak van belső margója (a szöveg nem ér a kerethez)');
+
   console.log('\n--- típus szerint ---');
   await chip('tipusSzuro', 'Javítás');
   const javitasok = await cimek();
@@ -59,18 +69,38 @@ const cim = t => t.replace(/\s+/g, ' ').trim();
   console.log('   NB1:', JSON.stringify(nb1.map(x => x.slice(0, 28))));
   jo(nb1.includes('MINDKETTO'), 'a mindkét ligát érintő bejegyzés NB1-re szűrve is előjön');
   jo(!nb1.some(x => /bónuszpontokról/i.test(x)), 'a csak PL-es bejegyzés NB1-re szűrve nem jön elő');
+  await chip('ligaSzuro', 'NB1');        // kikapcs
   await chip('ligaSzuro', 'PL');
   const pl = await cimek();
   console.log('   PL:', JSON.stringify(pl.map(x => x.slice(0, 28))));
   jo(pl.includes('MINDKETTO'), 'ugyanaz a bejegyzés PL-re szűrve is előjön');
   jo(!pl.some(x => /elmaradt meccsek/i.test(x)), 'a csak NB1-es bejegyzés PL-re szűrve nem jön elő');
 
+  console.log('\n--- a ligák KÜLÖN kapcsolhatók (aki több ligában játszik) ---');
+  await chip('ligaSzuro', 'NB1');        // a PL mellé
+  const ketto = await cimek();
+  console.log('   NB1 + PL:', JSON.stringify(ketto.map(x => x.slice(0, 28))));
+  jo(ketto.length === 4, 'két ligát kijelölve mindkettő bejegyzései látszanak');
+  const aktivak = await p.locator('#ligaSzuro .vlt-chip.on').allInnerTexts();
+  console.log('   kiemelt liga-gombok:', JSON.stringify(aktivak));
+  jo(aktivak.length === 2 && !aktivak.some(t => /Mind/.test(t)),
+    'mindkét liga gombja ki van emelve, a Mind nem');
+  await chip('ligaSzuro', 'Mind');       // torles
+  jo((await p.locator('#ligaSzuro .vlt-chip.on')).count && (await cimek()).length === 4,
+    'a Mind törli a kijelöléseket');
+  const mindAktiv = await p.locator('#ligaSzuro .vlt-chip.on').allInnerTexts();
+  jo(mindAktiv.length === 1 && /Mind/.test(mindAktiv[0]),
+    'kijelölés nélkül a Mind van kiemelve');
+
   console.log('\n--- a két szűrő együtt ---');
+  await chip('ligaSzuro', 'PL');
   await chip('tipusSzuro', 'Javítás');
   const ures = await cimek();
   console.log('   PL + Javítás:', JSON.stringify(ures));
   jo(ures.length === 0 && /nincs bejegyzés/.test(await p.locator('#lista').innerText()),
     'PL + Javítás: nincs ilyen, és ezt ki is írja');
+
+  await chip('ligaSzuro', 'PL');     // kikapcs
   await chip('ligaSzuro', 'NB1');
   jo((await cimek()).length === 2, 'NB1 + Javítás: a két NB1-es javítás');
 

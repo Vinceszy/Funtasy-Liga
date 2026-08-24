@@ -13,9 +13,16 @@ const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
   const ki = await p.evaluate(() => {
     LIVE[900] = [];                       // 900 = elo fordulo, 901 = lezart
     const perc = m => new Date(Date.now() - m * 60000).toISOString();
+    // Az ejfeles helyorzot KET valtozatban visszuk be: az MLSZ ejfelt ir, ha a
+    // kezdes nincs kituzve, es annak a napja el is mulhat. A ket eset mast
+    // jelent, tehat mast is kell irni rola. A datumok a MAI naphoz kepest
+    // keszulnek - bedrotozva egy nap alatt elavulnanak (meg is tettek).
+    const ejfel = nap => new Date(Date.now() + nap * 864e5).toISOString().slice(0, 10)
+      + 'T00:00:00+02:00';
     const STARTOK = {
-      'nincs':      null,
-      'ejfel':      '2026-08-23T00:00:00+02:00',
+      'nincs':        null,
+      'ejfelJovo':    ejfel(2),
+      'ejfelLejart':  ejfel(-5),
       'jovo':       new Date(Date.now() + 90 * 60000).toISOString(),
       'fut30':      perc(30),
       'fut110':     perc(110),
@@ -55,8 +62,12 @@ const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
     if (s.elo && !s.nogame && s.allapot === 'fut' && /Lejátszotta|véget ért/.test(s.uzenet))
       sert('I1 — futó meccsre azt írja, hogy vége', kulcs + '  ->  ' + s.uzenet);
     // I2: jovobeli vagy kituzetlen kezdes = meg nem kezdodott
-    if (!s.nogame && (s.sn === 'jovo' || s.sn === 'ejfel') && !/még nem kezdődött/.test(s.uzenet))
+    if (!s.nogame && (s.sn === 'jovo' || s.sn === 'ejfelJovo') && !/még nem kezdődött/.test(s.uzenet))
       sert('I2 — jövőbeli/kitűzetlen kezdésre nem azt írja, hogy még nem kezdődött', kulcs + '  ->  ' + s.uzenet);
+    // I2b: a LEJART ejfeles helyorzo mar nem kezdesi idopont - nem szabad
+    // tole kezdest igerni, mert a datum a multban van
+    if (!s.nogame && s.sn === 'ejfelLejart' && !/elmaradt/.test(s.uzenet))
+      sert('I2b — lejárt helyőrzőnél kezdést ígér', kulcs + '  ->  ' + s.uzenet);
     // I3: lezart forduloban nem allithatjuk, hogy zajlik
     if (!s.elo && /A meccs zajlik/.test(s.uzenet))
       sert('I3 — lezárt fordulóban azt írja, hogy zajlik', kulcs + '  ->  ' + s.uzenet);

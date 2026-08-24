@@ -6,14 +6,14 @@ const { BASE, jo, hibak, inditas, vege } = require('./kozos');
 //   megy a meccs                          -> a bonusz percrol percre valtozhat
 //   lefujva, de a NAPZARAS meg hatravan   -> rogzult, de meg valtozhat
 //   napzaras utan                         -> fix, JELOLETLEN
-// A harmadikat a NAP allapota mondja meg, nem a meccse: az FPL naponta zar,
-// egyszerre az aznapi osszes meccsre. A jelzes a klasszikus FPL event-status
-// vegpontjabol jon, a "points" mezobol, ami a nap haladasat koveti:
-//   ""  - a napon meg nem jatszottak
-//   "l" - mennek a meccsek
-//   "p" - a napot LEZARTAK (a "provisional" itt a zaras UTANI allapot)
-// A meccs sajat finished mezoje erre nem jo: a pentek esti meccs vasarnap
-// este is finished=false volt, pedig a napja mar reg lezarult.
+// A harmadik a FORDULO zarasa. 2026/27-tol a lockdown a fordulo utolso
+// meccse UTANI nap 09:00 UK-kor van (korabban egy oraval a lefujas utan),
+// hogy az Opta felulvizsgalata meg beleszamithasson - NAPI zaras tehat
+// nincs. A jelzes a klasszikus FPL event-status vegpontjabol jon; a Draft
+// frontendjenek forrasabol kiolvasva a ket mezo jelentese:
+//   points:      "" = ures, l = Live, p = Provisional, r = Confirmed
+//   bonus_added: igaz eseten a Bonus Points oszlopban "Added"
+// Vegleges tehat a "r" vagy az "Added" - a "p" NEM az, az a kozbenso.
 // Az explain szerkezete [[stat-lista, meccs_id]] - a bonusz-sor ezert a
 // SAJAT meccsehez, azon at a sajat NAPJAHOZ kotheto.
 
@@ -30,11 +30,12 @@ const MECCSEK = [
   { id: 13, started: true,  finished_provisional: true,  finished: false,
     kickoff_time: ZART_NAP + 'T14:00:00Z', team_h: 5, team_a: 6 },
 ];
-// A lezart nap "p"-t mutat, a meg futo nap "l"-t. A bonus_added szandekosan
-// hamis mindkettonel: meresre az sosem billent at, tehat nem hasznaljuk.
+// A lezart nap "r" (Confirmed), a masik meg "p" (Provisional). A "p"
+// szandekosan a NYITOTT napon all: ha valaki azt megint veglegesnek venne,
+// ez a teszt bukik.
 const NAPOK = { status: [
-  { date: ZART_NAP,     event: GW, bonus_added: false, points: 'p' },
-  { date: NYITOTT_NAP,  event: GW, bonus_added: false, points: 'l' },
+  { date: ZART_NAP,     event: GW, bonus_added: false, points: 'r' },
+  { date: NYITOTT_NAP,  event: GW, bonus_added: false, points: 'p' },
 ] };
 // jatekosonkent: melyik meccs(ek)ben szerepel es mennyi bonuszt kapott
 const JATEKOSOK = {
@@ -106,13 +107,24 @@ let napokKi = true;   // a napi zaras adata megjon-e (a tartalek-ag tesztelésé
   console.log('   hivatalos       ->', JSON.stringify(kesz));
   jo(/b-valtozik/.test(fut.cls) && /változik/.test(fut.megj),
     'futó meccs: a bónusz sor jelölt, és megmondja, hogy még változik');
-  jo(/b-ideiglenes/.test(lefujva.cls) && /még változhat/.test(lefujva.megj),
-    'lefújt meccs, még nyitott nap: külön jelölés');
+  jo(/b-ideiglenes/.test(lefujva.cls) && /forduló végéig/.test(lefujva.megj),
+    'lefújt meccs, a forduló még nyitva: külön jelölés, és megmondja, mire vár');
   jo(!/b-valtozik|b-ideiglenes/.test(kesz.cls) && kesz.megj === '',
-    'napzárás után: semmilyen jelölés (a jelöletlen = fix)');
+    'a forduló zárása után: semmilyen jelölés (a jelöletlen = fix)');
   jo(/még változhat/.test(lefujva.megj) && kesz.megj === '',
-    'ugyanaz a meccs-állapot (lefújva, finished=false) más jelölést kap a lezárt napon');
+    'a "p" (Provisional) jelölést kap, a "r" (Confirmed) nem');
   jo(fut.cls !== lefujva.cls, 'a két jelölt állapot nem ugyanaz');
+
+  console.log('\n--- a bónusz "Added" önmagában is véglegessé tesz ---');
+  const added = await p.evaluate(() => {
+    // a nyitott nap "p" marad, de a bonusz mar Added
+    LIVENAP[Object.keys(LIVENAP).find(d => !LIVENAP[d].lezart)] = { lezart: true };
+    return bontasHTML(202, 1);
+  });
+  const addedSor = sorok(added)[0];
+  console.log('   Added esetén:', JSON.stringify(addedSor));
+  jo(addedSor.megj === '' && !/b-/.test(addedSor.cls),
+    'ha az FPL szerint a bónusz már Added, nincs jelölés');
 
   console.log('\n--- dupla forduló: két meccs, két állapot ---');
   const ketto = sorok(ki[204]);

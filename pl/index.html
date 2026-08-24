@@ -394,18 +394,20 @@ const lekeresHiba = FunTasy.hibajelzo({
   eloE: () => !!LIVEGW,
   taroltIdo: () => TAROLT_IDO,
 });
-// A NAPI pontzaras vegpontja. A Draft API-ban NINCS ilyen (event-status ott
-// 404), a klasszikus FPL-ben viszont van, es pontosan azt adja vissza, amit a
-// Draft sajat felulete is kiir naponkent:
+// A fordulo allapota naponkenti bontasban. A Draft API-ban NINCS ilyen
+// vegpont (event-status ott 404), a klasszikus FPL-ben viszont van, es
+// pontosan ezt rajzolja ki a Draft sajat "Current team" lapja is:
 //   {"bonus_added": false, "date": "2026-08-21", "event": 1, "points": "p"}
 //
-// A "points" mezo a nap HALADASAT koveti, nem azt, hogy hatra van-e meg
-// valami: ures, amig a napon nem jatszottak; "l", amig a meccsek mennek;
-// "p" (provisional), amikor a napot LEZARTAK. A "provisional" itt tehat a
-// napi zaras UTANI allapot - a fordulo vegi vegleges megerositesig.
-// Bizonyitek az ures ertek: 2026-08-24-en meg nem jatszottak, es a nap ""-t
-// mutat, nem "p"-t. (A bonus_added ehhez nem hasznalhato: minden lezart
-// napon is hamis maradt.)
+// A Draft frontendjenek forrasabol kiolvasva (2026-08-24) a ket oszlop:
+//   Match Points <- points:  "" = ures, l = Live, p = Provisional, r = Confirmed
+//   Bonus Points <- bonus_added:  igaz eseten "Added"
+//
+// FONTOS: a "p" (Provisional) NEM a veglegesites jele, hanem az elotte levo
+// allapot. 2026/27-tol a fordulo "lockdown"-ja az utolso meccs UTANI nap
+// 09:00 UK-kor van (korabban egy oraval a lefujas utan), hogy az Opta
+// utolagos felulvizsgalata meg beleszamithasson a bonuszba. Napi zaras
+// tehat NINCS - ezert all a jelolesen az, hogy a FORDULO vegeig valtozhat.
 const EVENT_STATUS = 'https://fantasy.premierleague.com/api/event-status/';
 // A napi pontzaras allapota. A Draft API nem adja (event-status ott 404), a
 // KLASSZIKUS FPL viszont igen - ugyanarrol a bajnoksagrol van szo, a bonuszt
@@ -421,12 +423,11 @@ async function napiZarasFrissit(){
   if (gw !== LIVEGW) return;                 // kozben fordulot valtottunk
   if (!j || !Array.isArray(j.status)) return;   // marad az elozo (vagy null)
   const uj = {};
-  // Lezart a nap, ha a points mar nem ures es nem "l". Igy egy kesobbi, meg
-  // nem latott ertek (pl. a fordulo vegi megerosites jelzese) is lezartnak
-  // szamit - inkabb ismeretlen ertekre ne jelezzunk, mint hogy oroken
-  // kint maradjon a jeloles.
+  // Vegleges a nap, ha az FPL BARMELYIK jelzoje kimondja: a pont "Confirmed"
+  // (r), vagy a bonusz "Added". Mindketto pozitiv allitas a veglegessegrol -
+  // a "p" (Provisional) viszont nem az, az meg a kozbenso allapot.
   j.status.forEach(n => {
-    if (n && n.date) uj[n.date] = { lezart: !!n.points && n.points !== 'l' };
+    if (n && n.date) uj[n.date] = { lezart: n.points === 'r' || !!n.bonus_added };
   });
   LIVENAP = uj;
 }
@@ -522,11 +523,10 @@ function nincsPontUzenet(e, gw, perc){
 // rogzul, de hivatalossa csak a NAPI PONTZARASKOR valik. Harom allapot,
 // ebbol kettot jelolunk - a hivatalos a jeloletlen alap.
 //
-// A ketto kozotti hatart a NAP allapota mondja meg (event-status "points"),
-// nem a meccse: az FPL naponta zar, egyszerre az aznapi osszes meccsre.
-// A meccs sajat finished mezoje erre NEM jo - meresre (2026-08-23, negy
-// lekeres 21:04 es 22:06 UTC kozott) a pentek esti meccs is finished=false
-// maradt, pedig a napja mar reg lezarult.
+// A veglegesseget a fordulo zarasa adja, nem a meccs vege es nem a nap vege:
+// 2026/27-tol a lockdown a fordulo utolso meccse UTANI nap 09:00 UK-kor van.
+// Addig az Opta felulvizsgalata meg modosithatja a bonuszt, tehat a lefujt
+// meccs pontja is valtozhat meg - ezert szol a jeloles a FORDULO vegeig.
 //
 // Ha a napi adat nem jon meg, a meccs finished mezojere esunk vissza:
 // pontatlanabb (tovabb hagyja kint a jelolest), de nem allit valotlant.
@@ -542,7 +542,7 @@ function bonuszAllapot(gw, meccsId){
   const nap = LIVENAP && m.nap ? LIVENAP[m.nap] : null;
   const hivatalos = nap ? nap.lezart : m.hivatalos;
   return hivatalos ? null
-    : { jelzes: 'ideiglenes', megjegyzes: 'lefújva — a nap zárásáig még változhat' };
+    : { jelzes: 'ideiglenes', megjegyzes: 'lefújva — a forduló végéig még változhat' };
 }
 async function bontasHTML(e, gw){
   const el = await gwElems(gw);

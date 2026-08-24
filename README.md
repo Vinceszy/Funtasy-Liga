@@ -217,6 +217,7 @@ teljes képernyős, ragadós × gombbal.
 | `results.json` | H2H eredmények archívuma: `{updated, provisional:[...], schedule:{"1":[[hazai,vendég,hp,vp],...]}}`. Az oldal ebből tölt, felülírva a beégetett menetrendet. A `provisional` a még le nem zárult fordulók listája. |
 | `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”), `start`-ot (az adott fordulós meccsének kezdése), `vege: true`-t (a meccse már lement, akkor is, ha a pontok még nincsenek feldolgozva) és — ha a klubnak nincs meccse a fordulóban — `nogame: true`-t is tartalmaz. A régebbi, e mezők nélküli rekordokat az oldal tolerálja, de a gyűjtő nem hagyja őket úgy: az olyan fordulót, amelynek a rekordjaiban nincs `played`, egyszer újra lekéri a meccslistával együtt, és pótolja a hiányzó mezőket. |
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
+| `naplo/fpl-figyelo.py` | **Ideiglenes megfigyelés:** negyedóránként naplózza az FPL forduló-állapotát, csak változáskor ír sort (`naplo/fpl-allapot.txt`). Azt nézzük vele, tényleg csak a forduló zárásakor véglegesedik-e a bónusz. Ha megvan a válasz, törölhető. |
 | `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. |
 | `valtozasok/index.html` | A változásnapló oldala („Mi újult meg?"). |
 | `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
@@ -596,8 +597,8 @@ tehát az oldalunk kiírja, miközben még változhat. Három állapot van, a me
 | állapot | miből látszik | mit jelent |
 |---|---|---|
 | a meccs alatt még változik | a meccs `started`, de még nem `finished_provisional` | percről percre változhat |
-| lefújva — a nap zárásáig még változhat | a meccs `finished_provisional`, de a **napja** még nincs lezárva | rögzült, de a napzárásig még módosulhat |
-| fix | a **nap** le van zárva | innentől nem változik |
+| lefújva — a forduló végéig még változhat | a meccs `finished_provisional`, de a forduló még nincs lezárva | rögzült, de az Opta felülvizsgálata még módosíthatja |
+| végleges | a forduló le van zárva (`points: "r"` vagy `bonus_added`) | innentől nem változik |
 
 A pont-bontásban a bónusz sora **színt és rövid szöveget** kap az első két állapotban; a
 harmadik szándékosan **jelöletlen**. A szezon nagy részében minden bónusz végleges, így a
@@ -613,33 +614,46 @@ GET https://fantasy.premierleague.com/api/event-status/
 {"status":[{"bonus_added":false,"date":"2026-08-21","event":1,"points":"p"}, ...]}
 ```
 
-**A `points` mező a nap haladását követi, nem azt, hogy hátra van-e még valami:**
+**A mezők jelentését a Draft frontendjének forrásából olvastuk ki** (2026-08-24), tehát
+nem tippelés. Ez rajzolja azt a naponkénti táblázatot, amit a Draft „Current team" lapja
+mutat:
 
-| érték | mit jelent |
-|---|---|
-| `""` | a napon még nem játszottak |
-| `"l"` | mennek a meccsek |
-| `"p"` | a napot **lezárták** |
+```js
+o7 = { "": ``, l: `Live`, p: `Provisional`, r: `Confirmed` }
+<td>{ points === 'r' ? <Kiemelt>Confirmed</Kiemelt> : (o7[points] || <>&nbsp;</>) }</td>
+<td>{ bonus_added && <span>Added</span> }</td>
+```
 
-A „provisional" itt tehát a napi zárás **utáni** állapot — a forduló végi végleges
-megerősítésig. Ez elsőre félrevezető: a szó azt sugallja, hogy még hátra van a zárás.
-A bizonyíték az üres érték: 2026-08-24-en még nem játszottak, és a nap `""`-t mutat, nem
-`"p"`-t — ha a `"p"` azt jelentené, „még nincs lezárva", a le sem játszott nap is azt
-mutatná. Ugyanezt írja ki a Draft saját felülete is naponként („Day / Match Points /
-Bonus Points" táblázat).
+| oszlop | mező | értékek |
+|---|---|---|
+| Match Points | `points` | `""` (üres) → `l` **Live** → `p` **Provisional** → `r` **Confirmed** |
+| Bonus Points | `bonus_added` | igaz esetén **„Added"** |
 
-A kódban ezért **nem** a `"p"`-re illesztünk, hanem arra, hogy az érték már nem üres és
-nem `"l"` — így egy később bevezetett érték (pl. a forduló végi megerősítésé) is lezártnak
-számít. Inkább ismeretlen értékre ne jelezzünk, mint hogy örökre kint maradjon a jelölés.
+**A `"p"` (Provisional) NEM a véglegesítés jele, hanem az előtte lévő állapot.** Ez a
+legkönnyebben félreolvasható pont az egészben — magyarul a „provisional" szó azt sugallja,
+hogy már lezárult valami.
 
-**Két mező, ami erre NEM jó**, hogy ne kelljen újra megjárni:
+**2026/27-től nincs napi zárás.** A forduló „lockdown"-ja — amikor a pontok véglegessé
+válnak — az utolsó meccs **utáni nap 09:00 UK**-kor van; korábban ez a lefújás után egy
+órával volt. A haladék azért kell, hogy az Opta utólagos felülvizsgálata még
+beleszámíthasson a bónuszba és a védekező pontokba. Ezért szól a jelölés a **forduló**
+végéig, nem a napéig.
 
-- A meccs `finished` mezője. Mérésre (2026-08-23, négy lekérés 21:04 és 22:06 UTC között)
-  mind a kilenc lejátszott meccs `finished_provisional`, de egyik sem `finished` — a
-  péntek esti sem, két nappal később, jóval a napja lezárása után. Ez csak **tartalék**:
-  ha a napi adat nem jön meg, erre esünk vissza (pontatlanabb, tovább hagyja kint a
-  jelölést, de nem állít valótlant).
-- A `bonus_added`. Mind a négy mérésben hamis maradt, a már lezárt napokon is.
+Ezt megerősíti a mérés is: 2026-08-23 este, négy lekérésben 21:04 és 22:06 UTC között
+mind a kilenc lejátszott meccs `finished_provisional` volt, egyik sem `finished`, minden
+nap `points: "p"`, és sehol nem volt `bonus_added` — pedig a pénteki meccs két nappal
+korábban lement. A GW1 zárása kedden 09:00 UK-kor lesz.
+
+A kód szerint véglegesnek az számít, ha az FPL **bármelyik** jelzője kimondja: `points`
+`"r"`, vagy `bonus_added`. Mindkettő pozitív állítás a véglegességről. Tartalékként a
+meccs `finished` mezője marad, ha a napi adat nem jön meg — pontatlanabb (tovább hagyja
+kint a jelölést), de nem állít valótlant.
+
+**Hogy tényleg így megy-e, azt figyeljük:** a `naplo/fpl-figyelo.py` negyedóránként
+lekéri az állapotot, és **csak változáskor** ír egy sort a `naplo/fpl-allapot.txt`-be.
+Ebből utólag látszik, mikor billen át melyik mező — és az is, ha mégis vannak napi
+zárások. Ideiglenes megfigyelés; ha megvan a válasz, a `naplo/` és a hozzá tartozó
+workflow törölhető.
 
 **A napi lekérést nem várjuk meg.** Másodlagos jelzés, csak a bónusz sorának jelöléséhez
 kell, amit a felhasználó kattintásra lát — ha a pontfrissítés megvárná, egy lassú vagy
@@ -750,6 +764,10 @@ Felhasználói napló, nem technikai: **csak az kerül bele, amit a használó l
 - **A liga címke, nem kategória.** Egy bejegyzéshez több liga is tartozhat, és
   **bármelyikre szűrve előjön**. Ez azért fontos, mert nem mindenki játszik minden
   ligában — és minél több liga lesz, annál kevésbé.
+- **A ligák külön kapcsolhatók, több is egyszerre.** Aki két ligában játszik, mindkettőt
+  kijelölheti, és akkor mindkettő bejegyzéseit látja (a kijelöltek között VAGY van). A
+  „Mind" gomb nem egy választás a többi mellett, hanem a kijelölések törlése. A típus
+  ezzel szemben egy választás, mert a két típus kizárja egymást.
 - **Egy nap, egy téma, egy bejegyzés.** Ha egy megoldás több nekifutásból állt össze, csak
   a végső állapot kerül be; a közbenső próbálkozások a használót nem érdeklik.
 - **Dátumozva**, naponként csoportosítva, a legfrissebb elöl. A napló 2026-08-23 estétől

@@ -71,26 +71,32 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 
 /* ===== Valtozasnaplo =====
    Felhasznaloi naplo, ket szurosorral: tipus es liga. A liga CIMKE, tehat
-   egy bejegyzes tobbhoz is tartozhat, es barmelyikre szurve elojon. */
-.vlt-szurok{display:flex;flex-wrap:wrap;gap:12px 28px;padding:0 0 16px;
-  border-bottom:1px solid var(--line);margin-bottom:6px}
+   egy bejegyzes tobbhoz is tartozhat, es barmelyikre szurve elojon.
+   A .panel-nek nincs sajat belso margoja (a gyerekei adjak), ezert itt
+   minden sav maga gondoskodik rola - kulonben a szoveg a keretnek er. */
+.vlt-szurok{display:flex;flex-wrap:wrap;gap:14px 32px;padding:16px 20px;
+  border-bottom:1px solid var(--line)}
 .vlt-szurocsoport{display:flex;align-items:center;gap:10px}
 /* A ket szurosor kulon-kulon "Mind" gombbal indul; felirat nelkul nem
    derulne ki, melyik mihez tartozik. */
 .vlt-szurocim{font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--dim)}
+  color:var(--dim);white-space:nowrap}
 .vlt-szurosor{display:flex;flex-wrap:wrap;gap:6px}
 .vlt-chip{background:var(--panel2);border:1px solid var(--line);color:var(--dim);
   padding:5px 13px;border-radius:999px;cursor:pointer;font:600 12px Inter}
 .vlt-chip:hover{color:var(--ink);border-color:var(--dim)}
 .vlt-chip.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
-.vlt-nap{padding:16px 0 4px;border-bottom:1px solid var(--line)}
-.vlt-nap:last-child{border-bottom:0}
-.vlt-datum{font:700 11px 'JetBrains Mono';letter-spacing:1px;text-transform:uppercase;
-  color:var(--dim);margin-bottom:12px}
-.vlt-tetel{padding:0 0 18px}
-.vlt-tetel:last-child{padding-bottom:6px}
-.vlt-fejsor{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}
+/* A ligak kulon-kulon kapcsolhatok (tobb is lehet egyszerre), a tipus viszont
+   egy valasztas. A pipa teszi lathatova, hogy itt tobbet is be lehet jelolni;
+   a "Mind" gomb (az elso) nem kap pipat, mert az a kijelolesek torlese. */
+#ligaSzuro .vlt-chip.on:not(:first-child)::before{content:'✓ ';font-weight:700}
+.vlt-ures{color:var(--dim);font-size:13px;padding:22px 20px;line-height:1.5}
+.vlt-datum{font:700 10px 'JetBrains Mono';letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--dim);background:var(--panel2);padding:9px 20px;
+  border-bottom:1px solid var(--line)}
+.vlt-tetel{padding:18px 20px;border-bottom:1px solid var(--line)}
+.vlt-nap:last-child .vlt-tetel:last-child{border-bottom:0}
+.vlt-fejsor{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
 .vlt-tipus{font:700 9px Inter;letter-spacing:1.5px;text-transform:uppercase;
   padding:3px 9px;border-radius:999px;border:1px solid currentColor}
 .vlt-tipus.t-funkcio{color:var(--win)}
@@ -98,8 +104,8 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .vlt-liga{font:700 9px 'JetBrains Mono';letter-spacing:1px;text-transform:uppercase;
   color:var(--dim);background:var(--panel2);border:1px solid var(--line);
   padding:3px 8px;border-radius:999px}
-.vlt-tetel h3{font:700 15px Inter;margin:0 0 4px}
-.vlt-tetel p{font-size:13px;color:var(--dim);line-height:1.55;margin:0;max-width:70ch}
+.vlt-tetel h3{font:700 15px Inter;margin:0 0 5px;line-height:1.35}
+.vlt-tetel p{font-size:13px;color:var(--dim);line-height:1.6;margin:0;max-width:68ch}
 /* A kezdolapi sor a naplohoz. Szandekosan NEM liga-kartya: a ligak a fo
    dolog a lapon, ez csak egy melleklet - ugyanakkora kartyakent elvinne a
    figyelmet. */
@@ -112,13 +118,13 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .ujdonsagsor .leiras{font-size:12.5px;flex:1}
 .ujdonsagsor .tovabb{font:700 14px Inter}
 @media(max-width:520px){
+  .vlt-szurok{gap:12px 0;flex-direction:column;padding:14px 14px}
+  .vlt-szurocsoport{align-items:flex-start;flex-direction:column;gap:6px}
+  .vlt-datum{padding:8px 14px}
+  .vlt-tetel{padding:15px 14px}
+  .vlt-tetel p{font-size:12.5px}
   .ujdonsagsor{flex-direction:column;gap:4px}
   .ujdonsagsor .tovabb{display:none}
-}
-@media(max-width:520px){
-  .vlt-szurok{gap:10px 0;flex-direction:column}
-  .vlt-szurocsoport{align-items:flex-start;flex-direction:column;gap:6px}
-  .vlt-tetel p{font-size:12.5px}
 }
 .clickable{cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .clickable:hover{color:var(--amber)}
