@@ -217,6 +217,7 @@ teljes képernyős, ragadós × gombbal.
 | `results.json` | H2H eredmények archívuma: `{updated, provisional:[...], schedule:{"1":[[hazai,vendég,hp,vp],...]}}`. Az oldal ebből tölt, felülírva a beégetett menetrendet. A `provisional` a még le nem zárult fordulók listája. |
 | `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”), `start`-ot (az adott fordulós meccsének kezdése), `vege: true`-t (a meccse már lement, akkor is, ha a pontok még nincsenek feldolgozva) és — ha a klubnak nincs meccse a fordulóban — `nogame: true`-t is tartalmaz. A régebbi, e mezők nélküli rekordokat az oldal tolerálja, de a gyűjtő nem hagyja őket úgy: az olyan fordulót, amelynek a rekordjaiban nincs `played`, egyszer újra lekéri a meccslistával együtt, és pótolja a hiányzó mezőket. |
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
+| `naplo/fpl-csere-meres.py` | **Ideiglenes megfigyelés:** a forduló zárásakor átírja-e az FPL a pick `position` mezőjét (automatikus csere), mikor teszi, és melyik mező jelzi a végleges zárást. Ebből dől el, meddig kell a gyűjtőnek újra lekérnie egy lement fordulót. A napló (`naplo/fpl-cserek.txt`) **nem tartalmaz `entry_id`-t és valódi nevet** — a repó publikus. Ha megvan a válasz, törölhető. |
 | `naplo/fpl-figyelo.py` | **Ideiglenes megfigyelés:** negyedóránként naplózza az FPL forduló-állapotát, csak változáskor ír sort (`naplo/fpl-allapot.txt`). Azt nézzük vele, tényleg csak a forduló zárásakor véglegesedik-e a bónusz. Ha megvan a válasz, törölhető. |
 | `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. |
 | `valtozasok/index.html` | A változásnapló oldala („Mi újult meg?"). |
@@ -726,6 +727,37 @@ valós 14.8 helyett, 19:43:00-kor 40' a valós 43.0 helyett.
 Fejléc csak ott jelenik meg, ahol van is perc-cella (élő forduló, elkezdődött meccs) —
 lezárt fordulóban nincs mit címkézni. A címke nem lehet szélesebb a saját oszlopánál,
 különben elcsúszik a számoktól; a teszt középpontra méri.
+
+### A pad sorrendje (PL) — és ami még nyitott
+
+**A pad sorrendje az FPL csere-sorrendje**, nem díszítés: a forduló végén az FPL az első
+olyan padost állítja be a nem játszó kezdő helyére, aki formációlag befér. Ezért a padot
+**úgy hagyjuk, ahogy jött** — a kezdőket viszont továbbra is poszt szerint rendezzük, ott
+a sorrendnek nincs jelentése. (Korábban a padot is poszt szerint rendeztük, és ezzel pont
+azt az információt dobtuk el, amiért nézni kell. A `padsorrend.teszt.js` rögzíti.)
+
+Az adat végig jó volt: a gyűjtő a `picks` API-sorrendjében írja ki a keretet, tehát a
+`draft_history.json` a 12–15. helyeket az FPL sorrendjében őrzi. A `position` mezőt maga
+nem tárolja, csak a `b` (pad) jelzőt — a sorrendet a **lista sorrendje** hordozza.
+
+**Nyitott kérdés: mi történik a fordulózáráskor.** Az FPL ilyenkor végrehajtja az
+automatikus cseréket. Amit biztosan tudunk:
+
+- **A tabella nem érintett.** A `draft.json` `standings` és `schedule` mezője az FPL saját
+  `league/{id}/details` végpontjáról jön, tehát a hivatalos eredményt mutatja, a cserékkel
+  együtt. Ezt nem mi számoljuk.
+- **A „Kezdők" összeg viszont a mi számításunk** a tárolt `b` jelzőből, és csak akkor
+  követi a cserét, ha a gyűjtő újra lekéri a fordulót.
+- **A gyűjtő ma csak az aktuális fordulót kéri le újra** (plusz azokat, amikből hiányzik
+  csapat). Amint a `current_event` továbblép, a lezárt forduló **befagy** — azzal a
+  keretbeosztással és pontokkal, ami épp akkor volt benne. Ha a csere vagy a bónusz
+  véglegesítése a váltás után történik, az a forduló nálunk örökre a váltás előtti
+  állapotot mutatja, a „Szezon játékosai" fülön is.
+
+Amit **nem** tudunk: a csere után átírja-e az FPL a pick `position` mezőjét (akkor a
+gyűjtő magától rendbe jön, ha időben lekéri), vagy külön mezőben adja (akkor a `b`
+jelzőnk marad hibás). Ezt méri a `naplo/fpl-csere-meres.py`; amíg nincs válasz, az oldal
+**nem állít semmit** a cserékről.
 
 ### Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva
 

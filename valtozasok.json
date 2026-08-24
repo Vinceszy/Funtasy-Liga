@@ -2,6 +2,15 @@
  "bejegyzesek": [
   {
    "datum": "2026-08-24",
+   "tipus": "bugfix",
+   "ligak": [
+    "pl"
+   ],
+   "cim": "A pad az FPL sorrendjében áll",
+   "leiras": "A pad sorrendje az FPL-ben csere-sorrend: a forduló végén az első olyan padost állítja be a nem játszó kezdő helyére, aki formációlag befér. Az oldal eddig poszt szerint rendezte a padot is, így ez a sorrend nem látszott. A kezdők továbbra is poszt szerint állnak."
+  },
+  {
+   "datum": "2026-08-24",
    "tipus": "funkcio",
    "ligak": [
     "pl"
