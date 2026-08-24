@@ -34,5 +34,13 @@ jobs:
             echo "Nincs változás."
           else
             git commit -m "Adatfrissítés ($(date -u +'%Y-%m-%d %H:%M') UTC)"
-            git push origin HEAD:${GITHUB_REF_NAME}
+            # A push kozben mas workflow is irhat a main-re (naplok, meresek) -
+            # rebase-elve ujraprobalkozunk, ahogy a tobbi workflow is teszi.
+            # E nelkul a futas minden eredmenye elveszett mar egyszer.
+            for i in 1 2 3; do
+              git push origin HEAD:${GITHUB_REF_NAME} && exit 0
+              git pull --rebase origin ${GITHUB_REF_NAME}
+              sleep $((i * 5))
+            done
+            exit 1
           fi
