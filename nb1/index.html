@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=31">
+<link rel="stylesheet" href="../funtasy.css?v=32">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -72,7 +72,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=31"></script>
+<script src="../funtasy.js?v=32"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -276,7 +276,7 @@ function pontCellaHTML(p, round){
 // A `own` a szakvezeto neve - a pont-bontas ebbol oldja fel a jatekost, ha a
 // rekordban meg nincs azonosito.
 function plrSorHTML(p, own, round){
-  const acc=round?` data-acc="1" data-own="${esc(own)}" data-nm="${esc(p.name)}" data-r="${round}"${p.id?` data-cp="${p.id}"`:''}${p.played===true?' data-pl="1"':(p.played===false?' data-pl="0"':'')}${p.start?` data-st="${esc(p.start)}"`:''}${p.nogame?' data-ng="1"':''}${p.vege?' data-vg="1"':''}${p.cap?' data-cap="1"':''}${p.sub?' data-sub="1"':''}`:'';
+  const acc=round?` data-acc="1" data-own="${esc(own)}" data-nm="${esc(p.name)}" data-r="${round}"${p.team?` data-tm="${esc(p.team)}"`:''}${p.id?` data-cp="${p.id}"`:''}${p.played===true?' data-pl="1"':(p.played===false?' data-pl="0"':'')}${p.start?` data-st="${esc(p.start)}"`:''}${p.nogame?' data-ng="1"':''}${p.vege?' data-vg="1"':''}${p.cap?' data-cap="1"':''}${p.sub?' data-sub="1"':''}`:'';
   const pont=pontCellaHTML(p, round);
   return `<div class="plr"${acc}>
       <span class="ppos">${esc(posLabel(p.pos))}</span>
@@ -459,6 +459,21 @@ async function eloKeret(name, r, jatek){
 // ideiglenesnek jelolt fordulok egyuttese adja. Ez donti el, hogy a meccs
 // allapotarol szabad-e barmit allitani a tarolt jelzokbol.
 const eloFordulo=r=>!!LIVE[r]||(window.PROVISIONAL||[]).map(Number).includes(+r);
+let MECCSEK=null;   // fordulonkenti meccsek a meccsek.json-bol: {"5":[{h,v,hp,vp,vege,start}]}
+// A jatekos klubjanak meccse(i) a bontas folott. Az eredmenyt a gyujto CSAK
+// lezart meccsrol tarolja el, tehat reszallas itt nem jelenhet meg; a jobb
+// oldali cimke a mar meglevo meccsAllapot-bol jon (idokorlatokkal vedve).
+function meccsSorokHTML(klub, r){
+  const lista=(MECCSEK||{})[r]||[];
+  return lista.filter(m=>m.h===klub||m.v===klub).map(m=>{
+    const allapot=m.vege?'utana':meccsAllapot(m.start,false);
+    return FunTasy.bontasMeccsSor({hazai:m.h, vendeg:m.v, hp:m.hp, vp:m.vp,
+      jobb: allapot==='utana' ? 'vége'
+          : allapot==='fut' ? 'a meccs zajlik'
+          : allapot==='elotte' && !lejartHelyorzo(m.start) ? 'még nem kezdődött'
+          : ''});
+  }).join('');
+}
 const BONTAS=new Map(), KERET_CACHE=new Map();
 async function keretNevrol(own,r,nm){
   const k=own+'|'+r;
@@ -575,6 +590,9 @@ async function bontasHTML(ds){
     if(rec){ cp=cp||rec.id; start=start||rec.start; if(played===undefined) played=rec.played; }
   }
   const elo=eloFordulo(r);
+  // a jatekos meccse a bontas folott (ha a meccsek.json mar betoltodott);
+  // elmaradt meccsu (nogame) jatekosnal ertelemszeruen nincs meccs-sor
+  const meccssor=nogame?'':meccsSorokHTML(ds.tm, r);
   if(nogame) return FunTasy.accTable([], nincsPontUzenet(played,start,null,true,false,elo));
   if(!cp) return null;
   // Elo forduloban a bontas percenkent valtozhat, ezert ott 60 masodperc utan
@@ -594,9 +612,19 @@ async function bontasHTML(ds){
     }
   }
   const nyers=BONTAS.get(k).sorok, sorok=nyers.filter(s=>s.points);
+  // A jatszott perc eddig ki volt szurve (0 pontot er), pedig megjon - aki
+  // 60 percnel kevesebbet jatszott, annak a percet SOSEM lehetett latni.
+  // Elso sorkent mutatjuk, pont nelkul. DE csak lement meccsnel: az
+  // allapot-kaput (elotte/fut -> szoveges uzenet) nem kerulheti meg, mert
+  // futo meccs alatt egy beragadt bontas-sor hamis vegallapotnak latszana.
+  // 0 percnel is az uzenet marad ("nem lepett palyara") - az tobbet mond.
+  const lement = ds.vg==='1' || meccsAllapot(start, ds.vg==='1')==='utana';
+  const perc=nyers.find(x=>x.name==='Játszott perc');
+  if(lement && perc && perc.value)
+    sorok.unshift({name:'Játszott perc', value:perc.value, points:''});
   if(sorok.length && ds.cap==='1') sorok.push({name:'Kapitány — a heti pontban már duplázva',value:'',points:'×2'});
   if(sorok.length && ds.sub==='1') sorok.push({name:'Pad — a heti pontban már felezve',value:'',points:'×0.5'});
-  return FunTasy.accTable(sorok, nincsPontUzenet(played,start,nyers,false,ds.vg==='1',elo));
+  return meccssor + FunTasy.accTable(sorok, nincsPontUzenet(played,start,nyers,false,ds.vg==='1',elo));
 }
 // ---------- Különbségek nézet (salary cap liga) ----------
 // Salary cap ligaban ugyanaz a jatekos MINDKET keretben szerepelhet, es
@@ -840,6 +868,11 @@ async function boot(){
       }
     }
   }catch(e){}
+  // A fordulonkenti meccseredmenyek (meccsek.json, a gyujto irja) - a
+  // pont-bontas folotti sorhoz kellenek. Nem varjuk meg: mire a nezo egy
+  // jatekosra kattint, betoltodik; ha nem, a bontas meccs-sor nelkul megy.
+  fetch('../meccsek.json?t='+Date.now()).then(r=>r.ok?r.json():null)
+    .then(j=>{ if(j&&j.rounds) MECCSEK=j.rounds; }).catch(()=>{});
   T.rPast=lastPlayedRound(); T.rNext=nextRound();
   renderTable(); renderMatches('past'); renderMatches('next'); renderMatrix();
   refresh();

@@ -25,7 +25,10 @@ function keret(opts){
   const esetek = [
     { nev: 'meccs zajlik (is_played MAR igaz)', status: 'scheduled', ora: 1, vart: /A meccs zajlik/ },
     { nev: 'meccs közben hazug "completed"',    status: 'completed', ora: 0.5, vart: /A meccs zajlik/ },
-    { nev: 'meccs véget ért, pont nélkül',      status: 'completed', ora: 2.2, vart: /Lejátszotta a meccset/ },
+    // Lement meccsnel a "lejatszotta pont nelkul" uzenet helyett a Jatszott
+    // perc sora all (tobbet mond) - de ez CSAK a lement meccs kivaltsaga,
+    // a fenti ket eset tovabbra is szoveges uzenetet var (allapot-kapu).
+    { nev: 'meccs véget ért, pont nélkül',      status: 'completed', ora: 2.2, vart: /Játszott perc\s*90/ },
   ];
   for (const eset of esetek){
     const p = await br.newPage();

@@ -61,6 +61,10 @@ json.dump({"updated": None, "provisional": [], "schedule": menetrend}, open("res
 # a keret-elozmeny mar teljes minden fordulora, hogy csak a `valtozott` ag hozza be a 2-est
 tortenet = {str(r): {n: [] for n in NEVEK} for r in range(1, AKTUALIS + 1)}
 json.dump({"updated": None, "rounds": tortenet}, open("squad_history.json", "w"))
+# kesz meccslista, hogy a meccsek.json-potlas ne szoljon bele (gyujto_meccsek.py tesztje)
+json.dump({"updated": None, "rounds": {str(r): [
+    {"id": 900 + r, "h": "XYZ", "v": "ZZZ", "start": "2026-08-01T17:30:00+02:00",
+     "hp": 1, "vp": 0, "vege": True}] for r in range(1, 9)}}, open("meccsek.json", "w"))
 
 print("--- gyujto ---")
 c.main()

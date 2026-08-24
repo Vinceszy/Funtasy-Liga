@@ -114,7 +114,12 @@ const ell = (cimke, kapott, vart) =>
   jo(await page.locator('.plr.open .accarr').count() === 1, 'nyitott sor jelölve');
   ell('zajlik           ', await kattints('Eppen Fut'), 'A meccs zajlik');
   ell('nem lepett palyara', await kattints('Nem Lepett Palyara'), 'Nem lépett pályára');
-  ell('lejatszotta, 0    ', await kattints('Lejatszotta Nullat'), 'Lejátszotta a meccset');
+  // Aki lejatszotta a meccset pontot ero esemeny nelkul, annal a "Jatszott
+  // perc" sor all (tobbet mond, mint a regi szoveges uzenet) - de CSAK
+  // lement meccsnel: futo meccsen az allapot-kapu uzenete jon (lasd lent).
+  const lej = await kattints('Lejatszotta Nullat');
+  jo(/Játszott perc\t90/.test(lej) && !/Lejátszotta a meccset/.test(lej),
+     'lejatszotta, 0 -> a Játszott perc sor áll, nem üzenet: ' + JSON.stringify(lej.slice(0, 60)));
   ell('nincs meccse      ', await kattints('Nincs Meccse'), 'Ebben a fordulóban nem játszik');
   // A bejelentett hiba regresszio-tesztje: is_played=true, de a meccs meg fut.
   // Meccs kozben a 0 helyen kotojel all (az MLSZ meg nem ad pontot), de aki
@@ -136,8 +141,10 @@ const ell = (cimke, kapott, vart) =>
     .map(n => (n.querySelector('.pts')||{}).textContent));
   jo(kj.length === 1 && kj[0] === '–', 'nincs meccse -> kötőjel: ' + JSON.stringify(kj));
   const t = await kattints('Pontot Szerzett');
-  jo(/Győzelem/.test(t) && /Percek a pályán/.test(t) && !/Játszott perc\b/.test(t),
+  jo(/Győzelem/.test(t) && /Percek a pályán/.test(t),
      'pontot érő bontás -> ' + JSON.stringify(t.replace(/\n/g, ' | ').slice(0, 80)));
+  jo(/ESEMÉNY\tÉRTÉK\tPONT\nJátszott perc\t90/.test(t),
+     'a Játszott perc az első sor a pontot érő bontásban is');
 
   // ---------------- PL ----------------
   const pl = require(REPO + '/draft_players.json');

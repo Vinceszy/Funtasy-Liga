@@ -219,6 +219,7 @@ teljes képernyős, ragadós × gombbal.
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
 | `naplo/fpl-csere-meres.py` | **Ideiglenes megfigyelés:** a forduló zárásakor átírja-e az FPL a pick `position` mezőjét (automatikus csere), mikor teszi, és melyik mező jelzi a végleges zárást. Ebből dől el, meddig kell a gyűjtőnek újra lekérnie egy lement fordulót. A napló (`naplo/fpl-cserek.txt`) **nem tartalmaz `entry_id`-t és valódi nevet** — a repó publikus. Ha megvan a válasz, törölhető. |
 | `naplo/fpl-figyelo.py` | **Ideiglenes megfigyelés:** negyedóránként naplózza az FPL forduló-állapotát, csak változáskor ír sort (`naplo/fpl-allapot.txt`). Azt nézzük vele, tényleg csak a forduló zárásakor véglegesedik-e a bónusz. Ha megvan a válasz, törölhető. |
+| `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset soha többé. |
 | `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. |
 | `valtozasok/index.html` | A változásnapló oldala („Mi újult meg?"). |
 | `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
@@ -728,7 +729,7 @@ Fejléc csak ott jelenik meg, ahol van is perc-cella (élő forduló, elkezdőd�
 lezárt fordulóban nincs mit címkézni. A címke nem lehet szélesebb a saját oszlopánál,
 különben elcsúszik a számoktól; a teszt középpontra méri.
 
-### A meccs állása a pont-bontás fölött (PL)
+### A meccs állása a pont-bontás fölött (PL és NB1)
 
 A játékosra kattintva a pontok fölött egy sor: `ARS 2–1 BRE · 70. perc`. Lefújás után
 `vége`, el nem kezdődött meccsnél nincs állás, csak a két klub — **0–0-t nem írunk ki**,
@@ -743,6 +744,15 @@ Az állás a **fixtures** válasz `team_h_score` / `team_a_score` mezőjéből j
 
 A fixtures válasz értelmezése **egy helyen** él (`meccsRekord`), hogy az élő és a lezárt
 forduló ne csússzon el egymástól.
+
+**Az NB1-en ugyanez a sor** a `meccsek.json`-ból jön (a gyűjtő tölti, lásd a fájl-táblázatot),
+a jobb oldali címke pedig a már meglévő `meccsAllapot`-ból (időkorlátokkal védve) — a
+kirajzolás közös (`FunTasy.bontasMeccsSor`), az adat-előállítás ligánkénti adapter.
+Az NB1 részletezője emellett **első sorként a játszott percet** is mutatja: a "Játszott
+perc" sor eddig ki volt szűrve (0 pontot ér), pedig megjön — aki 60 percnél kevesebbet
+játszott, annak a perce sosem látszott. A sor **csak lement meccsnél** kerül be: az
+állapot-kaput (előtte/fut → szöveges üzenet) nem kerülheti meg. 0 percnél az üzenet
+marad ("Nem lépett pályára"), mert az többet mond.
 
 **Miért a lenyílóban, és nem oszlopban.** Kimérve (360px): egy állás-oszlop a névnek
 maradó helyet 112 → 70px-re vinné, tehát a nevek látható része csonkulna; a név alatti

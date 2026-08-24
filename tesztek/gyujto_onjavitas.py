@@ -101,6 +101,10 @@ menetrend["4"][0][2] = 70.0                   # Katyul tarolt erteke elavult (70
 json.dump({"updated": None, "provisional": [], "schedule": menetrend},
           open("results.json", "w"))
 json.dump({"updated": None, "rounds": {}}, open("squad_history.json", "w"))
+# kesz meccslista, hogy a meccsek.json-potlas ne szoljon bele (gyujto_meccsek.py tesztje)
+json.dump({"updated": None, "rounds": {str(r): [
+    {"id": 900 + r, "h": "XYZ", "v": "ZZZ", "start": "2026-08-01T17:30:00+02:00",
+     "hp": 1, "vp": 0, "vege": True}] for r in range(1, 9)}}, open("meccsek.json", "w"))
 
 print("--- gyujto futtatasa ---")
 c.main()

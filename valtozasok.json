@@ -6,8 +6,18 @@
    "ligak": [
     "pl"
    ],
-   "cim": "A pontrészletező fölött ott a meccs állása",
-   "leiras": "A játékosra kattintva a pontok fölött megjelenik a meccse: a két klub, az állás és a meccsóra, lefújás után „vége”. Lezárt fordulóban a végeredmény áll ott. Kettős fordulóban mindkét meccs külön sort kap."
+   "cim": "Látszik, hány percet játszott a játékos",
+   "leiras": "A keretben és a meccs nézetében a pont mellett áll a játékos perce és az, hogy kezdőként lépett-e pályára; az élő fordulóban a meccsóra is — a kettő összevetéséből látszik, pályán van-e még. Kettős fordulóban mindkét meccs értéke szerepel, függőleges vonallal elválasztva."
+  },
+  {
+   "datum": "2026-08-24",
+   "tipus": "funkcio",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
+   "cim": "A pontrészletező fölött ott a játékos meccse",
+   "leiras": "A játékosra kattintva a pontok fölött a meccs áll: a két klub, az eredmény és az állapot — zajlik, vége, vagy még nem kezdődött; eredmény csak lezárt meccsről jelenik meg. Az NB1-en a részletező első sora a játszott perc, ha a játékos pályára lépett — eddig ez csak 60 perc fölött látszott."
   },
   {
    "datum": "2026-08-24",
@@ -16,16 +26,7 @@
     "pl"
    ],
    "cim": "A pad az FPL sorrendjében áll",
-   "leiras": "A pad sorrendje az FPL-ben csere-sorrend: a forduló végén az első olyan padost állítja be a nem játszó kezdő helyére, aki formációlag befér. Az oldal eddig poszt szerint rendezte a padot is, így ez a sorrend nem látszott. A kezdők továbbra is poszt szerint állnak."
-  },
-  {
-   "datum": "2026-08-24",
-   "tipus": "funkcio",
-   "ligak": [
-    "pl"
-   ],
-   "cim": "Látszik, hány percet játszott a játékos",
-   "leiras": "A keretben és a meccs nézetében a pont mellett ott a játékos percei és az, hogy kezdőként lépett-e pályára. Az élő fordulóban a meccsóra is — a kettő összevetéséből látszik, pályán van-e még, anélkül hogy más oldalt kellene megnyitni; kettős fordulóban mindkét meccs értéke szerepel, függőleges vonallal elválasztva. Lezárt fordulóban a meccsóra elmarad, a percek és a kezdő jelzés megmarad."
+   "leiras": "A pad sorrendje az FPL-ben csere-sorrend: a forduló végén az első olyan pados áll be a nem játszó kezdő helyére, aki formációlag befér. Az oldal eddig poszt szerint rendezte a padot is, így ez a sorrend nem látszott. A kezdők továbbra is poszt szerint állnak."
   },
   {
    "datum": "2026-08-24",

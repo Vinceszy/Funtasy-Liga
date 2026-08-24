@@ -438,6 +438,20 @@
   /* ===== Lablec =====
      Minden oldal aljan ugyanaz a sor. Azert kozos, mert harom oldalra
      lemasolva a kovetkezo linknel mar biztosan elcsuszna valamelyik. */
+  /* A jatekos meccse a pont-bontas folott: "ARS 2-1 BRE" + jobbra egy
+     allapot ("70. perc" / "vege" / "meg nem kezdodott"). KOZOS a ligak
+     kozott - az adat (honnan jon az allas es mi a jobb oldali cimke)
+     ligankenti adapter dolga. 0-0-t sosem talalunk ki: ha nincs eredmeny
+     (hp == null), csak a ket klub nevet irjuk ki. */
+  function bontasMeccsSor(m) {
+    if (!m || !m.hazai || !m.vendeg) return '';
+    var allas = (m.hp == null || m.vp == null)
+      ? esc(m.hazai) + '\u2013' + esc(m.vendeg)
+      : esc(m.hazai) + ' <b>' + fmt(m.hp) + '\u2013' + fmt(m.vp) + '</b> ' + esc(m.vendeg);
+    return '<div class="bontasmeccs"><span>' + allas + '</span>' +
+           '<span class="ora">' + esc(m.jobb || '') + '</span></div>';
+  }
+
   function lablecHTML(gyoker) {
     gyoker = gyoker || '';
     return '<a href="' + gyoker + 'valtozasok/">Mi újult meg?</a>';
@@ -705,6 +719,7 @@
                      accToggle: accToggle, accTable: accTable,
                      LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
                      lablecHTML: lablecHTML, renderLablec: renderLablec,
+                     bontasMeccsSor: bontasMeccsSor,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
                      lassuJelzo: lassuJelzo, allasHTML: allasHTML,
                      nezetVerem: nezetVerem, lekero: lekero,

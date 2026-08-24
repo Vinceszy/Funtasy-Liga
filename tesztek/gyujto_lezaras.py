@@ -66,6 +66,13 @@ def keret(r, nev, status, nogame=False, games=True, meccs_fordulo=None):
 def keszit(prov, akt=AKT, tortenet=None):
     menetrend = {str(r): [[h, v, API[r][h], API[r][v]] for h, v in parok] for r in range(1, akt + 1)}
     json.dump({"updated": None, "provisional": prov, "schedule": menetrend}, open("results.json", "w"))
+    # Kesz meccslista minden fordulora, hogy a meccsek.json-potlas (kulon
+    # teszteli a gyujto_meccsek.py) ne kerjen meccslistat a regi fordulokra -
+    # e nelkul az itteni forgatokonyvek elofeltevesei valtoznanak meg.
+    json.dump({"updated": None, "rounds": {str(r): [
+        {"id": 900 + r, "h": "XYZ", "v": "ZZZ", "start": "2026-08-01T17:30:00+02:00",
+         "hp": 1, "vp": 0, "vege": True}] for r in range(1, akt + 1)}},
+        open("meccsek.json", "w"))
     rounds = {str(r): {n: [] for n in NEVEK} for r in range(1, akt + 1)}
     for r, keretek in (tortenet or {}).items():
         rounds[str(r)] = keretek

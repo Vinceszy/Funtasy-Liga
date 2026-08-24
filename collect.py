@@ -320,6 +320,39 @@ def beir_eredmeny(schedule, r, nev, ertek):
     return 0
 
 
+def meccs_kivonat(g):
+    """Egy meccs tarolando alakja a meccsek.json-hoz. EREDMENY CSAK LEZART
+    MECCSROL kerul bele: meccs kozben az MLSZ reszallast adhat, es a 3
+    orankent futo gyujto azt veglegeskent orokitene meg - ugyanaz a hiba
+    lenne, mint a 0-0 a results.json-ban."""
+    m = {"id": g.get("id"),
+         "h": ((g.get("home_team") or {}).get("short_name")
+               or (g.get("home_team") or {}).get("name") or "?"),
+         "v": ((g.get("away_team") or {}).get("short_name")
+               or (g.get("away_team") or {}).get("name") or "?"),
+         "start": g.get("start_at")}
+    if g.get("status") == "completed":
+        m["hp"], m["vp"] = g.get("home_score"), g.get("away_score")
+        m["vege"] = True
+    return m
+
+
+def meccsek_gyujtes(j, fordulo, tarolo):
+    """A keret-valaszban utazo meccseket teszi a tarolo[game_id] ala.
+    Ugyanazt a meccset tobb jatekos is hozza - az id szerinti kulcsolas
+    von ossze. A masik fordulobol visszaeso meccs (lasd meccs_forduloja)
+    nem kerul be. Csak akkor ad valamit, ha a games-t egyaltalan kertuk."""
+    for d in (j or {}).get("data") or []:
+        cr = (d.get("competition_player") or {}).get("current_round") or {}
+        for g in cr.get("games") or []:
+            if not isinstance(g, dict) or g.get("id") is None:
+                continue
+            mf = meccs_forduloja(g)
+            if mf is not None and mf != fordulo:
+                continue
+            tarolo[g["id"]] = meccs_kivonat(g)
+
+
 def kompakt_iras(path, obj):
     """A konyvjelzoevel azonos, kompakt JSON-formatum."""
     with open(path, "w", encoding="utf-8") as f:
@@ -341,6 +374,13 @@ def main():
         hist = {"updated": None, "rounds": {}}
     hist.setdefault("rounds", {})
     hist_elotte = json.dumps(hist.get("rounds"), ensure_ascii=False, sort_keys=True)
+    try:
+        with open("meccsek.json", encoding="utf-8") as f:
+            meccsek = json.load(f)
+    except Exception:
+        meccsek = {"updated": None, "rounds": {}}
+    meccsek.setdefault("rounds", {})
+    meccsek_elotte = json.dumps(meccsek["rounds"], ensure_ascii=False, sort_keys=True)
 
     # ---- 1. Azonositok es a friss hivatalos pontok ----
     ids, pontok = {}, {n: {} for n in MEMBERS}
@@ -432,6 +472,18 @@ def main():
         print("  regi formatumu keretek potlasa: %s. fordulo"
               % ", ".join(str(x) for x in sorted(migralando)))
     celok |= migralando
+    # MECCSEK POTLASA a meccsek.json-hoz: az a fordulo szorul ra, amelyikbol
+    # meg nincs meccs eltarolva, vagy van eredmeny nelkuli (nem lezart)
+    # meccse. Az elo fordulo amugy is meccslistaval megy; a regiekre ez
+    # egyszeri nagy lekeres (a lezart meccs melle az API a klublogokat is
+    # betolti), utana a feltetel mar nem all fenn.
+    meccs_potlas = {r for r in range(1, aktualis + 1)
+                    if not meccsek["rounds"].get(str(r))
+                    or any(not m.get("vege") for m in meccsek["rounds"][str(r)])}
+    if meccs_potlas - {aktualis}:
+        print("  meccsek potlasa: %s. fordulo"
+              % ", ".join(str(x) for x in sorted(meccs_potlas - {aktualis})))
+    celok |= meccs_potlas
 
     # lezart: r -> True/False, de CSAK ha teljes az adat. Amit nem tudtunk
     # kiertekelni (elhasalt lekeres, 403), az a `bizonytalan` halmazba kerul,
@@ -452,13 +504,17 @@ def main():
             continue
         uj_fordulo, teljes = {}, True
         mind_lement = True          # a meccslista szerint minden meccs lement
+        fordulo_meccsei = {m["id"]: m for m in meccsek["rounds"].get(str(r)) or []
+                           if m.get("id") is not None}
         for nev, uid in ids.items():
-            st, j = squad(uid, r, jatek=(r == aktualis or r in migralando))
+            st, j = squad(uid, r, jatek=(r == aktualis or r in migralando
+                                         or r in meccs_potlas))
             if st != 200 or not isinstance(j, dict) or not j.get("data"):
                 print("  ! %d. fordulo / %s: HTTP %s" % (r, nev, st), file=sys.stderr)
                 teljes = False
                 continue
             uj_fordulo[nev] = [rekord(d, r) for d in j["data"]]
+            meccsek_gyujtes(j, r, fordulo_meccsei)
             for d in j["data"]:
                 cr = (d.get("competition_player") or {}).get("current_round") or {}
                 # Az is_played mar a meccs KOZBEN igazra vall - abbol tehat NEM
@@ -477,6 +533,9 @@ def main():
         if not uj_fordulo:
             bizonytalan.add(r)
             continue
+        if fordulo_meccsei:
+            meccsek["rounds"][str(r)] = sorted(
+                fordulo_meccsei.values(), key=lambda m: (m.get("start") or "", m["h"]))
         regi_fordulo = hist["rounds"].get(str(r)) or {}
         orokit_meccsjelzok(regi_fordulo, uj_fordulo)
         hist["rounds"][str(r)] = {**regi_fordulo, **uj_fordulo}
@@ -568,6 +627,11 @@ def main():
         with open("results.json", "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=0)
         print("  results.json frissitve")
+
+    if json.dumps(meccsek["rounds"], ensure_ascii=False, sort_keys=True) != meccsek_elotte:
+        meccsek["updated"] = stamp()
+        kompakt_iras("meccsek.json", meccsek)
+        print("  meccsek.json frissitve")
 
     if json.dumps(hist.get("rounds"), ensure_ascii=False, sort_keys=True) != hist_elotte:
         hist["updated"] = stamp()
