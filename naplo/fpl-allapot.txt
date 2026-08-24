@@ -3,3 +3,4 @@
 # meccs:  - = meg nem kezdodott, M = megy, P = lefujva, F = finished
 2026-08-24 01:00  GW1 kesz=False ps=n ligak='' | NAP 08-21=p 08-22=p 08-23=p 08-24=_ | MECCS 1P 4P 3P 5P 6P 2P 7P 8P 9P 10-
 2026-08-24 19:16  GW1 kesz=False ps=n ligak='' | NAP 08-21=p 08-22=p 08-23=p 08-24=l | MECCS 1P 4P 3P 5P 6P 2P 7P 8P 9P 10M
+2026-08-24 21:28  GW1 kesz=False ps=n ligak='' | NAP 08-21=p 08-22=p 08-23=p 08-24=p | MECCS 1P 4P 3P 5P 6P 2P 7P 8P 9P 10P
