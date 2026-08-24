@@ -85,18 +85,65 @@ if uid:
     if not talalt_meccs:
         ki("! egyetlen jatekosnal sincs meccslista a valaszban")
 
-# ---- 2) game-player-stats CSAK round_id szurovel ----
-for cimke, url in [
-    ("round-only", collect.ROOT + "game-player-stats?include=competition_stat_config"
-     "&filter%%5Bround_id%%5D=%d" % collect.rid(R)),
-    ("round+competition", collect.ROOT + "game-player-stats?include=competition_stat_config"
-     "&filter%%5Bround_id%%5D=%d&filter%%5Bcompetition_id%%5D=3" % collect.rid(R)),
-]:
-    st, j = collect.api_get(url)
-    n = len((j or {}).get("data") or []) if isinstance(j, dict) else None
-    ki("=== 2) game-player-stats %s -> HTTP %s, sorok: %s" % (cimke, st, n))
-    if st == 200 and n:
-        dump("elso sor", j["data"][0])
+# ---- 2) game-player-stats tomeges lekerdezes - MASODIK KOR ----
+# Az elso meres megmutatta: a round-only lekerdezes MEGY (200), de a sorban
+# nincs jatekos-azonosito, es 50 soranként lapoz. Most azt merjuk, ami az
+# oszlophoz kellene: (a) az include=competition_player rateszi-e a jatekost,
+# (b) megy-e a stat-szuro (csak a "Jatszott perc" sorai), (c) van-e lapozas-
+# vezerles, (d) a 0 pontos jatekosok benne vannak-e a tomeges valaszban.
+rid_ = collect.rid(R)
+# a "Jatszott perc" config-azonositoja egy PONTSZERZO jatekos soraibol
+# (a jatekost a tarolt keretbol valasztjuk, nem beegetett azonositoval)
+percconf = None
+try:
+    with open(os.path.join(os.path.dirname(NAPLO), "..", "squad_history.json"), encoding="utf-8") as f:
+        _hist = json.load(f)
+    _jelolt = next(p for sq in (_hist["rounds"].get(str(R)) or {}).values()
+                   for p in sq if p.get("id") and (p.get("week") or 0) > 0)
+except Exception as e:
+    _jelolt = None
+    ki("! nincs jelolt jatekos a config-azonositohoz: %s" % e)
+st, j = collect.api_get(collect.ROOT + "game-player-stats?include=competition_stat_config"
+                        + "&filter%%5Bround_id%%5D=%d&filter%%5Bcompetition_player_id%%5D=%s"
+                        % (rid_, _jelolt["id"] if _jelolt else 0))
+for s2 in (j or {}).get("data") or []:
+    cfg = s2.get("competition_stat_config") or {}
+    if cfg.get("name") == "Játszott perc":
+        percconf = cfg.get("id")
+ki("=== 2) a 'Jatszott perc' stat-config id: %s" % percconf)
+probak = [
+    ("round + jatekos-include",
+     "game-player-stats?include=competition_stat_config,competition_player"
+     "&filter%%5Bround_id%%5D=%d" % rid_),
+    ("round + stat-szuro",
+     "game-player-stats?include=competition_player"
+     "&filter%%5Bround_id%%5D=%d&filter%%5Bcompetition_stat_config_id%%5D=%s" % (rid_, percconf)),
+    ("round + stat-szuro + nagy lap",
+     "game-player-stats?include=competition_player"
+     "&filter%%5Bround_id%%5D=%d&filter%%5Bcompetition_stat_config_id%%5D=%s"
+     "&page%%5Bsize%%5D=500" % (rid_, percconf)),
+    ("round + stat-szuro + 2. lap",
+     "game-player-stats?include=competition_player"
+     "&filter%%5Bround_id%%5D=%d&filter%%5Bcompetition_stat_config_id%%5D=%s"
+     "&page%%5Bnumber%%5D=2" % (rid_, percconf)),
+]
+for cimke, ut in probak:
+    st, j = collect.api_get(collect.ROOT + ut)
+    adat = (j or {}).get("data") or [] if isinstance(j, dict) else []
+    ki("=== 2) %s -> HTTP %s, sorok: %s" % (cimke, st, len(adat)))
+    if st == 200 and adat:
+        dump("elso sor", adat[0])
+        # lapozas-informacio a valasz tetejerol (meta/links, ha van)
+        for k in ("meta", "links"):
+            if isinstance(j, dict) and k in j:
+                dump("valasz '%s' mezoje" % k, j[k])
+        # a 0 pontosok benne vannak-e: hany KULONBOZO jatekos van a lapon
+        jatekosok = set()
+        for s2 in adat:
+            cp = s2.get("competition_player") or {}
+            if cp.get("id"):
+                jatekosok.add((cp.get("id"), cp.get("last_name")))
+        ki("    kulonbozo jatekos a lapon: %d %s" % (len(jatekosok), sorted(jatekosok)[:6]))
 
 # ---- 3) egy sokperces es egy 0 perces jatekos OSSZES nyers sora ----
 try:
