@@ -776,6 +776,20 @@ Felhasználói napló, nem technikai: **csak az kerül bele, amit a használó l
 Az adat a `valtozasok.json`-ban van, kézzel bővítjük. A szűrők a `LIGAK` listából
 készülnek, tehát egy új liga felvétele itt sem igényel külön munkát.
 
+**Hogyan legyen megfogalmazva egy bejegyzés**
+
+- **A cím azt mondja meg, mi igaz mostantól**, a mondat pedig azt, hogy ez mit jelent a
+  használónak és hol látja. Példa: *„Az elmaradt meccs játékosainál kötőjel áll 0 helyett"*.
+- **Nincs benne első személy, és nincs hivatkozás a fejlesztés menetére.** A napló nem
+  arról szól, ki mit mondott vagy hogyan derült ki — csak arról, mi változott az oldalon.
+  (Első nekifutásra ez a mondat került bele: *„Eddig chatben mondtam el, mi változott"* —
+  ennek egy felhasználói naplóban nincs helye.)
+- **Tárgyszerű, nem dramatizál.** Nem *„nem kapnak többé hamis 0-t"*, hanem az, ami
+  ténylegesen látszik a soron.
+- **A beszélgetésben elhangzott szavakat nem vesszük át szó szerint.** Az, ahogy egy
+  hibáról beszélünk, nem ugyanaz, ahogy a naplóba le kell írni; a megfogalmazást minden
+  bejegyzésnél újra végig kell gondolni.
+
 Elérés: a kezdőlapról (kártya) és minden oldal **láblécéből** (`FunTasy.renderLablec`).
 A naplón magán nincs lábléc, mert önmagára mutatna.
 

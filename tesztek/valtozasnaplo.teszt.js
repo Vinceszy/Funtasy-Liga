@@ -14,6 +14,9 @@ const PLUSZ = { datum: '2999-01-01', tipus: 'funkcio', ligak: ['nb1', 'pl'],
                 cim: 'MINDKETTO', leiras: 'Mindkét ligát érinti.' };
 const OSSZES = [PLUSZ].concat(ADAT);
 const hany = f => OSSZES.filter(f).length;
+const cimekEbbol = f => OSSZES.filter(f).map(b => cim(b.cim));
+const csakPl  = cimekEbbol(b => b.ligak.includes('pl')  && !b.ligak.includes('nb1'));
+const csakNb1 = cimekEbbol(b => b.ligak.includes('nb1') && !b.ligak.includes('pl'));
 
 (async () => {
   const br = await inditas();
@@ -74,13 +77,18 @@ const hany = f => OSSZES.filter(f).length;
   const nb1 = await cimek();
   console.log('   NB1:', JSON.stringify(nb1.map(x => x.slice(0, 28))));
   jo(nb1.includes('MINDKETTO'), 'a mindkét ligát érintő bejegyzés NB1-re szűrve is előjön');
-  jo(!nb1.some(x => /bónuszpontokról/i.test(x)), 'a csak PL-es bejegyzés NB1-re szűrve nem jön elő');
+  // A cimekre illesztes nemán atmenne, ha a szoveg valtozik (meg is tortent):
+  // a varhato cimeket ezert az ADATBOL szedjuk, es megkoveteljuk, hogy legyen
+  // mit ellenoriznie.
+  jo(csakPl.length > 0 && !csakPl.some(c => nb1.includes(c)),
+    `a csak PL-es bejegyzések NB1-re szűrve nem jönnek elő (${csakPl.length} ilyen)`);
   await chip('ligaSzuro', 'NB1');        // kikapcs
   await chip('ligaSzuro', 'PL');
   const pl = await cimek();
   console.log('   PL:', JSON.stringify(pl.map(x => x.slice(0, 28))));
   jo(pl.includes('MINDKETTO'), 'ugyanaz a bejegyzés PL-re szűrve is előjön');
-  jo(!pl.some(x => /elmaradt meccsek/i.test(x)), 'a csak NB1-es bejegyzés PL-re szűrve nem jön elő');
+  jo(csakNb1.length > 0 && !csakNb1.some(c => pl.includes(c)),
+    `a csak NB1-es bejegyzések PL-re szűrve nem jönnek elő (${csakNb1.length} ilyen)`);
 
   console.log('\n--- a ligák KÜLÖN kapcsolhatók (aki több ligában játszik) ---');
   await chip('ligaSzuro', 'NB1');        // a PL mellé

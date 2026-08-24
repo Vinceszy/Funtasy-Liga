@@ -7,8 +7,8 @@
     "nb1",
     "pl"
    ],
-   "cim": "Van egy oldal, ami megmutatja, mi újult meg",
-   "leiras": "Eddig chatben mondtam el, mi változott. Mostantól ez az oldal gyűjti: új funkciók és javítások, dátummal. Szűrhető típus szerint, és ligánként — ha több ligában játszol, többet is kijelölhetsz egyszerre."
+   "cim": "A változások mostantól egy helyen",
+   "leiras": "Új funkciók és javítások, dátummal. Típus szerint és ligánként szűrhető; több ligát is ki lehet jelölni egyszerre."
   },
   {
    "datum": "2026-08-23",
@@ -16,8 +16,8 @@
    "ligak": [
     "pl"
    ],
-   "cim": "A bónuszpontokról látszik, hogy még változhatnak-e",
-   "leiras": "Az FPL már a meccs alatt kiírja a bónuszt, de az még módosulhat: a meccs alatt percről percre, lefújás után pedig a forduló lezárásáig. A pontrészletezőben a bónusz sora ezt most megmutatja — ami jelöletlen, az már végleges."
+   "cim": "A bónuszpontok mellett látszik, hogy véglegesek-e",
+   "leiras": "Az FPL a meccs alatt is kiírja a bónuszt, de az még változhat: a meccs alatt percről percre, lefújás után a forduló lezárásáig. A pontrészletezőben a bónusz sora jelzi, melyik állapotban van; jelölés nélkül a bónusz végleges."
   },
   {
    "datum": "2026-08-23",
@@ -25,8 +25,8 @@
    "ligak": [
     "nb1"
    ],
-   "cim": "Az elmaradt meccsek játékosai nem kapnak többé hamis 0-t",
-   "leiras": "A 3. fordulóban az ETO játékosainál 0 pont állt, és a részletező azt írta, hogy a meccs még nem kezdődött el — egy már elmúlt dátummal. Most kötőjel áll ott, és megmondja, hogy a klubnak nem volt meccse abban a fordulóban."
+   "cim": "Az elmaradt meccs játékosainál kötőjel áll 0 helyett",
+   "leiras": "A 3. fordulóban az ETO játékosai 0 pontot mutattak, a részletező pedig egy már elmúlt kezdési dátumra hivatkozott. Most kötőjel jelzi, hogy a klubnak nem volt meccse abban a fordulóban."
   },
   {
    "datum": "2026-08-23",
@@ -34,8 +34,8 @@
    "ligak": [
     "nb1"
    ],
-   "cim": "A forduló akkor is lezárul, ha egy klubnak nincs meccse",
-   "leiras": "Az 5. forduló a Honvéd elmaradt meccse miatt nagyjából egy hétig kimaradt volna a tabellából. Mostantól az számít, hogy mindenki lejátszotta-e a meccsét, akinek volt."
+   "cim": "A forduló akkor is bekerül a tabellába, ha egy klubnak nincs meccse",
+   "leiras": "Az 5. forduló a Honvéd elmaradt meccse miatt csak egy héttel később számított volna bele. A forduló mostantól akkor zárul le, ha mindenki lejátszotta a meccsét, akinek volt."
   }
  ]
 }
