@@ -1,0 +1,28 @@
+name: MLSZ adat-mérés (egyszeri, kézi)
+# EGYSZERI meres: mit ad az MLSZ API az NB1-es perc/kezdo/eredmeny
+# adatokhoz (lasd naplo/mlsz-adat-meres.py). Nincs cron: kezzel inditjuk,
+# egyszer fut le, az eredmenyt commitolja. A site mukodeset nem erinti.
+# Ha megvan a valasz, ez a workflow es a naplo/mlsz-adat.txt torolheto.
+on:
+  workflow_dispatch:
+permissions: { contents: write }
+jobs:
+  meres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git config user.name  "funtasy-figyelo"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          python3 naplo/mlsz-adat-meres.py
+          [ -z "$(git status --porcelain naplo/mlsz-adat.txt)" ] && exit 0
+          git add naplo/mlsz-adat.txt
+          git commit -q -m "MLSZ adat-meres eredmenye"
+          for i in 1 2 3; do
+            git pull -q --rebase origin main && git push -q origin HEAD:main && exit 0
+            sleep $((i * 5))
+          done
+          exit 1
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }

@@ -74,13 +74,13 @@ const LEZART = [
     const h = await bontasHTML(e, gw);
     const d = document.createElement('div');
     d.innerHTML = h || '';
-    const sorok = [...d.querySelectorAll('.meccsfej')]
+    const sorok = [...d.querySelectorAll('.bontasmeccs')]
       .map(x => [x.children[0].textContent.trim().replace(/\s+/g, ' '),
                  x.children[1].textContent.trim()]);
     // a fejlec a tablazat FOLOTT all-e?
     const elso = d.firstElementChild;
     const tabla = d.querySelector('table, .acctable, .loading');
-    return { sorok, felul: !!elso && elso.classList.contains('meccsfej'),
+    return { sorok, felul: !!elso && elso.classList.contains('bontasmeccs'),
              vanTabla: !!tabla };
   }, [e, gw]);
 

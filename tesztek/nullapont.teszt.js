@@ -25,7 +25,7 @@ const panelSzoveg = async page => {
   }, null, { timeout: 15000 });
   return page.evaluate(() => {
     const p = document.querySelector('.accpanel').cloneNode(true);
-    p.querySelectorAll('.meccsfej').forEach(x => x.remove());
+    p.querySelectorAll('.bontasmeccs').forEach(x => x.remove());
     document.body.appendChild(p);
     const t = p.innerText.trim();
     p.remove();

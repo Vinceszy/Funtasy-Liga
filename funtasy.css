@@ -237,12 +237,15 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
    nagybetusites es betukoz, es ezert 30px a .kezd oszlop. */
 .plrfej .perc,.plrfej .kezd,.plrfej .pts{font:inherit;color:inherit}
 /* A jatekos meccse a pont-bontas folott: "ARS 2-1 BRE - 70. perc".
-   Dupla forduloban ket sor kerul egymas ala. */
-.meccsfej{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
-  font:600 11px Inter;color:var(--dim);padding:6px 8px 5px;
+   Dupla forduloban ket sor kerul egymas ala. A nev NEM lehet .meccsfej:
+   az a meccs-modal allas-doboza (lentebb), es a hatteres-lekerekitett
+   stilusa rakaszkadolt erre a sorra - ugyanaz az utkozesfajta, mint
+   egykor a .pos/.ppos. */
+.bontasmeccs{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+  font:600 11px Inter;color:var(--dim);padding:4px 6px;
   border-bottom:1px solid var(--line)}
-.meccsfej b{font-family:'JetBrains Mono';font-weight:700;font-size:12.5px;color:var(--ink)}
-.meccsfej .ora{font-family:'JetBrains Mono';color:var(--dim);white-space:nowrap}
+.bontasmeccs b{font-family:'JetBrains Mono';font-weight:700;font-size:12.5px;color:var(--ink)}
+.bontasmeccs .ora{font-family:'JetBrains Mono';color:var(--dim);white-space:nowrap}
 .plr .pts{font-family:'JetBrains Mono';font-weight:700;min-width:52px;text-align:right}
 .flag{display:inline-block;width:14px;height:9px;margin-left:6px;vertical-align:middle;border-radius:1px;
   background:linear-gradient(to bottom,#CE2939 0 33.3%,#fff 33.3% 66.6%,#477050 66.6% 100%);border:1px solid rgba(0,0,0,.35)}
