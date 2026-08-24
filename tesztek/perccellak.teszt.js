@@ -97,6 +97,53 @@ const MECCSEK = [
   console.log('   a 11-es meccs órája: ' + ora + " (a fixtures minutes mezoje 0 volt)");
   jo(ora === 70, 'a meccsóra a pályán lévő kezdők percszáma, nem a fixtures mezője');
 
+  console.log('\n--- oszlopnevek ---');
+  // Harom cimkezetlen szam elsore rejtely, ezert a perc-oszlopok fole
+  // fejlecsor kerul. A cimkenek PONTOSAN a maga oszlopa fole kell esnie -
+  // ezt a kozeppontok osszevetesevel merjuk, nem szemre.
+  const kereet = [
+    { e: jatekos.fut[0], b: false, pts: 5 }, { e: jatekos.fut[1], b: false, pts: 5 },
+    { e: jatekos.fut[2], b: false, pts: 5 }, { e: jatekos.kesz[0], b: false, pts: 5 },
+    { e: jatekos.fut[3], b: true,  pts: 0 }, { e: jatekos.elotte[0], b: true, pts: 0 },
+  ];
+  const m = await p.evaluate(([lista, GW, regi]) => {
+    const meres = (html, szeles) => {
+      const d = document.createElement('div');
+      d.className = 'sqwrap one'; d.style.width = szeles + 'px';
+      d.innerHTML = html; document.body.appendChild(d);
+      const kp = el => { const r = el.getBoundingClientRect(); return Math.round(r.left + r.width / 2); };
+      const fejek = [...d.querySelectorAll('.plrfej')];
+      const elso = fejek[0];
+      const sor = d.querySelector('.plr:not(.plrfej)');
+      const ki = {
+        fejDb: fejek.length,
+        cimkek: elso ? [...elso.children].map(x => x.textContent.trim()).filter(Boolean) : [],
+        fejKp: elso ? [...elso.querySelectorAll('.perc,.kezd,.pts')].map(kp) : [],
+        sorKp: sor ? [...sor.querySelectorAll('.perc,.kezd,.pts')].map(kp) : [],
+        tulcsordul: sor ? sor.scrollWidth > sor.clientWidth + 1 : false,
+      };
+      d.remove();
+      return ki;
+    };
+    return {
+      gep: meres(sqcolHTML('T', lista, 'Teszt', GW), 420),
+      mobil: meres(sqcolHTML('T', lista, 'Teszt', GW), 320),
+      lezart: meres(sqcolHTML('T', lista, 'Teszt', regi), 420),
+    };
+  }, [kereet, GW, 99]);
+  console.log('   címkék: ' + JSON.stringify(m.gep.cimkek));
+  console.log('   fejléc közepek: ' + JSON.stringify(m.gep.fejKp) + '  sor közepek: ' + JSON.stringify(m.gep.sorKp));
+  jo(JSON.stringify(m.gep.cimkek) === JSON.stringify(['perc', 'meccs', 'kezdő', 'pont']),
+     'a négy oszlopnak neve van: perc / meccs / kezdő / pont');
+  jo(m.gep.fejDb === 2, 'a kezdők és a pad fölött is ott a fejléc (' + m.gep.fejDb + ')');
+  jo(m.gep.fejKp.length === 4 && m.gep.sorKp.length === 4
+     && m.gep.fejKp.every((x, i) => Math.abs(x - m.gep.sorKp[i]) <= 1),
+     'minden címke a maga oszlopa fölött áll');
+  jo(m.mobil.fejKp.every((x, i) => Math.abs(x - m.mobil.sorKp[i]) <= 1),
+     'mobil szélességen is illeszkedik');
+  jo(!m.gep.tulcsordul && !m.mobil.tulcsordul, 'a sor nem csordul túl (a név rövidül)');
+  jo(m.lezart.fejDb === 0, 'lezárt fordulóban nincs fejléc — ott nincs is perc-oszlop');
+
   console.log('\n--- lezárt forduló ---');
   const regi = await p.evaluate(e => percCellakHTML(e, 99), jatekos.fut[0]);
   jo(regi === '', 'nem az élő fordulóban nincs cella');

@@ -671,6 +671,47 @@ a bónusz állapota **meccsenként** (`LIVEMECCS`) áll, nem klubonként (`LIVEF
 hogy a bónuszt véglegesítették. A Draft API-ban ez a tömb `{s, h, a}` alakú, nincs benne
 `identifier` kulcs, mint a klasszikus FPL-ben.
 
+### Ki van még a pályán (PL, élő forduló)
+
+A pont mellett három szám áll a keretben és a meccs nézetében, **fejléccel**
+(`perc · meccs · kezdő · pont`), mert három cimkézetlen szám elsőre rejtély:
+
+| oszlop | mit mutat |
+|---|---|
+| `perc` | a játékos lejátszott percei (`stats.minutes`) |
+| `meccs` | a meccsóra, lefújás után `vége` |
+| `kezdő` | `K`, ha kezdőként lépett pályára, egyébként `–` |
+
+**Nyers értékeket mutatunk, nem értelmezünk a néző helyett.** A „lecserélve" felirathoz
+tűréshatár kellene, és egy egyperces csúszás a két végpont között hamis állítást szülne.
+A két számból magától látszik, pályán van-e: ha egyeznek, igen.
+
+**A meccsóra a játékosok perceinek maximuma**, klubonként összegyűjtve — nem a fixtures
+`minutes` mezője. Élő meccs alatt mérve (2026-08-24) az **mindig 0**, még a lement
+meccseknél is. A játékosok percei viszont együtt ketyegnek: 15 mintában, fél óra alatt a
+futó meccs minden pályán lévő kezdője ugyanazt a számot mutatta. Ez nem becslés: 11
+kezdővel és legfeljebb 5 cserével mindig marad valaki, aki végigjátssza a meccset.
+A `perccellak.teszt.js` mockjában a `minutes` **szándékosan 0** — ha valaki visszatenné a
+meccs saját mezőjét, a teszt bukik.
+
+**A lecserélt játékos percei megállnak** — mérve: egy lement meccsen a kezdők 81', 80',
+75'… értéken álltak (ekkor cserélték le őket), a csereként beállók pedig 28', 22', 20'…
+értéken. 15 mintában, fél óra alatt egyetlen szám sem változott.
+
+**A meccsóra 45-nél és 90-nél megáll**, ezért a 90 önmagában nem árulja el, vége van-e a
+meccsnek — ott a cella `vége`-t ír.
+
+**Dupla fordulóban mindkét meccs értéke szerepel**, `|` elválasztóval. A `kezdő` oszlop
+ilyenkor nem bontható meccsre: az `explain` **csak pontot érő tételeket** tartalmaz, a
+`starts` sosem szerepel benne.
+
+**Az adat késése ~3 perc** a valós időhöz képest (mérve, stabilan): 19:14:47-kor 12' a
+valós 14.8 helyett, 19:43:00-kor 40' a valós 43.0 helyett.
+
+Fejléc csak ott jelenik meg, ahol van is perc-cella (élő forduló, elkezdődött meccs) —
+lezárt fordulóban nincs mit címkézni. A címke nem lehet szélesebb a saját oszlopánál,
+különben elcsúszik a számoktól; a teszt középpontra méri.
+
 ### Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva
 
 - `league/{id}/details` — résztvevők, menetrend, eredmények; **a valódi neveket is

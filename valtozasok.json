@@ -4,6 +4,15 @@
    "datum": "2026-08-24",
    "tipus": "funkcio",
    "ligak": [
+    "pl"
+   ],
+   "cim": "Az élő fordulóban látszik, hány percet játszott a játékos",
+   "leiras": "A keretben és a meccs nézetében három új oszlop áll a pont mellett: a játékos percei, a meccsóra és az, hogy kezdőként lépett-e pályára. A kettő összevetéséből látszik, pályán van-e még, anélkül hogy más oldalt kellene megnyitni. Kettős fordulóban mindkét meccs értéke szerepel, függőleges vonallal elválasztva."
+  },
+  {
+   "datum": "2026-08-24",
+   "tipus": "funkcio",
+   "ligak": [
     "nb1",
     "pl"
    ],

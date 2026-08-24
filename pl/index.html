@@ -6,7 +6,7 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=26">
+<link rel="stylesheet" href="../funtasy.css?v=27">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -72,7 +72,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=26"></script>
+<script src="../funtasy.js?v=27"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -192,6 +192,15 @@ function percCellakHTML(e, gw){
        + `<span class="kezd" title="${p.kezdo ? 'kezdőként lépett pályára' : 'nem kezdőként'}">`
        + (p.kezdo ? 'K' : '–') + '</span>';
 }
+// A harom perc-oszlop fejlece. Ugyanaz a .plr racs, csak cimkekkel, hogy a
+// felirat pontosan a maga oszlopa fole essen. Csak ott jelenik meg, ahol
+// van is perc-cella - lezart forduloban vagy meccs elott nincs mit cimkezni.
+const PERCFEJ = '<div class="plr plrfej"><span class="nm"></span>'
+  + '<span class="perc">perc</span><span class="perc mora">meccs</span>'
+  + '<span class="kezd">kezdő</span><span class="pts">pont</span></div>';
+const vanPercOszlop = (lista, gw) =>
+  lista.some(x => x && typeof x === 'object' && percCellakHTML(x.e, gw));
+
 function sqcolHTML(id, lista, cim, gw){
   const gazdag = lista.length && typeof lista[0] === 'object';
   const sor = x => {
@@ -216,11 +225,13 @@ function sqcolHTML(id, lista, cim, gw){
     return `<div class="sqcol"><h3>${esc(cim || nev(id))}</h3>${rendez(lista).map(sor).join('')}</div>`;
   const st = lista.filter(x => !x.b), pad = lista.filter(x => x.b);
   const S = a => a.reduce((s, x) => s + (x.pts || 0), 0);
+  const fejSt = vanPercOszlop(st, gw) ? PERCFEJ : '';
+  const fejPad = vanPercOszlop(pad, gw) ? PERCFEJ : '';
   return `<div class="sqcol"><h3>${esc(cim || nev(id))}<span>${fmt(S(st))}</span></h3>
-    ${rendez(st).map(sor).join('')}
+    ${fejSt}${rendez(st).map(sor).join('')}
     <div class="sumline"><span>Kezdők</span><b>${fmt(S(st))}</b></div>
     <div class="subhead">Pad — a pontjaik nem számítanak a csapatnak</div>
-    ${rendez(pad).map(sor).join('')}</div>`;
+    ${fejPad}${rendez(pad).map(sor).join('')}</div>`;
 }
 
 function keretHTML(id){
