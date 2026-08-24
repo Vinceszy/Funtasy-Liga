@@ -7,6 +7,13 @@ const { BASE, jo, hibak, inditas, vege, jsonAtir, apiKi } = require('./kozos');
 // elvei szerint menet kozben, nem tarolt fixturabol.
 
 const cim = t => t.replace(/\s+/g, ' ').trim();
+// A varhato ertekeket a VALODI adatbol szamoljuk, nem irjuk be szamkent:
+// kulonben minden uj naplobejegyzes megbuktatna a tesztet.
+const ADAT = require(require('path').join(__dirname, '..', 'valtozasok.json')).bejegyzesek;
+const PLUSZ = { datum: '2999-01-01', tipus: 'funkcio', ligak: ['nb1', 'pl'],
+                cim: 'MINDKETTO', leiras: 'Mindkét ligát érinti.' };
+const OSSZES = [PLUSZ].concat(ADAT);
+const hany = f => OSSZES.filter(f).length;
 
 (async () => {
   const br = await inditas();
@@ -15,10 +22,7 @@ const cim = t => t.replace(/\s+/g, ' ').trim();
   await apiKi(p);
   // egy mindket ligat erinto bejegyzes hozzaadasa
   await jsonAtir(p, '**/valtozasok.json*', j => {
-    j.bejegyzesek.unshift({
-      datum: '2026-08-24', tipus: 'funkcio', ligak: ['nb1', 'pl'],
-      cim: 'MINDKETTO', leiras: 'Mindkét ligát érinti.',
-    });
+    j.bejegyzesek.unshift(PLUSZ);
     return j;
   });
   await p.goto(BASE + 'valtozasok/', { waitUntil: 'domcontentloaded' });
@@ -33,14 +37,16 @@ const cim = t => t.replace(/\s+/g, ' ').trim();
   console.log('--- alapállapot ---');
   const mind = await cimek();
   console.log('   ' + mind.length + ' bejegyzés:', JSON.stringify(mind.map(x => x.slice(0, 28))));
-  jo(mind.length === 4, 'szűrés nélkül minden bejegyzés látszik');
+  jo(mind.length === OSSZES.length,
+    `szűrés nélkül minden bejegyzés látszik (${OSSZES.length})`);
   jo(mind[0] === 'MINDKETTO', 'a legfrissebb dátum van elöl');
   // az innerText a CSS text-transform:uppercase-t is visszaadja, ezert /i
   const datumok = await p.locator('.vlt-datum').allInnerTexts();
   console.log('   dátumfejlécek:', JSON.stringify(datumok.map(cim)));
   jo(datumok.some(t => /augusztus 24/i.test(t)),
     'a dátum magyarul, csoportfejlécként jelenik meg');
-  jo(datumok.length === 2, 'a két nap külön csoportban van');
+  jo(datumok.length === new Set(OSSZES.map(b => b.datum)).size,
+    'annyi dátumcsoport van, ahány különböző nap');
 
   // A .panel-nek nincs sajat belso margoja, a gyerekei adjak - ha egy sav
   // kifelejti, a szoveg a keretnek er. Ezt egyszer mar elrontottam.
@@ -56,12 +62,12 @@ const cim = t => t.replace(/\s+/g, ' ').trim();
   await chip('tipusSzuro', 'Javítás');
   const javitasok = await cimek();
   console.log('   javítások:', JSON.stringify(javitasok.map(x => x.slice(0, 28))));
-  jo(javitasok.length === 2 && !javitasok.includes('MINDKETTO'),
+  jo(javitasok.length === hany(b => b.tipus === 'bugfix') && !javitasok.includes('MINDKETTO'),
     'a Javítás szűrő csak a javításokat hagyja meg');
   await chip('tipusSzuro', 'Új funkció');
   jo((await cimek()).includes('MINDKETTO'), 'az Új funkció szűrő az új funkciókat hagyja meg');
   await chip('tipusSzuro', 'Mind');
-  jo((await cimek()).length === 4, 'a Mind visszaadja az összeset');
+  jo((await cimek()).length === OSSZES.length, 'a Mind visszaadja az összeset');
 
   console.log('\n--- liga: CÍMKEKÉNT viselkedik-e ---');
   await chip('ligaSzuro', 'NB1');
@@ -80,14 +86,14 @@ const cim = t => t.replace(/\s+/g, ' ').trim();
   await chip('ligaSzuro', 'NB1');        // a PL mellé
   const ketto = await cimek();
   console.log('   NB1 + PL:', JSON.stringify(ketto.map(x => x.slice(0, 28))));
-  jo(ketto.length === 4, 'két ligát kijelölve mindkettő bejegyzései látszanak');
+  jo(ketto.length === hany(b => b.ligak.some(x => x === 'nb1' || x === 'pl')),
+    'két ligát kijelölve mindkettő bejegyzései látszanak');
   const aktivak = await p.locator('#ligaSzuro .vlt-chip.on').allInnerTexts();
   console.log('   kiemelt liga-gombok:', JSON.stringify(aktivak));
   jo(aktivak.length === 2 && !aktivak.some(t => /Mind/.test(t)),
     'mindkét liga gombja ki van emelve, a Mind nem');
   await chip('ligaSzuro', 'Mind');       // torles
-  jo((await p.locator('#ligaSzuro .vlt-chip.on')).count && (await cimek()).length === 4,
-    'a Mind törli a kijelöléseket');
+  jo((await cimek()).length === OSSZES.length, 'a Mind törli a kijelöléseket');
   const mindAktiv = await p.locator('#ligaSzuro .vlt-chip.on').allInnerTexts();
   jo(mindAktiv.length === 1 && /Mind/.test(mindAktiv[0]),
     'kijelölés nélkül a Mind van kiemelve');
@@ -97,12 +103,17 @@ const cim = t => t.replace(/\s+/g, ' ').trim();
   await chip('tipusSzuro', 'Javítás');
   const ures = await cimek();
   console.log('   PL + Javítás:', JSON.stringify(ures));
-  jo(ures.length === 0 && /nincs bejegyzés/.test(await p.locator('#lista').innerText()),
-    'PL + Javítás: nincs ilyen, és ezt ki is írja');
+  const plJavitas = hany(b => b.tipus === 'bugfix' && b.ligak.includes('pl'));
+  if (plJavitas === 0)
+    jo(ures.length === 0 && /nincs bejegyzés/.test(await p.locator('#lista').innerText()),
+      'PL + Javítás: nincs ilyen, és ezt ki is írja');
+  else
+    jo(ures.length === plJavitas, `PL + Javítás: ${plJavitas} bejegyzés`);
 
   await chip('ligaSzuro', 'PL');     // kikapcs
   await chip('ligaSzuro', 'NB1');
-  jo((await cimek()).length === 2, 'NB1 + Javítás: a két NB1-es javítás');
+  jo((await cimek()).length === hany(b => b.tipus === 'bugfix' && b.ligak.includes('nb1')),
+    'NB1 + Javítás: az NB1-es javítások');
 
   console.log('\n--- elérési pontok ---');
   jo(perr.length === 0, 'nincs JS-hiba a naplón: ' + JSON.stringify(perr));

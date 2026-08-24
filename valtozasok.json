@@ -1,25 +1,41 @@
 {
-"bejegyzesek": [
- {
-  "datum": "2026-08-23",
-  "tipus": "funkcio",
-  "ligak": ["pl"],
-  "cim": "A bónuszpontokról látszik, hogy még változhatnak-e",
-  "leiras": "Az FPL már a meccs alatt kiírja a bónuszt, de az még módosulhat: a meccs alatt percről percre, lefújás után pedig a forduló lezárásáig. A pontrészletezőben a bónusz sora ezt most megmutatja — ami jelöletlen, az már végleges."
- },
- {
-  "datum": "2026-08-23",
-  "tipus": "bugfix",
-  "ligak": ["nb1"],
-  "cim": "Az elmaradt meccsek játékosai nem kapnak többé hamis 0-t",
-  "leiras": "A 3. fordulóban az ETO játékosainál 0 pont állt, és a részletező azt írta, hogy a meccs még nem kezdődött el — egy már elmúlt dátummal. Most kötőjel áll ott, és megmondja, hogy a klubnak nem volt meccse abban a fordulóban."
- },
- {
-  "datum": "2026-08-23",
-  "tipus": "bugfix",
-  "ligak": ["nb1"],
-  "cim": "A forduló akkor is lezárul, ha egy klubnak nincs meccse",
-  "leiras": "Az 5. forduló a Honvéd elmaradt meccse miatt nagyjából egy hétig kimaradt volna a tabellából. Mostantól az számít, hogy mindenki lejátszotta-e a meccsét, akinek volt."
- }
-]
+ "bejegyzesek": [
+  {
+   "datum": "2026-08-24",
+   "tipus": "funkcio",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
+   "cim": "Van egy oldal, ami megmutatja, mi újult meg",
+   "leiras": "Eddig chatben mondtam el, mi változott. Mostantól ez az oldal gyűjti: új funkciók és javítások, dátummal. Szűrhető típus szerint, és ligánként — ha több ligában játszol, többet is kijelölhetsz egyszerre."
+  },
+  {
+   "datum": "2026-08-23",
+   "tipus": "funkcio",
+   "ligak": [
+    "pl"
+   ],
+   "cim": "A bónuszpontokról látszik, hogy még változhatnak-e",
+   "leiras": "Az FPL már a meccs alatt kiírja a bónuszt, de az még módosulhat: a meccs alatt percről percre, lefújás után pedig a forduló lezárásáig. A pontrészletezőben a bónusz sora ezt most megmutatja — ami jelöletlen, az már végleges."
+  },
+  {
+   "datum": "2026-08-23",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1"
+   ],
+   "cim": "Az elmaradt meccsek játékosai nem kapnak többé hamis 0-t",
+   "leiras": "A 3. fordulóban az ETO játékosainál 0 pont állt, és a részletező azt írta, hogy a meccs még nem kezdődött el — egy már elmúlt dátummal. Most kötőjel áll ott, és megmondja, hogy a klubnak nem volt meccse abban a fordulóban."
+  },
+  {
+   "datum": "2026-08-23",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1"
+   ],
+   "cim": "A forduló akkor is lezárul, ha egy klubnak nincs meccse",
+   "leiras": "Az 5. forduló a Honvéd elmaradt meccse miatt nagyjából egy hétig kimaradt volna a tabellából. Mostantól az számít, hogy mindenki lejátszotta-e a meccsét, akinek volt."
+  }
+ ]
 }
