@@ -38,7 +38,8 @@
   "color_hex": null
  }
 }
-=== 2) game-player-stats round-only -> HTTP 200, sorok: 50
+=== 2) a 'Jatszott perc' stat-config id: 99
+=== 2) round + jatekos-include -> HTTP 200, sorok: 50
 --- elso sor ---
 {
  "value": 0,
@@ -49,7 +50,52 @@
   "name": "Győzelem"
  }
 }
-=== 2) game-player-stats round+competition -> HTTP 400, sorok: None
+--- valasz 'meta' mezoje ---
+{
+ "current_page": 1,
+ "first_page_url": "https://fantasy-api.mlsz.hu/game-player-stats?page=1",
+ "from": 1,
+ "last_page": 80,
+ "last_page_url": "https://fantasy-api.mlsz.hu/game-player-stats?page=80",
+ "next_page_url": "https://fantasy-api.mlsz.hu/game-player-stats?page=2",
+ "path": "https://fantasy-api.mlsz.hu/game-player-stats",
+ "per_page": 50,
+ "prev_page_url": null,
+ "to": 50,
+ "total": 3959
+}
+--- valasz 'links' mezoje ---
+[
+ {
+  "url": null,
+  "label": "&laquo; Previous",
+  "page": null,
+  "active": false
+ },
+ {
+  "url": "https://fantasy-api.mlsz.hu/game-player-stats?page=1",
+  "label": "1",
+  "page": 1,
+  "active": true
+ },
+ {
+  "url": "https://fantasy-api.mlsz.hu/game-player-stats?page=2",
+  "label": "2",
+  "page": 2,
+  "active": false
+ },
+ {
+  "url": "https://fantasy-api.mlsz.hu/game-player-stats?page=3",
+  "label": "3",
+  "page": 3,
+  "active": false
+ },
+ "<+11 elem>"
+]
+    kulonbozo jatekos a lapon: 0 []
+=== 2) round + stat-szuro -> HTTP 400, sorok: 0
+=== 2) round + stat-szuro + nagy lap -> HTTP 400, sorok: 0
+=== 2) round + stat-szuro + 2. lap -> HTTP 400, sorok: 0
 === 3) Nfansu Njie (ETO, 12 pont) -> HTTP 200
     Győzelem                                      ertek=0      pont=0
     Döntetlen                                     ertek=1      pont=1
