@@ -17,6 +17,10 @@ Környezeti változók: `PORT` (alap: 8910), `PLAYWRIGHT_MODUL`, `CHROME_UT`.
 - **A különleges állapotokat a teszt állítja elő menet közben** — a Playwright elfogja a
   kérést és átírja a választ, a gyűjtő-teszteknél pedig az `api_get` van kicserélve.
   Nem tárolt fájlból, tehát holnap is ugyanazt méri.
+- **Minden állítás a közös `jo()`-n megy át.** Ha egy teszt maga írja ki, hogy „HIBA",
+  a futtató csak a kilépőkódot látja — és zöldnek hiszi a bukott tesztet. A
+  `nullapont.teszt.js` így takart el hat bukott állítást; a saját `hibak` tömbje
+  árnyékolta a közöset, és a kilépőkód csak a lap JS-hibáit nézte.
 
 ## Gyűjtő-tesztek (Python, hálózat nélkül)
 
@@ -48,7 +52,7 @@ Az `api_get`-et mock váltja ki, a `collect.py` egy ideiglenes könyvtárban fut
 |---|---|
 | `allapotter.teszt.js` | A „mit írjunk a 0 pontos játékosról" logika **teljes állapottere**: mind az 576 kombináció, öt invariánssal. Ez talált meg olyan hibákat, amikre nem gondoltunk tesztet írni. |
 | `tabella.teszt.js` | A tabellát és a H2H-mátrixot **függetlenül újraszámolja** a `results.json`-ból, és összeveti azzal, amit az oldal kirajzol. |
-| `nullapont.teszt.js` | A négy „0 pont" állapot és a kattinthatóság-jelzés mindkét oldalon. |
+| `nullapont.teszt.js` | A négy „0 pont" állapot és a kattinthatóság-jelzés mindkét oldalon. Az **élő forduló előfeltételét maga állítja be** (`provisional`): lezárt fordulóban a „zajlik" állapotokra más — és helyes — üzenet jár, tehát a valós adatra hagyva a teszt a gyűjtő első lezárása után mást mérne. |
 | `meccsallapot.teszt.js` | A `meccsAllapot()` négy értéke és a két időkorlát (100 / 180 perc); a lejárt éjféles helyőrző (nem ígér kezdési időt); a `round_number`-ből felismert „nincs meccse". |
 | `uzenetek.teszt.js` | Gyorsítótár-kerülés az élő lekéréseknél, és hogy meccs közben nem írjuk, hogy „lejátszotta pont nélkül". |
 | `visszateres.teszt.js` | A lap láthatóvá válásakor újra lekér-e (`FunTasy.ujraLathatokor`) — egységteszt és e2e is. |

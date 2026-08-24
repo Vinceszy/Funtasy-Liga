@@ -1,4 +1,4 @@
-const { BASE, jo, cim, hibak, inditas, vege } = require('./kozos');
+const { BASE, jo, cim, hibak, inditas, vege, jsonAtir } = require('./kozos');
 // A negy "0 pont" allapot es a kattinthatosag-jelzes tesztje mindket oldalon.
 const REPO = require('path').join(__dirname, '..');
 
@@ -23,15 +23,17 @@ const panelSzoveg = async page => {
   return (await page.locator('.accpanel').innerText()).trim();
 };
 const ell = (cimke, kapott, vart) =>
-  console.log((kapott.startsWith(vart) ? 'OK   ' : 'HIBA ') + cimke + ' -> ' + JSON.stringify(kapott.slice(0, 70)));
+  jo(kapott.startsWith(vart), cimke + ' -> ' + JSON.stringify(kapott.slice(0, 70)));
 
 (async () => {
   const browser = await inditas();
-  const hibak = [];
+  // Csak a lap JS-hibai gyulnek ide; MINDEN allitas a kozos jo()-n megy at,
+  // kulonben a futtato zoldnek latja a bukott tesztet is (igy is volt).
+  const oldalHiba = [];
 
   // ---------------- NB1 ----------------
   const page = await browser.newPage();
-  page.on('pageerror', e => hibak.push('NB1 pageerror: ' + e.message));
+  page.on('pageerror', e => oldalHiba.push('NB1 pageerror: ' + e.message));
   await page.route('**://fantasy-api.mlsz.hu/**', route => {
     const u = route.request().url();
     if (u.includes('game-player-stats')) {
@@ -47,6 +49,12 @@ const ell = (cimke, kapott, vart) =>
   });
   await page.route('**corsproxy.io/**', r => r.abort());
   await page.route('**allorigins**', r => r.abort());
+  // ELOFELTETEL, amit a teszt maga allit be: a mutatott fordulo ELO legyen.
+  // Enelkul a valos results.json donti el, es amint a gyujto lezarja a
+  // fordulot, a "zajlik" allapotokat lezart forduloban merne a teszt -
+  // ott viszont a "meccs vege, a pontok feldolgozasa tart" a helyes valasz.
+  const squadsR = require(REPO + '/squads.json').round;
+  await jsonAtir(page, '**/results.json*', j => Object.assign(j, { provisional: [squadsR] }));
   // A fixtura abszolut idopontokat tarol, amik idokozben elavulnak (egy
   // "meg nem kezdodott" meccs holnapra mar lejatszott). Ezert a kezdeseket
   // MOSTHOZ kepest allitjuk be, kulonben a teszt naponta mast mer.
@@ -83,9 +91,9 @@ const ell = (cimke, kapott, vart) =>
   await page.waitForSelector('.plr[data-acc]');
 
   console.log('--- NB1 ---');
-  console.log('sugosor:', await page.locator('.acchint').count() === 1 ? 'OK' : 'HIBA');
-  console.log('nyil minden soron:',
-    (await page.locator('.plr[data-acc]').count()) === (await page.locator('.plr[data-acc] .accarr').count()) ? 'OK' : 'HIBA');
+  jo(await page.locator('.acchint').count() === 1, 'súgósor');
+  jo((await page.locator('.plr[data-acc]').count()) === (await page.locator('.plr[data-acc] .accarr').count()),
+     'nyíl minden soron');
 
   const kattints = async nev => {
     const sor = page.locator('.plr', { hasText: nev }).first();
@@ -93,7 +101,7 @@ const ell = (cimke, kapott, vart) =>
     return panelSzoveg(page);
   };
   ell('meg nem kezdodott', await kattints('Meg Nem Kezdodott'), 'A meccs még nem kezdődött el — kezdés:');
-  console.log('nyitott sor jelolve:', await page.locator('.plr.open .accarr').count() === 1 ? 'OK' : 'HIBA');
+  jo(await page.locator('.plr.open .accarr').count() === 1, 'nyitott sor jelölve');
   ell('zajlik           ', await kattints('Eppen Fut'), 'A meccs zajlik');
   ell('nem lepett palyara', await kattints('Nem Lepett Palyara'), 'Nem lépett pályára');
   ell('lejatszotta, 0    ', await kattints('Lejatszotta Nullat'), 'Lejátszotta a meccset');
@@ -105,25 +113,21 @@ const ell = (cimke, kapott, vart) =>
     .locator('.pts').innerText();
   const futCim = await page.locator('.plr', { hasText: 'Futó Meccsű' }).first()
     .locator('.pts').getAttribute('title');
-  console.log((futPont.trim() === '–' ? 'OK   ' : 'HIBA ')
-    + 'futó meccs, 0 pont -> kötőjel (' + JSON.stringify(futPont.trim()) + ')');
-  console.log((/meccs zajlik/.test(futCim || '') ? 'OK   ' : 'HIBA ')
-    + 'a kötőjel magyarázata: ' + JSON.stringify(futCim));
+  jo(futPont.trim() === '–', 'futó meccs, 0 pont -> kötőjel (' + JSON.stringify(futPont.trim()) + ')');
+  jo(/meccs zajlik/.test(futCim || ''), 'a kötőjel magyarázata: ' + JSON.stringify(futCim));
   const lementPont = await page.locator('.plr', { hasText: 'Lejatszotta Nullat' }).first()
     .locator('.pts').innerText();
-  console.log((lementPont.trim() !== '–' ? 'OK   ' : 'HIBA ')
-    + 'lement meccs, 0 pont -> szám marad (' + JSON.stringify(lementPont.trim()) + ')');
+  jo(lementPont.trim() !== '–', 'lement meccs, 0 pont -> szám marad (' + JSON.stringify(lementPont.trim()) + ')');
   const futSzoveg = await kattints('Futó Meccsű');   // ujrakattintas zarna a panelt
   ell('fut, de is_played ', futSzoveg, 'A meccs zajlik');
-  console.log((/az MLSZ a pontokat a meccs végén rögzíti/.test(futSzoveg) ? 'OK   ' : 'HIBA ')
-    + 'NB1: a "zajlik" nem ígér élő pontot');
+  jo(/az MLSZ a pontokat a meccs végén rögzíti/.test(futSzoveg), 'NB1: a "zajlik" nem ígér élő pontot');
   ell('ejfel = nincs ido  ', await kattints('Ejfeli Placeholder'), 'A meccs még nem kezdődött el — kezdés: dec. 24. (időpont még nincs kitűzve)');
   const kj = await page.$$eval('.plr', ns => ns.filter(n => n.dataset.ng === '1')
     .map(n => (n.querySelector('.pts')||{}).textContent));
-  console.log((kj.length === 1 && kj[0] === '–' ? 'OK   ' : 'HIBA ') + 'nincs meccse -> kotojel: ' + JSON.stringify(kj));
+  jo(kj.length === 1 && kj[0] === '–', 'nincs meccse -> kötőjel: ' + JSON.stringify(kj));
   const t = await kattints('Pontot Szerzett');
-  console.log((/Győzelem/.test(t) && /Percek a pályán/.test(t) && !/Játszott perc\b/.test(t) ? 'OK   ' : 'HIBA ')
-    + 'pontot ero bontas -> ' + JSON.stringify(t.replace(/\n/g, ' | ').slice(0, 80)));
+  jo(/Győzelem/.test(t) && /Percek a pályán/.test(t) && !/Játszott perc\b/.test(t),
+     'pontot érő bontás -> ' + JSON.stringify(t.replace(/\n/g, ' | ').slice(0, 80)));
 
   // ---------------- PL ----------------
   const pl = require(REPO + '/draft_players.json');
@@ -149,7 +153,7 @@ const ell = (cimke, kapott, vart) =>
     { started: true,  finished: false, finished_provisional: true, kickoff_time: new Date(most - 7200e3).toISOString(),      team_h: rov2id[klub(C)], team_a: rov2id[klub(D)] },
   ];
   const page2 = await browser.newPage();
-  page2.on('pageerror', e => hibak.push('PL pageerror: ' + e.message));
+  page2.on('pageerror', e => oldalHiba.push('PL pageerror: ' + e.message));
   // A napi pontzaras a KLASSZIKUS FPL-rol jon (fantasy.premierleague.com),
   // ezert nem eleg a draft hosztot elfogni.
   await page2.route('**://*.premierleague.com/**', route => {
@@ -169,9 +173,9 @@ const ell = (cimke, kapott, vart) =>
   await page2.waitForSelector('.plr[data-acc]');
 
   console.log('--- PL ---');
-  console.log('sugosor:', await page2.locator('.acchint').count() === 1 ? 'OK' : 'HIBA');
-  console.log('nyil minden soron:',
-    (await page2.locator('.plr[data-acc]').count()) === (await page2.locator('.plr[data-acc] .accarr').count()) ? 'OK' : 'HIBA');
+  jo(await page2.locator('.acchint').count() === 1, 'súgósor');
+  jo((await page2.locator('.plr[data-acc]').count()) === (await page2.locator('.plr[data-acc] .accarr').count()),
+     'nyíl minden soron');
   const kattints2 = async e => {
     const sor = page2.locator(`.plr[data-e="${e}"]`).first();
     await sor.click();
@@ -185,14 +189,13 @@ const ell = (cimke, kapott, vart) =>
   if (E){
     ell('PL ures fordulo   ', await kattints2(E), 'Ebben a fordulóban nem játszik');
     const j = (await page2.locator(`.plr[data-e="${E}"] .pts`).textContent()).trim();
-    console.log((j === '–' ? 'OK   ' : 'HIBA ') + 'PL ures fordulo -> kotojel: ' + JSON.stringify(j));
+    jo(j === '–', 'PL üres forduló -> kötőjel: ' + JSON.stringify(j));
   } else console.log('(nincs otodik klub a teszt-kerethez)');
   // kotojel csak a meg nem kezdodott meccs jatekosainal
   const jelA = (await page2.locator(`.plr[data-e="${A}"] .pts`).textContent()).trim();
   const jelD = (await page2.locator(`.plr[data-e="${D}"] .pts`).textContent()).trim();
-  console.log((jelA === '–' && jelD === '0' ? 'OK   ' : 'HIBA ') + `kotojel/0: nem kezdodott="${jelA}" lejatszott="${jelD}"`);
+  jo(jelA === '–' && jelD === '0', `kötőjel/0: nem kezdődött="${jelA}" lejátszott="${jelD}"`);
 
-  console.log('pageerror-ok:', hibak.length ? hibak : 'nincs');
-  await browser.close();
-  process.exit(hibak.length ? 1 : 0);
+  jo(oldalHiba.length === 0, 'nincs JS-hiba az oldalakon: ' + JSON.stringify(oldalHiba));
+  await vege(browser);
 })();
