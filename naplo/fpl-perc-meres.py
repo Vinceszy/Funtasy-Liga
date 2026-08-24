@@ -68,6 +68,17 @@ with open(NAPLO, "a", encoding="utf-8") as f:
         f.write("# Elo meccs perc-merese. Minden minta egy sor (UTC).\n"
                 "# mora = a meccs oraja | dt = a ket vegpont lekerese kozt eltelt ms\n"
                 "# jatekos: <id>:<perc>[k=kezdo, b=csere, R=piros]\n")
+        # Milyen statisztikakat ismer egyaltalan az FPL? Ha a "starts" itt
+        # szerepel, akkor eselyes, hogy az explain-be is bekerul valahol -
+        # ha nem, akkor dupla forduloban meccsenkent nem tudhatjuk meg.
+        bs = hoz("https://draft.premierleague.com/api/bootstrap-static")
+        f.write("# element_stats: %s\n"
+                % json.dumps(bs.get("element_stats"), ensure_ascii=False)[:800])
+        # A meccs sajat stats tombje: van-e benne barmi kezdo/csere jellegu?
+        for m in elok:
+            f.write("# meccs stats azonositok: %s\n"
+                    % [x.get("s") or x.get("identifier") for x in (m.get("stats") or [])])
+            break
         # Egyszer kiirjuk NYERSEN egy kezdo es egy csere explain-jet. Ez a dupla
         # fordulo tervezesehez kell: az explain meccsekre bontva jon, es a
         # kerdes az, hogy a "starts" szerepel-e benne. Ha csak a pontot ero
