@@ -112,6 +112,11 @@ lapok = ((j or {}).get("meta") or {}).get("last_page")
 ki("")
 ki("### A teljes torzs %s lapbol all (15/lap)." % lapok)
 
+# A naplo kiirasa MEG A KILEPES ELOTT - kulonben a 2. kor eredmenye
+# elveszne (a regi, 1. koros kod a fajl vegen irt volna).
+with open(NAPLO, "w", encoding="utf-8") as f:
+    f.write("\n".join(sorok) + "\n")
+print("\n".join(sorok))
 sys.exit(0)
 
 ki("# Jatekoslista-vegpont kereses. Cel: teljes torzs + fordulonkenti pont.")

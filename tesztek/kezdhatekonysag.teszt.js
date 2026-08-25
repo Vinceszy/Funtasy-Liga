@@ -69,6 +69,32 @@ const { BASE, jo, inditas, vege, apiKi } = require('./kozos');
   jo(oszlop.fej, 'a PL tabellának van KEZD% oszlopa (title-lel)');
   jo(oszlop.cellak.length === 10 && oszlop.cellak.every(x => /^\d+%$|^–$/.test(x)),
      'minden sorban százalék (vagy kötőjel) áll');
+  // A td.name FLEX (a monogram vedelme miatt) - flex konteneren a SZOVEG es
+  // a span kozotti szokoz ELVESZIK, ezert a tavolsagot gap adja. E nelkul
+  // "WhiteARS" allt a "White ARS" helyett; a monogram-javitas regresszioja
+  // volt, kepen fogtuk meg. A Szezon jatekosai lista sora pont ilyen:
+  // [poszt-chip][nevszoveg][klub-chip].
+  const koz = await p.evaluate(([id]) => {
+    const d = document.createElement('div');
+    d.innerHTML = jatekosokHTML(+id);
+    document.body.appendChild(d);
+    const cella = d.querySelector('td.name');
+    const szoveg = [...cella.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+    const klub = cella.querySelector('.tm');
+    let res = null;
+    if (szoveg && klub) {
+      const r = document.createRange(); r.selectNode(szoveg);
+      res = Math.round(klub.getBoundingClientRect().left - r.getBoundingClientRect().right);
+    }
+    const van = { szoveg: !!szoveg, klub: !!klub, res };
+    d.remove();
+    return van;
+  }, [Object.keys(require === undefined ? {} : {})[0] || (await p.evaluate(() => Object.keys(ENTRIES)[0]))]);
+  console.log('   név és klub-címke közti térköz: ' + JSON.stringify(koz));
+  jo(koz.szoveg && koz.klub, 'a mérés talált névszöveget ÉS klub-címkét (nem üresen megy át)');
+  jo(koz.res != null && koz.res >= 3,
+     'van térköz a név és a klub-címke között (nem "WhiteARS"): ' + koz.res + 'px');
+
   jo(perr.length === 0, 'nincs JS-hiba a PL-oldalon: ' + JSON.stringify(perr));
   await p.close();
 

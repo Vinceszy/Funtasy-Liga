@@ -51,7 +51,13 @@ th{font:600 11px Inter;letter-spacing:1px;text-transform:uppercase;color:var(--d
 th:first-child,th:nth-child(2){text-align:left}
 td{padding:9px 10px;border-bottom:1px solid var(--panel2);text-align:right;font-family:'JetBrains Mono';font-size:13.5px}
 td.name{font-family:Inter;font-weight:700;text-align:left;font-size:14px}
-td.name{display:flex;align-items:center;min-width:0}
+/* A flex a monogram vedelme miatt kell (kulonben a sor vegi ellipszis
+   eppen azt vagja le) - DE flex konteneren a szoveg es a span kozotti
+   szokoz elveszik, ezert a tavolsagot gap adja. E nelkul "WhiteARS" allt
+   a "White ARS" helyett. */
+td.name{display:flex;align-items:center;min-width:0;gap:6px}
+/* a poszt-chip sajat margoja a gap-pel duplazna */
+td.name .ppos{margin-right:0}
 td.rank{text-align:left;color:var(--dim);width:30px}
 tr.leader td.rank{color:var(--amber)}
 td.pont{color:var(--amber);font-weight:700;font-size:15px}
