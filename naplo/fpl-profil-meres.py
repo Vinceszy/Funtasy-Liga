@@ -1,159 +1,116 @@
 #!/usr/bin/env python3
-"""EGYSZERI meres a jatekosprofil PL-oldalahoz.
+"""EGYSZERI meres a jatekosprofil PL-oldalahoz - 2. kor.
 
-Az MLSZ-oldal mar tisztazva (naplo/mlsz-jatekoslista.txt):
-  - a teljes torzs egy keresbol megjon (players?per_page=500);
-  - egy jatekos EGESZ szezonjanak teteles pontbontasa is megjon
-    (game-player-stats?filter[competition_player_id]=X, fordulo-szuro
-    NELKUL) - es ezt a bongeszo maga is hivhatja, ahogy ma is teszi.
+AZ 1. KOR EREDMENYE (naplo/fpl-profil.txt):
+  - a Draft SAJAT element-summary/{id} vegpontja egy keresbol adja egy
+    jatekos egesz szezonjat: fordulonkent `event`, `total_points`, minden
+    statisztika, es egy `detail` mezo "AVL (H) 4-0" alakban;
+  - a klasszikus FPL azonositoi NEM egyeznek a Draftéval (egy jatekosnal
+    1 vs 14 pont), tehat az a vegpont nem hasznalhato.
 
-A PL-oldalon ket dolog hianyzik a profilhoz:
-  1) egy jatekos FORDULONKENTI pontja akkor is, amikor SENKINEL sem volt
-     (a draft_history.json csak a kereteket orzi);
-  2) az adott fordulos ELLENFEL es eredmeny (a lezart fordulok meccseit ma
-     a bongeszo keri le fordulonkent, event/{gw}/fixtures).
+EZ A KOR EGYETLEN KERDEST DONT EL: a `detail` szamparja MILYEN SORRENDBEN
+all? Ket olvasat lehetseges, es 4-0-s hazai gyozelemnel a ketto egybeesik:
+  (a) HAZAI-VENDEG (mint mindenhol maskul az oldalon), vagy
+  (b) a JATEKOS CSAPATA - ELLENFEL.
+Ha rosszul talalnank el, minden idegenbeli meccs eredmenye megfordulna a
+profilban - es pont az ilyen csendes hiba a legrosszabb fajta.
 
-Ez a meres azt kerdezi, van-e olyan vegpont, ami egy JATEKOS egesz
-szezonjat egy keresbol adja - a klasszikus FPL element-summary pontosan
-ilyen. A kerdes, hogy (a) elerheto-e, (b) UGYANAZOK-e az azonositok, mint
-a Draft-jatekban. A (b)-t nem hisszuk el, hanem OSSZEVETJUK a repoban levo
-draft_history.json 1. fordulos pontjaival.
+A dontes nem tippbol szuletik: a fordulo meccseit (event/{gw}/fixtures)
+tekintjuk hitelesnek - ott team_h/team_a es a ket gol kulon mezoben all -,
+es ahhoz mérjük a `detail` szoveget. Kifejezetten IDEGENBELI, NEM dontetlen
+meccseket keresunk, mert csak azok valasztjak szet a ket olvasatot.
 
 Csak olvas; a naplot a workflow commitolja.
 """
-import json, os, sys
+import json, os, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import collect_draft  # fetch, B
-
-import urllib.error, urllib.parse, urllib.request
 
 GYOKER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NAPLO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fpl-profil.txt")
 sorok = []
 ki = sorok.append
 
-
-def get(url, retries=2):
-    """Nyers lekeres tetszoleges hoszra (a collect_draft.fetch mindig a Draft
-    eloteteet teszi ele)."""
-    keres = urllib.request.Request(url, headers={
-        "Accept": "application/json",
-        "User-Agent": "funtasy-archiver/1.0"})
-    for i in range(retries):
-        try:
-            with urllib.request.urlopen(keres, timeout=30) as v:
-                return v.status, json.loads(v.read().decode("utf-8"))
-        except urllib.error.HTTPError as e:
-            return e.code, None
-        except Exception as e:
-            if i == retries - 1:
-                return "hiba: %s" % e, None
-    return None, None
-
-
-def meret(o):
-    return len(json.dumps(o, separators=(",", ":")))
-
-
-# ---- referencia: mit tudunk MAR a repobol? ----
 with open(os.path.join(GYOKER, "draft_history.json"), encoding="utf-8") as f:
     tortenet = json.load(f)["rounds"]
 with open(os.path.join(GYOKER, "draft_players.json"), encoding="utf-8") as f:
-    torzs = json.load(f)["players"]
+    torzs = json.load(f)
+KLUB = torzs["teams"]                       # csapat-id -> rovidnev
+JATEKOSNEV = torzs["players"]
 
-gw = sorted(tortenet, key=int)[0]
-ismert = {}                       # element -> pont az adott forduloban
-for lista in tortenet[gw].values():
-    for p in lista:
-        ismert[p["e"]] = p["pts"]
-minta = sorted(ismert, key=lambda e: -ismert[e])[:5]
+GW = sorted(tortenet, key=int)[0]
+elemek = sorted({p["e"] for lista in tortenet[GW].values() for p in lista})
 
-ki("# PL profil-meres. Referencia: a repo draft_history.json %s. forduloja." % gw)
-ki("# Ismert (Draft) pontok az osszevetéshez:")
-for e in minta:
-    ki("#   element %-4s %-16s -> %s pont" % (e, (torzs.get(str(e)) or {}).get("n"), ismert[e]))
+ki("# PL profil-meres, 2. kor: a `detail` szamparjanak SORRENDJE.")
+ki("# Hiteles forras: event/%s/fixtures (team_h, team_a, team_h_score," % GW)
+ki("# team_a_score kulon mezoben). Ehhez merjuk a `detail` szoveget.")
 ki("")
 
-# ---- 1) van-e element-summary a DRAFT API-ban? ----
-ki("## 1) element-summary a Draft API-ban")
-for e in minta[:2]:
-    st, j = get(collect_draft.B + "element-summary/%d" % e)
-    kulcsok = sorted(j.keys()) if isinstance(j, dict) else None
-    ki("=== draft element-summary/%-4s -> HTTP %s | kulcsok: %s" % (e, st, kulcsok))
-    if isinstance(j, dict) and isinstance(j.get("history"), list) and j["history"]:
-        ki("    history[0]: %s" % json.dumps(j["history"][0], ensure_ascii=False)[:400])
-        ki("    history hossz: %d | valasz merete: %d bajt" % (len(j["history"]), meret(j)))
+st, fx = collect_draft.fetch("event/%s/fixtures" % GW)
+if not isinstance(fx, list):
+    ki("### A fixtures nem johetett le (HTTP %s) - a meres nem folytathato." % st)
+    with open(NAPLO, "w", encoding="utf-8") as f:
+        f.write("\n".join(sorok) + "\n")
+    print("\n".join(sorok))
+    sys.exit(0)
+meccs = {m.get("id"): m for m in fx}
+ki("### %d meccs a %s. forduloban." % (len(fx), GW))
 ki("")
 
-# ---- 2) a KLASSZIKUS FPL element-summary: elerheto-e, es stimmel-e az azonosito? ----
-ki("## 2) klasszikus FPL element-summary - es EGYEZNEK-E AZ AZONOSITOK?")
-KL = "https://fantasy.premierleague.com/api/"
-for e in minta:
-    st, j = get(KL + "element-summary/%d/" % e)
+MINTA = re.compile(r"^\s*(\S+)\s*\((H|A)\)\s*(\d+)\s*-\s*(\d+)\s*$")
+hazai_vendeg = jatekos_ellenfel = 0
+ellentmondas = []
+vizsgalt = 0
+
+for e in elemek:
+    if vizsgalt >= 25:
+        break
+    st, j = collect_draft.fetch("element-summary/%d" % e)
     if not isinstance(j, dict):
-        ki("=== klasszikus element-summary/%-4s -> HTTP %s" % (e, st))
         continue
-    hist = j.get("history") or []
-    sor = next((h for h in hist if str(h.get("round")) == str(gw)), None)
-    ki("=== klasszikus element-summary/%-4s -> HTTP %s | history=%d | %d bajt"
-       % (e, st, len(hist), meret(j)))
-    if sor:
-        ki("    %s. fordulo: %s pont (a Draftban: %s) %s"
-           % (gw, sor.get("total_points"), ismert[e],
-              "EGYEZIK" if sor.get("total_points") == ismert[e] else "!!! ELTER"))
-        ki("    a sor mezoi: %s" % sorted(sor.keys()))
-        ki("    ellenfel/eredmeny mezok: opponent_team=%s was_home=%s team_h_score=%s team_a_score=%s"
-           % (sor.get("opponent_team"), sor.get("was_home"),
-              sor.get("team_h_score"), sor.get("team_a_score")))
-ki("")
+    for h in (j.get("history") or []):
+        if str(h.get("event")) != str(GW):
+            continue
+        d = (h.get("detail") or "").strip()
+        m = MINTA.match(d)
+        fxr = meccs.get(h.get("fixture"))
+        if not m or not fxr:
+            ki("=== elem %-4s detail=%r fixture=%s -> NEM ERTELMEZHETO"
+               % (e, d, h.get("fixture")))
+            continue
+        ell, hol, a, b = m.group(1), m.group(2), int(m.group(3)), int(m.group(4))
+        hs, vs_ = fxr.get("team_h_score"), fxr.get("team_a_score")
+        hazai_klub = KLUB.get(str(fxr.get("team_h")), "?")
+        vendeg_klub = KLUB.get(str(fxr.get("team_a")), "?")
+        if hs is None or vs_ is None or hs == vs_:
+            continue                        # dontetlen nem valaszt szet
+        idegenben = (hol == "A")
+        if not idegenben:
+            continue                        # hazai meccs sem valaszt szet
+        vizsgalt += 1
+        # idegenbeli meccs: a jatekos csapata a VENDEG
+        hv = (a == hs and b == vs_)         # (a) hazai-vendeg olvasat
+        je = (a == vs_ and b == hs)         # (b) jatekos-ellenfel olvasat
+        hazai_vendeg += 1 if hv else 0
+        jatekos_ellenfel += 1 if je else 0
+        cimke = "HAZAI-VENDEG" if hv and not je else ("JATEKOS-ELLENFEL" if je and not hv else "?!")
+        ki("=== %-16s detail=%-18r | fixtures: %s %s-%s %s | ellenfel a detailben: %s -> %s"
+           % ((JATEKOSNEV.get(str(e)) or {}).get("n", "#%d" % e), d,
+              hazai_klub, hs, vs_, vendeg_klub, ell, cimke))
+        if not hv and not je:
+            ellentmondas.append("elem %s: detail=%r, fixtures %s-%s" % (e, d, hs, vs_))
 
-# ---- 3) mennyibe kerul a fordulonkenti tarolas (a masik ut)? ----
-ki("## 3) a masik ut: fordulonkent EGY keres mindenkire (event/{gw}/live)")
-st, j = get(collect_draft.B + "event/%s/live" % gw)
-el = (j or {}).get("elements") if isinstance(j, dict) else None
-if isinstance(el, dict):
-    k = list(el)[0]
-    ki("=== event/%s/live -> HTTP %s | %d jatekos | %d bajt" % (gw, st, len(el), meret(j)))
-    ki("    egy elem kulcsai: %s" % sorted(el[k].keys()))
-    ki("    stats: %s" % json.dumps((el[k].get("stats") or {}), ensure_ascii=False)[:400])
-    csak_pont = {i: (v.get("stats") or {}).get("total_points") for i, v in el.items()
-                 if (v.get("stats") or {}).get("total_points")}
-    ki("    ha CSAK a nem-nulla pontot tarolnank: %d jatekos, %d bajt/fordulo"
-       % (len(csak_pont), meret(csak_pont)))
-else:
-    ki("=== event/%s/live -> HTTP %s (nincs elements)" % (gw, st))
 ki("")
-
-ki("## 4) a fordulo meccsei (a tarolando meccsfajlhoz)")
-st, fx = get(collect_draft.B + "event/%s/fixtures" % gw)
-if isinstance(fx, list) and fx:
-    ki("=== event/%s/fixtures -> HTTP %s | %d meccs | %d bajt" % (gw, st, len(fx), meret(fx)))
-    ki("    egy meccs kulcsai: %s" % sorted(fx[0].keys()))
-else:
-    ki("=== event/%s/fixtures -> HTTP %s" % (gw, st))
-
-# ---- 5) a ket hianyzo reszlet: van-e total_points, es van-e osszpont a torzsben? ----
-ki("")
-ki("## 5) a ket hianyzo reszlet")
-st, j = get(collect_draft.B + "element-summary/%d" % minta[0])
-h = ((j or {}).get("history") or [None])[0] if isinstance(j, dict) else None
-if h:
-    ki("=== draft element-summary history-sor MINDEN mezoje:")
-    ki("    %s" % sorted(h.keys()))
-    ki("    total_points=%s (a Draftban ismert: %s) | detail=%r | event=%s"
-       % (h.get("total_points"), ismert[minta[0]], h.get("detail"), h.get("event")))
-    fx = (j or {}).get("fixtures") or []
-    ki("    fixtures: %d jovobeli meccs, elso: %s"
-       % (len(fx), json.dumps(fx[0], ensure_ascii=False)[:200] if fx else "-"))
-st, bs = collect_draft.fetch("bootstrap-static")
-el = (bs or {}).get("elements") if isinstance(bs, dict) else None
-if el:
-    ki("=== draft bootstrap-static: egy jatekos MINDEN mezoje:")
-    ki("    %s" % sorted(el[0].keys()))
-    p0 = next((x for x in el if x.get("id") == minta[0]), el[0])
-    ki("    %s: total_points=%s event_points=%s"
-       % (p0.get("web_name"), p0.get("total_points"), p0.get("event_points")))
+ki("### %d idegenbeli, NEM dontetlen meccs vizsgalva." % vizsgalt)
+ki("###   hazai-vendeg olvasat stimmel:      %d" % hazai_vendeg)
+ki("###   jatekos-ellenfel olvasat stimmel:  %d" % jatekos_ellenfel)
+if ellentmondas:
+    ki("### EGYIK OLVASAT SEM ALL a kovetkezokre:")
+    for x in ellentmondas[:10]:
+        ki("    " + x)
+if vizsgalt == 0:
+    ki("### NEM VOLT ELEGENDO MINTA - a kerdes eldontetlen maradt.")
 
 with open(NAPLO, "w", encoding="utf-8") as f:
     f.write("\n".join(sorok) + "\n")
