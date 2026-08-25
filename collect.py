@@ -507,8 +507,15 @@ def main():
         fordulo_meccsei = {m["id"]: m for m in meccsek["rounds"].get(str(r)) or []
                            if m.get("id") is not None}
         for nev, uid in ids.items():
+            # A meccslistat akkor kerjuk, ha az elo fordulorol van szo, ha a
+            # regi formatumot potoljuk, ha a meccsek.json-bol hianyzik valami,
+            # VAGY ha a fordulo hivatalos pontja most valtozott. Az utobbi a
+            # POTOLT MECCS esete: az elhalasztott meccs egyszeruen nincs benne
+            # a listaban (nem "eredmeny nelkuli"), tehat a meccs_potlas
+            # feltetele nem venne eszre - a lejatszasakor viszont a pontok
+            # biztosan valtoznak, mert a percekert is jar pont.
             st, j = squad(uid, r, jatek=(r == aktualis or r in migralando
-                                         or r in meccs_potlas))
+                                         or r in meccs_potlas or r in valtozott))
             if st != 200 or not isinstance(j, dict) or not j.get("data"):
                 print("  ! %d. fordulo / %s: HTTP %s" % (r, nev, st), file=sys.stderr)
                 teljes = False

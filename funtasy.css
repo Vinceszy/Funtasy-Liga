@@ -37,6 +37,9 @@ h1 .fun{color:var(--amber)}h1 .tag{color:var(--magenta)}
 .btn:hover{filter:brightness(1.08)}.btn:disabled{opacity:.5;cursor:wait}
 #status{font:500 12px 'JetBrains Mono';color:var(--dim);width:100%;min-height:16px}
 #status.err{color:var(--lose)}#status.ok{color:var(--win)}
+/* Nem hiba, de nem is naprakesz: a fordulo lezarult, a tarolt adatban meg
+   nincs benne az eredmeny (a gyujto 3 orankent fut). */
+#status.varakozik{color:var(--amber)}
 .grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:22px}
 .grid>*{min-width:0}
 @media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}

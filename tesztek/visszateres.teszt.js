@@ -1,4 +1,4 @@
-const { BASE, jo, cim, hibak, inditas, vege, apiKi } = require('./kozos');
+const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozos');
 // Frissites, amikor a lap ismet lathatova valik (FunTasy.ujraLathatokor).
 // 1) egysegteszt a segitore, 2) e2e a PL-oldalon mockolt FPL-API-val:
 //    a fooldal tenyleg ujra lekeri-e az elo pontokat visszatereskor.
@@ -78,6 +78,14 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi } = require('./kozos');
   const hist = require(require('path').join(__dirname,'..','draft_history.json'));
   const GW = Object.keys(hist.rounds)[0];
   const elemek = [...new Set(Object.values(hist.rounds[GW]).flat().map(x => x.e))];
+  // A forgatokonyv elofeltetele, hogy a fordulo eredmenye MEG NINCS a tarolt
+  // adatban - kimondjuk, nem a repo pillanatnyi allapotabol orokoljuk (a
+  // gyujto barmikor beirhatja az eredmenyt, es akkor az elo reteg mar nem
+  // irna felul semmit - helyesen).
+  await jsonAtir(p, '**/draft.json*', j => {
+    j.schedule[GW] = (j.schedule[GW] || []).map(m => [m[0], m[1], null, null]);
+    return j;
+  });
   await p.route('**premierleague.com/api/**', route => {
     const u = route.request().url();
     const json = b => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });

@@ -1,6 +1,24 @@
 {
  "bejegyzesek": [
   {
+   "datum": "2026-08-25",
+   "tipus": "bugfix",
+   "ligak": [
+    "pl"
+   ],
+   "cim": "A forduló végi automatikus cserék bekerülnek a keretbe",
+   "leiras": "Az FPL a forduló zárásakor beállítja az első beférő padost a nem játszó kezdő helyére. Az oldal a zárás előtti állapotot mutathatta volna véglegesnek, ha az adatgyűjtés éppen rossz időben fut. Mostantól a forduló addig frissül, amíg az FPL le nem zárja, tehát a csere és a helyes „Kezdők” összeg biztosan bekerül."
+  },
+  {
+   "datum": "2026-08-25",
+   "tipus": "bugfix",
+   "ligak": [
+    "pl"
+   ],
+   "cim": "A státuszsor nem ír „naprakész”-t, amíg a lezárt forduló eredménye hiányzik",
+   "leiras": "Az FPL a forduló végén egyszerre zárja le az eredményeket, az oldal adatgyűjtése viszont háromóránként fut. A köztes időben a státuszsor „naprakész”-t írt, pedig a tabellában még a zárás előtti állás volt. Most megmondja, hogy a forduló lezárult, az eredmények a következő frissítéssel kerülnek be, és kiírja a tárolt állás idejét."
+  },
+  {
    "datum": "2026-08-24",
    "tipus": "funkcio",
    "ligak": [

@@ -228,13 +228,38 @@ def main():
         hist = {"updated": None, "rounds": {}}
     hist.setdefault("rounds", {})
 
-    # celok: az aktualis fordulo (frissul, amig tart) + minden hianyzo
+    # Celok: az aktualis fordulo (frissul, amig tart), minden hianyzo, ES
+    # minden olyan fordulo, amirol meg NEM tudjuk biztosan, hogy veglegesen
+    # lezarult.
+    #
+    # MIERT: az FPL a fordulo vegen AUTOMATIKUS CSEREKET hajt vegre - a nem
+    # jatszo kezdo helyere beallitja az elso beferot a padrol -, es ilyenkor
+    # ATIRJA a pick "position" mezojet. Merve (2026-08-25, naplo/fpl-cserek.txt):
+    # ez a "lockdown"-kor tortenik, egyszerre a tobbivel, 08:03 es 08:23 UTC
+    # kozott; a jelzese a game vegpont "current_event_finished" mezoje.
+    # A gyujto 3 orankent fut, tehat ha a current_event azelott lepne tovabb,
+    # hogy a zaras utan meg egyszer lekertuk volna a fordulot, a keret
+    # VEGLEGESEN a csere elotti allapotban fagyna be (rossz "b" jelzo, rossz
+    # "Kezdok" osszeg). 2026-08-25-en ez csak azon mult, hogy a futas hat
+    # perccel a zaras utan esett.
+    #
+    # A mar lezartnak ismert fordulokat a hist["veglegesek"] tartja szamon, hogy egy
+    # veglegesitett fordulot ne kerjunk le ujra minden korben.
+    # AZ AKTUALIS FORDULO MINDIG CEL, akkor is, ha mar lezarult. Ez a regi
+    # viselkedes, es nem diszites: amig a current_event nem lep tovabb (egy
+    # hetig), addig az utolagos FPL-korrekciok igy jonnek at. Egy korabbi
+    # valtozat ezt kivette (a lezart fordulot veglegesnek jelolve), amivel a
+    # zaras utani egesz hetet vakon hagyta volna.
+    # A `veglegesek` lista csak azt donti el, hogy a REGI fordulokat kell-e ujra
+    # kerni - lasd lentebb, miert.
+    veglegesek = {int(x) for x in (hist.get("veglegesek") or [])}
     celok = {int(aktualis)}
     for gw in range(1, int(aktualis) + 1):
         megvan = hist["rounds"].get(str(gw)) or {}
-        if len(megvan) < len(liga_idk):
+        if len(megvan) < len(liga_idk) or gw not in veglegesek:
             celok.add(gw)
 
+    most_teljes = {}          # gw -> ebben a futasban minden csapat kerete megjott-e
     for gw in sorted(celok):
         st, live = fetch("event/%d/live" % gw)
         pont = {}
@@ -276,13 +301,31 @@ def main():
                              "b": (p.get("position") or 0) > 11,
                              "pts": pont.get(str(p.get("element")), 0)}
                             for p in picks]
+        # EBBEN A FUTASBAN jott-e be minden csapat kerete? A tarolt adatbol
+        # ez nem latszik: a sor alatti osszefesules miatt egy regebbi, teljes
+        # pillanatkep akkor is teljesnek mutatna a fordulot, ha most epp
+        # elhasalt egy lekeres - es akkor a csere elotti allapotot
+        # rogzitenenk veglegesnek.
+        most_teljes[gw] = (len(uj) == len(liga_idk))
         if uj:
             hist["rounds"][str(gw)] = {**(hist["rounds"].get(str(gw)) or {}), **uj}
             print("  fordulonkenti keret: GW%d, %d/%d csapat"
                   % (gw, len(uj), len(liga_idk)))
 
+    # Egy fordulo VEGLEGES, ha az FPL mar tullepett rajta, vagy ha o az
+    # aktualis, de a game vegpont szerint befejezodott (lockdown megtortent).
+    # Csak akkor jelolheto veglegesnek, ha ebben a futasban minden csapat keretet
+    # sikerult behozni - kulonben egy elhasalt lekeres utan a csere elotti
+    # allapotot rogzitenenk veglegesnek.
+    veg = bool(game.get("current_event_finished")) if isinstance(game, dict) else False
+    for gw in sorted(celok):
+        if not most_teljes.get(gw):
+            continue
+        if gw < int(aktualis) or (gw == int(aktualis) and veg):
+            veglegesek.add(gw)
     kiir_ha_valtozott("draft_history.json",
-                      {"updated": None, "rounds": hist["rounds"]})
+                      {"updated": None, "rounds": hist["rounds"],
+                       "veglegesek": sorted(veglegesek)})
     print("Kesz.")
     return 0
 

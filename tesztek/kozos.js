@@ -24,10 +24,25 @@ const cim = t => console.log('\n--- ' + t + ' ---');
 const inditas = () => chromium.launch({ executablePath: CHROME });
 const vege = async br => { if (br) await br.close(); process.exit(hibak.length ? 1 : 0); };
 
-/** A repobol jovo JSON-t menet kozben atirja (fixtura-fajlok nelkul). */
+/** A repobol jovo JSON-t menet kozben atirja (fixtura-fajlok nelkul).
+
+    A belso lekeres (route.fetch) a helyi tesztszerveren megy at, ami a
+    teljes tesztsor terhelese alatt neha eldobja a kapcsolatot. Ha ilyenkor
+    csendben tovabbengednenk, a teszt ELOFELTETELE veszne el, es a teszt
+    nem a sajat hibaja miatt bukna - rossz uzenettel (ez tortent: az
+    "uzenetek" es tarsai futasonkent mas-mas allitasnal buktak). Ezert
+    ujraprobalkozunk, es ha vegleg nem megy, HANGOSAN bukunk. */
 async function jsonAtir(page, minta, atalakit) {
   await page.route(minta, async route => {
-    const v = await route.fetch();
+    let v = null, hiba = null;
+    for (let i = 0; i < 3; i++) {
+      try { v = await route.fetch(); hiba = null; break; }
+      catch (e) { hiba = e; await new Promise(r => setTimeout(r, 150 * (i + 1))); }
+    }
+    if (!v) {
+      console.error('jsonAtir: a belso lekeres 3x elhasalt (' + minta + '): ' + hiba);
+      return route.abort();
+    }
     let j;
     try { j = await v.json(); } catch (e) { return route.fulfill({ response: v }); }
     route.fulfill({ status: 200, contentType: 'application/json',

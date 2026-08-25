@@ -418,7 +418,8 @@
     },
     betoltesHiba: function (mi, hiba) {
       return 'Nem sikerült betölteni a liga adatait (' + mi + '): ' + hiba;
-    }
+    },
+    datumOra: datumOra
   };
 
   /* Ligavalto sav. `aktiv` az eppen nyitott liga id-je (a kezdolapon null),

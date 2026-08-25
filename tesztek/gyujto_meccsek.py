@@ -12,6 +12,10 @@ M4: a hianyzo fordulot a gyujto meccslistaval keri ujra (potlas), de ha mar
     games-valasz nagy (klublogokkal jon), feleslegesen nem kerjuk.
 M5: futo meccsu fordulo a kovetkezo korben is meccslistaval megy, hogy a
     vegeredmeny bekeruljon.
+M6: POTOLT MECCS. Az elhalasztott meccs nincs benne a listaban (nem
+    "eredmeny nelkuli"), tehat az M4 feltetele nem venne eszre a potlasat.
+    Viszont a lejatszasakor a fordulo hivatalos pontja valtozik - ilyenkor a
+    gyujto meccslistaval keri ujra a fordulot, es a potolt meccs bekerul.
 """
 import importlib.util, json, os, sys, tempfile, urllib.parse
 
@@ -129,6 +133,19 @@ allit(not elso_gamesszel,
 allit(len(masodik_gamesszel) > 0,
       "M5: a futo meccsu 2. fordulo tovabbra is meccslistaval megy")
 
+print("\n--- M6: potolt meccs (a hivatalos pont valtozik) ---")
+# az 1. fordulo teljes es minden meccse lezart -> az M4 szerint nem kernenk
+# ujra. Most viszont az MLSZ mas pontot ad ra: ez a potolt meccs jelzese.
+MECCSEK[1].append(meccs(13, "EEE", "FFF", "completed", 1, 1, 0))
+API[1] = {n: 55.0 for n in NEVEK}
+jatekos_keresek.clear()
+c.main()
+m = json.load(open("meccsek.json"))
+elso_gamesszel = [r for r, g in jatekos_keresek if g and r == 1]
+allit(elso_gamesszel, "M6: a valtozott pontu fordulot meccslistaval keri ujra")
+allit(any(x["id"] == 13 for x in m["rounds"].get("1") or []),
+      "M6: a potolt meccs bekerult: " + repr([x["id"] for x in m["rounds"]["1"]]))
+
 if hibak:
     print("\n%d allitas bukott." % len(hibak)); sys.exit(1)
-print("\nMind az ot allitas rendben.")
+print("\nMind a het allitas rendben.")

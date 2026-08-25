@@ -1,4 +1,4 @@
-const { BASE, jo, cim, hibak, inditas, vege, apiKi } = require('./kozos');
+const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozos');
 // A felulvizsgalat utani javitasok tesztje.
 
 (async () => {
@@ -110,10 +110,20 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi } = require('./kozos');
   console.log('\n--- PL: a forduló lezárul, amíg a lap háttérben van ---');
   const p2 = await br.newPage();
   await p2.addInitScript(() => { window.__ora = 0; const e = Date.now; Date.now = () => e() + window.__ora; });
+  // A fordulo eredmenye a TAROLT adatban meg NINCS benne - ezt kimondjuk
+  // (nem a repo pillanatnyi allapotara epitunk: a gyujto barmikor behozhatja
+  // az eredmenyt, es akkor ez a forgatokonyv magatol szetesne). A zaras
+  // utani elvaras igy nem "Naprakesz": a gyujtes meg hatravan, es ezt a
+  // statuszsor meg is mondja (lasd zarasires.teszt.js - ott a masik ag is).
   const hist = require(require('path').join(__dirname,'..','draft_history.json'));
   const GW = Object.keys(hist.rounds)[0];
   const elemek = [...new Set(Object.values(hist.rounds[GW]).flat().map(x => x.e))];
   let kesz = false;
+  await jsonAtir(p2, '**/draft.json*', j => {
+    const GW2 = Object.keys(j.schedule)[0];
+    j.schedule[GW2] = j.schedule[GW2].map(m => [m[0], m[1], null, null]);
+    return j;
+  });
   await p2.route('**premierleague.com/api/**', route => {
     const u = decodeURIComponent(route.request().url());
     const json = b => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
@@ -141,7 +151,8 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi } = require('./kozos');
   console.log('   "élő" jelölés a lezárás után:', eloUtana, '| státusz:', JSON.stringify(statusz.slice(0, 40)));
   jo(eloElotte > 0, 'a forduló alatt van "élő" jelölés');
   jo(eloUtana === 0, 'a lezárás után egy meccs sem marad "élő" jelölésű');
-  jo(/Naprakész/.test(statusz), 'a státuszsáv naprakészt ír');
+  jo(/lezárult/.test(statusz) && !/Naprakész/.test(statusz),
+     'a státuszsáv megmondja, hogy az eredmény még hiányzik — nem ír „naprakész"-t');
   await p2.close(); await p.close();
   await br.close();
   process.exit(hibak.length ? 1 : 0);

@@ -217,9 +217,8 @@ teljes képernyős, ragadós × gombbal.
 | `results.json` | H2H eredmények archívuma: `{updated, provisional:[...], schedule:{"1":[[hazai,vendég,hp,vp],...]}}`. Az oldal ebből tölt, felülírva a beégetett menetrendet. A `provisional` a még le nem zárult fordulók listája. |
 | `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”), `start`-ot (az adott fordulós meccsének kezdése), `vege: true`-t (a meccse már lement, akkor is, ha a pontok még nincsenek feldolgozva) és — ha a klubnak nincs meccse a fordulóban — `nogame: true`-t is tartalmaz. A régebbi, e mezők nélküli rekordokat az oldal tolerálja, de a gyűjtő nem hagyja őket úgy: az olyan fordulót, amelynek a rekordjaiban nincs `played`, egyszer újra lekéri a meccslistával együtt, és pótolja a hiányzó mezőket. |
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
-| `naplo/fpl-csere-meres.py` | **Ideiglenes megfigyelés:** a forduló zárásakor átírja-e az FPL a pick `position` mezőjét (automatikus csere), mikor teszi, és melyik mező jelzi a végleges zárást. Ebből dől el, meddig kell a gyűjtőnek újra lekérnie egy lement fordulót. A napló (`naplo/fpl-cserek.txt`) **nem tartalmaz `entry_id`-t és valódi nevet** — a repó publikus. Ha megvan a válasz, törölhető. |
-| `naplo/fpl-figyelo.py` | **Ideiglenes megfigyelés:** negyedóránként naplózza az FPL forduló-állapotát, csak változáskor ír sort (`naplo/fpl-allapot.txt`). Azt nézzük vele, tényleg csak a forduló zárásakor véglegesedik-e a bónusz. Ha megvan a válasz, törölhető. |
-| `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset soha többé. |
+| `naplo/` | **Mérési archívum** (lezárt egyszeri megfigyelések nyers naplói — lásd `naplo/README.md`). A hozzájuk tartozó workflow-k törölve; a következtetések ebben a README-ben vannak (3/b, „Automatikus cserék”, „Ki van még a pályán”, bónusz-szakasz). |
+| `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset csak akkor, ha a forduló hivatalos pontja változott (ez a **pótolt meccs** esete — az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). **Nem a forduló összes meccse:** csak azoké a kluboké, amelyeknek van játékosuk valamelyik keretben — a részletező fölötti sorhoz ennyi kell. |
 | `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. |
 | `valtozasok/index.html` | A változásnapló oldala („Mi újult meg?"). |
 | `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
@@ -227,7 +226,7 @@ teljes képernyős, ragadós × gombbal.
 | `draft.json` | Az FPL Draft liga adatai (résztvevők, menetrend, eredmények) — a `pl/index.html` forrása. |
 | `draft_players.json` | FPL játékos-törzs: `{players: {id: {n: név, t: klub, p: poszt}}, teams: {csapat_id: rövidnév}}`. A `teams` a fixtures-válasz csapat-azonosítóinak feloldásához kell (kinek kezdődött el a meccse). |
 | `draft_squads.json` | A jelenlegi FPL-keretek (tulajdonlás): `{liga_id: [játékos_id,...]}`. |
-| `draft_history.json` | Fordulónkénti FPL-keretek pontokkal (`{rounds:{gw:{liga_id:[{e,b,pts},...]}}}`) — a GW1 indulásától gyűlik. |
+| `draft_history.json` | Fordulónkénti FPL-keretek pontokkal (`{rounds:{gw:{liga_id:[{e,b,pts},...]}}, kesz:[...]}`) — a GW1 indulásától gyűlik. A **`veglegesek`** lista mondja meg, mely RÉGI fordulók véglegesek: azokat a gyűjtő nem kéri le többé. Az aktuális fordulót minden körben lekéri, a zárás után is (lásd „3/b. A lezárás”). |
 | `keretek/<forduló>.json` | Egy forduló keretei külön fájlban (`{round, squads}`). A meccs-nézet **ezt** tölti le, nem a teljes előzményt. |
 | `.github/workflows/archive.yml` | 3 óránként futó munkafolyamat: `collect.py` + commit. |
 | `.github/workflows/draft.yml` | 3 óránként futó (és kézzel is indítható) munkafolyamat: `collect_draft.py` + commit. |
@@ -395,6 +394,49 @@ a repóra, csak `Contents: Read and write`); a repóban a token mindig helyőrz�
 
 ---
 
+## 3/b. A LEZÁRÁS — mi mit jelent, és hol dől el
+
+**Ezt olvasd el, mielőtt bármelyik lezárás-logikához hozzányúlsz.** A „lezárult" szó a
+projektben **négy különböző dolgot** jelent, külön jelzőkkel és külön következményekkel.
+Egyszer már abból lett hiba, hogy az egyiket a többi ismerete nélkül írtam át.
+
+| mit zárunk le | liga | miből dől el | mire hat |
+|---|---|---|---|
+| **egy meccs** | NB1 | a meccslista `status == "completed"` — de csak a `meccsAllapot` időkorlátaival együtt hihető | a részletező üzenete, a `meccsek.json` eredménye, a játszott perc sora |
+| **egy meccs** | PL | `started` → `finished_provisional` → `finished` (három állapot) | a perc-oszlop „vége", a bónusz jelölése |
+| **egy forduló** | NB1 | mindenki játszott (`played` vagy `nogame`) **és** minden meccs lement; biztonsági háló: az MLSZ továbblépett (`mlsz_lezarta`) | bekerül-e a tabellába, vagy `provisional` marad |
+| **egy forduló** | PL | a `game` végpont **`current_event_finished`** mezője | az automatikus cserék bekerülése, a bónusz véglegessége, a státuszsor |
+
+**A PL forduló-zárás egyetlen pillanat, több jelzővel.** Mérve (2026-08-25, 08:03 és
+08:23 UTC között) **egyszerre** billent át mind: `current_event_finished` → igaz, a H2H
+meccsek `finished`-re, az `event-status` `points` `p`-ről `r`-re, a `bonus_added` igazra.
+Ezért olvassa a gyűjtő a `current_event_finished`-ből, az oldal bónusz-jelzése pedig a
+`points === "r" || bonus_added`-ből — **ugyanazt az eseményt**, két végpontról (a Draftnak
+nincs `event-status`-a, az a klasszikus FPL-ről jön). Ha valaha eltérnének, az mérésre
+való, nem tippelésre.
+
+**A `current_event` ilyenkor MÉG a régi forduló** — a zárás nem forduló-váltás. Aki ezt
+összekeveri, az a cseréket veszíti el (lásd lentebb).
+
+### Amit a lezárás után is frissíteni KELL
+
+| forrás | meddig frissül | miért |
+|---|---|---|
+| NB1 keret + pont | az aktuális **és az előző** forduló minden körben, plusz körbeforgó ellenőrzés négy régi fordulóra (`ellenorzendo`) | az MLSZ utólag korrigál |
+| PL keret + pont | az **aktuális** forduló minden körben (a zárás után is, amíg a `current_event` tovább nem lép), plusz minden forduló, ami nincs a `draft_history.json` `veglegesek` listájában | az FPL a záráskor automatikus cseréket hajt végre, és utólag is korrigálhat |
+| PL meccseredmény | a `draft.json` `schedule`/`standings` az FPL saját válaszából, minden körben | ez a hivatalos eredmény, nem mi számoljuk |
+| NB1 meccseredmény | a `meccsek.json` addig kéri újra a fordulót, amíg van benne eredmény nélküli meccs | részállást nem tárolunk |
+
+**Amit soha ne csinálj:** ne szüntesd meg az „aktuális fordulót minden körben lekérjük"
+szabályt azzal az indokkal, hogy a forduló már lezárult. Az a szabály **nem** a zárásról
+szól, hanem az utólagos korrekciókról — a zárás utáni egy hét különben vakon maradna.
+Ez pontosan egyszer már megtörtént (2026-08-25), és a saját tesztem rögzítette a hibás
+viselkedést, mielőtt észrevettük volna.
+
+**Névhasználat.** A `collect_draft.py`-ban a `kesz` **meccset** jelent (`atalakit`), a
+fordulók listája ezért `veglegesek`. Ugyanez a csapda volt a `.pos`/`.ppos` és a
+`.meccsfej` esetében is: ha egy szónak már van jelentése a kódban, ne adj neki másikat.
+
 ## 4. Az MLSZ Fantasy API — amit a fejlesztés során kiderítettünk
 
 Base URL: `https://fantasy-api.mlsz.hu/competitions/3/`
@@ -512,6 +554,9 @@ paraméterrel 200). Egy megkötés maradt: **a még el nem kezdődött forduló 
 adnak** — piaczárásig titkosak.
 
 ### Forduló-lezárás és utólagos MLSZ-korrekciók
+
+> A négy különböző „lezárás" áttekintése a **3/b** szakaszban van — ott látszik, melyik
+> jelző mire hat. Ez a szakasz csak az NB1 forduló-lezárásának részleteit adja.
 - A keret-válasz `current_round.is_played` mezője megmondja, lejátszotta-e a játékos a
   meccsét. **Egy forduló akkor zárult le, ha mindenki játszott, akinek volt meccse** — és a
   meccse `completed` státuszú.
@@ -592,6 +637,10 @@ lett (sztring-összefűzésre).
 
 ### A bónuszpontok három állapota (PL)
 
+> A harmadik állapotot a **forduló** zárása adja — ugyanaz az esemény, amiből a gyűjtő
+> az automatikus cseréket veszi (3/b). Két végpontról olvassuk, mert a Draftnak nincs
+> `event-status`-a.
+
 A bónusz nem úgy végleges, mint a többi pont. Az FPL **a meccs alatt is számolja** a
 BPS-táblából, és bele is teszi a `live` végpont `explain` mezőjébe (`stat: "bonus"`) —
 tehát az oldalunk kiírja, miközben még változhat. Három állapot van, a meccs jelzőiből:
@@ -651,11 +700,10 @@ A kód szerint véglegesnek az számít, ha az FPL **bármelyik** jelzője kimon
 meccs `finished` mezője marad, ha a napi adat nem jön meg — pontatlanabb (tovább hagyja
 kint a jelölést), de nem állít valótlant.
 
-**Hogy tényleg így megy-e, azt figyeljük:** a `naplo/fpl-figyelo.py` negyedóránként
-lekéri az állapotot, és **csak változáskor** ír egy sort a `naplo/fpl-allapot.txt`-be.
-Ebből utólag látszik, mikor billen át melyik mező — és az is, ha mégis vannak napi
-zárások. Ideiglenes megfigyelés; ha megvan a válasz, a `naplo/` és a hozzá tartozó
-workflow törölhető.
+**Mérve, lezárva (2026-08-25):** napi zárás NINCS — a napok napokig `p`-n álltak, és
+mind a forduló lockdownjakor váltottak `r`-re (08:03–08:23 UTC, két lépésben: előbb a
+pontok/bónusz, ~15 perccel később a `current_event_finished`). A nyers napló:
+`naplo/fpl-allapot.txt` (archívum).
 
 **A napi lekérést nem várjuk meg.** Másodlagos jelzés, csak a bónusz sorának jelöléséhez
 kell, amit a felhasználó kattintásra lát — ha a pontfrissítés megvárná, egy lassú vagy
@@ -761,6 +809,51 @@ második sor a sormagasságot 31 → 51px-re. A lenyíló ezzel szemben ingyen v
 mond valamit). A keretlistában a *pillantásra* szóló kérdésre — kezdett-e, pályán
 van-e még — a perc-oszlopok felelnek, azt ez nem váltja ki.
 
+### Automatikus cserék a forduló zárásakor (PL)
+
+Az FPL a forduló végén **automatikus cseréket** hajt végre: a nem játszó kezdő helyére
+beállítja az első beférőt a padról — ezért számít a pad sorrendje. Mérve
+(2026-08-25, `naplo/fpl-cserek.txt`):
+
+- **Az FPL átírja a pick `position` mezőjét** (a becserélt 12→11 alá kerül, a kikerülő a
+  helyére a padra), és **külön `subs` listát is ad** (`{element_in, element_out, event}`).
+  A gyűjtőnk a `position`-ből számolja a `b` (pad) jelzőt, tehát magától rendbe jön —
+  **ha időben újra lekéri a fordulót.**
+- **Ez a lockdownkor történik**, nem a meccs után: 08:03 és 08:23 UTC között billent át
+  minden egyszerre (H2H `finished`, `points` → `r`, `bonus_added`, `current_event_finished`).
+- **A `current_event` ilyenkor MÉG a régi forduló** — a zárás jelzése a `game` végpont
+  **`current_event_finished`** mezője. (A `processing_status` és a `waivers_processed`
+  végig változatlan maradt, azok mást jelentenek.)
+
+Ezért a gyűjtő addig kéri újra a fordulót, amíg nem tudja biztosan, hogy lezárult:
+a `draft_history.json` **`veglegesek`** listája tartja számon a véglegesített fordulókat.
+Egy forduló akkor kerül bele, ha az FPL már túllépett rajta, **vagy** ő az aktuális, de
+`current_event_finished` — és csak akkor, ha abban a futásban **minden csapat** kerete
+megjött (különben egy elhasalt lekérés a csere előtti állapotot rögzítené véglegesnek).
+
+**Az aktuális fordulót ettől függetlenül minden körben lekérjük**, a zárás után is —
+a `veglegesek` lista csak a *régi* fordulókról dönt. Lásd „3/b. A lezárás": ez a szabály
+nem a zárásról szól, hanem az utólagos korrekciókról. Rögzíti: `gyujto_draftzaras.py`.
+
+2026-08-25-én ez **csak azon múlt**, hogy a futás hat perccel a zárás után esett.
+
+### A zárás és a gyűjtés közötti rés (PL)
+
+Az FPL a fordulót a **lockdownkor** zárja le egyszerre — mérve 2026-08-25-én 08:03 és
+08:23 UTC között billent át minden: a H2H meccsek `finished`-re, a `points` `p`-ről
+`r`-re, a `bonus_added` igazra, a `current_event_finished` igazra. A gyűjtőnk viszont
+3 óránként fut, tehát van egy rés, amikor a `game` végpont már lezártat mond, de a
+tárolt `draft.json`-ban még a zárás előtti állás van.
+
+Ebben a résben a státuszsor korábban **„Naprakész · ellenőrizve <most>"**-ot írt: a
+kiírt idő a *lekérésé* volt, nem az *adaté* — vagyis pont akkor állította magáról, hogy
+naprakész, amikor bizonyíthatóan nem volt az. Most megmondja, hogy a forduló lezárult,
+az eredmény a következő adatfrissítéssel jön, és a **tárolt** állás idejét írja ki.
+Rögzíti: `zarasires.teszt.js`.
+
+Az NB1-en ez a rés nem áll fenn: ott a gyűjtő maga dönti el a lezárást, és ugyanabban a
+futásban írja be az eredményt is.
+
 ### A pad sorrendje (PL) — és ami még nyitott
 
 **A pad sorrendje az FPL csere-sorrendje**, nem díszítés: a forduló végén az FPL az első
@@ -787,10 +880,10 @@ automatikus cseréket. Amit biztosan tudunk:
   véglegesítése a váltás után történik, az a forduló nálunk örökre a váltás előtti
   állapotot mutatja, a „Szezon játékosai" fülön is.
 
-Amit **nem** tudunk: a csere után átírja-e az FPL a pick `position` mezőjét (akkor a
-gyűjtő magától rendbe jön, ha időben lekéri), vagy külön mezőben adja (akkor a `b`
-jelzőnk marad hibás). Ezt méri a `naplo/fpl-csere-meres.py`; amíg nincs válasz, az oldal
-**nem állít semmit** a cserékről.
+Ezt a kérdést a mérés azóta megválaszolta — lásd az „Automatikus cserék a forduló
+zárásakor" szakaszt: az FPL **átírja** a `position`-t (és külön `subs` listát is ad),
+a gyűjtő pedig a `veglegesek` listával gondoskodik róla, hogy a csere utáni állapot
+kerüljön be.
 
 ### Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva
 
@@ -938,6 +1031,12 @@ gondoltunk tesztet írni), a `tabella.teszt.js` pedig **függetlenül újraszám
 tabellát és a mátrixot a nyers adatból.
 
 ## 6. Ha módosítani kell
+
+**Mielőtt lezárás-logikához nyúlsz, olvasd el a 3/b szakaszt.** Négy különböző dolgot
+hívunk „lezárásnak", külön jelzőkkel; egyszer már abból lett hiba, hogy az egyiket a
+többi ismerete nélkül írtam át — és a hozzá írt teszt a hibás viselkedést rögzítette,
+nem fogta meg. Ha egy tesztet a kód alá igazítasz, állj meg: valószínűleg az elvárás
+rossz, nem a kód.
 
 Nincs build lépés, nincs függőség. A kód három rétegben él:
 
