@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=41">
+<link rel="stylesheet" href="../funtasy.css?v=42">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -72,7 +72,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=41"></script>
+<script src="../funtasy.js?v=42"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -467,12 +467,14 @@ async function profilAdat(jat){
       s.pont=b.reduce((x,y)=>x+(y.points||0),0);
     }catch(e){ /* marad a kotojel */ }
   }));
-  // ellenfel es allas a meccsek.json-bol, a jatekos ADOTT FORDULOS klubjabol
+  // ellenfel es allas a meccsek.json-bol, a jatekos ADOTT FORDULOS klubjabol.
+  // Az NB1-ben egy klubnak fordulonkent egy meccse van, de a kozos reteg
+  // listat var (a PL-ben van dupla fordulo) - itt az a lista egyelemu.
   for(const s of sorok){
-    const m=((MECCSEK||{})[s.r]||[]).find(x=>x.h===s.klub||x.v===s.klub);
-    if(m){ s.ellenfel = m.h===s.klub ? m.v : m.h; s.hazai = m.h===s.klub;
-           s.hp=m.hp; s.vp=m.vp; }
-    else { s.jegyzet = s.pont==null ? 'nincs meccs' : undefined; }
+    s.meccsek=((MECCSEK||{})[s.r]||[])
+      .filter(x=>x.h===s.klub||x.v===s.klub)
+      .map(m=>({ellenfel: m.h===s.klub?m.v:m.h, hazai: m.h===s.klub, hp:m.hp, vp:m.vp}));
+    if(!s.meccsek.length && s.pont==null) s.jegyzet='nincs meccs';
   }
   const osszes = sorok.reduce((x,s)=>x+(s.pont||0),0);
   const keretben = sorok.filter(s=>s.tulajok.length).length;

@@ -326,6 +326,7 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
 /* a liga egeszere vetitett aranyok a tulajdonos-felsorolas VEGEN. Sajat
    sorvegre tolva (margin-left:auto), hogy a nevek es a szazalekok ne
    folyjanak ossze; ha nem fer ki, a flexbox amugy is uj sorba teszi. */
+.pelval{color:var(--dim);opacity:.6;margin:0 2px}
 .parany{margin-left:auto;white-space:nowrap;font-size:11px;color:var(--dim)}
 .parany b{font-family:'JetBrains Mono';color:var(--fg);font-weight:700}
 

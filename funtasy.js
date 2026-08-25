@@ -649,10 +649,34 @@
      "(h)" / "(i)" jeloli, melyik oldalon allt a jatekos klubja - igy az
      eredmeny ugyanugy olvashato, mint barhol maskul az oldalon, es nem kell
      fejben forgatni. */
+  /* Egy fordulo meccse(i) a sor nev-cellajaban. Rendes esetben egy meccs
+     van: ilyenkor az ellenfel es a palya a nev-cellaban, az allas a sajat
+     oszlopaban all - igy a szamok egymas ala igazodnak. DUPLA FORDULOBAN
+     (a PL-ben elofordul) egy klub ketszer jatszik: ott a ket meccs egymas
+     mellett, allassal egyutt a nev-cellaba kerul, es az allas-oszlop ures
+     marad. Inkabb legyen a ritka eset kicsit maskepp tordelve, mint hogy a
+     masodik meccs eltunjon. */
+  function profilMeccsekHTML(mk) {
+    if (!mk.length) return { nev: '—', allas: '' };
+    var egy = function (m) {
+      var hol = m.hazai == null ? '' : (m.hazai ? '(h)' : '(i)');
+      var all = (m.hp == null || m.vp == null) ? '' : ' ' + fmt(m.hp) + '–' + fmt(m.vp);
+      return esc(m.ellenfel || '—') + (hol ? ' ' + hol : '') + all;
+    };
+    if (mk.length > 1)
+      return { nev: mk.map(egy).join(' <span class="pelval">·</span> '), allas: '' };
+    var m = mk[0];
+    return {
+      nev: esc(m.ellenfel || '—') +
+        (m.hazai == null ? '' : ' <span class="tm">' + (m.hazai ? 'otthon' : 'idegenben') + '</span>'),
+      allas: (m.hp == null || m.vp == null) ? ''
+        : '<span class="pallas">' + fmt(m.hp) + '–' + fmt(m.vp) + '</span>'
+    };
+  }
+
   function profilSorHTML(s, senkinel, salaryCap) {
-    var hol = s.hazai == null ? '' : (s.hazai ? 'otthon' : 'idegenben');
-    var allas = (s.hp == null || s.vp == null) ? ''
-      : '<span class="pallas">' + fmt(s.hp) + '–' + fmt(s.vp) + '</span>';
+    var mk = s.meccsek || [];
+    var m = profilMeccsekHTML(mk);
     var tulaj = (s.tulajok && s.tulajok.length)
       ? s.tulajok.map(function (t) {
           return '<span class="ptul"><b>' + esc(t.nev) + '</b> · ' + esc(szerepNev(t)) + '</span>';
@@ -664,10 +688,8 @@
       : fmt(s.pont);
     return '<div class="plr profsor" data-acc="1" data-pr="' + s.r + '">' +
       '<span class="ppos">' + s.r + '.</span>' +
-      '<span class="nm">' + (s.ellenfel ? esc(s.ellenfel) : '—') +
-        '<span class="accarr">▼</span>' +
-        (hol ? ' <span class="tm">' + hol + '</span>' : '') + '</span>' +
-      allas +
+      '<span class="nm">' + m.nev + '<span class="accarr">▼</span></span>' +
+      m.allas +
       '<span class="pts">' + pont + '</span>' +
       '<span class="ptulajok">' + tulaj + arany + '</span>' +
     '</div>';

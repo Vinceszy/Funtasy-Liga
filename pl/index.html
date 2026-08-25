@@ -6,7 +6,7 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=41">
+<link rel="stylesheet" href="../funtasy.css?v=42">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -90,7 +90,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=41"></script>
+<script src="../funtasy.js?v=42"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -372,11 +372,105 @@ function jatekosokHTML(id){
     <table><tr><th></th><th>Játékos</th><th>F</th><th>Kezdő</th><th>Pad</th><th>Pont</th></tr>`;
   rows.forEach((r, i) => {
     const j = jat(r.e);
-    h += `<tr><td class="rank">${i + 1}.</td>
+    h += `<tr class="clickable" data-prof="${r.e}"><td class="rank">${i + 1}.</td>
       <td class="name"><span class="ppos">${esc(j.p)}</span>${esc(j.n)}${j.t ? ` <span class="tm">${esc(j.t)}</span>` : ''}</td>
       <td>${r.rounds}</td><td>${r.st}</td><td>${r.pad}</td><td class="pont">${fmt(r.pts)}</td></tr>`;
   });
   return '<div class="tablewrap">' + h + '</table></div>';
+}
+
+// ---------- játékosprofil (PL) ----------
+// A MEGJELENITES kozos (funtasy.js -> FunTasy.profilHTML), itt csak az ADAT
+// all ossze. Ket forrasbol:
+//   1) draft_history.json - kinel volt a jatekos az adott forduloban, es
+//      kezdo volt-e vagy pados. Draft ligaban ez legfeljebb EGY szakvezeto;
+//      ha senkinel sem volt, szabadugynok volt.
+//   2) a Draft element-summary vegpontja - egy jatekos EGESZ szezonja EGY
+//      keresbol: fordulonkent a pont, az ellenfel, a palya es az allas.
+//      A gyujtonek ez semmibe nem kerul, mert a bongeszo keri le, akkor,
+//      amikor a profil megnyilik.
+// A teteles bontast a mar meglevo bontasHTML adja (event/{gw}/live explain),
+// ugyanaz a hivas es gyorsitotar, mint a keret-nezetben.
+
+// A `detail` mezo alakja: "BHA (A) 4-0" - az ELLENFEL, a JATEKOS csapatanak
+// palyaja, es az allas HAZAI-VENDEG sorrendben. Az utolsot KIMERTUK
+// (naplo/fpl-profil.txt): 25 idegenbeli, nem dontetlen meccsbol mind a 25 a
+// hazai-vendeg olvasatot igazolta, a "jatekos csapata eloszor" olvasatot
+// egy sem. Rosszul valasztva minden idegenbeli eredmeny megfordult volna.
+const DETAIL = /^\s*(\S+)\s*\((H|A)\)\s*(\d+)\s*[-–]\s*(\d+)\s*$/;
+function detailMeccs(d){
+  const m = DETAIL.exec(d || '');
+  return m ? { ellenfel: m[1], hazai: m[2] === 'H', hp: +m[3], vp: +m[4] } : null;
+}
+
+let PROFIL_AKT = null;               // az eppen nyitott profil elem-azonositoja
+const PROFILTORT = new Map();        // element -> Promise(history | null)
+function profilTortenet(e){
+  if (!PROFILTORT.has(e))
+    PROFILTORT.set(e, apiGet('https://draft.premierleague.com/api/element-summary/' + e)
+      .then(j => (j && j.history) || [])
+      .catch(() => null));           // null = nem sikerult; a sorok kotojelet kapnak
+  return PROFILTORT.get(e);
+}
+
+async function profilAdat(e){
+  const hist = await profilTortenet(e);
+  const j = jat(e);
+  // A fordulok halmaza: amirol keret-elozmenyunk van, ES amiben a jatekos
+  // palyan volt. A ketto nem ugyanaz: szabadugynokkent is szerezhetett
+  // pontot, es lehetett valakinel ugy, hogy a klubjanak nem volt meccse.
+  const gwk = new Set(Object.keys(HIST).map(Number).filter(Boolean));
+  (hist || []).forEach(h => { if (h.event) gwk.add(+h.event); });
+
+  const sorok = [];
+  for (const gw of [...gwk].sort((a, b) => a - b)){
+    const per = HIST[gw] || {};
+    const tulajok = [];
+    for (const id of Object.keys(per)){
+      const x = (per[id] || []).find(p => p.e === e);
+      // draftban egy jatekos egy keretben lehet; kapitany nincs a jatekban
+      if (x) tulajok.push({ nev: nev(+id), kezdo: !x.b, kapitany: false });
+    }
+    // dupla forduloban ket sor tartozik ugyanahhoz a fordulohoz
+    const hs = (hist || []).filter(h => +h.event === gw);
+    sorok.push({
+      r: gw,
+      tulajok,
+      keretszam: Object.keys(per).length,
+      meccsek: hs.map(h => detailMeccs(h.detail)).filter(Boolean),
+      pont: (hist && hs.length) ? hs.reduce((s, h) => s + (h.total_points || 0), 0) : null,
+      jegyzet: !hist ? '—' : (hs.length ? undefined : 'nincs meccs')
+    });
+  }
+  const osszes = sorok.reduce((x, s) => x + (s.pont || 0), 0);
+  const keretben = sorok.filter(s => s.tulajok.length).length;
+  return {
+    liga: 'pl',
+    nev: j.n, klub: j.t, poszt: j.p,
+    tenyek: [
+      { cimke: 'Pont összesen', ertek: osszes },
+      { cimke: 'Fordulók', ertek: sorok.length },
+      { cimke: 'Ebből keretben', ertek: keretben }
+    ],
+    sorok, senkinel: 'szabadügynök'
+  };
+}
+
+async function showProfil(e, mode){
+  vShow(() => showProfil(e, 'noop'), mode);
+  PROFIL_AKT = e; openModal();
+  const j = jat(e);
+  $('mTitle').textContent = j.n;
+  $('mSub').textContent = 'Fordulónkénti teljesítmény — a sorra kattintva a pontok bontása';
+  $('mTabs').innerHTML = '';
+  $('mBody').innerHTML = '<div class="loading">Profil betöltése…</div>';
+  try {
+    const adat = await profilAdat(e);
+    if (PROFIL_AKT !== e) return;                 // kozben mas profilt nyitottak
+    $('mBody').innerHTML = FunTasy.profilHTML(adat);
+  } catch (err) {
+    $('mBody').innerHTML = `<div class="loading" style="color:var(--lose)">Nem sikerült betölteni — ${esc(err.message)}</div>`;
+  }
 }
 
 let mTeam = null;
@@ -555,7 +649,13 @@ function showMatch(h, v, r, mode){
 document.addEventListener('click', e => {
   if (e.target === $('ovBack')){ vBack(); return; }
   const pr = e.target.closest('.plr[data-acc]');
-  if (pr){ FunTasy.accToggle(pr, () => bontasHTML(+pr.dataset.e, +pr.dataset.gw)); return; }
+  // ugyanaz az accordion ket helyen: a keret-nezetben a sor sajat adataibol,
+  // a jatekosprofilban a nyitott jatekosbol es a fordulo szamabol (data-pr)
+  if (pr){ FunTasy.accToggle(pr, () => pr.dataset.pr !== undefined
+             ? bontasHTML(PROFIL_AKT, +pr.dataset.pr)
+             : bontasHTML(+pr.dataset.e, +pr.dataset.gw)); return; }
+  const pf = e.target.closest('[data-prof]');
+  if (pf){ showProfil(+pf.dataset.prof, 'push'); return; }
   const t = e.target.closest('[data-team]');
   if (t){ showTeam(+t.dataset.team); return; }
   const tab = e.target.closest('#mTabs .tab');

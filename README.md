@@ -191,8 +191,8 @@ Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő 
   ad pontot, ezért ott a futó meccs 0-ja valódi 0, és **számként** marad. A kötőjel
   magyarázata egérrel elolvasható (`title`).
 
-### Játékosprofil (NB1)
-A **Szezon játékosai** listában egy névre kattintva megnyílik a játékos profilja. Fent az
+### Játékosprofil
+Mindkét ligában. A **Szezon játékosai** listában egy névre kattintva megnyílik a játékos profilja. Fent az
 alapadatok (poszt, klub, magyar/U21 jelölés, összpont, hány fordulóról van adat, ebből
 hányban volt valakinek a keretében), alatta fordulónként egy sor: **ellenfél, a meccs
 állása** (mindig hazai–vendég sorrendben, mellette hogy otthon vagy idegenben játszott),
@@ -205,6 +205,21 @@ benne (*keret*), hányban volt kezdő (*kezdő*) és hányban kapitány (*kapit�
 forduló **tényleges** keretszáma — ahány szakvezetőről mentett keret van —, nem beégetett 8,
 így egy kimaradó keret nem húzza le az arányt. **A kapitány kezdőnek is számít**, tehát a három
 szám egymásba ágyazódik: keret ≥ kezdő ≥ kapitány. Akinél senki sem volt, ott nincs arány-blokk.
+
+**Több meccs egy fordulóban.** A sor a klub **összes** meccsét mutatja az adott fordulóban,
+nem az elsőt. A PL-ben ez a dupla forduló (egy klub kétszer játszik), az NB1-ben a pótolt,
+korábban elhalasztott meccs hozhatja elő. Egy meccsnél az ellenfél és a pálya a név-cellában,
+az állás a saját oszlopában áll (így a számok egymás alá igazodnak); kettőnél mindkét meccs
+az állásával együtt a név-cellába kerül, és az állás-oszlop üres marad. Inkább legyen a ritka
+eset máshogy tördelve, mint hogy a második meccs eltűnjön.
+
+**Honnan jön az adat ligánként.** Az NB1-ben a fordulónkénti pont a keret-előzményből (a
+szabadügynök-fordulóké az MLSZ pont-bontásából), az ellenfél a `meccsek.json`-ból. A PL-ben
+mind a kettő **egyetlen kérésből**: a Draft `element-summary/{id}` fordulónként adja a pontot
+és egy `"BHA (A) 4-0"` alakú mezőt, amiben az ellenfél, a játékos csapatának pályája és az
+állás **hazai–vendég** sorrendben szerepel. Ez utóbbit kimértük (`naplo/fpl-profil.txt`):
+25 idegenbeli, nem döntetlen meccsen mind a 25 ezt igazolta, a „játékos csapata előre"
+olvasatot egy sem — rossz választással minden idegenbeli eredmény megfordult volna.
 
 **Ez az arány csak salary cap ligában jelenik meg**, és ezt a liga `tipus` mezője dönti el
 (`funtasy.js` → `LIGAK`), nem a liga azonosítója. Draft ligában egy játékos pontosan egy
@@ -1303,3 +1318,13 @@ tartalommal. A `GOMB-bookmarklet.txt`-t soha ne szerkeszd kézzel.
 - Kapitány-hatékonysági toplista
 - „Padon hagyott pontok” toplista
 - Ligán belüli tulajdonlási arányok
+- **A játékosprofil hátralévő része:** a főoldali blokk kereséssel (ehhez kell az NB1
+  játékostörzse — egy plusz kérés a gyűjtőben, `players?per_page=500`), és a profil
+  megnyitása a meccs-lenyíló aljáról is („Teljes játékosprofil" sor)
+- **A Zárási változások panelen a játékosok és a csapatnevek legyenek kattinthatók** — a
+  játékos a profilját, a csapat a keretét nyissa meg, ahogy máshol az oldalon
+- **Zárási változások az NB1-en is.** Ma csak a PL-oldalon van ilyen panel, pedig a
+  mérésekből tudjuk, hogy az MLSZ is módosít utólag: a 4. fejezet „Forduló-lezárás és
+  utólagos MLSZ-korrekciók" szakasza rögzíti, hogy a hivatalos fordulóösszeg is
+  változott már visszamenőleg (Csendi, 1–3. forduló). Ugyanaz a panel kell oda is, a
+  változás forrásának megfelelő tartalommal

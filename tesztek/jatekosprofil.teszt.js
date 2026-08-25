@@ -1,5 +1,5 @@
 const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
-// Jatekosprofil (NB1). Amit rogzit:
+// Jatekosprofil. Amit rogzit (NB1 + PL):
 //   - a "Szezon jatekosai" sorai megnyitjak a profilt, es viszik a
 //     cp-azonositot (enelkul a bontas nem lenne lekerheto);
 //   - a fordulo sora az ELLENFELET, az ALLAST es a jatekos SAJAT pontjat
@@ -154,6 +154,78 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   jo(!/class="parany"/.test(ketfele.pl), 'DRAFT ligában nincs arány-blokk (mindig 1 vagy 0 keret)');
   jo(/kapitány/.test(ketfele.pl) && /pad/.test(ketfele.pl),
      'a szerep neve draft ligában is látszik (csak az arány marad el)');
+
+  await p.close();
+
+  // ================= PL (draft liga) =================
+  // Az element-summary valaszat mi adjuk: a konteneres gepbol az FPL nem
+  // erheto el, es a teszt igy determinisztikus is. A KESOBB regisztralt
+  // route nyer, ezert eloszor vagunk el mindent, utana jon a celzott mock.
+  const q = await br.newPage();
+  const qerr = []; q.on('pageerror', x => qerr.push(x.message));
+  for (const m of ['**mlsz.hu/**', '**premierleague.com/**',
+                   '**corsproxy.io/**', '**allorigins**']) await q.route(m, r => r.abort());
+  await q.route('**element-summary**', r => r.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ history: [
+      { event: 1, total_points: 17, detail: 'AVL (H) 4-0', minutes: 77 },
+      // DUPLA FORDULO: ugyanaz a fordulo ket meccsel
+      { event: 2, total_points: 3,  detail: 'FUL (A) 2-3', minutes: 90 },
+      { event: 2, total_points: 6,  detail: 'BRE (H) 1-0', minutes: 90 }
+    ], fixtures: [] }) }));
+
+  await q.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
+  await q.waitForFunction(() => typeof showProfil === 'function'
+    && Object.keys(HIST).length > 0, null, { timeout: 20000 });
+
+  cim('PL: belépési pont');
+  const csapat = await q.evaluate(() => Object.keys(HIST[Object.keys(HIST)[0]])[0]);
+  await q.evaluate(id => showTeam(+id, 'jatekosok'), csapat);
+  await q.waitForSelector('[data-prof]', { timeout: 20000 });
+  jo(/^\d+$/.test(await q.$eval('[data-prof]', e => e.dataset.prof)),
+     'a "Szezon játékosai" sora viszi a játékos azonosítóját');
+  await q.click('[data-prof]');
+  await q.waitForSelector('.proflista', { timeout: 20000 });
+
+  const psorok = await q.$$eval('.profsor', a => a.map(x => ({
+    r: x.querySelector('.ppos').textContent.trim(),
+    nm: x.querySelector('.nm').textContent.trim(),
+    allas: (x.querySelector('.pallas') || {}).textContent || '',
+    pts: x.querySelector('.pts').textContent.trim(),
+    tul: (x.querySelector('.ptulajok') || {}).innerText || ''
+  })));
+  const g = n => psorok.find(x => x.r === n + '.');
+
+  cim('PL: az eredmény sorrendje');
+  // A `detail` allasa HAZAI-VENDEG sorrendben all (kimerve: naplo/fpl-profil.txt,
+  // 25 idegenbeli meccsbol 25). Idegenbeli meccsen valik el a ket olvasat:
+  // "FUL (A) 2-3" annyit tesz, hogy a HAZAI FUL 2, a jatekos csapata 3 -
+  // ha megforditva ertelmeznenk, itt 3-2 allna.
+  jo(g('2') && /FUL \(i\) 2–3/.test(g('2').nm),
+     'idegenbeli meccs: "FUL (A) 2-3" -> FUL (i) 2–3, nem megfordítva'
+     + (g('2') ? ' — kapott: ' + g('2').nm : ''));
+  jo(g('1') && /AVL/.test(g('1').nm) && /otthon/.test(g('1').nm)
+            && g('1').allas.replace(/\s/g, '') === '4–0',
+     'egy meccsnél az állás a saját oszlopában áll (4–0)');
+
+  cim('PL: dupla forduló');
+  jo(g('2') && /FUL/.test(g('2').nm) && /BRE/.test(g('2').nm),
+     'dupla fordulóban MINDKÉT meccs látszik (a második nem tűnik el)');
+  jo(g('2') && g('2').pts === '9',
+     'dupla fordulóban a pontok összeadódnak (3 + 6 = 9)'
+     + (g('2') ? ' — kapott: ' + g('2').pts : ''));
+  jo(g('2') && !g('2').allas,
+     'dupla fordulóban az állás-oszlop üres (az állások a meccsek mellett állnak)');
+
+  cim('PL: tulajdonos');
+  jo(g('1') && /kezdő/.test(g('1').tul), '1. forduló: a szakvezető és a szerep látszik');
+  jo(g('2') && /szabadügynök/.test(g('2').tul),
+     'akinél senki sem volt: "szabadügynök" (nem "senkinél sem volt")');
+  jo(await q.$$eval('.parany', a => a.length) === 0,
+     'draft ligában nincs arány-blokk a valódi oldalon sem');
+
+  jo(qerr.length === 0, 'nincs JS-hiba a PL-oldalon'
+     + (qerr.length ? ': ' + qerr.join(' | ') : ''));
 
   jo(perr.length === 0, 'nincs JS-hiba' + (perr.length ? ': ' + perr.join(' | ') : ''));
   await vege(br);
