@@ -14,10 +14,10 @@
 
 ## 2) tartalek: a keret-vegpont meccslistaja JOVOBELI fordulokra
 #    (valodi user_id-val - enelkul a vegpont ures listat ad)
-=== rankings('peterkmrs') -> user_id: {'id': 32615, 'rank': 293, 'points': 366.64, 'last_week_rank': 371, 'user_team': {'round_played_player_count': 0, 'user': {'id': 5299, 'username': 'peterkmrs'}, 'round_statistics': [{'id': 6285253, 'round_id': 87, 'round_number': 6, 'points': 0}, {'id': 5122311, 'round_id': 85, 'round_number': 5, 'points': 91.38}], 'summary_statistics': {'competition_statistics': {'id': 2649807, 'points': 366.64}, 'current_round_statistics': {'id': 6285253, 'round_id': 87, 'round_number': 6, 'points': 0}, 'previous_round_statistics': {'id': 5122311, 'round_id': 85, 'round_number': 5, 'points': 91.38}, 'current_month_statistics': {'id': 1716741, 'points': 286.64, 'first_day_of_month': '2026-08-01T00:00:00+02:00'}, 'previous_month_statistics': {'id': 637141, 'points': 80, 'first_day_of_month': '2026-07-01T00:00:00+02:00'}}}, 'competition_rank': {'rank': 293, 'points': 366.64}}
-===  8. fordulo -> HTTP None | nincs keret-sor
-=== 13. fordulo -> HTTP None | nincs keret-sor
-=== 33. fordulo -> HTTP None | nincs keret-sor
+=== rankings('peterkmrs') -> user.id: 5299
+===  8. fordulo -> HTTP 200 | nincs keret-sor
+=== 13. fordulo -> HTTP 200 | nincs keret-sor
+=== 33. fordulo -> HTTP 200 | nincs keret-sor
 
 ### Ha a jovobeli fordulora is megjon a meccslista, a gyujto egyszer
 ### vegigmegy a hatralevo fordulokon, es a menetrend bekerul a
