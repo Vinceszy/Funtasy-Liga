@@ -14,6 +14,7 @@ Amit ellenoriz:
   D3: a fo README fajl-tablazata nem hivatkozik nem letezo fajlra.
   D4: a valtozasok.json minden bejegyzese teljes es jol formazott
       (datum, ismert tipus, legalabb egy liga, cim, leiras).
+  D5: ugyanez a valtozasok-vazlat.json meg nem publikalt bejegyzeseire.
 """
 import glob, json, os, re, sys
 
@@ -63,23 +64,40 @@ allit(tabla is not None and not rossz,
       "D3: a README fajl-tablazata csak letezo fajlra hivatkozik"
       + ("" if not rossz else " - NEM LETEZIK: %s" % ", ".join(rossz)))
 
-# ---- D4: a valtozasnaplo bejegyzesei teljesek ----
+# ---- D4/D5: a naplo es a vazlat bejegyzesei teljesek ----
+def bejegyzes_gondok(bejegyzesek):
+    gond = []
+    for i, b in enumerate(bejegyzesek or []):
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", b.get("datum") or ""):
+            gond.append("%d. bejegyzes: rossz datum %r" % (i + 1, b.get("datum")))
+        if b.get("tipus") not in ("funkcio", "bugfix"):
+            gond.append("%d. bejegyzes: ismeretlen tipus %r" % (i + 1, b.get("tipus")))
+        if not b.get("ligak") or not all(isinstance(x, str) and x for x in b["ligak"]):
+            gond.append("%d. bejegyzes: hianyzo/rossz ligak" % (i + 1))
+        for mezo in ("cim", "leiras"):
+            if not (b.get(mezo) or "").strip():
+                gond.append("%d. bejegyzes: ures %s" % (i + 1, mezo))
+    return gond
+
+
 naplo = json.loads(olvas("valtozasok.json"))
-gond = []
-for i, b in enumerate(naplo.get("bejegyzesek") or []):
-    if not re.match(r"^\d{4}-\d{2}-\d{2}$", b.get("datum") or ""):
-        gond.append("%d. bejegyzes: rossz datum %r" % (i + 1, b.get("datum")))
-    if b.get("tipus") not in ("funkcio", "bugfix"):
-        gond.append("%d. bejegyzes: ismeretlen tipus %r" % (i + 1, b.get("tipus")))
-    if not b.get("ligak") or not all(isinstance(x, str) and x for x in b["ligak"]):
-        gond.append("%d. bejegyzes: hianyzo/rossz ligak" % (i + 1))
-    for mezo in ("cim", "leiras"):
-        if not (b.get(mezo) or "").strip():
-            gond.append("%d. bejegyzes: ures %s" % (i + 1, mezo))
+gond = bejegyzes_gondok(naplo.get("bejegyzesek"))
 allit(not gond, "D4: a valtozasnaplo minden bejegyzese teljes"
+      + ("" if not gond else " - " + "; ".join(gond)))
+
+# A vazlat-fajl a MEG NEM PUBLIKALT bejegyzeseket orzi (tobb szakaszban
+# keszulo funkcional a naplo csak a vegen megy ki). Ugyanaz az alaki
+# elvaras all ra, hogy a kesz szakasz vegen csak at kelljen mozgatni - es
+# hogy egy felig megirt vazlat ne aludjon el evekig eszrevetlenul.
+try:
+    vazlat = json.loads(olvas("valtozasok-vazlat.json")).get("bejegyzesek")
+except FileNotFoundError:
+    vazlat = []
+gond = bejegyzes_gondok(vazlat)
+allit(not gond, "D5: a valtozasnaplo-vazlat minden bejegyzese teljes"
       + ("" if not gond else " - " + "; ".join(gond)))
 
 if hibak:
     print("\n%d allitas bukott." % len(hibak))
     sys.exit(1)
-print("\nMind a negy allitas rendben.")
+print("\nMind az ot allitas rendben.")

@@ -259,6 +259,7 @@ teljes képernyős, ragadós × gombbal.
 | `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**; elemeik `{e, pts}` alakúak, mert a beállt játékos pontja mondja meg, mit hozott a csere (a régi, csak azonosítót tartalmazó alakot a lap még elfogadja). A GW1 a git-történetből lett pótolva. |
 | `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset csak akkor, ha a forduló hivatalos pontja változott (ez a **pótolt meccs** esete — az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). **Nem a forduló összes meccse:** csak azoké a kluboké, amelyeknek van játékosuk valamelyik keretben — a részletező fölötti sorhoz ennyi kell. |
 | `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. |
+| `valtozasok-vazlat.json` | **Még nem publikált** naplóbejegyzések, ugyanabban a formában. A napló oldala ezt nem olvassa; a kész bejegyzés innen kerül át a `valtozasok.json`-ba. |
 | `valtozasok/index.html` | A változásnapló oldala („Mi újult meg?"). |
 | `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
 | `collect_draft.py` | GitHub Actions: az FPL Draft liga adatai. A résztvevők valódi nevét és az `entry_id`-t kiszűri (a repó publikus). |
@@ -1116,8 +1117,15 @@ Felhasználói napló, nem technikai: **csak az kerül bele, amit a használó l
   bejegyzés; törölni kellett.)
 - **Dátumozva**, naponként csoportosítva, a legfrissebb elöl. A napló 2026-08-23 estétől
   indul, a korábbi változások nincsenek benne.
+- **Több szakaszban készülő funkciónál a bejegyzés a VÉGÉN megy ki**, nem szakaszonként.
+  Ellenkező utasítás híján ez az alap. Ha egy funkciót azért bontunk szakaszokra, hogy
+  közben látni lehessen — az még nem kész funkció: a napló szakaszonként átírva
+  félkész állapotot mutatna annak, aki épp megnyitja. A készülő szöveg addig a
+  `valtozasok-vazlat.json`-ban áll (a napló oldala ezt nem olvassa), és amikor az utolsó
+  szakasz is kész, egy mozdulattal átkerül. Ugyanaz az alaki ellenőrzés vonatkozik rá
+  (`tesztek/dokuk.py`, D5), tehát nem tud félig megírva elaludni.
 
-Az adat a `valtozasok.json`-ban van, kézzel bővítjük. A szűrők a `LIGAK` listából
+Az adat a `valtozasok.json`-ban van, kézzel bővítjük (a még nem publikált szöveg a `valtozasok-vazlat.json`-ban). A szűrők a `LIGAK` listából
 készülnek, tehát egy új liga felvétele itt sem igényel külön munkát.
 
 **Hogyan legyen megfogalmazva egy bejegyzés**
