@@ -323,6 +323,11 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
   font-size:11px;color:var(--dim);padding-left:2px}
 .ptul b{color:var(--fg);font-weight:600}
 .ptul.nincs{font-style:italic}
+/* a liga egeszere vetitett aranyok a tulajdonos-felsorolas VEGEN. Sajat
+   sorvegre tolva (margin-left:auto), hogy a nevek es a szazalekok ne
+   folyjanak ossze; ha nem fer ki, a flexbox amugy is uj sorba teszi. */
+.parany{margin-left:auto;white-space:nowrap;font-size:11px;color:var(--dim)}
+.parany b{font-family:'JetBrains Mono';color:var(--fg);font-weight:700}
 
 /* pont-bontas accordion: a data-acc jelolt jatekos-sor kattinthato, alatta
    nyilik a panel (FunTasy.accToggle). A "meg nem jatszott" jelzes a .pts

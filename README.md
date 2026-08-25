@@ -200,6 +200,12 @@ a játékos **saját pontja**, és hogy **melyik szakvezetőnél** volt — kezd
 kapitányként. Salary cap ligában ugyanaz a játékos egy fordulóban **több szakvezetőnél is**
 lehet: ilyenkor mind ott van, mindegyik a maga szerepével. Ha senkinél sem volt, azt írjuk ki.
 
+A felsorolás végén a **ligára vetített arányok**: a forduló kereteinek hány százalékában volt
+benne (*keret*), hányban volt kezdő (*kezdő*) és hányban kapitány (*kapitány*). A nevező a
+forduló **tényleges** keretszáma — ahány szakvezetőről mentett keret van —, nem beégetett 8,
+így egy kimaradó keret nem húzza le az arányt. **A kapitány kezdőnek is számít**, tehát a három
+szám egymásba ágyazódik: keret ≥ kezdő ≥ kapitány. Akinél senki sem volt, ott nincs arány-blokk.
+
 A sorra kattintva a szokásos accordion nyílik le a **tételes pont-bontással** és a klub
 meccsével — ugyanaz a lekérés és ugyanaz a gyorsítótár, mint a keret-nézetben.
 

@@ -82,7 +82,8 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
     nm: x.querySelector('.nm').textContent.trim(),
     allas: (x.querySelector('.pallas') || {}).textContent || '',
     pts: x.querySelector('.pts').textContent.trim(),
-    tul: (x.querySelector('.ptulajok') || {}).innerText || ''
+    tul: (x.querySelector('.ptulajok') || {}).innerText || '',
+    ar: (x.querySelector('.parany') || {}).textContent || ''
   })));
   const f = n => sorok.find(s => s.r === n + '.');
 
@@ -104,6 +105,22 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   jo(f('3') && /Katyul/.test(f('3').tul) && /kapitány/.test(f('3').tul)
             && /Bence/.test(f('3').tul) && /kezdő/.test(f('3').tul),
      '3. forduló: MINDKÉT szakvezető szerepel, a saját szerepével');
+
+  // ---- a ligara vetitett aranyok ----
+  // A liga 8 kerete a nevezo. A 2. forduloban egyedul Katyul padjan volt
+  // (1/8 = 13%, kezdo 0), a 3.-ban Katyul kapitanya ES Bence kezdoje
+  // (2/8 = 25%) - ez utobbi rogziti, hogy a KAPITANY IS KEZDONEK szamit,
+  // kulonben itt 13% jonne ki.
+  cim('A ligára vetített arányok');
+  jo(f('2') && /keret\s*13%/.test(f('2').ar) && /kezdő\s*0%/.test(f('2').ar)
+            && /kapitány\s*0%/.test(f('2').ar),
+     '2. forduló: 1 keret a 8-ból, padon — keret 13%, kezdő 0%, kapitány 0%'
+     + (f('2') ? ' — kapott: ' + f('2').ar : ''));
+  jo(f('3') && /keret\s*25%/.test(f('3').ar) && /kezdő\s*25%/.test(f('3').ar)
+            && /kapitány\s*13%/.test(f('3').ar),
+     '3. forduló: a kapitány is kezdő — keret 25%, kezdő 25%, kapitány 13%'
+     + (f('3') ? ' — kapott: ' + f('3').ar : ''));
+  jo(f('1') && !f('1').ar, '1. forduló: akinél senki sem volt, ott nincs arány-blokk');
 
   // ---- lenyilo bontas ----
   cim('Lenyíló bontás');

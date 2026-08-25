@@ -627,6 +627,17 @@
                  (t.szerep ? ' · ' + esc(t.szerep) : '') + '</span>';
         }).join('')
       : '<span class="ptul nincs">' + esc(senkinel || 'senkinél') + '</span>';
+    // A tulajdonos-felsorolas melle a LIGA EGESZERE vetitett aranyok: hany
+    // keretben volt benne, hany kezdoben, hanyszor kapitany. A nevezo a liga
+    // aznapi keretszama, nem egy beegetett szam - igy egy kimarado keret nem
+    // torzit. Amelyik arany egy ligaban ertelmetlen (a PL Draftban nincs
+    // kapitany), azt a hivo egyszeruen nem adja at.
+    var arany = (s.arany && s.arany.length)
+      ? '<span class="parany"' + (s.aranyCim ? ' title="' + esc(s.aranyCim) + '"' : '') + '>' +
+        s.arany.map(function (a) {
+          return esc(a.cimke) + ' <b>' + Math.round(a.pc) + '%</b>';
+        }).join(' · ') + '</span>'
+      : '';
     var pont = (s.pont == null)
       ? '<span class="pjegyzet">' + esc(s.jegyzet || '—') + '</span>'
       : fmt(s.pont);
@@ -637,7 +648,7 @@
         (hol ? ' <span class="tm">' + hol + '</span>' : '') + '</span>' +
       allas +
       '<span class="pts">' + pont + '</span>' +
-      '<span class="ptulajok">' + tulaj + '</span>' +
+      '<span class="ptulajok">' + tulaj + arany + '</span>' +
     '</div>';
   }
 

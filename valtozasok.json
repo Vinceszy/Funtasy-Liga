@@ -7,7 +7,7 @@
     "nb1"
    ],
    "cim": "Játékosprofil: mit csinált egy játékos a szezonban",
-   "leiras": "A Szezon játékosai listában egy névre kattintva megnyílik a játékos profilja: fordulónként az ellenfél, a meccs állása, a játékos saját pontja, és hogy melyik szakvezetőnél volt — kezdőként, padon vagy kapitányként. Egy fordulóban több szakvezetőnél is szerepelhet, ilyenkor mind ott van; ha senkinél sem volt, azt is kiírjuk. A sorra kattintva a pontok tételes bontása nyílik le. A pont a játékosé, nem a csapaté: nincs benne se kapitányi duplázás, se padfelezés."
+   "leiras": "A Szezon játékosai listában egy névre kattintva megnyílik a játékos profilja: fordulónként az ellenfél, a meccs állása, a játékos saját pontja, és hogy melyik szakvezetőnél volt — kezdőként, padon vagy kapitányként. Egy fordulóban több szakvezetőnél is szerepelhet, ilyenkor mind ott van; ha senkinél sem volt, azt is kiírjuk. A felsorolás végén ott áll, hogy a liga kereteinek hány százalékában volt benne, hány százalékában volt kezdő, és hányban kapitány. A sorra kattintva a pontok tételes bontása nyílik le. A pont a játékosé, nem a csapaté: nincs benne se kapitányi duplázás, se padfelezés."
   },
   {
    "datum": "2026-08-25",
