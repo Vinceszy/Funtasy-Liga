@@ -133,6 +133,28 @@ if isinstance(fx, list) and fx:
 else:
     ki("=== event/%s/fixtures -> HTTP %s" % (gw, st))
 
+# ---- 5) a ket hianyzo reszlet: van-e total_points, es van-e osszpont a torzsben? ----
+ki("")
+ki("## 5) a ket hianyzo reszlet")
+st, j = get(collect_draft.B + "element-summary/%d" % minta[0])
+h = ((j or {}).get("history") or [None])[0] if isinstance(j, dict) else None
+if h:
+    ki("=== draft element-summary history-sor MINDEN mezoje:")
+    ki("    %s" % sorted(h.keys()))
+    ki("    total_points=%s (a Draftban ismert: %s) | detail=%r | event=%s"
+       % (h.get("total_points"), ismert[minta[0]], h.get("detail"), h.get("event")))
+    fx = (j or {}).get("fixtures") or []
+    ki("    fixtures: %d jovobeli meccs, elso: %s"
+       % (len(fx), json.dumps(fx[0], ensure_ascii=False)[:200] if fx else "-"))
+st, bs = collect_draft.fetch("bootstrap-static")
+el = (bs or {}).get("elements") if isinstance(bs, dict) else None
+if el:
+    ki("=== draft bootstrap-static: egy jatekos MINDEN mezoje:")
+    ki("    %s" % sorted(el[0].keys()))
+    p0 = next((x for x in el if x.get("id") == minta[0]), el[0])
+    ki("    %s: total_points=%s event_points=%s"
+       % (p0.get("web_name"), p0.get("total_points"), p0.get("event_points")))
+
 with open(NAPLO, "w", encoding="utf-8") as f:
     f.write("\n".join(sorok) + "\n")
 print("\n".join(sorok))
