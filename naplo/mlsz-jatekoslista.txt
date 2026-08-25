@@ -1,51 +1,10 @@
-# 3. KOR - a fordulonkenti pont utolso eselye (pontbontas-vegpont).
-# Elozmeny: a torzs (competitions/3/players) megvan, de fordulora nem
-# szurheto (400). Itt a /game-player-stats vegpontot meritjuk ki.
-# Merott jatekos-azonositok: [1237, 1303]
+# 4. KOR - a profil kozponti feltevese: a bontas-sorok osszege = a
+# jatekos ALAPPONTJA az adott forduloban (kapitanysag/pad nelkul).
+# Osszevetes: keretek/<f>.json `week` / (cap?2:1) / (sub?0.5:1).
 
-## a) EGY jatekos, fordulo-szuro NELKUL - megjon-e az egesz szezon?
-=== csak jatekos-szuro                                   -> HTTP 200 | sorok=50 total=109 per_page=50 last_page=3
-    elso sor (RÖVIDÍTVE, de MINDEN mezo):
-{
- "value": 1,
- "points": 3,
- "round_id": 77,
- "competition_stat_config": {
-  "id": 59,
-  "name": "Győzelem"
- }
-}
-    -> 50 sorban 3 kulonbozo fordulo: [77, 79, 81]
-=== csak jatekos-szuro + per_page=100                    -> HTTP 200 | sorok=50 total=109 per_page=50 last_page=3
-    -> 50 sorban 3 kulonbozo fordulo: [77, 79, 81]
+## 107 kulonbozo jatekos, 377 (jatekos, fordulo) par a keret-fajlokban.
+=== lapozas page=2                 -> HTTP 200 | a 2. lap AZONOS (nem lapoz) az 1.-vel
+=== lapozas page%5Bnumber%5D=2     -> HTTP 200 | a 2. lap AZONOS (nem lapoz) az 1.-vel
 
-## referencia: ugyanaz a jatekos, EGY fordulora (a mai mukodo hivas)
-=== jatekos + 5. fordulo                                 -> HTTP 200 | sorok=22 total=22 per_page=50 last_page=1
-    -> 22 sorban 1 kulonbozo fordulo: [85]
-
-## b) fogad-e TOBB azonositot egyszerre?
-=== jatekos-lista (1237,1303)                            -> HTTP 200 | sorok=44 total=44 per_page=50 last_page=1
-    -> 44 sorban 1 kulonbozo fordulo: [85]
-=== jatekos-lista szogletes ([]=)                        -> HTTP 200 | sorok=44 total=44 per_page=50 last_page=1
-
-## c) TOMEGES hivas (csak fordulora szurve) - a nyers sor MINDEN mezoje.
-#    Ha van benne barmilyen jatekos-azonosito, az egesz mult potolhato
-#    par keressel. Az 1. kor szerint nincs - ezt ellenorizzuk ujra.
-=== csak fordulo-szuro + per_page=500                    -> HTTP 200 | sorok=50 total=3322 per_page=50 last_page=67
-    elso sor (RÖVIDÍTVE, de MINDEN mezo):
-{
- "value": 1,
- "points": 3,
- "round_id": 85
-}
-    az elso 50 sor OSSZES mezoneve: ['points', 'round_id', 'value']
-    azonositonak tuno mezok: ['round_id']
-      round_id                         -> 1 kulonbozo ertek az elso 50 sorban, pl. ['85']
-
-## d) a torzsvegpont: fordulonkenti include, es elfér-e egy lapon?
-=== torzs: per_page=500 (mind a 385 egy lapon?)          -> HTTP 200 | sorok=385 total=385 per_page=500 last_page=1
-=== torzs: include=round_statistics                      -> HTTP 200 | sorok=15 total=385 per_page=15 last_page=26
-=== torzs: include=statistics                            -> HTTP 200 | sorok=15 total=385 per_page=15 last_page=26
-=== torzs: include=rounds                                -> HTTP 200 | sorok=15 total=385 per_page=15 last_page=26
-=== torzs: include=game_player_stats                     -> HTTP 200 | sorok=15 total=385 per_page=15 last_page=26
-=== egy jatekos reszletes lapja                          -> HTTP 200 | sorok=0 total=None per_page=None last_page=None
+### EGYIK LAPOZO-PARAMETER SEM MUKODIK - a meres nem folytathato,
+### mert a 2-3. lap adatai nelkul a fordulo-osszegek hianyosak lennenek.
