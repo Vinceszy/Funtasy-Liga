@@ -1,24 +1,51 @@
-# 2. KOR: a players vegpont MEGVAN (competitions/N/players, 385 jatekos,
-# 15/lap, 26 lap; a page[size]-t eldobja). Amit ad: klub, poszt, u21,
-# serules, ar, es summary_statistics (competition_points, weekly_points).
-# Amit NEM ad: fordulonkenti pont - a weekly_points az AKTUALIS forduloe.
-#
-# EZ A KOR AZT MERI, POTOLHATO-E A MULT:
-#   a) fogad-e filter[round_id]-t (akkor barmelyik regi fordulo lekerheto)
-#   b) van-e mukodo lapmeret-parameter (26 keres helyett keve sebb)
-#   c) valtozik-e a weekly_points a szurovel - ez a doL kerdes
-=== filter[round_id]=77 (1. fordulo)             -> HTTP 400 (nincs lista)
-=== filter[round_id]=81 (3. fordulo)             -> HTTP 400 (nincs lista)
-=== filter[round_id]=85 (5. fordulo)             -> HTTP 400 (nincs lista)
-=== szuro NELKUL (referencia)                    -> HTTP 200 | sorok=15 total=385 per_page=15
-    elso: Áron Alaxai | weekly_points=0 comp=0 | current_round.round_id=87
-=== lapmeret: per_page=100                       -> HTTP 200 | sorok=100 total=385 per_page=100
-    elso: Áron Alaxai | weekly_points=0 comp=0 | current_round.round_id=87
-=== lapmeret: limit=100                          -> HTTP 200 | sorok=15 total=385 per_page=15
-    elso: Áron Alaxai | weekly_points=0 comp=0 | current_round.round_id=87
-=== lapmeret: page[limit]=100                    -> HTTP 200 | sorok=15 total=385 per_page=15
-    elso: Áron Alaxai | weekly_points=0 comp=0 | current_round.round_id=87
-=== lapmeret: page[per_page]=100                 -> HTTP 200 | sorok=15 total=385 per_page=15
-    elso: Áron Alaxai | weekly_points=0 comp=0 | current_round.round_id=87
+# 3. KOR - a fordulonkenti pont utolso eselye (pontbontas-vegpont).
+# Elozmeny: a torzs (competitions/3/players) megvan, de fordulora nem
+# szurheto (400). Itt a /game-player-stats vegpontot meritjuk ki.
+# Merott jatekos-azonositok: [1237, 1303]
 
-### A teljes torzs 26 lapbol all (15/lap).
+## a) EGY jatekos, fordulo-szuro NELKUL - megjon-e az egesz szezon?
+=== csak jatekos-szuro                                   -> HTTP 200 | sorok=50 total=109 per_page=50 last_page=3
+    elso sor (RÖVIDÍTVE, de MINDEN mezo):
+{
+ "value": 1,
+ "points": 3,
+ "round_id": 77,
+ "competition_stat_config": {
+  "id": 59,
+  "name": "Győzelem"
+ }
+}
+    -> 50 sorban 3 kulonbozo fordulo: [77, 79, 81]
+=== csak jatekos-szuro + per_page=100                    -> HTTP 200 | sorok=50 total=109 per_page=50 last_page=3
+    -> 50 sorban 3 kulonbozo fordulo: [77, 79, 81]
+
+## referencia: ugyanaz a jatekos, EGY fordulora (a mai mukodo hivas)
+=== jatekos + 5. fordulo                                 -> HTTP 200 | sorok=22 total=22 per_page=50 last_page=1
+    -> 22 sorban 1 kulonbozo fordulo: [85]
+
+## b) fogad-e TOBB azonositot egyszerre?
+=== jatekos-lista (1237,1303)                            -> HTTP 200 | sorok=44 total=44 per_page=50 last_page=1
+    -> 44 sorban 1 kulonbozo fordulo: [85]
+=== jatekos-lista szogletes ([]=)                        -> HTTP 200 | sorok=44 total=44 per_page=50 last_page=1
+
+## c) TOMEGES hivas (csak fordulora szurve) - a nyers sor MINDEN mezoje.
+#    Ha van benne barmilyen jatekos-azonosito, az egesz mult potolhato
+#    par keressel. Az 1. kor szerint nincs - ezt ellenorizzuk ujra.
+=== csak fordulo-szuro + per_page=500                    -> HTTP 200 | sorok=50 total=3322 per_page=50 last_page=67
+    elso sor (RÖVIDÍTVE, de MINDEN mezo):
+{
+ "value": 1,
+ "points": 3,
+ "round_id": 85
+}
+    az elso 50 sor OSSZES mezoneve: ['points', 'round_id', 'value']
+    azonositonak tuno mezok: ['round_id']
+      round_id                         -> 1 kulonbozo ertek az elso 50 sorban, pl. ['85']
+
+## d) a torzsvegpont: fordulonkenti include, es elfér-e egy lapon?
+=== torzs: per_page=500 (mind a 385 egy lapon?)          -> HTTP 200 | sorok=385 total=385 per_page=500 last_page=1
+=== torzs: include=round_statistics                      -> HTTP 200 | sorok=15 total=385 per_page=15 last_page=26
+=== torzs: include=statistics                            -> HTTP 200 | sorok=15 total=385 per_page=15 last_page=26
+=== torzs: include=rounds                                -> HTTP 200 | sorok=15 total=385 per_page=15 last_page=26
+=== torzs: include=game_player_stats                     -> HTTP 200 | sorok=15 total=385 per_page=15 last_page=26
+=== egy jatekos reszletes lapja                          -> HTTP 200 | sorok=0 total=None per_page=None last_page=None
