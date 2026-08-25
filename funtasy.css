@@ -302,6 +302,63 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
 .sumline{display:flex;justify-content:space-between;padding:6px 4px;border-top:1px solid var(--line);margin-top:6px;font-size:12px;color:var(--dim)}
 .u21{background:#2E6BE5;color:#fff;font:700 9px Inter;border-radius:3px;padding:1px 4px}
 
+/* ===== Fooldali jatekoslista + kereso =====
+   A sor ugyanaz a .plr flex-sor, mint mindenhol maskul: sorszam, poszt, nev
+   + klub, a jelenlegi tulajdonos, es a szezonpont. A tulajdonos-oszlop fix
+   szeles es levagodik, mert a teljes kep ugyis a profilban van - a lista
+   dolga az, hogy egy pillantasra lehessen benne keresni. */
+.jlvezerlo{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.kereso{flex:1 1 100%;box-sizing:border-box;padding:7px 10px;
+  background:var(--panel2);border:1px solid var(--line);border-radius:6px;
+  color:var(--fg);font:400 13px Inter}
+.kereso:focus{outline:none;border-color:var(--accent)}
+.kereso::placeholder{color:var(--dim)}
+.jlszuro,.jlszam,.jltorol{flex:1 1 0;min-width:96px;box-sizing:border-box;
+  padding:5px 7px;background:var(--panel2);border:1px solid var(--line);
+  border-radius:6px;color:var(--fg);font:400 12px Inter}
+.jlszam::placeholder{color:var(--dim)}
+.jlszuro:focus,.jlszam:focus{outline:none;border-color:var(--accent)}
+.jltorol{cursor:pointer;color:var(--dim)}
+.jltorol:hover{color:var(--fg);border-color:var(--accent)}
+/* kattinthato fejlec: a nyil jelzi, mi szerint all a sorrend */
+.jlfej{border-bottom:1px solid var(--line)}
+.jlfejcella{cursor:pointer;user-select:none}
+.jlfejcella:hover{color:var(--fg)}
+.jlfejcella.rendez{color:var(--accent)}
+.jlfejcella i{font-style:normal;font-size:8px;margin-left:3px}
+/* A fejleccellak ugyanazt a layout-osztalyt viselik, mint az adatcellak,
+   csak a diszitest vesszuk le roluk (a .ppos chip-kerete, a monospace szam),
+   kulonben a fejlec nem az oszlopok folott allna. */
+.jlklub{min-width:56px;max-width:56px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-size:11px;color:var(--dim)}
+.jlfej .jlklub,.jlfej .jltulaj,.jlfej .pts{font:inherit;color:inherit}
+.jlfej .ppos{background:none;border:0;padding:0;font:inherit;color:inherit;
+  text-align:left}
+.jlfej .jltulaj{display:block;text-align:right}
+.jlfej .nm{flex:1;min-width:0}
+.jlsor{cursor:pointer}
+.jlsor:hover{background:rgba(255,255,255,.045)}
+.jlsor .rank{min-width:26px;color:var(--dim);font-size:11px;text-align:right}
+.jltulaj{min-width:112px;max-width:112px;display:flex;justify-content:flex-end;
+  gap:4px;font-size:11px;color:var(--fg)}
+.jlnev{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jltobb{flex:none;color:var(--dim)}
+.jltulaj.nincs{display:block;text-align:right;color:var(--dim);font-style:italic;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:720px){
+  /* Telefonon ot oszlop nem fer ki: a nev vagodna le, pedig az a legfontosabb.
+     Oszlopot viszont NEM rejtunk el - akkor az szurhetetlen es rendezhetetlen
+     lenne -, hanem a "kinel van" csuszik sajat sorba, ugyanugy, mint a
+     jatekosprofil tulajdonos-sora. Igy minden oszlop megmarad. */
+  .jlsor,.jlfej{flex-wrap:wrap}
+  /* a "kinel van" a DOM-ban a pont ELOTT all (ott a helye szeles kepernyon),
+     ezert telefonon az `order` teszi a sor vegere - kulonben a pontot is
+     lelokne egy harmadik sorba */
+  .jltulaj{order:1;flex-basis:100%;max-width:none;justify-content:flex-end;
+    padding-right:2px;margin-top:1px}
+  .jlfej .jltulaj{order:1;display:block;text-align:right;flex-basis:100%}
+}
+
 /* ===== Jatekosprofil =====
    A fejlec a jatekos alapadatai, alatta fordulonkenti sorok. A sor ugyanaz
    a .plr flex-sor, mint a keretben (igy az accordion CSS-e valtozatlanul
@@ -309,6 +366,11 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
    teljes szelessegu masodik sorba kerul. Ez azert kell, mert az NB1-ben
    ugyanaz a jatekos EGY forduloban tobb szakvezetonel is lehetett - egy
    sorba zsufolva vagy levagodna, vagy szetlokne az oszlopokat. */
+.profnyito{margin-top:6px;padding:7px 8px;border-top:1px solid var(--line);
+  font-size:12px;color:var(--accent);cursor:pointer;display:flex;
+  justify-content:space-between;align-items:center}
+.profnyito:hover{background:rgba(255,255,255,.045)}
+.profnyito span{opacity:.7}
 .proffej{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px}
 .profnev{display:flex;align-items:center;gap:6px;font-size:15px}
 .profnev .tm{color:var(--dim);font-size:11px}

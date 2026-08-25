@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=42">
+<link rel="stylesheet" href="../funtasy.css?v=44">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -32,6 +32,10 @@
       <div class="matrix" id="matrix"></div>
       <div class="note">Sor vs oszlop: <span class="pos">GY</span>/<span style="color:var(--draw)">D</span>/<span class="neg">V</span>.
       <b>Kattints egy cellára</b> a két csapat egymás elleni meccseihez.</div>
+    </div>
+    <div class="panel" id="jlPanel" style="display:none">
+      <h2>A mezőny játékosai</h2>
+      <div id="jlDoboz"></div>
     </div>
   </div>
   <div>
@@ -72,7 +76,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=42"></script>
+<script src="../funtasy.js?v=44"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -440,6 +444,22 @@ async function profilAdat(jat){
       if(jat.cp) break;
     }
   }
+  // A belepesi pontok kulonbozo mennyisegu adatot tudnak a jatekosrol (a
+  // lenyilobol pl. csak a nev, az azonosito es a klub jon). Ami hianyzik -
+  // poszt, magyar, U21 -, azt a keret-elozmenybol toltjuk ki, kulonben
+  // ugyanaz a profil maskepp nezne ki aszerint, honnan nyitottak meg.
+  for(const r of rks){
+    let kesz=false;
+    for(const lista of Object.values(rounds[r]||{})){
+      const p=lista.find(azonos);
+      if(!p) continue;
+      if(!jat.poszt && p.pos) jat.poszt=p.pos;
+      if(jat.hun===undefined || jat.hun===false) jat.hun=!!p.hun;
+      if(!jat.u21 && p.u21) jat.u21=true;
+      kesz=true; break;
+    }
+    if(kesz) break;
+  }
   const sorok=[], klubok={};
   for(const r of rks){
     const per = rounds[r] || {};
@@ -489,6 +509,47 @@ async function profilAdat(jat){
     ],
     sorok, senkinel:'senkinél sem volt'
   };
+}
+
+// A mezony osszes jatekosa (jatekosok.json) - a fooldali lista es kereso
+// forrasa. A profil NEM ebbol nyilik meg: aki kikerult a bajnoksagbol, az
+// mar nincs a torzsben, a keret-elozmenyben viszont igen.
+let TORZS=null;
+async function torzsBetolt(){
+  if(TORZS!==null) return TORZS;
+  try{
+    const r=await fetch('../jatekosok.json?t='+Date.now());
+    TORZS = r.ok ? ((await r.json()).players||{}) : {};
+  }catch(e){ TORZS={}; }
+  return TORZS;
+}
+
+// Salary cap ligaban ugyanaz a jatekos TOBB keretben is lehet, ezert a
+// "kinel van most" nem egy nev, hanem lista. A megjelenitest (hany fer ki,
+// mi kerul a "+N"-be) a kozos reteg vegzi.
+function jelenlegiTulaj(cp, nev, keretek){
+  const kik=[];
+  for(const mgr of Object.keys(keretek||{}).sort())
+    if((keretek[mgr]||[]).some(x => cp ? x.id===cp : x.name===nev)) kik.push(mgr);
+  return kik;                    // a rovidites a kozos retegben tortenik
+}
+
+async function jatekosPanel(){
+  const [torzs, keretek] = await Promise.all([torzsBetolt(), loadSquadFile()]);
+  const idk=Object.keys(torzs);
+  if(!idk.length) return;                       // nincs mit mutatni
+  const lista=idk.map(id=>({
+    id, nev: torzs[id].n, klub: torzs[id].t, poszt: torzs[id].p,
+    u21: !!torzs[id].u21, pts: torzs[id].pts||0,
+    tulajok: jelenlegiTulaj(+id, torzs[id].n, keretek)
+  })).sort((a,b)=>b.pts-a.pts || a.nev.localeCompare(b.nev,'hu'));
+  $('jlPanel').style.display='';
+  FunTasy.jatekosKereso({
+    doboz:'jlDoboz', szabad:'szabad',
+    adat:()=>lista,
+    nyit:id=>{ const t=torzs[id]; if(!t) return;
+      showProfil({nev:t.n, cp:+id, klub:t.t, poszt:t.p, u21:!!t.u21, hun:false}, 'push'); }
+  });
 }
 
 async function showProfil(jat, mode){
@@ -748,7 +809,13 @@ async function bontasHTML(ds){
     sorok.unshift({name:'Játszott perc', value:perc.value, points:''});
   if(sorok.length && ds.cap==='1') sorok.push({name:'Kapitány — a heti pontban már duplázva',value:'',points:'×2'});
   if(sorok.length && ds.sub==='1') sorok.push({name:'Pad — a heti pontban már felezve',value:'',points:'×0.5'});
-  return meccssor + FunTasy.accTable(sorok, nincsPontUzenet(played,start,nyers,false,ds.vg==='1',elo));
+  // A lenyilo aljan a teljes profil - a keret-nezetbol ez a legkozelebbi ut
+  // oda. A profilon BELUL nincs kitéve (ott mar ott vagy): azt a lenyilot a
+  // profilBontasHTML epiti, ez a fuggveny oda nem is fut be.
+  const nyito = cp ? FunTasy.profilNyitoHTML(
+    ` data-prof="${esc(ds.nm||'')}" data-pcp="${cp}"`
+    + (ds.tm ? ` data-ptm="${esc(ds.tm)}"` : '')) : '';
+  return meccssor + FunTasy.accTable(sorok, nincsPontUzenet(played,start,nyers,false,ds.vg==='1',elo)) + nyito;
 }
 // ---------- Különbségek nézet (salary cap liga) ----------
 // Salary cap ligaban ugyanaz a jatekos MINDKET keretben szerepelhet, es
@@ -1007,6 +1074,9 @@ async function boot(){
   // jatekosra kattint, betoltodik; ha nem, a bontas meccs-sor nelkul megy.
   fetch('../meccsek.json?t='+Date.now()).then(r=>r.ok?r.json():null)
     .then(j=>{ if(j&&j.rounds) MECCSEK=j.rounds; }).catch(()=>{});
+  // A mezony jatekoslistaja: nem varjuk meg, a panel maga jelenik meg,
+  // amint az adat megjott (hianyzo fajlnal rejtve marad).
+  jatekosPanel().catch(()=>{});
   T.rPast=lastPlayedRound(); T.rNext=nextRound();
   renderTable(); renderMatches('past'); renderMatches('next'); renderMatrix();
   refresh();

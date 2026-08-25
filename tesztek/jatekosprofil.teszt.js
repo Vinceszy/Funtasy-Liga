@@ -155,6 +155,77 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   jo(/kapitány/.test(ketfele.pl) && /pad/.test(ketfele.pl),
      'a szerep neve draft ligában is látszik (csak az arány marad el)');
 
+  // ---- fooldali jatekoslista + kereso ----
+  cim('NB1: főoldali lista és kereső');
+  await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
+  await p.waitForSelector('.jlsor', { timeout: 20000 });
+  const db = await p.$$eval('.jlsor', a => a.length);
+  jo(db > 0 && db <= 40, 'a lista a legjobbakat mutatja, nem a teljes mezőnyt (' + db + ' sor)');
+  // EKEZET NELKUL is talaljon: a mezony tele van ekezetes es delszlav
+  // nevekkel, es senki nem fog kalapos c-t irni a keresobe. Olyan JATEKOS-
+  // nevet keresunk a listaban, amiben van ekezet, es az ekezet nelkuli
+  // alakjara keresunk ra.
+  const cel = await p.$$eval('.jlsor .nm', a => {
+    for (const x of a) {
+      const nev = x.childNodes[0].textContent.trim();      // a klub kulon span
+      const szo = nev.split(/\s+/).filter(w => w.normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') !== w)[0];
+      if (szo) return szo;
+    }
+    return null;
+  });
+  if (cel){
+    const celEk = cel.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    await p.fill('#jlKereso', celEk);
+    await p.waitForFunction(n => document.querySelectorAll('.jlsor').length < n,
+                            db, { timeout: 5000 }).catch(() => {});
+    const talalt = await p.$$eval('.jlsor .nm', a => a.map(x => x.textContent));
+    jo(celEk !== cel.toLowerCase() && talalt.some(x => x.includes(cel)),
+       'ékezet nélkül írva is megtalálja („' + celEk + '” → „' + cel + '”)');
+  } else {
+    jo(false, 'nem találtam ékezetes nevet a listában — az ékezet-teszt nem futott le');
+  }
+  // a kereses a TELJES mezonyben fusson, ne csak a kirajzolt sorokban:
+  // olyanra keresunk, aki a lista vegen sincs benne
+  await p.fill('#jlKereso', 'zzzznincsilyen');
+  await p.waitForSelector('#jlLista .loading', { timeout: 5000 });
+  jo(/Nincs találat/.test(await p.$eval('#jlLista', e => e.innerText)),
+     'nem létező névre saját üzenet jön, nem üres doboz');
+  await p.fill('#jlKereso', '');
+  await p.waitForSelector('.jlsor', { timeout: 5000 });
+
+  // A "+N" SOSEM vagodhat le: a nevek rovidulnek helyette. (Elobb egyben
+  // volt a ket resz, es a CSS pont a darabszamot nyelte el.)
+  cim('NB1: a „kinél van” oszlop');
+  const tobbek = await p.$$eval('.jltobb', a => a.map(x => x.textContent));
+  jo(!tobbek.length || tobbek.every(x => /^\+\d+$/.test(x)),
+     'ahol többen birtokolják, a „+N” külön áll és teljes egészében látszik'
+     + (tobbek.length ? ' — pl. ' + tobbek[0] : ' (most nincs ilyen sor)'));
+  const levagott = await p.$$eval('.jltobb', a => a.some(x => x.scrollWidth > x.clientWidth + 1));
+  jo(!levagott, 'a „+N” nincs elvágva');
+
+  cim('NB1: a listából megnyílik a profil');
+  await p.click('.jlsor');
+  await p.waitForSelector('.proflista', { timeout: 20000 });
+  jo(true, 'a lista sorára kattintva megnyílik a profil');
+  await p.click('#ovClose');
+
+  // ---- belepes a pont-bontas aljarol ----
+  cim('NB1: belépés a lenyíló aljáról');
+  await p.evaluate(() => showSquad(['Katyul']));
+  await p.waitForSelector('.plr[data-acc]', { timeout: 20000 });
+  await p.click('.plr[data-acc]');
+  await p.waitForSelector('.accpanel .profnyito', { timeout: 20000 });
+  jo(/Teljes játékosprofil/.test(await p.$eval('.accpanel .profnyito', e => e.innerText)),
+     'a bontás alján ott a „Teljes játékosprofil” sor');
+  await p.click('.accpanel .profnyito');
+  await p.waitForSelector('.proflista', { timeout: 20000 });
+  const fej2 = await p.$eval('.proffej', e => e.innerText);
+  jo(/[A-ZÁÉÍÓÖŐÚÜŰ]/.test(fej2.split('\n')[0]),
+     'a lenyílóból nyitott profil fejléce is kitöltött (a posztot a keret-előzményből pótoljuk)');
+  jo(await p.$('.accpanel .profnyito') === null,
+     'a profilon BELÜL már nincs „Teljes játékosprofil” sor');
+
   await p.close();
 
   // ================= PL (draft liga) =================
@@ -223,6 +294,25 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
      'akinél senki sem volt: "szabadügynök" (nem "senkinél sem volt")');
   jo(await q.$$eval('.parany', a => a.length) === 0,
      'draft ligában nincs arány-blokk a valódi oldalon sem');
+
+  cim('PL: főoldali lista');
+  await q.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
+  await q.waitForSelector('.jlsor', { timeout: 20000 });
+  jo((await q.$$eval('.jlsor', a => a.length)) > 0, 'a PL-főoldalon is ott a játékoslista');
+  jo((await q.$$eval('.jltobb', a => a.length)) === 0,
+     'draft ligában sosincs „+N”: egy játékos legfeljebb egy keretben van');
+  // A kereses NEVRE ES KLUBRA is talal - "ars" tehat az Arsenal jatekosait
+  // ES a nevukben "ars"-t tartalmazokat is hozza. Ez szandekos: a talalat
+  // legyen bo, ne kelljen elore tudni, mire keresel.
+  await q.fill('#jlKereso', 'ars');
+  await q.waitForFunction(() => document.querySelectorAll('.jlsor').length > 0, null, { timeout: 5000 });
+  const arsSorok = await q.$$eval('.jlsor', a => a.map(x => x.innerText.replace(/\n/g, ' ')));
+  jo(arsSorok.length > 0 && arsSorok.every(x => /ars/i.test(x)),
+     'klubra keresve minden találat tartalmazza a keresett szót (névben vagy klubban)');
+  jo(arsSorok.some(x => /\bARS\b/.test(x)), 'az ARS klub játékosai köztük vannak');
+  await q.click('.jlsor');
+  await q.waitForSelector('.proflista', { timeout: 20000 });
+  jo(true, 'a PL-listából is megnyílik a profil');
 
   jo(qerr.length === 0, 'nincs JS-hiba a PL-oldalon'
      + (qerr.length ? ': ' + qerr.join(' | ') : ''));

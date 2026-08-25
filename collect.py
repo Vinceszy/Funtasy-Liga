@@ -450,6 +450,40 @@ def jatekostorzs():
     return ki
 
 
+def arnaplo_frissit(torzs, mai):
+    """Az arak valtozasanak naplozasa (arak.json).
+
+    Ma semmi nem hasznalja - azert gyujtjuk, mert visszamenoleg NEM lehet
+    pototlni: az API csak a MOSTANI arat adja, a multat sehol nem tarolja.
+    Amit ma nem irunk fel, az orokre elveszett.
+
+    Csak a VALTOZAST irjuk fel, nem minden futast: a gyujto 3 oraankent fut,
+    igy a fajl napi nyolc valtozatlan bejegyzessel hizna. Egy jatekos sora
+    tehat [[datum, ar], ...], es uj elem csak akkor kerul bele, ha az ar mas,
+    mint a legutobb feljegyzett.
+
+    A hianyzo vagy nulla arat NEM tekintjuk valtozasnak: az API-hiba igy nem
+    ir be hamis "0-ra esett" bejegyzest (ugyanaz a logika, mint a 0-0
+    vedelem a results.json-nal).
+    """
+    try:
+        with open("arak.json", encoding="utf-8") as f:
+            naplo = json.load(f).get("arak") or {}
+    except Exception:
+        naplo = {}
+    valtozott = 0
+    for cp, rec in torzs.items():
+        ar = rec.get("ar")
+        if not isinstance(ar, (int, float)) or ar <= 0:
+            continue
+        sor = naplo.setdefault(cp, [])
+        if sor and sor[-1][1] == ar:
+            continue
+        sor.append([mai, ar])
+        valtozott += 1
+    return naplo, valtozott
+
+
 def kompakt_iras(path, obj):
     """A konyvjelzoevel azonos, kompakt JSON-formatum."""
     with open(path, "w", encoding="utf-8") as f:
@@ -793,6 +827,13 @@ def main():
            json.dumps(torzs_regi, ensure_ascii=False, sort_keys=True):
             kompakt_iras("jatekosok.json", {"updated": stamp(), "players": torzs})
             print("  jatekosok.json frissitve (%d jatekos)" % len(torzs))
+
+    # ---- Arnaplo: csak a valtozasok, mert a multat nem lehet potolni ----
+    if torzs is not None:
+        arak, valtozott = arnaplo_frissit(torzs, time.strftime("%Y-%m-%d", time.gmtime()))
+        if valtozott:
+            kompakt_iras("arak.json", {"updated": stamp(), "arak": arak})
+            print("  arak.json frissitve (%d arvaltozas)" % valtozott)
 
     if provisional:
         print("  ideiglenes (meg tart): %s. fordulo" % ", ".join(map(str, provisional)))

@@ -6,7 +6,7 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=42">
+<link rel="stylesheet" href="../funtasy.css?v=44">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -32,6 +32,10 @@
       <div class="matrix" id="matrix"></div>
       <div class="note">Sor vs oszlop: <span class="pos">GY</span>/<span style="color:var(--draw)">D</span>/<span class="neg">V</span>.
       <b>Kattints egy cellára</b> a két csapat egymás elleni meccseihez.</div>
+    </div>
+    <div class="panel" id="jlPanel" style="display:none">
+      <h2>A mezőny játékosai</h2>
+      <div id="jlDoboz"></div>
     </div>
   </div>
   <div>
@@ -90,7 +94,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=42"></script>
+<script src="../funtasy.js?v=44"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -456,6 +460,30 @@ async function profilAdat(e){
   };
 }
 
+// A mezony osszes jatekosa a fooldali listahoz es kereseshez. A torzs
+// (draft_players.json) mar betoltodik az oldal indulasakor, a szezonpont
+// pedig 2026-08-25 ota benne van - plusz lekeres nem kell hozza.
+// Draft ligaban egy jatekos legfeljebb EGY keretben van, tehat a
+// "kinel van most" itt egyetlen nev vagy semmi.
+function jatekosPanel(){
+  const idk = Object.keys(PLAYERS);
+  if (!idk.length) return;
+  const tulaj = {};
+  for (const id of Object.keys(SQUADS))
+    for (const e of (SQUADS[id] || [])) tulaj[e] = nev(+id);
+  const lista = idk.map(id => ({
+    id, nev: PLAYERS[id].n, klub: PLAYERS[id].t, poszt: PLAYERS[id].p,
+    pts: PLAYERS[id].pts || 0,
+    tulajok: tulaj[id] ? [tulaj[id]] : []
+  })).sort((a, b) => b.pts - a.pts || a.nev.localeCompare(b.nev, 'hu'));
+  $('jlPanel').style.display = '';
+  FunTasy.jatekosKereso({
+    doboz: 'jlDoboz', szabad: 'szabadügynök',
+    adat: () => lista,
+    nyit: id => showProfil(+id, 'push')
+  });
+}
+
 async function showProfil(e, mode){
   vShow(() => showProfil(e, 'noop'), mode);
   PROFIL_AKT = e; openModal();
@@ -652,7 +680,7 @@ document.addEventListener('click', e => {
   // ugyanaz az accordion ket helyen: a keret-nezetben a sor sajat adataibol,
   // a jatekosprofilban a nyitott jatekosbol es a fordulo szamabol (data-pr)
   if (pr){ FunTasy.accToggle(pr, () => pr.dataset.pr !== undefined
-             ? bontasHTML(PROFIL_AKT, +pr.dataset.pr)
+             ? bontasHTML(PROFIL_AKT, +pr.dataset.pr, true)
              : bontasHTML(+pr.dataset.e, +pr.dataset.gw)); return; }
   const pf = e.target.closest('[data-prof]');
   if (pf){ showProfil(+pf.dataset.prof, 'push'); return; }
@@ -944,7 +972,7 @@ function bonuszAllapot(gw, meccsId){
   return hivatalos ? null
     : { jelzes: 'ideiglenes', megjegyzes: 'lefújva — a forduló végéig még változhat' };
 }
-async function bontasHTML(e, gw){
+async function bontasHTML(e, gw, profilban){
   const [el, meccsek] = await Promise.all([gwElems(gw), forduloMeccsei(gw)]);
   const v = el && (el[e] || el[String(e)]);
   if (!v) return null;
@@ -964,7 +992,10 @@ async function bontasHTML(e, gw){
       sorok.push(sor);
     });
   });
-  return fej + FunTasy.accTable(sorok, nincsPontUzenet(e, gw, perc));
+  // A lenyilo aljan a teljes profil. A profilon BELUL nem tesszuk ki (ott
+  // mar ott vagy) - onnan a hivo `profilban` jelzessel jon.
+  return fej + FunTasy.accTable(sorok, nincsPontUzenet(e, gw, perc))
+             + (profilban ? '' : FunTasy.profilNyitoHTML(` data-prof="${e}"`));
 }
 // A fooldali meccslista allasa a LIVE retegben el (hogy a tabellaba ne
 // szamitson bele). Barki frissiti a LIVEPTS-t, ezt is at kell szamolni -
@@ -1051,6 +1082,7 @@ Promise.all([
     SQUADS = (sq && sq.squads) || {};
     HIST = (hi && hi.rounds) || {};
 
+    jatekosPanel();
     T.rPast = T.lastPlayedRound();
     T.rNext = T.nextRound();
     $('sub').textContent = `${FunTasy.liga('pl').cim} · privát head-to-head · ${Object.keys(ENTRIES).length} csapat · ${liga.stop_event || 38} forduló`;

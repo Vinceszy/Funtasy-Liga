@@ -1,96 +1,93 @@
 #!/usr/bin/env python3
-"""EGYSZERI meres a jatekosprofil-funkciohoz - 5. kor.
+"""EGYSZERI meres - 6. kor: van-e AR-ELOZMENY az MLSZ-nel?
 
-EDDIGI EREDMENY (naplo/mlsz-jatekoslista.txt korabbi korei):
-  - a teljes torzs egy keresbol megjon: competitions/3/players?per_page=500
-    (385 jatekos, klub, poszt, u21, serules, ar, competition_points);
-  - fordulora nem szurheto, a pontbontas nem lapozhato;
-  - a bontas-sorok osszege = a jatekos alappontja (377 fordulon merve).
+Elozmeny: a torzs (competitions/3/players) a `current_round.market_price`
+mezoben a MOSTANI arat adja. Ha az arak valtozasat kovetni akarjuk, ket ut
+van: vagy mi naplozzuk futasonkent (amit visszamenoleg mar nem lehet
+potolni), vagy az API maga adja a multat.
 
-EZ A KOR EGYETLEN KERDEST DONT EL: a torzs `id` mezoje UGYANAZ-e, mint
-amit a keret-rekordokban `id` neven tarolunk (a competition_player.id)?
-A fooldali kereso ezen all: ha a talalatra kattintva rossz azonositoval
-nyitnank profilt, a bontas mas jatekost mutatna - csendben, hihetoen.
+Ez a kor az utobbit keresi. A legigeretesebb, hogy a torzs fogad valamilyen
+fordulonkenti include-ot: akkor MINDEN jatekos ARMULTJA egy keresbol
+megjonne, es a sajat naplozas felesleges (vagy legalabb visszamenoleg
+potolhato) lenne.
 
-Az osszevetes a repo keret-fajljaibol tortenik: minden mentett jatekosra
-megnezzuk, hogy a torzsben ugyanazzal az azonositoval ugyanaz a NEV all-e.
+Ha nincs ilyen, az is ertekes valasz: akkor a naplozas az EGYETLEN ut, es
+amit ma nem irunk fel, az orokre elveszett.
 
 Csak olvas; a naplot a workflow commitolja.
-ADATVEDELEM: a labdarugok neve nyilvanos adat, az mehet a naploba.
 """
-import glob, json, os, sys
+import json, os, sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import collect
 
-GYOKER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NAPLO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mlsz-jatekoslista.txt")
 sorok = []
 ki = sorok.append
 
-ki("# 5. KOR: a torzs `id`-je ugyanaz-e, mint a keret-rekordok `id`-je?")
-ki("# A fooldali kereso ezen all: rossz azonosito eseten a talalat MAS")
-ki("# jatekos bontasat nyitna meg - csendben, hihetoen.")
+
+def rovidit(v, hossz=160):
+    if isinstance(v, str) and len(v) > hossz:
+        return "<%d karakteres szoveg>" % len(v)
+    if isinstance(v, dict):
+        return {k: rovidit(x, hossz) for k, x in v.items()}
+    if isinstance(v, list):
+        return [rovidit(x, hossz) for x in v[:4]] + (["<+%d elem>" % (len(v) - 4)] if len(v) > 4 else [])
+    return v
+
+
+ki("# 6. KOR: van-e AR-ELOZMENY az MLSZ-nel?")
+ki("# Ha van, nem kell sajat naplo (es a mult is potolhato). Ha nincs, a")
+ki("# naplozas az egyetlen ut - amit ma nem irunk fel, az elveszett.")
 ki("")
 
-st, j = collect.api_get(collect.BASE + "players?include=team,position,summary_statistics&per_page=500")
-adat = (j or {}).get("data") if isinstance(j, dict) else None
-if not isinstance(adat, list) or not adat:
-    ki("### A torzs nem johetett le (HTTP %s) - a meres nem folytathato." % st)
-    with open(NAPLO, "w", encoding="utf-8") as f:
-        f.write("\n".join(sorok) + "\n")
-    print("\n".join(sorok))
-    sys.exit(0)
+# ---- 1) a torzs include-jai: hoz-e barmelyik fordulonkenti arat? ----
+ALAP = "competitions/%d/players?per_page=3" % collect.COMPETITION
+ki("## 1) A torzs include-jai (per_page=3, hogy a valasz olvashato legyen)")
+for inc in ("rounds", "player_rounds", "competition_player_rounds", "market_prices",
+            "price_history", "prices", "current_round", "statistics"):
+    st, j = collect.api_get(collect.ROOT + ALAP + "&include=" + inc)
+    adat = (j or {}).get("data") if isinstance(j, dict) else None
+    if not isinstance(adat, list) or not adat:
+        ki("=== include=%-28s -> HTTP %s (nincs lista)" % (inc, st))
+        continue
+    elso = adat[0]
+    # az include akkor "hatott", ha uj kulcs jelent meg a soron
+    ki("=== include=%-28s -> HTTP %s | sor-kulcsok: %s"
+       % (inc, st, sorted(elso.keys())))
+    for k in sorted(elso.keys()):
+        if k in ("id", "first_name", "last_name", "birth_date", "is_u21", "injury_status"):
+            continue
+        ert = elso[k]
+        if isinstance(ert, list) and ert:
+            ki("    %s: %d elem, elso: %s" % (k, len(ert),
+               json.dumps(rovidit(ert[0]), ensure_ascii=False)[:300]))
 
-ki("### A torzs %d sort adott (HTTP %s). Egy sor kulcsai:" % (len(adat), st))
-ki("    %s" % sorted(adat[0].keys()))
-
-torzs = {}
-for p in adat:
-    nev = " ".join(x for x in (p.get("first_name"), p.get("last_name")) if x)
-    torzs[p.get("id")] = nev
+# ---- 2) kulon vegpontok az arra ----
 ki("")
+ki("## 2) Onallo ar-vegpontok")
+CP = 1299                                   # egy ismert competition_player
+for cimke, ut in [
+    ("players/{id} (reszletes lap)", "competitions/%d/players/%d" % (collect.COMPETITION, CP)),
+    ("market-prices", "market-prices?filter%%5Bcompetition_player_id%%5D=%d" % CP),
+    ("player-market-prices", "player-market-prices?filter%%5Bcompetition_player_id%%5D=%d" % CP),
+    ("competition-player-rounds", "competition-player-rounds?filter%%5Bcompetition_player_id%%5D=%d" % CP),
+    ("player-rounds", "player-rounds?filter%%5Bcompetition_player_id%%5D=%d" % CP),
+    ("price-history", "price-history?filter%%5Bcompetition_player_id%%5D=%d" % CP),
+]:
+    st, j = collect.api_get(collect.ROOT + ut)
+    if not isinstance(j, dict):
+        ki("=== %-30s -> HTTP %s" % (cimke, st))
+        continue
+    adat = j.get("data")
+    n = len(adat) if isinstance(adat, list) else ("dict" if adat else 0)
+    ki("=== %-30s -> HTTP %s | data: %s" % (cimke, st, n))
+    if adat:
+        minta = adat[0] if isinstance(adat, list) else adat
+        ki("    %s" % json.dumps(rovidit(minta), ensure_ascii=False)[:500])
 
-# a keret-fajlokban tarolt (id -> nev) parok
-keret = {}
-for ut in sorted(glob.glob(os.path.join(GYOKER, "keretek", "*.json"))):
-    for lista in json.load(open(ut, encoding="utf-8"))["squads"].values():
-        for p in lista:
-            if p.get("id"):
-                keret[p["id"]] = p["name"]
-
-egyezik, elter, hianyzik = 0, 0, 0
-gondok = []
-for cp, nev in sorted(keret.items()):
-    tnev = torzs.get(cp)
-    if tnev is None:
-        hianyzik += 1
-        if len(gondok) < 20:
-            gondok.append("%s (id=%s): NINCS a torzsben" % (nev, cp))
-    elif tnev.strip() == nev.strip():
-        egyezik += 1
-    else:
-        elter += 1
-        if len(gondok) < 20:
-            gondok.append("id=%s: keretben %r, torzsben %r" % (cp, nev, tnev))
-
-ki("### %d mentett jatekos osszevetve a torzzsel:" % len(keret))
-ki("###   ugyanaz a nev ugyanazon az azonositon: %d" % egyezik)
-ki("###   MAS nev ugyanazon az azonositon:       %d" % elter)
-ki("###   az azonosito nincs a torzsben:         %d" % hianyzik)
-if gondok:
-    ki("")
-    ki("### Reszletek (max 20):")
-    for g in gondok:
-        ki("  " + g)
-else:
-    ki("")
-    ki("### Egyetlen elteres sincs - a torzs `id`-je a competition_player.id.")
-
-# a torzs egy teljes sora, hogy lassuk, mit erdemes elmenteni
 ki("")
-ki("### Egy teljes torzs-sor (a mentendo mezokhoz):")
-ki(json.dumps(adat[0], ensure_ascii=False, indent=1)[:1800])
+ki("### Ha egyik sem ad fordulonkenti/idobeli arat, marad a sajat naplozas.")
 
 with open(NAPLO, "w", encoding="utf-8") as f:
     f.write("\n".join(sorok) + "\n")
