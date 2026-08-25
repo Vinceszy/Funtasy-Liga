@@ -72,8 +72,12 @@ ki("")
 ki("## 2) tartalek: a keret-vegpont meccslistaja JOVOBELI fordulokra")
 ki("#    (valodi user_id-val - enelkul a vegpont ures listat ad)")
 nev = list(collect.MEMBERS.values())[0]
-uid = collect.rankings(nev)
-ki("=== rankings(%r) -> user_id: %s" % (nev, uid))
+sor = collect.rankings(nev)
+# a rankings a TELJES ranglista-rekordot adja; a keret-lekereshez a benne
+# levo user.id kell (elso nekifutasra az egesz rekordot adtam at, es a
+# keret-vegpont ezert nem adott semmit)
+uid = (((sor or {}).get("user_team") or {}).get("user") or {}).get("id")
+ki("=== rankings(%r) -> user.id: %s" % (nev, uid))
 if uid:
     for r_ in (JOVO, JOVO + 5, 33):
         st, j = collect.squad(uid, r_, jatek=True)
