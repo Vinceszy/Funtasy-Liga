@@ -1090,6 +1090,12 @@ többi ismerete nélkül írtam át — és a hozzá írt teszt a hibás viselke
 nem fogta meg. Ha egy tesztet a kód alá igazítasz, állj meg: valószínűleg az elvárás
 rossz, nem a kód.
 
+**A dokumentáció-frissítés nem opcionális lépés, és nem is bizalmi kérdés többé:** a
+`tesztek/dokuk.py` a tesztsor részeként ellenőrzi, hogy minden teszt- és adatfájl
+dokumentálva van, a fájl-táblázat nem hivatkozik törölt fájlra, és a változásnapló
+bejegyzései teljesek. (Azért született, mert a doksi-szerkesztés kétszer hasalt el
+csendben.)
+
 Nincs build lépés, nincs függőség. A kód három rétegben él:
 
 - **`funtasy.css`** — a közös stíluslap (mindkét oldal ezt tölti; itt van minden szín,

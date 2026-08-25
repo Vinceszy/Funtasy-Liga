@@ -30,6 +30,7 @@ futtat() {                      # futtat <cimke> <parancs...>
   else BUKOTT=$((BUKOTT + 1)); printf '   \033[31mBUKOTT\033[0m\n'; fi
 }
 
+futtat "dokuk.py" python3 "$GYOKER/tesztek/dokuk.py"
 for t in "$GYOKER"/tesztek/gyujto_*.py; do
   [ -e "$t" ] || continue
   futtat "$(basename "$t")" python3 "$t"
