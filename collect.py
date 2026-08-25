@@ -67,10 +67,12 @@ TOVABBI MERESSEL IGAZOLT TENYEK (2026-08-20):
   ("played" = current_round.is_played) teszi a keret-rekordokba.
 - A le nem zarult fordulo szamai IDEIGLENESEK: a results.json "provisional"
   listajaba kerulnek, es az oldal nem szamolja oket a tabellaba.
-- Az MLSZ utolag korrigalhat jatekos-statisztikat, es atvezeti a hivatalos
-  fordulo-osszegre is (megtortent: Csendi, 1-3. fordulo). Ezert a lekert
-  ertekhez MINDIG szinkronizalunk, es a keretbol szamolt osszeget
-  osszevetjuk a hivatalossal - elteresnel figyelmeztetes megy a naploba.
+- Az MLSZ utolag korrigalhat jatekos-statisztikat - MEGFIGYELT korrekcio
+  meg nincs (a Csendi-eset a kezi korszak adata volt, ami az elso szerveres
+  osszevetesnel tert el; hogy kozben az MLSZ valtoztatott-e, nem eldontheto).
+  A vedelem ettol fuggetlenul all: a lekert ertekhez MINDIG szinkronizalunk,
+  es a keretbol szamolt osszeget osszevetjuk a hivatalossal - elteresnel
+  figyelmeztetes megy a naploba.
 - A jatekosok weekly_points erteke MAR KESZ: benne van a kapitanyi duplazas
   es a pad felezese. Soha nem szorzunk ujra es nem felezunk.
 - A 0-0 vedelem marad: ha egy fordulo minden erteke 0, a fordulo el sem

@@ -791,9 +791,12 @@ A szabály: a `current_round` az erősebb jel. Ha az MLSZ szerint **még ez** az
 forduló, akkor az `end_at` eltelte sem zárja le — a futó fordulót lezárni a rosszabb téves
 lépés, mert a félig kész eredmény csendben bekerülne a tabellába. Az `end_at` csak akkor
 dönt, ha a `current_round` egyáltalán nem jött meg.
-- **Az MLSZ utólag korrigálhat** játékos-statisztikát, és átvezeti a hivatalos
-  fordulóösszegre is. Megtörtént: Csendi 1–3. fordulós pontjai a lezárás után változtak
-  (+1, +1, −2,5).
+- **Az MLSZ utólag korrigálhat** játékos-statisztikát — erre a gyűjtő fel van készülve,
+  de **megfigyelt korrekciónk nincs**. Ami történt (Csendi, 1–3. forduló, +1, +1, −2,5):
+  a kézi/könyvjelzős korszakban mentett értékek tértek el a hivatalostól, amikor
+  2026-08-20-án először tudtunk szerverről összevetni — hogy közben az MLSZ változtatott,
+  vagy a kézi mentés eleve nem a végleges értéket kapta el, nem eldönthető. A 08-20-i
+  szinkron óta (3 óránkénti összevetéssel) egyetlen régi fordulóérték sem változott.
 
 #### Önjavítás: ha az MLSZ korrigál, a gyűjtő is korrigál
 
@@ -1429,8 +1432,7 @@ tartalommal. A `GOMB-bookmarklet.txt`-t soha ne szerkeszd kézzel.
   megnyitása a meccs-lenyíló aljáról is („Teljes játékosprofil" sor)
 - **A Zárási változások panelen a játékosok és a csapatnevek legyenek kattinthatók** — a
   játékos a profilját, a csapat a keretét nyissa meg, ahogy máshol az oldalon
-- **Zárási változások az NB1-en is.** Ma csak a PL-oldalon van ilyen panel, pedig a
-  mérésekből tudjuk, hogy az MLSZ is módosít utólag: a 4. fejezet „Forduló-lezárás és
-  utólagos MLSZ-korrekciók" szakasza rögzíti, hogy a hivatalos fordulóösszeg is
-  változott már visszamenőleg (Csendi, 1–3. forduló). Ugyanaz a panel kell oda is, a
-  változás forrásának megfelelő tartalommal
+- **Zárási változások az NB1-en is.** Ma csak a PL-oldalon van ilyen panel. Az NB1-en
+  megfigyelt utólagos korrekció még nincs (lásd a 4. fejezetet) — előbb azt kell
+  eldönteni, MI a rögzítendő változás: a gyűjtő naplózza, ha egy végleges forduló
+  értéke módosul, és a panel csak akkor jelenik meg, ha tényleg van ilyen
