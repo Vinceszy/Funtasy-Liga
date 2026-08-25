@@ -158,3 +158,19 @@
 
 08-25 08:53:29  (valtozatlan)
 
+08-25 09:03:32  cur=1  meccs=5/5 kesz  es=r/bonus r/bonus r/bonus r/bonus  current_event=1 current_event_finished=true next_event=2 processing_status="n" trades_time_for_approval=true waivers_processed=false
+  # entry/event kulcsok: ['entry_history', 'picks', 'subs']
+  # pick kulcsok:        ['element', 'is_captain', 'is_vice_captain', 'multiplier', 'position']
+  # entry.entry_history = {}
+  # entry.subs = [{"element_in": 125, "element_out": 512, "event": 1}]
+  L254810  kezdo=[226, 356, 357, 10, 426, 260, 236, 41, 125, 223, 552]  pad=[467, 512, 115, 36]  0perces_kezdo=[]
+  L254960  kezdo=[1, 142, 8, 149, 583, 428, 367, 43, 372, 295, 165]  pad=[2, 152, 159, 136]  0perces_kezdo=[]
+  L267429  kezdo=[385, 200, 388, 61, 504, 40, 427, 208, 483, 514, 526]  pad=[557, 31, 166, 167]  0perces_kezdo=[208]
+  L267607  kezdo=[529, 423, 469, 11, 12, 15, 554, 542, 209, 26, 249]  pad=[566, 471, 362, 79]  0perces_kezdo=[]
+  L267857  kezdo=[384, 387, 502, 580, 237, 45, 572, 556, 464, 55, 25]  pad=[140, 499, 400, 6]  0perces_kezdo=[572, 55, 25]
+  L268988  kezdo=[109, 229, 204, 393, 123, 480, 155, 67, 481, 106, 346]  pad=[496, 391, 569, 5]  0perces_kezdo=[]
+  L271009  kezdo=[350, 112, 449, 392, 399, 515, 157, 94, 70, 411, 439]  pad=[442, 491, 448, 419]  0perces_kezdo=[392]
+  L277905  kezdo=[198, 4, 389, 9, 445, 397, 452, 95, 431, 401, 490]  pad=[57, 593, 403, 581]  0perces_kezdo=[452, 431, 401]
+  L327399  kezdo=[82, 498, 358, 418, 154, 366, 13, 429, 16, 527, 222]  pad=[83, 465, 533, 60]  0perces_kezdo=[]
+  L360593  kezdo=[412, 390, 201, 417, 231, 368, 14, 398, 156, 379, 463]  pad=[28, 18, 503, 27]  0perces_kezdo=[231, 463]
+
