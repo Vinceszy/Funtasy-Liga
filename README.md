@@ -219,7 +219,7 @@ teljes képernyős, ragadós × gombbal.
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
 | `naplo/` | **Mérési archívum** (lezárt egyszeri megfigyelések nyers naplói — lásd `naplo/README.md`). A hozzájuk tartozó workflow-k törölve; a következtetések ebben a README-ben vannak (3/b, „Automatikus cserék”, „Ki van még a pályán”, bónusz-szakasz). |
 | `hatekonysag.json` | Kezdőállítási hatékonyság fordulónként (`{updated, rounds:{"1":{név:{sz, le}}}}`) — az NB1 KEZD% oszlopának és meccs-nézetének forrása. A gyűjtő minden futásnál az összes tárolt fordulóra újraszámolja (determinisztikus). A PL-nek nincs ilyen fájlja: ott a böngésző számol a már betöltött kerettörténetből. |
-| `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**. A GW1 a git-történetből lett pótolva. |
+| `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**; elemeik `{e, pts}` alakúak, mert a beállt játékos pontja mondja meg, mit hozott a csere (a régi, csak azonosítót tartalmazó alakot a lap még elfogadja). A GW1 a git-történetből lett pótolva. |
 | `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset csak akkor, ha a forduló hivatalos pontja változott (ez a **pótolt meccs** esete — az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). **Nem a forduló összes meccse:** csak azoké a kluboké, amelyeknek van játékosuk valamelyik keretben — a részletező fölötti sorhoz ennyi kell. |
 | `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. |
 | `valtozasok/index.html` | A változásnapló oldala („Mi újult meg?"). |
@@ -862,6 +862,17 @@ Rögzíti: `zarasires.teszt.js`.
 Az NB1-en ez a rés nem áll fenn: ott a gyűjtő maga dönti el a lezárást, és ugyanabban a
 futásban írja be az eredményt is.
 
+### Név és monogram: a monogram sosem vágódik le
+
+A csapatnév mellett álló monogram (`.mgr`) **szűk helyen az azonosító** — ezért nem a
+sor végén vágjuk le, hanem a nevet rövidítjük. A pár közös (`nevMgr` a `funtasy.js`-ben):
+a név `.nv`-be kerül (ellipszis, zsugorodik), a monogram `flex:none`. A konténerek
+(`td.name`, `.match .h/.v`) flexek, nem `text-align`-nal igazítanak.
+
+Mobilon a szélesség-korlát a **néven** van (`td.name .nv{max-width:42vw}`), nem a cellán:
+a `td` `max-width`-je table-layout alatt nem korlátoz megbízhatóan, és a hosszú név
+kitolta a monogramot a cellából (mérve: a 30 monogramból egy túlnyúlt).
+
 ### Kezdőállítási hatékonyság (KEZD%)
 
 **Mit mér:** a keretből elérhető pontok hány százalékát hozta a ténylegesen beállított
@@ -884,8 +895,12 @@ a meccs-nézet fejlécében és az egymás elleni listában fordulónként áll.
 - Élő fordulóra a tabella nem számol (csak lejátszott meccsekre aggregál); a meccs-modal
   élő meccsen a friss pontokból számol, „élő" jelöléssel.
 
-A megjelenítés közös (`opts.kezd` hook a `FunTasy.create`-ben: tabella-oszlop, h2h-jel;
-`FunTasy.kezdSzazalek`, `KEZD_CIM`) — a számítás ligánkénti adapter.
+A megjelenítés közös (`opts.kezd` hook a `FunTasy.create`-ben: tabella-oszlop, h2h-jel,
+`fordulokHTML`; `FunTasy.kezdParHTML` a meccs-fejléc kétoldalt igazított sora) — a
+számítás ligánkénti adapter. A **Fordulók fül is közös** (`T.fordulokHTML`): a PL és az
+NB1 korábban két majdnem azonos példányban tartotta (`fordulokHTML` / `seasonHTML`),
+ebből lett a kimaradó NB1-es KEZD% — az ilyen kettőzés pontosan az, amiről a
+6. fejezet közösítés-szabálya szól.
 
 ### A pad sorrendje (PL) — és ami még nyitott
 
@@ -1016,7 +1031,11 @@ Felhasználói napló, nem technikai: **csak az kerül bele, amit a használó l
   „Mind" gomb nem egy választás a többi mellett, hanem a kijelölések törlése. A típus
   ezzel szemben egy választás, mert a két típus kizárja egymást.
 - **Egy nap, egy téma, egy bejegyzés.** Ha egy megoldás több nekifutásból állt össze, csak
-  a végső állapot kerül be; a közbenső próbálkozások a használót nem érdeklik.
+  a végső állapot kerül be; a közbenső próbálkozások a használót nem érdeklik. **Ez az
+  utólagos igazításokra is áll:** ami egy frissen élesített funkción még aznap (vagy másnap
+  az első visszajelzésre) igazítás, az nem külön bugfix-bejegyzés — a funkció bejegyzése
+  írja le a végállapotot. (Egyszer már becsúszott egy külön „a panel a helyére állt"
+  bejegyzés; törölni kellett.)
 - **Dátumozva**, naponként csoportosítva, a legfrissebb elöl. A napló 2026-08-23 estétől
   indul, a korábbi változások nincsenek benne.
 

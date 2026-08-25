@@ -110,6 +110,38 @@ const { BASE, jo, inditas, vege, apiKi } = require('./kozos');
   jo(nb1.cellak.length > 0 && nb1.cellak.every(x => x === '90%'),
      'az összesítés a LEZÁRT fordulókból számol (40+50)/(50+50)=90% — az ideiglenes kimarad');
   jo(/40|90/.test(nb1.cim || ''), 'a cella title-je a pont-párt mutatja: ' + JSON.stringify(nb1.cim));
+
+  // a Fordulok ful KOZOS renderelobol jon (T.fordulokHTML) - az NB1-en is
+  // ott a KEZD% oszlop, fordulonkent (1.: 40/50=80%, 2.: 50/50=100%)
+  const fordulok = await p2.evaluate(([nev]) => {
+    const d = document.createElement('div');
+    d.innerHTML = T.fordulokHTML(nev);
+    return { fej: !!d.querySelector('th[title*="Kezdőállítási"]'),
+             cellak: [...d.querySelectorAll('td.kezdpc')].map(x => x.textContent).slice(0, 4) };
+  }, [nevek[0]]);
+  console.log('   NB1 Fordulók fül: ' + JSON.stringify(fordulok.cellak));
+  jo(fordulok.fej, 'az NB1 Fordulók fülén is van KEZD% oszlop (közös renderelő)');
+  jo(fordulok.cellak[0] === '80%' && fordulok.cellak[1] === '100%',
+     'fordulónkénti értékek: 1.=80%, 2.=100% — ' + JSON.stringify(fordulok.cellak));
+
+  // a meccs-fejlec sora KETOLDALT igazit: a bal ertek a bal szelhez, a
+  // jobb a jobbhoz - ahogy a fejlec minden mas adata
+  const igazitas = await p2.evaluate(() => {
+    const d = document.createElement('div');
+    d.style.cssText = 'width:400px';
+    d.innerHTML = FunTasy.kezdParHTML({ sz: 40, le: 50 }, { sz: 45, le: 50 }, false);
+    document.body.appendChild(d);
+    const k = d.querySelector('.kezdsor').getBoundingClientRect();
+    const bal = d.querySelector('.kezdbal').getBoundingClientRect();
+    const jobb = d.querySelector('.kezdjobb').getBoundingClientRect();
+    const cim = d.querySelector('.kezdcim').textContent.trim();
+    d.remove();
+    return { balOK: Math.abs(bal.left - k.left) <= 1, jobbOK: Math.abs(jobb.right - k.right) <= 1, cim };
+  });
+  jo(igazitas.balOK && igazitas.jobbOK,
+     'a két érték a saját térfeléhez igazodik (bal a bal szélen, jobb a jobbon)');
+  jo(/kezdőállítás/.test(igazitas.cim), 'középen a címke: ' + JSON.stringify(igazitas.cim));
+
   jo(perr2.length === 0, 'nincs JS-hiba az NB1-oldalon: ' + JSON.stringify(perr2));
   await vege(br);
 })();

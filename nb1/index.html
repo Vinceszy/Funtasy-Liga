@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=35">
+<link rel="stylesheet" href="../funtasy.css?v=37">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -72,7 +72,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=35"></script>
+<script src="../funtasy.js?v=37"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -366,31 +366,6 @@ function playersHTML(name, rounds){
       <td class="pont">${fmt(r.pts)}</td></tr>`;
   });
   return '<div class="tablewrap">'+h+'</table></div>';
-}
-function seasonHTML(name){
-  let h=`<table><tr><th>F</th><th>Ellenfél</th><th>Pont</th><th>Ell.</th><th>Eredm.</th></tr>`;
-  let gy=0,d=0,v=0;
-  for(const r of ROUNDS) for(const m of SCHEDULE[r]){
-    let opp,own,ov,elo=false;
-    if(m[0]===name){opp=m[1];own=m[2];ov=m[3];}
-    else if(m[1]===name){opp=m[0];own=m[3];ov=m[2];}
-    else continue;
-    // A folyo fordulo allasa nem a menetrendben van, hanem az elo retegben
-    // (hogy a tabellaba ne szamitson) - de itt latszania kell.
-    if(own==null){
-      const L=eloAllas(r,m[0],m[1]);
-      if(L){ elo=true; own=(m[0]===name?L[2]:L[3]); ov=(m[0]===name?L[3]:L[2]); }
-    }
-    let res='—',cls='';
-    if(own!=null&&ov!=null){
-      if(own>ov){res='GY';cls='pos';} else if(own<ov){res='V';cls='neg';} else {res='D';}
-      if(!elo){ if(res==='GY')gy++; else if(res==='V')v++; else d++; }   // elo meccs a merlegbe nem szamit
-    }
-    h+=`<tr class="clickable" data-mh="${esc(m[0])}" data-mv="${esc(m[1])}" data-mr="${r}"><td class="rank">${r}.</td><td class="name">${esc(opp)}</td>
-      <td>${own!=null?fmt(own):'—'}</td><td>${ov!=null?fmt(ov):'—'}</td>
-      <td class="${cls}">${res}${elo?'<span class="elojel">élő</span>':''}</td></tr>`;
-  }
-  return `<div style="font-size:13px;color:var(--dim);margin-bottom:8px">Mérleg: <b class="pos">${gy} GY</b> · ${d} D · <b class="neg">${v} V</b> — ${gy*3+d} pont</div>`+h+'</table>';
 }
 let mCurrent=[];
 function showEloUzenet(){
@@ -704,16 +679,7 @@ function meccsTest(){
   const van = SALARY_CAP && (kozos.length || szabaly.kozos);
   // kezdoallitasi hatekonysag a ket oldalra (csak lezart meccsen: elo
   // forduloban az ertek meg valtozik, es a gyujto ugyis ujraszamolja)
-  const kezdsor = (() => {
-    if (elo) return '';
-    const egy = n => {
-      const x = kezdErtek(n, r), pc = x && FunTasy.kezdSzazalek(x.sz, x.le);
-      return pc == null ? '–' : `${pc}% <span class="kezdresz">(${fmt(x.sz)}/${fmt(x.le)})</span>`;
-    };
-    const a = egy(h), b = egy(v);
-    if (a === '–' && b === '–') return '';
-    return `<div class="kezdsor" title="${esc(FunTasy.KEZD_CIM)}">kezdőállítás: ${a} — ${b}</div>`;
-  })();
+  const kezdsor = elo ? '' : FunTasy.kezdParHTML(kezdErtek(h, r), kezdErtek(v, r), false);
   const gomb = van
     ? `<div class="szurosor">
          <button class="szurogomb${CSAK_ELTERES?' on':''}" id="elteresGomb">Különbségek</button>
@@ -809,7 +775,7 @@ async function showSquad(names,tab,mode){
   }
   if(single && tab==='season'){
     $('mSub').textContent='Fordulónkénti eredmények — sorra kattintva a meccs részletei';
-    $('mBody').innerHTML=`<div class="sqwrap one" style="max-width:none">${seasonHTML(names[0])}</div>`;
+    $('mBody').innerHTML=`<div class="sqwrap one" style="max-width:none">${T.fordulokHTML(names[0])}</div>`;
     return;
   }
   const at = SQUAD_FILE_AT ? ' · frissítve: '+new Date(SQUAD_FILE_AT).toLocaleString('hu-HU',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';

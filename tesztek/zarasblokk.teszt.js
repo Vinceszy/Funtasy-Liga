@@ -21,7 +21,7 @@ const { BASE, jo, inditas, vege } = require('./kozos');
     status: 200, contentType: 'application/json',
     body: JSON.stringify({ updated: 'x', rounds: {
       1: { [csA]: { pont: [{ e: azon[0], elott: 5, utan: 7 }] },
-           [csB]: { ki: [azon[1]], be: [azon[2]] } },
+           [csB]: { ki: [{ e: azon[1], pts: 0 }], be: [{ e: azon[2], pts: 6 }] } },
       2: {},
     } }),
   }));
@@ -55,6 +55,8 @@ const { BASE, jo, inditas, vege } = require('./kozos');
   jo(a.sorok.some(x => /5 → 7/.test(x) && /\+2/.test(x)), 'a pontváltozás sora: előtte → utána (+diff)');
   jo(a.sorok.some(x => /kikerült/.test(x)) && a.sorok.some(x => /beállt/.test(x)),
      'a csere két külön sor: kikerült / beállt — nincs hamis párosítás');
+  jo(a.sorok.some(x => /6 pont.*beállt/.test(x)),
+     'a beállt játékosnál ott a pontja: ' + JSON.stringify(a.sorok.filter(x => /beállt/.test(x))));
 
   console.log('--- szűrés ---');
   await p.click('[data-znezet="pont"]');

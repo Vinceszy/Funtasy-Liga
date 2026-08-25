@@ -8,16 +8,7 @@
     "pl"
    ],
    "cim": "Új mutató: kezdőállítási hatékonyság (KEZD%)",
-   "leiras": "A keretből elérhető pontok hány százalékát hozta a beállított kezdő. A tabella új KEZD% oszlopa a lezárt fordulók összesítése; a meccs nézetében és az egymás elleni listában fordulónként is látszik. Az NB1-en a kapitányválasztás és a magyarszabály is beleszámít, a PL-en az érvényes felállások szabálya."
-  },
-  {
-   "datum": "2026-08-25",
-   "tipus": "bugfix",
-   "ligak": [
-    "pl"
-   ],
-   "cim": "A Zárási változások panel a többi panel sorába állt",
-   "leiras": "A panel eddig teljes szélességben lógott az oldal alján, a szövege a keretig ért, a leírása pedig nem mondta meg, mihez képest „másnap” a zárás. Most a jobb oszlopban áll, belső margókkal, és a leírás az utolsó meccs utáni reggelt mondja."
+   "leiras": "A keretből elérhető pontok hány százalékát hozta a beállított kezdő. A tabella új KEZD% oszlopa a lezárt fordulók összesítése; a meccs nézetében (a két értéket a saját térfeléhez igazítva), a Fordulók fülön és az egymás elleni listában fordulónként is látszik. Az NB1-en a kapitányválasztás és a magyarszabály is beleszámít, a PL-en az érvényes felállások szabálya."
   },
   {
    "datum": "2026-08-25",

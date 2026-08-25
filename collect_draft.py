@@ -155,9 +155,11 @@ def zarasi_kulonbseg(regi, uj):
         vp = {x["e"]: x for x in volt}
         pont = [{"e": x["e"], "elott": vp[x["e"]]["pts"], "utan": x["pts"]}
                 for x in friss if x["e"] in vp and vp[x["e"]]["pts"] != x["pts"]]
-        csere_ki = [x["e"] for x in friss
+        # a cserenel a PONT is kell: a bekerult jatekos pontja mondja meg,
+        # mit hozott a csere (a kikerulte pedig, miert tortent)
+        csere_ki = [{"e": x["e"], "pts": x["pts"]} for x in friss
                     if x["b"] and x["e"] in vp and not vp[x["e"]]["b"]]
-        csere_be = [x["e"] for x in friss
+        csere_be = [{"e": x["e"], "pts": x["pts"]} for x in friss
                     if not x["b"] and x["e"] in vp and vp[x["e"]]["b"]]
         if pont or csere_ki or csere_be:
             ki[lid] = {}

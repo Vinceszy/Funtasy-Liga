@@ -123,8 +123,13 @@ z = json.load(open("zarasok.json"))
 z1 = z["rounds"].get("1") or {}
 allit("1" in z["rounds"], "D6: a veglegesito futasban elkeszult a zarasi bejegyzes")
 erintett = next(iter(z1.values())) if z1 else {}
-allit(erintett.get("ki") == [11] and erintett.get("be") == [12],
+# a ki/be elemei {e, pts} alakuak: a bekerult jatekos PONTJA mondja meg,
+# mit hozott a csere (a kikerulte pedig, miert tortent)
+allit([x["e"] for x in erintett.get("ki") or []] == [11]
+      and [x["e"] for x in erintett.get("be") or []] == [12],
       "D6: a csere benne van (ki=11, be=12): " + repr(erintett))
+allit(all("pts" in x for x in (erintett.get("ki") or []) + (erintett.get("be") or [])),
+      "D6: a csere-elemeknel ott a pont is")
 pontok_d6 = erintett.get("pont") or []
 allit(any(x["e"] == 15 and x["elott"] == 2 and x["utan"] == 5 for x in pontok_d6),
       "D6: a pontvaltozas is benne van (15-os: 2 -> 5): " + repr(pontok_d6))
@@ -181,4 +186,4 @@ allit(not h.get("veglegesek"),
 
 if hibak:
     print("\n%d allitas bukott." % len(hibak)); sys.exit(1)
-print("\nMind a tizennyolc allitas rendben.")
+print("\nMind a tizenkilenc allitas rendben.")

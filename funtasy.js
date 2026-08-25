@@ -85,6 +85,14 @@
       var t = tag(k);
       return t ? ' <span class="mgr">' + esc(t) + '</span>' : '';
     };
+    /* Nev + monogram egy sorban. A NEV kap ellipszist (.nv zsugorodik), a
+       monogram sosem: korabban a levagas a sor vegen tortent, tehat eppen a
+       monogramot ette meg - pedig szuk helyen az azonositja a csapatot.
+       `belso`: a nev korule keruljon-e kattinthato burok. */
+    var nevMgr = function (k, belso) {
+      var nev = '<span class="nv">' + esc(label(k)) + '</span>';
+      return (belso ? belso(nev) : nev) + mgr(k);
+    };
 
     var api = {
       rPast: opts.firstRound || 1,
@@ -187,11 +195,10 @@
         var form = r.form.slice(-5).map(function (f) {
           return '<span class="dot ' + f + '"></span>';
         }).join('');
-        var nev = esc(label(r.name));
         // A nev csak ott kattinthato, ahol van mit megnyitni (keret-modal).
-        var cella = (opts.nameAttr
-          ? '<span class="clickable" ' + opts.nameAttr(r.name) + '>' + nev + '</span>'
-          : nev) + mgr(r.name);
+        var cella = nevMgr(r.name, opts.nameAttr && function (nev) {
+          return '<span class="clickable" ' + opts.nameAttr(r.name) + '>' + nev + '</span>';
+        });
         h += '<tr class="' + (i === 0 ? 'leader' : '') + '"><td class="rank">' + (i + 1) + '.</td>' +
           '<td class="name">' + cella + '</td>' +
           '<td>' + r.M + '</td><td>' + r.GY + '</td><td>' + r.D + '</td><td>' + r.V + '</td>' +
@@ -231,13 +238,13 @@
         var van = p || elo;
         var attr = opts.matchAttr ? ' ' + opts.matchAttr(m[0], m[1], r) : '';
         h += '<div class="match' + (elo ? ' elo' : '') + '"' + attr + '>' +
-          '<div class="h ' + (van && hp > vp ? 'winner' : '') + '">' + esc(label(m[0])) + mgr(m[0]) + '</div>' +
+          '<div class="h ' + (van && hp > vp ? 'winner' : '') + '">' + nevMgr(m[0]) + '</div>' +
           '<div class="score">' +
             (van ? fmt(hp) + ' <span style="color:var(--dim)">:</span> ' + fmt(vp) +
                    (elo ? '<span class="elojel">élő</span>' : '')
                  : '<span class="na">— : —</span>') +
           '</div>' +
-          '<div class="v ' + (van && vp > hp ? 'winner' : '') + '">' + esc(label(m[1])) + mgr(m[1]) + '</div></div>';
+          '<div class="v ' + (van && vp > hp ? 'winner' : '') + '">' + nevMgr(m[1]) + '</div></div>';
       });
       el(which === 'past' ? ids.mPast : ids.mNext).innerHTML = h;
     };
@@ -298,6 +305,56 @@
         : ' <span class="kezdjel" title="' + KEZD_CIM + ': ' +
           fmt(v.sz) + ' / ' + fmt(v.le) + ' pont">' + pc + '%</span>';
     }
+
+    /* Egy szakvezeto fordulonkenti eredmenyei (a "Fordulok" ful) - KOZOS:
+       a PL es az NB1 korabban ket majdnem azonos peldanyban tartotta.
+       A sorra kattintva a meccs nyilik (data-mh/mv/mr, mint a h2h-ban). */
+    api.fordulokHTML = function (name) {
+      var h = '<table><tr><th>F</th><th>Ellenfél</th><th>Pont</th><th>Ell.</th>' +
+        (opts.kezd ? '<th title="' + esc(KEZD_CIM) + '">KEZD%</th>' : '') +
+        '<th>Eredm.</th></tr>';
+      var gy = 0, d = 0, v = 0;
+      kor().forEach(function (r) {
+        vegleges(r).forEach(function (m, i) {
+          var opp, own, ov, elo = false;
+          if (m[0] === name) { opp = m[1]; own = m[2]; ov = m[3]; }
+          else if (m[1] === name) { opp = m[0]; own = m[3]; ov = m[2]; }
+          else return;
+          // a folyo fordulo allasa az elo retegben van, nem a menetrendben
+          if (own == null) {
+            var L = eloMeccs(r, i);
+            if (played(L)) { elo = true; own = m[0] === name ? L[2] : L[3]; ov = m[0] === name ? L[3] : L[2]; }
+          }
+          var res = '—', cls = '';
+          if (own != null && ov != null) {
+            if (own > ov) { res = 'GY'; cls = 'pos'; }
+            else if (own < ov) { res = 'V'; cls = 'neg'; }
+            else res = 'D';
+            if (!elo) { if (res === 'GY') gy++; else if (res === 'V') v++; else d++; }
+          }
+          var kezdCella = '';
+          if (opts.kezd) {
+            var pc = null;
+            if (!elo && own != null) {
+              var kv = opts.kezd(name, r);
+              pc = kv && kezdSzazalek(kv.sz, kv.le);
+            }
+            kezdCella = '<td class="kezdpc">' +
+              (elo || own == null ? '' : (pc == null ? '—' : pc + '%')) + '</td>';
+          }
+          h += '<tr class="clickable" data-mh="' + esc(m[0]) + '" data-mv="' + esc(m[1]) +
+            '" data-mr="' + r + '"><td class="rank">' + r + '.</td>' +
+            '<td class="name">' + esc(label(opp)) + '</td>' +
+            '<td>' + (own != null ? fmt(own) : '—') + '</td>' +
+            '<td>' + (ov != null ? fmt(ov) : '—') + '</td>' + kezdCella +
+            '<td class="' + cls + '">' + res +
+            (elo ? '<span class="elojel">élő</span>' : '') + '</td></tr>';
+        });
+      });
+      return '<div style="font-size:13px;color:var(--dim);margin-bottom:8px">Mérleg: <b class="pos">' +
+        gy + ' GY</b> · ' + d + ' D · <b class="neg">' + v + ' V</b> — ' + (gy * 3 + d) +
+        ' pont</div>' + h + '</table>';
+    };
 
     api.h2hHTML = function (a, b) {
       var sorok = '', gy = 0, d = 0, v = 0, jatszott = 0;
@@ -491,6 +548,24 @@
                  'hány százalékát hozta a beállított kezdő';
   function kezdSzazalek(sz, le) {
     return le > 0 ? Math.round(100 * sz / le) : null;
+  }
+
+  /* A meccs-fejlec hatekonysag-sora: a ket ertek a SAJAT terfelehez
+     igazodik (bal/jobb), ahogy a fejlec minden mas adata - kozepen a
+     cimke. Ures, ha egyik oldalon sincs ertek. */
+  function kezdParHTML(va, vb, elo) {
+    var egy = function (x) {
+      var pc = x && kezdSzazalek(x.sz, x.le);
+      return pc == null ? '–'
+        : pc + '% <span class="kezdresz">(' + fmt(x.sz) + '/' + fmt(x.le) + ')</span>';
+    };
+    var a = egy(va), b = egy(vb);
+    if (a === '–' && b === '–') return '';
+    return '<div class="kezdsor" title="' + esc(KEZD_CIM) + '">' +
+      '<span class="kezdbal">' + a + '</span>' +
+      '<span class="kezdcim">kezdőállítás' +
+      (elo ? ' <span class="elojel">élő</span>' : '') + '</span>' +
+      '<span class="kezdjobb">' + b + '</span></div>';
   }
 
   function bontasMeccsSor(m) {
@@ -771,6 +846,7 @@
                      lablecHTML: lablecHTML, renderLablec: renderLablec,
                      bontasMeccsSor: bontasMeccsSor,
                      kezdSzazalek: kezdSzazalek, KEZD_CIM: KEZD_CIM,
+                     kezdParHTML: kezdParHTML,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
                      lassuJelzo: lassuJelzo, allasHTML: allasHTML,
                      nezetVerem: nezetVerem, lekero: lekero,
