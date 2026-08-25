@@ -67,12 +67,11 @@ TOVABBI MERESSEL IGAZOLT TENYEK (2026-08-20):
   ("played" = current_round.is_played) teszi a keret-rekordokba.
 - A le nem zarult fordulo szamai IDEIGLENESEK: a results.json "provisional"
   listajaba kerulnek, es az oldal nem szamolja oket a tabellaba.
-- Az MLSZ utolag korrigalhat jatekos-statisztikat - MEGFIGYELT korrekcio
-  meg nincs (a Csendi-eset a kezi korszak adata volt, ami az elso szerveres
-  osszevetesnel tert el; hogy kozben az MLSZ valtoztatott-e, nem eldontheto).
-  A vedelem ettol fuggetlenul all: a lekert ertekhez MINDIG szinkronizalunk,
-  es a keretbol szamolt osszeget osszevetjuk a hivatalossal - elteresnel
-  figyelmeztetes megy a naploba.
+- Az MLSZ utolag korrigal: harom megfigyelt esetunk van (Csendi, 1-3.
+  fordulo, +1/+1/-2,5; 2026-08-20). Ezert a lekert ertekhez MINDIG
+  szinkronizalunk, a keretbol szamolt osszeget osszevetjuk a hivatalossal,
+  es a valtozast NAPLOZZUK is (zarasok_nb1.json) - utolag mar nem
+  rekonstrualhato, hogy mi mozdult.
 - A jatekosok weekly_points erteke MAR KESZ: benne van a kapitanyi duplazas
   es a pad felezese. Soha nem szorzunk ujra es nem felezunk.
 - A 0-0 vedelem marad: ha egy fordulo minden erteke 0, a fordulo el sem
@@ -811,6 +810,14 @@ def main():
                 javitott += beir_eredmeny(schedule, r, nev, friss)
                 print("  ~ %d. fordulo / %s: hivatalos pont frissitve %.2f -> %.2f"
                       % (r, nev, hiv, friss))
+                # CSAPATSZINTU igazitas naplozasa. Ez a Csendi-eset alakja: a
+                # hivatalos fordulo-osszeg mozdul, de nem tudjuk, melyik
+                # jatekosnal - a jatekos-szintu sor kulon keletkezik, ha a
+                # keret-pillanatkepbol latszik.
+                zarasok_nb1["rounds"].setdefault(str(r), []).append(
+                    {"mgr": nev, "e": round(hiv, 2), "u": round(friss, 2),
+                     "d": time.strftime("%Y-%m-%d", time.gmtime())})
+                zarasok_nb1_valtozott = True
                 hiv = friss
             if abs(szamolt - hiv) >= 0.005:
                 print("  ! ELTERES %d. fordulo / %s: keretbol %.2f, hivatalos %.2f"

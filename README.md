@@ -302,11 +302,18 @@ forduló utolsó játéknapjának végén válik véglegessé** — a kettő kö
 igazíthat. A gyűjtő ezt eddig átvezette, de nem őrizte meg; mostantól naplózza
 (`zarasok_nb1.json`), mert utólag rekonstruálhatatlan.
 
-A főoldali panel csak akkor jelenik meg, ha van benne adat — élesben ez ritka esemény, és
-egy állandóan üres doboz azt sugallná, hogy valami hiányzik. A megjelenített érték a
-játékos **saját** pontja (kapitányi duplázás és padfelezés visszaszámolva), tehát ugyanaz a
-változás nem néz ki másképp aszerint, hogy kinél volt. Csak **lement meccsű** játékosnál
-számít változásnak: a meccs közbeni pontketyegés nem hír.
+A panelben **kétféle sor** lehet:
+
+- **Játékos-szintű**, ha látjuk, kinél mozdult a pont. Az érték a játékos **saját** pontja
+  (kapitányi duplázás és padfelezés visszaszámolva), tehát ugyanaz a változás nem néz ki
+  másképp aszerint, hogy kinél volt. Csak **lement meccsű** játékosnál számít változásnak:
+  a meccs közbeni pontketyegés nem hír.
+- **Csapat-szintű**, ha csak a hivatalos fordulóösszeg változását látjuk — ez a
+  2026-08-20-i eset alakja. Ott a szakvezető neve áll, „fordulóösszeg" felirattal, és a
+  sor a keretét nyitja meg, nem játékosprofilt.
+
+A panel csak akkor jelenik meg, ha van benne adat: egy állandóan üres doboz azt sugallná,
+hogy valami hiányzik.
 
 Ez **nem** ugyanaz, mint a PL „Zárási változások" panelje. Ott a zárás pillanatában
 tervezetten történik valami (bónusz-véglegesítés, automatikus cserék); az NB1-ben a zárás
@@ -832,12 +839,12 @@ A szabály: a `current_round` az erősebb jel. Ha az MLSZ szerint **még ez** az
 forduló, akkor az `end_at` eltelte sem zárja le — a futó fordulót lezárni a rosszabb téves
 lépés, mert a félig kész eredmény csendben bekerülne a tabellába. Az `end_at` csak akkor
 dönt, ha a `current_round` egyáltalán nem jött meg.
-- **Az MLSZ utólag korrigálhat** játékos-statisztikát — erre a gyűjtő fel van készülve,
-  de **megfigyelt korrekciónk nincs**. Ami történt (Csendi, 1–3. forduló, +1, +1, −2,5):
-  a kézi/könyvjelzős korszakban mentett értékek tértek el a hivatalostól, amikor
-  2026-08-20-án először tudtunk szerverről összevetni — hogy közben az MLSZ változtatott,
-  vagy a kézi mentés eleve nem a végleges értéket kapta el, nem eldönthető. A 08-20-i
-  szinkron óta (3 óránkénti összevetéssel) egyetlen régi fordulóérték sem változott.
+- **Az MLSZ utólag korrigál** — három megfigyelt esetünk van. 2026-08-20-án a
+  fantasy.mlsz.hu már más hivatalos fordulóösszeget mutatott Csendinél, mint amit a
+  lezáráskor rögzítettünk (1. forduló +1, 2. +1, 3. −2,5; képernyőképpel igazolva). Ezek
+  bekerültek a `zarasok_nb1.json`-ba, **csapatszinten**: hogy melyik játékosnál mozdult a
+  pont, nem visszakereshető, mert a fordulónkénti keret-pillanatképek csak 2026-08-21-től
+  gyűlnek. A 08-20-i szinkron óta (3 óránkénti összevetéssel) nem volt újabb ilyen.
 
 #### Önjavítás: ha az MLSZ korrigál, a gyűjtő is korrigál
 
