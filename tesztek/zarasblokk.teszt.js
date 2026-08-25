@@ -49,7 +49,7 @@ const { BASE, jo, inditas, vege } = require('./kozos');
   // Ugyanaz a szoveg, mint az NB1 panelen - a ketto egy renderert hasznal.
   jo(/Nem történt változás/.test(a.ures || ''), 'változás nélküli fordulónál ezt meg is mondja');
 
-  await p.click('[data-znav="1"]');           // vissza az 1. fordulora
+  await p.click('[data-znav="-1"]');          // vissza az 1. fordulora
   a = await allapot();
   console.log('   1. forduló sorai: ' + JSON.stringify(a.sorok));
   jo(a.valaszto === '1' && a.csapatok.length === 2, 'lapozás az 1. fordulóra, két érintett csapat');
@@ -68,7 +68,7 @@ const { BASE, jo, inditas, vege } = require('./kozos');
   a = await allapot();
   jo(a.csapatok.length === 1 && a.sorok.every(x => /kikerült|beállt/.test(x)),
      'Cserék nézetben csak a cserés csapat marad');
-  await p.click('[data-znav="-1"]');          // vissza a 2. fordulora, csere nezetben
+  await p.click('[data-znav="1"]');           // elore a 2. fordulora, csere nezetben
   a = await allapot();
   jo(/nem történt automatikus csere/.test(a.ures || ''),
      'üres csere-nézethez saját üzenet jár: ' + JSON.stringify(a.ures));

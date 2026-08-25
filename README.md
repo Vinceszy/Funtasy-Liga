@@ -307,7 +307,10 @@ Mindkét ligában van „Zárási változások" panel, **ugyanazon a helyen, ugy
 soronként poszt-címke, játékosnév + klub, `előtte → utána` érték és előjeles különbség. A
 játékos neve a profilt, a szakvezető neve a keretet nyitja. Ahol nem volt változás, ott az
 áll, hogy **nem történt változás** — a legördülőben minden eddigi forduló szerepel, nem
-csak az, amelyikben volt.
+csak az, amelyikben volt, és a lapozó alapból a **legutolsó** fordulón áll. A fordulók
+mindkét oldalon növekvő sorrendben állnak, tehát a `‹` visszafelé, a `›` előre lép.
+(Korábban a PL-en fordítva volt: ott csökkenő volt a lista, és a két panelen a nyilak
+ellenkező irányba vittek.)
 
 **A HTML-t a közös réteg állítja elő** (`funtasy.js` → `FunTasy.zarasLista`); a két oldal
 csak normalizált sorokat ad át. Ez azért így van, mert külön-külön megírva a két panel

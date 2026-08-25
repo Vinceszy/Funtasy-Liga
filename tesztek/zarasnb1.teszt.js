@@ -4,16 +4,18 @@ const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
 //     es egy allandoan ures doboz azt sugallna, hogy valami hianyzik);
 //   - a legordulo MINDEN lejatszott fordulot felsorol: ahol nem volt
 //     valtozas, ott az a hir, hogy nem volt;
-//   - a legutolso ilyen fordulot mutatja alapbol, es lapozni lehet;
+//   - alapbol a LEGUTOLSO fordulon all (akkor is, ha abban nem volt
+//     valtozas), es lapozni lehet;
 //   - a valtozas iranya latszik (elojel es szin), a jatekos SAJAT pontjaval;
 //   - a megjelenites UGYANAZ, mint a PL "Zarasi valtozasok" panelje:
 //     szakvezeto szerint csoportositva, kattinthato nevekkel.
 const ADAT = { updated: 'x', rounds: {
+  '2': { Bazsa: { pont: [
+          { n: 'Egyik Elek', cp: 1, pos: 'MF', tm: 'MTK', elott: 5, utan: 6, d: '2026-08-20' }] } },
+  // Ismeretlen jatekos: csak a valtozas merteke tudott, a jatekos nem
   '3': { Csendi: { pont: [
           { n: '', cp: null, pos: '', tm: '', elott: null, utan: null, dl: -2.5, d: '2026-08-20', nk: 1 }] } },
   '4': { Bazsa: { pont: [
-          { n: 'Egyik Elek', cp: 1, pos: 'MF', tm: 'MTK', elott: 5, utan: 6, d: '2026-08-20' }] } },
-  '5': { Bazsa: { pont: [
           { n: 'Teszt Elek', cp: 2, pos: 'DF', tm: 'FTC', elott: 9.25, utan: 6.75, d: '2026-08-24' }] },
          Csendi: { pont: [
           { n: 'Másik Elek', cp: 3, pos: 'FW', tm: 'DVSC', elott: 1, utan: 2, d: '2026-08-24' }] } } } };
@@ -55,8 +57,13 @@ const ADAT = { updated: 'x', rounds: {
   await p.waitForSelector('#znPanel:not([style*="none"])', { timeout: 20000 });
 
   cim('Tartalom');
+  // Az 5. az utolso lejatszott fordulo, es NINCS benne valtozas: a lapozo
+  // akkor is ott all, mert az is hir, hogy nem tortent semmi.
   jo((await p.$eval('#selZaras', e => e.value)) === '5',
-     'alapból a legutolsó ilyen fordulót mutatja');
+     'alapból az utolsó fordulón áll a lapozó');
+  jo(/Nem történt változás/.test(await p.$eval('#znBody', e => e.innerText)),
+     'változás nélküli fordulónál ezt meg is mondja');
+  await p.selectOption('#selZaras', '4'); await p.waitForTimeout(200);
   const fejek = await p.$$eval('#znBody .zcsapat h3', a => a.map(x => x.textContent.trim()));
   jo(JSON.stringify(fejek) === JSON.stringify(['Bazsa', 'Csendi']),
      'szakvezető szerint csoportosít, névsorban (' + fejek.join(', ') + ')');
@@ -90,14 +97,12 @@ const ADAT = { updated: 'x', rounds: {
   const fordulok = await p.$$eval('#selZaras option', a => a.map(o => +o.value));
   jo(JSON.stringify(fordulok) === JSON.stringify([1, 2, 3, 4, 5]),
      'minden lejátszott forduló ott van a legördülőben (' + fordulok.join(', ') + ')');
+  await p.selectOption('#selZaras', '3'); await p.waitForTimeout(200);
   await p.click('[data-znav="-1"]');
-  await p.waitForFunction(() => document.querySelector('#selZaras').value === '4',
+  await p.waitForFunction(() => document.querySelector('#selZaras').value === '2',
                           null, { timeout: 5000 });
   jo(/Egyik Elek/.test(await p.$eval('#znBody', e => e.innerText)),
      'a nyíllal a korábbi fordulóra lehet lépni');
-  await p.selectOption('#selZaras', '2'); await p.waitForTimeout(200);
-  jo(/Nem történt változás/.test(await p.$eval('#znBody', e => e.innerText)),
-     'ahol nem volt változás, ott ez van kiírva');
   // az 1. az elso fordulo: onnan a visszalepes nem vihet sehova
   await p.selectOption('#selZaras', '1'); await p.waitForTimeout(200);
   await p.click('[data-znav="-1"]');
