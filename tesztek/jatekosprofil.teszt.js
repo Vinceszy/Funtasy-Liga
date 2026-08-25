@@ -111,6 +111,14 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   // (1/8 = 13%, kezdo 0), a 3.-ban Katyul kapitanya ES Bence kezdoje
   // (2/8 = 25%) - ez utobbi rogziti, hogy a KAPITANY IS KEZDONEK szamit,
   // kulonben itt 13% jonne ki.
+  cim('NB1: csak a lejátszott fordulók');
+  // Az MLSZ-nel nincs menetrend-vegpont, tehat a jovobeli sorban se
+  // ellenfelet, se idopontot nem tudnank kiirni - ures sorokat pedig nem
+  // teszunk ki. (A PL-profil ezzel szemben elore is megy: ott van adat.)
+  jo(!f('10') && !f('33'),
+     'nincsenek jövőbeli, üres fordulósorok (' + sorok.length + ' sor, az utolsó a '
+     + (sorok.length ? sorok[sorok.length - 1].r : '?') + ')');
+
   cim('A ligára vetített arányok');
   jo(f('2') && /keret\s*13%/.test(f('2').ar) && /kezdő\s*0%/.test(f('2').ar)
             && /kapitány\s*0%/.test(f('2').ar),
@@ -232,12 +240,40 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
 
   const lab1 = await p.$eval('.jllab', e => e.textContent);
   jo(/^1–\d+ \/ \d+/.test(lab1), 'a lábléc az aktuális tartományt mutatja (' + lab1 + ')');
-  jo(await p.$eval('[data-lap="-1"]', e => e.disabled), 'az első oldalon a vissza gomb tiltott');
-  await p.click('[data-lap="1"]');
+  const lapGombok = await p.$$eval('.jllapozo > *', a => a.map(x => x.textContent));
+  jo(lapGombok[0] === '‹' && lapGombok[lapGombok.length - 1] === '›'
+     && lapGombok.includes('1') && lapGombok.some(x => /^\d+$/.test(x) && +x > 2),
+     'a lapozóban OLDALSZÁMOK vannak, nem csak nyilak (' + lapGombok.join(' ') + ')');
+  jo(await p.$eval('.jllapozo > button', e => e.disabled),
+     'az első oldalon a vissza nyíl tiltott');
+  // az UTOLSO oldal mindig elerheto egy kattintassal - tiz oldalt egyesevel
+  // vegiglapozni nem hasznalhato
+  const utolsoSzam = Math.max(...lapGombok.filter(x => /^\d+$/.test(x)).map(Number));
+  await p.click('[data-ugras="' + (utolsoSzam - 1) + '"]');
+  await p.waitForFunction(() => /\/ \d+ játékos$/.test(document.querySelector('.jllab').textContent),
+                          null, { timeout: 5000 });
+  jo(await p.$eval('.jllapozo > button:last-child', e => e.disabled),
+     'az utolsó oldal egy kattintással elérhető, ott az előre nyíl tiltott');
+  // az utolso oldalrol a 2. oldal gombja mar nincs kint (csak a szomszedok
+  // es az elso/utolso) - eloszor vissza az elsore, onnan tovabb
+  await p.click('[data-ugras="0"]');
+  await p.waitForFunction(() => /^1–/.test(document.querySelector('.jllab').textContent),
+                          null, { timeout: 5000 });
+  await p.click('[data-ugras="1"]');
   await p.waitForFunction(() => /^41–/.test(document.querySelector('.jllab').textContent),
                           null, { timeout: 5000 });
   jo((await p.$eval('.jlsor .rank', e => e.textContent)) === '41.',
      'a 2. oldal a 41. sorral kezdődik (a sorszám folytatódik, nem nullázódik)');
+
+  // oldalmeret: a "mind" eltunteti a lapozot
+  await p.selectOption('.jlmeret', '0');
+  await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 100,
+                          null, { timeout: 8000 });
+  jo((await p.$$eval('.jllapozo > *', a => a.length)) === 0,
+     '„mind” oldalméretnél nincs lapozó (nincs mit lapozni)');
+  await p.selectOption('.jlmeret', '40');
+  await p.waitForFunction(() => document.querySelectorAll('.jlsor').length === 40,
+                          null, { timeout: 8000 });
   // szures/kereses utan NEM maradhatunk egy nem letezo oldalon
   await p.fill('#jlDoboz .kereso', 'a');
   await p.waitForFunction(() => /^1–/.test(document.querySelector('.jllab').textContent),
@@ -342,17 +378,41 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
      + (g('3') ? ' — kapott: ' + g('3').nm : ''));
   jo(g('3') && !g('3').allas && g('3').pts === '—',
      'jövőbeli fordulónál nincs állás és nincs pont, csak az ellenfél');
+  jo(g('3') && !g('3').tul.trim(),
+     'jövőbeli fordulónál a tulajdonos ÜRES — nem tudjuk, kinél lesz, tehát '
+     + '„szabadügynök”-öt sem írunk oda'
+     + (g('3') ? ' — kapott: ' + JSON.stringify(g('3').tul) : ''));
   jo(g('38') && !/nincs meccs/.test(g('38').pts + g('38').nm),
      'a távoli fordulóra nem írunk „nincs meccs”-et (az elmaradást jelentene)');
 
   cim('PL: tulajdonos');
   jo(g('1') && /kezdő/.test(g('1').tul), '1. forduló: a szakvezető és a szerep látszik');
-  jo(g('2') && /szabadügynök/.test(g('2').tul),
-     'akinél senki sem volt: "szabadügynök" (nem "senkinél sem volt")');
+  // A "szabadugynok" csak akkor allitas, ha TUDJUK, hogy senkinel sem volt -
+  // vagyis van keret-elozmenyunk arrol a fordulorol. A kozos retegen merjuk,
+  // mert ott allithatjuk be mindket esetet.
+  const gazdatlanSor = await q.evaluate(() => {
+    const alap = { r: 1, ellenfel: 'ARS', hazai: true, hp: 2, vp: 1, tulajok: [] };
+    const rajz = x => FunTasy.profilHTML(
+      { liga: 'pl', nev: 'X', senkinel: 'szabadügynök', sorok: [Object.assign({}, alap, x)] });
+    return { mult: rajz({ pont: 0 }), jovo: rajz({ jovo: true }) };
+  });
+  jo(/szabadügynök/.test(gazdatlanSor.mult),
+     'lejátszott fordulónál, ahol tudjuk, hogy senkié sem volt: „szabadügynök”');
+  jo(!/szabadügynök/.test(gazdatlanSor.jovo),
+     'jövőbeli fordulónál viszont NEM — azt nem tudhatjuk előre');
   jo(await q.$$eval('.parany', a => a.length) === 0,
      'draft ligában nincs arány-blokk a valódi oldalon sem');
 
   cim('PL: főoldali lista');
+  // a szuro-legordulo is monogramot mutasson, mint az oszlop
+  await q.waitForSelector('.jlsor', { timeout: 20000 });
+  const opciok = await q.$$eval('[data-szuro="tulaj"] option',
+    a => a.slice(3).map(x => ({ ertek: x.value, felirat: x.textContent, cim: x.title })));
+  jo(opciok.length > 0 && opciok.every(x => x.felirat.length <= 4 && x.cim.length > x.felirat.length),
+     'a „Kinél van” szűrő monogramot mutat, a teljes név a title-ben van'
+     + (opciok.length ? ' — pl. ' + JSON.stringify(opciok[0]) : ''));
+  jo(opciok.every(x => x.ertek === x.cim),
+     'a szűrt érték a teljes név marad (az azonosít, nem a monogram)');
   await q.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
   await q.waitForSelector('.jlsor', { timeout: 20000 });
   jo((await q.$$eval('.jlsor', a => a.length)) > 0, 'a PL-főoldalon is ott a játékoslista');

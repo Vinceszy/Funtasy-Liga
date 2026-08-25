@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=47">
+<link rel="stylesheet" href="../funtasy.css?v=48">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -76,7 +76,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=47"></script>
+<script src="../funtasy.js?v=48"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -431,12 +431,14 @@ async function profilBontasHTML(r){
 
 async function profilAdat(jat){
   const rounds = await loadHistory();
-  // MINDEN fordulo szerepel, nem csak amirol mar van adat - ugyanugy, mint a
-  // szakvezeto "Fordulok" fulen. A jovobeli sorok ures adattal allnak; igy
-  // latszik, hany fordulo van meg hatra, es a lista nem ugral, ahogy telik
-  // a szezon.
-  const rks = [];
-  for (let r = 1; r <= LAST_ROUND; r++) rks.push(r);
+  // CSAK a lejatszott fordulok. A jovobelieket szandekosan NEM soroljuk fel:
+  // az MLSZ-nel nem talaltuk meg a menetrend-vegpontot (lasd README, 4.
+  // fejezet), tehat ott se ellenfelet, se idopontot nem tudnank kiirni -
+  // huszonhet ures sor pedig nem informacio, csak zaj. A PL-oldalon ez
+  // mas: ott a Draft adja a hatralevo meccseket, ezert ott elore is megy.
+  // Ha az NB1-menetrend elokerul, ez a ket sor cserelodik ki.
+  const rks = [...new Set([...Object.keys(rounds), ...Object.keys(MECCSEK||{})]
+    .map(Number).filter(Boolean))].sort((a,b)=>a-b);
   const azonos = x => jat.cp ? x.id===jat.cp : x.name===jat.nev;
   // a cp-azonosito a REGI keret-rekordokbol hianyzik: ilyenkor barmelyik
   // ujabb fordulo rekordjabol feloldjuk, kulonben a bontas nem kerheto le
@@ -492,9 +494,6 @@ async function profilAdat(jat){
       s.pont=b.reduce((x,y)=>x+(y.points||0),0);
     }catch(e){ /* marad a kotojel */ }
   }));
-  // amelyik fordulorol van barmilyen adatunk (keret vagy meccs), az mar
-  // "jatszott" - a tobbi a jovo, es ott az ures sor a helyes
-  const jatszott = new Set([...Object.keys(rounds), ...Object.keys(MECCSEK||{})].map(Number));
   // ellenfel es allas a meccsek.json-bol, a jatekos ADOTT FORDULOS klubjabol.
   // Az NB1-ben egy klubnak fordulonkent egy meccse van, de a kozos reteg
   // listat var (a PL-ben van dupla fordulo) - itt az a lista egyelemu.
@@ -502,9 +501,7 @@ async function profilAdat(jat){
     s.meccsek=((MECCSEK||{})[s.r]||[])
       .filter(x=>x.h===s.klub||x.v===s.klub)
       .map(m=>({ellenfel: m.h===s.klub?m.v:m.h, hazai: m.h===s.klub, hp:m.hp, vp:m.vp}));
-    // A meg le nem jatszott forduloban nincs meccs-adat sem: ott ne irjunk
-    // "nincs meccs"-et (az elmaradast jelentene), csak hagyjuk uresen.
-    if(!s.meccsek.length && s.pont==null && jatszott.has(s.r)) s.jegyzet='nincs meccs';
+    if(!s.meccsek.length && s.pont==null) s.jegyzet='nincs meccs';
   }
   const osszes = sorok.reduce((x,s)=>x+(s.pont||0),0);
   const keretben = sorok.filter(s=>s.tulajok.length).length;

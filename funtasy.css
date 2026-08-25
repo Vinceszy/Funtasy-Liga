@@ -340,13 +340,18 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
 .jlar,.jlkpc{min-width:38px;text-align:right;font-family:'JetBrains Mono';
   font-size:11.5px;color:var(--dim)}
 .jlfej .jlar,.jlfej .jlkpc{font:inherit;color:inherit}
-.jllabsor{display:flex;align-items:center;gap:8px;padding:8px 0 0}
-.jllabsor .jllab{flex:1;text-align:center;padding:0}
-.jllapoz{flex:none;min-width:30px;padding:3px 8px;background:var(--panel2);
+.jllabsor{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 0 0}
+.jllabsor .jllab{flex:1;min-width:120px;padding:0}
+.jlmeret{flex:none;padding:3px 6px;background:var(--panel2);border:1px solid var(--line);
+  border-radius:6px;color:var(--dim);font:400 11.5px Inter}
+.jllapozo{display:flex;align-items:center;gap:3px}
+.jllapoz{flex:none;min-width:28px;padding:3px 7px;background:var(--panel2);
   border:1px solid var(--line);border-radius:6px;color:var(--fg);cursor:pointer;
-  font:400 13px Inter}
+  font:400 12px Inter;text-align:center}
 .jllapoz:hover:not(:disabled){border-color:var(--accent)}
 .jllapoz:disabled{opacity:.35;cursor:default}
+.jllapoz.most{background:var(--accent);border-color:var(--accent);color:#111;font-weight:700}
+.jlkihagy{color:var(--dim);padding:0 2px}
 .jlklub{min-width:56px;max-width:56px;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;font-size:11px;color:var(--dim)}
 .jlfej .jlklub,.jlfej .jltulaj,.jlfej .pts{font:inherit;color:inherit}
@@ -397,8 +402,6 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
   .jlsor .jltulaj::before{content:'kinél van: ';color:var(--dim);white-space:pre}
 }
 
-}
-
 /* ===== Jatekosprofil =====
    A fejlec a jatekos alapadatai, alatta fordulonkenti sorok. A sor ugyanaz
    a .plr flex-sor, mint a keretben (igy az accordion CSS-e valtozatlanul
@@ -406,11 +409,15 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
    teljes szelessegu masodik sorba kerul. Ez azert kell, mert az NB1-ben
    ugyanaz a jatekos EGY forduloban tobb szakvezetonel is lehetett - egy
    sorba zsufolva vagy levagodna, vagy szetlokne az oszlopokat. */
-.profnyito{margin-top:6px;padding:7px 8px;border-top:1px solid var(--line);
-  font-size:12px;color:var(--accent);cursor:pointer;display:flex;
-  justify-content:space-between;align-items:center}
-.profnyito:hover{background:rgba(255,255,255,.045)}
-.profnyito span{opacity:.7}
+/* A bontas aljan allo "Teljes jatekosprofil" sor. Linknek latszik, nem
+   sornak: a szoveg es a nyil EGYUTT all (a ket vegre huzva ugy nezett ki,
+   mint ket kulon dolog), es a hover alahuzza. */
+.profnyito{margin-top:4px;padding:6px 0 2px;border-top:1px solid var(--line);
+  font:600 12px Inter;color:var(--accent);cursor:pointer;
+  display:flex;align-items:center;gap:4px}
+.profnyito span{font-size:11px;transition:transform .12s}
+.profnyito:hover{text-decoration:underline}
+.profnyito:hover span{transform:translateX(2px)}
 .proffej{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px}
 .profnev{display:flex;align-items:center;gap:6px;font-size:15px}
 .profnev .tm{color:var(--dim);font-size:11px}

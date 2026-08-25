@@ -206,6 +206,12 @@ forduló **tényleges** keretszáma — ahány szakvezetőről mentett keret van
 így egy kimaradó keret nem húzza le az arányt. **A kapitány kezdőnek is számít**, tehát a három
 szám egymásba ágyazódik: keret ≥ kezdő ≥ kapitány. Akinél senki sem volt, ott nincs arány-blokk.
 
+**Meddig megy a lista?** A **PL-profil a szezon összes fordulóját** felsorolja: a lejátszott
+sorokban a pont és az eredmény, a jövőbeliekben az ellenfél és a pálya (a Draft
+`element-summary` `fixtures` tömbjéből). Az **NB1-profil csak a lejátszott fordulókat**
+mutatja, mert ott a jövőbeli párosítás nem érhető el (lásd a 4. fejezetet) — ellenfél és
+időpont nélküli üres sorokat nem írunk ki.
+
 **Több meccs egy fordulóban.** A sor a klub **összes** meccsét mutatja az adott fordulóban,
 nem az elsőt. A PL-ben ez a dupla forduló (egy klub kétszer játszik), az NB1-ben a pótolt,
 korábban elhalasztott meccs hozhatja elő. Egy meccsnél az ellenfél és a pálya a név-cellában,
@@ -251,7 +257,8 @@ amire kell: megtalálni egy hátrébb állót, és megnézni, kinél van.
 
 Oszlopok: **#** (hányadik a jelenlegi nézetben — nem fix rangsor, átrendezéskor csak
 számol), **Poszt**, **Játékos** (U21-jelöléssel), **Klub**, **Kinél van** (most kinél;
-salary capben többen is lehetnek, ilyenkor két név után `+N`), **Keret%** és **Ár**
+salary capben többen is lehetnek — a szakvezetőt **monogram** jelöli, így négy is
+kifér, utána `+N`), **Keret%** és **Ár**
 (mindkettő csak NB1 — a draftban egy játékos egy keretben van, és nem veszel játékost),
 végül **Pont**.
 
@@ -673,8 +680,10 @@ Amit ad a törzs-soron felül:
 ellenfél nincs benne.
 
 ### A jövőbeli menetrend nem érhető el (mérve, 2026-08-25)
-A játékosprofil előre is felsorolja a fordulókat, de az **NB1-en a jövőbeli ellenfél
-üresen marad**. Az MLSZ fantasy felülete mutat ilyen táblát („Következő mérkőzések"), tehát
+Emiatt az **NB1-profil csak a lejátszott fordulókat sorolja fel** — a PL-profil előre is
+megy, mert ott a Draft adja a hátralévő meccseket. Huszonhét üres sor ellenfél és időpont
+nélkül nem információ, csak zaj; ha a menetrend előkerül, az NB1 is előre megy majd.
+Az MLSZ fantasy felülete mutat ilyen táblát („Következő mérkőzések"), tehát
 az adat létezik — de a hozzá tartozó végpontot nem sikerült megtalálni. Ami 404-et adott:
 `games`, `matches`, `fixtures`, `competitions/3/games`, `competitions/3/schedule`,
 `competitions/3/game-days`, `competitions/3/rounds`, `competitions/3/teams`,

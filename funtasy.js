@@ -686,11 +686,13 @@
   function profilSorHTML(s, senkinel, salaryCap) {
     var mk = s.meccsek || [];
     var m = profilMeccsekHTML(mk);
+    // JOVOBELI fordulonal a tulajdonos-sor URES marad: azt, hogy kinel lesz,
+    // nem tudjuk - a "senkinel" / "szabadugynok" ott allitas lenne, nem adat.
     var tulaj = (s.tulajok && s.tulajok.length)
       ? s.tulajok.map(function (t) {
           return '<span class="ptul"><b>' + esc(t.nev) + '</b> · ' + esc(szerepNev(t)) + '</span>';
         }).join('')
-      : '<span class="ptul nincs">' + esc(senkinel || 'senkinél') + '</span>';
+      : (s.jovo ? '' : '<span class="ptul nincs">' + esc(senkinel || 'senkinél') + '</span>');
     var arany = aranyHTML(s, salaryCap);
     var pont = (s.pont == null)
       ? '<span class="pjegyzet">' + esc(s.jegyzet || '—') + '</span>'
@@ -808,6 +810,30 @@
     return p[kulcs] || '';
   }
 
+  /* Lapozo oldalszamokkal. Egyesevel kattintgatni 10 oldalon at nem
+     hasznalhato, ezert az elso es az utolso oldal MINDIG latszik, koztuk az
+     aktualis kornyezete, a kihagyott reszen egy "…". Igy barhova ket
+     kattintasbol el lehet jutni, es latszik, hany oldal van osszesen. */
+  function lapozoHTML(lap, lapok) {
+    if (lapok <= 1) return '';
+    var jel = {}, i;
+    jel[0] = jel[lapok - 1] = 1;
+    for (i = lap - 2; i <= lap + 2; i++) if (i >= 0 && i < lapok) jel[i] = 1;
+    var szamok = Object.keys(jel).map(Number).sort(function (a, b) { return a - b; });
+    var h = '<button class="jllapoz nyil" data-ugras="' + (lap - 1) +
+      '" type="button"' + (lap === 0 ? ' disabled' : '') + ' title="Előző">‹</button>';
+    var elozo = null;
+    for (i = 0; i < szamok.length; i++) {
+      var n = szamok[i];
+      if (elozo !== null && n > elozo + 1) h += '<span class="jlkihagy">…</span>';
+      h += '<button class="jllapoz' + (n === lap ? ' most' : '') +
+        '" data-ugras="' + n + '" type="button">' + (n + 1) + '</button>';
+      elozo = n;
+    }
+    return h + '<button class="jllapoz nyil" data-ugras="' + (lap + 1) +
+      '" type="button"' + (lap >= lapok - 1 ? ' disabled' : '') + ' title="Következő">›</button>';
+  }
+
   function jatekosKereso(opts) {
     var doboz = document.getElementById(opts.doboz);
     if (!doboz) return null;
@@ -825,15 +851,19 @@
     // leutesnel elveszne a fokusz
     // A legordulok ertekei magabol az ADATBOL jonnek, nem beegetett listabol:
     // igy egy uj klub vagy egy uj szakvezeto magatol megjelenik bennuk.
+    // ertek -> felirat. A tulajdonos-szuroben a MONOGRAM a felirat (ugyanaz,
+    // mint az oszlopban), a teljes nev a title-be kerul; a szurt ERTEK
+    // viszont marad a nev, mert az azonosit.
     var ertekek = function (o) {
       var h = {}, mind = opts.adat() || [], i, j;
       for (i = 0; i < mind.length; i++) {
         if (o.szuro === 'tulaj') {
           var t = mind[i].tulajok || [];
-          for (j = 0; j < t.length; j++) h[t[j].nev] = 1;
-        } else if (mind[i][o.kulcs]) h[mind[i][o.kulcs]] = 1;
+          for (j = 0; j < t.length; j++) h[t[j].nev] = t[j].jel || t[j].nev;
+        } else if (mind[i][o.kulcs]) h[mind[i][o.kulcs]] = mind[i][o.kulcs];
       }
-      return Object.keys(h).sort(function (a, b) { return a.localeCompare(b, 'hu'); });
+      return Object.keys(h).sort(function (a, b) { return a.localeCompare(b, 'hu'); })
+        .map(function (k) { return { ertek: k, felirat: h[k] }; });
     };
     var vezerlo = function (o) {
       if (o.szuro === 'min' || o.szuro === 'max')
@@ -846,7 +876,8 @@
           '<option value="' + JL_SZABAD + '">' + esc(opts.szabad || 'szabad') + '</option>' : '';
       return '<select class="jlszuro" data-szuro="' + o.kulcs + '"><option value="">' +
         esc(o.szuroCim) + '</option>' + extra + ertekek(o).map(function (v) {
-          return '<option value="' + esc(v) + '">' + esc(v) + '</option>';
+          return '<option value="' + esc(v.ertek) + '" title="' + esc(v.ertek) + '">' +
+                 esc(v.felirat) + '</option>';
         }).join('') + '</select>';
     };
     doboz.innerHTML =
@@ -864,13 +895,18 @@
                  esc(o.cim) + '<i></i></span>';
         }).join('') + '<span class="jltores"></span></div>' +
       '<div class="jllista"></div>' +
-      '<div class="jllabsor"><button class="jllapoz" data-lap="-1" type="button">‹</button>' +
-        '<span class="note jllab"></span>' +
-        '<button class="jllapoz" data-lap="1" type="button">›</button></div>';
+      '<div class="jllabsor"><span class="note jllab"></span>' +
+        '<select class="jlmeret" title="Hány sor egy oldalon">' +
+          [20, 40, 100, 0].map(function (n) {
+            return '<option value="' + n + '"' + (n === limit ? ' selected' : '') + '>' +
+                   (n ? n + ' / oldal' : 'mind') + '</option>';
+          }).join('') +
+        '</select><span class="jllapozo"></span></div>';
 
     var mezo = doboz.querySelector('.kereso');
     var lista = doboz.querySelector('.jllista');
     var lab = doboz.querySelector('.jllab');
+    var lapozo = doboz.querySelector('.jllapozo');
 
     function rajzol() {
       var mind = opts.adat() || [];
@@ -932,9 +968,7 @@
         : !talalat.length ? 'Nincs találat'
         : (tol + '–' + (lap * limit + mutat.length) + ' / ' + talalat.length +
            (szurve ? ' találat' : ' játékos'));
-      doboz.querySelectorAll('.jllapoz').forEach(function (b) {
-        b.disabled = +b.dataset.lap < 0 ? lap === 0 : lap >= lapok - 1;
-      });
+      lapozo.innerHTML = lapozoHTML(lap, lapok);
     }
 
     var ujrarajzol = function () { lap = 0; rajzol(); };
@@ -944,6 +978,9 @@
       if (sz) { szuro[sz.dataset.szuro] = sz.value; ujrarajzol(); }
     });
     doboz.addEventListener('change', function (e) {
+      var m = e.target.closest('.jlmeret');
+      // "mind": nagy szam, nem kulon ag - igy a lapozo magatol eltunik
+      if (m) { limit = +m.value || 100000; ujrarajzol(); return; }
       var sz = e.target.closest('.jlszuro');
       if (sz) { szuro[sz.dataset.szuro] = sz.value; ujrarajzol(); }
     });
@@ -966,7 +1003,7 @@
         return;
       }
       var lapoz = e.target.closest('.jllapoz');
-      if (lapoz) { lap += +lapoz.dataset.lap; rajzol(); return; }
+      if (lapoz) { lap = +lapoz.dataset.ugras; rajzol(); return; }
       var sor = e.target.closest('.jlsor');
       if (sor && opts.nyit) opts.nyit(sor.dataset.jl);
     });

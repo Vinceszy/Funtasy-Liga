@@ -7,6 +7,16 @@
     "nb1",
     "pl"
    ],
+   "cim": "Játékosprofil: mit csinált egy játékos a szezonban",
+   "leiras": "A Szezon játékosai listában egy névre kattintva megnyílik a játékos profilja: fordulónként az ellenfél, a meccs állása, a játékos saját pontja, és hogy melyik szakvezetőnél volt. Az NB1-en kezdőként, padon vagy kapitányként, és egy fordulóban több szakvezetőnél is szerepelhet — ilyenkor mind ott van, a felsorolás végén pedig az áll, hogy a forduló kereteinek hány százalékában volt benne, hányban volt kezdő és hányban kapitány. A PL-en egy szakvezetőnél lehet, kezdőként vagy padon; ha senkinél sem volt, szabadügynökként. Ha egy klubnak két meccse van ugyanabban a fordulóban, mindkettő látszik. A sorra kattintva a pontok tételes bontása nyílik le. A pont a játékosé, nem a csapaté: nincs benne se kapitányi duplázás, se padfelezés. A főoldalon új blokk sorolja fel a mezőny összes játékosát: kereshető névre és klubra (ékezet nélkül is), szűrhető poszt, klub, jelenlegi tulajdonos, keretarány, ár és pont szerint, bármelyik oszlop szerint átrendezhető, és lapozható. Innen is megnyílik a profil — ahogy a pontok bontásának aljáról is. A PL-en a profil a szezon összes fordulóját felsorolja, a még hátralévőknél az ellenféllel."
+  },
+  {
+   "datum": "2026-08-25",
+   "tipus": "funkcio",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
    "cim": "Új mutató: kezdőállítási hatékonyság (KEZD%)",
    "leiras": "A keretből elérhető pontok hány százalékát hozta a beállított kezdő. A tabella új KEZD% oszlopa a lezárt fordulók összesítése; a meccs nézetében (a két értéket a saját térfeléhez igazítva), a Fordulók fülön és az egymás elleni listában fordulónként is látszik. Az NB1-en a kapitányválasztás és a magyarszabály is beleszámít, a PL-en az érvényes felállások szabálya."
   },
