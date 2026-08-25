@@ -57,10 +57,11 @@ jatekosok = sorted({i for i, _ in keret})
 ki("## %d kulonbozo jatekos, %d (jatekos, fordulo) par a keret-fajlokban."
    % (len(jatekosok), len(keret)))
 
-# ---- 2) elobb: MELYIK lapozo-parameter mukodik? ----
-# Ha rossz nevvel lapoznank, az API az 1. lapot adna vissza haromszor, a
-# pontok haromszorozodnanak, es a meres HAMIS elterest jelentene. Ezert
-# eloszor kimerjuk, aztan hasznaljuk.
+# ---- 2) elobb: HOGYAN jon meg egy jatekos EGESZ szezonja? ----
+# Egy lapra 50 sor fer, egy szezon ~109 - tehat vagy nagyobb lapmeret kell,
+# vagy lapozas. Ha rossz parameternevvel "lapoznank", az API az 1. lapot
+# adna vissza ujra, a pontok duplazodnanak, es a meres HAMIS elterest
+# jelentene. Ezert eloszor kimerjuk, aztan hasznaljuk.
 CP = "game-player-stats?include=competition_stat_config&filter%5Bcompetition_player_id%5D="
 
 
@@ -71,39 +72,73 @@ def elso_sor(j):
 
 probe = jatekosok[0]
 st, lap1 = collect.api_get(collect.ROOT + CP + str(probe))
+osszesen = ((lap1 or {}).get("meta") or {}).get("total")
+ki("### A probe-jatekos (%s) szezonja %s sor, egy lapon %d fer el."
+   % (probe, osszesen, len(((lap1 or {}).get("data") or []))))
+
+# Elobb a lapmeret: ha felmeheto, LAPOZNI SEM KELL (a torzsvegponton a
+# per_page mukodott - itt is ezt probaljuk elsokent).
+LAPMERET = None
+for par in ("per_page=200", "limit=200", "page%5Bsize%5D=200"):
+    st2, j2 = collect.api_get(collect.ROOT + CP + str(probe) + "&" + par)
+    n = len((j2 or {}).get("data") or [])
+    ki("=== lapmeret %-20s -> HTTP %s | sorok=%d" % (par, st2, n))
+    if st2 == 200 and osszesen and n >= osszesen and LAPMERET is None:
+        LAPMERET = par
+
+# Ha a lapmeret nem megy, marad a lapozas - de csak akkor, ha tenyleg lapoz.
 LAPPAR = None
-for nev_par in ("page=", "page%5Bnumber%5D="):
-    st2, lap2 = collect.api_get(collect.ROOT + CP + str(probe) + "&" + nev_par + "2")
-    egyezo = elso_sor(lap2) == elso_sor(lap1)
-    ki("=== lapozas %-22s -> HTTP %s | a 2. lap %s az 1.-vel"
-       % (nev_par + "2", st2, "AZONOS (nem lapoz)" if egyezo else "eltero (LAPOZ)"))
-    if st2 == 200 and not egyezo and LAPPAR is None:
-        LAPPAR = nev_par
-if LAPPAR is None:
+if LAPMERET is None:
+    for nev_par in ("page=", "page%5Bnumber%5D=", "offset=", "page%5Boffset%5D="):
+        ertek = "50" if "offset" in nev_par else "2"
+        st2, j2 = collect.api_get(collect.ROOT + CP + str(probe) + "&" + nev_par + ertek)
+        egyezo = elso_sor(j2) == elso_sor(lap1)
+        ki("=== lapozas %-22s -> HTTP %s | %s"
+           % (nev_par + ertek, st2, "AZONOS (nem lapoz)" if egyezo else "eltero (LAPOZ)"))
+        if st2 == 200 and not egyezo and LAPPAR is None:
+            LAPPAR = nev_par + ("50" if "offset" in nev_par else "")
+
+if LAPMERET is None and LAPPAR is None:
     ki("")
-    ki("### EGYIK LAPOZO-PARAMETER SEM MUKODIK - a meres nem folytathato,")
-    ki("### mert a 2-3. lap adatai nelkul a fordulo-osszegek hianyosak lennenek.")
-    with open(NAPLO, "w", encoding="utf-8") as f:
-        f.write("\n".join(sorok) + "\n")
-    print("\n".join(sorok))
-    sys.exit(0)
-ki("### A lapozo-parameter: %s" % LAPPAR)
+    ki("### Sem lapmeret, sem lapozas. Marad a fordulonkenti lekeres:")
+    ki("### fordulonkent 22 sor, ami elfér egy lapon - a profil tehat")
+    ki("### fordulonkent egy kerest jelent, nem egyet az egesz szezonra.")
+    ki("### A meres innentol FORDULONKENT ker le, ugy ellenorzi a feltevest.")
 ki("")
+
 egyezik = elter = hianyzik = 0
 gondok = []
 for i, cp in enumerate(jatekosok):
     osszes = []
-    lap = 1
-    while True:
-        st, j = collect.api_get(collect.ROOT + CP + str(cp) + "&" + LAPPAR + str(lap))
-        if st != 200 or not isinstance(j, dict):
-            gondok.append("jatekos %s: HTTP %s a %d. lapon" % (cp, st, lap))
-            break
-        osszes += j.get("data") or []
-        meta = j.get("meta") or {}
-        if lap >= (meta.get("last_page") or 1):
-            break
-        lap += 1
+    if LAPMERET:
+        st, j = collect.api_get(collect.ROOT + CP + str(cp) + "&" + LAPMERET)
+        osszes = (j or {}).get("data") or []
+        if st != 200:
+            gondok.append("jatekos %s: HTTP %s (lapmeret)" % (cp, st))
+    elif LAPPAR:
+        lap = 1
+        while True:
+            u = collect.ROOT + CP + str(cp)
+            if lap > 1:
+                u += "&" + (LAPPAR if LAPPAR.endswith("50") else LAPPAR + str(lap))
+            st, j = collect.api_get(u)
+            if st != 200 or not isinstance(j, dict):
+                gondok.append("jatekos %s: HTTP %s a %d. lapon" % (cp, st, lap))
+                break
+            osszes += j.get("data") or []
+            meta = j.get("meta") or {}
+            if lap >= (meta.get("last_page") or 1):
+                break
+            lap += 1
+    else:
+        # fordulonkent: 22 sor/fordulo, biztosan elfér egy lapon
+        for r_ in sorted({r for c, r in keret if c == cp}):
+            st, j = collect.api_get(collect.ROOT + CP + str(cp)
+                                    + "&filter%5Bround_id%5D=" + str(collect.rid(r_)))
+            if st != 200 or not isinstance(j, dict):
+                gondok.append("jatekos %s, %d. f: HTTP %s" % (cp, r_, st))
+                continue
+            osszes += j.get("data") or []
     # fordulonkenti osszeg
     per_fordulo = {}
     for s in osszes:

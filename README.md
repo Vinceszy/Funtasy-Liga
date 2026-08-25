@@ -968,6 +968,15 @@ kerüljön be.
   árfolyam-statisztikát erre a mezőre építeni nem szabad.
 - **Halasztott meccsek:** a Ferencváros európai kupaszereplése miatt az ellenfelének fordulója
   elmaradhat. Ilyenkor az érintett klub játékosai 0 pontot kapnak.
+- **NB1 szezon közbeni klubváltás — a játékosprofil ellenfél-oszlopa.** A pont-bontás
+  sorai megmondják, MELYIK fordulóban szerezte a játékos a pontot, de azt nem, hogy melyik
+  klubban. A profil ezért a játékos **mostani** klubjából keresi ki az adott forduló
+  ellenfelét (`meccsek.json`). Aki a szezon közben klubot vált, annál a váltás ELŐTTI
+  fordulóknál rossz ellenfél jelenne meg. A téli átigazolási időszakig ez nem fordulhat
+  elő; **akkor viszont kezelni kell** — vagy egy klubváltást is rögzítő adatforrásból, vagy
+  ha addigra az MLSZ API maga adja a fordulónkénti klubot. A PL-oldalon ez a gond nincs: ott
+  a Draft `element-summary` `detail` mezője (`"AVL (H) 4-0"`) magával hozza az ellenfelet.
+
 - **A könyvjelző (tartalék) a böngésződ másolatából fut**, nem a repóból. Ha a
   `tartalek/GOMB-bookmarklet.txt` módosul, a böngészőben lévő könyvjelzőt kézzel kell frissíteni.
 - **A PL-en a GW első óráiban** (amíg a gyűjtő először le nem tárolja a forduló kereteit,
