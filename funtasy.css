@@ -329,6 +329,9 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
 /* A fejleccellak ugyanazt a layout-osztalyt viselik, mint az adatcellak,
    csak a diszitest vesszuk le roluk (a .ppos chip-kerete, a monospace szam),
    kulonben a fejlec nem az oszlopok folott allna. */
+.jlar{min-width:38px;text-align:right;font-family:'JetBrains Mono';
+  font-size:11.5px;color:var(--dim)}
+.jlfej .jlar{font:inherit;color:inherit}
 .jlklub{min-width:56px;max-width:56px;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;font-size:11px;color:var(--dim)}
 .jlfej .jlklub,.jlfej .jltulaj,.jlfej .pts{font:inherit;color:inherit}

@@ -540,12 +540,14 @@ async function jatekosPanel(){
   if(!idk.length) return;                       // nincs mit mutatni
   const lista=idk.map(id=>({
     id, nev: torzs[id].n, klub: torzs[id].t, poszt: torzs[id].p,
-    u21: !!torzs[id].u21, pts: torzs[id].pts||0,
+    u21: !!torzs[id].u21, pts: torzs[id].pts||0, ar: torzs[id].ar,
     tulajok: jelenlegiTulaj(+id, torzs[id].n, keretek)
   })).sort((a,b)=>b.pts-a.pts || a.nev.localeCompare(b.nev,'hu'));
   $('jlPanel').style.display='';
   FunTasy.jatekosKereso({
     doboz:'jlDoboz', szabad:'szabad',
+    // az ar csak salary cap ligaban ertelmes oszlop
+    oszlopok:['poszt','nev','klub','tulaj','ar','pts'],
     adat:()=>lista,
     nyit:id=>{ const t=torzs[id]; if(!t) return;
       showProfil({nev:t.n, cp:+id, klub:t.t, poszt:t.p, u21:!!t.u21, hun:false}, 'push'); }

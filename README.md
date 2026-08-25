@@ -243,6 +243,30 @@ Két dolog, ami könnyen félreérthető, ezért így csináljuk:
   megy egy lekérés az MLSZ pont-bontás végpontjára. Tipikusan néhány kérés, nem az egész
   szezon.
 
+### A mezőny játékosai (főoldali lista)
+Mindkét liga főoldalán, a bal oszlop alján. A **teljes mezőny** benne van (NB1: 385,
+PL: 612 játékos), a lista alapból a legtöbb pontot szerző 40-et mutatja — a keresés és a
+szűrés viszont **mindig az egész mezőnyben fut**, különben pont arra lenne alkalmatlan,
+amire kell: megtalálni egy hátrébb állót, és megnézni, kinél van.
+
+Oszlopok: **#** (hányadik a jelenlegi nézetben — nem fix rangsor), **Poszt**, **Játékos**
+(U21-jelöléssel), **Klub**, **Kinél van** (most kinél; salary capben többen is lehetnek,
+ilyenkor két név után `+N`), **Ár** (csak NB1 — a draftban nem veszel játékost) és **Pont**.
+
+- **A kereső** a névben *és* a klubban is keres, és **ékezet nélkül is talál**
+  (`ljujic` → Ljujić): senki nem fog kalapos c-t írni a keresőbe.
+- **Minden oszlop szűrhető** a maga módján: poszt / klub / kinél van legördülő
+  (az értékek magából az adatból jönnek, tehát egy új klub vagy szakvezető magától
+  megjelenik bennük), az árnál felső korlát („mi fér bele"), a pontnál alsó.
+  A „Kinél van" szűrőben a `szabad` / `szabadügynök` a gazdátlan játékosokat hozza.
+- **Minden oszlop rendezhető** a fejlécre kattintva; újrakattintás megfordítja.
+  Szöveges oszlop alapból növekvő, számos csökkenő.
+- **Telefonon egyetlen oszlop sem tűnik el** — akkor szűrhetetlen és rendezhetetlen
+  lenne. Helyette a „Kinél van" csúszik saját sorba, ugyanúgy, mint a játékosprofil
+  tulajdonos-sora.
+
+A sorra kattintva megnyílik a játékosprofil.
+
 ### Navigáció a modalon belül
 A modal kis böngészőként működik: a listák soraira kattintva a tartalom cserélődik
 (pl. Fordulók → egy meccs két kerete), és a fejlécben megjelenő **‹ vissza** gomb az
@@ -273,6 +297,8 @@ teljes képernyős, ragadós × gombbal.
 | `hatekonysag.json` | Kezdőállítási hatékonyság fordulónként (`{updated, rounds:{"1":{név:{sz, le}}}}`) — az NB1 KEZD% oszlopának és meccs-nézetének forrása. A gyűjtő minden futásnál az összes tárolt fordulóra újraszámolja (determinisztikus). A PL-nek nincs ilyen fájlja: ott a böngésző számol a már betöltött kerettörténetből. |
 | `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**; elemeik `{e, pts}` alakúak, mert a beállt játékos pontja mondja meg, mit hozott a csere (a régi, csak azonosítót tartalmazó alakot a lap még elfogadja). A GW1 a git-történetből lett pótolva. |
 | `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset csak akkor, ha a forduló hivatalos pontja változott (ez a **pótolt meccs** esete — az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). **Nem a forduló összes meccse:** csak azoké a kluboké, amelyeknek van játékosuk valamelyik keretben — a részletező fölötti sorhoz ennyi kell. |
+| `jatekosok.json` | A mezőny **összes** játékosa (`{players:{id:{n,t,p,u21,pts,ar}}}`) — a főoldali lista és keresés forrása. A gyűjtő írja, egy kérésből. |
+| `arak.json` | Az árak **változásai** (`{arak:{id:[[dátum, ár], …]}}`). Csak akkor bővül, ha egy ár tényleg megváltozott. |
 | `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. |
 | `valtozasok-vazlat.json` | **Még nem publikált** naplóbejegyzések, ugyanabban a formában. A napló oldala ezt nem olvassa; a kész bejegyzés innen kerül át a `valtozasok.json`-ba. |
 | `valtozasok/index.html` | A változásnapló oldala („Mi újult meg?"). |
@@ -612,6 +638,20 @@ viselkedése: 0 pontos játékosra üres bontást ad). A maradék **16 eltérés
 0,01** volt, és mind **pados** játékos: a felezés utáni két tizedesre kerekítés miatt.
 Ebből következik, hogy az alappont mindig 0,25 többszöröse — a visszaszámolásnál ezért
 kerekítünk negyedre.
+
+### Az árakról nincs előzmény (mérve, 2026-08-25)
+A törzs a `current_round.market_price` mezőben a **mostani** árat adja. Ár-előzményt az
+MLSZ **sehol nem ad**: a `players` végpont az `include=rounds` / `player_rounds` /
+`market_prices` / `price_history` / `prices` kéréseket **némán elnyeli** (a válasz sorai
+egyetlen új mezőt sem kapnak), az önálló `market-prices`, `player-market-prices`,
+`competition-player-rounds`, `player-rounds`, `price-history` végpontok pedig **404**-et.
+
+Ezért a gyűjtő maga naplózza az árakat (`arak.json`), és **csak a változásokat**: a
+gyűjtő 3 óránként fut, minden futás feljegyzése napi nyolc azonos sort jelentene. Egy
+játékos sora `[[dátum, ár], …]`. A hiányzó vagy nulla árat nem tekintjük változásnak —
+különben egy API-hiba hamis „0-ra esett" bejegyzést írna be, amit utólag nem lehetne
+megkülönböztetni a valóditól (ugyanaz a logika, mint a 0–0 védelem a `results.json`-nál).
+**Amit ma nem írunk fel, az visszamenőleg pótolhatatlan.**
 
 ### A pontszámítás kulcsa
 A `weekly_points` **már kész érték**: tartalmazza a kapitányi duplázást és a pad felezését.
@@ -1308,6 +1348,26 @@ oldalon léptetni kell** — különben a böngészők a régi motort tölthetik
 **A tartalék könyvjelző módosítása:** szerkeszd a `tartalek/GOMB-forras.js`-t, futtasd a
 mappában a `python3 GOMB-epites.py`-t, majd frissítsd a böngészőben lévő könyvjelzőt az új
 tartalommal. A `GOMB-bookmarklet.txt`-t soha ne szerkeszd kézzel.
+
+---
+
+## 6/b. Amit csak MOST lehet elmenteni
+
+Van adat, ami visszamenőleg **pótolhatatlan**: az API csak a pillanatnyi állapotot adja,
+a múltat sehol nem tárolja. Ilyenkor az, hogy „egyelőre nem használjuk semmire", nem ok a
+halasztásra — amit ma nem írunk fel, az örökre elveszett. Az ilyet **fel kell vetni akkor
+is, ha senki nem kérte**, és olcsón el kell kezdeni gyűjteni.
+
+Eddig ilyen:
+
+- **A játékosok ára** (`arak.json`) — az MLSZ nem ad ár-előzményt (mérve; lásd a 4.
+  fejezetet), tehát csak az menthető, amit futás közben látunk.
+- **A forduló zárásakor történt változások** (`zarasok.json`) — a zárás után az API már
+  csak a végállapotot mutatja, a „mi változott" különbség sehol nincs eltárolva.
+
+Mindkettőnél ugyanaz a minta: **csak a változást** írjuk fel, nem minden futást (a gyűjtő
+3 óránként fut), és a hiányzó vagy nyilvánvalóan hibás értéket nem tekintjük változásnak,
+nehogy egy API-hiba hamis bejegyzést hagyjon maga után.
 
 ---
 

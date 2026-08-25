@@ -479,6 +479,8 @@ function jatekosPanel(){
   $('jlPanel').style.display = '';
   FunTasy.jatekosKereso({
     doboz: 'jlDoboz', szabad: 'szabadügynök',
+    // draft ligaban nincs ar - az oszlop sem kell
+    oszlopok: ['poszt', 'nev', 'klub', 'tulaj', 'pts'],
     adat: () => lista,
     nyit: id => showProfil(+id, 'push')
   });
