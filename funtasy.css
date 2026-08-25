@@ -42,7 +42,15 @@ h1 .fun{color:var(--amber)}h1 .tag{color:var(--magenta)}
 #status.varakozik{color:var(--amber)}
 .grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:22px}
 .grid>*{min-width:0}
-@media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:900px){
+  /* Egy oszlop: a ket burkolo div `display:contents`-szel eltunik a
+     layoutbol, igy a panelek KOZVETLEN flex-elemek lesznek, es az `order`
+     rajuk hat. Enelkul a bal oszlop egesze elozne meg a jobbat, es a
+     jatekoslista a lap kozepere kerulne. */
+  .grid{display:flex;flex-direction:column}
+  .grid>div{display:contents}
+  #jlPanel{order:9}
+}
 .panel{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:22px}
 .panel h2{min-width:0;flex-wrap:wrap;font-family:'Archivo Black';font-size:15px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);
 padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
@@ -329,9 +337,16 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
 /* A fejleccellak ugyanazt a layout-osztalyt viselik, mint az adatcellak,
    csak a diszitest vesszuk le roluk (a .ppos chip-kerete, a monospace szam),
    kulonben a fejlec nem az oszlopok folott allna. */
-.jlar{min-width:38px;text-align:right;font-family:'JetBrains Mono';
+.jlar,.jlkpc{min-width:38px;text-align:right;font-family:'JetBrains Mono';
   font-size:11.5px;color:var(--dim)}
-.jlfej .jlar{font:inherit;color:inherit}
+.jlfej .jlar,.jlfej .jlkpc{font:inherit;color:inherit}
+.jllabsor{display:flex;align-items:center;gap:8px;padding:8px 0 0}
+.jllabsor .jllab{flex:1;text-align:center;padding:0}
+.jllapoz{flex:none;min-width:30px;padding:3px 8px;background:var(--panel2);
+  border:1px solid var(--line);border-radius:6px;color:var(--fg);cursor:pointer;
+  font:400 13px Inter}
+.jllapoz:hover:not(:disabled){border-color:var(--accent)}
+.jllapoz:disabled{opacity:.35;cursor:default}
 .jlklub{min-width:56px;max-width:56px;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;font-size:11px;color:var(--dim)}
 .jlfej .jlklub,.jlfej .jltulaj,.jlfej .pts{font:inherit;color:inherit}
@@ -344,22 +359,44 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
 .jlsor .rank{min-width:26px;color:var(--dim);font-size:11px;text-align:right}
 .jltulaj{min-width:112px;max-width:112px;display:flex;justify-content:flex-end;
   gap:4px;font-size:11px;color:var(--fg)}
-.jlnev{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jlnev{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  display:flex;gap:3px;justify-content:flex-end}
+.jlnev .tag{flex:none}
 .jltobb{flex:none;color:var(--dim)}
 .jltulaj.nincs{display:block;text-align:right;color:var(--dim);font-style:italic;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jltores{display:none}
 @media(max-width:720px){
-  /* Telefonon ot oszlop nem fer ki: a nev vagodna le, pedig az a legfontosabb.
-     Oszlopot viszont NEM rejtunk el - akkor az szurhetetlen es rendezhetetlen
-     lenne -, hanem a "kinel van" csuszik sajat sorba, ugyanugy, mint a
-     jatekosprofil tulajdonos-sora. Igy minden oszlop megmarad. */
-  .jlsor,.jlfej{flex-wrap:wrap}
-  /* a "kinel van" a DOM-ban a pont ELOTT all (ott a helye szeles kepernyon),
-     ezert telefonon az `order` teszi a sor vegere - kulonben a pontot is
-     lelokne egy harmadik sorba */
-  .jltulaj{order:1;flex-basis:100%;max-width:none;justify-content:flex-end;
-    padding-right:2px;margin-top:1px}
-  .jlfej .jltulaj{order:1;display:block;text-align:right;flex-basis:100%}
+  /* Telefonon het oszlop nem fer egy sorba: a nev vagodna le, pedig az a
+     legfontosabb. Oszlopot viszont NEM rejtunk el - akkor szurhetetlen es
+     rendezhetetlen lenne -, hanem KET SORRA bontjuk:
+       1. sor: sorszam, poszt, nev, pont
+       2. sor: klub, keret%, ar, kinel van (kiirt felirattal, mert magukban
+               a szamok nem mondanak semmit)
+     A tordelest a .jltores vegzi: az `order` maga NEM tor sort, ahhoz kell
+     egy teljes szelessegu elem a ket csoport kozott. A fejleccellak ugyanigy
+     tordelnek, tehat a rendezes mindegyik oszlopra megmarad. */
+  .jlsor,.jlfej{flex-wrap:wrap;row-gap:3px}
+  .jltores{display:block;order:1;flex-basis:100%;height:0;margin:0}
+  .jlsor .rank,.jlsor .ppos,.jlsor .nm,.jlsor .pts,
+  .jlfej .rank,.jlfej .ppos,.jlfej .nm,.jlfej .pts{order:0}
+  .jlsor .jlklub,.jlsor .jlkpc,.jlsor .jlar,.jlsor .jltulaj,
+  .jlfej .jlklub,.jlfej .jlkpc,.jlfej .jlar,.jlfej .jltulaj{font-size:10.5px}
+  /* a masodik sor olvasasi rendje: klub - keret% - ar, es a vegen jobbra
+     zarva a "kinel van" (a DOM-ban a tulajdonos elobb all, mert szeles
+     kepernyon ott a helye) */
+  .jlsor .jlklub,.jlsor .jlkpc,.jlsor .jlar,
+  .jlfej .jlklub,.jlfej .jlkpc,.jlfej .jlar{order:2}
+  .jlsor .jltulaj,.jlfej .jltulaj{order:3}
+  .jlsor .jlklub,.jlfej .jlklub{min-width:0;max-width:none;padding-left:2px}
+  .jlsor .jlkpc,.jlsor .jlar,.jlfej .jlkpc,.jlfej .jlar{min-width:0;text-align:left}
+  .jlsor .jlkpc::before{content:'keret ';color:var(--dim)}
+  .jlsor .jlar::before{content:'ár ';color:var(--dim)}
+  .jlsor .jltulaj,.jlfej .jltulaj{flex:1;min-width:0;max-width:none;
+    display:flex;justify-content:flex-end;padding-right:2px}
+  .jlsor .jltulaj::before{content:'kinél van: ';color:var(--dim);white-space:pre}
+}
+
 }
 
 /* ===== Jatekosprofil =====

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """A kezdoallitasi hatekonysag szamitasa (collect.py hatekonysag) - 7 allitas.
 
-A szabaly (Vince, 2026-08-25): a pad kotelezoen 1 kapus + 1 vedo + 1 kozep-
+A szabaly: a pad kotelezoen 1 kapus + 1 vedo + 1 kozep-
 palyas + 1 csatar, tehat az optimum posztonkent a leggyengebb kiultetese;
 a kapitany a kezdok legjobbja. A tarolt week mar KESZ ertek (kapitanyi x2,
 pad x0.5) - a nyers pontot a cap/sub jelzobol kell visszafejteni.

@@ -176,7 +176,7 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   });
   if (cel){
     const celEk = cel.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    await p.fill('#jlKereso', celEk);
+    await p.fill('#jlDoboz .kereso', celEk);
     await p.waitForFunction(n => document.querySelectorAll('.jlsor').length < n,
                             db, { timeout: 5000 }).catch(() => {});
     const talalt = await p.$$eval('.jlsor .nm', a => a.map(x => x.textContent));
@@ -187,11 +187,11 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   }
   // a kereses a TELJES mezonyben fusson, ne csak a kirajzolt sorokban:
   // olyanra keresunk, aki a lista vegen sincs benne
-  await p.fill('#jlKereso', 'zzzznincsilyen');
-  await p.waitForSelector('#jlLista .loading', { timeout: 5000 });
-  jo(/Nincs találat/.test(await p.$eval('#jlLista', e => e.innerText)),
+  await p.fill('#jlDoboz .kereso', 'zzzznincsilyen');
+  await p.waitForSelector('#jlDoboz .jllista .loading', { timeout: 5000 });
+  jo(/Nincs találat/.test(await p.$eval('#jlDoboz .jllista', e => e.innerText)),
      'nem létező névre saját üzenet jön, nem üres doboz');
-  await p.fill('#jlKereso', '');
+  await p.fill('#jlDoboz .kereso', '');
   await p.waitForSelector('.jlsor', { timeout: 5000 });
 
   // A "+N" SOSEM vagodhat le: a nevek rovidulnek helyette. (Elobb egyben
@@ -203,6 +203,48 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
      + (tobbek.length ? ' — pl. ' + tobbek[0] : ' (most nincs ilyen sor)'));
   const levagott = await p.$$eval('.jltobb', a => a.some(x => x.scrollWidth > x.clientWidth + 1));
   jo(!levagott, 'a „+N” nincs elvágva');
+
+  // ---- szurok, rendezes, lapozas ----
+  cim('NB1: szűrés, rendezés, lapozás');
+  const szurok = await p.$$eval('.jlszuro,.jlszam', a => a.map(x => x.dataset.szuro));
+  jo(['poszt','klub','tulaj','kpc','ar','pts'].every(k => szurok.includes(k)),
+     'minden oszlopnak van szűrője (' + szurok.join(', ') + ')');
+
+  // "Valakinél": a jeloloerteknek NEM szabad vezerlokaraktert tartalmaznia -
+  // a HTML-elemzo kicsereli, es a szuro nemán ures listat adna (igy is volt)
+  await p.selectOption('[data-szuro="tulaj"]', { label: 'Valakinél' });
+  await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 0,
+                          null, { timeout: 5000 }).catch(() => {});
+  const gazdatlan = await p.$$eval('.jlsor .jltulaj', a => a.filter(x => /nincs/.test(x.className)).length);
+  const gazdas = await p.$$eval('.jlsor', a => a.length);
+  jo(gazdas > 0 && gazdatlan === 0,
+     '„Valakinél”: csak akiknek van gazdájuk (' + gazdas + ' sor, ' + gazdatlan + ' gazdátlan)');
+  await p.selectOption('[data-szuro="tulaj"]', { label: 'szabad' });
+  await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 0,
+                          null, { timeout: 5000 }).catch(() => {});
+  jo((await p.$$eval('.jlsor .jltulaj', a => a.every(x => /nincs/.test(x.className)))),
+     '„szabad”: csak a gazdátlanok');
+  await p.click('.jltorol');
+  await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 1, null, { timeout: 5000 });
+
+  jo((await p.$$eval('.jlsor .jlkpc', a => a.every(x => /^\d+%$/.test(x.textContent)))),
+     'a Keret% oszlop százalékot mutat');
+
+  const lab1 = await p.$eval('.jllab', e => e.textContent);
+  jo(/^1–\d+ \/ \d+/.test(lab1), 'a lábléc az aktuális tartományt mutatja (' + lab1 + ')');
+  jo(await p.$eval('[data-lap="-1"]', e => e.disabled), 'az első oldalon a vissza gomb tiltott');
+  await p.click('[data-lap="1"]');
+  await p.waitForFunction(() => /^41–/.test(document.querySelector('.jllab').textContent),
+                          null, { timeout: 5000 });
+  jo((await p.$eval('.jlsor .rank', e => e.textContent)) === '41.',
+     'a 2. oldal a 41. sorral kezdődik (a sorszám folytatódik, nem nullázódik)');
+  // szures/kereses utan NEM maradhatunk egy nem letezo oldalon
+  await p.fill('#jlDoboz .kereso', 'a');
+  await p.waitForFunction(() => /^1–/.test(document.querySelector('.jllab').textContent),
+                          null, { timeout: 5000 });
+  jo(true, 'keresésre visszaugrik az első oldalra');
+  await p.click('.jltorol');
+  await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 1, null, { timeout: 5000 });
 
   cim('NB1: a listából megnyílik a profil');
   await p.click('.jlsor');
@@ -243,7 +285,11 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
       // DUPLA FORDULO: ugyanaz a fordulo ket meccsel
       { event: 2, total_points: 3,  detail: 'FUL (A) 2-3', minutes: 90 },
       { event: 2, total_points: 6,  detail: 'BRE (H) 1-0', minutes: 90 }
-    ], fixtures: [] }) }));
+    ], fixtures: [
+      // hatralevo meccsek: ellenfel-azonositoval es palya-jelzessel
+      { event: 3, opponent: 1, is_home: true,  kickoff_time: '2026-09-01T13:00:00Z' },
+      { event: 4, opponent: 6, is_home: false, kickoff_time: '2026-09-08T13:00:00Z' }
+    ] }) }));
 
   await q.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
   await q.waitForFunction(() => typeof showProfil === 'function'
@@ -288,6 +334,17 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   jo(g('2') && !g('2').allas,
      'dupla fordulóban az állás-oszlop üres (az állások a meccsek mellett állnak)');
 
+  cim('PL: előre is felsorolja a fordulókat');
+  jo(psorok.length >= 38,
+     'a profil MINDEN fordulót felsorol, nem csak a lejátszottakat (' + psorok.length + ')');
+  jo(g('3') && /ARS/.test(g('3').nm) && /otthon/.test(g('3').nm),
+     'jövőbeli fordulónál is ott az ellenfél (a hátralévő meccsekből)'
+     + (g('3') ? ' — kapott: ' + g('3').nm : ''));
+  jo(g('3') && !g('3').allas && g('3').pts === '—',
+     'jövőbeli fordulónál nincs állás és nincs pont, csak az ellenfél');
+  jo(g('38') && !/nincs meccs/.test(g('38').pts + g('38').nm),
+     'a távoli fordulóra nem írunk „nincs meccs”-et (az elmaradást jelentene)');
+
   cim('PL: tulajdonos');
   jo(g('1') && /kezdő/.test(g('1').tul), '1. forduló: a szakvezető és a szerep látszik');
   jo(g('2') && /szabadügynök/.test(g('2').tul),
@@ -304,7 +361,7 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   // A kereses NEVRE ES KLUBRA is talal - "ars" tehat az Arsenal jatekosait
   // ES a nevukben "ars"-t tartalmazokat is hozza. Ez szandekos: a talalat
   // legyen bo, ne kelljen elore tudni, mire keresel.
-  await q.fill('#jlKereso', 'ars');
+  await q.fill('#jlDoboz .kereso', 'ars');
   await q.waitForFunction(() => document.querySelectorAll('.jlsor').length > 0, null, { timeout: 5000 });
   const arsSorok = await q.$$eval('.jlsor', a => a.map(x => x.innerText.replace(/\n/g, ' ')));
   jo(arsSorok.length > 0 && arsSorok.every(x => /ars/i.test(x)),

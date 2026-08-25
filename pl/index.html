@@ -6,7 +6,7 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=44">
+<link rel="stylesheet" href="../funtasy.css?v=47">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -94,7 +94,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=44"></script>
+<script src="../funtasy.js?v=47"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -412,19 +412,34 @@ const PROFILTORT = new Map();        // element -> Promise(history | null)
 function profilTortenet(e){
   if (!PROFILTORT.has(e))
     PROFILTORT.set(e, apiGet('https://draft.premierleague.com/api/element-summary/' + e)
-      .then(j => (j && j.history) || [])
+      .then(j => j ? { hist: j.history || [], jovo: j.fixtures || [] } : null)
       .catch(() => null));           // null = nem sikerult; a sorok kotojelet kapnak
   return PROFILTORT.get(e);
 }
 
 async function profilAdat(e){
-  const hist = await profilTortenet(e);
+  const valasz = await profilTortenet(e);
+  const hist = valasz && valasz.hist;
   const j = jat(e);
   // A fordulok halmaza: amirol keret-elozmenyunk van, ES amiben a jatekos
   // palyan volt. A ketto nem ugyanaz: szabadugynokkent is szerezhetett
   // pontot, es lehetett valakinel ugy, hogy a klubjanak nem volt meccse.
-  const gwk = new Set(Object.keys(HIST).map(Number).filter(Boolean));
+  // MINDEN fordulo szerepel, nem csak a lejatszottak - ugyanugy, mint a
+  // szakvezeto "Fordulok" fulen. A jovobeli sorokban a pont ures, az
+  // ELLENFEL viszont megvan: az element-summary a hatralevo meccseket is
+  // adja (`fixtures`), csapat-azonositoval es palya-jelzessel.
+  const utolso = liga.stop_event || 38;   // a `lastRound` csak a T beallitasa, nem metodusa
+  const gwk = new Set();
+  for (let r = 1; r <= utolso; r++) gwk.add(r);
+  Object.keys(HIST).map(Number).filter(Boolean).forEach(r => gwk.add(r));
   (hist || []).forEach(h => { if (h.event) gwk.add(+h.event); });
+  // fordulo -> a hatralevo meccsek (dupla forduloban tobb is)
+  const jovoGw = {};
+  ((valasz && valasz.jovo) || []).forEach(f => {
+    if (!f || !f.event) return;
+    (jovoGw[f.event] = jovoGw[f.event] || []).push({
+      ellenfel: TEAMS[f.opponent] || '', hazai: !!f.is_home, hp: null, vp: null });
+  });
 
   const sorok = [];
   for (const gw of [...gwk].sort((a, b) => a - b)){
@@ -437,13 +452,19 @@ async function profilAdat(e){
     }
     // dupla forduloban ket sor tartozik ugyanahhoz a fordulohoz
     const hs = (hist || []).filter(h => +h.event === gw);
+    const lejatszott = hs.map(h => detailMeccs(h.detail)).filter(Boolean);
+    const jovobeli = jovoGw[gw] || [];
     sorok.push({
       r: gw,
       tulajok,
       keretszam: Object.keys(per).length,
-      meccsek: hs.map(h => detailMeccs(h.detail)).filter(Boolean),
+      meccsek: lejatszott.length ? lejatszott : jovobeli,
       pont: (hist && hs.length) ? hs.reduce((s, h) => s + (h.total_points || 0), 0) : null,
-      jegyzet: !hist ? '—' : (hs.length ? undefined : 'nincs meccs')
+      // "nincs meccs" CSAK akkor, ha a fordulo mar lement, de a klub nem
+      // jatszott (ures fordulo). A jovobeli sor egyszeruen ures.
+      jegyzet: !hist ? '—'
+        : (hs.length || jovobeli.length) ? undefined
+        : (HIST[gw] ? 'nincs meccs' : '')
     });
   }
   const osszes = sorok.reduce((x, s) => x + (s.pont || 0), 0);
@@ -470,7 +491,8 @@ function jatekosPanel(){
   if (!idk.length) return;
   const tulaj = {};
   for (const id of Object.keys(SQUADS))
-    for (const e of (SQUADS[id] || [])) tulaj[e] = nev(+id);
+    for (const e of (SQUADS[id] || []))
+      tulaj[e] = { nev: nev(+id), jel: (ENTRIES[id] && ENTRIES[id].short) || '' };
   const lista = idk.map(id => ({
     id, nev: PLAYERS[id].n, klub: PLAYERS[id].t, poszt: PLAYERS[id].p,
     pts: PLAYERS[id].pts || 0,

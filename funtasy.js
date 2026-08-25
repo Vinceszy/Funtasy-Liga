@@ -747,12 +747,20 @@
      nevek nem fernek ki egy sorba - a "+2" viszont pont a legfontosabb
      resze, ezert az KULON all es SOSEM vagodik le; a nevek rovidulnek
      helyette. (Elobb egyben volt, es a CSS pont a darabszamot nyelte el.) */
+  /* A szakvezetot MONOGRAMMAL jeloljuk (ugyanaz a `.tag` cimke, mint a
+     tabellaban): igy negy is kifér oda, ahova ket teljes nev sem fert. A
+     teljes nev a `title`-ben marad, es a profil ugyis kiirja.
+     A hivo `{nev, jel}` parokat ad; ha nincs monogram, a nev a tartalek. */
   function tulajHTML(tulajok, szabadSzo) {
     var t = tulajok || [];
     if (!t.length)
       return '<span class="jltulaj nincs">' + esc(szabadSzo || 'szabad') + '</span>';
-    var mutat = t.slice(0, 2), tobb = t.length - mutat.length;
-    return '<span class="jltulaj"><span class="jlnev">' + esc(mutat.join(', ')) + '</span>' +
+    var mutat = t.slice(0, 4), tobb = t.length - mutat.length;
+    return '<span class="jltulaj"><span class="jlnev">' + mutat.map(function (x) {
+      return x.jel
+        ? '<span class="tag" title="' + esc(x.nev) + '">' + esc(x.jel) + '</span>'
+        : esc(x.nev);
+    }).join(' ') + '</span>' +
       (tobb ? '<span class="jltobb">+' + tobb + '</span>' : '') + '</span>';
   }
 
@@ -770,8 +778,13 @@
     { kulcs: 'klub',  cim: 'Klub', oszt: 'jlklub', szuro: 'lista', szuroCim: 'Minden klub',
       cella: function (p) {
         return '<span class="jlklub">' + esc(p.klub || '') + '</span>'; } },
-    { kulcs: 'tulaj', cim: 'Kinél van', oszt: 'jltulaj', szuro: 'tulaj', szuroCim: 'Bárkinél',
+    { kulcs: 'tulaj', cim: 'Kinél van', oszt: 'jltulaj', szuro: 'tulaj', szuroCim: 'Mindegy',
       cella: function (p, o) { return tulajHTML(p.tulajok, o.szabad); } },
+    // Keret%: a kereteknek hany szazalekaban van benne MOST. Csak salary cap
+    // ligaban van ertelme (draftban mindig 1/N vagy 0), ezert a hivo keri.
+    { kulcs: 'kpc',   cim: 'Keret%', oszt: 'jlkpc', szam: true, szuro: 'min', szuroCim: 'Min. keret%',
+      cella: function (p) {
+        return '<span class="jlkpc">' + (p.kpc == null ? '' : Math.round(p.kpc) + '%') + '</span>'; } },
     // Ar: csak salary cap ligaban van ertelme (a draftban nem veszel
     // jatekost). A szuro itt FELSO korlat - a kerdes az, hogy mi fer bele
     // a kerembe, nem az, hogy mi a draga.
@@ -782,11 +795,16 @@
       cella: function (p) {
         return '<span class="pts">' + fmt(p.pts || 0) + '</span>'; } }
   ];
-  var JL_SZABAD = '\u0000szabad';        // a "senkinel" szuroertek jelolese
+  // A ket kulonleges szuroertek. NEM vezerlokarakterrel jeloljuk: a NUL-t a
+  // HTML-elemzo kicsereli, es a legordulo erteke sosem egyezne meg azzal,
+  // amit a szuro var - a "Valakinel" nemán ures listat adott tole.
+  // A "@@" elotag viszont szakvezeto-nevkent nem fordulhat elo.
+  var JL_SZABAD = '@@szabad';           // senkinel sincs
+  var JL_VALAKI = '@@valaki';           // legalabb egy tulajdonos
 
   function jlErtek(p, kulcs) {
-    if (kulcs === 'pts' || kulcs === 'ar') return p[kulcs] || 0;
-    if (kulcs === 'tulaj') return (p.tulajok && p.tulajok[0]) || '';
+    if (kulcs === 'pts' || kulcs === 'ar' || kulcs === 'kpc') return p[kulcs] || 0;
+    if (kulcs === 'tulaj') return (p.tulajok && p.tulajok[0] && p.tulajok[0].nev) || '';
     return p[kulcs] || '';
   }
 
@@ -801,6 +819,7 @@
     });
     var rend = { kulcs: 'pts', irany: -1 };
     var szuro = {};                       // oszlop-kulcs -> szuroertek
+    var lap = 0;                          // hanyadik oldal (0-tol)
 
     // egyszeri vaz: a keresomezot NEM rajzoljuk ujra, kulonben minden
     // leutesnel elveszne a fokusz
@@ -811,7 +830,7 @@
       for (i = 0; i < mind.length; i++) {
         if (o.szuro === 'tulaj') {
           var t = mind[i].tulajok || [];
-          for (j = 0; j < t.length; j++) h[t[j]] = 1;
+          for (j = 0; j < t.length; j++) h[t[j].nev] = 1;
         } else if (mind[i][o.kulcs]) h[mind[i][o.kulcs]] = 1;
       }
       return Object.keys(h).sort(function (a, b) { return a.localeCompare(b, 'hu'); });
@@ -820,8 +839,11 @@
       if (o.szuro === 'min' || o.szuro === 'max')
         return '<input class="jlszam" type="number" min="0" step="any" ' +
                'data-szuro="' + o.kulcs + '" placeholder="' + esc(o.szuroCim) + '">';
+      // A "Mindegy" a szuro kikapcsolasa; a "Valakinel" azt kerdezi, hogy
+      // van-e egyaltalan gazdaja - ez ket kulonbozo kerdes, ezert ket sor.
       var extra = o.szuro === 'tulaj'
-        ? '<option value="' + JL_SZABAD + '">' + esc(opts.szabad || 'szabad') + '</option>' : '';
+        ? '<option value="' + JL_VALAKI + '">Valakinél</option>' +
+          '<option value="' + JL_SZABAD + '">' + esc(opts.szabad || 'szabad') + '</option>' : '';
       return '<select class="jlszuro" data-szuro="' + o.kulcs + '"><option value="">' +
         esc(o.szuroCim) + '</option>' + extra + ertekek(o).map(function (v) {
           return '<option value="' + esc(v) + '">' + esc(v) + '</option>';
@@ -840,8 +862,11 @@
           // nem az oszlopok folott all, hanem osszecsuszva a sor elejen
           return '<span class="jlfejcella ' + o.oszt + '" data-rend="' + o.kulcs + '">' +
                  esc(o.cim) + '<i></i></span>';
-        }).join('') + '</div>' +
-      '<div class="jllista"></div><div class="note jllab"></div>';
+        }).join('') + '<span class="jltores"></span></div>' +
+      '<div class="jllista"></div>' +
+      '<div class="jllabsor"><button class="jllapoz" data-lap="-1" type="button">‹</button>' +
+        '<span class="note jllab"></span>' +
+        '<button class="jllapoz" data-lap="1" type="button">›</button></div>';
 
     var mezo = doboz.querySelector('.kereso');
     var lista = doboz.querySelector('.jllista');
@@ -862,7 +887,10 @@
           if (o.szuro === 'tulaj') {
             var t = p.tulajok || [];
             if (v === JL_SZABAD) { if (t.length) return false; continue; }
-            if (t.indexOf(v) < 0) return false;
+            if (v === JL_VALAKI) { if (!t.length) return false; continue; }
+            var van = false;
+            for (var k = 0; k < t.length; k++) if (t[k].nev === v) van = true;
+            if (!van) return false;
             continue;
           }
           if (p[o.kulcs] !== v) return false;
@@ -877,11 +905,18 @@
         // azonos ertekeknel a pont dont, hogy a sorrend ne ugraljon
         return c * rend.irany || (b.pts || 0) - (a.pts || 0);
       });
-      var mutat = talalat.slice(0, limit);
+      // a szures/rendezes utan az oldalszam nem lehet a lista vegen tul
+      var lapok = Math.max(1, Math.ceil(talalat.length / limit));
+      if (lap >= lapok) lap = lapok - 1;
+      if (lap < 0) lap = 0;
+      var mutat = talalat.slice(lap * limit, lap * limit + limit);
       lista.innerHTML = mutat.length ? mutat.map(function (p, i) {
         return '<div class="plr jlsor" data-jl="' + esc(p.id) + '">' +
-          '<span class="rank">' + (i + 1) + '.</span>' +
+          '<span class="rank">' + (lap * limit + i + 1) + '.</span>' +
           oszlopok.map(function (o) { return o.cella(p, opts); }).join('') +
+          // telefonon ez tori ket sorra a sort (gepen rejtve); az `order`
+          // maga nem tor sort, ahhoz kell egy teljes szelessegu elem
+          '<span class="jltores"></span>' +
         '</div>';
       }).join('') : '<div class="loading">Nincs találat erre: „' + esc(mezo.value) + '”</div>';
 
@@ -892,30 +927,32 @@
       });
       var szurve = !!q;
       for (var sk in szuro) if (szuro[sk] !== '' && szuro[sk] !== undefined) szurve = true;
+      var tol = talalat.length ? lap * limit + 1 : 0;
       lab.textContent = !mind.length ? ''
-        : szurve
-          ? (talalat.length + ' találat' +
-             (talalat.length > mutat.length ? ' — az első ' + mutat.length + ' látszik' : ''))
-          : ('A mezőny ' + mind.length + ' játékosából az első ' + mutat.length +
-             ' látszik. A keresés és a szűrés az egész mezőnyben fut; ' +
-             'a fejlécre kattintva átrendezhető.');
+        : !talalat.length ? 'Nincs találat'
+        : (tol + '–' + (lap * limit + mutat.length) + ' / ' + talalat.length +
+           (szurve ? ' találat' : ' játékos'));
+      doboz.querySelectorAll('.jllapoz').forEach(function (b) {
+        b.disabled = +b.dataset.lap < 0 ? lap === 0 : lap >= lapok - 1;
+      });
     }
 
-    mezo.addEventListener('input', rajzol);
+    var ujrarajzol = function () { lap = 0; rajzol(); };
+    mezo.addEventListener('input', ujrarajzol);
     doboz.addEventListener('input', function (e) {
       var sz = e.target.closest('.jlszam');
-      if (sz) { szuro[sz.dataset.szuro] = sz.value; rajzol(); }
+      if (sz) { szuro[sz.dataset.szuro] = sz.value; ujrarajzol(); }
     });
     doboz.addEventListener('change', function (e) {
       var sz = e.target.closest('.jlszuro');
-      if (sz) { szuro[sz.dataset.szuro] = sz.value; rajzol(); }
+      if (sz) { szuro[sz.dataset.szuro] = sz.value; ujrarajzol(); }
     });
     doboz.addEventListener('click', function (e) {
       if (e.target.closest('.jltorol')) {
         szuro = {}; mezo.value = '';
         doboz.querySelectorAll('.jlszuro').forEach(function (x) { x.value = ''; });
         doboz.querySelectorAll('.jlszam').forEach(function (x) { x.value = ''; });
-        rajzol();
+        ujrarajzol();
         return;
       }
       var fej = e.target.closest('.jlfejcella');
@@ -925,9 +962,11 @@
           if (oszlopok[i].kulcs === fej.dataset.rend) o = oszlopok[i];
         if (rend.kulcs === fej.dataset.rend) rend.irany = -rend.irany;
         else rend = { kulcs: fej.dataset.rend, irany: (o && o.szam) ? -1 : 1 };
-        rajzol();
+        ujrarajzol();
         return;
       }
+      var lapoz = e.target.closest('.jllapoz');
+      if (lapoz) { lap += +lapoz.dataset.lap; rajzol(); return; }
       var sor = e.target.closest('.jlsor');
       if (sor && opts.nyit) opts.nyit(sor.dataset.jl);
     });

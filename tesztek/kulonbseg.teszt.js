@@ -16,11 +16,15 @@ const nyit = async (p,w,h) => {
     for(const m of ['**mlsz.hu/**','**corsproxy.io/**','**allorigins**']) await p.route(m,r=>r.abort());
     await p.goto(BASE + 'nb1/'); await p.waitForSelector('#table tr');
     await p.evaluate(()=>showMatchRound('Bazsa','Csendi',4));
-    await p.waitForSelector('.plr');
+    // A modalra szukitunk (#mBody): a fooldali jatekoslista sorai UGYANAZT a
+    // .plr osztalyt viselik, tehat egy oldal-szintu lekerdezes azokat is
+    // beszamolna - a kozos jatekos harmadszor is elojonne a lista sorai
+    // kozott, es a szamlalas hamisan bukna. (Igy is tortent, 2026-08-25.)
+    await p.waitForSelector('#mBody .plr');
     console.log('=== '+cimke+' ===');
     await p.click('#elteresGomb'); await p.waitForTimeout(250);
 
-    const lathatoNevek = await p.$$eval('.plr', ns=>ns.filter(n=>n.offsetParent!==null)
+    const lathatoNevek = await p.$$eval('#mBody .plr', ns=>ns.filter(n=>n.offsetParent!==null)
       .map(n=>n.querySelector('.nm').textContent.trim().split('▼')[0].trim()));
     const kozosNev='Jozef Urblík';
     if (cimke==='GÉP'){
@@ -46,7 +50,7 @@ const nyit = async (p,w,h) => {
          'sorrend: '+sorrend.join(' → '));
     }
     // a bontas tovabbra is nyilik
-    await p.locator('.plr[data-acc]:visible').first().click(); await p.waitForTimeout(400);
+    await p.locator('#mBody .plr[data-acc]:visible').first().click(); await p.waitForTimeout(400);
     jo(await p.locator('.accpanel').count()===1, 'a pont-bontás nyílik');
     // kikapcsolas
     await p.click('#elteresGomb'); await p.waitForTimeout(250);

@@ -55,8 +55,22 @@ function keret(opts){
     await p.waitForSelector('#table tr', { timeout: 20000 });
     // elo meccs megnyitasa az 5. (ideiglenes) fordulora
     await p.evaluate(() => showLiveMatch('Bazsa', 'Vince', 5));
-    await p.waitForSelector('.plr[data-acc]', { timeout: 20000 });
-    await p.click('.plr[data-acc]');
+    // A teszt elofeltetele a MOCKOLT elo keret. Terheles alatt elofordult,
+    // hogy az elo lekeres nem ert ide, es a lap a TAROLT keretbol rajzolt -
+    // ilyenkor a sor egy hetekkel korabbi kezdesi idot vitt, es a teszt egy
+    // teljesen mas allapotot mert (felrevezeto uzenettel bukott). Ezert nem
+    // az elso sorra kattintunk, hanem megvarjuk azt, amelyik a MOSTANI
+    // kezdessel jott - ha nincs ilyen, a varakozas bukik, es az legalabb
+    // azt mondja meg, hogy az elofeltetel veszett el.
+    const napja = start.slice(0, 10);
+    await p.waitForFunction(nap => [...document.querySelectorAll('.plr[data-acc]')]
+      .some(x => (x.dataset.st || '').startsWith(nap)), napja, { timeout: 20000 });
+    const kattintott = await p.evaluate(nap => {
+      const sor = [...document.querySelectorAll('.plr[data-acc]')]
+        .find(x => (x.dataset.st || '').startsWith(nap));
+      sor.click();
+      return { ...sor.dataset };
+    }, napja);
     await p.waitForFunction(() => {
       const el = document.querySelector('.accpanel');
       return el && !/betöltése/i.test(el.textContent);
@@ -65,6 +79,7 @@ function keret(opts){
     console.log('   ' + eset.nev + ' -> ' + JSON.stringify(szoveg.slice(0, 70)));
     if (!eset.vart.test(szoveg))
       // ha bukik, mondja meg MIERT: mit latott a lap a sajat elofeltetelebol
+      console.log('   DIAG kattintott sor: ' + JSON.stringify(kattintott)),
       console.log('   DIAG: ' + JSON.stringify(await p.evaluate(() => ({
         prov: window.PROVISIONAL, live: Object.keys(LIVE),
         elo5: eloFordulo(5),

@@ -249,23 +249,41 @@ PL: 612 játékos), a lista alapból a legtöbb pontot szerző 40-et mutatja —
 szűrés viszont **mindig az egész mezőnyben fut**, különben pont arra lenne alkalmatlan,
 amire kell: megtalálni egy hátrébb állót, és megnézni, kinél van.
 
-Oszlopok: **#** (hányadik a jelenlegi nézetben — nem fix rangsor), **Poszt**, **Játékos**
-(U21-jelöléssel), **Klub**, **Kinél van** (most kinél; salary capben többen is lehetnek,
-ilyenkor két név után `+N`), **Ár** (csak NB1 — a draftban nem veszel játékost) és **Pont**.
+Oszlopok: **#** (hányadik a jelenlegi nézetben — nem fix rangsor, átrendezéskor csak
+számol), **Poszt**, **Játékos** (U21-jelöléssel), **Klub**, **Kinél van** (most kinél;
+salary capben többen is lehetnek, ilyenkor két név után `+N`), **Keret%** és **Ár**
+(mindkettő csak NB1 — a draftban egy játékos egy keretben van, és nem veszel játékost),
+végül **Pont**.
 
 - **A kereső** a névben *és* a klubban is keres, és **ékezet nélkül is talál**
   (`ljujic` → Ljujić): senki nem fog kalapos c-t írni a keresőbe.
 - **Minden oszlop szűrhető** a maga módján: poszt / klub / kinél van legördülő
   (az értékek magából az adatból jönnek, tehát egy új klub vagy szakvezető magától
-  megjelenik bennük), az árnál felső korlát („mi fér bele"), a pontnál alsó.
-  A „Kinél van" szűrőben a `szabad` / `szabadügynök` a gazdátlan játékosokat hozza.
+  megjelenik bennük), az árnál felső korlát („mi fér bele"), a pontnál és a Keret%-nál
+  alsó. A „Kinél van" szűrőben a **Mindegy** a szűrő kikapcsolása, a **Valakinél** azt
+  kérdezi, van-e egyáltalán gazdája, a `szabad` / `szabadügynök` pedig a gazdátlanokat
+  hozza — ez három különböző kérdés.
 - **Minden oszlop rendezhető** a fejlécre kattintva; újrakattintás megfordítja.
   Szöveges oszlop alapból növekvő, számos csökkenő.
+- **Lapozható**: a lábléc mutatja, hol tartunk (`41–80 / 385`), és a nyilakkal lehet
+  előre-hátra lépni. Szűrésre, keresésre és átrendezésre visszaugrik az első oldalra —
+  különben egy szűkebb találati halmaznál egy üres oldalon ragadnánk.
 - **Telefonon egyetlen oszlop sem tűnik el** — akkor szűrhetetlen és rendezhetetlen
-  lenne. Helyette a „Kinél van" csúszik saját sorba, ugyanúgy, mint a játékosprofil
-  tulajdonos-sora.
+  lenne. Helyette a sor **két sorra törik**: fent a sorszám, a poszt, a név és a pont,
+  alatta a klub, a Keret%, az ár és a „kinél van", kiírt felirattal (magukban a számok
+  nem mondanának semmit). A fejléccellák ugyanígy tördelnek, tehát a rendezés minden
+  oszlopra megmarad. A törést egy külön elem (`.jltores`) végzi: az `order` önmagában
+  nem tör sort.
+- **Telefonon ez az utolsó blokk.** A rácsot ott egy oszlopos flexre váltjuk, a két
+  burkoló `div` `display:contents`-szel eltűnik a layoutból, így a panelek közvetlen
+  flex-elemek lesznek, és az `order` rájuk hat.
 
 A sorra kattintva megnyílik a játékosprofil.
+
+**A lista sorai ugyanazt a `.plr` osztályt viselik**, mint a keret-nézet sorai — így a
+megjelenésük egységes, viszont egy oldal-szintű `.plr` lekérdezés (pl. egy tesztben)
+ezeket is beszámolja. A modalra vonatkozó kereséseket ezért `#mBody`-ra kell szűkíteni.
+(A különbségek-teszt pontosan ezen bukott el, amikor a lista bekerült.)
 
 ### Navigáció a modalon belül
 A modal kis böngészőként működik: a listák soraira kattintva a tartalom cserélődik
@@ -639,6 +657,38 @@ viselkedése: 0 pontos játékosra üres bontást ad). A maradék **16 eltérés
 Ebből következik, hogy az alappont mindig 0,25 többszöröse — a visszaszámolásnál ezért
 kerekítünk negyedre.
 
+### A játékos-adatlap végpontja (mérve, 2026-08-25)
+`GET competitions/3/players/{competition_player_id}` — **nincs `data` burok**, a mezők a
+gyökérben állnak (ezen csúszott el az első mérés: a `data`-t néztem, és üresnek látszott).
+Amit ad a törzs-soron felül:
+
+- `countries` — ebből derül ki, hogy magyar-e a játékos (a listás törzs ezt nem adja);
+- `rounds` — fordulónkénti sor `market_price`-szal, `is_played`-del és a forduló
+  objektumával: vagyis **a múltbeli árak visszamenőleg is megvannak**, játékosonként egy
+  kéréssel. Az `arak.json` ettől függetlenül hasznos: az finomabb felbontású (a forduló
+  közbeni változásokat is rögzíti);
+- `extended_summary_statistics` — hazai/idegenbeli átlagok (jelenleg nem használjuk).
+
+**Amit NEM ad: a jövőbeli ellenfelet.** A `rounds` csak az eddigi fordulókat sorolja, és
+ellenfél nincs benne.
+
+### A jövőbeli menetrend nem érhető el (mérve, 2026-08-25)
+A játékosprofil előre is felsorolja a fordulókat, de az **NB1-en a jövőbeli ellenfél
+üresen marad**. Az MLSZ fantasy felülete mutat ilyen táblát („Következő mérkőzések"), tehát
+az adat létezik — de a hozzá tartozó végpontot nem sikerült megtalálni. Ami 404-et adott:
+`games`, `matches`, `fixtures`, `competitions/3/games`, `competitions/3/schedule`,
+`competitions/3/game-days`, `competitions/3/rounds`, `competitions/3/teams`,
+`competitions/3/teams/{id}[/games]`, `teams/{id}[/games|/next-games]`,
+`games?filter[team_id]`, `rounds?filter[competition_id]`. A keret-végpont jövőbeli
+`round_id`-val HTTP 200-at ad, de **üres listát** (a keret csak elindult fordulóra
+létezik), a `competitions?include=rounds` pedig csak a **már elkezdődött** fordulókat
+sorolja (mérés idején 6-ot), lapmérettől függetlenül.
+
+A következő lépés a felület JS-bundle-jének visszafejtése lenne — ugyanaz a módszer,
+amivel a pont-bontás végpontja megkerült. A PL-oldalon ez a gond nincs: ott a Draft
+`element-summary` `fixtures` tömbje adja a hátralévő meccseket, ellenfél-azonosítóval és
+pálya-jelzéssel.
+
 ### Az árakról nincs előzmény (mérve, 2026-08-25)
 A törzs a `current_round.market_price` mezőben a **mostani** árat adja. Ár-előzményt az
 MLSZ **sehol nem ad**: a `players` végpont az `include=rounds` / `player_rounds` /
@@ -651,7 +701,10 @@ gyűjtő 3 óránként fut, minden futás feljegyzése napi nyolc azonos sort je
 játékos sora `[[dátum, ár], …]`. A hiányzó vagy nulla árat nem tekintjük változásnak —
 különben egy API-hiba hamis „0-ra esett" bejegyzést írna be, amit utólag nem lehetne
 megkülönböztetni a valóditól (ugyanaz a logika, mint a 0–0 védelem a `results.json`-nál).
-**Amit ma nem írunk fel, az visszamenőleg pótolhatatlan.**
+**A listás törzs végpontja nem ad ár-előzményt** — a *játékos-adatlap* `rounds` tömbje
+viszont igen, fordulónkénti bontásban (lásd fentebb), tehát a múlt játékosonként egy
+kéréssel pótolható. Az `arak.json` ettől függetlenül hasznos: az minden gyűjtő-futásnál
+figyel, tehát a forduló KÖZBENI változást is rögzíti, amit a fordulónkénti bontás nem.
 
 ### A pontszámítás kulcsa
 A `weekly_points` **már kész érték**: tartalmazza a kapitányi duplázást és a pad felezését.
@@ -995,7 +1048,7 @@ legjobb érvényes felállítás. A tabella KEZD% oszlopa a lezárt fordulók ö
 a meccs-nézet fejlécében és az egymás elleni listában fordulónként áll.
 
 **NB1** (a gyűjtő számolja, `collect.py hatekonysag` → `hatekonysag.json`):
-- A pad kötelezően 1 kapus + 1 védő + 1 középpályás + 1 csatár (Vince, 2026-08-25) —
+- A pad kötelezően 1 kapus + 1 védő + 1 középpályás + 1 csatár —
   formációválasztás tehát nincs. Az optimum **mégsem** posztonkénti minimum: a
   magyarszabály (+10) függ attól, ki ül a padon, ezért a ~160 pad-kombinációt
   végigpróbáljuk, mindegyikhez a legjobb kezdő a kapitány.
@@ -1189,8 +1242,8 @@ készülnek, tehát egy új liga felvétele itt sem igényel külön munkát.
   használónak és hol látja. Példa: *„Az elmaradt meccs játékosainál kötőjel áll 0 helyett"*.
 - **Nincs benne első személy, és nincs hivatkozás a fejlesztés menetére.** A napló nem
   arról szól, ki mit mondott vagy hogyan derült ki — csak arról, mi változott az oldalon.
-  (Első nekifutásra ez a mondat került bele: *„Eddig chatben mondtam el, mi változott"* —
-  ennek egy felhasználói naplóban nincs helye.)
+  (Egy naplóbejegyzés arról, hogy korábban hol hangzott el ugyanez, a használót nem
+  érdekli — őt az érdekli, mi változott az oldalon.)
 - **Tárgyszerű, nem dramatizál.** Nem *„nem kapnak többé hamis 0-t"*, hanem az, ami
   ténylegesen látszik a soron.
 - **A beszélgetésben elhangzott szavakat nem vesszük át szó szerint.** Az, ahogy egy

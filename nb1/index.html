@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=44">
+<link rel="stylesheet" href="../funtasy.css?v=47">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -76,7 +76,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=44"></script>
+<script src="../funtasy.js?v=47"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -431,7 +431,12 @@ async function profilBontasHTML(r){
 
 async function profilAdat(jat){
   const rounds = await loadHistory();
-  const rks = Object.keys(rounds).map(Number).filter(x=>x).sort((a,b)=>a-b);
+  // MINDEN fordulo szerepel, nem csak amirol mar van adat - ugyanugy, mint a
+  // szakvezeto "Fordulok" fulen. A jovobeli sorok ures adattal allnak; igy
+  // latszik, hany fordulo van meg hatra, es a lista nem ugral, ahogy telik
+  // a szezon.
+  const rks = [];
+  for (let r = 1; r <= LAST_ROUND; r++) rks.push(r);
   const azonos = x => jat.cp ? x.id===jat.cp : x.name===jat.nev;
   // a cp-azonosito a REGI keret-rekordokbol hianyzik: ilyenkor barmelyik
   // ujabb fordulo rekordjabol feloldjuk, kulonben a bontas nem kerheto le
@@ -487,6 +492,9 @@ async function profilAdat(jat){
       s.pont=b.reduce((x,y)=>x+(y.points||0),0);
     }catch(e){ /* marad a kotojel */ }
   }));
+  // amelyik fordulorol van barmilyen adatunk (keret vagy meccs), az mar
+  // "jatszott" - a tobbi a jovo, es ott az ures sor a helyes
+  const jatszott = new Set([...Object.keys(rounds), ...Object.keys(MECCSEK||{})].map(Number));
   // ellenfel es allas a meccsek.json-bol, a jatekos ADOTT FORDULOS klubjabol.
   // Az NB1-ben egy klubnak fordulonkent egy meccse van, de a kozos reteg
   // listat var (a PL-ben van dupla fordulo) - itt az a lista egyelemu.
@@ -494,7 +502,9 @@ async function profilAdat(jat){
     s.meccsek=((MECCSEK||{})[s.r]||[])
       .filter(x=>x.h===s.klub||x.v===s.klub)
       .map(m=>({ellenfel: m.h===s.klub?m.v:m.h, hazai: m.h===s.klub, hp:m.hp, vp:m.vp}));
-    if(!s.meccsek.length && s.pont==null) s.jegyzet='nincs meccs';
+    // A meg le nem jatszott forduloban nincs meccs-adat sem: ott ne irjunk
+    // "nincs meccs"-et (az elmaradast jelentene), csak hagyjuk uresen.
+    if(!s.meccsek.length && s.pont==null && jatszott.has(s.r)) s.jegyzet='nincs meccs';
   }
   const osszes = sorok.reduce((x,s)=>x+(s.pont||0),0);
   const keretben = sorok.filter(s=>s.tulajok.length).length;
@@ -530,7 +540,8 @@ async function torzsBetolt(){
 function jelenlegiTulaj(cp, nev, keretek){
   const kik=[];
   for(const mgr of Object.keys(keretek||{}).sort())
-    if((keretek[mgr]||[]).some(x => cp ? x.id===cp : x.name===nev)) kik.push(mgr);
+    if((keretek[mgr]||[]).some(x => cp ? x.id===cp : x.name===nev))
+      kik.push({nev:mgr, jel:MONOGRAM[mgr]||''});
   return kik;                    // a rovidites a kozos retegben tortenik
 }
 
@@ -538,16 +549,19 @@ async function jatekosPanel(){
   const [torzs, keretek] = await Promise.all([torzsBetolt(), loadSquadFile()]);
   const idk=Object.keys(torzs);
   if(!idk.length) return;                       // nincs mit mutatni
+  // hany keretbol all a liga MOST - ebbol jon a Keret% oszlop
+  const keretszam=Object.keys(keretek||{}).length;
   const lista=idk.map(id=>({
     id, nev: torzs[id].n, klub: torzs[id].t, poszt: torzs[id].p,
     u21: !!torzs[id].u21, pts: torzs[id].pts||0, ar: torzs[id].ar,
     tulajok: jelenlegiTulaj(+id, torzs[id].n, keretek)
-  })).sort((a,b)=>b.pts-a.pts || a.nev.localeCompare(b.nev,'hu'));
+  })).map(x=>({...x, kpc: keretszam ? 100*x.tulajok.length/keretszam : null}))
+    .sort((a,b)=>b.pts-a.pts || a.nev.localeCompare(b.nev,'hu'));
   $('jlPanel').style.display='';
   FunTasy.jatekosKereso({
     doboz:'jlDoboz', szabad:'szabad',
     // az ar csak salary cap ligaban ertelmes oszlop
-    oszlopok:['poszt','nev','klub','tulaj','ar','pts'],
+    oszlopok:['poszt','nev','klub','tulaj','kpc','ar','pts'],
     adat:()=>lista,
     nyit:id=>{ const t=torzs[id]; if(!t) return;
       showProfil({nev:t.n, cp:+id, klub:t.t, poszt:t.p, u21:!!t.u21, hun:false}, 'push'); }

@@ -357,7 +357,7 @@ def meccsek_gyujtes(j, fordulo, tarolo):
 def hatekonysag(sq):
     """Kezdoallitasi hatekonysag egy keretre: (szerzett, leheto) vagy None.
 
-    SZABALY (Vince, 2026-08-25): a pad kotelezoen 1 kapus + 1 vedo +
+    SZABALY: a pad kotelezoen 1 kapus + 1 vedo +
     1 kozeppalyas + 1 csatar - formaciovalasztas tehat NINCS. Az optimum
     MEGSEM posztonkenti minimum: a magyarszabaly (+10, ha a kezdok kozt
     legalabb 5 magyar es koztuk U21-es van) fugg attol, KI ul a padon,
