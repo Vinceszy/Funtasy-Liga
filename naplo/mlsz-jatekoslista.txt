@@ -1,4 +1,4 @@
-# 10. KOR: van-e teljes menetrend (jovobeli meccsek) az MLSZ-nel?
+# 11. KOR: van-e teljes menetrend (jovobeli meccsek) az MLSZ-nel?
 # A profil elore is felsorolja a fordulokat - ott az ELLENFELNEK latszania
 # kell, csak a pont ures. Ma a meccsek.json csak a megjart fordulokat ismeri.
 # Probafordulo: 8. (round_id=91)
@@ -12,20 +12,19 @@
 === competitions/N/rounds                  -> HTTP 404
 === competitions/N/rounds + games          -> HTTP 404
 
-## 2) A jatekos-adatlap vegpontja (a felulet ezt mutatja)
-=== players/{id}                     -> HTTP 200 | felso kulcsok: ['birth_date', 'countries', 'extended_summary_statistics', 'fantasy_summary_statistics', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'profile_picture', 'rounds', 'team']
-=== players/{id} + team.games        -> HTTP 200 | felso kulcsok: ['birth_date', 'countries', 'extended_summary_statistics', 'fantasy_summary_statistics', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'profile_picture', 'rounds', 'team']
-=== players/{id} + games             -> HTTP 200 | felso kulcsok: ['birth_date', 'countries', 'extended_summary_statistics', 'fantasy_summary_statistics', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'profile_picture', 'rounds', 'team']
-=== players/{id} + next_games        -> HTTP 200 | felso kulcsok: ['birth_date', 'countries', 'extended_summary_statistics', 'fantasy_summary_statistics', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'profile_picture', 'rounds', 'team']
-=== players/{id} + upcoming_games    -> HTTP 200 | felso kulcsok: ['birth_date', 'countries', 'extended_summary_statistics', 'fantasy_summary_statistics', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'profile_picture', 'rounds', 'team']
-=== players/{id} + fixtures          -> HTTP 200 | felso kulcsok: ['birth_date', 'countries', 'extended_summary_statistics', 'fantasy_summary_statistics', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'profile_picture', 'rounds', 'team']
-=== players/{id}/games               -> HTTP 404 (nem JSON objektum)
-=== players/{id}/next-games          -> HTTP 404 (nem JSON objektum)
+## 2) competitions/N/players/{id} - a TELJES szerkezet
+=== HTTP 200 | gyoker-kulcsok: ['birth_date', 'countries', 'extended_summary_statistics', 'fantasy_summary_statistics', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'profile_picture', 'rounds', 'team']
+    nev: Dániel Lukács | klub: PAFC | poszt: CS
+    countries: [{"id": 1, "name": "Hungary", "code": "HUN"}]
+    fantasy_summary_statistics: {"competition_statistics": {"id": 2859241, "points": 40.5}, "current_round_statistics": {"id": 6279603, "round_id": 87, "round_number": 6, "points": 0}, "previous_round_statistics": {"id": 5116667, "round_id": 85, "round_number": 5, "points": 5.5}, "current_month_statistics": {"id": 1647295, "points": 23.5, "first_day_of_month": "2026-08-01T00:00:00+02:00"}, "previous_month_statistics": {"id": 807
+    extended_summary_statistics: {"all_matches": {"overall": 8.1, "home": 8.25, "away": 8}, "last_3_matches": {"overall": 7.83, "home": 11.25, "away": 6.13}, "last_5_matches": {"overall": 8.1, "home": 8.25, "away": 8}}
 
-## 3) Hany fordulot ismer az API? (elso meresre csak 6-ot adott)
-=== competitions?include=rounds      -> HTTP 200 | 6 fordulo (utolso: 6)
-=== + per_page=100                   -> HTTP 200 | 6 fordulo (utolso: 6)
-=== rounds?filter[competition_id]    -> HTTP 404 | data: 0
-
-### A felulet biztosan tudja a jovobeli parositasokat - ha egyik ut sem
-### adja, a kovetkezo lepes a frontend-bundle visszafejtese.
+### rounds: 6 elem
+    egy elem kulcsai: ['first_played_at', 'has_statistics', 'id', 'is_played', 'market_price', 'round', 'round_id']
+    {"id": 32699, "round_id": 77, "market_price": 14.1, "is_played": true, "first_played_at": "2026-07-26T18:00:00+02:00", "round": {"id": 77, "round_number": 1, "start_at": "2026-07-21T10:00:00+02:00", "end_at": "2026-07-28T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-07-24T18:00:00+02:00"}, "has_statistics": true}
+    {"id": 33635, "round_id": 79, "market_price": 14.3, "is_played": true, "first_played_at": "2026-07-31T20:00:00+02:00", "round": {"id": 79, "round_number": 2, "start_at": "2026-07-28T10:00:00+02:00", "end_at": "2026-08-04T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-07-31T18:00:00+02:00"}, "has_statistics": true}
+    {"id": 34565, "round_id": 81, "market_price": 14.2, "is_played": true, "first_played_at": "2026-08-07T17:30:00+02:00", "round": {"id": 81, "round_number": 3, "start_at": "2026-08-04T10:00:00+02:00", "end_at": "2026-08-10T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-08-07T15:30:00+02:00"}, "has_statistics": true}
+    ...
+    {"id": 36467, "round_id": 85, "market_price": 14.2, "is_played": true, "first_played_at": "2026-08-22T15:30:00+02:00", "round": {"id": 85, "round_number": 5, "start_at": "2026-08-18T10:00:00+02:00", "end_at": "2026-08-24T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-08-21T15:30:00+02:00"}, "has_statistics": true}
+    {"id": 37429, "round_id": 87, "market_price": 14.2, "is_played": false, "first_played_at": "2026-08-30T19:00:00+02:00", "round": {"id": 87, "round_number": 6, "start_at": "2026-08-24T10:00:00+02:00", "end_at": "2026-08-31T10:00:00+02:00", "is_transfers_closed": false, "closed_transfers_at": "2026-08-28T18:00:00+02:00"}, "has_statistics": false}
+    a fordulo-szamok: [None, None, None, None, None, None]
