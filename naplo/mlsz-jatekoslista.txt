@@ -3,8 +3,46 @@
 # Osszevetes: keretek/<f>.json `week` / (cap?2:1) / (sub?0.5:1).
 
 ## 107 kulonbozo jatekos, 377 (jatekos, fordulo) par a keret-fajlokban.
-=== lapozas page=2                 -> HTTP 200 | a 2. lap AZONOS (nem lapoz) az 1.-vel
-=== lapozas page%5Bnumber%5D=2     -> HTTP 200 | a 2. lap AZONOS (nem lapoz) az 1.-vel
+### A probe-jatekos (915) szezonja 0 sor, egy lapon 0 fer el.
+=== lapmeret per_page=200         -> HTTP 200 | sorok=0
+=== lapmeret limit=200            -> HTTP 200 | sorok=0
+=== lapmeret page%5Bsize%5D=200   -> HTTP 200 | sorok=0
+=== lapozas page=2                 -> HTTP 200 | AZONOS (nem lapoz)
+=== lapozas page%5Bnumber%5D=2     -> HTTP 200 | AZONOS (nem lapoz)
+=== lapozas offset=50              -> HTTP 200 | AZONOS (nem lapoz)
+=== lapozas page%5Boffset%5D=50    -> HTTP 200 | AZONOS (nem lapoz)
 
-### EGYIK LAPOZO-PARAMETER SEM MUKODIK - a meres nem folytathato,
-### mert a 2-3. lap adatai nelkul a fordulo-osszegek hianyosak lennenek.
+### Sem lapmeret, sem lapozas. Marad a fordulonkenti lekeres:
+### fordulonkent 22 sor, ami elfér egy lapon - a profil tehat
+### fordulonkent egy kerest jelent, nem egyet az egesz szezonra.
+### A meres innentol FORDULONKENT ker le, ugy ellenorzi a feltevest.
+
+
+### EREDMENY: egyezik=238 | ELTER=16 | ures bontas=123
+
+### Reszletek (max 25):
+  Áron Alaxai (915), 1. f: a bontas URES, a keretben 0.0
+  Áron Alaxai (915), 2. f: a bontas URES, a keretben 0.0
+  Áron Alaxai (915), 3. f: a bontas URES, a keretben 0.0
+  Áron Alaxai (915), 4. f: a bontas URES, a keretben 0.0
+  Bence Lenzsér (917), 1. f: a bontas URES, a keretben 0
+  Bence Lenzsér (917), 3. f: a bontas URES, a keretben 0
+  Soma Zsombor Novothny (925), 2. f: a bontas URES, a keretben 0
+  Jakub Plšek (951), 1. f: a bontas URES, a keretben 0
+  Artem Favorov (957), 1. f: a bontas URES, a keretben 0
+  Tamás Markek (971), 1. f: a bontas URES, a keretben 0.0
+  Tamás Markek (971), 2. f: a bontas URES, a keretben 0.0
+  Tamás Markek (971), 3. f: a bontas URES, a keretben 0.0
+  Tamás Markek (971), 4. f: a bontas URES, a keretben 0.0
+  Tamás Markek (971), 5. f: a bontas URES, a keretben 0.0
+  Mátyás Katona (989), 1. f: a bontas URES, a keretben 0.0
+  Mátyás Katona (989), 3. f: bontas=2.25, keret=2.26
+  Mátyás Katona (989), 4. f: bontas=3.75, keret=3.76
+  Mátyás Katona (989), 5. f: bontas=0.75, keret=0.76
+  Gábor Vas (1009), 2. f: a bontas URES, a keretben 0
+  Gábor Vas (1009), 5. f: a bontas URES, a keretben 0
+  Balázs Tóth (1019), 3. f: bontas=1.25, keret=1.26
+  Balázs Tóth (1019), 4. f: a bontas URES, a keretben 0.0
+  Balázs Tóth (1019), 5. f: a bontas URES, a keretben 0.0
+  Nemanja Antonov (1033), 1. f: a bontas URES, a keretben 0
+  Soma Szuhodovszki (1035), 1. f: a bontas URES, a keretben 0
