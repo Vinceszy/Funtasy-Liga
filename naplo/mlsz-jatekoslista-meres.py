@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
-"""EGYSZERI meres: van-e az MLSZ-nel JATEKOSLISTA-vegpont?
+"""EGYSZERI meres a jatekosprofil-funkciohoz.
 
-A jatekosprofil-funkciohoz ket dolog kell, ami ma nincs meg:
-  1) a TELJES jatekostorzs (a keresohoz - ma csak azt a ~107-et ismerjuk,
-     aki valaha valamelyik keretben volt);
-  2) minden jatekos FORDULONKENTI pontja (a profil "ures hetei" - amikor a
-     jatekos senkinel sem volt, a pontja sehol nincs eltarolva).
+EDDIGI EREDMENY (naplo/mlsz-jatekoslista.txt):
+  1. kor: MEGVAN a teljes jatekostorzs - competitions/3/players
+     (385 jatekos, klub, poszt, u21, serules, ar, competition_points).
+  2. kor: a torzs NEM fogad filter[round_id]-t (400), tehat a
+     fordulonkenti pontot nem adja vissza; a per_page=100 viszont MEGY
+     (26 lap helyett 4).
 
-Amit mar tudunk (naplo/mlsz-adat.txt, 2026-08-25):
-  - game-player-stats?filter[round_id]=X megy, de a SORBAN NINCS
-    jatekos-azonosito, es 50-esevel lapoz (80 lap egy fordulora);
-  - az include=competition_player-t a vegpont nemán lenyeli;
-  - a stat-szuro 400-at ad.
-Tehat a tomeges pont-lekerdezes azon az uton nem jart.
-
-Ez a meres a JATEKOS-vegpontokat probalja: a fantasy piac/bongeszo oldal
-biztosan listaz jatekosokat arral es ponttal - a kerdes, melyik uton.
-Ha van ilyen, a gyujto fordulozaras utan egyszer lehivja az egeszet
-(mint a tabellat), es a profil ingyen lesz.
+3. KOR - a fordulonkenti pont utolso eselye. A pontbontas-vegpont
+(/game-player-stats, competitions elotag NELKUL) ma is ket szuroval megy:
+filter[competition_player_id] ES filter[round_id]. A kerdes:
+  a) elhagyhato-e a fordulo-szuro (akkor egy keres = egy jatekos EGESZ
+     szezonja, es a mult potolhato 385 keressel, egyszer);
+  b) fogad-e vesszos azonosito-listat (akkor meg olcsobb);
+  c) a tomeges (csak fordulora szurt) valasz soraiban tenyleg nincs-e
+     jatekos-azonosito - ezt a nyers sor teljes kiirasaval ellenorizzuk,
+     mert egy elnezett mezo itt az egesz funkciot eldonti;
+  d) van-e a torzsvegponton fordulonkenti include (round_statistics stb.),
+     es elfér-e mind a 385 jatekos egy lapon (per_page=500).
 
 Csak olvas; a naplot a workflow commitolja.
 ADATVEDELEM: a labdarugok neve nyilvanos adat, az mehet a naploba.
@@ -28,12 +29,24 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import collect  # api_get, ROOT, BASE, COMPETITION, rid
 
 NAPLO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mlsz-jatekoslista.txt")
-R = int(os.environ.get("MERES_FORDULO", "1"))
 sorok = []
 ki = sorok.append
 
+# Ket ismert competition_player azonosito a mentett keretbol - nem kell
+# hozza kerés, es igy a meres nem fugg attol, ki van eppen valakinek a
+# kereteben.
+GYOKER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+JATEKOS = [1237]
+try:
+    with open(os.path.join(GYOKER, "keretek", "5.json"), encoding="utf-8") as f:
+        mind = [p for lista in json.load(f)["squads"].values() for p in lista]
+    JATEKOS = [p["id"] for p in mind if p.get("id")][:2]
+except Exception as e:                                    # pragma: no cover
+    ki("# (a keret-fajl nem olvashato: %s - beepitett azonosito)" % e)
+    JATEKOS = [1237]
 
-def rovidit(v, hossz=140):
+
+def rovidit(v, hossz=200):
     if isinstance(v, str) and len(v) > hossz:
         return "<%d karakteres szoveg>" % len(v)
     if isinstance(v, dict):
@@ -43,124 +56,110 @@ def rovidit(v, hossz=140):
     return v
 
 
-def proba(cimke, ut):
-    """Egy vegpont kiprobalasa: statusz, sorszam, lapozas, elso sor."""
+def proba(cimke, ut, elso_sor=False):
+    """Egy keres: statusz, sorszam, lapozas - es keresre az elso nyers sor."""
     st, j = collect.api_get(collect.ROOT + ut)
     if not isinstance(j, dict):
-        ki("=== %-38s -> HTTP %s (nem JSON objektum)" % (cimke, st))
+        ki("=== %-52s -> HTTP %s (nem JSON objektum)" % (cimke, st))
         return None
     adat = j.get("data")
-    n = len(adat) if isinstance(adat, list) else ("dict" if adat else 0)
     meta = j.get("meta") or {}
-    lap = ""
-    if meta:
-        lap = " | meta: total=%s per_page=%s last_page=%s" % (
-            meta.get("total"), meta.get("per_page"), meta.get("last_page"))
-    ki("=== %-38s -> HTTP %s, sorok: %s%s" % (cimke, st, n, lap))
-    if st == 200 and isinstance(adat, list) and adat:
-        ki("    elso sor kulcsai: %s" % sorted(adat[0].keys()))
+    n = len(adat) if isinstance(adat, list) else ("dict" if adat else 0)
+    ki("=== %-52s -> HTTP %s | sorok=%s total=%s per_page=%s last_page=%s"
+       % (cimke, st, n, meta.get("total"), meta.get("per_page"), meta.get("last_page")))
+    if elso_sor and isinstance(adat, list) and adat:
+        ki("    elso sor (RÖVIDÍTVE, de MINDEN mezo):")
         ki(json.dumps(rovidit(adat[0]), ensure_ascii=False, indent=1))
     return j
 
 
-ki("# 2. KOR: a players vegpont MEGVAN (competitions/N/players, 385 jatekos,")
-ki("# 15/lap, 26 lap; a page[size]-t eldobja). Amit ad: klub, poszt, u21,")
-ki("# serules, ar, es summary_statistics (competition_points, weekly_points).")
-ki("# Amit NEM ad: fordulonkenti pont - a weekly_points az AKTUALIS forduloe.")
-ki("#")
-ki("# EZ A KOR AZT MERI, POTOLHATO-E A MULT:")
-ki("#   a) fogad-e filter[round_id]-t (akkor barmelyik regi fordulo lekerheto)")
-ki("#   b) van-e mukodo lapmeret-parameter (26 keres helyett keve sebb)")
-ki("#   c) valtozik-e a weekly_points a szurovel - ez a doL kerdes")
-
-ALAP = "competitions/%d/players?include=summary_statistics,team,position" % collect.COMPETITION
-
-
-def minta(cimke, ut, kulcs="weekly_points"):
-    """Egy proba: hany sor, es mit ad az ELSO jatekos weekly_points-a."""
-    st, j = collect.api_get(collect.ROOT + ut)
-    if not isinstance(j, dict) or not isinstance(j.get("data"), list):
-        ki("=== %-44s -> HTTP %s (nincs lista)" % (cimke, st))
-        return None
-    adat, meta = j["data"], (j.get("meta") or {})
-    elso = adat[0] if adat else {}
-    ss = (elso.get("summary_statistics") or {})
-    cr = (elso.get("current_round") or {})
-    ki("=== %-44s -> HTTP %s | sorok=%d total=%s per_page=%s"
-       % (cimke, st, len(adat), meta.get("total"), meta.get("per_page")))
-    ki("    elso: %s %s | %s=%s comp=%s | current_round.round_id=%s"
-       % (elso.get("first_name"), elso.get("last_name"), kulcs, ss.get(kulcs),
-          ss.get("competition_points"), cr.get("round_id")))
-    return j
+def fordulok_a_valaszban(j):
+    """Hany kulonbozo round_id van a valaszban? Ez donti el, hogy a
+    fordulo-szuro elhagyasa tenyleg az EGESZ szezont adja-e."""
+    adat = (j or {}).get("data")
+    if not isinstance(adat, list):
+        return
+    talalt = set()
+    for sor in adat:
+        for kulcs in ("round_id", "roundId"):
+            if sor.get(kulcs) is not None:
+                talalt.add(sor[kulcs])
+        r = sor.get("round") or {}
+        if isinstance(r, dict) and r.get("id") is not None:
+            talalt.add(r["id"])
+    ki("    -> %d sorban %d kulonbozo fordulo: %s"
+       % (len(adat), len(talalt), sorted(talalt)[:12]))
 
 
-# ---- a) fordulo-szuro: potolhato-e a mult? ----
-for r_ in (1, 3, 5):
-    minta("filter[round_id]=%d (%d. fordulo)" % (collect.rid(r_), r_),
-          ALAP + "&filter%%5Bround_id%%5D=%d" % collect.rid(r_))
-minta("szuro NELKUL (referencia)", ALAP)
-
-# ---- b) lapmeret-parameterek ----
-for cimke, par in [("per_page=100", "per_page=100"), ("limit=100", "limit=100"),
-                   ("page[limit]=100", "page%5Blimit%5D=100"),
-                   ("page[per_page]=100", "page%5Bper_page%5D=100")]:
-    minta("lapmeret: " + cimke, ALAP + "&" + par)
-
-# ---- c) mennyi ido/keres a teljes torzs? ----
-st, j = collect.api_get(collect.ROOT + ALAP)
-lapok = ((j or {}).get("meta") or {}).get("last_page")
+ki("# 3. KOR - a fordulonkenti pont utolso eselye (pontbontas-vegpont).")
+ki("# Elozmeny: a torzs (competitions/3/players) megvan, de fordulora nem")
+ki("# szurheto (400). Itt a /game-player-stats vegpontot meritjuk ki.")
+ki("# Merott jatekos-azonositok: %s" % JATEKOS)
 ki("")
-ki("### A teljes torzs %s lapbol all (15/lap)." % lapok)
 
-# A naplo kiirasa MEG A KILEPES ELOTT - kulonben a 2. kor eredmenye
-# elveszne (a regi, 1. koros kod a fajl vegen irt volna).
-with open(NAPLO, "w", encoding="utf-8") as f:
-    f.write("\n".join(sorok) + "\n")
-print("\n".join(sorok))
-sys.exit(0)
+GPS = "game-player-stats"
+CP = "&filter%5Bcompetition_player_id%5D="
+RD = "&filter%5Bround_id%5D="
+KONF = "?include=competition_stat_config"
+j1 = JATEKOS[0]
 
-ki("# Jatekoslista-vegpont kereses. Cel: teljes torzs + fordulonkenti pont.")
-ki("# ROOT=%s  BASE=%s  round_id(%d)=%d" % (collect.ROOT, collect.BASE, R, collect.rid(R)))
+# ---- a) elhagyhato-e a fordulo-szuro? ----
+ki("## a) EGY jatekos, fordulo-szuro NELKUL - megjon-e az egesz szezon?")
+j = proba("csak jatekos-szuro", GPS + KONF + CP + str(j1), elso_sor=True)
+fordulok_a_valaszban(j)
+j = proba("csak jatekos-szuro + per_page=100", GPS + KONF + CP + str(j1) + "&per_page=100")
+fordulok_a_valaszban(j)
+ki("")
+ki("## referencia: ugyanaz a jatekos, EGY fordulora (a mai mukodo hivas)")
+j = proba("jatekos + 5. fordulo", GPS + KONF + CP + str(j1) + RD + str(collect.rid(5)))
+fordulok_a_valaszban(j)
+ki("")
 
-# ---- 1) a legvaloszinubb utak a JSON:API mintabol ----
-jeloltek = [
-    ("competition-players (gyoker)", "competition-players?filter%%5Bcompetition_id%%5D=%d" % collect.COMPETITION),
-    ("competitions/N/competition-players", "competitions/%d/competition-players" % collect.COMPETITION),
-    ("competitions/N/players", "competitions/%d/players" % collect.COMPETITION),
-    ("players (gyoker)", "players?filter%%5Bcompetition_id%%5D=%d" % collect.COMPETITION),
-    ("competitions/N/player-rankings", "competitions/%d/player-rankings" % collect.COMPETITION),
-    ("competition-players + round szuro",
-     "competition-players?filter%%5Bcompetition_id%%5D=%d&filter%%5Bround_id%%5D=%d"
-     % (collect.COMPETITION, collect.rid(R))),
-]
-talalat = None
-for cimke, ut in jeloltek:
-    j = proba(cimke, ut)
-    if j and isinstance(j.get("data"), list) and j["data"] and talalat is None:
-        talalat = (cimke, ut, j)
+# ---- b) vesszos azonosito-lista ----
+ki("## b) fogad-e TOBB azonositot egyszerre?")
+if len(JATEKOS) > 1:
+    lista = ",".join(str(x) for x in JATEKOS[:2])
+    j = proba("jatekos-lista (%s)" % lista, GPS + KONF + CP + lista + RD + str(collect.rid(5)))
+    fordulok_a_valaszban(j)
+    proba("jatekos-lista szogletes ([]=)", GPS + KONF
+          + "&filter%5Bcompetition_player_id%5D%5B%5D=" + str(JATEKOS[0])
+          + "&filter%5Bcompetition_player_id%5D%5B%5D=" + str(JATEKOS[1])
+          + RD + str(collect.rid(5)))
+ki("")
 
-# ---- 2) ha van talalat: mit tud? include-ok, lapmeret, fordulonkenti pont ----
-if talalat:
-    cimke, ut, j = talalat
-    ki("")
-    ki("### MUKODIK: %s" % cimke)
-    elval = "&" if "?" in ut else "?"
-    for cim2, extra in [
-        ("include=team,position", "include=team,position"),
-        ("include=current_round", "include=current_round"),
-        ("include=summary_statistics", "include=summary_statistics"),
-        ("nagy lapmeret (500)", "page%5Bsize%5D=500"),
-        ("2. lap", "page%5Bnumber%5D=2"),
-    ]:
-        proba(cimke + " + " + cim2, ut + elval + extra)
-else:
-    ki("")
-    ki("### EGYIK JELOLT SEM ADOTT LISTAT.")
-    ki("# Tartalek terv: a gyujto jatekosonkent kerdez (game-player-stats,")
-    ki("# 1 keres/jatekos/fordulo) - de ahhoz is kell egy NEVSOR. Az egyetlen")
-    ki("# ismert nevsor-forras a keret-vegpont, ami csak a MI jatekosainkat")
-    ki("# adja. Ilyenkor a 'minden jatekos' kovetelmeny nem teljesitheto,")
-    ki("# es ezt Vincenek meg kell beszelnunk.")
+# ---- c) a tomeges valasz sora: tenyleg nincs benne jatekos? ----
+ki("## c) TOMEGES hivas (csak fordulora szurve) - a nyers sor MINDEN mezoje.")
+ki("#    Ha van benne barmilyen jatekos-azonosito, az egesz mult potolhato")
+ki("#    par keressel. Az 1. kor szerint nincs - ezt ellenorizzuk ujra.")
+j = proba("csak fordulo-szuro + per_page=500", GPS + "?filter%5Bround_id%5D="
+          + str(collect.rid(5)) + "&per_page=500", elso_sor=True)
+adat = (j or {}).get("data")
+if isinstance(adat, list) and adat:
+    kulcsok = set()
+    for sor in adat[:50]:
+        kulcsok |= set(sor.keys())
+    ki("    az elso 50 sor OSSZES mezoneve: %s" % sorted(kulcsok))
+    gyanus = [k for k in sorted(kulcsok) if "player" in k.lower() or k.endswith("_id") or k == "id"]
+    ki("    azonositonak tuno mezok: %s" % gyanus)
+    for k in gyanus:
+        ertekek = {sor.get(k) for sor in adat[:50]}
+        ki("      %-32s -> %d kulonbozo ertek az elso 50 sorban, pl. %s"
+           % (k, len(ertekek), sorted(str(x) for x in ertekek)[:5]))
+ki("")
+
+# ---- d) a torzsvegpont vegso lehetosegei ----
+ki("## d) a torzsvegpont: fordulonkenti include, es elfér-e egy lapon?")
+ALAP = "competitions/%d/players" % collect.COMPETITION
+for cimke, extra in [
+    ("per_page=500 (mind a 385 egy lapon?)", "?per_page=500"),
+    ("include=round_statistics", "?include=round_statistics"),
+    ("include=statistics", "?include=statistics"),
+    ("include=rounds", "?include=rounds"),
+    ("include=game_player_stats", "?include=game_player_stats"),
+]:
+    proba("torzs: " + cimke, ALAP + extra)
+proba("egy jatekos reszletes lapja", ALAP + "/" + str(j1)
+      + "?include=summary_statistics,team,position", elso_sor=True)
 
 with open(NAPLO, "w", encoding="utf-8") as f:
     f.write("\n".join(sorok) + "\n")
