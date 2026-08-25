@@ -1,56 +1,35 @@
-# PL profil-meres. Referencia: a repo draft_history.json 1. forduloja.
-# Ismert (Draft) pontok az osszevetéshez:
-#   element 115  De Cuyper        -> 17 pont
-#   element 123  Hinshelwood      -> 16 pont
-#   element 556  M.Sangaré        -> 14 pont
-#   element 154  Palmer           -> 13 pont
-#   element 367  Gakpo            -> 12 pont
+# PL profil-meres, 2. kor: a `detail` szamparjanak SORRENDJE.
+# Hiteles forras: event/1/fixtures (team_h, team_a, team_h_score,
+# team_a_score kulon mezoben). Ehhez merjuk a `detail` szoveget.
 
-## 1) element-summary a Draft API-ban
-=== draft element-summary/115  -> HTTP 200 | kulcsok: ['fixtures', 'history']
-    history[0]: {"id": 115, "detail": "AVL (H) 4-0", "event": 1, "assists": 1, "bonus": 2, "bps": 46, "clean_sheets": 1, "creativity": "45.3", "goals_conceded": 0, "goals_scored": 1, "ict_index": "12.9", "influence": "40.6", "minutes": 77, "own_goals": 0, "penalties_missed": 0, "penalties_saved": 0, "red_cards": 0, "saves": 0, "threat": "43.0", "yellow_cards": 0, "starts": 1, "expected_goals": "1.47", "expected_a
-    history hossz: 1 | valasz merete: 11691 bajt
-=== draft element-summary/123  -> HTTP 200 | kulcsok: ['fixtures', 'history']
-    history[0]: {"id": 123, "detail": "AVL (H) 4-0", "event": 1, "assists": 0, "bonus": 3, "bps": 54, "clean_sheets": 1, "creativity": "13.4", "goals_conceded": 0, "goals_scored": 2, "ict_index": "14.5", "influence": "72.8", "minutes": 63, "own_goals": 0, "penalties_missed": 0, "penalties_saved": 0, "red_cards": 0, "saves": 0, "threat": "59.0", "yellow_cards": 0, "starts": 1, "expected_goals": "1.41", "expected_a
-    history hossz: 1 | valasz merete: 11691 bajt
+### 10 meccs a 1. forduloban.
 
-## 2) klasszikus FPL element-summary - es EGYEZNEK-E AZ AZONOSITOK?
-=== klasszikus element-summary/115  -> HTTP 200 | history=1 | 10805 bajt
-    1. fordulo: 17 pont (a Draftban: 17) EGYEZIK
-    a sor mezoi: ['assists', 'bonus', 'bps', 'clean_sheets', 'clearances_blocks_interceptions', 'creativity', 'defensive_contribution', 'element', 'expected_assists', 'expected_goal_involvements', 'expected_goals', 'expected_goals_conceded', 'fixture', 'goals_conceded', 'goals_scored', 'ict_index', 'influence', 'kickoff_time', 'minutes', 'modified', 'opponent_team', 'own_goals', 'penalties_missed', 'penalties_saved', 'recoveries', 'red_cards', 'round', 'saves', 'selected', 'starts', 'tackles', 'team_a_score', 'team_h_score', 'threat', 'total_points', 'transfers_balance', 'transfers_in', 'transfers_out', 'value', 'was_home', 'yellow_cards']
-    ellenfel/eredmeny mezok: opponent_team=2 was_home=True team_h_score=4 team_a_score=0
-=== klasszikus element-summary/123  -> HTTP 200 | history=1 | 12565 bajt
-    1. fordulo: 16 pont (a Draftban: 16) EGYEZIK
-    a sor mezoi: ['assists', 'bonus', 'bps', 'clean_sheets', 'clearances_blocks_interceptions', 'creativity', 'defensive_contribution', 'element', 'expected_assists', 'expected_goal_involvements', 'expected_goals', 'expected_goals_conceded', 'fixture', 'goals_conceded', 'goals_scored', 'ict_index', 'influence', 'kickoff_time', 'minutes', 'modified', 'opponent_team', 'own_goals', 'penalties_missed', 'penalties_saved', 'recoveries', 'red_cards', 'round', 'saves', 'selected', 'starts', 'tackles', 'team_a_score', 'team_h_score', 'threat', 'total_points', 'transfers_balance', 'transfers_in', 'transfers_out', 'value', 'was_home', 'yellow_cards']
-    ellenfel/eredmeny mezok: opponent_team=2 was_home=True team_h_score=4 team_a_score=0
-=== klasszikus element-summary/556  -> HTTP 200 | history=1 | 17825 bajt
-    1. fordulo: 1 pont (a Draftban: 14) !!! ELTER
-    a sor mezoi: ['assists', 'bonus', 'bps', 'clean_sheets', 'clearances_blocks_interceptions', 'creativity', 'defensive_contribution', 'element', 'expected_assists', 'expected_goal_involvements', 'expected_goals', 'expected_goals_conceded', 'fixture', 'goals_conceded', 'goals_scored', 'ict_index', 'influence', 'kickoff_time', 'minutes', 'modified', 'opponent_team', 'own_goals', 'penalties_missed', 'penalties_saved', 'recoveries', 'red_cards', 'round', 'saves', 'selected', 'starts', 'tackles', 'team_a_score', 'team_h_score', 'threat', 'total_points', 'transfers_balance', 'transfers_in', 'transfers_out', 'value', 'was_home', 'yellow_cards']
-    ellenfel/eredmeny mezok: opponent_team=16 was_home=True team_h_score=2 team_a_score=0
-=== klasszikus element-summary/154  -> HTTP 200 | history=1 | 14345 bajt
-    1. fordulo: 13 pont (a Draftban: 13) EGYEZIK
-    a sor mezoi: ['assists', 'bonus', 'bps', 'clean_sheets', 'clearances_blocks_interceptions', 'creativity', 'defensive_contribution', 'element', 'expected_assists', 'expected_goal_involvements', 'expected_goals', 'expected_goals_conceded', 'fixture', 'goals_conceded', 'goals_scored', 'ict_index', 'influence', 'kickoff_time', 'minutes', 'modified', 'opponent_team', 'own_goals', 'penalties_missed', 'penalties_saved', 'recoveries', 'red_cards', 'round', 'saves', 'selected', 'starts', 'tackles', 'team_a_score', 'team_h_score', 'threat', 'total_points', 'transfers_balance', 'transfers_in', 'transfers_out', 'value', 'was_home', 'yellow_cards']
-    ellenfel/eredmeny mezok: opponent_team=10 was_home=False team_h_score=2 team_a_score=3
-=== klasszikus element-summary/367  -> HTTP 200 | history=1 | 12634 bajt
-    1. fordulo: 12 pont (a Draftban: 12) EGYEZIK
-    a sor mezoi: ['assists', 'bonus', 'bps', 'clean_sheets', 'clearances_blocks_interceptions', 'creativity', 'defensive_contribution', 'element', 'expected_assists', 'expected_goal_involvements', 'expected_goals', 'expected_goals_conceded', 'fixture', 'goals_conceded', 'goals_scored', 'ict_index', 'influence', 'kickoff_time', 'minutes', 'modified', 'opponent_team', 'own_goals', 'penalties_missed', 'penalties_saved', 'recoveries', 'red_cards', 'round', 'saves', 'selected', 'starts', 'tackles', 'team_a_score', 'team_h_score', 'threat', 'total_points', 'transfers_balance', 'transfers_in', 'transfers_out', 'value', 'was_home', 'yellow_cards']
-    ellenfel/eredmeny mezok: opponent_team=17 was_home=False team_h_score=2 team_a_score=2
+=== Martinez         detail='BHA (A) 4-0'      | fixtures: BHA 4-0 AVL | ellenfel a detailben: BHA -> HAZAI-VENDEG
+=== Maatsen          detail='BHA (A) 4-0'      | fixtures: BHA 4-0 AVL | ellenfel a detailben: BHA -> HAZAI-VENDEG
+=== Rogers           detail='FUL (A) 2-3'      | fixtures: FUL 2-3 CHE | ellenfel a detailben: FUL -> HAZAI-VENDEG
+=== Buendía          detail='BHA (A) 4-0'      | fixtures: BHA 4-0 AVL | ellenfel a detailben: BHA -> HAZAI-VENDEG
+=== Tielemans        detail='HUL (A) 2-0'      | fixtures: HUL 2-0 MUN | ellenfel a detailben: HUL -> HAZAI-VENDEG
+=== McGinn           detail='BHA (A) 4-0'      | fixtures: BHA 4-0 AVL | ellenfel a detailben: BHA -> HAZAI-VENDEG
+=== Watkins          detail='BHA (A) 4-0'      | fixtures: BHA 4-0 AVL | ellenfel a detailben: BHA -> HAZAI-VENDEG
+=== Petrović         detail='MCI (A) 2-1'      | fixtures: MCI 2-1 BOU | ellenfel a detailben: MCI -> HAZAI-VENDEG
+=== Hill             detail='MCI (A) 2-1'      | fixtures: MCI 2-1 BOU | ellenfel a detailben: MCI -> HAZAI-VENDEG
+=== Truffert         detail='MCI (A) 2-1'      | fixtures: MCI 2-1 BOU | ellenfel a detailben: MCI -> HAZAI-VENDEG
+=== Rayan            detail='MCI (A) 2-1'      | fixtures: MCI 2-1 BOU | ellenfel a detailben: MCI -> HAZAI-VENDEG
+=== Kluivert         detail='MCI (A) 2-1'      | fixtures: MCI 2-1 BOU | ellenfel a detailben: MCI -> HAZAI-VENDEG
+=== Evanilson        detail='MCI (A) 2-1'      | fixtures: MCI 2-1 BOU | ellenfel a detailben: MCI -> HAZAI-VENDEG
+=== Van Hecke        detail='BRE (A) 3-0'      | fixtures: BRE 3-0 TOT | ellenfel a detailben: BRE -> HAZAI-VENDEG
+=== Welbeck          detail='FUL (A) 2-3'      | fixtures: FUL 2-3 CHE | ellenfel a detailben: FUL -> HAZAI-VENDEG
+=== Sánchez          detail='FUL (A) 2-3'      | fixtures: FUL 2-3 CHE | ellenfel a detailben: FUL -> HAZAI-VENDEG
+=== James            detail='FUL (A) 2-3'      | fixtures: FUL 2-3 CHE | ellenfel a detailben: FUL -> HAZAI-VENDEG
+=== Colwill          detail='FUL (A) 2-3'      | fixtures: FUL 2-3 CHE | ellenfel a detailben: FUL -> HAZAI-VENDEG
+=== Palestra         detail='FUL (A) 2-3'      | fixtures: FUL 2-3 CHE | ellenfel a detailben: FUL -> HAZAI-VENDEG
+=== Palmer           detail='FUL (A) 2-3'      | fixtures: FUL 2-3 CHE | ellenfel a detailben: FUL -> HAZAI-VENDEG
+=== Enzo             detail='FUL (A) 2-3'      | fixtures: FUL 2-3 CHE | ellenfel a detailben: FUL -> HAZAI-VENDEG
+=== Neto             detail='FUL (A) 2-3'      | fixtures: FUL 2-3 CHE | ellenfel a detailben: FUL -> HAZAI-VENDEG
+=== Estêvão          detail='FUL (A) 2-3'      | fixtures: FUL 2-3 CHE | ellenfel a detailben: FUL -> HAZAI-VENDEG
+=== Caicedo          detail='FUL (A) 2-3'      | fixtures: FUL 2-3 CHE | ellenfel a detailben: FUL -> HAZAI-VENDEG
+=== João Pedro       detail='FUL (A) 2-3'      | fixtures: FUL 2-3 CHE | ellenfel a detailben: FUL -> HAZAI-VENDEG
 
-## 3) a masik ut: fordulonkent EGY keres mindenkire (event/{gw}/live)
-=== event/1/live -> HTTP 200 | 610 jatekos | 411433 bajt
-    egy elem kulcsai: ['explain', 'stats']
-    stats: {"minutes": 90, "goals_scored": 0, "assists": 0, "clean_sheets": 1, "goals_conceded": 0, "own_goals": 0, "penalties_saved": 0, "penalties_missed": 0, "yellow_cards": 0, "red_cards": 0, "saves": 1, "bonus": 0, "bps": 24, "influence": 11.8, "creativity": 0.0, "threat": 0.0, "ict_index": 1.2, "starts": 1, "expected_goals": 0.0, "expected_assists": 0.0, "expected_goal_involvements": 0.0, "expected_goa
-    ha CSAK a nem-nulla pontot tarolnank: 295 jatekos, 2324 bajt/fordulo
-
-## 4) a fordulo meccsei (a tarolando meccsfajlhoz)
-=== event/1/fixtures -> HTTP 200 | 10 meccs | 24726 bajt
-    egy meccs kulcsai: ['code', 'event', 'finished', 'finished_provisional', 'id', 'kickoff_time', 'minutes', 'provisional_start_time', 'pulse_id', 'started', 'stats', 'team_a', 'team_a_score', 'team_h', 'team_h_score']
-
-## 5) a ket hianyzo reszlet
-=== draft element-summary history-sor MINDEN mezoje:
-    ['assists', 'bonus', 'bps', 'clean_sheets', 'clearances_blocks_interceptions', 'creativity', 'defensive_contribution', 'detail', 'element', 'event', 'expected_assists', 'expected_goal_involvements', 'expected_goals', 'expected_goals_conceded', 'fixture', 'goals_conceded', 'goals_scored', 'ict_index', 'id', 'influence', 'minutes', 'opponent_team', 'own_goals', 'penalties_missed', 'penalties_saved', 'recoveries', 'red_cards', 'saves', 'starts', 'tackles', 'threat', 'total_points', 'yellow_cards']
-    total_points=17 (a Draftban ismert: 17) | detail='AVL (H) 4-0' | event=1
-    fixtures: 37 jovobeli meccs, elso: {"id": 16, "started": false, "difficulty": 4, "opponent": 6, "is_home": false, "code": 2645207, "finished": false, "finished_provisional": false, "kickoff_time": "2026-08-30T13:00:00Z", "minutes": 0, 
-=== draft bootstrap-static: egy jatekos MINDEN mezoje:
-    ['added', 'assists', 'bonus', 'bps', 'chance_of_playing_next_round', 'chance_of_playing_this_round', 'clean_sheets', 'clearances_blocks_interceptions', 'code', 'corners_and_indirect_freekicks_order', 'corners_and_indirect_freekicks_text', 'creativity', 'creativity_rank', 'creativity_rank_type', 'defensive_contribution', 'direct_freekicks_order', 'direct_freekicks_text', 'draft_rank', 'dreamteam_count', 'element_type', 'ep_next', 'ep_this', 'event_points', 'expected_assists', 'expected_goal_involvements', 'expected_goals', 'expected_goals_conceded', 'first_name', 'form', 'form_rank', 'form_rank_type', 'goals_conceded', 'goals_scored', 'ict_index', 'ict_index_rank', 'ict_index_rank_type', 'id', 'in_dreamteam', 'influence', 'influence_rank', 'influence_rank_type', 'minutes', 'news', 'news_added', 'news_return', 'news_updated', 'own_goals', 'penalties_missed', 'penalties_order', 'penalties_saved', 'penalties_text', 'points_per_game', 'points_per_game_rank', 'points_per_game_rank_type', 'recoveries', 'red_cards', 'saves', 'second_name', 'squad_number', 'starts', 'status', 'tackles', 'team', 'threat', 'threat_rank', 'threat_rank_type', 'total_points', 'web_name', 'yellow_cards']
-    De Cuyper: total_points=17 event_points=17
+### 25 idegenbeli, NEM dontetlen meccs vizsgalva.
+###   hazai-vendeg olvasat stimmel:      25
+###   jatekos-ellenfel olvasat stimmel:  0
