@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=48">
+<link rel="stylesheet" href="../funtasy.css?v=49">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -76,7 +76,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=48"></script>
+<script src="../funtasy.js?v=49"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -486,14 +486,12 @@ async function profilAdat(jat){
                 keretszam: Object.keys(per).length});
   }
   jat.klubok=klubok;
-  // amikor senkinel sem volt, a pontja csak az API-bol derul ki
-  await Promise.all(sorok.filter(s=>s.pont===null).map(async s=>{
-    if(!jat.cp) return;
-    try{
-      const b=await profilBontasSorok(jat.cp, s.r);
-      s.pont=b.reduce((x,y)=>x+(y.points||0),0);
-    }catch(e){ /* marad a kotojel */ }
-  }));
+  // Akinel senki sem volt, annak a pontja csak az API-bol derul ki. Ezt NEM
+  // varjuk meg a megjeleniteshez, es NEM parhuzamosan lojuk ki: egy soha
+  // nem birtokolt jatekosnal ez fordulonkent egy proxys keres, es ot
+  // egyszerre kilove a proxy eldobta oket - a profil percekig "toltott",
+  // a lenyilo bontas pedig elhasalt (bejelentett hiba). A profil azonnal
+  // megjelenik kotojelekkel, a pontok sorban, a hatterben potladnak.
   // ellenfel es allas a meccsek.json-bol, a jatekos ADOTT FORDULOS klubjabol.
   // Az NB1-ben egy klubnak fordulonkent egy meccse van, de a kozos reteg
   // listat var (a PL-ben van dupla fordulo) - itt az a lista egyelemu.
@@ -514,7 +512,7 @@ async function profilAdat(jat){
       {cimke:'Fordulók', ertek: sorok.length},
       {cimke:'Ebből keretben', ertek: keretben}
     ],
-    sorok, senkinel:'senkinél sem volt'
+    sorok, senkinel:'–'
   };
 }
 
@@ -556,7 +554,7 @@ async function jatekosPanel(){
     .sort((a,b)=>b.pts-a.pts || a.nev.localeCompare(b.nev,'hu'));
   $('jlPanel').style.display='';
   FunTasy.jatekosKereso({
-    doboz:'jlDoboz', szabad:'szabad',
+    doboz:'jlDoboz', szabad:'–',
     // az ar csak salary cap ligaban ertelmes oszlop
     oszlopok:['poszt','nev','klub','tulaj','kpc','ar','pts'],
     adat:()=>lista,
@@ -576,8 +574,31 @@ async function showProfil(jat, mode){
     const adat=await profilAdat(jat);
     if(PROFIL_AKT!==jat) return;                 // kozben mas profilt nyitottak
     $('mBody').innerHTML=FunTasy.profilHTML(adat);
+    profilPontPotlas(jat, adat);
   }catch(e){
     $('mBody').innerHTML=`<div class="loading" style="color:var(--lose)">Nem sikerült betölteni — ${esc(e.message)}</div>`;
+  }
+}
+
+// A hianyzo fordulopontok potlasa a mar kirajzolt profilban. SORBAN megy,
+// nem parhuzamosan (a proxy az egyszerre kilott kereseket eldobta), es
+// csak a cellat frissiti - igy egy kozben lenyitott bontas nem zarodik be.
+async function profilPontPotlas(jat, adat){
+  if(!jat.cp) return;
+  let ossz = adat.sorok.reduce((x,s)=>x+(s.pont||0),0);
+  for(const s of adat.sorok){
+    if(s.pont!==null || !s.meccsek.length) continue;
+    try{
+      const b=await profilBontasSorok(jat.cp, s.r);
+      s.pont=b.reduce((x,y)=>x+(y.points||0),0);
+    }catch(e){ continue; }                    // marad a kotojel; kesobb ujraprobalhato
+    if(PROFIL_AKT!==jat || !$('ov').classList.contains('open')) return;
+    const cella=document.querySelector(`.profsor[data-pr="${s.r}"] .pts`);
+    if(cella) cella.textContent=fmt(s.pont);
+    ossz+=s.pont;
+    // a fejlec osszesitoje kovesse a beerkezo pontokat
+    const fej=document.querySelector('.ptenyek .ptny b');
+    if(fej) fej.textContent=fmt(ossz);
   }
 }
 let mCurrent=[];

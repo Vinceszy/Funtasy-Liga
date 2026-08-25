@@ -198,7 +198,8 @@ hányban volt valakinek a keretében), alatta fordulónként egy sor: **ellenfé
 állása** (mindig hazai–vendég sorrendben, mellette hogy otthon vagy idegenben játszott),
 a játékos **saját pontja**, és hogy **melyik szakvezetőnél** volt — kezdőként, padon vagy
 kapitányként. Salary cap ligában ugyanaz a játékos egy fordulóban **több szakvezetőnél is**
-lehet: ilyenkor mind ott van, mindegyik a maga szerepével. Ha senkinél sem volt, azt írjuk ki.
+lehet: ilyenkor mind ott van, mindegyik a maga szerepével. Ha senkinél sem volt, rövid
+kötőjel áll ott — jövőbeli fordulónál pedig semmi, mert azt, hogy kinél *lesz*, nem tudjuk.
 
 A felsorolás végén a **ligára vetített arányok**: a forduló kereteinek hány százalékában volt
 benne (*keret*), hányban volt kezdő (*kezdő*) és hányban kapitány (*kapitány*). A nevező a
@@ -220,7 +221,7 @@ az állásával együtt a név-cellába kerül, és az állás-oszlop üres mara
 eset máshogy tördelve, mint hogy a második meccs eltűnjön.
 
 **Honnan jön az adat ligánként.** Az NB1-ben a fordulónkénti pont a keret-előzményből (a
-szabadügynök-fordulóké az MLSZ pont-bontásából), az ellenfél a `meccsek.json`-ból. A PL-ben
+gazdátlan fordulóké az MLSZ pont-bontásából), az ellenfél a `meccsek.json`-ból. A PL-ben
 mind a kettő **egyetlen kérésből**: a Draft `element-summary/{id}` fordulónként adja a pontot
 és egy `"BHA (A) 4-0"` alakú mezőt, amiben az ellenfél, a játékos csapatának pályája és az
 állás **hazai–vendég** sorrendben szerepel. Ez utóbbit kimértük (`naplo/fpl-profil.txt`):
@@ -246,8 +247,10 @@ Két dolog, ami könnyen félreérthető, ezért így csináljuk:
   a legközelebbi negyedre kerekítünk. Hogy ez helyes, azt kimértük: a játékosok alappontja
   377 összevetett fordulón **mindig 0,25 többszöröse** volt.
 - **Amikor senkinél sem volt**, a pont sehol nincs eltárolva — ilyenkor (és csak ilyenkor)
-  megy egy lekérés az MLSZ pont-bontás végpontjára. Tipikusan néhány kérés, nem az egész
-  szezon.
+  megy egy lekérés az MLSZ pont-bontás végpontjára. A profil ezt **nem várja meg**: azonnal
+  megjelenik kötőjelekkel, a pontok a háttérben, **sorban** pótlódnak. Párhuzamosan kilőve
+  a proxy eldobta a kéréseket — a profil percekig töltött, a lenyíló bontás elhasalt
+  (bejelentett hiba, 2026-08-25).
 
 ### A mezőny játékosai (főoldali lista)
 Mindkét liga főoldalán, a bal oszlop alján. A **teljes mezőny** benne van (NB1: 385,
@@ -268,8 +271,9 @@ végül **Pont**.
   (az értékek magából az adatból jönnek, tehát egy új klub vagy szakvezető magától
   megjelenik bennük), az árnál felső korlát („mi fér bele"), a pontnál és a Keret%-nál
   alsó. A „Kinél van" szűrőben a **Mindegy** a szűrő kikapcsolása, a **Valakinél** azt
-  kérdezi, van-e egyáltalán gazdája, a `szabad` / `szabadügynök` pedig a gazdátlanokat
-  hozza — ez három különböző kérdés.
+  kérdezi, van-e egyáltalán gazdája, a **Senkinél** pedig a gazdátlanokat hozza — ez
+  három különböző kérdés. A gazdátlan játékos cellájában rövid kötőjel áll, nem szó:
+  az oszlop szűk, a felirat csak helyet foglalt.
 - **Minden oszlop rendezhető** a fejlécre kattintva; újrakattintás megfordítja.
   Szöveges oszlop alapból növekvő, számos csökkenő.
 - **Lapozható**: a lábléc mutatja, hol tartunk (`41–80 / 385`), és a nyilakkal lehet

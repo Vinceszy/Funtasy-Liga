@@ -692,7 +692,7 @@
       ? s.tulajok.map(function (t) {
           return '<span class="ptul"><b>' + esc(t.nev) + '</b> · ' + esc(szerepNev(t)) + '</span>';
         }).join('')
-      : (s.jovo ? '' : '<span class="ptul nincs">' + esc(senkinel || 'senkinél') + '</span>');
+      : (s.jovo ? '' : '<span class="ptul nincs">' + esc(senkinel || '–') + '</span>');
     var arany = aranyHTML(s, salaryCap);
     var pont = (s.pont == null)
       ? '<span class="pjegyzet">' + esc(s.jegyzet || '—') + '</span>'
@@ -755,8 +755,10 @@
      A hivo `{nev, jel}` parokat ad; ha nincs monogram, a nev a tartalek. */
   function tulajHTML(tulajok, szabadSzo) {
     var t = tulajok || [];
+    // Senkinel: rovid jel, nem szo. Az oszlop szuk, es a "szabadugynok"
+    // ott csak helyet foglalt; a szuro legorduloben marad az olvashato szoveg.
     if (!t.length)
-      return '<span class="jltulaj nincs">' + esc(szabadSzo || 'szabad') + '</span>';
+      return '<span class="jltulaj nincs">' + esc(szabadSzo || '–') + '</span>';
     var mutat = t.slice(0, 4), tobb = t.length - mutat.length;
     return '<span class="jltulaj"><span class="jlnev">' + mutat.map(function (x) {
       return x.jel
@@ -873,7 +875,7 @@
       // van-e egyaltalan gazdaja - ez ket kulonbozo kerdes, ezert ket sor.
       var extra = o.szuro === 'tulaj'
         ? '<option value="' + JL_VALAKI + '">Valakinél</option>' +
-          '<option value="' + JL_SZABAD + '">' + esc(opts.szabad || 'szabad') + '</option>' : '';
+          '<option value="' + JL_SZABAD + '">Senkinél</option>' : '';
       return '<select class="jlszuro" data-szuro="' + o.kulcs + '"><option value="">' +
         esc(o.szuroCim) + '</option>' + extra + ertekek(o).map(function (v) {
           return '<option value="' + esc(v.ertek) + '" title="' + esc(v.ertek) + '">' +

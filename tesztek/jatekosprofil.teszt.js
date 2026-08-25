@@ -87,7 +87,7 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   })));
   const f = n => sorok.find(s => s.r === n + '.');
 
-  jo(f('1') && /senkinél/.test(f('1').tul), '1. forduló: kiírja, hogy senkinél sem volt');
+  jo(f('1') && /–/.test(f('1').tul), '1. forduló: rövid jel jelzi, hogy senkinél sem volt');
   jo(f('1') && /FTC/.test(f('1').nm) && /idegenben|otthon/.test(f('1').nm),
      '1. forduló: az ellenfél és a pálya látszik');
   jo(f('1') && f('1').allas.replace(/\s/g, '') === '1–3',
@@ -227,11 +227,11 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   const gazdas = await p.$$eval('.jlsor', a => a.length);
   jo(gazdas > 0 && gazdatlan === 0,
      '„Valakinél”: csak akiknek van gazdájuk (' + gazdas + ' sor, ' + gazdatlan + ' gazdátlan)');
-  await p.selectOption('[data-szuro="tulaj"]', { label: 'szabad' });
+  await p.selectOption('[data-szuro="tulaj"]', { label: 'Senkinél' });
   await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 0,
                           null, { timeout: 5000 }).catch(() => {});
   jo((await p.$$eval('.jlsor .jltulaj', a => a.every(x => /nincs/.test(x.className)))),
-     '„szabad”: csak a gazdátlanok');
+     '„Senkinél”: csak a gazdátlanok');
   await p.click('.jltorol');
   await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 1, null, { timeout: 5000 });
 
@@ -287,6 +287,42 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   await p.waitForSelector('.proflista', { timeout: 20000 });
   jo(true, 'a lista sorára kattintva megnyílik a profil');
   await p.click('#ovClose');
+
+  // ---- soha nem birtokolt jatekos: a profil nem varhat az API-ra ----
+  // BEJELENTETT HIBA (2026-08-25): az ilyen jatekosnal fordulonkent egy
+  // proxys keres ment ki, mind EGYSZERRE - a proxy eldobta oket, a profil
+  // percekig toltott, a lenyilo bontas elhasalt. A szabaly azota: a profil
+  // AZONNAL megjelenik kotojelekkel, a pontok SORBAN potladnak.
+  cim('NB1: soha nem birtokolt játékos profilja');
+  let egyszerre = 0, csucs = 0;
+  await p.route('**game-player-stats**', async route => {
+    egyszerre++; csucs = Math.max(csucs, egyszerre);
+    await new Promise(r => setTimeout(r, 400));       // lassu proxy
+    egyszerre--;
+    route.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ data: [{ value: 1, points: 2,
+        competition_stat_config: { name: 'Gól' } }] }) });
+  });
+  await p.selectOption('[data-szuro="tulaj"]', { label: 'Senkinél' });
+  await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 0, null, { timeout: 5000 });
+  const t0 = Date.now();
+  await p.click('.jlsor');
+  await p.waitForSelector('.proflista', { timeout: 20000 });
+  jo(Date.now() - t0 < 3000,
+     'a profil a lassú API bevárása NÉLKÜL megjelenik (' + (Date.now() - t0) + ' ms)');
+  // ahol volt meccs, ott kotojel; ahol nem (elmaradt fordulo), ott a sajat
+  // felirata - szam viszont meg sehol sem lehet
+  jo((await p.$$eval('.profsor .pts', a => a.every(x => !/\d/.test(x.textContent)))),
+     'a még le nem kért pontok helyén nem áll szám (kötőjel vagy „nincs meccs”)');
+  await p.waitForFunction(() => [...document.querySelectorAll('.profsor .pts')]
+    .every(x => x.textContent.trim() !== '—'), null, { timeout: 20000 });
+  jo(true, 'a pontok a háttérben pótlódnak');
+  jo(csucs === 1, 'a kérések SORBAN mennek, nem egyszerre (csúcs: ' + csucs + ')');
+  // az unroute a teszt ELEJEN beallitott mockot is levenne - a kesleltetett
+  // valasz marad, a tovabbi szakaszoknak az is jo
+  await p.click('#ovClose');
+  await p.click('.jltorol');
+  await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 1, null, { timeout: 5000 });
 
   // ---- belepes a pont-bontas aljarol ----
   cim('NB1: belépés a lenyíló aljáról');
@@ -393,13 +429,13 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   const gazdatlanSor = await q.evaluate(() => {
     const alap = { r: 1, ellenfel: 'ARS', hazai: true, hp: 2, vp: 1, tulajok: [] };
     const rajz = x => FunTasy.profilHTML(
-      { liga: 'pl', nev: 'X', senkinel: 'szabadügynök', sorok: [Object.assign({}, alap, x)] });
+      { liga: 'pl', nev: 'X', senkinel: '–', sorok: [Object.assign({}, alap, x)] });
     return { mult: rajz({ pont: 0 }), jovo: rajz({ jovo: true }) };
   });
-  jo(/szabadügynök/.test(gazdatlanSor.mult),
-     'lejátszott fordulónál, ahol tudjuk, hogy senkié sem volt: „szabadügynök”');
-  jo(!/szabadügynök/.test(gazdatlanSor.jovo),
-     'jövőbeli fordulónál viszont NEM — azt nem tudhatjuk előre');
+  jo(/ptul nincs/.test(gazdatlanSor.mult),
+     'lejátszott fordulónál, ahol tudjuk, hogy senkié sem volt: rövid jel áll ott');
+  jo(!/ptul nincs/.test(gazdatlanSor.jovo),
+     'jövőbeli fordulónál viszont semmi — azt nem tudhatjuk előre');
   jo(await q.$$eval('.parany', a => a.length) === 0,
      'draft ligában nincs arány-blokk a valódi oldalon sem');
 
