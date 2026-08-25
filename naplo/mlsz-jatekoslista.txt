@@ -1,53 +1,23 @@
-# 5. KOR: a torzs `id`-je ugyanaz-e, mint a keret-rekordok `id`-je?
-# A fooldali kereso ezen all: rossz azonosito eseten a talalat MAS
-# jatekos bontasat nyitna meg - csendben, hihetoen.
+# 6. KOR: van-e AR-ELOZMENY az MLSZ-nel?
+# Ha van, nem kell sajat naplo (es a mult is potolhato). Ha nincs, a
+# naplozas az egyetlen ut - amit ma nem irunk fel, az elveszett.
 
-### A torzs 385 sort adott (HTTP 200). Egy sor kulcsai:
-    ['birth_date', 'current_round', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'summary_statistics', 'team']
+## 1) A torzs include-jai (per_page=3, hogy a valasz olvashato legyen)
+=== include=rounds                       -> HTTP 200 | sor-kulcsok: ['birth_date', 'current_round', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name']
+=== include=player_rounds                -> HTTP 200 | sor-kulcsok: ['birth_date', 'current_round', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name']
+=== include=competition_player_rounds    -> HTTP 200 | sor-kulcsok: ['birth_date', 'current_round', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name']
+=== include=market_prices                -> HTTP 200 | sor-kulcsok: ['birth_date', 'current_round', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name']
+=== include=price_history                -> HTTP 200 | sor-kulcsok: ['birth_date', 'current_round', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name']
+=== include=prices                       -> HTTP 200 | sor-kulcsok: ['birth_date', 'current_round', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name']
+=== include=current_round                -> HTTP 200 | sor-kulcsok: ['birth_date', 'current_round', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name']
+=== include=statistics                   -> HTTP 200 | sor-kulcsok: ['birth_date', 'current_round', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name']
 
-### 107 mentett jatekos osszevetve a torzzsel:
-###   ugyanaz a nev ugyanazon az azonositon: 102
-###   MAS nev ugyanazon az azonositon:       0
-###   az azonosito nincs a torzsben:         5
+## 2) Onallo ar-vegpontok
+=== players/{id} (reszletes lap)   -> HTTP 200 | data: 0
+=== market-prices                  -> HTTP 404
+=== player-market-prices           -> HTTP 404
+=== competition-player-rounds      -> HTTP 404
+=== player-rounds                  -> HTTP 404
+=== price-history                  -> HTTP 404
 
-### Reszletek (max 20):
-  Artúr Horváth (id=1137): NINCS a torzsben
-  Alen Martin Skribek (id=1163): NINCS a torzsben
-  Milán Vitális (id=1173): NINCS a torzsben
-  David Nwachukwu (id=1461): NINCS a torzsben
-  Jovan Živković (id=1543): NINCS a torzsben
-
-### Egy teljes torzs-sor (a mentendo mezokhoz):
-{
- "id": 915,
- "first_name": "Áron",
- "last_name": "Alaxai",
- "birth_date": "2003-04-11",
- "is_u21": false,
- "injury_status": "questionable",
- "position": {
-  "id": 3,
-  "name": "Hátvéd",
-  "monogram": "H"
- },
- "team": {
-  "id": 43,
-  "name": "NYÍREGY",
-  "short_name": "NYÍREGY",
-  "color_hex": null
- },
- "current_round": {
-  "id": 37229,
-  "round_id": 87,
-  "market_price": 4,
-  "is_played": false,
-  "first_played_at": "2026-08-29T14:45:00+02:00",
-  "has_statistics": false
- },
- "summary_statistics": {
-  "competition_points": 0,
-  "monthly_points": 0,
-  "weekly_points": 0,
-  "last_weeks_points": 0
- }
-}
+### Ha egyik sem ad fordulonkenti/idobeli arat, marad a sajat naplozas.
