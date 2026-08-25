@@ -435,12 +435,17 @@ def jatekostorzs():
         po = p.get("position") or {}
         team = p.get("team") or {}
         ss = p.get("summary_statistics") or {}
+        cr = p.get("current_round") or {}
         ki[str(cp)] = {
             "n": " ".join(x for x in (p.get("first_name"), p.get("last_name")) if x),
             "t": team.get("short_name") or team.get("name") or "",
             "p": po.get("monogram") or po.get("name") or "",
             "u21": bool(p.get("is_u21")),
             "pts": ss.get("competition_points") or 0,
+            # A MOSTANI piaci ar - nem az adott fordulóé (lasd README:
+            # a mentett ar mindig a lekeres pillanatanak ara). A listaban
+            # eppen ez kell: mennyibe kerul ma.
+            "ar": cr.get("market_price"),
         }
     return ki
 
