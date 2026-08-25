@@ -26,9 +26,15 @@ const nyit = async (p,w,h) => {
 
     const lathatoNevek = await p.$$eval('#mBody .plr', ns=>ns.filter(n=>n.offsetParent!==null)
       .map(n=>n.querySelector('.nm').textContent.trim().split('▼')[0].trim()));
-    const kozosNev='Jozef Urblík';
+    // A kozos jatekost az ADATBOL vesszuk, nem bedrotozva: a nevsorrend-
+    // valtas (vezeteknev elol) egyszer mar megbuktatta a bedrotozott nevet.
+    const kozosNev = await p.evaluate(async () => {
+      const j = await (await fetch('../keretek/4.json')).json();
+      const b = new Set((j.squads['Bazsa']||[]).map(x=>x.name));
+      return ((j.squads['Csendi']||[]).map(x=>x.name).find(n=>b.has(n))) || '(nincs kozos)';
+    });
     if (cimke==='GÉP'){
-      jo(lathatoNevek.filter(x=>x===kozosNev).length===2, 'a közös játékos MINDKÉT oszlopban ott van');
+      jo(lathatoNevek.filter(x=>x===kozosNev).length===2, 'a közös játékos MINDKÉT oszlopban ott van ('+kozosNev+')');
       jo(await p.locator('.mobilkozos').isVisible()===false, 'a mobil közös blokk gépen rejtve');
       const oszlopok = await p.$$eval('.sqcol', ns=>ns.map(n=>({
         fej:n.querySelector('h3').innerText.replace(/\n/g,' '),

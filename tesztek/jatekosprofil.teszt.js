@@ -370,10 +370,10 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   cim('PL: belépési pont');
   const csapat = await q.evaluate(() => Object.keys(HIST[Object.keys(HIST)[0]])[0]);
   await q.evaluate(id => showTeam(+id, 'jatekosok'), csapat);
-  await q.waitForSelector('[data-prof]', { timeout: 20000 });
-  jo(/^\d+$/.test(await q.$eval('[data-prof]', e => e.dataset.prof)),
+  await q.waitForSelector('#mBody [data-prof]', { timeout: 20000 });
+  jo(/^\d+$/.test(await q.$eval('#mBody [data-prof]', e => e.dataset.prof)),
      'a "Szezon játékosai" sora viszi a játékos azonosítóját');
-  await q.click('[data-prof]');
+  await q.click('#mBody [data-prof]');
   await q.waitForSelector('.proflista', { timeout: 20000 });
 
   const psorok = await q.$$eval('.profsor', a => a.map(x => ({
