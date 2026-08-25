@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=49">
+<link rel="stylesheet" href="../funtasy.css?v=50">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -32,6 +32,20 @@
       <div class="matrix" id="matrix"></div>
       <div class="note">Sor vs oszlop: <span class="pos">GY</span>/<span style="color:var(--draw)">D</span>/<span class="neg">V</span>.
       <b>Kattints egy cellára</b> a két csapat egymás elleni meccseihez.</div>
+    </div>
+    <div class="panel" id="znPanel" style="display:none">
+      <h2>Meccs utáni pontigazítás
+        <span class="roundnav">
+          <button data-znav="-1">‹</button>
+          <select id="selZaras"></select>
+          <button data-znav="1">›</button>
+        </span>
+      </h2>
+      <div class="note">A pont minden meccs után megvan, de a heti összeg csak a forduló
+        utolsó játéknapjának végén válik véglegessé. Ha az MLSZ a kettő között igazít
+        valamin, itt látszik — a játékos saját pontjával, kapitányi duplázás és padfelezés
+        nélkül.</div>
+      <div id="znBody"></div>
     </div>
     <div class="panel" id="jlPanel" style="display:none">
       <h2>A mezőny játékosai</h2>
@@ -76,7 +90,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=49"></script>
+<script src="../funtasy.js?v=50"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -371,6 +385,38 @@ function playersHTML(name, rounds){
       <td class="pont">${fmt(r.pts)}</td></tr>`;
   });
   return '<div class="tablewrap">'+h+'</table></div>';
+}
+
+// ---------- meccs utáni pontigazítás (zarasok_nb1.json) ----------
+// A gyujto akkor ir ide, ha egy MAR LEMENT meccsu jatekos pontja megvaltozik,
+// mielott a fordulo heti osszege veglegesse valna. Elesben ritka; a panel
+// csak akkor jelenik meg, ha van benne adat - ures dobozzal nem foglaljuk a
+// helyet olyasmivel, ami tobbnyire ures.
+let ZNADAT = null, ZNFORDULO = null;
+function znHTML(r){
+  const lista = (ZNADAT || {})[r] || [];
+  if(!lista.length)
+    return '<div class="loading">Ebben a fordulóban nem változott pont a meccsek után.</div>';
+  return '<div class="zlista">' + lista.map(x=>{
+    const d = x.u - x.e;
+    return `<div class="zsor"><span class="znev kattint" data-prof="${esc(x.n)}"`
+      + `${x.cp?` data-pcp="${x.cp}"`:''}>${esc(x.n)}</span>`
+      + `<span class="zert">${fmt(x.e)} → ${fmt(x.u)}</span>`
+      + `<span class="zdiff ${d>0?'pos':'neg'}">${d>0?'+':''}${fmt(d)}</span></div>`;
+  }).join('') + '</div>';
+}
+function znRajzol(){
+  $('znBody').innerHTML = znHTML(ZNFORDULO);
+  const sel = $('selZaras');
+  if(sel) sel.value = String(ZNFORDULO);
+}
+function znInit(){
+  const rk = Object.keys(ZNADAT).map(Number).filter(r=>(ZNADAT[r]||[]).length).sort((a,b)=>a-b);
+  if(!rk.length) return;                         // nincs mit mutatni
+  ZNFORDULO = rk[rk.length-1];
+  $('selZaras').innerHTML = rk.map(r=>`<option value="${r}">${r}. forduló</option>`).join('');
+  $('znPanel').style.display = '';
+  znRajzol();
 }
 
 // ---------- játékosprofil (NB1) ----------
@@ -1057,6 +1103,9 @@ async function showSquad(names,tab,mode){
 }
 
 // ---------- események ----------
+document.addEventListener('change',e=>{
+  if(e.target && e.target.id==='selZaras'){ ZNFORDULO=+e.target.value; znRajzol(); }
+});
 document.addEventListener('click',e=>{
   if(e.target===$('ovBack')){ vBack(); return; }
   if(e.target.id==='elteresGomb'){ CSAK_ELTERES=!CSAK_ELTERES; meccsTest(); return; }
@@ -1065,12 +1114,21 @@ document.addEventListener('click',e=>{
   // jatekosprofilban a fordulo szamabol (data-pr) tolt
   if(pr){ FunTasy.accToggle(pr, ()=> pr.dataset.pr!==undefined
             ? profilBontasHTML(+pr.dataset.pr) : bontasHTML(pr.dataset)); return; }
+  const zn=e.target.closest('[data-znav]');
+  if(zn){
+    const rk=Object.keys(ZNADAT||{}).map(Number).filter(r=>(ZNADAT[r]||[]).length).sort((a,b)=>a-b);
+    const i=rk.indexOf(ZNFORDULO)+ +zn.dataset.znav;
+    if(i>=0 && i<rk.length){ ZNFORDULO=rk[i]; znRajzol(); }
+    return;
+  }
   const pf=e.target.closest('[data-prof]');
   if(pf){ showProfil({nev:pf.dataset.prof, cp:pf.dataset.pcp?+pf.dataset.pcp:null,
                       klub:pf.dataset.ptm||null, poszt:pf.dataset.ppos||null,
                       hun:pf.dataset.phun==='1', u21:pf.dataset.pu21==='1'}, 'push'); return; }
   const mem=e.target.closest('[data-member]');
   if(mem){ showSquad([mem.dataset.member]); return; }
+  const zsel=e.target.closest('#selZaras');
+  if(zsel) return;                       // a select sajat change-esemenyt kap
   const tab=e.target.closest('[data-tab]');
   if(tab){ showSquad(mCurrent, tab.dataset.tab, 'replace'); return; }
   const ms=e.target.closest('[data-mh]');
@@ -1111,6 +1169,9 @@ async function boot(){
   // A mezony jatekoslistaja: nem varjuk meg, a panel maga jelenik meg,
   // amint az adat megjott (hianyzo fajlnal rejtve marad).
   jatekosPanel().catch(()=>{});
+  // meccs utani pontigazitas: hianyzo fajlnal a panel rejtve marad
+  fetch('../zarasok_nb1.json?t='+Date.now()).then(r=>r.ok?r.json():null)
+    .then(j=>{ if(j&&j.rounds){ ZNADAT=j.rounds; znInit(); } }).catch(()=>{});
   T.rPast=lastPlayedRound(); T.rNext=nextRound();
   renderTable(); renderMatches('past'); renderMatches('next'); renderMatrix();
   refresh();

@@ -296,6 +296,22 @@ megjelenésük egységes, viszont egy oldal-szintű `.plr` lekérdezés (pl. egy
 ezeket is beszámolja. A modalra vonatkozó kereséseket ezért `#mBody`-ra kell szűkíteni.
 (A különbségek-teszt pontosan ezen bukott el, amikor a lista bekerült.)
 
+### Meccs utáni pontigazítás (NB1)
+A hivatalos szabályzat szerint a pont minden meccs után megvan, de a **heti összeg csak a
+forduló utolsó játéknapjának végén válik véglegessé** — a kettő között az MLSZ még
+igazíthat. A gyűjtő ezt eddig átvezette, de nem őrizte meg; mostantól naplózza
+(`zarasok_nb1.json`), mert utólag rekonstruálhatatlan.
+
+A főoldali panel csak akkor jelenik meg, ha van benne adat — élesben ez ritka esemény, és
+egy állandóan üres doboz azt sugallná, hogy valami hiányzik. A megjelenített érték a
+játékos **saját** pontja (kapitányi duplázás és padfelezés visszaszámolva), tehát ugyanaz a
+változás nem néz ki másképp aszerint, hogy kinél volt. Csak **lement meccsű** játékosnál
+számít változásnak: a meccs közbeni pontketyegés nem hír.
+
+Ez **nem** ugyanaz, mint a PL „Zárási változások" panelje. Ott a zárás pillanatában
+tervezetten történik valami (bónusz-véglegesítés, automatikus cserék); az NB1-ben a zárás
+után tervezetten semmi — ott ez a panel a hibajavítást fogja meg.
+
 ### Navigáció a modalon belül
 A modal kis böngészőként működik: a listák soraira kattintva a tartalom cserélődik
 (pl. Fordulók → egy meccs két kerete), és a fejlécben megjelenő **‹ vissza** gomb az
@@ -327,6 +343,7 @@ teljes képernyős, ragadós × gombbal.
 | `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**; elemeik `{e, pts}` alakúak, mert a beállt játékos pontja mondja meg, mit hozott a csere (a régi, csak azonosítót tartalmazó alakot a lap még elfogadja). A GW1 a git-történetből lett pótolva. |
 | `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset csak akkor, ha a forduló hivatalos pontja változott (ez a **pótolt meccs** esete — az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). **Nem a forduló összes meccse:** csak azoké a kluboké, amelyeknek van játékosuk valamelyik keretben — a részletező fölötti sorhoz ennyi kell. |
 | `jatekosok.json` | A mezőny **összes** játékosa (`{players:{id:{n,t,p,u21,pts,ar}}}`) — a főoldali lista és keresés forrása. A gyűjtő írja, egy kérésből. |
+| `zarasok_nb1.json` | Fordulónként azok a **meccs utáni pontigazítások**, amiket az MLSZ a forduló véglegesítése előtt vezetett át (`{rounds:{forduló:[{n,cp,e,u,d}]}}`). Élesben ritka esemény: a fájl üres vázként létezik, és csak akkor bővül, ha tényleg történt igazítás — a panel is csak akkor jelenik meg. |
 | `arak.json` | Az árak **változásai** (`{arak:{id:[[dátum, ár], …]}}`). Csak akkor bővül, ha egy ár tényleg megváltozott. |
 | `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. |
 | `valtozasok-vazlat.json` | **Még nem publikált** naplóbejegyzések, ugyanabban a formában. A napló oldala ezt nem olvassa; a kész bejegyzés innen kerül át a `valtozasok.json`-ba. |
@@ -1265,6 +1282,10 @@ Felhasználói napló, nem technikai: **csak az kerül bele, amit a használó l
   bejegyzés; törölni kellett.)
 - **Dátumozva**, naponként csoportosítva, a legfrissebb elöl. A napló 2026-08-23 estétől
   indul, a korábbi változások nincsenek benne.
+- **Összevonáskor a bejegyzést ÚJRA KELL FOGALMAZNI, nem hozzáfűzni.** Ha egy meglévő
+  bejegyzéshez újabb rész kerül, a leírás nem bővül egy odabiggyesztett mondattal: az
+  egészet újra kell írni úgy, hogy egy szövegként olvasható legyen. A hozzáfűzött mondatok
+  sorozatából felsorolás lesz, amiből a használó nem érti, mi a lényeg.
 - **Több szakaszban készülő funkciónál a bejegyzés a VÉGÉN megy ki**, nem szakaszonként.
   Ellenkező utasítás híján ez az alap. Ha egy funkciót azért bontunk szakaszokra, hogy
   közben látni lehessen — az még nem kész funkció: a napló szakaszonként átírva
@@ -1454,9 +1475,3 @@ tartalommal. A `GOMB-bookmarklet.txt`-t soha ne szerkeszd kézzel.
 - **A játékosprofil hátralévő része:** a főoldali blokk kereséssel (ehhez kell az NB1
   játékostörzse — egy plusz kérés a gyűjtőben, `players?per_page=500`), és a profil
   megnyitása a meccs-lenyíló aljáról is („Teljes játékosprofil" sor)
-- **A Zárási változások panelen a játékosok és a csapatnevek legyenek kattinthatók** — a
-  játékos a profilját, a csapat a keretét nyissa meg, ahogy máshol az oldalon
-- **Zárási változások az NB1-en is.** Ma csak a PL-oldalon van ilyen panel. Az NB1-en
-  megfigyelt utólagos korrekció még nincs (lásd a 4. fejezetet) — előbb azt kell
-  eldönteni, MI a rögzítendő változás: a gyűjtő naplózza, ha egy végleges forduló
-  értéke módosul, és a panel csak akkor jelenik meg, ha tényleg van ilyen

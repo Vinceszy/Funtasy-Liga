@@ -195,6 +195,19 @@ def squad(user_id, round_no, jatek=False):
     return api_get(url)
 
 
+def jatekosnev(elo, utó, tartalek=None):
+    """A jatekos neve MAGYAR SORRENDBEN: vezeteknev elol.
+
+    Az MLSZ kulon adja a ket reszt, mi pedig sokaig nyugati sorrendben
+    fuztuk ossze ("Aron Alaxai"). A magyar bajnoksagban ez forditva helyes,
+    es nem csak stilus kerdese: a hosszu nevek felismerheto resze a
+    VEZETEKNEV - az all a mezen is. "Gleofilo Sabrino Rudewald Hasselbaink
+    Vlijter" eseten a nyugati sorrend a felismerhetetlen felevel kezdodott,
+    es a szuk oszlopokban pont a lenyeg (Vlijter) vagodott le."""
+    nev = " ".join(x for x in (utó, elo) if x)
+    return nev or (tartalek or "")
+
+
 def is_hun(cp):
     """Ugyanaz a szabaly, mint a konyvjelzoben."""
     szoveg = json.dumps(cp.get("countries") or cp.get("country") or "", ensure_ascii=False)
@@ -215,8 +228,8 @@ def rekord(d, fordulo=None):
     ss = d.get("summary_statistics") or {}
     team = cp.get("team") or {}
     cr = cp.get("current_round") or {}
-    nev = " ".join(x for x in (cp.get("first_name"), cp.get("last_name")) if x) \
-          or ("#%s" % (cp.get("id") or d.get("id")))
+    nev = jatekosnev(cp.get("first_name"), cp.get("last_name"),
+                     "#%s" % (cp.get("id") or d.get("id")))
     return {
         "name": nev,
         "team": team.get("short_name") or team.get("name") or "",
@@ -439,7 +452,7 @@ def jatekostorzs():
         ss = p.get("summary_statistics") or {}
         cr = p.get("current_round") or {}
         ki[str(cp)] = {
-            "n": " ".join(x for x in (p.get("first_name"), p.get("last_name")) if x),
+            "n": jatekosnev(p.get("first_name"), p.get("last_name"), "#%s" % cp),
             "t": team.get("short_name") or team.get("name") or "",
             "p": po.get("monogram") or po.get("name") or "",
             "u21": bool(p.get("is_u21")),
@@ -450,6 +463,57 @@ def jatekostorzs():
             "ar": cr.get("market_price"),
         }
     return ki
+
+
+def zaras_valtozas(regi_fordulo, uj_fordulo, tarolo, mai):
+    """Pontvaltozas a MECCS VEGE utan, a fordulo zarasa elott.
+
+    A szabalyzat szerint a pont minden meccs utan meghatarozasra kerul, de a
+    heti osszeg csak a fordulo utolso jateknapjanak vegen VEGLEGES - a ketto
+    kozott az MLSZ meg igazithat (a Csendi-eset 3 valtozasa is ebbe az
+    ablakba esett). A gyujto a valtozast eddig atvezette, de NEM orizte meg -
+    innentol naplozza, mert utolag mar nem rekonstrualhato.
+
+    Csak azt a jatekost nezzuk, akinek a TAROLT rekordja szerint a meccse
+    mar veget ert (vege=True): a meccs kozbeni pontketyeges nem "valtozas".
+    A jatekos SAJAT pontjat taroljuk (kapitanyi duplazas es padfelezes
+    nelkul, negyedre kerekitve - kimertuk, hogy az alappont mindig 0,25
+    tobbszorose), igy ugyanaz a valtozas nem fugg attol, kinel volt.
+    Ugyanarrol a jatekosrol tobb keretbol is latszik ugyanaz a valtozas -
+    egyszer irjuk fel."""
+    def alap(p):
+        return round((p.get("week") or 0) / (2 if p.get("cap") else 1)
+                     * (2 if p.get("sub") else 1) * 4) / 4
+
+    # dedup csak EZEN a futason belul (tobb keretbol ugyanaz a valtozas) -
+    # a tarolobol NEM toltjuk fel, kulonben egy jatekos MASODIK igazitasa
+    # (pl. +1 most, -0,5 kesobb) orokre elveszne
+    latott = set()
+    db = 0
+    for nev_, regi_sq in (regi_fordulo or {}).items():
+        uj_sq = (uj_fordulo or {}).get(nev_)
+        if not uj_sq:
+            continue
+        ujak = {}
+        for p in uj_sq:
+            ujak[p.get("id") or p.get("name")] = p
+        for p in regi_sq:
+            if not p.get("vege"):
+                continue                      # meccs kozben a valtozas nem hir
+            u = ujak.get(p.get("id") or p.get("name"))
+            if not u or u.get("week") is None or p.get("week") is None:
+                continue
+            e, ut = alap(p), alap(u)
+            if abs(e - ut) < 0.005:
+                continue
+            kulcs = (p.get("id"), p.get("name"))
+            if kulcs in latott:
+                continue                      # masik keretbol mar felirtuk
+            latott.add(kulcs)
+            tarolo.append({"n": p.get("name"), "cp": p.get("id"),
+                           "e": e, "u": ut, "d": mai})
+            db += 1
+    return db
 
 
 def arnaplo_frissit(torzs, mai):
@@ -500,12 +564,25 @@ def main():
     with open("results.json", encoding="utf-8") as f:
         data = json.load(f)
     schedule = data["schedule"]
+    # Melyik fordulo allt MAR A FUTAS ELOTT veglegeskent a tabellaban?
+    # (Minden meccsen van eredmeny, es nem volt az ideiglenes listaban.)
+    # MEG A BEIRASOK ELOTT rogzitjuk: a bizonytalan ag erre tamaszkodik.
+    volt_vegleges = {int(r) for r, ms in schedule.items()
+                     if ms and all(m[2] is not None and m[3] is not None for m in ms)
+                     and int(r) not in {int(x) for x in (data.get("provisional") or [])}}
     try:
         with open("squad_history.json", encoding="utf-8") as f:
             hist = json.load(f)
     except Exception:
         hist = {"updated": None, "rounds": {}}
     hist.setdefault("rounds", {})
+    try:
+        with open("zarasok_nb1.json", encoding="utf-8") as f:
+            zarasok_nb1 = json.load(f)
+    except Exception:
+        zarasok_nb1 = {}
+    zarasok_nb1.setdefault("rounds", {})
+    zarasok_nb1_valtozott = False
     hist_elotte = json.dumps(hist.get("rounds"), ensure_ascii=False, sort_keys=True)
     try:
         with open("meccsek.json", encoding="utf-8") as f:
@@ -677,6 +754,15 @@ def main():
             meccsek["rounds"][str(r)] = sorted(
                 fordulo_meccsei.values(), key=lambda m: (m.get("start") or "", m["h"]))
         regi_fordulo = hist["rounds"].get(str(r)) or {}
+        # meccs utani pontigazitas naplozasa, MIELOTT az uj felulirja a regit
+        zvalt = zarasok_nb1["rounds"].setdefault(str(r), [])
+        zdb = zaras_valtozas(regi_fordulo, uj_fordulo, zvalt,
+                             time.strftime("%Y-%m-%d", time.gmtime()))
+        if not zvalt:
+            del zarasok_nb1["rounds"][str(r)]
+        if zdb:
+            zarasok_nb1_valtozott = True
+            print("  ! %d. fordulo: %d pontigazitas a meccs vege utan" % (r, zdb))
         orokit_meccsjelzok(regi_fordulo, uj_fordulo)
         hist["rounds"][str(r)] = {**regi_fordulo, **uj_fordulo}
         # A "mindenki jatszott" vizsgalat a MAR OSSZEFESULT rekordokbol dol
@@ -756,7 +842,19 @@ def main():
     # kovetkezo futas javitja). Ezert a friss fordulo alapertelmezetten
     # ideiglenes marad, a regi pedig megtartja a korabbi allapotat.
     for r in bizonytalan:
-        if r in regi_prov or (r >= aktualis - 1 and van_pont(r)):
+        if r in regi_prov:
+            prov.add(r)
+        elif r != aktualis and r in volt_vegleges:
+            # A mar LEZART fordulo veglegeskent allt kint - egy hianyos futas
+            # (halozati hiba, reszleges valasz) nem nyithatja ujra. Enelkul
+            # egyetlen DNS-hiba kivette az 5. fordulot a tabellabol
+            # (megtortent: 2026-08-25 21:47, "nincs ranglista-adat: Katyul"
+            # -> a tabella a 4 fordulos allast mutatta).
+            # Az ELO fordulora (r == aktualis) a vedelem NEM all: ott a
+            # "veglegesnek latszo" tarolt szam reszeredmeny is lehet, es a
+            # rosszabb hiba az, ha az bekerul a tabellaba.
+            print("  . %d. fordulo: hianyos futas, de mar vegleges volt - az is marad" % r)
+        elif r >= aktualis - 1 and van_pont(r):
             prov.add(r)
     provisional = sorted(prov)
 
@@ -790,6 +888,24 @@ def main():
         kompakt_iras("hatekonysag.json", {"updated": stamp(), "rounds": hat})
         print("  hatekonysag.json frissitve")
 
+    # A torzs a nev-atirashoz is kell, ezert MEG a kiiras elott lekerjuk.
+    torzs = jatekostorzs()
+    # A tarolt nevek atvezetese a torzs szerinti alakra. Nem csak egyszeri
+    # migracio (nyugati -> magyar sorrend): ha az MLSZ barmikor javit egy
+    # nevet, a regi fordulok is kovetik. Az azonosito a fogodzo, tehat nem
+    # nev-egyeztetessel dolgozunk.
+    if torzs:
+        atirt = 0
+        for keretek_ in hist["rounds"].values():
+            for sq_ in (keretek_ or {}).values():
+                for p_ in sq_:
+                    rec_ = torzs.get(str(p_.get("id") or ""))
+                    if rec_ and rec_["n"] and p_.get("name") != rec_["n"]:
+                        p_["name"] = rec_["n"]
+                        atirt += 1
+        if atirt:
+            print("  %d tarolt jatekosnev atvezetve a torzs szerinti alakra" % atirt)
+
     if json.dumps(meccsek["rounds"], ensure_ascii=False, sort_keys=True) != meccsek_elotte:
         meccsek["updated"] = stamp()
         kompakt_iras("meccsek.json", meccsek)
@@ -818,7 +934,6 @@ def main():
     # ---- Jatekostorzs (a fooldali lista + kereses). Egy keres futasonkent.
     # Az `updated` mezot az osszehasonlitasbol kihagyjuk, kulonben minden
     # korben valtozna a fajl akkor is, ha egyetlen pont sem mozdult.
-    torzs = jatekostorzs()
     if torzs is not None:
         try:
             with open("jatekosok.json", encoding="utf-8") as f:
@@ -829,6 +944,11 @@ def main():
            json.dumps(torzs_regi, ensure_ascii=False, sort_keys=True):
             kompakt_iras("jatekosok.json", {"updated": stamp(), "players": torzs})
             print("  jatekosok.json frissitve (%d jatekos)" % len(torzs))
+
+    if zarasok_nb1_valtozott:
+        zarasok_nb1["updated"] = stamp()
+        kompakt_iras("zarasok_nb1.json", zarasok_nb1)
+        print("  zarasok_nb1.json frissitve")
 
     # ---- Arnaplo: csak a valtozasok, mert a multat nem lehet potolni ----
     if torzs is not None:

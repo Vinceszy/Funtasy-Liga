@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A jatekostorzs es az arnaplo (collect.py) - 10 allitas.
+"""A jatekostorzs es az arnaplo (collect.py) - 12 allitas.
 
 MIERT: a torzs a fooldali lista es kereses forrasa, az arnaplo pedig az
 EGYETLEN ut az arak valtozasanak kovetesehez - kimertuk, hogy az MLSZ sehol
@@ -41,8 +41,16 @@ t = c.jatekostorzs()
 
 allit(t is not None and len(t) == 2, "az azonosito nelkuli sor kimarad (%s sor)" % (len(t) if t else None))
 allit("per_page=500" in kert["url"], "egy keres, nagy lapmerettel (per_page=500)")
-allit(t["915"] == {"n": "Áron Alaxai", "t": "NYÍREGY", "p": "H", "u21": False,
-                   "pts": 12.5, "ar": 4.2}, "a teljes sor minden mezoje a helyere kerul")
+allit(t["915"] == {"n": "Alaxai Áron", "t": "NYÍREGY", "p": "H", "u21": False,
+                   "pts": 12.5, "ar": 4.2},
+      "a teljes sor minden mezoje a helyere kerul, a nev MAGYAR sorrendben (%s)"
+      % t["915"]["n"])
+
+# a hosszu nev felismerheto resze a vezeteknev - annak kell elol allnia
+allit(c.jatekosnev("Gleofilo Sabrino Rudewald Hasselbaink", "Vlijter")
+      == "Vlijter Gleofilo Sabrino Rudewald Hasselbaink",
+      "hosszu nevnel is a vezeteknev all elol (ez van a mezen)")
+allit(c.jatekosnev(None, None, "#42") == "#42", "nev nelkul az azonosito a tartalek")
 allit(t["916"]["p"] == "Csatár" and t["916"]["t"] == "MTK",
       "monogram/rovidnev hianyaban a teljes nev a tartalek")
 allit(t["916"]["pts"] == 0 and t["916"]["ar"] is None,
@@ -96,4 +104,4 @@ allit(db4 == 0 and n4 == n,
 if hibak:
     print("\n%d allitas bukott." % len(hibak))
     sys.exit(1)
-print("\nMind a %d allitas rendben." % 10)
+print("\nMind a %d allitas rendben." % 12)

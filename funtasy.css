@@ -276,6 +276,10 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
    changelognal mar egyszer elcsuszott). */
 #zarasSzuro{display:flex;gap:6px;flex-wrap:wrap;margin:2px 16px 4px}
 #zarasBody{padding:0 16px 12px}
+/* kattinthato nev a zarasi listaban: a jatekos a profiljat, a szakvezeto a
+   keretet nyitja - ugyanaz a viselkedes, mint az oldal tobbi listajaban */
+.kattint{cursor:pointer}
+.kattint:hover{text-decoration:underline}
 .zlista{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 22px}
 .zcsapat h3{font-family:'Archivo Black';font-size:12px;letter-spacing:1px;color:var(--amber);
   margin:10px 0 2px}

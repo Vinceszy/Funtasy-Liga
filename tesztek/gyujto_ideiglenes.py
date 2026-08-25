@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Egy REG lezart fordulo nem valhat ideiglenesse egy elhasalt keret-lekerestol.
+"""Egy mar vegleges fordulo nem valhat ideiglenesse egy hianyos futastol.
 
 A rolling ellenorzes ota egy regi fordulo is bekerulhet a keret-lekeresek
 koze (ha az MLSZ korrigalt). Ha ott egyetlen keret-keres hibara fut, a
@@ -109,5 +109,45 @@ if AKTUALIS in prov2:
 else:
     hibak.append("C1: a provisional kiurult")
     print("HIBA a provisional kiurult - a reszeredmeny veglegeskent szamitana")
+
+# ---------------------------------------------------------------- C2
+# MEGTORTENT (2026-08-25 21:47): egy DNS-hiba miatt EGY tag ranglista-adata
+# (es igy az azonositoja) nem jott meg -> minden cel-fordulo "hianyos" lett,
+# es a mar veglegeskent kozolt aktualis-1 fordulo ideiglenesse valt: a
+# tabella a 4 fordulos allast mutatta. A szabaly: amit mar veglegeskent
+# kozoltunk, azt hianyos futas nem nyithatja ujra.
+print("\n--- C2: egy tag azonositoja nem jon meg (halozati hiba) ---")
+os.chdir(tempfile.mkdtemp())
+json.dump({"updated": None, "provisional": [AKTUALIS], "schedule": menetrend},
+          open("results.json", "w"))
+json.dump({"updated": None, "rounds": tortenet}, open("squad_history.json", "w"))
+json.dump({"updated": None, "rounds": {str(r): [
+    {"id": 900 + r, "h": "XYZ", "v": "ZZZ", "start": "2026-08-01T17:30:00+02:00",
+     "hp": 1, "vp": 0, "vege": True}] for r in range(1, 9)}}, open("meccsek.json", "w"))
+
+
+def mock3(url, retries=3):
+    if "rankings" in url:
+        par3 = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
+        if UNAME[par3["filter[search]"][0]] == NEVEK[0]:
+            return 500, None            # <-- a halozati hiba
+    return mock(url, retries)
+
+
+c.api_get = mock3
+c.ellenorzendo = lambda regi, db=4: []
+c.main()
+prov3 = json.load(open("results.json"))["provisional"]
+print("provisional:", prov3)
+if AKTUALIS - 1 in prov3:
+    hibak.append("C2: a mar vegleges fordulo ujranyilt egy halozati hibatol")
+    print("HIBA a mar veglegeskent kozolt %d. fordulo ideiglenesse valt" % (AKTUALIS - 1))
+else:
+    print("OK   a mar veglegeskent kozolt %d. fordulo vegleges maradt" % (AKTUALIS - 1))
+if AKTUALIS not in prov3:
+    hibak.append("C2: az elo fordulo kikerult az ideiglenesek kozul")
+    print("HIBA az elo fordulo kikerult az ideiglenesek kozul")
+else:
+    print("OK   az elo fordulo tovabbra is ideiglenes")
 
 sys.exit(1 if hibak else 0)
