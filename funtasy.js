@@ -568,6 +568,90 @@
       '<span class="kezdjobb">' + b + '</span></div>';
   }
 
+  /* ===== Jatekosprofil (kozos reteg) =====
+     A profil szerkezete a ket ligaban ugyanaz: egy fejlec (ki ez a jatekos)
+     es egy fordulonkenti lista (ellenfel, allas, pont, es hogy KINEL volt).
+     Ami ligankent mas, az kizarolag az adat FORRASA - ezert a hivo egy kesz
+     `adat` objektumot ad at, a megjelenites pedig itt, egyetlen helyen el.
+     Igy a ket oldal nem irhat ugyanarrol ketfelet.
+
+     adat = {
+       nev, klub, poszt,
+       cimkek: ['U21', ...],              // a nev melle kerulo rovid jelolok
+       tenyek: [{cimke, ertek}],          // fejlec-adatok (osszpont, ar, ...)
+       sorok: [{
+         r,                               // a fordulo szama
+         ellenfel,                        // az ellenfel klub rovidneve (vagy null)
+         hazai,                           // true = otthon, false = idegenben, null = nem tudjuk
+         hp, vp,                          // a meccs allasa, MINDIG hazai-vendeg sorrendben
+         pont,                            // a jatekos alappontja (null = nincs adat)
+         jegyzet,                         // a pont helyett kiirando szoveg, ha nincs pont
+         tulajok: [{nev, szerep}]         // kinel volt; ures tomb = senkinel
+       }],
+       senkinel                           // mit irjunk ki ures `tulajok` eseten
+     }
+
+     A sorok lenyithatok: a hivo a `.plr[data-acc]` kattintast a sajat
+     bontas-toltojere koti (accToggle), pont ugy, mint a keret-nezetben. */
+  function profilFejHTML(adat) {
+    // ugyanazok a jelolok, mint a keret-soraiban: a magyar jatekost zaszlo
+    // jelzi, a tobbi rovid cimke a kek chip - kulonben ugyanaz az informacio
+    // ket helyen ketfelekeppen nezne ki
+    var cimkek = (adat.magyar ? '<span class="flag" title="magyar"></span>' : '')
+      + (adat.cimkek || []).map(function (c) {
+          return '<span class="u21">' + esc(c) + '</span>';
+        }).join('');
+    var tenyek = (adat.tenyek || []).map(function (t) {
+      return '<div class="ptny"><span>' + esc(t.cimke) + '</span><b>' +
+             (typeof t.ertek === 'number' ? fmt(t.ertek) : esc(String(t.ertek))) + '</b></div>';
+    }).join('');
+    return '<div class="proffej">' +
+      '<div class="profnev">' +
+        (adat.poszt ? '<span class="ppos">' + esc(adat.poszt) + '</span>' : '') +
+        '<b>' + esc(adat.nev || '') + '</b>' +
+        (adat.klub ? '<span class="tm">' + esc(adat.klub) + '</span>' : '') + cimkek +
+      '</div>' + (tenyek ? '<div class="ptenyek">' + tenyek + '</div>' : '') + '</div>';
+  }
+
+  /* Egy fordulo sora. Az allast MINDIG hazai-vendeg sorrendben kapjuk, a
+     "(h)" / "(i)" jeloli, melyik oldalon allt a jatekos klubja - igy az
+     eredmeny ugyanugy olvashato, mint barhol maskul az oldalon, es nem kell
+     fejben forgatni. */
+  function profilSorHTML(s, senkinel) {
+    var hol = s.hazai == null ? '' : (s.hazai ? 'otthon' : 'idegenben');
+    var allas = (s.hp == null || s.vp == null) ? ''
+      : '<span class="pallas">' + fmt(s.hp) + '–' + fmt(s.vp) + '</span>';
+    var tulaj = (s.tulajok && s.tulajok.length)
+      ? s.tulajok.map(function (t) {
+          return '<span class="ptul"><b>' + esc(t.nev) + '</b>' +
+                 (t.szerep ? ' · ' + esc(t.szerep) : '') + '</span>';
+        }).join('')
+      : '<span class="ptul nincs">' + esc(senkinel || 'senkinél') + '</span>';
+    var pont = (s.pont == null)
+      ? '<span class="pjegyzet">' + esc(s.jegyzet || '—') + '</span>'
+      : fmt(s.pont);
+    return '<div class="plr profsor" data-acc="1" data-pr="' + s.r + '">' +
+      '<span class="ppos">' + s.r + '.</span>' +
+      '<span class="nm">' + (s.ellenfel ? esc(s.ellenfel) : '—') +
+        '<span class="accarr">▼</span>' +
+        (hol ? ' <span class="tm">' + hol + '</span>' : '') + '</span>' +
+      allas +
+      '<span class="pts">' + pont + '</span>' +
+      '<span class="ptulajok">' + tulaj + '</span>' +
+    '</div>';
+  }
+
+  function profilHTML(adat) {
+    var sorok = adat.sorok || [];
+    if (!sorok.length)
+      return profilFejHTML(adat) +
+        '<div class="loading">Ehhez a játékoshoz még nincs fordulónkénti adat.</div>';
+    return profilFejHTML(adat) +
+      '<div class="proflista">' + sorok.map(function (s) {
+        return profilSorHTML(s, adat.senkinel);
+      }).join('') + '</div>';
+  }
+
   function bontasMeccsSor(m) {
     if (!m || !m.hazai || !m.vendeg) return '';
     var allas = (m.hp == null || m.vp == null)
@@ -845,6 +929,7 @@
                      LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
                      lablecHTML: lablecHTML, renderLablec: renderLablec,
                      bontasMeccsSor: bontasMeccsSor,
+                     profilHTML: profilHTML, profilFejHTML: profilFejHTML,
                      kezdSzazalek: kezdSzazalek, KEZD_CIM: KEZD_CIM,
                      kezdParHTML: kezdParHTML,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,

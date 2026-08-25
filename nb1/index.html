@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=38">
+<link rel="stylesheet" href="../funtasy.css?v=39">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -72,7 +72,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=38"></script>
+<script src="../funtasy.js?v=39"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -338,7 +338,8 @@ function playersHTML(name, rounds){
     const sq=(rounds[r]||{})[name]; if(!sq) continue;
     for(const p of sq){
       const k=p.name+'|'+(p.team||'');
-      const a=agg[k]||(agg[k]={name:p.name,team:p.team,pos:p.pos,hun:!!p.hun,u21:!!p.u21,pts:0,rounds:0,st:0,sb:0,cap:0});
+      const a=agg[k]||(agg[k]={name:p.name,team:p.team,pos:p.pos,hun:!!p.hun,u21:!!p.u21,id:null,pts:0,rounds:0,st:0,sb:0,cap:0});
+      if(!a.id && p.id) a.id=p.id;
       a.pts+=(p.week||0); a.rounds++; p.sub?a.sb++:a.st++; if(p.cap)a.cap++;
     }
   }
@@ -360,12 +361,142 @@ function playersHTML(name, rounds){
     <div class="bonus"><span>Magyar játékosok pontja · ebből U21: ${fmt(u21pts)}</span><b>${fmt(hunpts)}</b></div>
     <table><tr><th></th><th>Játékos</th><th>F</th><th>Kezdő</th><th>Pad</th><th>C</th><th>Pont</th></tr>`;
   rows.forEach((r,i)=>{
-    h+=`<tr><td class="rank">${i+1}.</td>
+    h+=`<tr class="clickable" data-prof="${esc(r.name)}"${r.id?` data-pcp="${r.id}"`:''} data-ptm="${esc(r.team||'')}" data-ppos="${esc(r.pos||'')}"${r.hun?' data-phun="1"':''}${r.u21?' data-pu21="1"':''}><td class="rank">${i+1}.</td>
       <td class="name"><span class="ppos">${esc(posLabel(r.pos))}</span>${esc(r.name)}${r.hun?'<span class="flag"></span>':''}${r.u21?' <span class="u21">U21</span>':''}${r.team?` <span class="tm">${esc(r.team)}</span>`:''}</td>
       <td>${r.rounds}</td><td>${r.st}</td><td>${r.sb}</td><td>${r.cap||''}</td>
       <td class="pont">${fmt(r.pts)}</td></tr>`;
   });
   return '<div class="tablewrap">'+h+'</table></div>';
+}
+
+// ---------- játékosprofil (NB1) ----------
+// A MEGJELENITES kozos (funtasy.js -> FunTasy.profilHTML); itt csak az ADAT
+// all ossze. Harom forrasbol, ebben a sorrendben:
+//   1) squad_history.json - kinel volt a jatekos, milyen szerepben, es mennyi
+//      volt a heti pontja. A tarolt `week` MAR tartalmazza a kapitanyi
+//      duplazast es a padfelezest, a profilban viszont a jatekos SAJAT
+//      pontja kell (fuggetlenul attol, kinel volt), ezert visszaszamoljuk.
+//      Ez a fajl a "Szezon jatekosai" fulhoz amugy is betoltodik.
+//   2) meccsek.json - az adott fordulo ellenfele es allasa. A jatekos KLUBJA
+//      is fordulonkent tarolt (a keret-rekord `team` mezoje), tehat egy
+//      szezon kozbeni klubvaltas azoknal a forduloknal helyesen jelenik meg,
+//      amikor a jatekos valakinek a kereteben volt.
+//   3) az MLSZ pontbontas-vegpontja - CSAK azokra a fordulokra, amikor a
+//      jatekos SENKINEL sem volt: onnan maskepp nem tudnank meg a pontjat.
+//      Tipikusan nulla-nehany keres, nem az egesz szezon.
+// A teteles bontas lenyitasra toltodik, fordulonkent egy keresbol - ugyanaz
+// a hivas es ugyanaz a gyorsitotar (BONTAS), mint a keret-nezetben.
+// A tarolt `week` mar tartalmazza a kapitanyi duplazast es a padfelezest; a
+// profilban viszont a jatekos SAJAT pontja kell, fuggetlenul attol, kinel
+// volt. Visszaszamoljuk - de a PADNAL a felezes utan az API mar KEREKIT ket
+// tizedesre (0,75 -> 0,38), tehat a puszta ketszerezes 0,01-gyel melle megy.
+// MEGMERTUK (naplo/mlsz-jatekoslista.txt, 4. kor): a jatekos alappontja
+// MINDIG 0,25 tobbszorose - 238 osszevetett fordulon egyetlen kivetel nelkul,
+// es a 16 elteres mind pados eset volt, mind pont 0,01. Ezert a legkozelebbi
+// negyedre kerekitve pontosan visszakapjuk az eredeti erteket.
+const alapPont = p => Math.round((p.week||0) / (p.cap?2:1) * (p.sub?2:1) * 4) / 4;
+let PROFIL_AKT = null;      // az eppen nyitott profil - a lenyilo ebbol dolgozik
+
+async function profilBontasSorok(cp, r){
+  const k = cp+'|'+r;
+  if(!BONTAS.has(k)){
+    const u='https://fantasy-api.mlsz.hu/game-player-stats?include=competition_stat_config'+
+      `&filter%5Bcompetition_player_id%5D=${cp}&filter%5Bround_id%5D=${75+2*r}`;
+    const j=await apiGet(u);
+    BONTAS.set(k,{t:Date.now(), sorok:(j.data||[]).map(s=>({
+      name:(s.competition_stat_config||{}).name||'?', value:s.value, points:s.points}))});
+  }
+  return BONTAS.get(k).sorok;
+}
+
+// Egy profil-sor lenyiloja: a klub meccse, alatta a teteles bontas. A
+// kapitany/pad szorzo-sorok itt SZANDEKOSAN nincsenek - a profil a jatekos
+// sajat pontjat mutatja, azt pedig nem a tulajdonosa alakitja. Kinel volt,
+// azt a sor "kinel" resze mondja meg.
+async function profilBontasHTML(r){
+  const p = PROFIL_AKT;
+  if(!p || !p.cp) return null;
+  const nyers = await profilBontasSorok(p.cp, r);
+  const sorok = nyers.filter(s=>s.points);
+  const perc = nyers.find(x=>x.name==='Játszott perc');
+  if(perc && perc.value) sorok.unshift({name:'Játszott perc', value:perc.value, points:''});
+  const klub = (p.klubok||{})[r] || p.klub;
+  return meccsSorokHTML(klub, r)
+    + FunTasy.accTable(sorok, 'Ebben a fordulóban nem szerzett pontot érő eseményt.');
+}
+
+async function profilAdat(jat){
+  const rounds = await loadHistory();
+  const rks = Object.keys(rounds).map(Number).filter(x=>x).sort((a,b)=>a-b);
+  const azonos = x => jat.cp ? x.id===jat.cp : x.name===jat.nev;
+  // a cp-azonosito a REGI keret-rekordokbol hianyzik: ilyenkor barmelyik
+  // ujabb fordulo rekordjabol feloldjuk, kulonben a bontas nem kerheto le
+  if(!jat.cp){
+    for(const r of rks){
+      for(const lista of Object.values(rounds[r]||{})){
+        const p=lista.find(azonos);
+        if(p && p.id){ jat.cp=p.id; break; }
+      }
+      if(jat.cp) break;
+    }
+  }
+  const sorok=[], klubok={};
+  for(const r of rks){
+    const per = rounds[r] || {};
+    const tulajok=[]; let alap=null, klub=null;
+    for(const mgr of Object.keys(per).sort()){
+      const p=(per[mgr]||[]).find(azonos);
+      if(!p) continue;
+      tulajok.push({nev:mgr, szerep: p.cap?'kapitány':(p.sub?'pad':'kezdő')});
+      if(alap===null){ alap=alapPont(p); klub=p.team||null; }
+    }
+    if(klub) klubok[r]=klub;
+    sorok.push({r, tulajok, pont:alap, klub: klub||jat.klub});
+  }
+  jat.klubok=klubok;
+  // amikor senkinel sem volt, a pontja csak az API-bol derul ki
+  await Promise.all(sorok.filter(s=>s.pont===null).map(async s=>{
+    if(!jat.cp) return;
+    try{
+      const b=await profilBontasSorok(jat.cp, s.r);
+      s.pont=b.reduce((x,y)=>x+(y.points||0),0);
+    }catch(e){ /* marad a kotojel */ }
+  }));
+  // ellenfel es allas a meccsek.json-bol, a jatekos ADOTT FORDULOS klubjabol
+  for(const s of sorok){
+    const m=((MECCSEK||{})[s.r]||[]).find(x=>x.h===s.klub||x.v===s.klub);
+    if(m){ s.ellenfel = m.h===s.klub ? m.v : m.h; s.hazai = m.h===s.klub;
+           s.hp=m.hp; s.vp=m.vp; }
+    else { s.jegyzet = s.pont==null ? 'nincs meccs' : undefined; }
+  }
+  const osszes = sorok.reduce((x,s)=>x+(s.pont||0),0);
+  const keretben = sorok.filter(s=>s.tulajok.length).length;
+  return {
+    nev: jat.nev, klub: jat.klub, poszt: jat.poszt,
+    magyar: !!jat.hun, cimkek: jat.u21?['U21']:[],
+    tenyek: [
+      {cimke:'Pont összesen', ertek: osszes},
+      {cimke:'Fordulók', ertek: sorok.length},
+      {cimke:'Ebből keretben', ertek: keretben}
+    ],
+    sorok, senkinel:'senkinél sem volt'
+  };
+}
+
+async function showProfil(jat, mode){
+  vShow(()=>showProfil(jat,'noop'), mode);
+  PROFIL_AKT=jat; openModal();
+  $('mTitle').textContent=jat.nev;
+  $('mSub').textContent='Fordulónkénti teljesítmény — a sorra kattintva a pontok bontása';
+  $('mTabs').innerHTML='';
+  $('mBody').innerHTML='<div class="loading">Profil betöltése…</div>';
+  try{
+    const adat=await profilAdat(jat);
+    if(PROFIL_AKT!==jat) return;                 // kozben mas profilt nyitottak
+    $('mBody').innerHTML=FunTasy.profilHTML(adat);
+  }catch(e){
+    $('mBody').innerHTML=`<div class="loading" style="color:var(--lose)">Nem sikerült betölteni — ${esc(e.message)}</div>`;
+  }
 }
 let mCurrent=[];
 function showEloUzenet(){
@@ -821,7 +952,14 @@ document.addEventListener('click',e=>{
   if(e.target===$('ovBack')){ vBack(); return; }
   if(e.target.id==='elteresGomb'){ CSAK_ELTERES=!CSAK_ELTERES; meccsTest(); return; }
   const pr=e.target.closest('.plr[data-acc]');
-  if(pr){ FunTasy.accToggle(pr, ()=>bontasHTML(pr.dataset)); return; }
+  // ugyanaz az accordion ket helyen: a keret-nezetben a keret-rekordbol, a
+  // jatekosprofilban a fordulo szamabol (data-pr) tolt
+  if(pr){ FunTasy.accToggle(pr, ()=> pr.dataset.pr!==undefined
+            ? profilBontasHTML(+pr.dataset.pr) : bontasHTML(pr.dataset)); return; }
+  const pf=e.target.closest('[data-prof]');
+  if(pf){ showProfil({nev:pf.dataset.prof, cp:pf.dataset.pcp?+pf.dataset.pcp:null,
+                      klub:pf.dataset.ptm||null, poszt:pf.dataset.ppos||null,
+                      hun:pf.dataset.phun==='1', u21:pf.dataset.pu21==='1'}, 'push'); return; }
   const mem=e.target.closest('[data-member]');
   if(mem){ showSquad([mem.dataset.member]); return; }
   const tab=e.target.closest('[data-tab]');

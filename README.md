@@ -191,6 +191,30 @@ Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő 
   ad pontot, ezért ott a futó meccs 0-ja valódi 0, és **számként** marad. A kötőjel
   magyarázata egérrel elolvasható (`title`).
 
+### Játékosprofil (NB1)
+A **Szezon játékosai** listában egy névre kattintva megnyílik a játékos profilja. Fent az
+alapadatok (poszt, klub, magyar/U21 jelölés, összpont, hány fordulóról van adat, ebből
+hányban volt valakinek a keretében), alatta fordulónként egy sor: **ellenfél, a meccs
+állása** (mindig hazai–vendég sorrendben, mellette hogy otthon vagy idegenben játszott),
+a játékos **saját pontja**, és hogy **melyik szakvezetőnél** volt — kezdőként, padon vagy
+kapitányként. Salary cap ligában ugyanaz a játékos egy fordulóban **több szakvezetőnél is**
+lehet: ilyenkor mind ott van, mindegyik a maga szerepével. Ha senkinél sem volt, azt írjuk ki.
+
+A sorra kattintva a szokásos accordion nyílik le a **tételes pont-bontással** és a klub
+meccsével — ugyanaz a lekérés és ugyanaz a gyorsítótár, mint a keret-nézetben.
+
+Két dolog, ami könnyen félreérthető, ezért így csináljuk:
+
+- **A pont a játékosé, nem a csapaté.** A tárolt heti pont már tartalmazza a kapitányi
+  duplázást és a padfelezést; a profil ezeket **visszaszámolja**, mert különben ugyanaz a
+  teljesítmény más számot mutatna aszerint, hogy kinél volt. A padnál az API a felezés után
+  két tizedesre kerekít (0,75 → 0,38), így a puszta kétszerezés 0,01-gyel mellémenne — ezért
+  a legközelebbi negyedre kerekítünk. Hogy ez helyes, azt kimértük: a játékosok alappontja
+  377 összevetett fordulón **mindig 0,25 többszöröse** volt.
+- **Amikor senkinél sem volt**, a pont sehol nincs eltárolva — ilyenkor (és csak ilyenkor)
+  megy egy lekérés az MLSZ pont-bontás végpontjára. Tipikusan néhány kérés, nem az egész
+  szezon.
+
 ### Navigáció a modalon belül
 A modal kis böngészőként működik: a listák soraira kattintva a tartalom cserélődik
 (pl. Fordulók → egy meccs két kerete), és a fejlécben megjelenő **‹ vissza** gomb az
@@ -539,6 +563,26 @@ a forduló keretéből). Bárhonnan, bejelentkezés nélkül működik.
 
 Létezik még: `GET competitions/3/stat-configs` (a 10 szezonstatisztika-kategória neve) és
 `stat-leaders` (toplisták) — jelenleg egyiket sem használjuk.
+
+### Játékostörzs és a szezon egésze (mérésekkel, 2026-08-25)
+A játékosprofilhoz két dolgot kerestünk: a **teljes játékostörzset** (a kereséshez) és
+minden játékos **fordulónkénti pontját**. Amit a mérések hoztak (`naplo/mlsz-jatekoslista.txt`):
+
+| Kérdés | Válasz |
+|---|---|
+| Van teljes játékoslista? | **Igen:** `competitions/3/players?include=team,position,summary_statistics` — 385 játékos, klub, poszt, `is_u21`, `injury_status`, `market_price`, `competition_points`. |
+| Egy kérésből? | **Igen**, `per_page=500`-zal (alapból 15/lap, 26 lap). A `page[size]`-t eldobja. |
+| Ad fordulónkénti pontot? | **Nem.** A `weekly_points` mindig az **aktuális** fordulóé, és a végpont `filter[round_id]`-re **400**-at ad. |
+| A pont-bontás lekérhető forduló-szűrő nélkül? | **Igen**, akkor az egész szezon jön — **de csak az első 50 sor.** |
+| Lehet lapozni rajta? | **Nem.** Sem `page`, sem `page[number]`, sem `offset`, sem `page[offset]`, sem `per_page`/`limit`/`page[size]` — mind ugyanazt az első lapot adja vissza. Egy szezon ~109 sor, tehát **a teljes szezon egy kérésből nem hozható le**; fordulónként viszont ~22 sor, ami elfér egy lapon. A profil ezért fordulónként kérdez, és csak akkor, ha muszáj. |
+
+**A pontok felbontása 0,25.** 377 (játékos, forduló) párra összevetettük a bontás-sorok
+összegét a keret-fájlok tárolt heti pontjával: **238 pontosan egyezett**, 123 esetben a
+bontás üres volt — de mind a 123-nál a tárolt érték is 0 volt (ez az MLSZ ismert
+viselkedése: 0 pontos játékosra üres bontást ad). A maradék **16 eltérés mind pontosan
+0,01** volt, és mind **pados** játékos: a felezés utáni két tizedesre kerekítés miatt.
+Ebből következik, hogy az alappont mindig 0,25 többszöröse — a visszaszámolásnál ezért
+kerekítünk negyedre.
 
 ### A pontszámítás kulcsa
 A `weekly_points` **már kész érték**: tartalmazza a kapitányi duplázást és a pad felezését.
@@ -953,6 +997,15 @@ kerüljön be.
   dupla fordulón ugyanis egy klubnak két meccse van. Ha egy klub **egyáltalán nem
   szerepel** a forduló meccsei között, akkor üres fordulója van (blank gameweek): a
   játékosai kötőjelet kapnak, és a bontás is ezt írja ki
+- `element-summary/{element_id}` — **egy játékos egész szezonja EGY kérésből** (mérve
+  2026-08-25): a `history` tömbben fordulónként `event`, `total_points`, minden statisztika,
+  és egy `detail` mező `"AVL (H) 4-0"` alakban — vagyis az ellenfél, a pálya és a végeredmény
+  együtt. A `fixtures` a hátralévő meccseket adja. Ez a PL-oldali játékosprofil forrása;
+  a gyűjtőnek nem kerül semmibe, mert a böngésző kéri le, akkor, amikor kell.
+  **A klasszikus FPL (`fantasy.premierleague.com/api/element-summary/{id}/`) NEM használható
+  helyette:** ugyanaz az útvonal létezik, de az **azonosítók nem egyeznek** a Drafttal. A
+  mérésben öt játékosból négynél véletlenül stimmelt a pont, az ötödiknél viszont 1 vs 14 —
+  egy felületes ellenőrzés tehát átengedte volna. Mindig a Draft saját végpontját használjuk.
 - `game` — `current_event`: a folyamatban lévő forduló száma (vagy null)
 
 ---
@@ -968,14 +1021,17 @@ kerüljön be.
   árfolyam-statisztikát erre a mezőre építeni nem szabad.
 - **Halasztott meccsek:** a Ferencváros európai kupaszereplése miatt az ellenfelének fordulója
   elmaradhat. Ilyenkor az érintett klub játékosai 0 pontot kapnak.
-- **NB1 szezon közbeni klubváltás — a játékosprofil ellenfél-oszlopa.** A pont-bontás
-  sorai megmondják, MELYIK fordulóban szerezte a játékos a pontot, de azt nem, hogy melyik
-  klubban. A profil ezért a játékos **mostani** klubjából keresi ki az adott forduló
-  ellenfelét (`meccsek.json`). Aki a szezon közben klubot vált, annál a váltás ELŐTTI
-  fordulóknál rossz ellenfél jelenne meg. A téli átigazolási időszakig ez nem fordulhat
-  elő; **akkor viszont kezelni kell** — vagy egy klubváltást is rögzítő adatforrásból, vagy
-  ha addigra az MLSZ API maga adja a fordulónkénti klubot. A PL-oldalon ez a gond nincs: ott
-  a Draft `element-summary` `detail` mezője (`"AVL (H) 4-0"`) magával hozza az ellenfelet.
+- **NB1 szezon közbeni klubváltás — a játékosprofil ellenfél-oszlopa.** A keret-rekord
+  fordulónként tárolja a játékos klubját (`team`), tehát azokra a fordulókra, amikor a
+  játékos **valakinek a keretében volt**, a profil a helyes klubot — és így a helyes
+  ellenfelet — használja. A gond csak azoknál a fordulóknál marad, amikor **senkinél sem
+  volt**: ott nincs eltárolt klub, és a pont-bontás sorai sem árulják el (csak a fordulót
+  mondják meg), ezért a profil a játékos **mostani** klubjából keresi ki az ellenfelet.
+  Aki a szezon közben klubot vált, annál az ilyen — váltás előtti, senkinél sem töltött —
+  fordulóknál rossz ellenfél jelenne meg. A téli átigazolási időszakig ez nem fordulhat elő;
+  **akkor viszont kezelni kell** — vagy egy klubváltást is rögzítő adatforrásból, vagy ha
+  addigra az MLSZ API maga adja a fordulónkénti klubot. A PL-oldalon ez a gond nincs: ott a
+  Draft `element-summary` `detail` mezője (`"AVL (H) 4-0"`) magával hozza az ellenfelet.
 
 - **A könyvjelző (tartalék) a böngésződ másolatából fut**, nem a repóból. Ha a
   `tartalek/GOMB-bookmarklet.txt` módosul, a böngészőben lévő könyvjelzőt kézzel kell frissíteni.
