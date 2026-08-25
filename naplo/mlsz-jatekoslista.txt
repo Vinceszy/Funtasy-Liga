@@ -1,48 +1,53 @@
-# 4. KOR - a profil kozponti feltevese: a bontas-sorok osszege = a
-# jatekos ALAPPONTJA az adott forduloban (kapitanysag/pad nelkul).
-# Osszevetes: keretek/<f>.json `week` / (cap?2:1) / (sub?0.5:1).
+# 5. KOR: a torzs `id`-je ugyanaz-e, mint a keret-rekordok `id`-je?
+# A fooldali kereso ezen all: rossz azonosito eseten a talalat MAS
+# jatekos bontasat nyitna meg - csendben, hihetoen.
 
-## 107 kulonbozo jatekos, 377 (jatekos, fordulo) par a keret-fajlokban.
-### A probe-jatekos (915) szezonja 0 sor, egy lapon 0 fer el.
-=== lapmeret per_page=200         -> HTTP 200 | sorok=0
-=== lapmeret limit=200            -> HTTP 200 | sorok=0
-=== lapmeret page%5Bsize%5D=200   -> HTTP 200 | sorok=0
-=== lapozas page=2                 -> HTTP 200 | AZONOS (nem lapoz)
-=== lapozas page%5Bnumber%5D=2     -> HTTP 200 | AZONOS (nem lapoz)
-=== lapozas offset=50              -> HTTP 200 | AZONOS (nem lapoz)
-=== lapozas page%5Boffset%5D=50    -> HTTP 200 | AZONOS (nem lapoz)
+### A torzs 385 sort adott (HTTP 200). Egy sor kulcsai:
+    ['birth_date', 'current_round', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'summary_statistics', 'team']
 
-### Sem lapmeret, sem lapozas. Marad a fordulonkenti lekeres:
-### fordulonkent 22 sor, ami elfér egy lapon - a profil tehat
-### fordulonkent egy kerest jelent, nem egyet az egesz szezonra.
-### A meres innentol FORDULONKENT ker le, ugy ellenorzi a feltevest.
+### 107 mentett jatekos osszevetve a torzzsel:
+###   ugyanaz a nev ugyanazon az azonositon: 102
+###   MAS nev ugyanazon az azonositon:       0
+###   az azonosito nincs a torzsben:         5
 
+### Reszletek (max 20):
+  Artúr Horváth (id=1137): NINCS a torzsben
+  Alen Martin Skribek (id=1163): NINCS a torzsben
+  Milán Vitális (id=1173): NINCS a torzsben
+  David Nwachukwu (id=1461): NINCS a torzsben
+  Jovan Živković (id=1543): NINCS a torzsben
 
-### EREDMENY: egyezik=238 | ELTER=16 | ures bontas=123
-
-### Reszletek (max 25):
-  Áron Alaxai (915), 1. f: a bontas URES, a keretben 0.0
-  Áron Alaxai (915), 2. f: a bontas URES, a keretben 0.0
-  Áron Alaxai (915), 3. f: a bontas URES, a keretben 0.0
-  Áron Alaxai (915), 4. f: a bontas URES, a keretben 0.0
-  Bence Lenzsér (917), 1. f: a bontas URES, a keretben 0
-  Bence Lenzsér (917), 3. f: a bontas URES, a keretben 0
-  Soma Zsombor Novothny (925), 2. f: a bontas URES, a keretben 0
-  Jakub Plšek (951), 1. f: a bontas URES, a keretben 0
-  Artem Favorov (957), 1. f: a bontas URES, a keretben 0
-  Tamás Markek (971), 1. f: a bontas URES, a keretben 0.0
-  Tamás Markek (971), 2. f: a bontas URES, a keretben 0.0
-  Tamás Markek (971), 3. f: a bontas URES, a keretben 0.0
-  Tamás Markek (971), 4. f: a bontas URES, a keretben 0.0
-  Tamás Markek (971), 5. f: a bontas URES, a keretben 0.0
-  Mátyás Katona (989), 1. f: a bontas URES, a keretben 0.0
-  Mátyás Katona (989), 3. f: bontas=2.25, keret=2.26
-  Mátyás Katona (989), 4. f: bontas=3.75, keret=3.76
-  Mátyás Katona (989), 5. f: bontas=0.75, keret=0.76
-  Gábor Vas (1009), 2. f: a bontas URES, a keretben 0
-  Gábor Vas (1009), 5. f: a bontas URES, a keretben 0
-  Balázs Tóth (1019), 3. f: bontas=1.25, keret=1.26
-  Balázs Tóth (1019), 4. f: a bontas URES, a keretben 0.0
-  Balázs Tóth (1019), 5. f: a bontas URES, a keretben 0.0
-  Nemanja Antonov (1033), 1. f: a bontas URES, a keretben 0
-  Soma Szuhodovszki (1035), 1. f: a bontas URES, a keretben 0
+### Egy teljes torzs-sor (a mentendo mezokhoz):
+{
+ "id": 915,
+ "first_name": "Áron",
+ "last_name": "Alaxai",
+ "birth_date": "2003-04-11",
+ "is_u21": false,
+ "injury_status": "questionable",
+ "position": {
+  "id": 3,
+  "name": "Hátvéd",
+  "monogram": "H"
+ },
+ "team": {
+  "id": 43,
+  "name": "NYÍREGY",
+  "short_name": "NYÍREGY",
+  "color_hex": null
+ },
+ "current_round": {
+  "id": 37229,
+  "round_id": 87,
+  "market_price": 4,
+  "is_played": false,
+  "first_played_at": "2026-08-29T14:45:00+02:00",
+  "has_statistics": false
+ },
+ "summary_statistics": {
+  "competition_points": 0,
+  "monthly_points": 0,
+  "weekly_points": 0,
+  "last_weeks_points": 0
+ }
+}
