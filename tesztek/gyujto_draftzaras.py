@@ -17,7 +17,12 @@ D3: a lezart fordulo bekerul a "veglegesek" listaba - de amig O AZ AKTUALIS,
     jonnek at); csak amikor a current_event tovabblep, akkor hagyjuk el.
 D4: ha a lekeres elhasal, a fordulo NEM jelolodik veglegesnek - kulonben a csere
     elotti allapotot rogzitenenk veglegesnek.
-D5: ...es akkor sem, ha a TAROLT adat mar teljes egy korabbi futasbol. A
+D5: ...es akkor sem, ha a TAROLT adat mar teljes egy korabbi futasbol.
+D6: a ZARASI KULONBSEG (zarasok.json) pontosan egyszer, a veglegesito
+    futasban keszul: a zaras elotti tarolt pillanatkep es a friss allapot
+    elterese. A cserek (ki/be) es a pontvaltozasok is benne vannak; ha a
+    zaras semmit sem valtoztatott, URES bejegyzes keszul (az is eredmeny).
+    A zaras elotti futasokban nem keszul, es masodszor sem szamoljuk ujra. A
     gyujto osszefesuli a regit az ujjal, tehat a tarolt allapotbol nem
     latszik, hogy MOST bejott-e minden csapat. Ez a valodi eset: a keret mar
     megvan a zaras elottrol, a zaras utani lekeres viszont elhasal - a csere
@@ -72,7 +77,11 @@ def mock(path, retries=3):
         return 200, {"elements": [], "teams": [], "element_types": []}
     if "/live" in path:
         gw = int(path.split("/")[1])
-        return 200, {"elements": {str(e): {"stats": {"total_points": 1}} for e in range(1, 16)}}
+        pontok = {str(e): {"stats": {"total_points": 1}} for e in range(1, 16)}
+        # a 15-os jatekos pontja a zaraskor valtozik (bonusz-korrekcio) -
+        # ebbol merjuk, hogy a zarasi kulonbseg a pontot is eszreveszi
+        pontok["15"] = {"stats": {"total_points": 5 if allapot["zarva"] else 2}}
+        return 200, {"elements": pontok}
     if path.startswith("entry/"):
         reszek = path.split("/")
         entry, gw = int(reszek[1]), int(reszek[3])
@@ -110,12 +119,24 @@ allit(padE == {11, 13, 14, 15},
       "D2: a CSERE UTANI allapot kerult be - a 0 perces kezdo a padra: " + repr(sorted(padE)))
 allit(h.get("veglegesek") == [1], "D3: a fordulo bekerult a veglegesek listaba: " + repr(h.get("veglegesek")))
 
+z = json.load(open("zarasok.json"))
+z1 = z["rounds"].get("1") or {}
+allit("1" in z["rounds"], "D6: a veglegesito futasban elkeszult a zarasi bejegyzes")
+erintett = next(iter(z1.values())) if z1 else {}
+allit(erintett.get("ki") == [11] and erintett.get("be") == [12],
+      "D6: a csere benne van (ki=11, be=12): " + repr(erintett))
+pontok_d6 = erintett.get("pont") or []
+allit(any(x["e"] == 15 and x["elott"] == 2 and x["utan"] == 5 for x in pontok_d6),
+      "D6: a pontvaltozas is benne van (15-os: 2 -> 5): " + repr(pontok_d6))
+
 print("\n--- 4. futas: lezart, DE MEG AKTUALIS fordulo ---")
 keresek.clear()
 c.main()
 allit(len(keresek) == 2,
       "D3: amig a fordulo az aktualis, a zaras utan is lekerjuk - igy jon at egy "
       "utolagos FPL-korrekcio (%d keres)" % len(keresek))
+
+z_elott = json.dumps(json.load(open("zarasok.json"))["rounds"], sort_keys=True)
 
 print("\n--- 5. futas: a current_event tovabblepett ---")
 allapot["akt"] = 2
@@ -125,6 +146,8 @@ c.main()
 elso = [x for x in keresek if x[0] == 1]
 allit(not elso, "D3: a mar NEM aktualis, lezart fordulot nem kerdezzuk tobbe (%d keres)" % len(elso))
 allit([x for x in keresek if x[0] == 2], "a 2. fordulot viszont igen")
+allit(json.dumps(json.load(open("zarasok.json"))["rounds"], sort_keys=True) == z_elott,
+      "D6: a zarasi bejegyzest masodszor nem szamoljuk ujra")
 
 print("\n--- 6. eset: zaraskor elhasal az egyik lekeres (ures elozmeny) ---")
 os.chdir(tempfile.mkdtemp())
@@ -158,4 +181,4 @@ allit(not h.get("veglegesek"),
 
 if hibak:
     print("\n%d allitas bukott." % len(hibak)); sys.exit(1)
-print("\nMind a tizenharom allitas rendben.")
+print("\nMind a tizennyolc allitas rendben.")

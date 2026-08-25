@@ -44,10 +44,18 @@ jobs:
           # a 'draft*.json' glob csak a letezo fajlokat fogja - a felsorolassal
           # az volt a baj, hogy egyetlen meg nem letezo fajl az EGESZ add-ot
           # ervenytelenitette, es a hibat a /dev/null elnyelte
-          git add -A -- 'draft*.json'
+          git add -A -- 'draft*.json' zarasok.json
           if git diff --cached --quiet; then
             echo "Nincs valtozas."
           else
             git commit -m "Draft-adat frissites ($(date -u +'%Y-%m-%d %H:%M') UTC)"
-            git push origin HEAD:${GITHUB_REF_NAME}
+            # push-utkozeskor rebase + ujraprobalkozas - az archive.yml
+            # vedtelen push-a 2026-08-25-en egy teljes futas eredmenyet
+            # eldobta, ugyanaz itt is megtortenhetett volna
+            for i in 1 2 3; do
+              git push origin HEAD:${GITHUB_REF_NAME} && exit 0
+              git pull --rebase origin ${GITHUB_REF_NAME}
+              sleep $((i * 5))
+            done
+            exit 1
           fi

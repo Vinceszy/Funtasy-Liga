@@ -250,6 +250,18 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .bontasmeccs b{font-family:'JetBrains Mono';font-weight:700;font-size:12.5px;color:var(--ink)}
 .bontasmeccs .ora{font-family:'JetBrains Mono';color:var(--dim);white-space:nowrap}
 .plr .pts{font-family:'JetBrains Mono';font-weight:700;min-width:52px;text-align:right}
+/* ===== Zarasi valtozasok panel (PL fooldal) ===== */
+#zarasSzuro{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+.zlista{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px 22px}
+.zcsapat h3{font-family:'Archivo Black';font-size:12px;letter-spacing:1px;color:var(--amber);
+  margin:10px 0 2px}
+.zsor{display:flex;align-items:center;gap:8px;padding:4px 2px;font-size:13px;
+  border-bottom:1px solid var(--panel2)}
+.zsor .znev{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zsor .zert{font-family:'JetBrains Mono';font-size:12px;color:var(--dim);white-space:nowrap}
+.zsor .zdiff{font-family:'JetBrains Mono';font-weight:700;min-width:34px;text-align:right}
+.zsor .zirany{font:600 11px Inter;color:var(--dim)}
+.zsor .zirany.pos{color:var(--win)}
 .flag{display:inline-block;width:14px;height:9px;margin-left:6px;vertical-align:middle;border-radius:1px;
   background:linear-gradient(to bottom,#CE2939 0 33.3%,#fff 33.3% 66.6%,#477050 66.6% 100%);border:1px solid rgba(0,0,0,.35)}
 .ppos{display:inline-block;min-width:26px;text-align:center;background:var(--panel2);border:1px solid var(--line);

@@ -218,6 +218,7 @@ teljes képernyős, ragadós × gombbal.
 | `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”), `start`-ot (az adott fordulós meccsének kezdése), `vege: true`-t (a meccse már lement, akkor is, ha a pontok még nincsenek feldolgozva) és — ha a klubnak nincs meccse a fordulóban — `nogame: true`-t is tartalmaz. A régebbi, e mezők nélküli rekordokat az oldal tolerálja, de a gyűjtő nem hagyja őket úgy: az olyan fordulót, amelynek a rekordjaiban nincs `played`, egyszer újra lekéri a meccslistával együtt, és pótolja a hiányzó mezőket. |
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
 | `naplo/` | **Mérési archívum** (lezárt egyszeri megfigyelések nyers naplói — lásd `naplo/README.md`). A hozzájuk tartozó workflow-k törölve; a következtetések ebben a README-ben vannak (3/b, „Automatikus cserék”, „Ki van még a pályán”, bónusz-szakasz). |
+| `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**. A GW1 a git-történetből lett pótolva. |
 | `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset csak akkor, ha a forduló hivatalos pontja változott (ez a **pótolt meccs** esete — az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). **Nem a forduló összes meccse:** csak azoké a kluboké, amelyeknek van játékosuk valamelyik keretben — a részletező fölötti sorhoz ennyi kell. |
 | `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. |
 | `valtozasok/index.html` | A változásnapló oldala („Mi újult meg?"). |
@@ -426,6 +427,12 @@ való, nem tippelésre.
 | PL keret + pont | az **aktuális** forduló minden körben (a zárás után is, amíg a `current_event` tovább nem lép), plusz minden forduló, ami nincs a `draft_history.json` `veglegesek` listájában | az FPL a záráskor automatikus cseréket hajt végre, és utólag is korrigálhat |
 | PL meccseredmény | a `draft.json` `schedule`/`standings` az FPL saját válaszából, minden körben | ez a hivatalos eredmény, nem mi számoljuk |
 | NB1 meccseredmény | a `meccsek.json` addig kéri újra a fordulót, amíg van benne eredmény nélküli meccs | részállást nem tárolunk |
+
+A véglegesítő futás **melléktermékként a zárási különbséget is elmenti** (`zarasok.json`):
+a zárás előtti tárolt pillanatkép és a friss állapot eltérése — ebből él a főoldali
+„Zárási változások" panel. A pillanatkép legfeljebb 3 órával a zárás előtti; a mérés
+szerint (GW1) a lefújás és a zárás között semmi nem változik, tehát ez a különbség
+ténylegesen a lockdown műve.
 
 **Amit soha ne csinálj:** ne szüntesd meg az „aktuális fordulót minden körben lekérjük"
 szabályt azzal az indokkal, hogy a forduló már lezárult. Az a szabály **nem** a zárásról

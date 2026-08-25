@@ -6,7 +6,7 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=33">
+<link rel="stylesheet" href="../funtasy.css?v=34">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -57,6 +57,22 @@
       <div class="note">Kattints egy meccsre a két keret összehasonlításához.</div>
     </div>
   </div>
+
+  <!-- Amit a fordulo zarasa (az FPL masnap reggeli veglegesitese) valtoztatott.
+       Csak akkor latszik, ha van mar zarasi adat (zarasok.json). -->
+  <div class="panel" id="zarasPanel" style="display:none">
+    <h2>Zárási változások
+      <span class="roundnav">
+        <button data-znav="-1">‹</button>
+        <select id="selZaras"></select>
+        <button data-znav="1">›</button>
+      </span>
+    </h2>
+    <div class="note">Az FPL a fordulót másnap reggel zárja le: ekkor véglegesíti a bónuszt
+      és hajtja végre az automatikus cseréket. Itt az látszik, mit változtatott a zárás.</div>
+    <div id="zarasSzuro"></div>
+    <div id="zarasBody"></div>
+  </div>
 </div>
 <div class="lablec" id="lablec"></div>
 </div>
@@ -72,7 +88,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=33"></script>
+<script src="../funtasy.js?v=34"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -375,6 +391,78 @@ function showTeam(id, tab, mode){
     });
   }
 }
+
+// ---------- zarasi valtozasok (fooldali panel) ----------
+// Az adat a zarasok.json-bol jon (a gyujto a veglegesito futasban irja,
+// lasd collect_draft.py zarasi_kulonbseg). A panel csak akkor latszik, ha
+// mar van legalabb egy fordulonyi adat.
+//
+// A "ki"/"be" kulon sorokban all, NEM parban: a pad-jelzo valtozasabol nem
+// tudhato, melyik pados kinek a helyere allt be, es hamis parositast nem
+// allitunk.
+let ZARASOK = null, zarasNezet = 'mind';
+const ZNEZETEK = [['mind', 'Mind'], ['pont', 'Pontváltozás'], ['csere', 'Cserék']];
+
+function zarasHTML(r, nezet){
+  const csapatok = ZARASOK[r] || {};
+  const blokkok = [];
+  for (const lid of Object.keys(csapatok).sort((a, b) => nev(+a).localeCompare(nev(+b), 'hu'))){
+    const v = csapatok[lid], sorok = [];
+    if (nezet !== 'csere') (v.pont || []).forEach(x => {
+      const d = x.utan - x.elott;
+      sorok.push(`<div class="zsor"><span class="ppos">${esc(jat(x.e).p)}</span>`
+        + `<span class="znev">${esc(jat(x.e).n)}${jat(x.e).t ? ` <span class="tm">${esc(jat(x.e).t)}</span>` : ''}</span>`
+        + `<span class="zert">${fmt(x.elott)} → ${fmt(x.utan)}</span>`
+        + `<span class="zdiff ${d > 0 ? 'pos' : 'neg'}">${d > 0 ? '+' : ''}${fmt(d)}</span></div>`);
+    });
+    if (nezet !== 'pont'){
+      const csereSor = (e, irany) =>
+        `<div class="zsor"><span class="ppos">${esc(jat(e).p)}</span>`
+        + `<span class="znev">${esc(jat(e).n)}${jat(e).t ? ` <span class="tm">${esc(jat(e).t)}</span>` : ''}</span>`
+        + `<span class="zirany ${irany === 'be' ? 'pos' : ''}">${irany === 'be' ? 'beállt' : 'kikerült'}</span></div>`;
+      (v.ki || []).forEach(e => sorok.push(csereSor(e, 'ki')));
+      (v.be || []).forEach(e => sorok.push(csereSor(e, 'be')));
+    }
+    if (sorok.length)
+      blokkok.push(`<div class="zcsapat"><h3>${esc(nev(+lid))}</h3>${sorok.join('')}</div>`);
+  }
+  if (!blokkok.length)
+    return '<div class="loading">' + (nezet === 'pont'
+      ? 'A zárás nem hozott pontváltozást ebben a fordulóban.'
+      : nezet === 'csere'
+      ? 'A zárásnál nem történt automatikus csere ebben a fordulóban.'
+      : 'A zárás nem változtatott semmit ebben a fordulóban.') + '</div>';
+  return '<div class="zlista">' + blokkok.join('') + '</div>';
+}
+
+function zarasRajzol(){
+  const r = $('selZaras').value;
+  $('zarasSzuro').innerHTML = ZNEZETEK.map(([k, cim]) =>
+    `<button class="vlt-chip${zarasNezet === k ? ' on' : ''}" data-znezet="${k}">${cim}</button>`).join('');
+  $('zarasBody').innerHTML = zarasHTML(r, zarasNezet);
+}
+
+// A panel csak akkor rajzolhato, ha a NEVEK is megvannak (draft.json,
+// draft_players.json) - a zarasok.json kulon uton toltodik, es siman
+// megelozheti oket. E nelkul a jatekosok "#512"-kent jelennenek meg.
+function zarasInit(){
+  if (!ZARASOK || !Object.keys(PLAYERS).length || !Object.keys(ENTRIES).length) return;
+  const fordulok = Object.keys(ZARASOK).map(Number).sort((a, b) => b - a);
+  $('selZaras').innerHTML = fordulok.map(r => `<option value="${r}">${r}. forduló</option>`).join('');
+  $('zarasPanel').style.display = '';
+  zarasRajzol();
+}
+
+document.addEventListener('click', e => {
+  const chip = e.target.closest('[data-znezet]');
+  if (chip){ zarasNezet = chip.dataset.znezet; zarasRajzol(); return; }
+  const nav = e.target.closest('[data-znav]');
+  if (nav){
+    const sel = $('selZaras'), i = sel.selectedIndex + (+nav.dataset.znav);
+    if (i >= 0 && i < sel.options.length){ sel.selectedIndex = i; zarasRajzol(); }
+  }
+});
+document.addEventListener('change', e => { if (e.target.id === 'selZaras') zarasRajzol(); });
 
 // Matrix-cellara kattintva a ket csapat egymas elleni meccsei.
 const showH2H = FunTasy.h2hNezo({
@@ -815,6 +903,12 @@ async function liveRefresh(){
 // A liga-adatokat a collect_draft.py gyűjti szerveroldalon 3 óránként; a
 // keret-fájlok hiánya nem hiba (a szezon eleje előtt még nem léteznek).
 const opcional = u => fetch(u + '?t=' + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null);
+// A zarasi valtozasok nem a fooldal kritikus utja: kulon toltjuk, nem
+// varakoztatjak a tabellat. Ures vagy hianyzo fajlnal a panel rejtve marad.
+opcional('../zarasok.json').then(j => {
+  if (j && j.rounds && Object.keys(j.rounds).length){ ZARASOK = j.rounds; zarasInit(); }
+});
+// mindket betoltesi ut vegen probalkozunk: amelyik kesobb er ide, az rajzol
 Promise.all([
   fetch('../draft.json?t=' + Date.now()).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
   opcional('../draft_players.json'),
@@ -837,6 +931,7 @@ Promise.all([
     $('status').className = '';
     T.renderAll();
     liveRefresh();
+    zarasInit();          // ha a zarasok.json elobb ert ide, most mar nev is van hozza
     // Mobilon a lapra visszaterve nincs ujratoltes, tehat a fenti egyszeri
     // lekeres utan az allas befagyna - ezert visszatereskor ujra lekerjuk.
     FunTasy.ujraLathatokor(liveRefresh);

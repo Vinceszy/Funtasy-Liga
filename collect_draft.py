@@ -138,6 +138,36 @@ def kiir_ha_valtozott(path, tartalom, regi_nelkul_kulcs="updated"):
     return True
 
 
+def zarasi_kulonbseg(regi, uj):
+    """A zaras elotti (tarolt) es utani (friss) keretek kulonbsege.
+    Csapatonkent: "pont" = jatekosonkenti pontvaltozas (a bonusz-korrekcio),
+    "ki"/"be" = az automatikus cserek (a pad-jelzo valtozasabol - a zaraskor
+    az FPL atirja a position mezot, merve 2026-08-25). None, ha nincs mibol
+    szamolni (nincs tarolt pillanatkep); ures dict, ha semmi sem valtozott -
+    az is eredmeny: azt jelenti, a zaras nem hozott valtozast."""
+    if not regi:
+        return None
+    ki = {}
+    for lid, friss in uj.items():
+        volt = regi.get(lid)
+        if not volt:
+            continue
+        vp = {x["e"]: x for x in volt}
+        pont = [{"e": x["e"], "elott": vp[x["e"]]["pts"], "utan": x["pts"]}
+                for x in friss if x["e"] in vp and vp[x["e"]]["pts"] != x["pts"]]
+        csere_ki = [x["e"] for x in friss
+                    if x["b"] and x["e"] in vp and not vp[x["e"]]["b"]]
+        csere_be = [x["e"] for x in friss
+                    if not x["b"] and x["e"] in vp and vp[x["e"]]["b"]]
+        if pont or csere_ki or csere_be:
+            ki[lid] = {}
+            if pont:
+                ki[lid]["pont"] = pont
+            if csere_ki or csere_be:
+                ki[lid]["ki"], ki[lid]["be"] = csere_ki, csere_be
+    return ki
+
+
 def main():
     print("FPL Draft gyujtes (liga: %s)" % LEAGUE_ID)
 
@@ -227,6 +257,13 @@ def main():
     except Exception:
         hist = {"updated": None, "rounds": {}}
     hist.setdefault("rounds", {})
+    try:
+        with open("zarasok.json", encoding="utf-8") as f:
+            zarasok = json.load(f)
+    except Exception:
+        zarasok = {"updated": None, "rounds": {}}
+    zarasok.setdefault("rounds", {})
+    zarasok_elotte = json.dumps(zarasok["rounds"], ensure_ascii=False, sort_keys=True)
 
     # Celok: az aktualis fordulo (frissul, amig tart), minden hianyzo, ES
     # minden olyan fordulo, amirol meg NEM tudjuk biztosan, hogy veglegesen
@@ -301,6 +338,24 @@ def main():
                              "b": (p.get("position") or 0) > 11,
                              "pts": pont.get(str(p.get("element")), 0)}
                             for p in picks]
+        # ZARASI KULONBSEG: pontosan egyszer, a veglegesito futasban
+        # szamoljuk ki - amikor a fordulo MOST kerulne a veglegesek koze.
+        # Ilyenkor a hist meg a zaras ELOTTI pillanatkepet orzi (a legutobbi,
+        # legfeljebb 3 oraval korabbi futasbol), az "uj" pedig a zaras UTANI
+        # allapot: a ketto kulonbsege a lockdown muve (bonusz-korrekcio,
+        # automatikus cserek). Regi pillanatkep nelkul (backfill) nincs mibol
+        # szamolni - olyankor kimarad.
+        veglegesitendo = (gw not in veglegesek and len(uj) == len(liga_idk)
+                          and (gw < int(aktualis)
+                               or (gw == int(aktualis)
+                                   and bool(game.get("current_event_finished")))))
+        if veglegesitendo and str(gw) not in zarasok["rounds"]:
+            valtozas = zarasi_kulonbseg(hist["rounds"].get(str(gw)) or {}, uj)
+            if valtozas is not None:
+                zarasok["rounds"][str(gw)] = valtozas
+                print("  zarasi kulonbseg: GW%d, %d csapat erintett"
+                      % (gw, len(valtozas)))
+
         # EBBEN A FUTASBAN jott-e be minden csapat kerete? A tarolt adatbol
         # ez nem latszik: a sor alatti osszefesules miatt egy regebbi, teljes
         # pillanatkep akkor is teljesnek mutatna a fordulot, ha most epp
@@ -323,6 +378,10 @@ def main():
             continue
         if gw < int(aktualis) or (gw == int(aktualis) and veg):
             veglegesek.add(gw)
+    if json.dumps(zarasok["rounds"], ensure_ascii=False, sort_keys=True) != zarasok_elotte:
+        zarasok["updated"] = stamp()
+        kiir_ha_valtozott("zarasok.json", zarasok)
+
     kiir_ha_valtozott("draft_history.json",
                       {"updated": None, "rounds": hist["rounds"],
                        "veglegesek": sorted(veglegesek)})
