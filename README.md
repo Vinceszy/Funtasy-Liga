@@ -719,6 +719,30 @@ viszont igen, fordulónkénti bontásban (lásd fentebb), tehát a múlt játék
 kéréssel pótolható. Az `arak.json` ettől függetlenül hasznos: az minden gyűjtő-futásnál
 figyel, tehát a forduló KÖZBENI változást is rögzíti, amit a fordulónkénti bontás nem.
 
+### Amit a hivatalos szabályzat rögzít (fantasy.mlsz.hu, 2026-08-25)
+A szabályzat több, addig csak mérésből ismert viselkedést megerősít — és a „zárási
+változások" kérdését el is dönti:
+
+- **„A heti összpontszám az adott forduló utolsó játéknapjának végén válik véglegessé."**
+  Vagyis az NB1-ben a zárás pillanatában **tervezetten semmi nem változik** — nincs
+  másnapi bónusz-véglegesítés, mint az FPL-ben. Utólagos módosítás csak hibajavítás
+  lehetne (a pontozás a STATS adatbázisából jön), ilyet pedig még nem figyeltünk meg.
+- **Halasztott meccs:** a játékosok az eredeti héten nem szereznek pontot; a pont **azon
+  a héten** jár, amikor a meccset ténylegesen lejátsszák — annak alapján, hogy a játékos
+  benne van-e a **pótlás hetének** piaczárásig kialakított keretében. Ezért fordulhat elő,
+  hogy valaki egy héten két meccs után is pontot szerez — a profil fordulónkénti sora
+  ezért kezel több meccset.
+- **Árváltozás csak piacnyitáskor:** a játékosok ára „minden hétkezdet (piacnyitás) során
+  változhat" — tehát hetente egyszer, nem folyamatosan. A piac az előző forduló utolsó
+  játéknapjának **másnapján, reggel 10-kor** nyit, és a forduló első meccse előtt
+  **2 órával** zár. Az `arak.json` 3 óránkénti figyelése ezt bőven elkapja.
+- **A pad kötelező összetétele** (1 kapus + 1 védő + 1 középpályás + 1 csatár), a kezdő
+  formáció-korlátai (1 kapus, 3–5 védő, 3–5 középpályás, 1–3 csatár), a kapitány ×2, a
+  csere ×0,5 és a magyarszabály (+10, legalább 5 magyar kezdő, köztük U21-es) — mind
+  hivatalosan is így van, ahogy a KEZD% számítás használja.
+- **Egy valós klubból legfeljebb 3 játékos** lehet egy keretben; hetente **3 csere**
+  (téli és válogatott szünetben korlátlan).
+
 ### A pontszámítás kulcsa
 A `weekly_points` **már kész érték**: tartalmazza a kapitányi duplázást és a pad felezését.
 A csapat fordulópontszáma tehát:
