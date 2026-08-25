@@ -202,6 +202,10 @@ def main():
                 "n": el.get("web_name") or "",
                 "t": klub.get(el.get("team"), ""),
                 "p": poszt.get(el.get("element_type"), ""),
+                # a szezonpont a fooldali jatekoslistahoz kell (csokkeno
+                # pontsorrend + kereses). A bootstrap-static amugy is
+                # lejon minden korben, tehat ez NEM plusz keres.
+                "pts": el.get("total_points") or 0,
             }
         # a "teams" (csapat-id -> rovidnev) az elo fixtures-valasz
         # csapat-azonositoinak feloldasahoz kell a bongeszoben

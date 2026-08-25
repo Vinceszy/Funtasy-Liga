@@ -404,6 +404,47 @@ def hatekonysag(sq):
     return round(keret_osszeg(sq), 2), round(legjobb, 2)
 
 
+def jatekostorzs():
+    """A TELJES MLSZ-jatekostorzs - a fooldali jatekoslistahoz es kereseshez.
+
+    Egyetlen kerés: a `per_page=500` mukodik ezen a vegponton (alapbol 15/lap
+    lenne, 26 lap) - kimerve, lasd naplo/mlsz-jatekoslista.txt. Fordulora NEM
+    szurheto, tehat csak a mostani allapotot adja; a fordulonkenti pontot a
+    profil maskepp szedi ossze, ide csak a szezon-osszpont kell.
+
+    Az `id` UGYANAZ, mint a keret-rekordok `id`-je (competition_player.id) -
+    ezt is kimertuk: 102 mentett jatekosbol 102-nel ugyanaz a nev all
+    ugyanazon az azonositon, elteres nulla. A profil megnyitasa ezen all.
+
+    Aki KIKERULT a bajnoksagbol, az a torzsben mar nincs benne (a meresben 5
+    ilyen volt), a keret-elozmenyben viszont igen - ezert a torzs a keresest
+    szolgalja ki, nem a profilt: a profil a keret-elozmenybol is megnyilik.
+    """
+    st, j = api_get(BASE + "players?include=team,position,summary_statistics"
+                          "&per_page=500")
+    adat = (j or {}).get("data") if isinstance(j, dict) else None
+    if st != 200 or not isinstance(adat, list) or not adat:
+        print("  ! jatekostorzs: HTTP %s - a jatekosok.json valtozatlan" % st,
+              file=sys.stderr)
+        return None
+    ki = {}
+    for p in adat:
+        cp = p.get("id")
+        if not cp:
+            continue
+        po = p.get("position") or {}
+        team = p.get("team") or {}
+        ss = p.get("summary_statistics") or {}
+        ki[str(cp)] = {
+            "n": " ".join(x for x in (p.get("first_name"), p.get("last_name")) if x),
+            "t": team.get("short_name") or team.get("name") or "",
+            "p": po.get("monogram") or po.get("name") or "",
+            "u21": bool(p.get("is_u21")),
+            "pts": ss.get("competition_points") or 0,
+        }
+    return ki
+
+
 def kompakt_iras(path, obj):
     """A konyvjelzoevel azonos, kompakt JSON-formatum."""
     with open(path, "w", encoding="utf-8") as f:
@@ -732,6 +773,21 @@ def main():
                          {"round": int(r), "squads": keret})
         print("  squad_history.json + squads.json + keretek/ frissitve"
               " (utolso fordulo: %d)" % utolso)
+
+    # ---- Jatekostorzs (a fooldali lista + kereses). Egy keres futasonkent.
+    # Az `updated` mezot az osszehasonlitasbol kihagyjuk, kulonben minden
+    # korben valtozna a fajl akkor is, ha egyetlen pont sem mozdult.
+    torzs = jatekostorzs()
+    if torzs is not None:
+        try:
+            with open("jatekosok.json", encoding="utf-8") as f:
+                torzs_regi = json.load(f).get("players")
+        except Exception:
+            torzs_regi = None
+        if json.dumps(torzs, ensure_ascii=False, sort_keys=True) != \
+           json.dumps(torzs_regi, ensure_ascii=False, sort_keys=True):
+            kompakt_iras("jatekosok.json", {"updated": stamp(), "players": torzs})
+            print("  jatekosok.json frissitve (%d jatekos)" % len(torzs))
 
     if provisional:
         print("  ideiglenes (meg tart): %s. fordulo" % ", ".join(map(str, provisional)))
