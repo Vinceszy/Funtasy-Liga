@@ -1,4 +1,4 @@
-# 7. KOR: van-e teljes menetrend (jovobeli meccsek) az MLSZ-nel?
+# 9. KOR: van-e teljes menetrend (jovobeli meccsek) az MLSZ-nel?
 # A profil elore is felsorolja a fordulokat - ott az ELLENFELNEK latszania
 # kell, csak a pont ures. Ma a meccsek.json csak a megjart fordulokat ismeri.
 # Probafordulo: 8. (round_id=91)
@@ -12,13 +12,22 @@
 === competitions/N/rounds                  -> HTTP 404
 === competitions/N/rounds + games          -> HTTP 404
 
-## 2) tartalek: a keret-vegpont meccslistaja JOVOBELI fordulokra
-#    (valodi user_id-val - enelkul a vegpont ures listat ad)
-=== rankings('peterkmrs') -> user.id: 5299
-===  8. fordulo -> HTTP 200 | nincs keret-sor
-=== 13. fordulo -> HTTP 200 | nincs keret-sor
-=== 33. fordulo -> HTTP 200 | nincs keret-sor
+## 2) a keret-vegpont jovobeli fordulora: HTTP 200, de URES lista
+#    (kimerve: 8., 13. es 33. fordulo, valodi user.id-val - a keret
+#     csak a mar elindult fordulokra letezik, tehat ez az ut sem jar)
 
-### Ha a jovobeli fordulora is megjon a meccslista, a gyujto egyszer
-### vegigmegy a hatralevo fordulokon, es a menetrend bekerul a
-### meccsek.json-ba - a profil elore is mutatja az ellenfelet.
+## 3) csapat-alapu vegpontok es a fordulo-objektum
+=== competitions/N/teams               -> HTTP 404
+=== competitions/N/teams + games       -> HTTP 404
+=== teams?filter[competition_id]       -> HTTP 400
+=== competitions/N/schedule            -> HTTP 404
+=== competitions/N/fixtures            -> HTTP 404
+=== competitions/N/game-days           -> HTTP 404
+
+## 4) a fordulo-objektum (amit a gyujto amugy is lekér)
+=== competitions?include=rounds -> HTTP 200 | 6 fordulo
+    egy fordulo kulcsai: ['closed_transfers_at', 'end_at', 'id', 'is_transfers_closed', 'round_number', 'start_at']
+    {"id": 77, "round_number": 1, "start_at": "2026-07-21T10:00:00+02:00", "end_at": "2026-07-28T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-07-24T18:00:00+02:00"}
+
+### Ha egyik sem adja a jovobeli parositasokat, akkor az NB1-profil
+### jovobeli soraiban nem tudunk ellenfelet mutatni - csak a fordulot.
