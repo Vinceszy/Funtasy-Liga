@@ -63,6 +63,57 @@ def proba(cimke, ut):
     return j
 
 
+ki("# 2. KOR: a players vegpont MEGVAN (competitions/N/players, 385 jatekos,")
+ki("# 15/lap, 26 lap; a page[size]-t eldobja). Amit ad: klub, poszt, u21,")
+ki("# serules, ar, es summary_statistics (competition_points, weekly_points).")
+ki("# Amit NEM ad: fordulonkenti pont - a weekly_points az AKTUALIS forduloe.")
+ki("#")
+ki("# EZ A KOR AZT MERI, POTOLHATO-E A MULT:")
+ki("#   a) fogad-e filter[round_id]-t (akkor barmelyik regi fordulo lekerheto)")
+ki("#   b) van-e mukodo lapmeret-parameter (26 keres helyett keve sebb)")
+ki("#   c) valtozik-e a weekly_points a szurovel - ez a doL kerdes")
+
+ALAP = "competitions/%d/players?include=summary_statistics,team,position" % collect.COMPETITION
+
+
+def minta(cimke, ut, kulcs="weekly_points"):
+    """Egy proba: hany sor, es mit ad az ELSO jatekos weekly_points-a."""
+    st, j = collect.api_get(collect.ROOT + ut)
+    if not isinstance(j, dict) or not isinstance(j.get("data"), list):
+        ki("=== %-44s -> HTTP %s (nincs lista)" % (cimke, st))
+        return None
+    adat, meta = j["data"], (j.get("meta") or {})
+    elso = adat[0] if adat else {}
+    ss = (elso.get("summary_statistics") or {})
+    cr = (elso.get("current_round") or {})
+    ki("=== %-44s -> HTTP %s | sorok=%d total=%s per_page=%s"
+       % (cimke, st, len(adat), meta.get("total"), meta.get("per_page")))
+    ki("    elso: %s %s | %s=%s comp=%s | current_round.round_id=%s"
+       % (elso.get("first_name"), elso.get("last_name"), kulcs, ss.get(kulcs),
+          ss.get("competition_points"), cr.get("round_id")))
+    return j
+
+
+# ---- a) fordulo-szuro: potolhato-e a mult? ----
+for r_ in (1, 3, 5):
+    minta("filter[round_id]=%d (%d. fordulo)" % (collect.rid(r_), r_),
+          ALAP + "&filter%%5Bround_id%%5D=%d" % collect.rid(r_))
+minta("szuro NELKUL (referencia)", ALAP)
+
+# ---- b) lapmeret-parameterek ----
+for cimke, par in [("per_page=100", "per_page=100"), ("limit=100", "limit=100"),
+                   ("page[limit]=100", "page%5Blimit%5D=100"),
+                   ("page[per_page]=100", "page%5Bper_page%5D=100")]:
+    minta("lapmeret: " + cimke, ALAP + "&" + par)
+
+# ---- c) mennyi ido/keres a teljes torzs? ----
+st, j = collect.api_get(collect.ROOT + ALAP)
+lapok = ((j or {}).get("meta") or {}).get("last_page")
+ki("")
+ki("### A teljes torzs %s lapbol all (15/lap)." % lapok)
+
+sys.exit(0)
+
 ki("# Jatekoslista-vegpont kereses. Cel: teljes torzs + fordulonkenti pont.")
 ki("# ROOT=%s  BASE=%s  round_id(%d)=%d" % (collect.ROOT, collect.BASE, R, collect.rid(R)))
 
