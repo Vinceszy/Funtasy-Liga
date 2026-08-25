@@ -1,4 +1,4 @@
-# 9. KOR: van-e teljes menetrend (jovobeli meccsek) az MLSZ-nel?
+# 10. KOR: van-e teljes menetrend (jovobeli meccsek) az MLSZ-nel?
 # A profil elore is felsorolja a fordulokat - ott az ELLENFELNEK latszania
 # kell, csak a pont ures. Ma a meccsek.json csak a megjart fordulokat ismeri.
 # Probafordulo: 8. (round_id=91)
@@ -12,22 +12,20 @@
 === competitions/N/rounds                  -> HTTP 404
 === competitions/N/rounds + games          -> HTTP 404
 
-## 2) a keret-vegpont jovobeli fordulora: HTTP 200, de URES lista
-#    (kimerve: 8., 13. es 33. fordulo, valodi user.id-val - a keret
-#     csak a mar elindult fordulokra letezik, tehat ez az ut sem jar)
+## 2) A jatekos-adatlap vegpontja (a felulet ezt mutatja)
+=== players/{id}                     -> HTTP 200 | felso kulcsok: ['birth_date', 'countries', 'extended_summary_statistics', 'fantasy_summary_statistics', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'profile_picture', 'rounds', 'team']
+=== players/{id} + team.games        -> HTTP 200 | felso kulcsok: ['birth_date', 'countries', 'extended_summary_statistics', 'fantasy_summary_statistics', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'profile_picture', 'rounds', 'team']
+=== players/{id} + games             -> HTTP 200 | felso kulcsok: ['birth_date', 'countries', 'extended_summary_statistics', 'fantasy_summary_statistics', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'profile_picture', 'rounds', 'team']
+=== players/{id} + next_games        -> HTTP 200 | felso kulcsok: ['birth_date', 'countries', 'extended_summary_statistics', 'fantasy_summary_statistics', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'profile_picture', 'rounds', 'team']
+=== players/{id} + upcoming_games    -> HTTP 200 | felso kulcsok: ['birth_date', 'countries', 'extended_summary_statistics', 'fantasy_summary_statistics', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'profile_picture', 'rounds', 'team']
+=== players/{id} + fixtures          -> HTTP 200 | felso kulcsok: ['birth_date', 'countries', 'extended_summary_statistics', 'fantasy_summary_statistics', 'first_name', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'profile_picture', 'rounds', 'team']
+=== players/{id}/games               -> HTTP 404 (nem JSON objektum)
+=== players/{id}/next-games          -> HTTP 404 (nem JSON objektum)
 
-## 3) csapat-alapu vegpontok es a fordulo-objektum
-=== competitions/N/teams               -> HTTP 404
-=== competitions/N/teams + games       -> HTTP 404
-=== teams?filter[competition_id]       -> HTTP 400
-=== competitions/N/schedule            -> HTTP 404
-=== competitions/N/fixtures            -> HTTP 404
-=== competitions/N/game-days           -> HTTP 404
+## 3) Hany fordulot ismer az API? (elso meresre csak 6-ot adott)
+=== competitions?include=rounds      -> HTTP 200 | 6 fordulo (utolso: 6)
+=== + per_page=100                   -> HTTP 200 | 6 fordulo (utolso: 6)
+=== rounds?filter[competition_id]    -> HTTP 404 | data: 0
 
-## 4) a fordulo-objektum (amit a gyujto amugy is lekér)
-=== competitions?include=rounds -> HTTP 200 | 6 fordulo
-    egy fordulo kulcsai: ['closed_transfers_at', 'end_at', 'id', 'is_transfers_closed', 'round_number', 'start_at']
-    {"id": 77, "round_number": 1, "start_at": "2026-07-21T10:00:00+02:00", "end_at": "2026-07-28T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-07-24T18:00:00+02:00"}
-
-### Ha egyik sem adja a jovobeli parositasokat, akkor az NB1-profil
-### jovobeli soraiban nem tudunk ellenfelet mutatni - csak a fordulot.
+### A felulet biztosan tudja a jovobeli parositasokat - ha egyik ut sem
+### adja, a kovetkezo lepes a frontend-bundle visszafejtese.
