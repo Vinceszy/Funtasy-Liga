@@ -1,8 +1,14 @@
 # Tesztek
 
 ```bash
-tesztek/futtat.sh
+tesztek/futtat.sh            # parhuzamosan (alap: 3 munkas), ~5 perc
+PARHUZAM=1 tesztek/futtat.sh # regi soros mod (hibakereseshez), ~11 perc
 ```
+
+A böngészős tesztek párhuzamosan futnak, mert egymástól függetlenek — kivéve a két
+**időzítést mérő** tesztet (`frissjelzo`, `visszateres`): azok a sor végén, egyedül
+futnak, mert párhuzamos terhelés alatt hamisan bukhatnának. A párhuzamosság előfeltétele
+volt, hogy a `jsonAtir` lemezről olvasson (lásd a `kozos.js`-t).
 
 Elindít egy helyi kiszolgálót a repó gyökerére, lefuttatja az összes tesztet, és
 összegez. A kilépőkód a bukott tesztek száma, tehát CI-ból is használható.

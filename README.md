@@ -1065,9 +1065,11 @@ A naplón magán nincs lábléc, mert önmagára mutatna.
 tesztek/futtat.sh
 ```
 
-Elindít egy helyi kiszolgálót a repó gyökerére, lefuttat mindent (3 gyűjtő- és 13
-böngészős tesztet), és összegez; a kilépőkód a bukott tesztek száma. Tesztenkénti
-bontás: `tesztek/README.md`.
+Elindít egy helyi kiszolgálót a repó gyökerére, lefuttat mindent — a doksi-konzisztencia
+ellenőrzését, a gyűjtő-teszteket, majd a böngészős teszteket **párhuzamosan** (3 munkás;
+a két időzítést mérő teszt a végén, egyedül fut) —, és összegez; a kilépőkód a bukott
+tesztek száma. `PARHUZAM=1` a régi soros mód. A tesztek darabszámát szándékosan nem írjuk
+ide: kétszer is elavult. Tesztenkénti bontás: `tesztek/README.md`.
 
 Két elv, amit érdemes megtartani:
 
