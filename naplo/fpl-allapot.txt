@@ -7,3 +7,4 @@
 2026-08-24 21:54  GW1 kesz=False ps=n ligak='Updating' | NAP 08-21=p 08-22=p 08-23=p 08-24=p | MECCS 1P 4P 3P 5P 6P 2P 7P 8P 9P 10P
 2026-08-24 23:44  GW1 kesz=False ps=n ligak='' | NAP 08-21=p 08-22=p 08-23=p 08-24=p | MECCS 1P 4P 3P 5P 6P 2P 7P 8P 9P 10P
 2026-08-25 08:09  GW1 kesz=False ps=n ligak='Updating' | NAP 08-21=r/Added 08-22=r/Added 08-23=r/Added 08-24=r/Added | MECCS 1F 4F 3F 5F 6F 2F 7F 8F 9F 10F
+2026-08-25 08:58  GW1 kesz=True ps=n ligak='Updating' | NAP 08-21=r/Added 08-22=r/Added 08-23=r/Added 08-24=r/Added | MECCS 1F 4F 3F 5F 6F 2F 7F 8F 9F 10F
