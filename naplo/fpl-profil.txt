@@ -45,3 +45,12 @@
 ## 4) a fordulo meccsei (a tarolando meccsfajlhoz)
 === event/1/fixtures -> HTTP 200 | 10 meccs | 24726 bajt
     egy meccs kulcsai: ['code', 'event', 'finished', 'finished_provisional', 'id', 'kickoff_time', 'minutes', 'provisional_start_time', 'pulse_id', 'started', 'stats', 'team_a', 'team_a_score', 'team_h', 'team_h_score']
+
+## 5) a ket hianyzo reszlet
+=== draft element-summary history-sor MINDEN mezoje:
+    ['assists', 'bonus', 'bps', 'clean_sheets', 'clearances_blocks_interceptions', 'creativity', 'defensive_contribution', 'detail', 'element', 'event', 'expected_assists', 'expected_goal_involvements', 'expected_goals', 'expected_goals_conceded', 'fixture', 'goals_conceded', 'goals_scored', 'ict_index', 'id', 'influence', 'minutes', 'opponent_team', 'own_goals', 'penalties_missed', 'penalties_saved', 'recoveries', 'red_cards', 'saves', 'starts', 'tackles', 'threat', 'total_points', 'yellow_cards']
+    total_points=17 (a Draftban ismert: 17) | detail='AVL (H) 4-0' | event=1
+    fixtures: 37 jovobeli meccs, elso: {"id": 16, "started": false, "difficulty": 4, "opponent": 6, "is_home": false, "code": 2645207, "finished": false, "finished_provisional": false, "kickoff_time": "2026-08-30T13:00:00Z", "minutes": 0, 
+=== draft bootstrap-static: egy jatekos MINDEN mezoje:
+    ['added', 'assists', 'bonus', 'bps', 'chance_of_playing_next_round', 'chance_of_playing_this_round', 'clean_sheets', 'clearances_blocks_interceptions', 'code', 'corners_and_indirect_freekicks_order', 'corners_and_indirect_freekicks_text', 'creativity', 'creativity_rank', 'creativity_rank_type', 'defensive_contribution', 'direct_freekicks_order', 'direct_freekicks_text', 'draft_rank', 'dreamteam_count', 'element_type', 'ep_next', 'ep_this', 'event_points', 'expected_assists', 'expected_goal_involvements', 'expected_goals', 'expected_goals_conceded', 'first_name', 'form', 'form_rank', 'form_rank_type', 'goals_conceded', 'goals_scored', 'ict_index', 'ict_index_rank', 'ict_index_rank_type', 'id', 'in_dreamteam', 'influence', 'influence_rank', 'influence_rank_type', 'minutes', 'news', 'news_added', 'news_return', 'news_updated', 'own_goals', 'penalties_missed', 'penalties_order', 'penalties_saved', 'penalties_text', 'points_per_game', 'points_per_game_rank', 'points_per_game_rank_type', 'recoveries', 'red_cards', 'saves', 'second_name', 'squad_number', 'starts', 'status', 'tackles', 'team', 'threat', 'threat_rank', 'threat_rank_type', 'total_points', 'web_name', 'yellow_cards']
+    De Cuyper: total_points=17 event_points=17
