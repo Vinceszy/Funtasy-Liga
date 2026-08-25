@@ -76,7 +76,8 @@ TOVABBI MERESSEL IGAZOLT TENYEK (2026-08-20):
 - A 0-0 vedelem marad: ha egy fordulo minden erteke 0, a fordulo el sem
   kezdodott, nem kerulhet be lejatszott dontetlenkent.
 """
-import datetime, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
+import datetime
+import itertools, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 
 COMPETITION = 3
 MEMBERS = {
@@ -351,6 +352,56 @@ def meccsek_gyujtes(j, fordulo, tarolo):
             if mf is not None and mf != fordulo:
                 continue
             tarolo[g["id"]] = meccs_kivonat(g)
+
+
+def hatekonysag(sq):
+    """Kezdoallitasi hatekonysag egy keretre: (szerzett, leheto) vagy None.
+
+    SZABALY (Vince, 2026-08-25): a pad kotelezoen 1 kapus + 1 vedo +
+    1 kozeppalyas + 1 csatar - formaciovalasztas tehat NINCS. Az optimum
+    MEGSEM posztonkenti minimum: a magyarszabaly (+10, ha a kezdok kozt
+    legalabb 5 magyar es koztuk U21-es van) fugg attol, KI ul a padon,
+    ezert a 2x4x5x4 = ~160 pad-kombinaciot vegigprobaljuk (olcso), es
+    mindegyikhez a legjobb kezdot tesszuk kapitanynak.
+
+    A tarolt week mar KESZ ertek (kapitanyi x2, pad x0.5 benne van) - a
+    nyers pontot a cap/sub jelzobol fejtjuk vissza. A szerzett a
+    keret_osszeg (= a hivatalos fordulopont, magyarszaballyal egyutt)."""
+    if not sq or len(sq) != 15:
+        return None
+    posztok = {}
+    for p in sq:
+        raw = float(p.get("week") or 0)
+        if p.get("cap"):
+            raw /= 2.0
+        elif p.get("sub"):
+            raw *= 2.0
+        posztok.setdefault(p.get("pos") or "?", []).append(
+            (raw, bool(p.get("hun")), bool(p.get("hun") and p.get("u21"))))
+    if len(posztok) != 4 or any(len(v) < 2 for v in posztok.values()):
+        return None                     # nem a vart 4-posztos keretsablon
+    poszt_lista = list(posztok.values())
+    legjobb = None
+    for pad_idx in itertools.product(*[range(len(a)) for a in poszt_lista]):
+        ossz = pad_fel = 0.0
+        cap = None
+        hun = u21 = 0
+        for a, bi in zip(poszt_lista, pad_idx):
+            for i, (raw, h, u) in enumerate(a):
+                if i == bi:
+                    pad_fel += 0.5 * raw
+                else:
+                    ossz += raw
+                    if cap is None or raw > cap:
+                        cap = raw
+                    if h:
+                        hun += 1
+                    if u:
+                        u21 += 1
+        s = ossz + pad_fel + cap + (10 if (hun >= 5 and u21 >= 1) else 0)
+        if legjobb is None or s > legjobb:
+            legjobb = s
+    return round(keret_osszeg(sq), 2), round(legjobb, 2)
 
 
 def kompakt_iras(path, obj):
@@ -634,6 +685,28 @@ def main():
         with open("results.json", "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=0)
         print("  results.json frissitve")
+
+    # ---- Kezdoallitasi hatekonysag: minden tarolt fordulora ujraszamolva.
+    # Determinisztikus es olcso (nehany szaz rekord), ezert nem tartunk hozza
+    # allapotot: amig a keret nem valtozik, a fajl sem. Az elo fordulo erteke
+    # meg valtozik - a lap donti el, hogy a tabellaba csak a lezartat veszi.
+    hat = {}
+    for r_, keretek in hist["rounds"].items():
+        sor = {}
+        for nev_, sq_ in (keretek or {}).items():
+            h_ = hatekonysag(sq_)
+            if h_:
+                sor[nev_] = {"sz": h_[0], "le": h_[1]}
+        if sor:
+            hat[r_] = sor
+    try:
+        with open("hatekonysag.json", encoding="utf-8") as f:
+            hat_regi = json.load(f).get("rounds")
+    except Exception:
+        hat_regi = None
+    if json.dumps(hat, ensure_ascii=False, sort_keys=True) !=             json.dumps(hat_regi, ensure_ascii=False, sort_keys=True):
+        kompakt_iras("hatekonysag.json", {"updated": stamp(), "rounds": hat})
+        print("  hatekonysag.json frissitve")
 
     if json.dumps(meccsek["rounds"], ensure_ascii=False, sort_keys=True) != meccsek_elotte:
         meccsek["updated"] = stamp()

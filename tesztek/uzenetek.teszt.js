@@ -63,6 +63,13 @@ function keret(opts){
     }, null, { timeout: 20000 });
     const szoveg = (await p.locator('.accpanel').innerText()).trim();
     console.log('   ' + eset.nev + ' -> ' + JSON.stringify(szoveg.slice(0, 70)));
+    if (!eset.vart.test(szoveg))
+      // ha bukik, mondja meg MIERT: mit latott a lap a sajat elofeltetelebol
+      console.log('   DIAG: ' + JSON.stringify(await p.evaluate(() => ({
+        prov: window.PROVISIONAL, live: Object.keys(LIVE),
+        elo5: eloFordulo(5),
+        sor: { ...(document.querySelector('.plr[data-acc]') || { dataset: {} }).dataset },
+      }))));
     jo(eset.vart.test(szoveg), eset.nev);
     if (/zajlik/.test(szoveg))
       jo(!/eddig nincs pontot érő/.test(szoveg) && /MLSZ a pontokat a meccs végén/.test(szoveg),

@@ -6,7 +6,7 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=34">
+<link rel="stylesheet" href="../funtasy.css?v=35">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -56,22 +56,24 @@
       <div id="mNext"></div>
       <div class="note">Kattints egy meccsre a két keret összehasonlításához.</div>
     </div>
-  </div>
 
-  <!-- Amit a fordulo zarasa (az FPL masnap reggeli veglegesitese) valtoztatott.
-       Csak akkor latszik, ha van mar zarasi adat (zarasok.json). -->
-  <div class="panel" id="zarasPanel" style="display:none">
-    <h2>Zárási változások
-      <span class="roundnav">
-        <button data-znav="-1">‹</button>
-        <select id="selZaras"></select>
-        <button data-znav="1">›</button>
-      </span>
-    </h2>
-    <div class="note">Az FPL a fordulót másnap reggel zárja le: ekkor véglegesíti a bónuszt
-      és hajtja végre az automatikus cseréket. Itt az látszik, mit változtatott a zárás.</div>
-    <div id="zarasSzuro"></div>
-    <div id="zarasBody"></div>
+    <!-- Amit a fordulo zarasa valtoztatott. Csak akkor latszik, ha mar van
+         zarasi adat (zarasok.json). A GRIDBEN el, a tobbi panellel azonos
+         szelessegben - teljes szelessegu kulonallokent torzitotta az oldalt. -->
+    <div class="panel" id="zarasPanel" style="display:none">
+      <h2>Zárási változások
+        <span class="roundnav">
+          <button data-znav="-1">‹</button>
+          <select id="selZaras"></select>
+          <button data-znav="1">›</button>
+        </span>
+      </h2>
+      <div class="note">Az FPL a fordulót az utolsó meccse utáni reggelen véglegesíti:
+        ekkor rögzül a bónusz, és ekkor állnak be az automatikus cserék.
+        Itt az látszik, mit változtatott ez a zárás.</div>
+      <div id="zarasSzuro"></div>
+      <div id="zarasBody"></div>
+    </div>
   </div>
 </div>
 <div class="lablec" id="lablec"></div>
@@ -88,7 +90,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=34"></script>
+<script src="../funtasy.js?v=35"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -146,7 +148,51 @@ const nev = id => (ENTRIES[id] && ENTRIES[id].name) || ('#' + id);
 const jat = e => PLAYERS[e] || { n: '#' + e, t: '', p: '' };
 const posRank = p => ({ GKP: 0, DEF: 1, MID: 2, FWD: 3 }[p] ?? 9);
 
+// ---------- kezdoallitasi hatekonysag (PL) ----------
+// leheto: a legjobb ERVENYES kezdo 11 pontszama a 15-bol. FPL-formaciok:
+// pontosan 1 kapus, 3-5 vedo, 1-3 csatar, a kozeppalyas a maradek (2-5).
+// A Draftban nincs kapitany, a pad pontja nem szamit - a szerzett tehat a
+// kezdok osszege, a leheto a legjobb formacio osszege.
+function plLeheto(sq){
+  const poszt = { GKP: [], DEF: [], MID: [], FWD: [] };
+  for (const x of sq){
+    const p = jat(x.e).p;
+    if (poszt[p]) poszt[p].push(x.pts || 0);
+  }
+  for (const k in poszt) poszt[k].sort((a, b) => b - a);
+  // prefix-osszegek: elo[k][n] = a legjobb n jatekos osszege
+  const elo = a => a.reduce((s, v) => (s.push(s[s.length - 1] + v), s), [0]);
+  const G = elo(poszt.GKP), D = elo(poszt.DEF), M = elo(poszt.MID), F = elo(poszt.FWD);
+  let legjobb = null;
+  for (let d = 3; d <= 5; d++)
+    for (let f = 1; f <= 3; f++){
+      const m = 10 - d - f;
+      if (m < 2 || m > 5) continue;
+      if (poszt.GKP.length < 1 || poszt.DEF.length < d
+          || poszt.MID.length < m || poszt.FWD.length < f) continue;
+      const s = G[1] + D[d] + M[m] + F[f];
+      if (legjobb == null || s > legjobb) legjobb = s;
+    }
+  return legjobb;
+}
+function plHatekonysag(sq){
+  if (!sq || sq.length < 15) return null;
+  const le = plLeheto(sq);
+  if (le == null) return null;
+  return { sz: sq.filter(x => !x.b).reduce((s, x) => s + (x.pts || 0), 0), le };
+}
+// a hook a TAROLT keretbol szamol, fordulonkent memozva; elo fordulora a
+// tabella ugysem hasznalja (csak played meccsekre aggregal)
+const KEZD_MEMO = new Map();
+function kezdErtek(id, r){
+  const k = id + '|' + r;
+  if (!KEZD_MEMO.has(k))
+    KEZD_MEMO.set(k, plHatekonysag(((HIST[r] || {})[id]) || null));
+  return KEZD_MEMO.get(k);
+}
+
 const T = FunTasy.create({
+  kezd: kezdErtek,
   entries:    () => Object.keys(ENTRIES).map(Number),
   schedule:   SCHEDULE,
   firstRound: () => liga.start_event || 1,
@@ -309,7 +355,8 @@ function keretHTML(id){
 }
 
 function fordulokHTML(id){
-  let h = `<table><tr><th>F</th><th>Ellenfél</th><th>Pont</th><th>Ell.</th><th>Eredm.</th></tr>`;
+  let h = `<table><tr><th>F</th><th>Ellenfél</th><th>Pont</th><th>Ell.</th>
+    <th title="${esc(FunTasy.KEZD_CIM)}">KEZD%</th><th>Eredm.</th></tr>`;
   let gy = 0, d = 0, v = 0;
   for (const r of Object.keys(SCHEDULE).map(Number).sort((a, b) => a - b))
     for (const m of SCHEDULE[r]){
@@ -331,6 +378,11 @@ function fordulokHTML(id){
       h += `<tr class="clickable" data-mh="${m[0]}" data-mv="${m[1]}" data-mr="${r}"><td class="rank">${r}.</td>
         <td class="name">${esc(nev(opp))}</td>
         <td>${own != null ? fmt(own) : '—'}</td><td>${ov != null ? fmt(ov) : '—'}</td>
+        <td class="kezdpc">${(() => {
+          if (elo || r === LIVEGW) return '';        // élőben még változik
+          const v2 = kezdErtek(id, r), pc = v2 && FunTasy.kezdSzazalek(v2.sz, v2.le);
+          return pc == null ? '—' : pc + '%';
+        })()}</td>
         <td class="${cls}">${res}${elo ? '<span class="elojel">élő</span>' : ''}</td></tr>`;
     }
   return `<div style="font-size:13px;color:var(--dim);margin-bottom:8px">Mérleg: <b class="pos">${gy} GY</b> · ${d} D · <b class="neg">${v} V</b> — ${gy * 3 + d} pont</div>` + h + '</table>';
@@ -490,7 +542,17 @@ function showMatch(h, v, r, mode){
   if (H && V){
     const S = a => a.filter(x => !x.b).reduce((s, x) => s + (x.pts || 0), 0);   // a pad nem szamit
     const fej = (A, B) => allasHTML(h, v, S(A), S(B), r === LIVEGW);
-    const test = (A, B) => fej(A, B) + ACCHINT +
+    const kezdSor = (A, B) => {
+      const va = plHatekonysag(A), vb = plHatekonysag(B);
+      const egy = x => {
+        const pc = x && FunTasy.kezdSzazalek(x.sz, x.le);
+        return pc == null ? '–' : `${pc}% <span class="kezdresz">(${fmt(x.sz)}/${fmt(x.le)})</span>`;
+      };
+      if (!va && !vb) return '';
+      return `<div class="kezdsor" title="${esc(FunTasy.KEZD_CIM)}">kezdőállítás: `
+           + `${egy(va)} — ${egy(vb)}${r === LIVEGW ? ' <span class="elojel">élő</span>' : ''}</div>`;
+    };
+    const test = (A, B) => fej(A, B) + kezdSor(A, B) + ACCHINT +
       `<div class="sqwrap">${sqcolHTML(h, A, null, r)}${sqcolHTML(v, B, null, r)}</div>`;
     $('mBody').innerHTML = test(H, V);
     // Lezart fordulonal a percek utolag jonnek meg (egy keres, fordulonkent

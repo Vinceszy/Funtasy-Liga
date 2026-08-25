@@ -155,11 +155,34 @@
       });
     };
 
+    // Csapatonkent osszesitett hatekonysag a LEZART meccsek forduloira -
+    // ugyanabbol a korbol, amibol a tabella is szamol, tehat a ketto nem
+    // csuszhat szet (elo/ideiglenes fordulo egyikbe sem szamit bele).
+    function kezdOsszesito() {
+      if (!opts.kezd) return null;
+      var t = {};
+      kor().forEach(function (r) {
+        vegleges(r).forEach(function (m) {
+          if (!played(m)) return;
+          [m[0], m[1]].forEach(function (n) {
+            var v = opts.kezd(n, r);
+            if (!v) return;
+            var c = t[n] || (t[n] = { sz: 0, le: 0 });
+            c.sz += v.sz; c.le += v.le;
+          });
+        });
+      });
+      return t;
+    }
+
     api.renderTable = function () {
+      var kezd = kezdOsszesito();
       var h = '<tr><th></th><th>' + esc(opts.nameHeader || 'Szakvezető') +
         '</th><th>M</th><th>GY</th><th>D</th><th>V</th>' +
         '<th title="szerzett pont">SP</th><th title="kapott pont">KP</th>' +
-        '<th title="pontkülönbség">KÜL</th><th>Pont</th><th>Forma</th></tr>';
+        '<th title="pontkülönbség">KÜL</th><th>Pont</th>' +
+        (kezd ? '<th title="' + KEZD_CIM + '">KEZD%</th>' : '') +
+        '<th>Forma</th></tr>';
       api.computeTable().forEach(function (r, i) {
         var form = r.form.slice(-5).map(function (f) {
           return '<span class="dot ' + f + '"></span>';
@@ -175,6 +198,11 @@
           '<td>' + fmt(r.RG) + '</td><td>' + fmt(r.KG) + '</td>' +
           '<td class="' + (r.GK >= 0 ? 'pos' : 'neg') + '">' + fmt(r.GK) + '</td>' +
           '<td class="pont">' + r.Pont + '</td>' +
+          (kezd ? (function () {
+            var v = kezd[r.name], pc = v ? kezdSzazalek(v.sz, v.le) : null;
+            return '<td class="kezdpc" title="' + (v ? fmt(v.sz) + ' / ' + fmt(v.le) + ' pont' : '') +
+                   '">' + (pc == null ? '–' : pc + '%') + '</td>';
+          })() : '') +
           '<td style="text-align:left"><span class="form">' + form + '</span></td></tr>';
       });
       el(ids.table).innerHTML = h;
@@ -262,6 +290,15 @@
     // jelolessel, jovobeliek "— : —"-mal. A sorok data-mh/mv/mr attributumot
     // kapnak: kattintasra a meccs-nezet nyilik a modalon belul (vissza
     // gombbal), mindket oldal sajat kezelojevel.
+    // kis szurke % a h2h pontja mellett - elo meccsre nem, az meg valtozik
+    function kezdJel(n, r, elo) {
+      if (!opts.kezd || elo) return '';
+      var v = opts.kezd(n, r), pc = v && kezdSzazalek(v.sz, v.le);
+      return pc == null ? ''
+        : ' <span class="kezdjel" title="' + KEZD_CIM + ': ' +
+          fmt(v.sz) + ' / ' + fmt(v.le) + ' pont">' + pc + '%</span>';
+    }
+
     api.h2hHTML = function (a, b) {
       var sorok = '', gy = 0, d = 0, v = 0, jatszott = 0;
       kor().forEach(function (r) {
@@ -283,9 +320,9 @@
           }
           sorok += '<tr class="clickable" data-mh="' + esc(m[0]) + '" data-mv="' + esc(m[1]) +
             '" data-mr="' + r + '"><td class="rank">' + r + '.</td>' +
-            '<td>' + (ap != null ? fmt(ap) : '—') +
+            '<td>' + (ap != null ? fmt(ap) : '—') + kezdJel(a, r, elo) +
             (elo ? ' <span class="elojel">élő</span>' : '') + '</td>' +
-            '<td>' + (bp != null ? fmt(bp) : '—') + '</td>' +
+            '<td>' + (bp != null ? fmt(bp) : '—') + kezdJel(b, r, elo) + '</td>' +
             '<td class="' + cls + '">' + (elo ? 'élő' : res) + '</td></tr>';
         });
       });
@@ -444,6 +481,18 @@
      kozott - az adat (honnan jon az allas es mi a jobb oldali cimke)
      ligankenti adapter dolga. 0-0-t sosem talalunk ki: ha nincs eredmeny
      (hp == null), csak a ket klub nevet irjuk ki. */
+  /* ===== Kezdoallitasi hatekonysag =====
+     Mennyit hozott a felallitott kezdo abbol, amennyit a keretbol ki
+     lehetett volna hozni. A SZAMITAS ligankenti adapter dolga (NB1: a
+     gyujto szamolja a fix pad-szaballyal es a kapitannyal; PL: a bongeszo
+     a formacio-szabalyokkal) - itt csak a kozos megjelenites el.
+     A hook: opts.kezd(name, fordulo) -> {sz, le} | null. */
+  var KEZD_CIM = 'Kezdőállítási hatékonyság — a keretből elérhető pontok ' +
+                 'hány százalékát hozta a beállított kezdő';
+  function kezdSzazalek(sz, le) {
+    return le > 0 ? Math.round(100 * sz / le) : null;
+  }
+
   function bontasMeccsSor(m) {
     if (!m || !m.hazai || !m.vendeg) return '';
     var allas = (m.hp == null || m.vp == null)
@@ -721,6 +770,7 @@
                      LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
                      lablecHTML: lablecHTML, renderLablec: renderLablec,
                      bontasMeccsSor: bontasMeccsSor,
+                     kezdSzazalek: kezdSzazalek, KEZD_CIM: KEZD_CIM,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
                      lassuJelzo: lassuJelzo, allasHTML: allasHTML,
                      nezetVerem: nezetVerem, lekero: lekero,

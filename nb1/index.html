@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=34">
+<link rel="stylesheet" href="../funtasy.css?v=35">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -72,7 +72,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=34"></script>
+<script src="../funtasy.js?v=35"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -116,7 +116,17 @@ const eloMeccs = (r,i) => (LIVE[r] && LIVE[r][i]) || null;
 // elo allast (ott nincs kezunkben a menetrendbeli sorszam)
 const eloAllas = FunTasy.eloKereso(LIVE);
 
+// ---------- kezdoallitasi hatekonysag (NB1) ----------
+// A SZAMITAS a gyujtoben el (collect.py hatekonysag - fix pad-szabaly,
+// kapitany, magyarszabaly), az eredmeny a kis hatekonysag.json-ban jon:
+// a lapnak igy nem kell a teljes kerettortenetet letoltenie a tabellahoz.
+let KEZD = null;
+fetch('../hatekonysag.json?t='+Date.now()).then(r=>r.ok?r.json():null)
+  .then(j=>{ if(j&&j.rounds){ KEZD=j.rounds; renderTable(); } }).catch(()=>{});
+const kezdErtek=(nev,r)=>((KEZD||{})[r]||{})[nev]||null;
+
 const T = FunTasy.create({
+  kezd: kezdErtek,
   entries:     () => Object.keys(MEMBERS),
   schedule:    SCHEDULE,
   live:        LIVE,
@@ -692,6 +702,18 @@ function meccsTest(){
   const mbA=magyarBonus(A.filter(p=>!p.sub)), mbB=magyarBonus(B.filter(p=>!p.sub));
   const szabaly={kozos: mbA.pts===mbB.pts, pts: mbA.pts};
   const van = SALARY_CAP && (kozos.length || szabaly.kozos);
+  // kezdoallitasi hatekonysag a ket oldalra (csak lezart meccsen: elo
+  // forduloban az ertek meg valtozik, es a gyujto ugyis ujraszamolja)
+  const kezdsor = (() => {
+    if (elo) return '';
+    const egy = n => {
+      const x = kezdErtek(n, r), pc = x && FunTasy.kezdSzazalek(x.sz, x.le);
+      return pc == null ? '–' : `${pc}% <span class="kezdresz">(${fmt(x.sz)}/${fmt(x.le)})</span>`;
+    };
+    const a = egy(h), b = egy(v);
+    if (a === '–' && b === '–') return '';
+    return `<div class="kezdsor" title="${esc(FunTasy.KEZD_CIM)}">kezdőállítás: ${a} — ${b}</div>`;
+  })();
   const gomb = van
     ? `<div class="szurosor">
          <button class="szurogomb${CSAK_ELTERES?' on':''}" id="elteresGomb">Különbségek</button>
@@ -705,7 +727,7 @@ function meccsTest(){
     : ACCHINT + `<div class="sqwrap">${squadHTML(h,A,hp,r)}${squadHTML(v,B,vp,r)}</div>`;
   // az allas es a kapcsolo EGY dobozban all: igy nem harom kulon kozepre
   // zart sor lebeg egymas alatt, es a gomb is odatartozik, ahova valo
-  $('mBody').innerHTML = `<div class="meccsfej">${allasHTML(h,v,hp,vp,elo)}${gomb}</div>` + test;
+  $('mBody').innerHTML = `<div class="meccsfej">${allasHTML(h,v,hp,vp,elo)}${kezdsor}${gomb}</div>` + test;
 }
 
 // Egyseges meccs-nezet: fordulohu keretek. Elo fordulonal az elo folyamat

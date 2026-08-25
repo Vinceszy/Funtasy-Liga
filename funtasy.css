@@ -251,8 +251,11 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .bontasmeccs .ora{font-family:'JetBrains Mono';color:var(--dim);white-space:nowrap}
 .plr .pts{font-family:'JetBrains Mono';font-weight:700;min-width:52px;text-align:right}
 /* ===== Zarasi valtozasok panel (PL fooldal) ===== */
-#zarasSzuro{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
-.zlista{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px 22px}
+/* A belso margokat a savok adjak (a .panel-nek nincs sajatja - ez a
+   changelognal mar egyszer elcsuszott). */
+#zarasSzuro{display:flex;gap:6px;flex-wrap:wrap;margin:2px 16px 4px}
+#zarasBody{padding:0 16px 12px}
+.zlista{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 22px}
 .zcsapat h3{font-family:'Archivo Black';font-size:12px;letter-spacing:1px;color:var(--amber);
   margin:10px 0 2px}
 .zsor{display:flex;align-items:center;gap:8px;padding:4px 2px;font-size:13px;
@@ -262,6 +265,13 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .zsor .zdiff{font-family:'JetBrains Mono';font-weight:700;min-width:34px;text-align:right}
 .zsor .zirany{font:600 11px Inter;color:var(--dim)}
 .zsor .zirany.pos{color:var(--win)}
+/* kezdoallitasi hatekonysag: tabella-cella, h2h-jel, meccsfej-sor */
+td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
+.kezdjel{font:500 10.5px 'JetBrains Mono';color:var(--dim);margin-left:4px}
+.kezdsor{text-align:center;font:600 12px Inter;color:var(--dim);margin-top:9px}
+.kezdsor .kezdresz{font:500 11px 'JetBrains Mono';color:var(--dim)}
+/* a PL meccs-modaljaban az allas-doboz folott kulon sorkent all */
+#mBody > .kezdsor{margin:-4px 0 10px}
 .flag{display:inline-block;width:14px;height:9px;margin-left:6px;vertical-align:middle;border-radius:1px;
   background:linear-gradient(to bottom,#CE2939 0 33.3%,#fff 33.3% 66.6%,#477050 66.6% 100%);border:1px solid rgba(0,0,0,.35)}
 .ppos{display:inline-block;min-width:26px;text-align:center;background:var(--panel2);border:1px solid var(--line);

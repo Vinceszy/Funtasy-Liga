@@ -26,25 +26,25 @@ const vege = async br => { if (br) await br.close(); process.exit(hibak.length ?
 
 /** A repobol jovo JSON-t menet kozben atirja (fixtura-fajlok nelkul).
 
-    A belso lekeres (route.fetch) a helyi tesztszerveren megy at, ami a
-    teljes tesztsor terhelese alatt neha eldobja a kapcsolatot. Ha ilyenkor
-    csendben tovabbengednenk, a teszt ELOFELTETELE veszne el, es a teszt
-    nem a sajat hibaja miatt bukna - rossz uzenettel (ez tortent: az
-    "uzenetek" es tarsai futasonkent mas-mas allitasnal buktak). Ezert
-    ujraprobalkozunk, es ha vegleg nem megy, HANGOSAN bukunk. */
+    A fajlt LEMEZROL olvassuk, nem a helyi tesztszerveren at: a szerver a
+    teljes tesztsor terhelese alatt neha eldobja a kapcsolatot, es akkor a
+    teszt ELOFELTETELE veszett el - a teszt mas-mas allitasnal, felrevezeto
+    uzenettel bukott (az "uzenetek" harom futasban harom kulonbozo helyen).
+    Egy route.fetch-es ujraprobalkozo valtozat sem volt eleg. Halozati ut
+    csak akkor marad, ha a keres nem repo-fajlra mutat. */
+const fs = require('fs');
+const GYOKER = require('path').join(__dirname, '..');
 async function jsonAtir(page, minta, atalakit) {
   await page.route(minta, async route => {
-    let v = null, hiba = null;
-    for (let i = 0; i < 3; i++) {
-      try { v = await route.fetch(); hiba = null; break; }
-      catch (e) { hiba = e; await new Promise(r => setTimeout(r, 150 * (i + 1))); }
+    let j = null;
+    try {
+      const ut = decodeURIComponent(new URL(route.request().url()).pathname);
+      j = JSON.parse(fs.readFileSync(require('path').join(GYOKER, '.' + ut), 'utf8'));
+    } catch (e) { /* nem repo-fajl vagy nem JSON - jon a halozati ut */ }
+    if (j == null) {
+      const v = await route.fetch();
+      try { j = await v.json(); } catch (e) { return route.fulfill({ response: v }); }
     }
-    if (!v) {
-      console.error('jsonAtir: a belso lekeres 3x elhasalt (' + minta + '): ' + hiba);
-      return route.abort();
-    }
-    let j;
-    try { j = await v.json(); } catch (e) { return route.fulfill({ response: v }); }
     route.fulfill({ status: 200, contentType: 'application/json',
                     body: JSON.stringify(atalakit(j) || j) });
   });

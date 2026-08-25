@@ -218,6 +218,7 @@ teljes képernyős, ragadós × gombbal.
 | `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”), `start`-ot (az adott fordulós meccsének kezdése), `vege: true`-t (a meccse már lement, akkor is, ha a pontok még nincsenek feldolgozva) és — ha a klubnak nincs meccse a fordulóban — `nogame: true`-t is tartalmaz. A régebbi, e mezők nélküli rekordokat az oldal tolerálja, de a gyűjtő nem hagyja őket úgy: az olyan fordulót, amelynek a rekordjaiban nincs `played`, egyszer újra lekéri a meccslistával együtt, és pótolja a hiányzó mezőket. |
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
 | `naplo/` | **Mérési archívum** (lezárt egyszeri megfigyelések nyers naplói — lásd `naplo/README.md`). A hozzájuk tartozó workflow-k törölve; a következtetések ebben a README-ben vannak (3/b, „Automatikus cserék”, „Ki van még a pályán”, bónusz-szakasz). |
+| `hatekonysag.json` | Kezdőállítási hatékonyság fordulónként (`{updated, rounds:{"1":{név:{sz, le}}}}`) — az NB1 KEZD% oszlopának és meccs-nézetének forrása. A gyűjtő minden futásnál az összes tárolt fordulóra újraszámolja (determinisztikus). A PL-nek nincs ilyen fájlja: ott a böngésző számol a már betöltött kerettörténetből. |
 | `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**. A GW1 a git-történetből lett pótolva. |
 | `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset csak akkor, ha a forduló hivatalos pontja változott (ez a **pótolt meccs** esete — az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). **Nem a forduló összes meccse:** csak azoké a kluboké, amelyeknek van játékosuk valamelyik keretben — a részletező fölötti sorhoz ennyi kell. |
 | `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. |
@@ -860,6 +861,31 @@ Rögzíti: `zarasires.teszt.js`.
 
 Az NB1-en ez a rés nem áll fenn: ott a gyűjtő maga dönti el a lezárást, és ugyanabban a
 futásban írja be az eredményt is.
+
+### Kezdőállítási hatékonyság (KEZD%)
+
+**Mit mér:** a keretből elérhető pontok hány százalékát hozta a ténylegesen beállított
+kezdő. `szerzett / lehető`, ahol a lehető a keret **utólag ismert** pontjaiból számolt
+legjobb érvényes felállítás. A tabella KEZD% oszlopa a lezárt fordulók összesítése
+(ugyanabból a körből, amiből a tabella számol — élő/ideiglenes forduló nem számít bele);
+a meccs-nézet fejlécében és az egymás elleni listában fordulónként áll.
+
+**NB1** (a gyűjtő számolja, `collect.py hatekonysag` → `hatekonysag.json`):
+- A pad kötelezően 1 kapus + 1 védő + 1 középpályás + 1 csatár (Vince, 2026-08-25) —
+  formációválasztás tehát nincs. Az optimum **mégsem** posztonkénti minimum: a
+  magyarszabály (+10) függ attól, ki ül a padon, ezért a ~160 pad-kombinációt
+  végigpróbáljuk, mindegyikhez a legjobb kezdő a kapitány.
+- A tárolt `week` már kész érték (kapitányi ×2, pad ×0,5) — a nyers pontot a `cap`/`sub`
+  jelzőből fejtjük vissza. A szerzett a `keret_osszeg` (= a hivatalos fordulópont).
+
+**PL** (a böngésző számolja, `plHatekonysag` a `pl/index.html`-ben):
+- A legjobb **érvényes** kezdő 11: pontosan 1 kapus, 3–5 védő, 1–3 csatár, a középpályás
+  a maradék (2–5). A Draftban nincs kapitány, a pad pontja nem számít.
+- Élő fordulóra a tabella nem számol (csak lejátszott meccsekre aggregál); a meccs-modal
+  élő meccsen a friss pontokból számol, „élő" jelöléssel.
+
+A megjelenítés közös (`opts.kezd` hook a `FunTasy.create`-ben: tabella-oszlop, h2h-jel;
+`FunTasy.kezdSzazalek`, `KEZD_CIM`) — a számítás ligánkénti adapter.
 
 ### A pad sorrendje (PL) — és ami még nyitott
 
