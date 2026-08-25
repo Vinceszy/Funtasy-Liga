@@ -613,31 +613,52 @@
       '</div>' + (tenyek ? '<div class="ptenyek">' + tenyek + '</div>' : '') + '</div>';
   }
 
+  /* A tulajdonos szerepenek NEVE egy helyen. A hivo strukturaltan adja at
+     (kezdo / kapitany logikai mezok), nem kesz magyar szoveget - igy a
+     szohasznalat egy helyen all, es az aranyokat is ebbol lehet szamolni,
+     nem szoveg-egyeztetessel. A kapitany egyben kezdo is. */
+  function szerepNev(t) {
+    return t.kapitany ? 'kapitány' : (t.kezdo ? 'kezdő' : 'pad');
+  }
+
+  /* A ligara vetitett aranyok - CSAK SALARY CAP ligaban.
+     DRAFT ligaban ennek nincs ertelme: ott egy jatekos pontosan egy
+     szakvezetonel lehet (vagy senkinel), tehat a "keret %" mindig 1/N vagy
+     0 lenne, a kapitany pedig nem is letezik. Ez nem az NB1 es a PL
+     kulonbsege, hanem a liga TIPUSAe - ezert a `tipus` mezo donti el
+     (funtasy.js -> LIGAK), nem a liga azonositoja.
+     A nevezo a fordulo TENYLEGES keretszama, nem beegetett szam: ha egy
+     fordulobol hianyzik valakinek a kerete, a beegetett szam lefele
+     torzitana. A harom szam egymasba agyazodik: keret >= kezdo >= kapitany. */
+  function aranyHTML(s, salaryCap) {
+    var t = s.tulajok || [];
+    if (!salaryCap || !s.keretszam || !t.length) return '';
+    var kezdo = 0, kap = 0;
+    for (var i = 0; i < t.length; i++) {
+      if (t[i].kezdo || t[i].kapitany) kezdo++;
+      if (t[i].kapitany) kap++;
+    }
+    var pc = function (x) { return Math.round(100 * x / s.keretszam) + '%'; };
+    return '<span class="parany" title="a forduló ' + s.keretszam +
+      ' keretére vetítve — a kapitány is kezdő">' +
+      'keret <b>' + pc(t.length) + '</b> · kezdő <b>' + pc(kezdo) +
+      '</b> · kapitány <b>' + pc(kap) + '</b></span>';
+  }
+
   /* Egy fordulo sora. Az allast MINDIG hazai-vendeg sorrendben kapjuk, a
      "(h)" / "(i)" jeloli, melyik oldalon allt a jatekos klubja - igy az
      eredmeny ugyanugy olvashato, mint barhol maskul az oldalon, es nem kell
      fejben forgatni. */
-  function profilSorHTML(s, senkinel) {
+  function profilSorHTML(s, senkinel, salaryCap) {
     var hol = s.hazai == null ? '' : (s.hazai ? 'otthon' : 'idegenben');
     var allas = (s.hp == null || s.vp == null) ? ''
       : '<span class="pallas">' + fmt(s.hp) + '–' + fmt(s.vp) + '</span>';
     var tulaj = (s.tulajok && s.tulajok.length)
       ? s.tulajok.map(function (t) {
-          return '<span class="ptul"><b>' + esc(t.nev) + '</b>' +
-                 (t.szerep ? ' · ' + esc(t.szerep) : '') + '</span>';
+          return '<span class="ptul"><b>' + esc(t.nev) + '</b> · ' + esc(szerepNev(t)) + '</span>';
         }).join('')
       : '<span class="ptul nincs">' + esc(senkinel || 'senkinél') + '</span>';
-    // A tulajdonos-felsorolas melle a LIGA EGESZERE vetitett aranyok: hany
-    // keretben volt benne, hany kezdoben, hanyszor kapitany. A nevezo a liga
-    // aznapi keretszama, nem egy beegetett szam - igy egy kimarado keret nem
-    // torzit. Amelyik arany egy ligaban ertelmetlen (a PL Draftban nincs
-    // kapitany), azt a hivo egyszeruen nem adja at.
-    var arany = (s.arany && s.arany.length)
-      ? '<span class="parany"' + (s.aranyCim ? ' title="' + esc(s.aranyCim) + '"' : '') + '>' +
-        s.arany.map(function (a) {
-          return esc(a.cimke) + ' <b>' + Math.round(a.pc) + '%</b>';
-        }).join(' · ') + '</span>'
-      : '';
+    var arany = aranyHTML(s, salaryCap);
     var pont = (s.pont == null)
       ? '<span class="pjegyzet">' + esc(s.jegyzet || '—') + '</span>'
       : fmt(s.pont);
@@ -657,9 +678,10 @@
     if (!sorok.length)
       return profilFejHTML(adat) +
         '<div class="loading">Ehhez a játékoshoz még nincs fordulónkénti adat.</div>';
+    var l = liga(adat.liga), salaryCap = !!l && l.tipus === 'salary-cap';
     return profilFejHTML(adat) +
       '<div class="proflista">' + sorok.map(function (s) {
-        return profilSorHTML(s, adat.senkinel);
+        return profilSorHTML(s, adat.senkinel, salaryCap);
       }).join('') + '</div>';
   }
 

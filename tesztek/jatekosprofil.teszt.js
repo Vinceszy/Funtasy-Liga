@@ -137,6 +137,24 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   await p.waitForSelector('[data-prof]', { timeout: 20000 });
   jo(await p.$('.proflista') === null, 'a vissza gomb a "Szezon játékosai" listára tér vissza');
 
+  // ---- draft liga: ott az arany ertelmetlen ----
+  // Nem az NB1/PL kulonbsegen mulik, hanem a liga TIPUSAN: draftban egy
+  // jatekos pontosan egy szakvezetonel lehet, tehat a "keret %" mindig 1/N
+  // vagy 0 lenne. Ugyanazt az adatot rajzoltatjuk ki ketfele ligaval.
+  cim('Draft liga: nincs arány');
+  const ketfele = await p.evaluate(() => {
+    const sor = { r: 1, ellenfel: 'ARS', hazai: true, hp: 2, vp: 1, pont: 7,
+                  keretszam: 8,
+                  tulajok: [{ nev: 'A', kezdo: true, kapitany: true },
+                            { nev: 'B', kezdo: false, kapitany: false }] };
+    const rajz = l => FunTasy.profilHTML({ liga: l, nev: 'X', sorok: [sor] });
+    return { nb1: rajz('nb1'), pl: rajz('pl') };
+  });
+  jo(/class="parany"/.test(ketfele.nb1), 'salary cap ligában ott az arány-blokk');
+  jo(!/class="parany"/.test(ketfele.pl), 'DRAFT ligában nincs arány-blokk (mindig 1 vagy 0 keret)');
+  jo(/kapitány/.test(ketfele.pl) && /pad/.test(ketfele.pl),
+     'a szerep neve draft ligában is látszik (csak az arány marad el)');
+
   jo(perr.length === 0, 'nincs JS-hiba' + (perr.length ? ': ' + perr.join(' | ') : ''));
   await vege(br);
 })();

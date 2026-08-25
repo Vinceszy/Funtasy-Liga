@@ -206,6 +206,13 @@ forduló **tényleges** keretszáma — ahány szakvezetőről mentett keret van
 így egy kimaradó keret nem húzza le az arányt. **A kapitány kezdőnek is számít**, tehát a három
 szám egymásba ágyazódik: keret ≥ kezdő ≥ kapitány. Akinél senki sem volt, ott nincs arány-blokk.
 
+**Ez az arány csak salary cap ligában jelenik meg**, és ezt a liga `tipus` mezője dönti el
+(`funtasy.js` → `LIGAK`), nem a liga azonosítója. Draft ligában egy játékos pontosan egy
+szakvezetőnél lehet — vagy senkinél —, tehát a *keret* mindig 1/N vagy 0 lenne, kapitány pedig
+nincs is: a három szám nem mondana semmit. A szerep neve (kezdő / pad / kapitány) viszont ott
+is látszik. A közös réteg ezért nem kész magyar szöveget kap, hanem `{nev, kezdo, kapitany}`
+mezőket — így a szóhasználat és az arányszámítás is egy helyen áll.
+
 A sorra kattintva a szokásos accordion nyílik le a **tételes pont-bontással** és a klub
 meccsével — ugyanaz a lekérés és ugyanaz a gyorsítótár, mint a keret-nézetben.
 

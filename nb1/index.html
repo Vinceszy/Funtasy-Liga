@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=40">
+<link rel="stylesheet" href="../funtasy.css?v=41">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -72,7 +72,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=40"></script>
+<script src="../funtasy.js?v=41"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -443,27 +443,20 @@ async function profilAdat(jat){
   const sorok=[], klubok={};
   for(const r of rks){
     const per = rounds[r] || {};
-    const tulajok=[]; let alap=null, klub=null, kezdo=0, kap=0;
+    const tulajok=[]; let alap=null, klub=null;
     for(const mgr of Object.keys(per).sort()){
       const p=(per[mgr]||[]).find(azonos);
       if(!p) continue;
-      tulajok.push({nev:mgr, szerep: p.cap?'kapitány':(p.sub?'pad':'kezdő')});
-      if(!p.sub) kezdo++;                   // a kapitany is kezdo
-      if(p.cap) kap++;
+      // strukturaltan adjuk at, nem kesz szoveggel: a szerep NEVET es a
+      // ligara vetitett aranyokat a kozos reteg szamolja belole
+      tulajok.push({nev:mgr, kezdo: !p.sub, kapitany: !!p.cap});
       if(alap===null){ alap=alapPont(p); klub=p.team||null; }
     }
     if(klub) klubok[r]=klub;
-    // A nevezo a fordulo TENYLEGES keretszama (ahany szakvezetorol van
-    // mentett keret), nem egy beegetett 8 - egy hianyzo keret igy nem
-    // torzitja lefele az aranyt.
-    const ossz = Object.keys(per).length;
-    const arany = (ossz && tulajok.length) ? [
-      {cimke:'keret',    pc: 100*tulajok.length/ossz},
-      {cimke:'kezdő',    pc: 100*kezdo/ossz},
-      {cimke:'kapitány', pc: 100*kap/ossz}
-    ] : null;
-    sorok.push({r, tulajok, pont:alap, klub: klub||jat.klub, arany,
-                aranyCim: ossz ? ('a forduló '+ossz+' keretére vetítve — a kapitány is kezdő') : ''});
+    // a fordulo TENYLEGES keretszama - a kozos reteg ebbol szamol aranyt
+    // (es csak salary cap ligaban; draftban nem lenne ertelme)
+    sorok.push({r, tulajok, pont:alap, klub: klub||jat.klub,
+                keretszam: Object.keys(per).length});
   }
   jat.klubok=klubok;
   // amikor senkinel sem volt, a pontja csak az API-bol derul ki
@@ -485,6 +478,7 @@ async function profilAdat(jat){
   const keretben = sorok.filter(s=>s.tulajok.length).length;
   return {
     nev: jat.nev, klub: jat.klub, poszt: jat.poszt,
+    liga: 'nb1',
     magyar: !!jat.hun, cimkek: jat.u21?['U21']:[],
     tenyek: [
       {cimke:'Pont összesen', ertek: osszes},
