@@ -8,7 +8,7 @@
     "pl"
    ],
    "cim": "Kereshető a teljes mezőny, és megnyitható bárki szezonja",
-   "leiras": "A főoldalon új blokk sorolja fel a mezőny összes játékosát. Kereshető névre és klubra (ékezet nélkül is), szűrhető poszt, klub, jelenlegi tulajdonos, ár és pont szerint, bármelyik oszlop szerint rendezhető, és lapozható — így kideríthető, kinél van most bárki. Egy névre kattintva megnyílik a játékos szezonja: fordulónként az ellenfél, a meccs állása, a szerzett pont, és hogy melyik szakvezetőnél volt — az NB1-en kezdőként, padon vagy kapitányként, akár többnél egyszerre. A sor tovább nyitható a pontok tételes bontására. Ugyanez a nézet nyílik a Szezon játékosai listából és a pontok bontásának aljáról is. Az NB1-ben a játékosnevek mostantól magyar sorrendben állnak, vezetéknévvel elöl. Új panel mutatja azt is, ha egy pont a meccs után, a forduló véglegesítése előtt még változott — az első három fordulóból három ilyen eset van."
+   "leiras": "A főoldalon új blokk sorolja fel a mezőny összes játékosát. Kereshető névre és klubra (ékezet nélkül is), szűrhető poszt, klub, jelenlegi tulajdonos, ár és pont szerint, bármelyik oszlop szerint rendezhető, és lapozható — így kideríthető, kinél van most bárki. Egy névre kattintva megnyílik a játékos szezonja: fordulónként az ellenfél, a meccs állása, a szerzett pont, és hogy melyik szakvezetőnél volt — az NB1-en kezdőként, padon vagy kapitányként, akár többnél egyszerre. A sor tovább nyitható a pontok tételes bontására. Ugyanez a nézet nyílik a Szezon játékosai listából és a pontok bontásának aljáról is. Az NB1-ben a játékosnevek mostantól magyar sorrendben állnak, vezetéknévvel elöl."
   },
   {
    "datum": "2026-08-25",
@@ -24,10 +24,11 @@
    "datum": "2026-08-25",
    "tipus": "funkcio",
    "ligak": [
+    "nb1",
     "pl"
    ],
    "cim": "A főoldalon látszik, mit változtatott a forduló zárása",
-   "leiras": "Az FPL a fordulót az utolsó meccse utáni reggelen véglegesíti: ekkor rögzül a bónusz, és ekkor állnak be az automatikus cserék. Az új Zárási változások panel fordulónként mutatja, kinél mi változott — a pontváltozások és a cserék külön is szűrhetők, és a fordulók között lapozni lehet."
+   "leiras": "Mindkét ligában a forduló véglegesítése után is mozdulhat még a pont. Az FPL az utolsó meccs utáni reggelen zár: ekkor rögzül a bónusz, és ekkor állnak be az automatikus cserék. Az NB I-ben a pont minden meccs után megvan, de a heti összeg csak a forduló utolsó játéknapjának végén válik véglegessé — addig az MLSZ még igazíthat rajta. Az új Zárási változások panel mindkét oldalon fordulónként mutatja, kinél mi változott, és a fordulók között lapozni lehet. A PL-en a pontváltozások és a cserék külön is szűrhetők; az NB I-ben cserék nincsenek. Az első három fordulóból három ilyen esetünk van, ezekről az oldal még nem gyűjtött játékos-szintű adatot, ezért ott csak a változás mértéke áll — az nem, hogy kinél."
   },
   {
    "datum": "2026-08-25",

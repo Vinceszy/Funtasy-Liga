@@ -46,7 +46,8 @@ const { BASE, jo, inditas, vege } = require('./kozos');
   let a = await allapot();
   console.log('   forduló: ' + a.valaszto + ' | csapatok: ' + JSON.stringify(a.csapatok));
   jo(a.valaszto === '2', 'a legfrissebb forduló nyílik meg elsőnek');
-  jo(/nem változtatott semmit/.test(a.ures || ''), 'változás nélküli fordulónál ezt meg is mondja');
+  // Ugyanaz a szoveg, mint az NB1 panelen - a ketto egy renderert hasznal.
+  jo(/Nem történt változás/.test(a.ures || ''), 'változás nélküli fordulónál ezt meg is mondja');
 
   await p.click('[data-znav="1"]');           // vissza az 1. fordulora
   a = await allapot();

@@ -296,37 +296,44 @@ megjelenésük egységes, viszont egy oldal-szintű `.plr` lekérdezés (pl. egy
 ezeket is beszámolja. A modalra vonatkozó kereséseket ezért `#mBody`-ra kell szűkíteni.
 (A különbségek-teszt pontosan ezen bukott el, amikor a lista bekerült.)
 
-### Meccs utáni pontigazítás (NB1)
+### Zárási változások (mindkét liga)
 A hivatalos szabályzat szerint a pont minden meccs után megvan, de a **heti összeg csak a
 forduló utolsó játéknapjának végén válik véglegessé** — a kettő között az MLSZ még
 igazíthat. A gyűjtő ezt eddig átvezette, de nem őrizte meg; mostantól naplózza
 (`zarasok_nb1.json`), mert utólag rekonstruálhatatlan.
 
-A panel **ugyanott áll és ugyanúgy néz ki, mint a PL „Zárási változások" panelje**: a
-jobb oszlopban, szakvezető szerint csoportosítva, soronként poszt-címke, a **konkrét
-játékos** neve és klubja, az `előtte → utána` érték és az előjeles különbség. A játékos
-neve a profilt, a szakvezető neve a keretet nyitja. Az egyetlen eltérés, hogy nézetváltó
-sor nincs: az NB1-ben a forduló zárásakor nem áll be automatikus csere, tehát „cserék"
-nézet sem kell.
+Mindkét ligában van „Zárási változások" panel, **ugyanazon a helyen, ugyanazzal a címmel
+és ugyanazzal a megjelenítéssel**: jobb oszlop, szakvezető szerint csoportosítva,
+soronként poszt-címke, játékosnév + klub, `előtte → utána` érték és előjeles különbség. A
+játékos neve a profilt, a szakvezető neve a keretet nyitja. Ahol nem volt változás, ott az
+áll, hogy **nem történt változás** — a legördülőben minden eddigi forduló szerepel, nem
+csak az, amelyikben volt.
 
-Minden sor **játékos-szintű** — kivéve az első három forduló három ismert esetét, ahol
-csak a fordulóösszeg változását tudjuk. Azok a sorok ugyanígy állnak ott, „Ismeretlen
-játékos" névvel (`nk:1` jelző, nem kattinthatók), alattuk kiírt magyarázattal, hogy azokról
-a fordulókról az oldal még nem gyűjtött játékos-szintű adatot.
+**A HTML-t a közös réteg állítja elő** (`funtasy.js` → `FunTasy.zarasLista`); a két oldal
+csak normalizált sorokat ad át. Ez azért így van, mert külön-külön megírva a két panel
+egyszer már szétcsúszott (más cím, más elrendezés, más üres szöveg).
 
-Az érték a játékos **saját** pontja (kapitányi duplázás és
-padfelezés visszaszámolva), tehát ugyanaz a változás nem néz ki másképp aszerint, hogy
-kinél volt. Csak **lement meccsű** játékosnál számít változásnak: a meccs közbeni
-pontketyegés nem hír. Ugyanaz a játékos annyi blokkban jelenik meg, ahány keretben benne
-volt — pontosan úgy, ahogy a PL panelen.
+A **tárgya** ligánként más:
+
+- **PL:** az FPL az utolsó meccs utáni reggelen véglegesíti a fordulót — ekkor rögzül a
+  bónusz, és ekkor állnak be az automatikus cserék. Ezért van ott nézetváltó sor
+  (Mind / Pontváltozás / Cserék).
+- **NB1:** a pont minden meccs után megvan, de a heti összeg csak a forduló utolsó
+  játéknapjának végén válik véglegessé — a kettő között az MLSZ még igazíthat. Automatikus
+  csere nincs, tehát nézetváltó sor sincs.
+
+Az NB1-ben az érték a játékos **saját** pontja (kapitányi duplázás és padfelezés
+visszaszámolva), tehát ugyanaz a változás nem néz ki másképp aszerint, hogy kinél volt.
+Csak **lement meccsű** játékosnál számít változásnak: a meccs közbeni pontketyegés nem hír.
+Ugyanaz a játékos annyi blokkban jelenik meg, ahány keretben benne volt.
+
+Kivétel az első három forduló három ismert esete, ahol csak a **változás mértékét** tudjuk,
+a játékost nem. Azok a sorok „Ismeretlen játékos" névvel állnak ott (`nk:1` jelző, nem
+kattinthatók, `előtte → utána` nélkül, csak az előjeles különbséggel), alattuk kiírt
+magyarázattal.
 
 A panel csak akkor jelenik meg, ha van benne adat: egy állandóan üres doboz azt sugallná,
 hogy valami hiányzik.
-
-A **tárgya** más, mint a PL-é. Ott a zárás pillanatában tervezetten történik valami
-(bónusz-véglegesítés, automatikus cserék). Itt azt figyeljük, mi mozdul a **meccs vége és
-a forduló véglegesítése között** — a szabályzat szerint ez az az ablak, ahol az MLSZ még
-igazíthat.
 
 ### Navigáció a modalon belül
 A modal kis böngészőként működik: a listák soraira kattintva a tartalom cserélődik
@@ -359,7 +366,7 @@ teljes képernyős, ragadós × gombbal.
 | `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**; elemeik `{e, pts}` alakúak, mert a beállt játékos pontja mondja meg, mit hozott a csere (a régi, csak azonosítót tartalmazó alakot a lap még elfogadja). A GW1 a git-történetből lett pótolva. |
 | `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset csak akkor, ha a forduló hivatalos pontja változott (ez a **pótolt meccs** esete — az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). **Nem a forduló összes meccse:** csak azoké a kluboké, amelyeknek van játékosuk valamelyik keretben — a részletező fölötti sorhoz ennyi kell. |
 | `jatekosok.json` | A mezőny **összes** játékosa (`{players:{id:{n,t,p,u21,pts,ar}}}`) — a főoldali lista és keresés forrása. A gyűjtő írja, egy kérésből. |
-| `zarasok_nb1.json` | Fordulónként azok a **meccs utáni pontigazítások**, amiket az MLSZ a forduló véglegesítése előtt vezetett át. Alakja a PL `zarasok.json`-jáét követi, hogy ugyanaz a megjelenítés szolgálhassa ki: `{rounds:{forduló:{szakvezető:{pont:[{n,cp,pos,tm,elott,utan,d}]}}}}`. Az `nk:1` jelzőt viselő sor azt jelenti, hogy a játékos nem ismert (lásd fent). Élesben ritka esemény: a fájl üres vázként létezik, és csak akkor bővül, ha tényleg történt igazítás — a panel is csak akkor jelenik meg. |
+| `zarasok_nb1.json` | Fordulónként azok a **meccs utáni pontigazítások**, amiket az MLSZ a forduló véglegesítése előtt vezetett át. Alakja a PL `zarasok.json`-jáét követi, hogy ugyanaz a megjelenítés szolgálhassa ki: `{rounds:{forduló:{szakvezető:{pont:[{n,cp,pos,tm,elott,utan,d}]}}}}`. Az `nk:1` jelzőt viselő sor azt jelenti, hogy a játékos nem ismert: ott név helyett „Ismeretlen játékos" áll, és `elott`/`utan` helyett `dl` (a változás mértéke). Élesben ritka esemény: a fájl üres vázként létezik, és csak akkor bővül, ha tényleg történt igazítás — a panel is csak akkor jelenik meg. |
 | `arak.json` | Az árak **változásai** (`{arak:{id:[[dátum, ár], …]}}`). Csak akkor bővül, ha egy ár tényleg megváltozott. |
 | `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. |
 | `valtozasok-vazlat.json` | **Még nem publikált** naplóbejegyzések, ugyanabban a formában. A napló oldala ezt nem olvassa; a kész bejegyzés innen kerül át a `valtozasok.json`-ba. |
@@ -856,7 +863,7 @@ dönt, ha a `current_round` egyáltalán nem jött meg.
   már az — és utána mindegyik — a JAVÍTOTT összegeket adja ki (38,00 / 42,88 / 42,88 alap +
   10 bónusz = 48 / 52,88 / 52,88). A régi értékek csak a `results.json` csapatösszegében
   éltek, bontás nélkül. A `zarasok_nb1.json`-ban ezért „Ismeretlen játékos" névvel állnak
-  (`nk:1`), a fordulóösszeg értékeivel — nevet nem találunk ki hozzájuk.
+  (`nk:1`), és csak a változás mértéke (`dl`: +1, +1, −2,5) — nevet nem találunk ki hozzájuk.
   A 08-20-i szinkron óta (3 óránkénti összevetéssel) nem volt újabb ilyen.
 
 #### Önjavítás: ha az MLSZ korrigál, a gyűjtő is korrigál
@@ -1143,7 +1150,9 @@ A megjelenítés közös (`opts.kezd` hook a `FunTasy.create`-ben: tabella-oszlo
 számítás ligánkénti adapter. A **Fordulók fül is közös** (`T.fordulokHTML`): a PL és az
 NB1 korábban két majdnem azonos példányban tartotta (`fordulokHTML` / `seasonHTML`),
 ebből lett a kimaradó NB1-es KEZD% — az ilyen kettőzés pontosan az, amiről a
-6. fejezet közösítés-szabálya szól.
+6. fejezet közösítés-szabálya szól. Ugyanez történt a **zárási változások** paneljével is:
+két külön példányból két különböző kinézet lett, ezért a HTML most közös
+(`FunTasy.zarasLista`), és a két oldal csak normalizált sorokat ad át.
 
 ### A pad sorrendje (PL) — és ami még nyitott
 

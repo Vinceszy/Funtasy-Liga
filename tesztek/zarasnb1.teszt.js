@@ -2,11 +2,15 @@ const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
 // Meccs utani pontigazitas panel (NB1). Amit rogzit:
 //   - a panel CSAK akkor latszik, ha van adat (elesben ez ritka esemeny,
 //     es egy allandoan ures doboz azt sugallna, hogy valami hianyzik);
+//   - a legordulo MINDEN lejatszott fordulot felsorol: ahol nem volt
+//     valtozas, ott az a hir, hogy nem volt;
 //   - a legutolso ilyen fordulot mutatja alapbol, es lapozni lehet;
 //   - a valtozas iranya latszik (elojel es szin), a jatekos SAJAT pontjaval;
 //   - a megjelenites UGYANAZ, mint a PL "Zarasi valtozasok" panelje:
 //     szakvezeto szerint csoportositva, kattinthato nevekkel.
 const ADAT = { updated: 'x', rounds: {
+  '3': { Csendi: { pont: [
+          { n: '', cp: null, pos: '', tm: '', elott: null, utan: null, dl: -2.5, d: '2026-08-20', nk: 1 }] } },
   '4': { Bazsa: { pont: [
           { n: 'Egyik Elek', cp: 1, pos: 'MF', tm: 'MTK', elott: 5, utan: 6, d: '2026-08-20' }] } },
   '5': { Bazsa: { pont: [
@@ -83,15 +87,34 @@ const ADAT = { updated: 'x', rounds: {
   await p.click('#ovClose'); await p.waitForTimeout(200);
 
   cim('Lapozás');
+  const fordulok = await p.$$eval('#selZaras option', a => a.map(o => +o.value));
+  jo(JSON.stringify(fordulok) === JSON.stringify([1, 2, 3, 4, 5]),
+     'minden lejátszott forduló ott van a legördülőben (' + fordulok.join(', ') + ')');
   await p.click('[data-znav="-1"]');
   await p.waitForFunction(() => document.querySelector('#selZaras').value === '4',
                           null, { timeout: 5000 });
   jo(/Egyik Elek/.test(await p.$eval('#znBody', e => e.innerText)),
      'a nyíllal a korábbi fordulóra lehet lépni');
-  // a 4. az elso ilyen fordulo: onnan a visszalepes nem vihet sehova
+  await p.selectOption('#selZaras', '2'); await p.waitForTimeout(200);
+  jo(/Nem történt változás/.test(await p.$eval('#znBody', e => e.innerText)),
+     'ahol nem volt változás, ott ez van kiírva');
+  // az 1. az elso fordulo: onnan a visszalepes nem vihet sehova
+  await p.selectOption('#selZaras', '1'); await p.waitForTimeout(200);
   await p.click('[data-znav="-1"]');
-  jo((await p.$eval('#selZaras', e => e.value)) === '4',
+  jo((await p.$eval('#selZaras', e => e.value)) === '1',
      'az első fordulónál a visszalépés nem visz sehova (nem esik ki a listából)');
+
+  cim('Ismeretlen játékos');
+  // Ahol csak a valtozas MERTEKE ismert: nincs "elotte -> utana", a nev nem
+  // kattinthato, es kiirt magyarazat all alatta.
+  await p.selectOption('#selZaras', '3'); await p.waitForTimeout(200);
+  const isor = await p.$eval('#znBody .zsor', e => e.innerText.replace(/\n/g, ' '));
+  jo(/Ismeretlen játékos/.test(isor) && /-2,5/.test(isor) && !/→/.test(isor),
+     'csak a változás mértéke áll ott, nincs előtte → utána (' + isor + ')');
+  jo((await p.$$eval('#znBody .zsor .znev.kattint', a => a.length)) === 0,
+     'az ismeretlen játékos neve nem kattintható');
+  jo(/nem gyűjtött játékos-szintű adatot/.test(await p.$eval('#znBody', e => e.innerText)),
+     'kiírt magyarázat áll alatta');
 
   jo(perr.length === 0, 'nincs JS-hiba' + (perr.length ? ': ' + perr.join(' | ') : ''));
   await vege(br);

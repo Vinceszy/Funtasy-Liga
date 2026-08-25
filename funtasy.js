@@ -1276,11 +1276,57 @@
     return vege;
   }
 
+  /* ---------- zarasi valtozasok (mindket liga) ----------
+     A ket panel UGYANAZT mutatja ugyanugy: a PL-en a zaras pillanataban tortent
+     valtozast, az NB1-en a fordulo veglegesitesekor tortentet. A HTML ezert itt
+     keszul, egy helyen - kulon-kulon megirva egyszer mar szetcsuszott (mas cim,
+     mas elrendezes, mas ures-szoveg).
+
+     A ket oldal NORMALIZALT sorokat ad at:
+       {poszt, nev, klub, prof, elott, utan, dl}       - pontvaltozas
+       {tip:'csere', poszt, nev, klub, prof, irany, ert} - automatikus csere (PL)
+     `prof` az a jelzo-keszlet, amitol a nev kattinthato lesz; ha nincs (pl. az
+     NB1 elso forduloinal, ahol a jatekos nem ismert), a nev sima szoveg.
+     `dl` a kulonbseg, ha az "elotte -> utana" nem ismert, csak a valtozas. */
+  function jelzokHTML(a){
+    var s = '', k;
+    for (k in (a || {})) if (a[k] != null && a[k] !== '') s += ' ' + k + '="' + esc(String(a[k])) + '"';
+    return s;
+  }
+  function zarasSorHTML(x){
+    var d = (x.dl != null) ? x.dl : (x.utan - x.elott);
+    return '<div class="zsor">'
+      + (x.poszt ? '<span class="ppos">' + esc(x.poszt) + '</span>' : '')
+      + (x.prof
+          ? '<span class="znev kattint"' + jelzokHTML(x.prof) + '>' + esc(x.nev)
+            + (x.klub ? ' <span class="tm">' + esc(x.klub) + '</span>' : '') + '</span>'
+          : '<span class="znev">' + esc(x.nev) + '</span>')
+      + (x.tip === 'csere'
+          ? (x.ert != null ? '<span class="zert">' + fmt(x.ert) + ' pont</span>' : '')
+            + '<span class="zirany' + (x.irany === 'be' ? ' pos' : '') + '">'
+            + (x.irany === 'be' ? 'beállt' : 'kikerült') + '</span>'
+          : (x.elott != null ? '<span class="zert">' + fmt(x.elott) + ' → ' + fmt(x.utan) + '</span>' : '')
+            + '<span class="zdiff ' + (d > 0 ? 'pos' : 'neg') + '">'
+            + (d > 0 ? '+' : '') + fmt(d) + '</span>')
+      + '</div>';
+  }
+  function zarasLista(csoportok, ures){
+    var blokkok = [];
+    (csoportok || []).forEach(function (cs){
+      if (!cs || !cs.sorok || !cs.sorok.length) return;
+      blokkok.push('<div class="zcsapat"><h3 class="kattint"' + jelzokHTML(cs.jelzok) + '>'
+        + esc(cs.nev) + '</h3>' + cs.sorok.map(zarasSorHTML).join('') + '</div>');
+    });
+    if (!blokkok.length) return '<div class="loading">' + esc(ures) + '</div>';
+    return '<div class="zlista">' + blokkok.join('') + '</div>';
+  }
+
   global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played,
                      accToggle: accToggle, accTable: accTable,
                      LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
                      lablecHTML: lablecHTML, renderLablec: renderLablec,
                      bontasMeccsSor: bontasMeccsSor,
+                     zarasLista: zarasLista,
                      profilHTML: profilHTML, profilFejHTML: profilFejHTML,
                      jatekosKereso: jatekosKereso, ekezetlen: ekezetlen,
                      profilNyitoHTML: profilNyitoHTML,

@@ -6,7 +6,7 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=52">
+<link rel="stylesheet" href="../funtasy.css?v=53">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -94,7 +94,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=52"></script>
+<script src="../funtasy.js?v=53"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -570,42 +570,35 @@ let ZARASOK = null, zarasNezet = 'mind';
 const ZNEZETEK = [['mind', 'Mind'], ['pont', 'Pontváltozás'], ['csere', 'Cserék']];
 
 function zarasHTML(r, nezet){
+  // A HTML-t a kozos reteg rakja ossze (FunTasy.zarasLista) - ugyanaz, mint
+  // az NB1 paneljen. Itt csak a sorok allnak ossze a draft-adatbol.
   const csapatok = ZARASOK[r] || {};
-  const blokkok = [];
-  for (const lid of Object.keys(csapatok).sort((a, b) => nev(+a).localeCompare(nev(+b), 'hu'))){
-    const v = csapatok[lid], sorok = [];
-    if (nezet !== 'csere') (v.pont || []).forEach(x => {
-      const d = x.utan - x.elott;
-      sorok.push(`<div class="zsor"><span class="ppos">${esc(jat(x.e).p)}</span>`
-        + `<span class="znev kattint" data-prof="${x.e}">${esc(jat(x.e).n)}${jat(x.e).t ? ` <span class="tm">${esc(jat(x.e).t)}</span>` : ''}</span>`
-        + `<span class="zert">${fmt(x.elott)} → ${fmt(x.utan)}</span>`
-        + `<span class="zdiff ${d > 0 ? 'pos' : 'neg'}">${d > 0 ? '+' : ''}${fmt(d)}</span></div>`);
+  const csoportok = Object.keys(csapatok)
+    .sort((a, b) => nev(+a).localeCompare(nev(+b), 'hu'))
+    .map(lid => {
+      const v = csapatok[lid], sorok = [];
+      const alap = e => ({ poszt: jat(e).p, nev: jat(e).n, klub: jat(e).t,
+                           prof: { 'data-prof': e } });
+      if (nezet !== 'csere')
+        (v.pont || []).forEach(x => sorok.push({ ...alap(x.e), elott: x.elott, utan: x.utan }));
+      if (nezet !== 'pont'){
+        // A bekerult jatekos PONTJA mondja meg, mit hozott a csere. A regi
+        // (pont nelkuli) formatumot is elfogadjuk: ott csak azonosito allt.
+        const csere = (x, irany) => {
+          const e = (typeof x === 'object') ? x.e : x;
+          const pts = (typeof x === 'object') ? x.pts : null;
+          return { ...alap(e), tip: 'csere', irany, ert: irany === 'be' ? pts : null };
+        };
+        (v.ki || []).forEach(x => sorok.push(csere(x, 'ki')));
+        (v.be || []).forEach(x => sorok.push(csere(x, 'be')));
+      }
+      return { nev: nev(+lid), jelzok: { 'data-team': lid }, sorok };
     });
-    if (nezet !== 'pont'){
-      // A bekerult jatekos PONTJA mondja meg, mit hozott a csere. A regi
-      // (pont nelkuli) formatumot is elfogadjuk: ott csak azonosito allt.
-      const csereSor = (x, irany) => {
-        const e = (typeof x === 'object') ? x.e : x;
-        const pts = (typeof x === 'object') ? x.pts : null;
-        return `<div class="zsor"><span class="ppos">${esc(jat(e).p)}</span>`
-          + `<span class="znev kattint" data-prof="${e}">${esc(jat(e).n)}${jat(e).t ? ` <span class="tm">${esc(jat(e).t)}</span>` : ''}</span>`
-          + (irany === 'be' && pts != null
-              ? `<span class="zert">${fmt(pts)} pont</span>` : '')
-          + `<span class="zirany ${irany === 'be' ? 'pos' : ''}">${irany === 'be' ? 'beállt' : 'kikerült'}</span></div>`;
-      };
-      (v.ki || []).forEach(x => sorok.push(csereSor(x, 'ki')));
-      (v.be || []).forEach(x => sorok.push(csereSor(x, 'be')));
-    }
-    if (sorok.length)
-      blokkok.push(`<div class="zcsapat"><h3 class="kattint" data-team="${lid}">${esc(nev(+lid))}</h3>${sorok.join('')}</div>`);
-  }
-  if (!blokkok.length)
-    return '<div class="loading">' + (nezet === 'pont'
-      ? 'A zárás nem hozott pontváltozást ebben a fordulóban.'
-      : nezet === 'csere'
-      ? 'A zárásnál nem történt automatikus csere ebben a fordulóban.'
-      : 'A zárás nem változtatott semmit ebben a fordulóban.') + '</div>';
-  return '<div class="zlista">' + blokkok.join('') + '</div>';
+  return FunTasy.zarasLista(csoportok, nezet === 'pont'
+    ? 'A zárás nem hozott pontváltozást ebben a fordulóban.'
+    : nezet === 'csere'
+    ? 'A zárásnál nem történt automatikus csere ebben a fordulóban.'
+    : 'Nem történt változás ebben a fordulóban.');
 }
 
 function zarasRajzol(){
