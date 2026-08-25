@@ -465,29 +465,25 @@ def jatekostorzs():
 
 
 def zaras_valtozas(regi_fordulo, uj_fordulo, tarolo, mai):
-    """Pontvaltozas a MECCS VEGE utan, a fordulo zarasa elott.
+    """Pontvaltozas a MECCS VEGE utan, a fordulo veglegesitese elott.
 
     A szabalyzat szerint a pont minden meccs utan meghatarozasra kerul, de a
     heti osszeg csak a fordulo utolso jateknapjanak vegen VEGLEGES - a ketto
-    kozott az MLSZ meg igazithat (a Csendi-eset 3 valtozasa is ebbe az
-    ablakba esett). A gyujto a valtozast eddig atvezette, de NEM orizte meg -
-    innentol naplozza, mert utolag mar nem rekonstrualhato.
+    kozott az MLSZ meg igazithat. A gyujto a valtozast eddig atvezette, de
+    NEM orizte meg; utolag rekonstrualhatatlan.
 
-    Csak azt a jatekost nezzuk, akinek a TAROLT rekordja szerint a meccse
-    mar veget ert (vege=True): a meccs kozbeni pontketyeges nem "valtozas".
-    A jatekos SAJAT pontjat taroljuk (kapitanyi duplazas es padfelezes
-    nelkul, negyedre kerekitve - kimertuk, hogy az alappont mindig 0,25
-    tobbszorose), igy ugyanaz a valtozas nem fugg attol, kinel volt.
-    Ugyanarrol a jatekosrol tobb keretbol is latszik ugyanaz a valtozas -
-    egyszer irjuk fel."""
+    A tarolo alakja a PL zarasok.json-jat koveti, hogy az oldal ugyanazt a
+    megjelenitest hasznalhassa:  {szakvezeto: {"pont": [{n,cp,pos,tm,elott,utan}]}}
+
+    Csak azt a jatekost nezzuk, akinek a TAROLT rekordja szerint a meccse mar
+    veget ert (vege=True): a meccs kozbeni pontketyeges nem valtozas. Az
+    ertek a jatekos SAJAT pontja (kapitanyi duplazas es padfelezes
+    visszaszamolva, negyedre kerekitve), tehat ugyanaz a valtozas nem nez ki
+    maskepp aszerint, kinel volt."""
     def alap(p):
         return round((p.get("week") or 0) / (2 if p.get("cap") else 1)
                      * (2 if p.get("sub") else 1) * 4) / 4
 
-    # dedup csak EZEN a futason belul (tobb keretbol ugyanaz a valtozas) -
-    # a tarolobol NEM toltjuk fel, kulonben egy jatekos MASODIK igazitasa
-    # (pl. +1 most, -0,5 kesobb) orokre elveszne
-    latott = set()
     db = 0
     for nev_, regi_sq in (regi_fordulo or {}).items():
         uj_sq = (uj_fordulo or {}).get(nev_)
@@ -505,12 +501,14 @@ def zaras_valtozas(regi_fordulo, uj_fordulo, tarolo, mai):
             e, ut = alap(p), alap(u)
             if abs(e - ut) < 0.005:
                 continue
-            kulcs = (p.get("id"), p.get("name"))
-            if kulcs in latott:
-                continue                      # masik keretbol mar felirtuk
-            latott.add(kulcs)
-            tarolo.append({"n": p.get("name"), "cp": p.get("id"),
-                           "e": e, "u": ut, "d": mai})
+            sorok = tarolo.setdefault(nev_, {}).setdefault("pont", [])
+            if any(x.get("cp") == p.get("id") and x.get("n") == p.get("name")
+                   and abs(x.get("utan", 0) - ut) < 0.005 for x in sorok):
+                continue                      # ugyanazt a futast ne irjuk ketszer
+            sorok.append({"n": p.get("name"), "cp": p.get("id"),
+                          "pos": u.get("pos") or p.get("pos") or "",
+                          "tm": u.get("team") or p.get("team") or "",
+                          "elott": e, "utan": ut, "d": mai})
             db += 1
     return db
 
@@ -582,6 +580,14 @@ def main():
         zarasok_nb1 = {}
     zarasok_nb1.setdefault("rounds", {})
     zarasok_nb1_valtozott = False
+    # A legelso valtozat CSAPATSZINTU sorokat tarolt (listaban, {"mgr":...}),
+    # jatekos nelkul. Azokat nem lehet visszamenoleg jatekosra bontani (a
+    # jatekos-szintu pillanatkepek mind a mar javitott erteket tartalmazzak),
+    # es a panel sem tudja megjeleniteni oket - eldobjuk, hogy a regi alak ne
+    # akassza meg a futast.
+    for _r in [k for k, v in zarasok_nb1["rounds"].items() if not isinstance(v, dict)]:
+        del zarasok_nb1["rounds"][_r]
+        zarasok_nb1_valtozott = True
     hist_elotte = json.dumps(hist.get("rounds"), ensure_ascii=False, sort_keys=True)
     try:
         with open("meccsek.json", encoding="utf-8") as f:
@@ -754,7 +760,7 @@ def main():
                 fordulo_meccsei.values(), key=lambda m: (m.get("start") or "", m["h"]))
         regi_fordulo = hist["rounds"].get(str(r)) or {}
         # meccs utani pontigazitas naplozasa, MIELOTT az uj felulirja a regit
-        zvalt = zarasok_nb1["rounds"].setdefault(str(r), [])
+        zvalt = zarasok_nb1["rounds"].setdefault(str(r), {})
         zdb = zaras_valtozas(regi_fordulo, uj_fordulo, zvalt,
                              time.strftime("%Y-%m-%d", time.gmtime()))
         if not zvalt:
@@ -810,14 +816,6 @@ def main():
                 javitott += beir_eredmeny(schedule, r, nev, friss)
                 print("  ~ %d. fordulo / %s: hivatalos pont frissitve %.2f -> %.2f"
                       % (r, nev, hiv, friss))
-                # CSAPATSZINTU igazitas naplozasa. Ez a Csendi-eset alakja: a
-                # hivatalos fordulo-osszeg mozdul, de nem tudjuk, melyik
-                # jatekosnal - a jatekos-szintu sor kulon keletkezik, ha a
-                # keret-pillanatkepbol latszik.
-                zarasok_nb1["rounds"].setdefault(str(r), []).append(
-                    {"mgr": nev, "e": round(hiv, 2), "u": round(friss, 2),
-                     "d": time.strftime("%Y-%m-%d", time.gmtime())})
-                zarasok_nb1_valtozott = True
                 hiv = friss
             if abs(szamolt - hiv) >= 0.005:
                 print("  ! ELTERES %d. fordulo / %s: keretbol %.2f, hivatalos %.2f"

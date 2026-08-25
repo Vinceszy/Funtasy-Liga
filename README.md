@@ -302,22 +302,26 @@ forduló utolsó játéknapjának végén válik véglegessé** — a kettő kö
 igazíthat. A gyűjtő ezt eddig átvezette, de nem őrizte meg; mostantól naplózza
 (`zarasok_nb1.json`), mert utólag rekonstruálhatatlan.
 
-A panelben **kétféle sor** lehet:
+A panel **ugyanott áll és ugyanúgy néz ki, mint a PL „Zárási változások" panelje**: a
+jobb oszlopban, szakvezető szerint csoportosítva, soronként poszt-címke, a **konkrét
+játékos** neve és klubja, az `előtte → utána` érték és az előjeles különbség. A játékos
+neve a profilt, a szakvezető neve a keretet nyitja. Az egyetlen eltérés, hogy nézetváltó
+sor nincs: az NB1-ben a forduló zárásakor nem áll be automatikus csere, tehát „cserék"
+nézet sem kell.
 
-- **Játékos-szintű**, ha látjuk, kinél mozdult a pont. Az érték a játékos **saját** pontja
-  (kapitányi duplázás és padfelezés visszaszámolva), tehát ugyanaz a változás nem néz ki
-  másképp aszerint, hogy kinél volt. Csak **lement meccsű** játékosnál számít változásnak:
-  a meccs közbeni pontketyegés nem hír.
-- **Csapat-szintű**, ha csak a hivatalos fordulóösszeg változását látjuk — ez a
-  2026-08-20-i eset alakja. Ott a szakvezető neve áll, „fordulóösszeg" felirattal, és a
-  sor a keretét nyitja meg, nem játékosprofilt.
+Minden sor **játékos-szintű**. Az érték a játékos **saját** pontja (kapitányi duplázás és
+padfelezés visszaszámolva), tehát ugyanaz a változás nem néz ki másképp aszerint, hogy
+kinél volt. Csak **lement meccsű** játékosnál számít változásnak: a meccs közbeni
+pontketyegés nem hír. Ugyanaz a játékos annyi blokkban jelenik meg, ahány keretben benne
+volt — pontosan úgy, ahogy a PL panelen.
 
 A panel csak akkor jelenik meg, ha van benne adat: egy állandóan üres doboz azt sugallná,
 hogy valami hiányzik.
 
-Ez **nem** ugyanaz, mint a PL „Zárási változások" panelje. Ott a zárás pillanatában
-tervezetten történik valami (bónusz-véglegesítés, automatikus cserék); az NB1-ben a zárás
-után tervezetten semmi — ott ez a panel a hibajavítást fogja meg.
+A **tárgya** más, mint a PL-é. Ott a zárás pillanatában tervezetten történik valami
+(bónusz-véglegesítés, automatikus cserék). Itt azt figyeljük, mi mozdul a **meccs vége és
+a forduló véglegesítése között** — a szabályzat szerint ez az az ablak, ahol az MLSZ még
+igazíthat.
 
 ### Navigáció a modalon belül
 A modal kis böngészőként működik: a listák soraira kattintva a tartalom cserélődik
@@ -350,7 +354,7 @@ teljes képernyős, ragadós × gombbal.
 | `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**; elemeik `{e, pts}` alakúak, mert a beállt játékos pontja mondja meg, mit hozott a csere (a régi, csak azonosítót tartalmazó alakot a lap még elfogadja). A GW1 a git-történetből lett pótolva. |
 | `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset csak akkor, ha a forduló hivatalos pontja változott (ez a **pótolt meccs** esete — az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). **Nem a forduló összes meccse:** csak azoké a kluboké, amelyeknek van játékosuk valamelyik keretben — a részletező fölötti sorhoz ennyi kell. |
 | `jatekosok.json` | A mezőny **összes** játékosa (`{players:{id:{n,t,p,u21,pts,ar}}}`) — a főoldali lista és keresés forrása. A gyűjtő írja, egy kérésből. |
-| `zarasok_nb1.json` | Fordulónként azok a **meccs utáni pontigazítások**, amiket az MLSZ a forduló véglegesítése előtt vezetett át (`{rounds:{forduló:[{n,cp,e,u,d}]}}`). Élesben ritka esemény: a fájl üres vázként létezik, és csak akkor bővül, ha tényleg történt igazítás — a panel is csak akkor jelenik meg. |
+| `zarasok_nb1.json` | Fordulónként azok a **meccs utáni pontigazítások**, amiket az MLSZ a forduló véglegesítése előtt vezetett át. Alakja a PL `zarasok.json`-jáét követi, hogy ugyanaz a megjelenítés szolgálhassa ki: `{rounds:{forduló:{szakvezető:{pont:[{n,cp,pos,tm,elott,utan,d}]}}}}`. Élesben ritka esemény: a fájl üres vázként létezik, és csak akkor bővül, ha tényleg történt igazítás — a panel is csak akkor jelenik meg. |
 | `arak.json` | Az árak **változásai** (`{arak:{id:[[dátum, ár], …]}}`). Csak akkor bővül, ha egy ár tényleg megváltozott. |
 | `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. |
 | `valtozasok-vazlat.json` | **Még nem publikált** naplóbejegyzések, ugyanabban a formában. A napló oldala ezt nem olvassa; a kész bejegyzés innen kerül át a `valtozasok.json`-ba. |
@@ -841,10 +845,14 @@ lépés, mert a félig kész eredmény csendben bekerülne a tabellába. Az `end
 dönt, ha a `current_round` egyáltalán nem jött meg.
 - **Az MLSZ utólag korrigál** — három megfigyelt esetünk van. 2026-08-20-án a
   fantasy.mlsz.hu már más hivatalos fordulóösszeget mutatott Csendinél, mint amit a
-  lezáráskor rögzítettünk (1. forduló +1, 2. +1, 3. −2,5; képernyőképpel igazolva). Ezek
-  bekerültek a `zarasok_nb1.json`-ba, **csapatszinten**: hogy melyik játékosnál mozdult a
-  pont, nem visszakereshető, mert a fordulónkénti keret-pillanatképek csak 2026-08-21-től
-  gyűlnek. A 08-20-i szinkron óta (3 óránkénti összevetéssel) nem volt újabb ilyen.
+  lezáráskor rögzítettünk (1. forduló +1, 2. +1, 3. −2,5; képernyőképpel igazolva).
+  **Hogy melyik játékosnál mozdult a pont, ez a három eset nem visszakereshető**, és nem is
+  lesz: a `squad_history.json` első játékos-szintű pillanatképe 2026-08-18 12:19-ből van, és
+  már az — és utána mindegyik — a JAVÍTOTT összegeket adja ki (38,00 / 42,88 / 42,88 alap +
+  10 bónusz = 48 / 52,88 / 52,88). A régi értékek csak a `results.json` csapatösszegében
+  éltek, bontás nélkül. Ezért a `zarasok_nb1.json` ezt a hármat **nem** tartalmazza: a panel
+  a konkrét játékost mutatja, kitalált vagy csapatszintű sort nem teszünk bele.
+  A 08-20-i szinkron óta (3 óránkénti összevetéssel) nem volt újabb ilyen.
 
 #### Önjavítás: ha az MLSZ korrigál, a gyűjtő is korrigál
 

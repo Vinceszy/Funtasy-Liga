@@ -6,7 +6,7 @@
 <title>FunTasy NB1 — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=51">
+<link rel="stylesheet" href="../funtasy.css?v=52">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -32,21 +32,6 @@
       <div class="matrix" id="matrix"></div>
       <div class="note">Sor vs oszlop: <span class="pos">GY</span>/<span style="color:var(--draw)">D</span>/<span class="neg">V</span>.
       <b>Kattints egy cellára</b> a két csapat egymás elleni meccseihez.</div>
-    </div>
-    <div class="panel" id="znPanel" style="display:none">
-      <h2>Meccs utáni pontigazítás
-        <span class="roundnav">
-          <button data-znav="-1">‹</button>
-          <select id="selZaras"></select>
-          <button data-znav="1">›</button>
-        </span>
-      </h2>
-      <div class="note">A pont minden meccs után megvan, de a heti összeg csak a forduló
-        utolsó játéknapjának végén válik véglegessé. Ha az MLSZ a kettő között igazít
-        valamin, itt látszik. Ahol tudjuk, melyik játékosnál mozdult, ott a neve áll a
-        saját pontjával (kapitányi duplázás és padfelezés nélkül); ahol csak a hivatalos
-        fordulóösszeg változását láttuk, ott a szakvezető neve.</div>
-      <div id="znBody"></div>
     </div>
     <div class="panel" id="jlPanel" style="display:none">
       <h2>A mezőny játékosai</h2>
@@ -75,6 +60,23 @@
       <div id="mNext"></div>
       <div class="note">Kattints egy meccsre a két keret összehasonlításához.</div>
     </div>
+
+    <!-- Meccs utani pontigazitas. Ugyanaz a hely es ugyanaz a megjelenites,
+         mint a PL "Zarasi valtozasok" panelje - csak cserek nincsenek: az
+         NB1-ben a fordulo zarasakor nem all be automatikus csere. -->
+    <div class="panel" id="znPanel" style="display:none">
+      <h2>Meccs utáni pontigazítás
+        <span class="roundnav">
+          <button data-znav="-1">‹</button>
+          <select id="selZaras"></select>
+          <button data-znav="1">›</button>
+        </span>
+      </h2>
+      <div class="note">A pont minden meccs után megvan, de a heti összeg csak a forduló
+        utolsó játéknapjának végén válik véglegessé. Itt az látszik, min igazított az MLSZ
+        a kettő között — a játékos saját pontjával, kapitányi duplázás és padfelezés nélkül.</div>
+      <div id="znBody"></div>
+    </div>
   </div>
 </div>
 <div class="lablec" id="lablec"></div>
@@ -91,7 +93,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=51"></script>
+<script src="../funtasy.js?v=52"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -395,24 +397,34 @@ function playersHTML(name, rounds){
 // helyet olyasmivel, ami tobbnyire ures.
 let ZNADAT = null, ZNFORDULO = null;
 function znHTML(r){
-  const lista = (ZNADAT || {})[r] || [];
-  if(!lista.length)
+  const csapatok = (ZNADAT || {})[r] || {};
+  const blokkok = [];
+  for(const mgr of Object.keys(csapatok).sort((a,b)=>a.localeCompare(b,'hu'))){
+    const sorok = (csapatok[mgr].pont || []).map(x=>{
+      const d = x.utan - x.elott;
+      // A jatekos neve profilt nyit - kiveve az elso hetek eseteit, ahol
+      // csak azt tudjuk, hogy valamennyi pont mozdult (nk jelzo).
+      const nev = x.nk
+        ? `<span class="znev">Ismeretlen játékos</span>`
+        : `<span class="znev kattint" data-prof="${esc(x.n)}"${x.cp?` data-pcp="${x.cp}"`:''}`
+          + `${x.tm?` data-ptm="${esc(x.tm)}"`:''}>${esc(x.n)}`
+          + `${x.tm?` <span class="tm">${esc(x.tm)}</span>`:''}</span>`;
+      return `<div class="zsor"><span class="ppos">${esc(posLabel(x.pos||''))}</span>`
+        + nev
+        + `<span class="zert">${fmt(x.elott)} → ${fmt(x.utan)}</span>`
+        + `<span class="zdiff ${d>0?'pos':'neg'}">${d>0?'+':''}${fmt(d)}</span></div>`;
+    });
+    if(sorok.length)
+      blokkok.push(`<div class="zcsapat"><h3 class="kattint" data-member="${esc(mgr)}">${esc(mgr)}</h3>${sorok.join('')}</div>`);
+  }
+  if(!blokkok.length)
     return '<div class="loading">Ebben a fordulóban nem változott pont a meccsek után.</div>';
-  return '<div class="zlista">' + lista.map(x=>{
-    const d = x.u - x.e;
-    // Ketfele sor lehet. JATEKOS-szintu: tudjuk, kinel mozdult a pont.
-    // CSAPAT-szintu: csak a hivatalos fordulo-osszeg valtozasat latjuk (ez a
-    // 2026-08-20-i eset alakja) - ott a szakvezeto nevet mutatjuk, es a
-    // felirat is megmondja, hogy csapatszintu adatrol van szo.
-    const csapat = !x.n && x.mgr;
-    const nev = csapat ? x.mgr : x.n;
-    const attr = csapat ? ` data-member="${esc(x.mgr)}"`
-                        : ` data-prof="${esc(x.n)}"${x.cp?` data-pcp="${x.cp}"`:''}`;
-    return `<div class="zsor"><span class="znev kattint"${attr}>${esc(nev)}`
-      + (csapat?' <span class="tm">fordulóösszeg</span>':'') + '</span>'
-      + `<span class="zert">${fmt(x.e)} → ${fmt(x.u)}</span>`
-      + `<span class="zdiff ${d>0?'pos':'neg'}">${d>0?'+':''}${fmt(d)}</span></div>`;
-  }).join('') + '</div>';
+  const ismeretlen = Object.keys(csapatok).some(m =>
+    (csapatok[m].pont || []).some(x => x.nk));
+  return `<div class="zlista">${blokkok.join('')}</div>`
+    + (ismeretlen ? '<div class="note">Ezekről a fordulókról az oldal még nem gyűjtött '
+        + 'játékos-szintű adatot, ezért csak a fordulóösszeg változása ismert — azt nem '
+        + 'tudjuk, melyik játékosnál mozdult a pont.</div>' : '');
 }
 function znRajzol(){
   $('znBody').innerHTML = znHTML(ZNFORDULO);
@@ -420,7 +432,7 @@ function znRajzol(){
   if(sel) sel.value = String(ZNFORDULO);
 }
 function znInit(){
-  const rk = Object.keys(ZNADAT).map(Number).filter(r=>(ZNADAT[r]||[]).length).sort((a,b)=>a-b);
+  const rk = Object.keys(ZNADAT).map(Number).filter(r=>Object.keys(ZNADAT[r]||{}).length).sort((a,b)=>a-b);
   if(!rk.length) return;                         // nincs mit mutatni
   ZNFORDULO = rk[rk.length-1];
   $('selZaras').innerHTML = rk.map(r=>`<option value="${r}">${r}. forduló</option>`).join('');
@@ -1125,7 +1137,7 @@ document.addEventListener('click',e=>{
             ? profilBontasHTML(+pr.dataset.pr) : bontasHTML(pr.dataset)); return; }
   const zn=e.target.closest('[data-znav]');
   if(zn){
-    const rk=Object.keys(ZNADAT||{}).map(Number).filter(r=>(ZNADAT[r]||[]).length).sort((a,b)=>a-b);
+    const rk=Object.keys(ZNADAT||{}).map(Number).filter(r=>Object.keys(ZNADAT[r]||{}).length).sort((a,b)=>a-b);
     const i=rk.indexOf(ZNFORDULO)+ +zn.dataset.znav;
     if(i>=0 && i<rk.length){ ZNFORDULO=rk[i]; znRajzol(); }
     return;
