@@ -1351,26 +1351,6 @@ tartalommal. A `GOMB-bookmarklet.txt`-t soha ne szerkeszd kézzel.
 
 ---
 
-## 6/b. Amit csak MOST lehet elmenteni
-
-Van adat, ami visszamenőleg **pótolhatatlan**: az API csak a pillanatnyi állapotot adja,
-a múltat sehol nem tárolja. Ilyenkor az, hogy „egyelőre nem használjuk semmire", nem ok a
-halasztásra — amit ma nem írunk fel, az örökre elveszett. Az ilyet **fel kell vetni akkor
-is, ha senki nem kérte**, és olcsón el kell kezdeni gyűjteni.
-
-Eddig ilyen:
-
-- **A játékosok ára** (`arak.json`) — az MLSZ nem ad ár-előzményt (mérve; lásd a 4.
-  fejezetet), tehát csak az menthető, amit futás közben látunk.
-- **A forduló zárásakor történt változások** (`zarasok.json`) — a zárás után az API már
-  csak a végállapotot mutatja, a „mi változott" különbség sehol nincs eltárolva.
-
-Mindkettőnél ugyanaz a minta: **csak a változást** írjuk fel, nem minden futást (a gyűjtő
-3 óránként fut), és a hiányzó vagy nyilvánvalóan hibás értéket nem tekintjük változásnak,
-nehogy egy API-hiba hamis bejegyzést hagyjon maga után.
-
----
-
 ## 7. Tervezett, még nem elkészült
 
 - Összesítő oldal a két liga (NB1 + PL) közös követésére — a résztvevők összekötése
