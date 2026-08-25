@@ -69,26 +69,42 @@ for cimke, ut in [
 
 # ---- 2) a mar ismert ut: a keret-valasz meccslistaja jovobeli fordulora ----
 ki("")
-ki("## 2) tartalek: a keret-vegpont meccslistaja egy JOVOBELI fordulora")
-st, j = collect.squad(collect.rankings(list(collect.MEMBERS.values())[0]) or 0, JOVO, jatek=True) \
-        if False else collect.api_get(
-    collect.BASE + "user-team-players-history?include="
-    + "competition_player.current_round.games"
-    + "&filter%5Bround_id%5D=" + str(RID))
-ki("=== keret-vegpont (user_id nelkul) -> HTTP %s" % st)
-adat = (j or {}).get("data") if isinstance(j, dict) else None
-if isinstance(adat, list) and adat:
-    cr = ((adat[0].get("competition_player") or {}).get("current_round") or {})
-    games = cr.get("games")
-    ki("    sorok: %d | current_round.games: %s" % (len(adat), None if games is None else len(games)))
-    if games:
-        ki("    elso meccs: %s" % json.dumps(rovidit(games[0]), ensure_ascii=False)[:500])
-else:
-    ki("    (nincs lista - a vegpont user_id nelkul valoszinuleg nem ad adatot)")
+ki("## 2) tartalek: a keret-vegpont meccslistaja JOVOBELI fordulokra")
+ki("#    (valodi user_id-val - enelkul a vegpont ures listat ad)")
+nev = list(collect.MEMBERS.values())[0]
+uid = collect.rankings(nev)
+ki("=== rankings(%r) -> user_id: %s" % (nev, uid))
+if uid:
+    for r_ in (JOVO, JOVO + 5, 33):
+        st, j = collect.squad(uid, r_, jatek=True)
+        adat = (j or {}).get("data") if isinstance(j, dict) else None
+        if not isinstance(adat, list) or not adat:
+            ki("=== %2d. fordulo -> HTTP %s | nincs keret-sor" % (r_, st))
+            continue
+        klubok = {}
+        parok = set()
+        for d in adat:
+            cp = d.get("competition_player") or {}
+            cr = cp.get("current_round") or {}
+            for g in (cr.get("games") or []):
+                parok.add((g.get("round_number"),
+                           (g.get("home_team") or {}).get("short_name")
+                           or (g.get("home_team") or {}).get("name"),
+                           (g.get("away_team") or {}).get("short_name")
+                           or (g.get("away_team") or {}).get("name"),
+                           g.get("status"), g.get("start_at")))
+        ki("=== %2d. fordulo -> HTTP %s | %d keret-sor | %d kulonbozo meccs"
+           % (r_, st, len(adat), len(parok)))
+        for x in sorted(parok, key=lambda z: str(z[4]))[:4]:
+            ki("    round_number=%s | %s - %s | status=%s | start=%s" % x)
+        if not parok:
+            g0 = ((adat[0].get("competition_player") or {}).get("current_round") or {})
+            ki("    (nincs meccs a valaszban; current_round kulcsai: %s)" % sorted(g0.keys()))
 
 ki("")
-ki("### Ha egyik vegpont sem adja a jovot, a gyujtonek fordulonkent kell")
-ki("### lekernie a meccslistat - egyszer, mert a menetrend nem valtozik.")
+ki("### Ha a jovobeli fordulora is megjon a meccslista, a gyujto egyszer")
+ki("### vegigmegy a hatralevo fordulokon, es a menetrend bekerul a")
+ki("### meccsek.json-ba - a profil elore is mutatja az ellenfelet.")
 
 with open(NAPLO, "w", encoding="utf-8") as f:
     f.write("\n".join(sorok) + "\n")
