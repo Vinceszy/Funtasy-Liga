@@ -7,13 +7,10 @@
    leallt. A sajat Worker a sajat fiokunk alatt fut, senki nem kapcsolja le,
    es az ingyenes keret (100 000 keres/nap) a forgalmunk sokszorosa.
 
-   BEUZEMELES (kb. 5 perc, bankkartya nem kell):
-     1. dash.cloudflare.com -> regisztracio (ingyenes terv)
-     2. bal oldalt "Workers & Pages" -> "Create" -> "Create Worker"
-     3. nev: pl. funtasy-proxy -> Deploy
-     4. "Edit code" -> a teljes fajl tartalmat bemasolni a helyere -> Deploy
-     5. a kapott URL-t (https://funtasy-proxy.<felhasznalo>.workers.dev)
-        elkuldeni - a funtasy.js SAJAT_PROXY konstansaba kerul.
+   TELEPITES: a worker a REPOHOZ kotve epul (Cloudflare "connect to git"),
+   a beallitasokat a gyokerbeli wrangler.toml adja - minden main-re erkezo
+   push utan a Cloudflare ujratelepiti. Kezzel nem kell kodot masolni; a
+   worker URL-je a funtasy.js SAJAT_PROXY konstansaban all.
 
    MIT CSINAL: ?url=<kodolt cel-URL> alaku GET keresre lekeri a celt, es a
    valaszt CORS-fejleccel adja vissza. Csak a ket ismert API-t szolgalja ki,

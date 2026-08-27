@@ -1,0 +1,14 @@
+# A sajat CORS-proxy (Cloudflare Worker) telepitesi leirasa.
+#
+# A Cloudflare a repohoz kotve epiti a workert: minden main-re erkezo push
+# utan lefuttatja az `npx wrangler deploy`-t, ami ezt a fajlt olvassa, es a
+# tartalek/proxy-worker.js-t telepiti. Kezzel soha nem kell kodot masolni -
+# a worker kodja is itt el a repoban, egyutt valtozik az oldallal.
+#
+# Mit csinal a worker es miert kell: lasd tartalek/proxy-worker.js tetejet
+# es a README "Sajat proxy (Cloudflare Worker)" szakaszat.
+
+name = "funtasy-liga"
+main = "tartalek/proxy-worker.js"
+compatibility_date = "2026-08-27"
+workers_dev = true

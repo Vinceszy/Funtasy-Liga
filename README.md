@@ -581,9 +581,11 @@ Ha megint minden út elhasal, a pont-bontás hibaüzenete felsorolja, melyik mi�
 képernyőképen is.
 
 **Saját proxy (Cloudflare Worker).** A tartós megoldás a saját közvetítő: a
-`tartalek/proxy-worker.js` egy másolás-beillesztéssel telepíthető Cloudflare Worker
-(a beüzemelés lépései a fájl tetején; ingyenes terv, bankkártya nem kell, a napi
-100 000-es keret a forgalmunk sokszorosa). Csak a két ismert API-t szolgálja ki és csak
+`tartalek/proxy-worker.js`-ben élő Cloudflare Worker (ingyenes terv, bankkártya nem
+kell, a napi 100 000-es keret a forgalmunk sokszorosa). A worker **a repóhoz van kötve**:
+a Cloudflare minden `main`-re érkező push után lefuttatja az `npx wrangler deploy`-t, ami
+a gyökérbeli `wrangler.toml` alapján a worker-kódot telepíti — kézzel soha nem kell kódot
+másolni, a worker együtt változik az oldallal. Csak a két ismert API-t szolgálja ki és csak
 ennek az oldalnak, tehát nem lehet visszaélni vele; az MLSZ-válaszokat 60 másodpercig a
 Cloudflare peremhálója gyorsítótárazza, így akárhányan nézik ugyanazt, az MLSZ felé
 percenként egy kérés megy. A Worker URL-je a `funtasy.js` elején álló `SAJAT_PROXY`
