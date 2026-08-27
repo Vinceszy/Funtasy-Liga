@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=56">
+<link rel="stylesheet" href="../funtasy.css?v=57">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -106,7 +106,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=56"></script>
+<script src="../funtasy.js?v=57"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -562,14 +562,16 @@ function showTeam(id, tab, mode){
            && on && on.dataset.tab === 'keret';
   };
   if (tab === 'keret')
-    percUtantoltes(keretGW(id), () => { if (keretLatszik()) $('mBody').innerHTML = keretHTML(id); });
+    // a nyitott pont-bontas maradjon nyitva (lasd FunTasy.accOrzo)
+    percUtantoltes(keretGW(id), () => { if (keretLatszik())
+      FunTasy.accOrzo(() => { $('mBody').innerHTML = keretHTML(id); }); });
   if (tab === 'keret' && LIVEGW && (HIST[LIVEGW] || {})[id]){
     fetchLivePts().catch(() => false).then(ok => {
       // amit itt lekertunk, azzal a mogottes fooldali lista is frissul -
       // kulonben ugyanaz a "listan 39, ravaltva 38" elteres allna elo, mint
       // a meccs-adatlapnal
       if (ok) eloAllasFrissit(LIVEGW);
-      if (ok && keretLatszik()) $('mBody').innerHTML = keretHTML(id);
+      if (ok && keretLatszik()) FunTasy.accOrzo(() => { $('mBody').innerHTML = keretHTML(id); });
     });
   }
 }
@@ -692,7 +694,7 @@ function showMatch(h, v, r, mode){
     const cim = $('mTitle').textContent, alcim = $('mSub').textContent;
     percUtantoltes(r, () => {
       if ($('mTitle').textContent === cim && $('mSub').textContent === alcim)
-        $('mBody').innerHTML = test(H, V);
+        FunTasy.accOrzo(() => { $('mBody').innerHTML = test(H, V); });
     });
     if (r === LIVEGW){
       const kert = $('mTitle').textContent;
@@ -707,7 +709,7 @@ function showMatch(h, v, r, mode){
         eloAllasFrissit(r);
         if (!$('ov').classList.contains('open') || $('mTitle').textContent !== kert) return;
         const friss = x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts });
-        $('mBody').innerHTML = test(H.map(friss), V.map(friss));
+        FunTasy.accOrzo(() => { $('mBody').innerHTML = test(H.map(friss), V.map(friss)); });
       });
     }
     return;

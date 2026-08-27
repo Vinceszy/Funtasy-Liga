@@ -463,6 +463,42 @@
      szoveg. A PL-oldal bonusz-sora hasznalja: az FPL a bonuszt a meccs
      alatt is szamolja, es csak kesobb veglegesiti. A szin egyedul nem
      ertheto, ezert mindig szoveg is tartozik hozza. */
+  /* Ujrarajzolas a NYITOTT bontas megorzesevel.
+
+     A meccs- es keret-nezetek utolag frissulnek: beer a percre friss keret,
+     a jatszott percek, az elo pontok - ilyenkor a #mBody teljes tartalma
+     ujra keszul, es a nyitott accordion eltunt alola. A felhasznalonak ugy
+     nezett ki, mintha a "Bontas betoltese..." utan magatol visszazarodott
+     volna, es ujra meg kellett nyitnia. (Bejelentett hiba.)
+
+     A sort a data-* jelzoibol kepzett kulcs azonositja (rendezve, tehat a
+     sorrend nem szamit), a panel tartalmat pedig valtozatlanul visszatesszuk
+     - igy nincs se villanas, se ujabb lekeres. */
+  function accKulcs(el) {
+    var d = el.dataset, k = [], x;
+    for (x in d) k.push(x + '=' + d[x]);
+    return k.sort().join('|');
+  }
+  function accOrzo(rajzol) {
+    var nyitva = document.querySelector('.plr.open[data-acc]');
+    var panel = nyitva && nyitva.nextElementSibling;
+    var kulcs = nyitva ? accKulcs(nyitva) : null;
+    var html = (panel && panel.classList.contains('accpanel')) ? panel.innerHTML : null;
+    rajzol();
+    if (kulcs == null) return;
+    var sorok = document.querySelectorAll('.plr[data-acc]'), i;
+    for (i = 0; i < sorok.length; i++) {
+      if (accKulcs(sorok[i]) !== kulcs) continue;
+      sorok[i].classList.add('open');
+      if (html == null) return;
+      var uj = document.createElement('div');
+      uj.className = 'accpanel';
+      uj.innerHTML = html;
+      sorok[i].insertAdjacentElement('afterend', uj);
+      return;
+    }
+  }
+
   function accTable(sorok, ures) {
     if (!sorok || !sorok.length)
       return '<div class="accload">' + esc(ures || 'Ehhez a fordulóhoz nincs rögzített esemény.') + '</div>';
@@ -1364,7 +1400,7 @@
      igazsag lenne belole. A kolstseg ~100 byte, a haszon az, hogy nem kell
      majd kettozni. */
   global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played,
-                     accToggle: accToggle, accTable: accTable,
+                     accToggle: accToggle, accTable: accTable, accOrzo: accOrzo,
                      LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
                      lablecHTML: lablecHTML, renderLablec: renderLablec,
                      bontasMeccsSor: bontasMeccsSor,

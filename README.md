@@ -30,6 +30,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [Játékosprofil](#játékosprofil)
   - [A mezőny játékosai (főoldali lista)](#a-mezőny-játékosai-főoldali-lista)
   - [Zárási változások (mindkét liga)](#zárási-változások-mindkét-liga)
+  - [A nyitott pont-bontás túléli a frissítést](#a-nyitott-pont-bontás-túléli-a-frissítést)
   - [Navigáció a modalon belül](#navigáció-a-modalon-belül)
   - [Mobil](#mobil)
 - [2. Fájlok](#2-fájlok)
@@ -407,6 +408,21 @@ magyarázattal.
 
 A panel csak akkor jelenik meg, ha van benne adat: egy állandóan üres doboz azt sugallná,
 hogy valami hiányzik.
+
+### A nyitott pont-bontás túléli a frissítést
+
+A meccs- és keret-nézet **utólag frissül**: beér a percre friss keret, a játszott percek, az
+élő pontok. Ilyenkor a `#mBody` teljes tartalma újraépül — és a nyitott accordion eltűnt
+alóla. A felhasználónak úgy nézett ki, mintha a „Bontás betöltése…" után **magától
+visszazárt** volna, és újra meg kellene nyitnia. (Bejelentett hiba.)
+
+Minden ilyen újrarajzolás mostantól a `FunTasy.accOrzo`-n megy át: megjegyzi, melyik sor volt
+nyitva (a `data-*` jelzőiből képzett, sorrendtől független kulccsal) és mi állt a panelben,
+majd az újrarajzolás után visszateszi. Így **nincs villanás és nincs újabb lekérés** sem.
+
+Ez mindkét ligában több helyen fordul elő (élő keret, perc-utántöltés, élő pontok), ezért a
+mechanika a közös rétegben van — külön-külön megírva pontosan egy helyen maradt volna ki.
+Rögzítve: `tesztek/accordionorzes.teszt.js`.
 
 ### Navigáció a modalon belül
 A modal kis böngészőként működik: a listák soraira kattintva a tartalom cserélődik

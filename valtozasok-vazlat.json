@@ -9,6 +9,16 @@
    ],
    "cim": "Gyenge hálón is azonnal megjelenik az oldal",
    "leiras": "A betűkészletek a Google-tól jönnek, és eddig az oldal megvárta őket: ha a szolgáltatás lassú volt vagy nem válaszolt, addig üres képernyő látszott — mérve akár 12 másodpercig. Mostantól a tartalom azonnal kirajzolódik, a betűkészlet pedig akkor lép be, amikor megérkezik."
+  },
+  {
+   "datum": "2026-08-27",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
+   "cim": "A pontrészletező nem zár vissza magától",
+   "leiras": "Ha megnyitottad egy játékos pontjainak bontását, és közben beért a friss adat (élő keret, játszott percek, élő pontok), a nézet újrarajzolódott, és a nyitott bontás eltűnt — újra meg kellett nyitni. Mostantól nyitva marad, ugyanazzal a tartalommal."
   }
  ]
 }

@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=56">
+<link rel="stylesheet" href="../funtasy.css?v=57">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=56"></script>
+<script src="../funtasy.js?v=57"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -984,7 +984,11 @@ function kulonbsegOszlopHTML(name, list, kozosK, realTotal, round, szabaly){
     <div class="osszesito vegso"><span>${esc(name)} összesen</span><b>${fmt(teljes)}</b></div>
   </div>`;
 }
-function meccsTest(){
+// A meccs-test MINDEN ujrarajzolasa megorzi a nyitott pont-bontast: a
+// nezet utolag frissul (elo keret, elo pontok), es a felhasznalo ala
+// eltunt volna a panel. Egy helyen all, mert minden ujrarajzolas ide fut be.
+function meccsTest(){ FunTasy.accOrzo(meccsTestRajz); }
+function meccsTestRajz(){
   if(!MECCS) return;
   const {h,v,A,B,hp,vp,r,elo} = MECCS;
   const aK=new Set(A.map(szerepKulcs)), bK=new Set(B.map(szerepKulcs));
@@ -1057,8 +1061,9 @@ async function showLiveMatch(h, v, r){
   const rajz=(A,B)=>{
     if(A&&B){ MECCS={h,v,A,B,hp:keretOsszeg(A),vp:keretOsszeg(B),r,elo:true}; meccsTest(); return; }
     MECCS=null;
-    $('mBody').innerHTML=allasHTML(h,v,A?keretOsszeg(A):null,B?keretOsszeg(B):null,true)+ACCHINT+
-      `<div class="sqwrap">${A?squadHTML(h,A,null,r):''}${B?squadHTML(v,B,null,r):''}</div>`; };
+    FunTasy.accOrzo(()=>{
+      $('mBody').innerHTML=allasHTML(h,v,A?keretOsszeg(A):null,B?keretOsszeg(B):null,true)+ACCHINT+
+        `<div class="sqwrap">${A?squadHTML(h,A,null,r):''}${B?squadHTML(v,B,null,r):''}</div>`; }); };
   rajz(H,V);
   // hatterben: percre friss csere, ha a modal meg ugyanezen a meccsen all.
   // Amig tart, jelzest kap - kulonben a szamok szo nelkul ugranak at.
@@ -1122,8 +1127,9 @@ async function showSquad(names,tab,mode){
         const on=document.querySelector('#mTabs .tab.on');
         if(single && (!on || on.dataset.tab!=='squad')) return;
         if(friss.every(f=>!f||!f.length)) return;
-        $('mBody').innerHTML=ACCHINT+`<div class="sqwrap ${single?'one':''}">${
-          names.map((n,i)=>squadHTML(n,(friss[i]&&friss[i].length)?friss[i]:lists[i],real[n],SQUAD_ROUND)).join('')}</div>`;
+        // a nyitott pont-bontas maradjon nyitva (lasd FunTasy.accOrzo)
+        FunTasy.accOrzo(()=>{ $('mBody').innerHTML=ACCHINT+`<div class="sqwrap ${single?'one':''}">${
+          names.map((n,i)=>squadHTML(n,(friss[i]&&friss[i].length)?friss[i]:lists[i],real[n],SQUAD_ROUND)).join('')}</div>`; });
       });
     }
     $('mBody').innerHTML=ACCHINT+`<div class="sqwrap ${single?'one':''}">${names.map((n,i)=>squadHTML(n,lists[i],real[n],SQUAD_ROUND)).join('')}</div>`;
