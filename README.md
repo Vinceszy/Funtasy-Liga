@@ -580,6 +580,16 @@ Ha megint minden út elhasal, a pont-bontás hibaüzenete felsorolja, melyik mi�
 (`direkt:CORS · corsproxy:HTTP 401 · …`) — ebből lehet diagnosztizálni, kézre esik
 képernyőképen is.
 
+**Saját proxy (Cloudflare Worker).** A tartós megoldás a saját közvetítő: a
+`tartalek/proxy-worker.js` egy másolás-beillesztéssel telepíthető Cloudflare Worker
+(a beüzemelés lépései a fájl tetején; ingyenes terv, bankkártya nem kell, a napi
+100 000-es keret a forgalmunk sokszorosa). Csak a két ismert API-t szolgálja ki és csak
+ennek az oldalnak, tehát nem lehet visszaélni vele; az MLSZ-válaszokat 60 másodpercig a
+Cloudflare peremhálója gyorsítótárazza, így akárhányan nézik ugyanazt, az MLSZ felé
+percenként egy kérés megy. A Worker URL-je a `funtasy.js` elején álló `SAJAT_PROXY`
+konstansba kerül — amíg üres, a lekérő kihagyja, és a publikus proxyk viszik (utána is
+ott maradnak tartaléknak).
+
 ### A betűkészlet nem állíthatja meg a lapot (mérve, 2026-08-27)
 
 A három betűcsalád (Inter, JetBrains Mono, Archivo Black) a Google Fontsról jön. Sokáig

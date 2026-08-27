@@ -1223,6 +1223,12 @@
       return be.belsoBelyeg ? u + (u.indexOf('?') < 0 ? '?' : '&') +
         be.belsoBelyeg + '=' + Date.now() : u;
     };
+    /* SAJAT proxy (Cloudflare Worker, tartalek/proxy-worker.js): ha be van
+       allitva, ez az elso ut - a sajat fiok alatt fut, senki nem kapcsolja
+       le, es az ingyenes kerete (100k/nap) a forgalmunk sokszorosa. Amig
+       ures, a lekero kihagyja, es a publikus proxyk viszik (backup). */
+    var SAJAT_PROXY = '';   // pl. 'https://funtasy-proxy.valaki.workers.dev'
+
     /* Az ut-sorrend MERT megbizhatosag, nem izles (naplo/proxy-meres.txt,
        2026-08-27): aznap a corsproxy.io 401-re valtott (regisztraciohoz
        kotottek), az allorigins tulterhelt volt - es mivel minden elo lekeres
@@ -1230,6 +1236,10 @@
        tanulsag beepitve: tobb fuggetlen ut, es az elso siker utan a lekero
        ugyis a bevalt uton marad. */
     var utak = [
+      // a sajat ut a direkt ELOTT all: a ket API-nk direkt utja bongeszobol
+      // sosem megy (nincs CORS-fejlecuk), folosleges elorobalkozas lenne
+      SAJAT_PROXY && { n: 'sajat', f: function (u) {
+        return SAJAT_PROXY + '/?url=' + encodeURIComponent(belyeg(u)); } },
       { n: 'direkt', f: function (u) { return belyeg(u); } },
       // path-stilusu proxy: a cel-URL valtozatlanul fuzodik a vegere
       { n: 'cors.sh', f: function (u) { return 'https://proxy.cors.sh/' + belyeg(u); } },
@@ -1245,7 +1255,7 @@
       // 401 a meres napjan - a sor vegen marad, hatha visszaengedik
       { n: 'corsproxy', f: function (u) {
           return 'https://corsproxy.io/?url=' + encodeURIComponent(belyeg(u)) + '&_=' + Date.now(); } }
-    ];
+    ].filter(Boolean);
     var ervenyes = be.ervenyes || function (j) { return j && typeof j === 'object'; };
     var bevalt = null;
     return async function (url, cimke, ms) {

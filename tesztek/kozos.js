@@ -64,7 +64,7 @@ async function apiKi(page) {
   // itt is szerepeljen, kulonben egy teszt valodi halozatra szivarogna
   for (const m of ['**mlsz.hu/**', '**premierleague.com/**',
                    '**corsproxy.io/**', '**allorigins**',
-                   '**proxy.cors.sh/**', '**cors.lol/**',
+                   '**proxy.cors.sh/**', '**cors.lol/**', '**workers.dev/**',
                    '**fonts.googleapis.com/**', '**fonts.gstatic.com/**'])
     await page.route(m, r => r.abort());
 }
