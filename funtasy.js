@@ -1226,6 +1226,41 @@
     };
   }
 
+  /* ===== Jatekosprofil-nezo (mindket liga) =====
+     A vaz ugyanaz: cim, felirat, betoltes-jelzes, elavultsag-vedelem,
+     hibauzenet. A ket oldal csak abban ter el, hogy a kulcsbol hogyan lesz
+     NEV es ADAT, es hogy a kirajzolas utan van-e meg potolnivalo (az NB1-en
+     a hianyzo pontok utolag, sorban toltodnek).
+
+     Az elavultsag-vedelem nem diszites: amig a profil tolt, a felhasznalo
+     nyithat masikat - a kesobb beero valasz nem irhatja felul az ujabbat.
+     Ezert nem a hivas ideje szamit, hanem hogy ez-e MEG az aktualis kulcs. */
+  function profilNezo(be) {
+    var aktualis = null;
+    function mutat(kulcs, mod) {
+      be.nezet.mutat(function () { mutat(kulcs, 'noop'); }, mod);
+      aktualis = kulcs;
+      if (be.jelol) be.jelol(kulcs);
+      be.nezet.nyit();
+      document.getElementById('mTitle').textContent = be.nev(kulcs);
+      document.getElementById('mSub').textContent =
+        'Fordulónkénti teljesítmény — a sorra kattintva a pontok bontása';
+      document.getElementById('mTabs').innerHTML = '';
+      var test = document.getElementById('mBody');
+      test.innerHTML = '<div class="loading">Profil betöltése…</div>';
+      Promise.resolve().then(function () { return be.adat(kulcs); }).then(function (adat) {
+        if (aktualis !== kulcs) return;
+        test.innerHTML = profilHTML(adat);
+        if (be.utan) be.utan(kulcs, adat);
+      }, function (hiba) {
+        if (aktualis !== kulcs) return;
+        test.innerHTML = '<div class="loading" style="color:var(--lose)">' +
+          'Nem sikerült betölteni — ' + esc(hiba && hiba.message) + '</div>';
+      });
+    }
+    return mutat;
+  }
+
   /* ===== Egymas elleni nezet =====
      A matrix cellajara kattintva nyilik. A ket oldal csak abban ter el, hogy
      az azonositobol hogyan lesz nev, es hogy nyitaskor mit kell nullazni. */
@@ -1321,6 +1356,13 @@
     return '<div class="zlista">' + blokkok.join('') + '</div>';
   }
 
+  /* A kivitel egy resze ma csak BELUL hasznalt (navHTML, lablecHTML,
+     profilFejHTML, ekezetlen, kezdSzazalek, KEZD_CIM). Szandekosan maradnak
+     kint: a tervezett osszesito oldal es a toplistak pont ezeket ternek ujra
+     (ugyanaz a KEZD%-kerekites es ugyanaz a magyarazo szoveg, ugyanaz az
+     ekezet-fuggetlen kereses) - ha ott ujra megirodnanak, megint ket
+     igazsag lenne belole. A kolstseg ~100 byte, a haszon az, hogy nem kell
+     majd kettozni. */
   global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played,
                      accToggle: accToggle, accTable: accTable,
                      LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
@@ -1329,7 +1371,7 @@
                      zarasLista: zarasLista,
                      profilHTML: profilHTML, profilFejHTML: profilFejHTML,
                      jatekosKereso: jatekosKereso, ekezetlen: ekezetlen,
-                     profilNyitoHTML: profilNyitoHTML,
+                     profilNyitoHTML: profilNyitoHTML, profilNezo: profilNezo,
                      kezdSzazalek: kezdSzazalek, KEZD_CIM: KEZD_CIM,
                      kezdParHTML: kezdParHTML,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,

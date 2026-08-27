@@ -1248,6 +1248,12 @@ ebből lett a kimaradó NB1-es KEZD% — az ilyen kettőzés pontosan az, amirő
 két külön példányból két különböző kinézet lett, ezért a HTML most közös
 (`FunTasy.zarasLista`), és a két oldal csak normalizált sorokat ad át.
 
+A **játékosprofil megnyitása** is közös (`FunTasy.profilNezo`): a cím, a felirat, a
+betöltés-jelzés, az elavultság-védelem (amíg tölt, nyitható másik — a később beérő válasz
+nem írhatja felül az újabbat) és a hibaüzenet egy helyen van. A két oldal csak azt adja meg,
+hogy a kulcsból hogyan lesz név és adat, és hogy a kirajzolás után van-e még pótolnivaló
+(az NB1-en a gazdátlan fordulók pontja utólag, sorban töltődik).
+
 ### A pad sorrendje (PL) — és ami még nyitott
 
 **A pad sorrendje az FPL csere-sorrendje**, nem díszítés: a forduló végén az FPL az első
