@@ -431,6 +431,13 @@ találgatjuk:
 - `tolt` → a régi kérés már az elavult sorra futna ki, ezért **újraindul** a betöltés;
 - `hiba` → **nem** kerül vissza; a sor bezár, és egy kattintás újrapróbálja.
 
+**A hibaüzenet megmondja az okot is.** A lekérő (`FunTasy.lekero`) három úton próbálkozik —
+direkt, `corsproxy.io`, `allorigins` —, és a hibaüzenetbe beleírja, melyik miért nem ment
+(`direkt:CORS · corsproxy:HTTP 429 · allorigins:időtúllépés`). Ez eddig elveszett: az
+accordion csak annyit írt ki, hogy „A bontás lekérése nem sikerült", amiből sem a
+felhasználó, sem a fejlesztő nem tudta eldönteni, hálózat-e, proxy-e vagy az API változott.
+Mostantól a szöveg alatt halványan ott az ok.
+
 Ez mindkét ligában több helyen fordul elő (élő keret, perc-utántöltés, élő pontok), ezért a
 mechanika a közös rétegben van — külön-külön megírva pontosan egy helyen maradt volna ki.
 Rögzítve: `tesztek/accordionorzes.teszt.js`.

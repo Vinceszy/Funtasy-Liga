@@ -96,6 +96,10 @@ const BONTAS = { data: [
     return a && a.dataset.allapot === 'hiba';
   }, null, { timeout: 10000 });
   jo(true, 'az első lekérés elhasalt, a panel hibát mutat');
+  // Az OK is ott van: melyik ut miert nem ment. Enelkul se a felhasznalo, se
+  // a fejleszto nem tudja eldonteni, halozat-e, proxy-e vagy az API valtozott.
+  jo(await p2.$$eval('.accpanel .accmiert', a => a.length) === 1,
+     'a hibaüzenet mellett ott áll az OK is (melyik út mivel bukott)');
   await p2.evaluate(() => meccsTest());
   await p2.waitForTimeout(300);
   jo((await p2.$$eval('.accpanel', a => a.length)) === 0,

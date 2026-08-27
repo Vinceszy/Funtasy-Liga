@@ -451,10 +451,18 @@
       if (!row.classList.contains('open') || !p.isConnected) return;
       p.dataset.allapot = html ? 'kesz' : 'hiba';
       p.innerHTML = html || '<div class="accload">A pontok bontása nem érhető el ehhez a játékoshoz.</div>';
-    }, function () {
+    }, function (hiba) {
       if (!row.classList.contains('open') || !p.isConnected) return;
       p.dataset.allapot = 'hiba';
-      p.innerHTML = '<div class="accload">A bontás lekérése nem sikerült.</div>';
+      // Az OKOT is kiirjuk. A lekero (FunTasy.lekero) mindharom utat
+      // megprobalja - direkt, corsproxy, allorigins -, es a hibauzenetbe
+      // beleirja, melyik miert nem ment ("corsproxy:HTTP 429",
+      // "direkt:CORS", "allorigins:idotullepes"). Enelkul a felhasznalo es
+      // a fejleszto is csak annyit lat, hogy "nem sikerult", es nem lehet
+      // eldonteni, halozat-e, proxy-e, vagy az API valtozott.
+      var ok = hiba && hiba.message ? String(hiba.message) : '';
+      p.innerHTML = '<div class="accload">A bontás lekérése nem sikerült.'
+        + (ok ? '<br><span class="accmiert">' + esc(ok) + '</span>' : '') + '</div>';
     });
   }
 

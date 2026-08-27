@@ -528,6 +528,8 @@ td.kezdpc{font-family:var(--mono);color:var(--dim)}
 .ureseltares{font-size:12px;color:var(--dim);padding:10px 4px;font-style:italic}
 .accpanel{margin:0 0 6px 24px;border-left:2px solid var(--line);padding:4px 10px 6px;background:var(--panel2);border-radius:0 0 6px 6px}
 .accload{font-size:12px;color:var(--dim);padding:4px 0}
+/* A bontas-hiba OKA: halvanyan, kisebben - informacio, nem riasztas. */
+.accmiert{display:inline-block;margin-top:4px;font-size:11px;color:var(--dim);opacity:.85;word-break:break-word}
 .acctable{width:100%;border-collapse:collapse;font-size:12px}
 .acctable th{text-align:right;color:var(--dim);font-weight:600;padding:3px 6px;border-bottom:1px solid var(--line);font-size:11px}
 .acctable td{text-align:right;padding:3px 6px;font-family:var(--mono);border-bottom:1px solid rgba(255,255,255,.04)}
