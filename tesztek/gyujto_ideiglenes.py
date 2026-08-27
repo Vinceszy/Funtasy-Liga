@@ -222,4 +222,44 @@ else:
                 print("     %s\n     - %s\n     + %s" % (k, a[:90], b[:90]))
                 break
 
+
+# ---------------------------------------------------------------- C4
+# Egy REGI fordulo korrekcioja nem irhatja ujra a squads.json-t: az csak az
+# UTOLSO fordulo keretet tartalmazza. A kiiras felteteles agat a teljes
+# elozmeny valtozasa nyitja - vagyis barmelyik fordulo -, es igy a fajl uj
+# idobelyeggel, valtozatlan tartalommal kerult a repoba. (Az utolso 14
+# valtozasabol 2 volt ilyen.)
+print("\n--- C4: regi fordulo korrekcioja nem irja ujra a squads.json-t ---")
+os.chdir(tempfile.mkdtemp())
+json.dump({"updated": None, "provisional": [], "schedule": menetrend}, open("results.json", "w"))
+json.dump({"updated": None, "rounds": tortenet}, open("squad_history.json", "w"))
+json.dump({"updated": None, "rounds": {str(r): [
+    {"id": 900 + r, "h": "XYZ", "v": "ZZZ", "start": "2026-08-01T17:30:00+02:00",
+     "hp": 1, "vp": 0, "vege": True}] for r in range(1, 9)}}, open("meccsek.json", "w"))
+c.api_get = mock
+c.ellenorzendo = lambda regi, db=4: []
+c.stamp = szamlalo_stamp
+c.main()                                     # 1. futas: minden felepul
+sq_elotte = open("squads.json", encoding="utf-8").read()
+sh_elotte = open("squad_history.json", encoding="utf-8").read()
+
+# most jon a REGI (2.) fordulo korrekcioja
+API[2]['Csongi'] = API[2]['Csongi'] + 3.0
+c.ellenorzendo = lambda regi, db=4: [2]
+c.main()
+c.stamp = eredeti_stamp
+sq_utana = open("squads.json", encoding="utf-8").read()
+sh_utana = open("squad_history.json", encoding="utf-8").read()
+if sh_elotte == sh_utana:
+    hibak.append("C4: a korrekcio at sem ment a keret-elozmenyre")
+    print("HIBA a 2. fordulo korrekcioja nem jelent meg a squad_history.json-ban")
+else:
+    print("OK   a regi fordulo korrekcioja atment a keret-elozmenyre")
+if sq_elotte == sq_utana:
+    print("OK   a squads.json (utolso fordulo) valtozatlan maradt")
+else:
+    hibak.append("C4: a squads.json ujraírodott egy regi fordulo korrekciojatol")
+    print("HIBA a squads.json ujraírodott, pedig az utolso fordulo kerete nem valtozott")
+    print("     - %s\n     + %s" % (sq_elotte[:110], sq_utana[:110]))
+
 sys.exit(1 if hibak else 0)

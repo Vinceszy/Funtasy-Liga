@@ -935,8 +935,25 @@ def main():
         kompakt_iras("squad_history.json", {"updated": hist["updated"],
                                             "rounds": hist["rounds"]})
         utolso = max((int(r) for r in hist["rounds"]), default=0)
-        kompakt_iras("squads.json", {"updated": hist["updated"], "round": utolso,
-                                     "squads": hist["rounds"].get(str(utolso)) or {}})
+        # A squads.json CSAK az utolso fordulot tartalmazza, a fenti feltetel
+        # viszont BARMELYIK fordulo valtozasara igaz - egy regi fordulo
+        # utolagos korrekcioja igy ujra kiirta volna a fajlt uj idobelyeggel,
+        # valtozatlan tartalommal. (Az utolso 14 valtozasabol 2 ilyen volt.)
+        # A kereteket ezert kulon hasonlitjuk, ahogy a tobbi kimenetnel is.
+        uj_squads = {"round": utolso, "squads": hist["rounds"].get(str(utolso)) or {}}
+        try:
+            with open("squads.json", encoding="utf-8") as f:
+                regi_squads = json.load(f)
+            regi_squads = {k: v for k, v in regi_squads.items() if k != "updated"}
+        except Exception:
+            regi_squads = None
+        if json.dumps(regi_squads, ensure_ascii=False, sort_keys=True) != \
+           json.dumps(uj_squads, ensure_ascii=False, sort_keys=True):
+            # a mezosorrend marad (updated, round, squads) - kulonben a
+            # kovetkezo iras az egesz fajlt "megvaltoztatna" a sorrend miatt
+            kompakt_iras("squads.json", {"updated": hist["updated"],
+                                         "round": uj_squads["round"],
+                                         "squads": uj_squads["squads"]})
         # Fordulonkenti keret-fajlok. A teljes elozmeny fordulonkent ~19 KB-tal
         # no, a szezon vegere ~630 KB - egy meccs megnyitasahoz az oldalnak
         # nem kell az egesz. A `updated` mezo SZANDEKOSAN nincs bennuk: ha

@@ -70,6 +70,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva](#az-fpl-draft-api-draftpremierleaguecomapi--mérésekkel-igazolva)
 - [5. Ismert korlátok, buktatók](#5-ismert-korlátok-buktatók)
 - [5/a. Miért van fordulónként külön keret-fájl](#5a-miért-van-fordulónként-külön-keret-fájl)
+  - [Írás csak akkor, ha tényleg változott](#írás-csak-akkor-ha-tényleg-változott)
 - [5/a2. Változásnapló („Mi újult meg?")](#5a2-változásnapló-mi-újult-meg)
   - [A két oldal váza kézzel van kétszer leírva](#a-két-oldal-váza-kézzel-van-kétszer-leírva)
 - [5/b. Tesztek](#5b-tesztek)
@@ -1382,6 +1383,31 @@ is az egészet igényli — az viszont ritkán megnyitott, tudatosan nehéz néz
 **A PL-oldalon ez még nincs meg:** a `draft_history.json` minden betöltéskor lejön (most
 4 KB, a 38. fordulóra ~159 KB). Kisebb tét, és ott a `HIST` több helyen szinkron használt,
 tehát invazívabb átalakítás — külön körben érdemes.
+
+**Ami viszont még nyitott az NB1-en is:** a *játékosprofil* továbbra is a teljes
+`squad_history.json`-t tölti le (most 121 KB, a szezon végén ~797 KB), mert minden
+fordulóra szüksége van. Amit ténylegesen használ belőle, az fordulónként öt mező játékosonként
+— abból egy külön index ~162 KB lenne az egész szezonra, vagyis **80%-kal kevesebb**. Ez új
+adatfájl, tehát a formátumot előbb el kell dönteni; addig marad a mostani megoldás.
+
+### Írás csak akkor, ha tényleg változott
+
+Minden kimeneti fájlra ugyanaz a szabály: **az `updated` mező nem ok az írásra**. Ha csak
+az időbélyeg változna, a fájl nem íródik újra — különben a repó három óránként hízna a
+semmiért, és a git-történetben nem lehetne megtalálni, mikor változott tényleg valami.
+
+Ez kétszer csúszott el:
+
+- a `results.json` feltétele **listát hasonlított halmazhoz** (`provisional != regi_prov`),
+  ami sosem egyenlő — az utolsó 36 commitjából 30-ban csak az időbélyeg változott;
+- a `squads.json` kiírását a **teljes előzmény** változása nyitotta, pedig a fájl csak az
+  utolsó forduló keretét tartalmazza — egy régi forduló korrekciója így változatlan
+  tartalommal írta újra (14-ből 2 alkalommal).
+
+Mindkettőt teszt fedi (`tesztek/gyujto_ideiglenes.py`, C3 és C4): a C3 a gyűjtőt kétszer
+futtatja változatlan adaton, és **egyetlen** kimeneti fájl sem változhat — nem csak a
+`results.json`, hanem minden, amit a futás után talál. A `stamp()` helyére számláló kerül,
+különben a másodperc-pontosságú időbélyeg elrejtené a fölösleges írást.
 
 ## 5/a2. Változásnapló („Mi újult meg?")
 

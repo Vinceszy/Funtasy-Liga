@@ -35,7 +35,7 @@ Az `api_get`-et mock váltja ki, a `collect.py` egy ideiglenes könyvtárban fut
 | fájl | mit ellenőriz |
 |---|---|
 | `gyujto_onjavitas.py` | Ha az MLSZ utólag korrigál egy régi fordulót, a gyűjtő átvezeti-e — az eredménybe, a keretbe és a keresztellenőrzésbe is. Ez találta meg a `rankings()` `%5B`-formázási hibáját, ami miatt a backfill-ág élesben sosem futott le. |
-| `gyujto_ideiglenes.py` | A `provisional` lista kezelése: mi kerül bele, mi kerül ki, és mi marad változatlan hiányos adatnál. Ellenőrzi azt is, hogy változatlan adatnál a gyűjtő **egyetlen kimeneti fájlt sem** ír újra — nem csak a `results.json`-t, hanem mindet, amit a futás után talál (a `stamp()` helyére számláló kerül, különben a másodperc-pontosságú időbélyeg elrejtené a felesleges írást). Azért az összeset, mert a „csak ha változott” logika fájlonként külön van megírva, és pont ez a széthúzottság rejtette el a `results.json` hibáját. |
+| `gyujto_ideiglenes.py` | A `provisional` lista kezelése: mi kerül bele, mi kerül ki, és mi marad változatlan hiányos adatnál. Ellenőrzi azt is, hogy változatlan adatnál a gyűjtő **egyetlen kimeneti fájlt sem** ír újra — nem csak a `results.json`-t, hanem mindet, amit a futás után talál (a `stamp()` helyére számláló kerül, különben a másodperc-pontosságú időbélyeg elrejtené a felesleges írást). Azért az összeset, mert a „csak ha változott” logika fájlonként külön van megírva, és pont ez a széthúzottság rejtette el a `results.json` hibáját. Külön eset arra is, hogy egy **régi** forduló korrekciója ne írja újra a `squads.json`-t: az csak az utolsó forduló keretét tartalmazza, a kiírás feltétele viszont a teljes előzmény változása volt. |
 | `gyujto_lezaras.py` | A forduló-lezárás kilenc esete (lásd lent). |
 
 ### `gyujto_lezaras.py` esetei
