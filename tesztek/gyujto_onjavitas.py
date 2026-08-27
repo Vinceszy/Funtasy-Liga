@@ -139,12 +139,13 @@ if os.path.isdir("keretek"):
     all(len(fajlok) == len(kesz["rounds"]),
         "minden fordulohoz keszult keret-fajl (%d db)" % len(fajlok))
     baj = []
-    for r, keret in kesz["rounds"].items():
+    # a ciklusvaltozo NEM "keret": az elarnyekolna a fenti keret() fuggvenyt
+    for r, keret_ in kesz["rounds"].items():
         try:
             egy = json.load(open(os.path.join("keretek", "%s.json" % r)))
         except Exception as e:
             baj.append("%s: %s" % (r, e)); continue
-        if egy.get("squads") != keret or egy.get("round") != int(r):
+        if egy.get("squads") != keret_ or egy.get("round") != int(r):
             baj.append(r)
     all(not baj, "a fordulonkenti fajlok egyeznek az elozmennyel" + (" (%s)" % baj if baj else ""))
     # az idobelyeg SZANDEKOSAN nincs bennuk: kulonben minden futasnal

@@ -6,7 +6,7 @@ palyas + 1 csatar, tehat az optimum posztonkent a leggyengebb kiultetese;
 a kapitany a kezdok legjobbja. A tarolt week mar KESZ ertek (kapitanyi x2,
 pad x0.5) - a nyers pontot a cap/sub jelzobol kell visszafejteni.
 """
-import importlib.util, json, os, sys
+import importlib.util, os, sys
 
 FORRAS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'collect.py')
 spec = importlib.util.spec_from_file_location('collect', FORRAS)

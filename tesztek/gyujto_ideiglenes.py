@@ -4,6 +4,9 @@
 A rolling ellenorzes ota egy regi fordulo is bekerulhet a keret-lekeresek
 koze (ha az MLSZ korrigalt). Ha ott egyetlen keret-keres hibara fut, a
 fordulo "nem lezart" lenne - es ideiglenesse minositve KIESNE a tabellabol.
+
+A fajl vegen (C3) az is szerepel, hogy valtozatlan adatnal a results.json
+egyaltalan nem irodik ujra - a tobbi kimeneti fajl mind igy mukodik.
 """
 import importlib.util, json, os, sys, tempfile, urllib.parse
 
@@ -149,5 +152,49 @@ if AKTUALIS not in prov3:
     print("HIBA az elo fordulo kikerult az ideiglenesek kozul")
 else:
     print("OK   az elo fordulo tovabbra is ideiglenes")
+
+
+# ---------------------------------------------------------------- C3
+# A results.json csak akkor irodhat ujra, ha TENYLEG valtozott valami.
+# MEGTORTENT: a feltetel egy listat hasonlitott halmazhoz
+# (`provisional != regi_prov`), ami sosem egyenlo - igy minden futas friss
+# idobelyeggel ujrairta a fajlt. A 36 utolso results.json-commitbol 30-ban
+# CSAK az `updated` mezo valtozott. (A tobbi fajl mind tartalmat hasonlit.)
+print("\n--- C3: valtozatlan adatnal a results.json nem irodik ujra ---")
+os.chdir(tempfile.mkdtemp())
+json.dump({"updated": None, "provisional": [], "schedule": menetrend},
+          open("results.json", "w"))
+json.dump({"updated": None, "rounds": tortenet}, open("squad_history.json", "w"))
+json.dump({"updated": None, "rounds": {str(r): [
+    {"id": 900 + r, "h": "XYZ", "v": "ZZZ", "start": "2026-08-01T17:30:00+02:00",
+     "hp": 1, "vp": 0, "vege": True}] for r in range(1, 9)}}, open("meccsek.json", "w"))
+
+# A menetrendben mar minden eredmeny benne van, es a 2. fordulo korrekcioja
+# sem kell ide: az ELSO futas beallitja a vegallapotot, a MASODIK futasnak
+# mar semmit nem szabad irnia.
+c.api_get = mock
+c.ellenorzendo = lambda regi, db=4: []
+# Az idobelyeg MASODPERC-pontossagu: ket egymas utani futas ugyanazt a
+# szoveget irna, es a teszt akkor is atmenne, ha a fajl ujrairodik. Ezert a
+# stamp() helyere szamlalo kerul - igy minden iras LATSZIK.
+eredeti_stamp, szamlalo = c.stamp, [0]
+def szamlalo_stamp():
+    szamlalo[0] += 1
+    return "IRAS-%d" % szamlalo[0]
+c.stamp = szamlalo_stamp
+c.main()
+elso = open("results.json", encoding="utf-8").read()
+c.main()
+masodik = open("results.json", encoding="utf-8").read()
+c.stamp = eredeti_stamp
+if elso == masodik:
+    print("OK   a masodik, valtozatlan futas nem irta ujra a results.json-t")
+else:
+    hibak.append("C3: valtozatlan futas is ujrairta a results.json-t")
+    print("HIBA a valtozatlan futas is ujrairta a fajlt")
+    for a, b in zip(elso.splitlines(), masodik.splitlines()):
+        if a != b:
+            print("     - %s\n     + %s" % (a[:90], b[:90]))
+            break
 
 sys.exit(1 if hibak else 0)

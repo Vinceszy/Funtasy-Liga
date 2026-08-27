@@ -97,7 +97,23 @@ gond = bejegyzes_gondok(vazlat)
 allit(not gond, "D5: a valtozasnaplo-vazlat minden bejegyzese teljes"
       + ("" if not gond else " - " + "; ".join(gond)))
 
+# D6: a ?v=N gyorsitotar-jelzo MINDEN oldalon ugyanaz.
+# A GitHub Pages 1-2 percig gyorsitataroz; a verzioszamot kezzel emeljuk
+# minden kiadasnal. Ha csak az egyik oldalon emelkedik, az a masikon REGI
+# funtasy.js/css-t hagy - ott a felhasznalo hetekig regi kodot lat, es a
+# hibajelentese ertelmezhetetlen lesz. Ezt gepnek kell nezni, nem szemnek.
+import re as _re
+_verziok = {}
+for _f in ("index.html", "nb1/index.html", "pl/index.html", "valtozasok/index.html"):
+    for _m in _re.findall(r'(funtasy\.(?:js|css))\?v=(\d+)', olvas(_f)):
+        _verziok.setdefault(_m[1], []).append("%s -> %s" % (_f, _m[0]))
+allit(len(_verziok) == 1,
+      "D6: minden oldal ugyanazt a ?v= verziot hivatkozza"
+      + ("" if len(_verziok) == 1
+         else " - eltero verziok: " + "; ".join("v=%s (%s)" % (v, ", ".join(h))
+                                                for v, h in sorted(_verziok.items()))))
+
 if hibak:
     print("\n%d allitas bukott." % len(hibak))
     sys.exit(1)
-print("\nMind az ot allitas rendben.")
+print("\nMind a hat allitas rendben.")

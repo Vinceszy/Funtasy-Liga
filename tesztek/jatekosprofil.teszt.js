@@ -470,6 +470,60 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   jo(qerr.length === 0, 'nincs JS-hiba a PL-oldalon'
      + (qerr.length ? ': ' + qerr.join(' | ') : ''));
 
+  // ---- PL: az FPL-lekeres elhasal, de a TAROLT pont akkor is latszik ----
+  // Korabban ilyenkor a profil minden sora kotojel volt, es a "Pont osszesen"
+  // 0 - pedig a fordulonkenti pont ott van a draft_history.json-ban. Az
+  // ellenfelet tovabbra sem tudjuk (az csak az element-summary-bol jon).
+  cim('PL: FPL-kimaradásnál a tárolt pont látszik');
+  const off = await br.newPage();
+  const oerr = []; off.on('pageerror', e => oerr.push(e.message));
+  await apiKi(off);
+  await off.route('**draft.premierleague.com/**', r => r.abort());
+  await off.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
+  await off.waitForSelector('.jlsor', { timeout: 20000 });
+  // olyan jatekost keresunk, akinek van tarolt fordulo-pontja
+  const celPont = await off.evaluate(async () => {
+    const h = await (await fetch('../draft_history.json')).json();
+    for (const gw of Object.keys(h.rounds || {}))
+      for (const lid of Object.keys(h.rounds[gw]))
+        for (const x of h.rounds[gw][lid])
+          if (x.pts) return { e: x.e, pts: x.pts, gw: +gw };
+    return null;
+  });
+  if (!celPont) {
+    jo(false, 'nem találtam tárolt pontot a draft_history.json-ban — a teszt nem futott le');
+  } else {
+    // Elobb NEVRE szurunk, hogy a keresett jatekos biztosan az elso lapon
+    // legyen; a kattintas evaluate-bol megy, hogy semmi ne fogja el.
+    const nev = await off.evaluate(async e => {
+      const j = await (await fetch('../draft_players.json')).json();
+      return (j.players[e] || {}).n || '';
+    }, celPont.e);
+    await off.fill('#jlDoboz .kereso', nev);
+    await off.waitForFunction(() => document.querySelectorAll('.jlsor').length > 0,
+                              null, { timeout: 5000 });
+    const megvan = await off.evaluate(e => {
+      const s = [...document.querySelectorAll('.jlsor')].find(x => +x.dataset.jl === e);
+      if (s) { s.click(); return true; }
+      return false;
+    }, celPont.e);
+    jo(megvan, 'a keresett játékos ott van a listában (id=' + celPont.e + ', „' + nev + '”)');
+    await off.waitForSelector('.proflista', { timeout: 20000 });
+    const sor = await off.$$eval('.profsor', (a, gw) => {
+      const x = a.find(y => y.querySelector('.ppos').textContent.trim() === gw + '.');
+      return x ? x.querySelector('.pts').textContent.trim() : null;
+    }, celPont.gw);
+    jo(sor === String(celPont.pts),
+       'FPL-kimaradásnál is a tárolt pont áll a sorban (' + celPont.gw + '. forduló: '
+       + sor + ', tárolt: ' + celPont.pts + ')');
+    const ossz = await off.$eval('.ptenyek', e => e.innerText.replace(/\n/g, ' ')).catch(() => '');
+    jo(/Pont összesen/.test(ossz) && !/Pont összesen\s*0\b/.test(ossz),
+       'a „Pont összesen” nem 0, amikor van tárolt pont (' + ossz.slice(0, 60) + ')');
+  }
+  jo(oerr.length === 0, 'FPL-kimaradásnál sincs JS-hiba'
+     + (oerr.length ? ': ' + oerr.join(' | ') : ''));
+  await off.close();
+
   jo(perr.length === 0, 'nincs JS-hiba' + (perr.length ? ': ' + perr.join(' | ') : ''));
   await vege(br);
 })();

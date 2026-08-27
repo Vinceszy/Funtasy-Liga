@@ -175,9 +175,18 @@ def rankings(uname, round_id=None):
     if st != 200 or not j:
         return None
     rows = j.get("data") or []
-    return next((d for d in rows
-                 if ((d.get("user_team") or {}).get("user") or {}).get("username") == uname),
-                rows[0] if rows else None)
+    pontos = next((d for d in rows
+                   if ((d.get("user_team") or {}).get("user") or {}).get("username") == uname),
+                  None)
+    if pontos or not rows:
+        return pontos
+    # Nincs pontos felhasznalonev-egyezes. A talalat listat NEM dobjuk el (a
+    # valasz nem mindig hozza a username mezot), de kiirjuk: enelkul egy
+    # elteveszett kereses MASIK szakvezeto pontjait irna be csendben - pont az
+    # a "csendes, hiheto, rossz" hiba, ami ellen a tobbi vedelem is szol.
+    print("  ! %s: nincs pontos felhasznalonev-egyezes, az elso talalatot "
+          "hasznaljuk (%d talalat)" % (uname, len(rows)), file=sys.stderr)
+    return rows[0]
 
 
 def squad(user_id, round_no, jatek=False):
@@ -864,7 +873,12 @@ def main():
     provisional = sorted(prov)
 
     # ---- 6. Iras, csak ha valtozott ----
-    if beirt or javitott or provisional != regi_prov:
+    # A `provisional` LISTA, a `regi_prov` HALMAZ - a ketto sosem egyenlo,
+    # tehat ez a feltetel korabban MINDIG igaz volt, es a results.json minden
+    # futasban ujrairodott friss idobelyeggel. (Mert: a 36 utolso
+    # results.json-commitbol 30-ban CSAK az `updated` mezo valtozott.) A
+    # tobbi fajl mind tartalmat hasonlit - ez most mar ugyanugy.
+    if beirt or javitott or set(provisional) != regi_prov:
         data["provisional"] = provisional
         data["updated"] = stamp()
         with open("results.json", "w", encoding="utf-8") as f:

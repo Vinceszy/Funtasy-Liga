@@ -445,10 +445,12 @@ async function profilAdat(e){
   for (const gw of [...gwk].sort((a, b) => a - b)){
     const per = HIST[gw] || {};
     const tulajok = [];
+    let tarolt = null;             // a fordulo TAROLT pontja (draft_history)
     for (const id of Object.keys(per)){
       const x = (per[id] || []).find(p => p.e === e);
       // draftban egy jatekos egy keretben lehet; kapitany nincs a jatekban
-      if (x) tulajok.push({ nev: nev(+id), kezdo: !x.b, kapitany: false });
+      if (x){ tulajok.push({ nev: nev(+id), kezdo: !x.b, kapitany: false });
+              if (x.pts != null) tarolt = x.pts; }
     }
     // dupla forduloban ket sor tartozik ugyanahhoz a fordulohoz
     const hs = (hist || []).filter(h => +h.event === gw);
@@ -461,10 +463,18 @@ async function profilAdat(e){
       jovo: !HIST[gw],
       keretszam: Object.keys(per).length,
       meccsek: lejatszott.length ? lejatszott : jovobeli,
-      pont: (hist && hs.length) ? hs.reduce((s, h) => s + (h.total_points || 0), 0) : null,
+      // Ha az FPL-lekeres elhasal, NEM kotojel jon: a fordulonkenti pont ott
+      // van a tarolt keret-elozmenyben (draft_history.json), es azt ki tudjuk
+      // irni. Az ellenfelet nem - az csak az element-summary-bol jon -, de a
+      // pont es a szerep megjelenik. (Enelkul FPL-kimaradaskor az egesz profil
+      // csupa kotojel volt, es a "Pont osszesen" 0 - miközben az adat itt
+      // hevert a repoban. Az NB1-profil mindig is a tarolt adatbol epult.)
+      pont: (hist && hs.length) ? hs.reduce((s, h) => s + (h.total_points || 0), 0)
+          : (!hist && tarolt != null) ? tarolt
+          : null,
       // "nincs meccs" CSAK akkor, ha a fordulo mar lement, de a klub nem
       // jatszott (ures fordulo). A jovobeli sor egyszeruen ures.
-      jegyzet: !hist ? '—'
+      jegyzet: !hist ? (tarolt != null ? undefined : '—')
         : (hs.length || jovobeli.length) ? undefined
         : (HIST[gw] ? 'nincs meccs' : '')
     });

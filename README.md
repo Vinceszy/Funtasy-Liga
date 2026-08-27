@@ -228,6 +228,12 @@ mind a kettő **egyetlen kérésből**: a Draft `element-summary/{id}` fordulón
 25 idegenbeli, nem döntetlen meccsen mind a 25 ezt igazolta, a „játékos csapata előre"
 olvasatot egy sem — rossz választással minden idegenbeli eredmény megfordult volna.
 
+**Ha az `element-summary` nem érhető el**, a PL-profil a **tárolt** fordulónkénti pontból
+dolgozik (`draft_history.json` → `pts`): a pont és a szerep (kezdő/pad) megjelenik, csak az
+ellenfél marad üres. Korábban ilyenkor minden sor kötőjel volt, a „Pont összesen" pedig 0 —
+miközben az adat ott hevert a repóban. Az NB1-profil mindig is a tárolt adatból épült, a
+tételes bontást pótolja utólag az API-ból; ez a két liga most ebben is egyformán működik.
+
 **Ez az arány csak salary cap ligában jelenik meg**, és ezt a liga `tipus` mezője dönti el
 (`funtasy.js` → `LIGAK`), nem a liga azonosítója. Draft ligában egy játékos pontosan egy
 szakvezetőnél lehet — vagy senkinél —, tehát a *keret* mindig 1/N vagy 0 lenne, kapitány pedig
