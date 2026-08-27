@@ -60,8 +60,11 @@ async function jsonAtir(page, minta, atalakit) {
     kesobbi nyer), tehat ott tovabbra is az a viselkedes ervenyes, amit az
     a teszt mer. */
 async function apiKi(page) {
+  // a lista a lekero (funtasy.js) UT-LISTAJAT koveti: minden proxy-hoszt
+  // itt is szerepeljen, kulonben egy teszt valodi halozatra szivarogna
   for (const m of ['**mlsz.hu/**', '**premierleague.com/**',
                    '**corsproxy.io/**', '**allorigins**',
+                   '**proxy.cors.sh/**', '**cors.lol/**',
                    '**fonts.googleapis.com/**', '**fonts.gstatic.com/**'])
     await page.route(m, r => r.abort());
 }

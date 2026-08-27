@@ -7,6 +7,16 @@
     "nb1",
     "pl"
    ],
+   "cim": "Az élő adatok újra betöltődnek",
+   "leiras": "Az élő lekérések (pontok részletezése, élő pontok, élő keretek) közvetítő szolgáltatásokon át mennek, és a két használt szolgáltatás egyszerre esett ki — az egyik fizetőssé vált, a másik túlterhelt lett. Ezért nem töltött be semmi élő adat egyik ligában sem. Kilenc szolgáltatást végigmérve új, több lábon álló sorrend került be; ha egy út kiesik, az oldal a következőn próbálkozik. Ha mégis minden út elhasal, a hibaüzenet mostantól azt is megmondja, melyik miért."
+  },
+  {
+   "datum": "2026-08-27",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
    "cim": "A pontrészletező nem zár vissza magától",
    "leiras": "Ha megnyitottad egy játékos pontjainak bontását, és közben beért a friss adat (élő keret, játszott percek, élő pontok), a nézet újrarajzolódott, és a nyitott bontás eltűnt — újra meg kellett nyitni. Mostantól nyitva marad, ugyanazzal a tartalommal."
   },

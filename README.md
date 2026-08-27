@@ -38,6 +38,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [Minden automatikusan megy (GitHub Actions, 3 óránként)](#minden-automatikusan-megy-github-actions-3-óránként)
   - [Az FPL Draft adatai (3 óránként, draft.yml)](#az-fpl-draft-adatai-3-óránként-draftyml)
   - [Élő frissítés a böngészőből (mindkét oldal)](#élő-frissítés-a-böngészőből-mindkét-oldal)
+  - [A CORS-proxyk cserélhetők — és cserélni is kellett (mérve, 2026-08-27)](#a-cors-proxyk-cserélhetők--és-cserélni-is-kellett-mérve-2026-08-27)
   - [A betűkészlet nem állíthatja meg a lapot (mérve, 2026-08-27)](#a-betűkészlet-nem-állíthatja-meg-a-lapot-mérve-2026-08-27)
   - [Gyorsítótár: miért ragadt be a pontszám iPhone-on](#gyorsítótár-miért-ragadt-be-a-pontszám-iphone-on)
   - [„frissítés… 1,2 mp" — a néma számcsere ellen](#frissítés-12-mp--a-néma-számcsere-ellen)
@@ -431,8 +432,9 @@ találgatjuk:
 - `tolt` → a régi kérés már az elavult sorra futna ki, ezért **újraindul** a betöltés;
 - `hiba` → **nem** kerül vissza; a sor bezár, és egy kattintás újrapróbálja.
 
-**A hibaüzenet megmondja az okot is.** A lekérő (`FunTasy.lekero`) három úton próbálkozik —
-direkt, `corsproxy.io`, `allorigins` —, és a hibaüzenetbe beleírja, melyik miért nem ment
+**A hibaüzenet megmondja az okot is.** A lekérő (`FunTasy.lekero`) több úton próbálkozik —
+direkt kérés és CORS-proxyk, lásd „A CORS-proxyk cserélhetők" szakaszt —, és a
+hibaüzenetbe beleírja, melyik miért nem ment
 (`direkt:CORS · corsproxy:HTTP 429 · allorigins:időtúllépés`). Ez eddig elveszett: az
 accordion csak annyit írt ki, hogy „A bontás lekérése nem sikerült", amiből sem a
 felhasználó, sem a fejlesztő nem tudta eldönteni, hálózat-e, proxy-e vagy az API változott.
@@ -556,6 +558,27 @@ bfcache-es `pageshow` és a `focus` eseményre futtatja újra a frissítést, le
 **Időzített frissítés szándékosan nincs:** nyitva hagyott lapon nem megy lekérés a
 proxykon át (mobilon adat és akku). Ha nézni akarod, hogy változik, vissza kell térni
 a laphoz — vagy újratölteni.
+
+### A CORS-proxyk cserélhetők — és cserélni is kellett (mérve, 2026-08-27)
+
+A böngésző az MLSZ/FPL API-t közvetlenül nem érheti el (a válaszban nincs
+`Access-Control-Allow-Origin` — ezt mértük, nem hisszük), ezért minden élő lekérés
+proxyn megy át. 2026-08-27-én **a két akkori proxy egyszerre halt meg**: a `corsproxy.io`
+401-re váltott (regisztrációhoz kötötték a szolgáltatást), az `allorigins` túlterhelt volt
+(522). Mivel minden élő kérés ezen a kettőn múlt, **mindkét liga** élő része — pont-bontás,
+élő pontok, élő keret — egyszerre állt le. A tárolt adatot ez nem érintette.
+
+A tanulság: egy ingyenes proxy bármikor eltűnhet, ezért **több független út kell**. A
+kilenc jelöltet végigmérő futás (`naplo/proxy-meres.py` → `naplo/proxy-meres.txt`) alapján
+az út-sorrend most: `direkt` → `proxy.cors.sh` → `allorigins /raw` → `allorigins /get`
+(ez **csomagolva** adja a választ, `{contents: "..."}` — a lekérő kibontja) → `cors.lol` →
+`corsproxy.io` (a sor végén, hátha visszaengedik). Az első siker után a lekérő a bevált
+úton marad. A láncot a `tesztek/lekero.teszt.js` rögzíti — benne pont a 2026-08-27-i
+hibakép: corsproxy 401 + néma allorigins mellett a cors.sh-nak kell kiszolgálnia.
+
+Ha megint minden út elhasal, a pont-bontás hibaüzenete felsorolja, melyik miért
+(`direkt:CORS · corsproxy:HTTP 401 · …`) — ebből lehet diagnosztizálni, kézre esik
+képernyőképen is.
 
 ### A betűkészlet nem állíthatja meg a lapot (mérve, 2026-08-27)
 

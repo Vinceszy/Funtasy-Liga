@@ -78,12 +78,16 @@ const BONTAS = { data: [
   var p2 = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err2 = []; p2.on('pageerror', e => err2.push(e.message));
   await apiKi(p2);
-  let hivas = 0;
+  // A lekero TOBB uton probalkozik (direkt + proxyk), es a proxys URL-ben is
+  // benne van a cel-URL - tehat "az elso keres" nem egy URL, hanem egy teljes
+  // PROBALKOZAS-KOR. Kapcsoloval vezereljuk: eloszor MINDEN ut elhasal, a
+  // sikeres ujraprobalast a kapcsolo atbillentese engedi.
+  let szolgal = false;
   await p2.route('**fantasy-api.mlsz.hu/**', r => {
     if (!/game-player-stats/.test(decodeURIComponent(r.request().url()))) return r.abort();
-    hivas++;
-    return hivas === 1 ? r.abort()      // az ELSO keres elhasal
-      : r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BONTAS) });
+    return szolgal
+      ? r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BONTAS) })
+      : r.abort();
   });
   await p2.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p2.waitForSelector('#table tr', { timeout: 20000 });
@@ -106,6 +110,7 @@ const BONTAS = { data: [
      'az újrarajzolás NEM őrzi meg a hibaüzenetet (a sor bezár)');
   jo((await p2.$$eval('.plr.open', a => a.length)) === 0,
      'a sor sem marad nyitottnak jelölve — különben a kattintás csak becsukná');
+  szolgal = true;                       // mostantol a lekeres sikerulhet
   await p2.$eval('#mBody .plr[data-acc]', e => e.click());
   await p2.waitForFunction(() => {
     const a = document.querySelector('.accpanel');

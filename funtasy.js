@@ -1223,12 +1223,28 @@
       return be.belsoBelyeg ? u + (u.indexOf('?') < 0 ? '?' : '&') +
         be.belsoBelyeg + '=' + Date.now() : u;
     };
+    /* Az ut-sorrend MERT megbizhatosag, nem izles (naplo/proxy-meres.txt,
+       2026-08-27): aznap a corsproxy.io 401-re valtott (regisztraciohoz
+       kotottek), az allorigins tulterhelt volt - es mivel minden elo lekeres
+       ezen a ketton mult, MINDKET liga elo resze egyszerre halt meg. A
+       tanulsag beepitve: tobb fuggetlen ut, es az elso siker utan a lekero
+       ugyis a bevalt uton marad. */
     var utak = [
       { n: 'direkt', f: function (u) { return belyeg(u); } },
-      { n: 'corsproxy', f: function (u) {
-          return 'https://corsproxy.io/?url=' + encodeURIComponent(belyeg(u)) + '&_=' + Date.now(); } },
+      // path-stilusu proxy: a cel-URL valtozatlanul fuzodik a vegere
+      { n: 'cors.sh', f: function (u) { return 'https://proxy.cors.sh/' + belyeg(u); } },
       { n: 'allorigins', f: function (u) {
-          return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(belyeg(u)) + '&_=' + Date.now(); } }
+          return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(belyeg(u)) + '&_=' + Date.now(); } },
+      // az allorigins masik utja CSOMAGOLVA adja a valaszt ({contents: "..."}) -
+      // a meresben pont ez ment, amikor a /raw eppen nem. A kibont() bontja ki.
+      { n: 'allorigins-get', f: function (u) {
+          return 'https://api.allorigins.win/get?url=' + encodeURIComponent(belyeg(u)) + '&_=' + Date.now(); },
+        kibont: function (j) { return JSON.parse(j.contents); } },
+      { n: 'cors.lol', f: function (u) {
+          return 'https://api.cors.lol/?url=' + encodeURIComponent(belyeg(u)) + '&_=' + Date.now(); } },
+      // 401 a meres napjan - a sor vegen marad, hatha visszaengedik
+      { n: 'corsproxy', f: function (u) {
+          return 'https://corsproxy.io/?url=' + encodeURIComponent(belyeg(u)) + '&_=' + Date.now(); } }
     ];
     var ervenyes = be.ervenyes || function (j) { return j && typeof j === 'object'; };
     var bevalt = null;
@@ -1247,6 +1263,10 @@
             .finally(function () { clearTimeout(t); });
           if (!res.ok) { hibak.push(rt.n + ':HTTP ' + res.status); continue; }
           var j = JSON.parse(await res.text());
+          if (rt.kibont) {
+            try { j = rt.kibont(j); }
+            catch (e2) { hibak.push(rt.n + ':csomagolt válasz hibás'); continue; }
+          }
           if (!ervenyes(j)) { hibak.push(rt.n + ':rossz formátum'); continue; }
           bevalt = rt;
           return j;
