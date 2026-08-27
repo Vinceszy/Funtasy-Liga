@@ -75,7 +75,7 @@ Az `api_get`-et mock váltja ki, a `collect.py` egy ideiglenes könyvtárban fut
 | `meccsallapot.teszt.js` | A `meccsAllapot()` négy értéke és a két időkorlát (100 / 180 perc); a lejárt éjféles helyőrző (nem ígér kezdési időt); a `round_number`-ből felismert „nincs meccse". |
 | `uzenetek.teszt.js` | Gyorsítótár-kerülés az élő lekéréseknél, és hogy meccs közben nem írjuk, hogy „lejátszotta pont nélkül". A mockolt élő sort a **teljes kezdési időbélyeghez** köti, nem a napjához: meccsnapon a tárolt sor ugyanarra a napra esik, és a teszt egy másik meccs üzenetét mérte volna (2026-08-27-én meg is tette). |
 | `visszateres.teszt.js` | A lap láthatóvá válásakor újra lekér-e (`FunTasy.ujraLathatokor`) — egységteszt és e2e is. |
-| `frissjelzo.teszt.js` | A „frissítés…" jelzés lassú lekérésnél megjelenik, gyorsnál nem villan fel. |
+| `frissjelzo.teszt.js` | A „frissítés…" jelzés lassú lekérésnél megjelenik, gyorsnál nem villan fel. Az élő fordulót előfeltételként rögzíti (`provisional:[5]`), nem a betöltési frissítés beérkezésétől reméli — ez kb. minden harmadik futásban flake-et okozott. |
 | `keretbetoltes.teszt.js` | A meccs megnyitása a **fordulónkénti** keret-fájlt tölti-e le a teljes előzmény helyett — és a visszaesési út is működik-e. |
 | `kulonbseg.teszt.js` | A Különbségek nézet szerkezete gépen (két oszlop) és mobilon (közös blokk + két oszlop). |
 | `lekero.teszt.js` | A lekérő tartalék-útjai (2026-08-27: a corsproxy.io 401-re váltott, az allorigins túlterhelt volt — minden élő lekérés leállt mindkét ligában). Rögzíti, hogy a lánc végigesik a következő útig (corsproxy 401 + néma allorigins mellett a cors.sh szolgál ki), a csomagolt allorigins-válasz (`{contents:"…"}`) kibontva jelenik meg, és ha minden út elhasal, a hibaüzenet felsorolja őket. |

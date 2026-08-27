@@ -1227,7 +1227,7 @@
        allitva, ez az elso ut - a sajat fiok alatt fut, senki nem kapcsolja
        le, es az ingyenes kerete (100k/nap) a forgalmunk sokszorosa. Amig
        ures, a lekero kihagyja, es a publikus proxyk viszik (backup). */
-    var SAJAT_PROXY = '';   // pl. 'https://funtasy-proxy.valaki.workers.dev'
+    var SAJAT_PROXY = 'https://funtasy-liga.swick00.workers.dev';
 
     /* Az ut-sorrend MERT megbizhatosag, nem izles (naplo/proxy-meres.txt,
        2026-08-27): aznap a corsproxy.io 401-re valtott (regisztraciohoz

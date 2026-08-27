@@ -70,7 +70,7 @@ async function lap(br, utak){
   cim('ha minden út elhasal, a hibaüzenet felsorolja őket');
   ({ p, err, panel } = await lap(br, []));   // az apiKi mindent elvag
   jo(panel.allapot === 'hiba', 'a panel hibát mutat');
-  for (const ut of ['direkt', 'cors.sh', 'allorigins', 'cors.lol', 'corsproxy'])
+  for (const ut of ['sajat', 'direkt', 'cors.sh', 'allorigins', 'cors.lol', 'corsproxy'])
     jo(panel.szoveg.indexOf(ut) >= 0, 'a hibaüzenetben ott a(z) ' + ut + ' út');
   await p.close();
   await vege(br);

@@ -51,8 +51,18 @@ function keret(opts){
       return json({ data: [{ user_team: { user: { id: 1, username: m ? m[1] : '' },
         round_statistics: [{ round_number: 5, points: 30 }] } }] });
     });
+    // a sajat proxy (workers.dev) a tesztkornyezetbol nem erheto el - a valos
+    // halozati probalkozasa csak kesleltetne az elso mock-valaszt
+    await p.route('**workers.dev/**', r => r.abort());
     await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
     await p.waitForSelector('#table tr', { timeout: 20000 });
+    // AZ ELOFELTETELT KIMONDJUK: az eloKeret a USER_IDS-bol dolgozik, amit a
+    // betoltesi frissites tolt fel a ranglista-valaszokbol. Ha a kattintas
+    // megelozi, az elo keret-lekeres el sem indul, es a teszt a TAROLT
+    // keretet meri (megtortent: a sajat proxy-ut ~300 ms-os kerulovel eppen
+    // eleg keslest adott hozza, es a teszt determinisztikusan bukott).
+    await p.waitForFunction(() => typeof USER_IDS !== 'undefined'
+      && USER_IDS['Bazsa'] && USER_IDS['Vince'], null, { timeout: 20000 });
     // elo meccs megnyitasa az 5. (ideiglenes) fordulora
     await p.evaluate(() => showLiveMatch('Bazsa', 'Vince', 5));
     // A teszt elofeltetele a MOCKOLT elo keret. Terheles alatt elofordult,

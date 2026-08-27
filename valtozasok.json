@@ -1,6 +1,16 @@
 {
  "bejegyzesek": [
   {
+   "datum": "2026-08-28",
+   "tipus": "funkcio",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
+   "cim": "Saját közvetítőn mennek az élő lekérések",
+   "leiras": "Az élő adatok eddig publikus, ingyenes közvetítő szolgáltatásokon át jöttek, amelyek bármikor kieshetnek — egyszer meg is tették. Mostantól az oldal saját közvetítője viszi őket (a nyilvánosak tartaléknak maradnak), és ha többen nézitek ugyanazt a meccset, az MLSZ felé percenként csak egy kérés megy ki, nem fejenként egy."
+  },
+  {
    "datum": "2026-08-27",
    "tipus": "bugfix",
    "ligak": [

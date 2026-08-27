@@ -1,4 +1,4 @@
-const { BASE, jo, cim, hibak, inditas, vege, apiKi } = require('./kozos');
+const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozos');
 // A "frissítés…" jelzes: lassu lekeresnel latszik, gyorsnal nem villan fel.
 
 // Megjelenik-e a jelzes a megadott idon belul? (A vegallapotot nezni keves
@@ -14,6 +14,11 @@ async function jelzesreVar(p, ms){
 async function plMeccs(br, keses){
   const p = await br.newPage();
   const perr = []; p.on('pageerror', x => perr.push(x.message));
+  // A sajat proxy (workers.dev) a tesztkornyezetbol nem erheto el, es a
+  // valodi halozati probalkozasa ~300 ms - ennyi kesessel a LIVEGW valasz
+  // MAR A KATTINTAS UTAN erne be, es a nem-elo ag futna le, jelzes nelkul.
+  // (Elesben a sajat ut a leggyorsabb, ott nincs ilyen kesleltetes.)
+  await p.route('**workers.dev/**', r => r.abort());
   const hist = require(require('path').join(__dirname,'..','draft_history.json'));
   const GW = Object.keys(hist.rounds)[0];
   const elemek = [...new Set(Object.values(hist.rounds[GW]).flat().map(x => x.e))];
@@ -66,6 +71,13 @@ async function plMeccs(br, keses){
   console.log('\n--- NB1: lassú élő keret-lekérés (3 mp) ---');
   const p = await br.newPage();
   const perr = []; p.on('pageerror', x => perr.push(x.message));
+  await p.route('**workers.dev/**', r => r.abort());   // lasd fent: plMeccs
+  // Az elofeltetelt KIMONDJUK, nem a betoltesi frissitestol remeljuk: az 5.
+  // fordulo elo volta eddig azon mult, hogy a mockolt ranglista-valaszok a
+  // kattintas ELOTT beertek-e - ha nem, az elo keret-lekeres el se indult,
+  // es a teszt jelzes nelkul, felrevezeto hibaval bukott (flake, kb. minden
+  // harmadik futas). Ugyanigy rogzit a uzenetek.teszt.js is.
+  await jsonAtir(p, '**/results.json*', j => Object.assign(j, { provisional: [5] }));
   const start = new Date(Date.now() - 1800000).toISOString();
   await p.route('**fantasy-api.mlsz.hu/**', async route => {
     const u = decodeURIComponent(route.request().url());
