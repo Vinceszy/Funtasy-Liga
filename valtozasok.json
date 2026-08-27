@@ -1,6 +1,35 @@
 {
  "bejegyzesek": [
   {
+   "datum": "2026-08-27",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
+   "cim": "A pontrészletező nem zár vissza magától",
+   "leiras": "Ha megnyitottad egy játékos pontjainak bontását, és közben beért a friss adat (élő keret, játszott percek, élő pontok), a nézet újrarajzolódott, és a nyitott bontás eltűnt — újra meg kellett nyitni. Mostantól nyitva marad, ugyanazzal a tartalommal."
+  },
+  {
+   "datum": "2026-08-27",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
+   "cim": "Gyenge hálón is azonnal megjelenik az oldal",
+   "leiras": "A betűkészletek a Google-tól jönnek, és eddig az oldal megvárta őket: ha a szolgáltatás lassú volt vagy nem válaszolt, addig üres képernyő látszott — mérve akár 12 másodpercig. Mostantól a tartalom azonnal kirajzolódik, a betűkészlet pedig akkor lép be, amikor megérkezik. JavaScript nélkül pedig az oldal kiírja, hogy JavaScript kell hozzá — eddig csak üres táblázatok látszottak, magyarázat nélkül."
+  },
+  {
+   "datum": "2026-08-27",
+   "tipus": "bugfix",
+   "ligak": [
+    "pl"
+   ],
+   "cim": "A játékos szezonja akkor is látszik, ha az FPL nem elérhető",
+   "leiras": "A PL-oldalon a játékosprofil fordulónkénti pontjai az FPL-től jöttek: ha a lekérés elakadt, minden sorban kötőjel állt, és a „Pont összesen” 0 volt. Mostantól a mentett adatból dolgozik — a pont és a szerep (kezdő vagy pad) megjelenik, csak az ellenfél marad üres."
+  },
+  {
    "datum": "2026-08-25",
    "tipus": "funkcio",
    "ligak": [

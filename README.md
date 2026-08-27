@@ -560,6 +560,11 @@ beírt** betűnevet is egy helyre húzták.
 
 Rögzítve: `tesztek/betukeszlet.teszt.js`.
 
+**JavaScript nélkül** eddig csak az üres váz látszott — panel-címek, üres táblázatok, egy szó
+magyarázat nélkül. Mostantól minden oldal tetején `<noscript>`-figyelmeztetés áll, hogy a
+táblázatokat a böngésző tölti fel, tehát JS kell hozzá. Ugyanaz az elv, mint a státuszsornál:
+ha valami hiányzik, azt az oldal **mondja meg**, ne a látogató találgassa.
+
 ### Gyorsítótár: miért ragadt be a pontszám iPhone-on
 
 Az élő lekérések sokáig **gyorsítótár-törés nélkül** mentek, és a `fetch` sem kapott
@@ -975,6 +980,17 @@ dönt, ha a `current_round` egyáltalán nem jött meg.
   éltek, bontás nélkül. A `zarasok_nb1.json`-ban ezért „Ismeretlen játékos" névvel állnak
   (`nk:1`), és csak a változás mértéke (`dl`: +1, +1, −2,5) — nevet nem találunk ki hozzájuk.
   A 08-20-i szinkron óta (3 óránkénti összevetéssel) nem volt újabb ilyen.
+
+#### A szakvezetőt a felhasználóneve azonosítja — és ha nem, arról szólunk
+
+A gyűjtő a ranglista-végponton **névre keres** (`filter[search]`), majd a találatok közül azt
+veszi, akinek a `username`-je pontosan egyezik. Ha nincs pontos egyezés, a lista első elemét
+használja — ez azért kell, mert a válasz nem mindig hozza a `username` mezőt.
+
+Ez a visszaesési út **csendben** működött, pedig ha valaha félrekeresne, egy **másik
+szakvezető pontjait** írná be a tabellába — pont az a „csendes, hihető, rossz" hibafajta,
+ami ellen a többi védelem is szól. Mostantól a futásnapló kiírja (`stderr`), ha a fallbackra
+került sor, és azt is, hány találat volt. A viselkedés nem változott, csak láthatóvá vált.
 
 #### Önjavítás: ha az MLSZ korrigál, a gyűjtő is korrigál
 
