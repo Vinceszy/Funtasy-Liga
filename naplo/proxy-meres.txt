@@ -1,0 +1,29 @@
+CORS-proxy meres · 2026-08-27 21:27 UTC · Origin: https://vinceszy.github.io
+A bongeszos hibakep, ami miatt a meres keszult:
+  direkt:CORS · corsproxy:HTTP 401 · allorigins:CORS  (NB1 es PL egyszerre)
+
+=== MLSZ · https://fantasy-api.mlsz.hu/game-player-stats?include=competition_stat_config&filter%5Bcompetition_player_id%5D=1249&filter%5Bround_id%5D=85
+  direkt               status=200    ACAO=None                       3065 byte  json-ok:True   1265 ms
+  corsproxy            status=401    ACAO=*                             0 byte  json-ok:False   263 ms
+  corsproxy-ts-nelkul  status=401    ACAO=*                             0 byte  json-ok:False   172 ms
+  allorigins-raw       status=522    ACAO=None                          0 byte  json-ok:False 19440 ms
+  allorigins-get       status=200    ACAO=https://vinceszy.github.io   3765 byte  json-ok:True   3883 ms
+  codetabs             status=522    ACAO=None                          0 byte  json-ok:False 19861 ms
+  cors.lol             status=429    ACAO=None                          0 byte  json-ok:False   496 ms
+  thingproxy           status=URLError:<urlopen error [Errno -2] Name or service not kn ACAO=None                          0 byte  json-ok:False   360 ms
+  workers-demo         status=429    ACAO=None                          0 byte  json-ok:False   129 ms
+  cors.sh              status=200    ACAO=*                          3065 byte  json-ok:True   1979 ms
+
+=== FPL · https://draft.premierleague.com/api/game
+  direkt               status=200    ACAO=None                        146 byte  json-ok:True    356 ms
+  corsproxy            status=401    ACAO=*                             0 byte  json-ok:False    75 ms
+  corsproxy-ts-nelkul  status=401    ACAO=*                             0 byte  json-ok:False    74 ms
+  allorigins-raw       status=200    ACAO=https://vinceszy.github.io    146 byte  json-ok:True   4818 ms
+  allorigins-get       status=522    ACAO=None                          0 byte  json-ok:False 19553 ms
+  codetabs             status=522    ACAO=None                          0 byte  json-ok:False 19722 ms
+  cors.lol             status=200    ACAO=*                           146 byte  json-ok:True    541 ms
+  thingproxy           status=URLError:<urlopen error [Errno -2] Name or service not kn ACAO=None                          0 byte  json-ok:False   434 ms
+  workers-demo         status=429    ACAO=None                          0 byte  json-ok:False    72 ms
+  cors.sh              status=200    ACAO=*                           146 byte  json-ok:True    170 ms
+
+Ertekeles: az a proxy jo, ahol status=200 ES van ACAO ES json-ok:True.
