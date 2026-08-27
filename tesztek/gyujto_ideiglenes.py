@@ -183,18 +183,43 @@ def szamlalo_stamp():
     return "IRAS-%d" % szamlalo[0]
 c.stamp = szamlalo_stamp
 c.main()
-elso = open("results.json", encoding="utf-8").read()
+
+
+def pillanatkep():
+    """MINDEN kimeneti fajl tartalma - nem csak a results.json.
+
+    A "csak ha valtozott" logika fajlonkent kulon van megirva (hol
+    szamlalobol, hol dump-osszehasonlitasbol, hol jelzobol), es pont ez a
+    szethuzottsag rejtette el a results.json hibajat. Ezert a teszt nem egy
+    fajlt nez, hanem az OSSZESET: barmelyik uj kimenet automatikusan
+    bekerul."""
+    kep = {}
+    for gy, _, fajlok in os.walk("."):
+        for f in fajlok:
+            if not f.endswith(".json"):
+                continue
+            ut = os.path.join(gy, f)
+            kep[ut] = open(ut, encoding="utf-8").read()
+    return kep
+
+
+elso = pillanatkep()
 c.main()
-masodik = open("results.json", encoding="utf-8").read()
+masodik = pillanatkep()
 c.stamp = eredeti_stamp
-if elso == masodik:
-    print("OK   a masodik, valtozatlan futas nem irta ujra a results.json-t")
+valtozott = sorted(k for k in elso if elso[k] != masodik.get(k))
+uj_fajl = sorted(k for k in masodik if k not in elso)
+if not valtozott and not uj_fajl:
+    print("OK   a masodik, valtozatlan futas EGYETLEN kimeneti fajlt sem irt ujra (%d fajl)"
+          % len(elso))
 else:
-    hibak.append("C3: valtozatlan futas is ujrairta a results.json-t")
-    print("HIBA a valtozatlan futas is ujrairta a fajlt")
-    for a, b in zip(elso.splitlines(), masodik.splitlines()):
-        if a != b:
-            print("     - %s\n     + %s" % (a[:90], b[:90]))
-            break
+    hibak.append("C3: valtozatlan futas is ujrairt fajlokat")
+    print("HIBA a valtozatlan futas ujrairta: %s%s"
+          % (", ".join(valtozott), (" | uj: " + ", ".join(uj_fajl)) if uj_fajl else ""))
+    for k in valtozott:
+        for a, b in zip(elso[k].splitlines(), masodik[k].splitlines()):
+            if a != b:
+                print("     %s\n     - %s\n     + %s" % (k, a[:90], b[:90]))
+                break
 
 sys.exit(1 if hibak else 0)

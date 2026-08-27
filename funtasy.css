@@ -5,7 +5,17 @@
    ez egy sima statikus fajl, amit a bongeszo <link>-kel tolt be. */
 :root{--bg:#0B1F16;--panel:#12291D;--panel2:#0E2418;--line:#2E4A38;--ink:#F2EFE6;--dim:#9DB3A4;
 --amber:#FFB020;--magenta:#E5378B;--win:#3DDC84;--lose:#E5533D;--draw:#9DB3A4;
---valtozo:#FFC24B;--ideiglenes:#FF8A3D}
+--valtozo:#FFC24B;--ideiglenes:#FF8A3D;
+/* Betukeszletek EGY helyen, tartalek-sorral. Ket ok:
+   1. A Google Fonts kulso szolgaltatas - ha lassu vagy nem elerheto, a
+      `display=swap` miatt a tartalek betuvel indul a lap. Tartalek nelkul az
+      a bongeszo alapertelmezese (tipikusan talpas Times), vagyis a szamok
+      hirtelen mas szelesseggel allnak: a tablazat ugral egyet.
+   2. A harom csalad korabban 60+ helyen volt beirva; egy csere 60 helyen
+      jelentett szerkesztest. */
+--fo:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+--mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+--cim:"Archivo Black",Impact,system-ui,sans-serif}
 /* ===== Liga-temak =====
    Az alapertelmezett (a :root fenti szinei) az NB1-oldal. A PL-oldal a
    body.liga-pl osztallyal a Premier League szinvilagara valt: lila alap,
@@ -27,15 +37,19 @@ body.liga-nb1 h1 .tag{color:#43E27F}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{max-width:100%;overflow-x:hidden}
 img,table{max-width:100%}
-body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;min-height:100vh}
+body{background:var(--bg);color:var(--ink);font-family:var(--fo);min-height:100vh}
 .wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+/* JS nelkul a lapon csak az ures vaz all (a tablazatokat a bongeszo tolti
+   fel a mentett adatbol). Ne ugy nezzen ki, mintha elromlott volna: mondjuk
+   meg. Csak <noscript>-ben latszik, tehat a rendes latogatot nem zavarja. */
+.nojs{margin:0 0 18px;border-left:3px solid var(--amber);padding-left:10px}
 header{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px 20px;border-bottom:3px solid var(--amber);padding-bottom:14px;margin-bottom:22px}
-h1{font-family:'Archivo Black';font-size:clamp(26px,5vw,40px);letter-spacing:.5px}
+h1{font-family:var(--cim);font-size:clamp(26px,5vw,40px);letter-spacing:.5px}
 h1 .fun{color:var(--amber)}h1 .tag{color:var(--magenta)}
 .sub{color:var(--dim);font-size:13px}
-.btn{margin-left:auto;background:var(--amber);color:#1A1200;border:0;font:700 14px Inter;padding:10px 18px;border-radius:6px;cursor:pointer}
+.btn{margin-left:auto;background:var(--amber);color:#1A1200;border:0;font:700 14px var(--fo);padding:10px 18px;border-radius:6px;cursor:pointer}
 .btn:hover{filter:brightness(1.08)}.btn:disabled{opacity:.5;cursor:wait}
-#status{font:500 12px 'JetBrains Mono';color:var(--dim);width:100%;min-height:16px}
+#status{font:500 12px var(--mono);color:var(--dim);width:100%;min-height:16px}
 #status.err{color:var(--lose)}#status.ok{color:var(--win)}
 /* Nem hiba, de nem is naprakesz: a fordulo lezarult, a tarolt adatban meg
    nincs benne az eredmeny (a gyujto 3 orankent fut). */
@@ -52,13 +66,13 @@ h1 .fun{color:var(--amber)}h1 .tag{color:var(--magenta)}
   #jlPanel{order:9}
 }
 .panel{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:22px}
-.panel h2{min-width:0;flex-wrap:wrap;font-family:'Archivo Black';font-size:15px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);
+.panel h2{min-width:0;flex-wrap:wrap;font-family:var(--cim);font-size:15px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);
 padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
 table{width:100%;border-collapse:collapse;font-size:14px}
-th{font:600 11px Inter;letter-spacing:1px;text-transform:uppercase;color:var(--dim);text-align:right;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{font:600 11px var(--fo);letter-spacing:1px;text-transform:uppercase;color:var(--dim);text-align:right;padding:8px 10px;border-bottom:1px solid var(--line)}
 th:first-child,th:nth-child(2){text-align:left}
-td{padding:9px 10px;border-bottom:1px solid var(--panel2);text-align:right;font-family:'JetBrains Mono';font-size:13.5px}
-td.name{font-family:Inter;font-weight:700;text-align:left;font-size:14px}
+td{padding:9px 10px;border-bottom:1px solid var(--panel2);text-align:right;font-family:var(--mono);font-size:13.5px}
+td.name{font-family:var(--fo);font-weight:700;text-align:left;font-size:14px}
 /* A flex a monogram vedelme miatt kell (kulonben a sor vegi ellipszis
    eppen azt vagja le) - DE flex konteneren a szoveg es a span kozotti
    szokoz elveszik, ezert a tavolsagot gap adja. E nelkul "WhiteARS" allt
@@ -97,11 +111,11 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .vlt-szurocsoport{display:flex;align-items:center;gap:10px}
 /* A ket szurosor kulon-kulon "Mind" gombbal indul; felirat nelkul nem
    derulne ki, melyik mihez tartozik. */
-.vlt-szurocim{font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;
+.vlt-szurocim{font:700 10px var(--fo);letter-spacing:1.5px;text-transform:uppercase;
   color:var(--dim);white-space:nowrap}
 .vlt-szurosor{display:flex;flex-wrap:wrap;gap:6px}
 .vlt-chip{background:var(--panel2);border:1px solid var(--line);color:var(--dim);
-  padding:5px 13px;border-radius:999px;cursor:pointer;font:600 12px Inter}
+  padding:5px 13px;border-radius:999px;cursor:pointer;font:600 12px var(--fo)}
 .vlt-chip:hover{color:var(--ink);border-color:var(--dim)}
 .vlt-chip.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 /* A ligak kulon-kulon kapcsolhatok (tobb is lehet egyszerre), a tipus viszont
@@ -109,20 +123,20 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
    a "Mind" gomb (az elso) nem kap pipat, mert az a kijelolesek torlese. */
 #ligaSzuro .vlt-chip.on:not(:first-child)::before{content:'✓ ';font-weight:700}
 .vlt-ures{color:var(--dim);font-size:13px;padding:22px 20px;line-height:1.5}
-.vlt-datum{font:700 10px 'JetBrains Mono';letter-spacing:1.5px;text-transform:uppercase;
+.vlt-datum{font:700 10px var(--mono);letter-spacing:1.5px;text-transform:uppercase;
   color:var(--dim);background:var(--panel2);padding:9px 20px;
   border-bottom:1px solid var(--line)}
 .vlt-tetel{padding:18px 20px;border-bottom:1px solid var(--line)}
 .vlt-nap:last-child .vlt-tetel:last-child{border-bottom:0}
 .vlt-fejsor{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
-.vlt-tipus{font:700 9px Inter;letter-spacing:1.5px;text-transform:uppercase;
+.vlt-tipus{font:700 9px var(--fo);letter-spacing:1.5px;text-transform:uppercase;
   padding:3px 9px;border-radius:999px;border:1px solid currentColor}
 .vlt-tipus.t-funkcio{color:var(--win)}
 .vlt-tipus.t-bugfix{color:var(--valtozo)}
-.vlt-liga{font:700 9px 'JetBrains Mono';letter-spacing:1px;text-transform:uppercase;
+.vlt-liga{font:700 9px var(--mono);letter-spacing:1px;text-transform:uppercase;
   color:var(--dim);background:var(--panel2);border:1px solid var(--line);
   padding:3px 8px;border-radius:999px}
-.vlt-tetel h3{font:700 15px Inter;margin:0 0 5px;line-height:1.35}
+.vlt-tetel h3{font:700 15px var(--fo);margin:0 0 5px;line-height:1.35}
 .vlt-tetel p{font-size:13px;color:var(--dim);line-height:1.6;margin:0;max-width:68ch}
 /* A kezdolapi sor a naplohoz. Szandekosan NEM liga-kartya: a ligak a fo
    dolog a lapon, ez csak egy melleklet - ugyanakkora kartyakent elvinne a
@@ -132,9 +146,9 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
   border-radius:10px;text-decoration:none;color:var(--dim)}
 .ujdonsagsor:hover{border-color:var(--dim)}
 .ujdonsagsor:hover .cim{color:var(--ink)}
-.ujdonsagsor .cim{font:700 14px Inter;color:var(--ink)}
+.ujdonsagsor .cim{font:700 14px var(--fo);color:var(--ink)}
 .ujdonsagsor .leiras{font-size:12.5px;flex:1}
-.ujdonsagsor .tovabb{font:700 14px Inter}
+.ujdonsagsor .tovabb{font:700 14px var(--fo)}
 @media(max-width:520px){
   .vlt-szurok{gap:12px 0;flex-direction:column;padding:14px 14px}
   .vlt-szurocsoport{align-items:flex-start;flex-direction:column;gap:6px}
@@ -151,7 +165,7 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .dot.GY{background:var(--win)}.dot.V{background:var(--lose)}.dot.D{background:var(--draw)}
 .roundnav{display:flex;align-items:center;gap:8px;margin-left:auto}
 .roundnav button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:15px}
-.roundnav select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:5px 8px;border-radius:6px;font:600 13px Inter}
+.roundnav select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:5px 8px;border-radius:6px;font:600 13px var(--fo)}
 .match{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--panel2);cursor:pointer}
 .match:hover{background:var(--panel2)}
 /* A nev+monogram par: a NEV rovidul (.nv), a monogram sosem - szuk helyen
@@ -162,7 +176,7 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .nv{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mgr{flex:none}
 .match .winner{color:var(--amber)}
-.score{font-family:'JetBrains Mono';font-weight:700;font-size:16px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;white-space:nowrap;min-width:130px;text-align:center}
+.score{font-family:var(--mono);font-weight:700;font-size:16px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;white-space:nowrap;min-width:130px;text-align:center}
 .score .na{color:var(--dim);font-weight:500}
 .matrix{padding:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
@@ -170,7 +184,7 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .tablewrap td.name,.tablewrap th:nth-child(2){position:sticky;left:0;background:var(--panel);z-index:1}
 .tablewrap td.rank,.tablewrap th:first-child{position:sticky;left:0;background:var(--panel);z-index:2}
 .matrix table{font-size:11px}
-.matrix td,.matrix th{padding:5px 6px;text-align:center;font-family:'JetBrains Mono'}
+.matrix td,.matrix th{padding:5px 6px;text-align:center;font-family:var(--mono)}
 .matrix td.w{color:var(--win)}.matrix td.l{color:var(--lose)}.matrix td.d{color:var(--draw)}.matrix td.x{color:#3a5245}
 .matrix td.mx{cursor:pointer}
 .matrix td.mx:hover{background:var(--panel2);outline:1px solid var(--line)}
@@ -181,12 +195,12 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
    felvetelehez itt nincs teendo. Az aktiv ful az adott liga sajat
    kiemelo szinet kapja (--amber temankent mas). */
 .liganav{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
-.liganav .markanev{font-family:'Archivo Black';font-size:12px;letter-spacing:2px;
+.liganav .markanev{font-family:var(--cim);font-size:12px;letter-spacing:2px;
   color:var(--dim);text-decoration:none;text-transform:uppercase}
 .liganav .markanev:hover{color:var(--ink)}
 .liganav .ligak{display:flex;gap:6px;overflow-x:auto;max-width:100%}
 .ligalink{padding:5px 13px;border:1px solid var(--line);border-radius:999px;color:var(--dim);
-  text-decoration:none;font:600 12px Inter;white-space:nowrap;transition:color .12s,border-color .12s}
+  text-decoration:none;font:600 12px var(--fo);white-space:nowrap;transition:color .12s,border-color .12s}
 .ligalink:hover{color:var(--ink);border-color:var(--dim)}
 .ligalink.on{background:var(--amber);border-color:var(--amber);color:#12140F;font-weight:700}
 
@@ -198,13 +212,13 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
   padding:20px 22px;transition:transform .12s,border-color .12s,background .12s}
 .ligakartya:hover{transform:translateY(-2px);background:var(--panel2)}
 .ligakartya .fejsor{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
-.ligakartya h2{font-family:'Archivo Black';font-size:22px;letter-spacing:1px;border:0;padding:0}
+.ligakartya h2{font-family:var(--cim);font-size:22px;letter-spacing:1px;border:0;padding:0}
 /* A ligatipus (salary cap / draft) nem dísz: ez mondja meg, milyen szabalyok
    szerint megy a liga. Ezert a kartyan is ott a helye, nem csak az alcimben. */
-.tipuscimke{font:700 9px Inter;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
+.tipuscimke{font:700 9px var(--fo);letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
   border:1px solid var(--line);border-radius:999px;padding:4px 9px;white-space:nowrap}
 .ligakartya .kartyaleiras{font-size:12px;color:var(--dim);line-height:1.5}
-.ligakartya .tovabb{display:inline-block;margin-top:12px;font:700 11px Inter;letter-spacing:1px;
+.ligakartya .tovabb{display:inline-block;margin-top:12px;font:700 11px var(--fo);letter-spacing:1px;
   text-transform:uppercase;color:var(--dim)}
 .ligakartya[data-liga="nb1"]{border-left-color:#43E27F}
 .ligakartya[data-liga="nb1"]:hover{border-color:#43E27F}
@@ -214,7 +228,7 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .ligakartya[data-liga="pl"] h2{color:#9B5CF6}
 .ligakartya:hover .tovabb{color:var(--ink)}
 
-.mgr{display:inline-block;font:700 9px 'JetBrains Mono';color:var(--dim);background:var(--panel2);
+.mgr{display:inline-block;font:700 9px var(--mono);color:var(--dim);background:var(--panel2);
   border:1px solid var(--line);border-radius:3px;padding:1px 4px;margin-left:5px;vertical-align:middle;letter-spacing:.5px}
 /* ===== overlay ===== */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:50;overscroll-behavior:contain}
@@ -225,36 +239,36 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .mback{position:absolute;top:12px;right:48px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
   font-size:15px;line-height:1;padding:4px 10px;border-radius:6px;cursor:pointer}
 .mback:hover{border-color:var(--amber)}
-.mtitle{font-family:'Archivo Black';color:var(--amber);font-size:17px;margin-bottom:3px;padding-right:96px}
+.mtitle{font-family:var(--cim);color:var(--amber);font-size:17px;margin-bottom:3px;padding-right:96px}
 .msub{font-size:12px;color:var(--dim);margin-bottom:14px}
 /* "frissítés… 1,2 mp" a modal alcime mellett, amig a percre friss lekeres
    tart. Csak lassu valasznal jelenik meg (lasd FunTasy.lassuJelzo). */
 .frissjel{margin-left:8px;padding:1px 7px;border-radius:999px;
   background:var(--panel2);border:1px solid var(--line);
-  font:500 11px 'JetBrains Mono';color:var(--amber);white-space:nowrap}
+  font:500 11px var(--mono);color:var(--amber);white-space:nowrap}
 .tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
-.tab{background:var(--panel2);border:1px solid var(--line);color:var(--dim);padding:6px 14px;border-radius:6px;cursor:pointer;font:600 13px Inter}
+.tab{background:var(--panel2);border:1px solid var(--line);color:var(--dim);padding:6px 14px;border-radius:6px;cursor:pointer;font:600 13px var(--fo)}
 .tab.on{background:var(--amber);color:#1A1200;border-color:var(--amber)}
 .sqwrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
 .sqwrap>*{min-width:0}
 .sqwrap.one{grid-template-columns:1fr;max-width:460px}
 @media(max-width:760px){.sqwrap{grid-template-columns:minmax(0,1fr)}}
-.sqcol h3{font-family:'Archivo Black';font-size:14px;letter-spacing:1px;color:var(--amber);padding-bottom:8px;
+.sqcol h3{font-family:var(--cim);font-size:14px;letter-spacing:1px;color:var(--amber);padding-bottom:8px;
 margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline}
-.sqcol h3 span{font-family:'JetBrains Mono';color:var(--ink);font-size:15px}
+.sqcol h3 span{font-family:var(--mono);color:var(--ink);font-size:15px}
 .plr{display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid var(--panel2);font-size:13px}
 .plr .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .plr .tm{color:var(--dim);font-size:11px}
 /* A jatekos harom szama elo forduloban (PL): jatszott perc, a meccs oraja,
    kezdo volt-e. Nyers ertekek - a ketto osszehasonlitasabol latszik, hogy
    palyan van-e; nem ertelmezunk helyette. */
-.plr .perc{font-family:'JetBrains Mono';font-size:11.5px;color:var(--dim);
+.plr .perc{font-family:var(--mono);font-size:11.5px;color:var(--dim);
   text-align:right;white-space:nowrap;min-width:30px}
 .plr .perc.mora{min-width:34px}
-.plr .kezd{font:700 9px Inter;color:var(--dim);min-width:30px;text-align:center}
+.plr .kezd{font:700 9px var(--fo);color:var(--dim);min-width:30px;text-align:center}
 /* A perc-oszlopok fejlecsora: ugyanaz a racs, de cimkevel. Nem kattinthato,
    es halvanyabb a jatekossoroknal, hogy ne vigye el a figyelmet. */
-.plr.plrfej{font:700 9px Inter;color:var(--dim);opacity:.75;
+.plr.plrfej{font:700 9px var(--fo);color:var(--dim);opacity:.75;
   padding:2px 4px 3px;border-bottom:1px solid var(--line);cursor:default}
 /* A cimke nem lehet szelesebb a maga oszlopanal, kulonben elcsuszik a fejlec
    a szamoktol (a perccellak.teszt.js kozeppontra meri) - ezert nincs
@@ -266,11 +280,11 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
    stilusa rakaszkadolt erre a sorra - ugyanaz az utkozesfajta, mint
    egykor a .pos/.ppos. */
 .bontasmeccs{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
-  font:600 11px Inter;color:var(--dim);padding:4px 6px;
+  font:600 11px var(--fo);color:var(--dim);padding:4px 6px;
   border-bottom:1px solid var(--line)}
-.bontasmeccs b{font-family:'JetBrains Mono';font-weight:700;font-size:12.5px;color:var(--ink)}
-.bontasmeccs .ora{font-family:'JetBrains Mono';color:var(--dim);white-space:nowrap}
-.plr .pts{font-family:'JetBrains Mono';font-weight:700;min-width:52px;text-align:right}
+.bontasmeccs b{font-family:var(--mono);font-weight:700;font-size:12.5px;color:var(--ink)}
+.bontasmeccs .ora{font-family:var(--mono);color:var(--dim);white-space:nowrap}
+.plr .pts{font-family:var(--mono);font-weight:700;min-width:52px;text-align:right}
 /* ===== Zarasi valtozasok panel (PL fooldal) ===== */
 /* A belso margokat a savok adjak (a .panel-nek nincs sajatja - ez a
    changelognal mar egyszer elcsuszott). */
@@ -281,38 +295,38 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .kattint{cursor:pointer}
 .kattint:hover{text-decoration:underline}
 .zlista{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 22px}
-.zcsapat h3{font-family:'Archivo Black';font-size:12px;letter-spacing:1px;color:var(--amber);
+.zcsapat h3{font-family:var(--cim);font-size:12px;letter-spacing:1px;color:var(--amber);
   margin:10px 0 2px}
 .zsor{display:flex;align-items:center;gap:8px;padding:4px 2px;font-size:13px;
   border-bottom:1px solid var(--panel2)}
 .zsor .znev{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.zsor .zert{font-family:'JetBrains Mono';font-size:12px;color:var(--dim);white-space:nowrap}
-.zsor .zdiff{font-family:'JetBrains Mono';font-weight:700;min-width:34px;text-align:right}
-.zsor .zirany{font:600 11px Inter;color:var(--dim)}
+.zsor .zert{font-family:var(--mono);font-size:12px;color:var(--dim);white-space:nowrap}
+.zsor .zdiff{font-family:var(--mono);font-weight:700;min-width:34px;text-align:right}
+.zsor .zirany{font:600 11px var(--fo);color:var(--dim)}
 .zsor .zirany.pos{color:var(--win)}
 /* kezdoallitasi hatekonysag: tabella-cella, h2h-jel, meccsfej-sor */
-td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
-.kezdjel{font:500 10.5px 'JetBrains Mono';color:var(--dim);margin-left:4px}
+td.kezdpc{font-family:var(--mono);color:var(--dim)}
+.kezdjel{font:500 10.5px var(--mono);color:var(--dim);margin-left:4px}
 /* A ket ertek a SAJAT terfelehez igazodik (bal/jobb), ahogy a fejlec
    minden mas adata; kozepen a halvany cimke. */
 .kezdsor{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
-  font:600 12px Inter;color:var(--ink);margin-top:9px}
+  font:600 12px var(--fo);color:var(--ink);margin-top:9px}
 .kezdsor .kezdbal{text-align:left}
 .kezdsor .kezdjobb{text-align:right}
-.kezdsor .kezdcim{font:600 10.5px Inter;letter-spacing:.5px;text-transform:uppercase;
+.kezdsor .kezdcim{font:600 10.5px var(--fo);letter-spacing:.5px;text-transform:uppercase;
   color:var(--dim);white-space:nowrap}
-.kezdsor .kezdresz{font:500 11px 'JetBrains Mono';color:var(--dim)}
+.kezdsor .kezdresz{font:500 11px var(--mono);color:var(--dim)}
 /* a PL meccs-modaljaban az allas-doboz alatt kulon sorkent all */
 #mBody > .kezdsor{margin:-4px 0 10px}
 .flag{display:inline-block;width:14px;height:9px;margin-left:6px;vertical-align:middle;border-radius:1px;
   background:linear-gradient(to bottom,#CE2939 0 33.3%,#fff 33.3% 66.6%,#477050 66.6% 100%);border:1px solid rgba(0,0,0,.35)}
 .ppos{display:inline-block;min-width:26px;text-align:center;background:var(--panel2);border:1px solid var(--line);
-  border-radius:3px;font:700 9px 'JetBrains Mono';color:var(--dim);padding:2px 4px;margin-right:6px}
-.mult{font:600 10px Inter;color:var(--dim);margin-left:4px}
-.eff{font-family:'JetBrains Mono';font-weight:700;min-width:52px;text-align:right}
-.raw{font-family:'JetBrains Mono';color:var(--dim);font-size:11px;min-width:42px;text-align:right}
+  border-radius:3px;font:700 9px var(--mono);color:var(--dim);padding:2px 4px;margin-right:6px}
+.mult{font:600 10px var(--fo);color:var(--dim);margin-left:4px}
+.eff{font-family:var(--mono);font-weight:700;min-width:52px;text-align:right}
+.raw{font-family:var(--mono);color:var(--dim);font-size:11px;min-width:42px;text-align:right}
 .sumline{display:flex;justify-content:space-between;padding:6px 4px;border-top:1px solid var(--line);margin-top:6px;font-size:12px;color:var(--dim)}
-.u21{background:#2E6BE5;color:#fff;font:700 9px Inter;border-radius:3px;padding:1px 4px}
+.u21{background:#2E6BE5;color:#fff;font:700 9px var(--fo);border-radius:3px;padding:1px 4px}
 
 /* ===== Fooldali jatekoslista + kereso =====
    A sor ugyanaz a .plr flex-sor, mint mindenhol maskul: sorszam, poszt, nev
@@ -322,12 +336,12 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
 .jlvezerlo{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
 .kereso{flex:1 1 100%;box-sizing:border-box;padding:7px 10px;
   background:var(--panel2);border:1px solid var(--line);border-radius:6px;
-  color:var(--fg);font:400 13px Inter}
+  color:var(--fg);font:400 13px var(--fo)}
 .kereso:focus{outline:none;border-color:var(--accent)}
 .kereso::placeholder{color:var(--dim)}
 .jlszuro,.jlszam,.jltorol{flex:1 1 0;min-width:96px;box-sizing:border-box;
   padding:5px 7px;background:var(--panel2);border:1px solid var(--line);
-  border-radius:6px;color:var(--fg);font:400 12px Inter}
+  border-radius:6px;color:var(--fg);font:400 12px var(--fo)}
 .jlszam::placeholder{color:var(--dim)}
 .jlszuro:focus,.jlszam:focus{outline:none;border-color:var(--accent)}
 .jltorol{cursor:pointer;color:var(--dim)}
@@ -341,17 +355,17 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
 /* A fejleccellak ugyanazt a layout-osztalyt viselik, mint az adatcellak,
    csak a diszitest vesszuk le roluk (a .ppos chip-kerete, a monospace szam),
    kulonben a fejlec nem az oszlopok folott allna. */
-.jlar,.jlkpc{min-width:38px;text-align:right;font-family:'JetBrains Mono';
+.jlar,.jlkpc{min-width:38px;text-align:right;font-family:var(--mono);
   font-size:11.5px;color:var(--dim)}
 .jlfej .jlar,.jlfej .jlkpc{font:inherit;color:inherit}
 .jllabsor{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 0 0}
 .jllabsor .jllab{flex:1;min-width:120px;padding:0}
 .jlmeret{flex:none;padding:3px 6px;background:var(--panel2);border:1px solid var(--line);
-  border-radius:6px;color:var(--dim);font:400 11.5px Inter}
+  border-radius:6px;color:var(--dim);font:400 11.5px var(--fo)}
 .jllapozo{display:flex;align-items:center;gap:3px}
 .jllapoz{flex:none;min-width:28px;padding:3px 7px;background:var(--panel2);
   border:1px solid var(--line);border-radius:6px;color:var(--fg);cursor:pointer;
-  font:400 12px Inter;text-align:center}
+  font:400 12px var(--fo);text-align:center}
 .jllapoz:hover:not(:disabled){border-color:var(--accent)}
 .jllapoz:disabled{opacity:.35;cursor:default}
 .jllapoz.most{background:var(--accent);border-color:var(--accent);color:#111;font-weight:700}
@@ -417,7 +431,7 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
    sornak: a szoveg es a nyil EGYUTT all (a ket vegre huzva ugy nezett ki,
    mint ket kulon dolog), es a hover alahuzza. */
 .profnyito{margin-top:4px;padding:6px 0 2px;border-top:1px solid var(--line);
-  font:600 12px Inter;color:var(--accent);cursor:pointer;
+  font:600 12px var(--fo);color:var(--accent);cursor:pointer;
   display:flex;align-items:center;gap:4px}
 .profnyito span{font-size:11px;transition:transform .12s}
 .profnyito:hover{text-decoration:underline}
@@ -427,11 +441,11 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
 .profnev .tm{color:var(--dim);font-size:11px}
 .ptenyek{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px}
 .ptny{display:flex;align-items:baseline;gap:5px;font-size:12px;color:var(--dim)}
-.ptny b{font-family:'JetBrains Mono';color:var(--fg)}
+.ptny b{font-family:var(--mono);color:var(--fg)}
 .profsor{flex-wrap:wrap}
-.profsor .pallas{font-family:'JetBrains Mono';font-size:11.5px;color:var(--dim);
+.profsor .pallas{font-family:var(--mono);font-size:11.5px;color:var(--dim);
   min-width:42px;text-align:right}
-.profsor .pjegyzet{font:400 11px Inter;color:var(--dim)}
+.profsor .pjegyzet{font:400 11px var(--fo);color:var(--dim)}
 .ptulajok{flex-basis:100%;display:flex;flex-wrap:wrap;gap:4px 12px;
   font-size:11px;color:var(--dim);padding-left:2px}
 .ptul b{color:var(--fg);font-weight:600}
@@ -441,7 +455,7 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
    folyjanak ossze; ha nem fer ki, a flexbox amugy is uj sorba teszi. */
 .pelval{color:var(--dim);opacity:.6;margin:0 2px}
 .parany{margin-left:auto;white-space:nowrap;font-size:11px;color:var(--dim)}
-.parany b{font-family:'JetBrains Mono';color:var(--fg);font-weight:700}
+.parany b{font-family:var(--mono);color:var(--fg);font-weight:700}
 
 /* pont-bontas accordion: a data-acc jelolt jatekos-sor kattinthato, alatta
    nyilik a panel (FunTasy.accToggle). A "meg nem jatszott" jelzes a .pts
@@ -474,7 +488,7 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
 .szurosor{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;
   margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
 .szurogomb{background:var(--panel);border:1px solid var(--dim);color:var(--ink);
-  font:700 12.5px Inter;padding:8px 18px;border-radius:999px;cursor:pointer;
+  font:700 12.5px var(--fo);padding:8px 18px;border-radius:999px;cursor:pointer;
   transition:background .12s,border-color .12s,color .12s}
 .szurogomb:hover{border-color:var(--amber);color:var(--amber)}
 .szurogomb.on{background:var(--amber);border-color:var(--amber);color:#12140F}
@@ -486,14 +500,14 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
    meccs szempontjabol semlegesek - a szem igy elsore az elteroket latja. */
 .kozosresz .plr,.kozosresz .nm,.kozosresz .pts,
 .mobilkozos .plr,.mobilkozos .nm,.mobilkozos .pts{color:var(--dim)}
-.szakasz{font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
+.szakasz{font:700 10px var(--fo);letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
   margin:14px 0 4px;padding:0 2px}
 .sqcol .szakasz:first-of-type{margin-top:10px}
 /* Osszesito sor - a keret-fejleccel azonos megjelenes, hogy jol lathato legyen. */
 .osszesito{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
   margin-top:6px;padding:8px 2px 2px;border-top:1px solid var(--line);
-  font-family:'Archivo Black';font-size:12px;letter-spacing:.6px;color:var(--amber)}
-.osszesito b{font:700 15px 'JetBrains Mono';color:var(--ink)}
+  font-family:var(--cim);font-size:12px;letter-spacing:.6px;color:var(--amber)}
+.osszesito b{font:700 15px var(--mono);color:var(--ink)}
 .osszesito.vegso{border-top-width:2px;margin-top:10px}
 /* Gepen a kozos jatekosok mindket oszlopban ott vannak (a bal/jobb szerkezet
    megmarad); mobilon viszont az oszlopok egymas ala kerulnek, ott eleg
@@ -516,16 +530,16 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
 .accload{font-size:12px;color:var(--dim);padding:4px 0}
 .acctable{width:100%;border-collapse:collapse;font-size:12px}
 .acctable th{text-align:right;color:var(--dim);font-weight:600;padding:3px 6px;border-bottom:1px solid var(--line);font-size:11px}
-.acctable td{text-align:right;padding:3px 6px;font-family:'JetBrains Mono';border-bottom:1px solid rgba(255,255,255,.04)}
-.acctable th:first-child,.acctable td.ev{text-align:left;font-family:Inter,sans-serif}
+.acctable td{text-align:right;padding:3px 6px;font-family:var(--mono);border-bottom:1px solid rgba(255,255,255,.04)}
+.acctable th:first-child,.acctable td.ev{text-align:left;font-family:var(--fo)}
 .acctable tr:last-child td{border-bottom:0}
 
 .bonus{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border:1px solid var(--line);
   border-radius:6px;padding:8px 10px;margin:10px 0 6px;font-size:12px}
-.bonus b{font-family:'JetBrains Mono';font-size:14px}
+.bonus b{font-family:var(--mono);font-size:14px}
 .bonus.ok b{color:var(--win)} .bonus.no b{color:var(--lose)}
-.cap{background:var(--magenta);color:#fff;font:700 9px Inter;border-radius:3px;padding:1px 4px}
-.subhead{font:700 10px Inter;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:12px 0 4px}
+.cap{background:var(--magenta);color:#fff;font:700 9px var(--fo);border-radius:3px;padding:1px 4px}
+.subhead{font:700 10px var(--fo);letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:12px 0 4px}
 .loading{color:var(--dim);padding:26px;text-align:center}
 
 /* ================= MOBIL ================= */
@@ -598,4 +612,4 @@ td.kezdpc{font-family:'JetBrains Mono';color:var(--dim)}
    ne latsszon veglegesnek. */
 .match.elo .score{border-color:var(--amber);border-style:dashed}
 .match.elo .h,.match.elo .v{opacity:.85}
-.elojel{display:block;font:700 9px Inter;letter-spacing:1px;text-transform:uppercase;color:var(--amber);margin-top:2px}
+.elojel{display:block;font:700 9px var(--fo);letter-spacing:1px;text-transform:uppercase;color:var(--amber);margin-top:2px}

@@ -5,11 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../funtasy.css?v=54">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- A betukeszlet-ivet NEM blokkolokent toltjuk. Egy sima <link rel=stylesheet>
+     megallitja a lap megjeleneset, amig a Google valaszol: kimerve DOMContentLoaded
+     57 ms helyett 12,6 MASODPERC, ha a fonts.googleapis.com nem elerheto - addig
+     a lapon SEMMI nincs. A media="print" + onload trukk aszinkronna teszi: a
+     tartalom azonnal latszik a tartalek betuvel (a `display=swap` miatt ugyis az
+     lenne az elso festes), es a webfont akkor lep be, amikor megjott. -->
+<link rel="stylesheet" media="print" onload="this.media='all';this.onload=null"
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<noscript><link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
+<link rel="stylesheet" href="../funtasy.css?v=55">
 </head>
 <body class="liga-pl">
 <div class="wrap">
+<noscript><div class="note nojs">Ehhez az oldalhoz <b>JavaScript</b> kell: a táblázatokat a
+  böngésző tölti fel a mentett adatokból. JavaScript nélkül csak az üres keret látszik.</div></noscript>
 <nav class="liganav" id="liganav"></nav>
 <header>
   <h1><span class="fun">FUN</span>TASY <span class="tag">PL</span></h1>
@@ -94,7 +106,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=54"></script>
+<script src="../funtasy.js?v=55"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító

@@ -1,3 +1,14 @@
 {
- "bejegyzesek": []
+ "bejegyzesek": [
+  {
+   "datum": "2026-08-27",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
+   "cim": "Gyenge hálón is azonnal megjelenik az oldal",
+   "leiras": "A betűkészletek a Google-tól jönnek, és eddig az oldal megvárta őket: ha a szolgáltatás lassú volt vagy nem válaszolt, addig üres képernyő látszott — mérve akár 12 másodpercig. Mostantól a tartalom azonnal kirajzolódik, a betűkészlet pedig akkor lép be, amikor megérkezik."
+  }
+ ]
 }

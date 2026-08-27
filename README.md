@@ -16,6 +16,69 @@ A régi `draft.html` cím átirányít a `/pl/`-re, hogy a korábbi linkek ne ha
 A résztvevőket mindkét oldalon a **monogram** azonosítja (a név mögött) — személyenként
 azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 
+<!-- tartalomjegyzek: a tesztek/dokuk.py tartja karban, kezzel ne szerkeszd -->
+<details>
+<summary><b>Tartalom</b></summary>
+
+- [1. Mit tud az oldal](#1-mit-tud-az-oldal)
+  - [Tabella](#tabella)
+  - [Meccsek — két külön panel](#meccsek--két-külön-panel)
+  - [Egymás elleni mátrix](#egymás-elleni-mátrix)
+  - [Modal — három fül](#modal--három-fül)
+  - [A FunTasy PL oldal](#a-funtasy-pl-oldal)
+  - [Pont-bontás (accordion) és a „még nem játszott” jelölés](#pont-bontás-accordion-és-a-még-nem-játszott-jelölés)
+  - [Játékosprofil](#játékosprofil)
+  - [A mezőny játékosai (főoldali lista)](#a-mezőny-játékosai-főoldali-lista)
+  - [Zárási változások (mindkét liga)](#zárási-változások-mindkét-liga)
+  - [Navigáció a modalon belül](#navigáció-a-modalon-belül)
+  - [Mobil](#mobil)
+- [2. Fájlok](#2-fájlok)
+- [3. Hogyan frissül az adat](#3-hogyan-frissül-az-adat)
+  - [Minden automatikusan megy (GitHub Actions, 3 óránként)](#minden-automatikusan-megy-github-actions-3-óránként)
+  - [Az FPL Draft adatai (3 óránként, draft.yml)](#az-fpl-draft-adatai-3-óránként-draftyml)
+  - [Élő frissítés a böngészőből (mindkét oldal)](#élő-frissítés-a-böngészőből-mindkét-oldal)
+  - [A betűkészlet nem állíthatja meg a lapot (mérve, 2026-08-27)](#a-betűkészlet-nem-állíthatja-meg-a-lapot-mérve-2026-08-27)
+  - [Gyorsítótár: miért ragadt be a pontszám iPhone-on](#gyorsítótár-miért-ragadt-be-a-pontszám-iphone-on)
+  - [„frissítés… 1,2 mp" — a néma számcsere ellen](#frissítés-12-mp--a-néma-számcsere-ellen)
+  - [Fordulóhatár és lezárult PL-forduló: az élő réteget el kell dobni](#fordulóhatár-és-lezárult-pl-forduló-az-élő-réteget-el-kell-dobni)
+  - [A főoldali lista és a meccs-adatlap nem mondhat mást](#a-főoldali-lista-és-a-meccs-adatlap-nem-mondhat-mást)
+  - [Ami tudatosan következetlen maradt](#ami-tudatosan-következetlen-maradt)
+  - [Tartalék: a böngészős könyvjelző](#tartalék-a-böngészős-könyvjelző)
+- [3/b. A LEZÁRÁS — mi mit jelent, és hol dől el](#3b-a-lezárás--mi-mit-jelent-és-hol-dől-el)
+  - [Amit a lezárás után is frissíteni KELL](#amit-a-lezárás-után-is-frissíteni-kell)
+- [4. Az MLSZ Fantasy API — amit a fejlesztés során kiderítettünk](#4-az-mlsz-fantasy-api--amit-a-fejlesztés-során-kiderítettünk)
+  - [Ranglista](#ranglista)
+  - [Keret (bárhonnan működik — ha jól kérdezed)](#keret-bárhonnan-működik--ha-jól-kérdezed)
+  - [Ki nem játszik a fordulóban (a meccslista)](#ki-nem-játszik-a-fordulóban-a-meccslista)
+  - [Pont-bontás (game-player-stats)](#pont-bontás-game-player-stats)
+  - [Játékostörzs és a szezon egésze (mérésekkel, 2026-08-25)](#játékostörzs-és-a-szezon-egésze-mérésekkel-2026-08-25)
+  - [A játékos-adatlap végpontja (mérve, 2026-08-25)](#a-játékos-adatlap-végpontja-mérve-2026-08-25)
+  - [A jövőbeli menetrend nem érhető el (mérve, 2026-08-25)](#a-jövőbeli-menetrend-nem-érhető-el-mérve-2026-08-25)
+  - [Az árakról nincs előzmény (mérve, 2026-08-25)](#az-árakról-nincs-előzmény-mérve-2026-08-25)
+  - [Amit a hivatalos szabályzat rögzít (fantasy.mlsz.hu, 2026-08-25)](#amit-a-hivatalos-szabályzat-rögzít-fantasymlszhu-2026-08-25)
+  - [A pontszámítás kulcsa](#a-pontszámítás-kulcsa)
+  - [A „szerverről tilos” tévhit története](#a-szerverről-tilos-tévhit-története)
+  - [Forduló-lezárás és utólagos MLSZ-korrekciók](#forduló-lezárás-és-utólagos-mlsz-korrekciók)
+  - [A bónuszpontok három állapota (PL)](#a-bónuszpontok-három-állapota-pl)
+  - [Ki van még a pályán (PL)](#ki-van-még-a-pályán-pl)
+  - [A meccs állása a pont-bontás fölött (PL és NB1)](#a-meccs-állása-a-pont-bontás-fölött-pl-és-nb1)
+  - [Automatikus cserék a forduló zárásakor (PL)](#automatikus-cserék-a-forduló-zárásakor-pl)
+  - [A zárás és a gyűjtés közötti rés (PL)](#a-zárás-és-a-gyűjtés-közötti-rés-pl)
+  - [Név és monogram: a monogram sosem vágódik le](#név-és-monogram-a-monogram-sosem-vágódik-le)
+  - [Kezdőállítási hatékonyság (KEZD%)](#kezdőállítási-hatékonyság-kezd)
+  - [A pad sorrendje (PL) — és ami még nyitott](#a-pad-sorrendje-pl--és-ami-még-nyitott)
+  - [Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva](#az-fpl-draft-api-draftpremierleaguecomapi--mérésekkel-igazolva)
+- [5. Ismert korlátok, buktatók](#5-ismert-korlátok-buktatók)
+- [5/a. Miért van fordulónként külön keret-fájl](#5a-miért-van-fordulónként-külön-keret-fájl)
+- [5/a2. Változásnapló („Mi újult meg?")](#5a2-változásnapló-mi-újult-meg)
+  - [A két oldal váza kézzel van kétszer leírva](#a-két-oldal-váza-kézzel-van-kétszer-leírva)
+- [5/b. Tesztek](#5b-tesztek)
+- [6. Ha módosítani kell](#6-ha-módosítani-kell)
+  - [Új liga felvétele](#új-liga-felvétele)
+- [7. Tervezett, még nem elkészült](#7-tervezett-még-nem-elkészült)
+
+</details>
+
 ---
 
 ## 1. Mit tud az oldal
@@ -458,6 +521,27 @@ bfcache-es `pageshow` és a `focus` eseményre futtatja újra a frissítést, le
 **Időzített frissítés szándékosan nincs:** nyitva hagyott lapon nem megy lekérés a
 proxykon át (mobilon adat és akku). Ha nézni akarod, hogy változik, vissza kell térni
 a laphoz — vagy újratölteni.
+
+### A betűkészlet nem állíthatja meg a lapot (mérve, 2026-08-27)
+
+A három betűcsalád (Inter, JetBrains Mono, Archivo Black) a Google Fontsról jön. Sokáig
+sima `<link rel="stylesheet">`-tel — ami **renderelést blokkoló**: amíg a Google nem
+válaszol, a lapon *semmi* nincs. Kimérve: ha a `fonts.googleapis.com` nem elérhető, a
+`DOMContentLoaded` **57 ms helyett 12 640 ms**. Mobilon, gyenge hálón pont az a helyzet,
+amikor az ember megnézné az állást.
+
+Mostantól az ív **aszinkron** (`media="print"` + `onload="this.media='all'"`, mellette
+`<noscript>`-ág annak, akinél nincs JS), és a `fonts.gstatic.com`-ra is megy `preconnect` —
+a betűfájlok onnan jönnek. Ugyanezzel a méréssel a lap **216 ms** alatt kirajzolódik akkor
+is, ha a betűkészlet-szolgáltatás egyáltalán nem válaszol.
+
+A másik fele a CSS-ben van: a három családnak **tartalék-sora** van, és mindegyik egy
+változón át megy (`--fo`, `--mono`, `--cim` a `:root`-ban). Enélkül a `display=swap` a
+böngésző alapértelmezésével (talpas Times) festene először, más betűszélességgel — a
+táblázat ugrana egyet a webfont megérkezésekor. A változók egyben a korábbi **60+ helyre
+beírt** betűnevet is egy helyre húzták.
+
+Rögzítve: `tesztek/betukeszlet.teszt.js`.
 
 ### Gyorsítótár: miért ragadt be a pontszám iPhone-on
 
@@ -1351,6 +1435,19 @@ készülnek, tehát egy új liga felvétele itt sem igényel külön munkát.
 
 Elérés: a kezdőlapról (kártya) és minden oldal **láblécéből** (`FunTasy.renderLablec`).
 A naplón magán nincs lábléc, mert önmagára mutatna.
+
+### A két oldal váza kézzel van kétszer leírva
+
+Nincs build és nincs sablon, tehát a `<head>`, a fejléc, a panel-keretek és a lábléc
+**mindkét liga-oldalon külön ott áll**. Ez tud szétcsúszni — meg is tette: a zárási
+változások panelje egy ideig más címmel, más oszlopban és más elrendezéssel állt a két
+oldalon. Ilyenkor nem elég „figyelni rá": a `tesztek/ligavaz.teszt.js` géppel nézi, hogy a
+`<head>` mind a négy oldalon azonos (a címen és az útvonal-előtagon kívül), a panelek
+sorrendje és oszlopa gépen és mobilon ugyanaz, és a tabella fejléce is egyezik — csak a
+résztvevő oszlopa fut más néven (Szakvezető / Csapat).
+
+Ha új panel kerül az egyik oldalra, a teszt addig bukik, amíg a másikra is oda nem kerül.
+Ez a szándék: **ami mindkét ligában van, az nézzen ki ugyanúgy.**
 
 ## 5/b. Tesztek
 

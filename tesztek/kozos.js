@@ -50,10 +50,20 @@ async function jsonAtir(page, minta, atalakit) {
   });
 }
 
-/** Elo API-k elvagasa: csak a tarolt adatbol dolgozzon a lap. */
+/** Elo API-k elvagasa: csak a tarolt adatbol dolgozzon a lap.
+
+    A Google Fonts is ide tartozik - nem azert, mert "API", hanem hogy a
+    tesztek ne fuggjenek attol, elerheto-e kifele a halozat. (A futasidot ez
+    NEM javitotta erdemben: megmerve a leglassabb tesztek ugyanannyian
+    maradtak - azok mas miatt lassuak. A haszna a fuggetlenseg.)
+    A betukeszlet-teszt sajat, KESOBB regisztralt utvonalat tesz rajuk (a
+    kesobbi nyer), tehat ott tovabbra is az a viselkedes ervenyes, amit az
+    a teszt mer. */
 async function apiKi(page) {
   for (const m of ['**mlsz.hu/**', '**premierleague.com/**',
-                   '**corsproxy.io/**', '**allorigins**']) await page.route(m, r => r.abort());
+                   '**corsproxy.io/**', '**allorigins**',
+                   '**fonts.googleapis.com/**', '**fonts.gstatic.com/**'])
+    await page.route(m, r => r.abort());
 }
 
 module.exports = { BASE, chromium, jo, cim, hibak, inditas, vege, jsonAtir, apiKi };

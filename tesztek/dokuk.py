@@ -113,7 +113,64 @@ allit(len(_verziok) == 1,
          else " - eltero verziok: " + "; ".join("v=%s (%s)" % (v, ", ".join(h))
                                                 for v, h in sorted(_verziok.items()))))
 
+# D7: a README tartalomjegyzeke egyezik a tenyleges cimekkel.
+# A fajl 1500+ soros; jegyzek nelkul kereshetetlen, elavult jegyzekkel meg
+# felrevezeto. Ezert a jegyzek NEM kezi munka: itt keszul ujra a cimekbol, es
+# ha eltert, a teszt kiirja a helyes szoveget - be lehet masolni.
+_JELOLES = "<!-- tartalomjegyzek: a tesztek/dokuk.py tartja karban, kezzel ne szerkeszd -->"
+
+
+def _slug(cim):
+    t = cim.strip().lower()
+    for x in ("\u201e", '"', "\u201d"):
+        t = t.replace(x, "")
+    t = re.sub(r"[^\w\s\u00c0-\u024f-]", "", t, flags=re.UNICODE)
+    return t.replace(" ", "-")
+
+
+def _cimek(szoveg):
+    ki, kod = [], False
+    for l in szoveg.split("\n"):
+        if l.startswith("```"):
+            kod = not kod
+            continue
+        if kod:
+            continue
+        if l.startswith("## "):
+            ki.append((2, l[3:].strip()))
+        elif l.startswith("### "):
+            ki.append((3, l[4:].strip()))
+    return ki
+
+
+def _jegyzek(szoveg):
+    sorok = [_JELOLES, "<details>", "<summary><b>Tartalom</b></summary>", ""]
+    for sz, c in _cimek(szoveg):
+        sorok.append("%s- [%s](#%s)" % ("  " * (sz - 2), c, _slug(c)))
+    return "\n".join(sorok + ["", "</details>"])
+
+
+_readme = olvas("README.md")
+if _JELOLES not in _readme:
+    allit(False, "D7: a README-ben nincs tartalomjegyzek (a jelolo hianyzik)")
+else:
+    _eleje = _readme.index(_JELOLES)
+    _vege = _readme.index("</details>", _eleje) + len("</details>")
+    _mostani = _readme[_eleje:_vege]
+    _kell = _jegyzek(_readme)
+    # "python3 tesztek/dokuk.py --javit" ujrairja a jegyzeket. Igy egy uj
+    # cim utan nem kell kezzel masolgatni - es nem is fog elmaradni.
+    if _mostani != _kell and "--javit" in sys.argv:
+        with open(os.path.join(GYOKER, "README.md"), "w", encoding="utf-8") as _f:
+            _f.write(_readme[:_eleje] + _kell + _readme[_vege:])
+        print("  . README tartalomjegyzek ujrairva (--javit)")
+        _mostani = _kell
+    allit(_mostani == _kell,
+          "D7: a README tartalomjegyzeke egyezik a cimekkel"
+          + ("" if _mostani == _kell else
+             " - futtasd: python3 tesztek/dokuk.py --javit"))
+
 if hibak:
     print("\n%d allitas bukott." % len(hibak))
     sys.exit(1)
-print("\nMind a hat allitas rendben.")
+print("\nMind a het allitas rendben.")
