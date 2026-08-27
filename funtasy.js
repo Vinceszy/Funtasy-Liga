@@ -441,13 +441,19 @@
     row.classList.add('open');
     var p = document.createElement('div');
     p.className = 'accpanel';
+    // A panel ALLAPOTA jelzoben all, nem a szovegebol talaljuk ki: az
+    // ujrarajzolas (accOrzo) ez alapjan dont, hogy megorizze-e. Csak a
+    // 'kesz' panelt szabad valtozatlanul visszatenni.
+    p.dataset.allapot = 'tolt';
     p.innerHTML = '<div class="accload">Bontás betöltése…</div>';
     row.insertAdjacentElement('afterend', p);
     Promise.resolve().then(tolt).then(function (html) {
       if (!row.classList.contains('open') || !p.isConnected) return;
+      p.dataset.allapot = html ? 'kesz' : 'hiba';
       p.innerHTML = html || '<div class="accload">A pontok bontása nem érhető el ehhez a játékoshoz.</div>';
     }, function () {
       if (!row.classList.contains('open') || !p.isConnected) return;
+      p.dataset.allapot = 'hiba';
       p.innerHTML = '<div class="accload">A bontás lekérése nem sikerült.</div>';
     });
   }
@@ -482,19 +488,31 @@
   function accOrzo(rajzol) {
     var nyitva = document.querySelector('.plr.open[data-acc]');
     var panel = nyitva && nyitva.nextElementSibling;
+    if (panel && !panel.classList.contains('accpanel')) panel = null;
     var kulcs = nyitva ? accKulcs(nyitva) : null;
-    var html = (panel && panel.classList.contains('accpanel')) ? panel.innerHTML : null;
+    var allapot = panel ? panel.dataset.allapot : null;
+    var html = (allapot === 'kesz') ? panel.innerHTML : null;
     rajzol();
     if (kulcs == null) return;
     var sorok = document.querySelectorAll('.plr[data-acc]'), i;
     for (i = 0; i < sorok.length; i++) {
       if (accKulcs(sorok[i]) !== kulcs) continue;
-      sorok[i].classList.add('open');
-      if (html == null) return;
-      var uj = document.createElement('div');
-      uj.className = 'accpanel';
-      uj.innerHTML = html;
-      sorok[i].insertAdjacentElement('afterend', uj);
+      // KESZ tartalom: valtozatlanul visszateheto - se villanas, se ujabb keres.
+      if (html != null) {
+        sorok[i].classList.add('open');
+        var uj = document.createElement('div');
+        uj.className = 'accpanel';
+        uj.dataset.allapot = 'kesz';
+        uj.innerHTML = html;
+        sorok[i].insertAdjacentElement('afterend', uj);
+        return;
+      }
+      // MEG TOLT: a regi keres az elavult sorra fut ki, tehat ujra kell inditani.
+      if (allapot === 'tolt') { sorok[i].click(); return; }
+      // HIBA: NEM orizzuk meg. Egy atmeneti hiba igy ragadt volna be, es a
+      // sor nyitva maradt volna - a kovetkezo kattintas becsukta volna
+      // ahelyett, hogy ujraprobalja. (Bejelentett hiba: "a pontok bontasa
+      // nem erheto el" / "a bontas lekerese nem sikerult" ott maradt.)
       return;
     }
   }

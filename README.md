@@ -420,6 +420,17 @@ Minden ilyen újrarajzolás mostantól a `FunTasy.accOrzo`-n megy át: megjegyzi
 nyitva (a `data-*` jelzőiből képzett, sorrendtől független kulccsal) és mi állt a panelben,
 majd az újrarajzolás után visszateszi. Így **nincs villanás és nincs újabb lekérés** sem.
 
+**Csak a kész panelt szabad megőrizni.** Az első változat mindent visszatett — a
+hibaüzenetet is. Egy átmeneti hálózati hiba így **beragadt**: a sor nyitva maradt, a
+következő kattintás pedig becsukta ahelyett, hogy újrapróbálta volna, tehát a bontás csak
+két kattintásra jött vissza. (Bejelentett hiba, a javítás javítása.) Ezért a panel az
+**állapotát jelzőben hordozza** (`data-allapot`: `tolt` / `kesz` / `hiba`), nem a szövegéből
+találgatjuk:
+
+- `kesz` → változatlanul visszakerül;
+- `tolt` → a régi kérés már az elavult sorra futna ki, ezért **újraindul** a betöltés;
+- `hiba` → **nem** kerül vissza; a sor bezár, és egy kattintás újrapróbálja.
+
 Ez mindkét ligában több helyen fordul elő (élő keret, perc-utántöltés, élő pontok), ezért a
 mechanika a közös rétegben van — külön-külön megírva pontosan egy helyen maradt volna ki.
 Rögzítve: `tesztek/accordionorzes.teszt.js`.
