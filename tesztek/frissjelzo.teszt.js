@@ -44,7 +44,12 @@ async function plMeccs(br, keses){
   await p.waitForFunction(() => document.querySelector('.match .score') &&
     /\d/.test(document.querySelector('.match .score').textContent), null, { timeout: 40000 });
   await p.locator('.match').first().click();
-  const szoveg = await jelzesreVar(p, keses ? 2500 : 1500);
+  // A LASSU agon bokezuen varunk: a jelzes a lekeres INDULASA utan 500
+  // ms-mal jelenik meg, de elotte a lap meg betolti a fordulo keretet a
+  // helyi szerverrol - a teljes tesztsor parhuzamos terhelese alatt ez
+  // onmagaban tullephette a 2,5 mp-et, es a teszt "nincs jelzes"-t mert.
+  // (A GYORS ag rovid marad: ott a jelzes HIANYAT allitjuk.)
+  const szoveg = await jelzesreVar(p, keses ? 8000 : 1500);
   await p.waitForTimeout((keses || 0) + 800);
   const maradt = await p.locator('.frissjel').count();
   await p.close();
@@ -101,7 +106,7 @@ async function plMeccs(br, keses){
   // NEM varjuk meg: a showLiveMatch async, es ha az egesz lefutasat
   // megvarnank, a jelzest mar le is vette volna magarol
   await p.evaluate(() => { showLiveMatch('Bazsa', 'Vince', 5); });
-  const nb1Szoveg = await jelzesreVar(p, 2500);
+  const nb1Szoveg = await jelzesreVar(p, 8000);   // lasd fent: terheles alatt kevés volt
   console.log('   jelzés szövege:', JSON.stringify(nb1Szoveg));
   jo(nb1Szoveg !== null, 'NB1: lassú élő keret-lekérésnél is megjelenik');
   await p.waitForTimeout(4000);

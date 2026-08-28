@@ -1502,6 +1502,21 @@ megnyitható. **Ez egyik kvótánkat sem terheli**: a gyűjtő a GitHub szerver�
 kéri az MLSZ-t (CORS csak böngészőben létezik, közvetítő itt nincs) — az ára fordulónként
 egyszeri ~3 perc futásidő és ~40 KB a repóban.
 
+**Csak a pontot érő sorokat tároljuk** — plusz a „Játszott perc" sort. Az MLSZ minden
+játszott játékosra mind a **22** statisztika-sort visszaadja, a nullás értékűeket is; 385
+játékossal az 141 KB fordulónként, a szezon végére 4,5 MB. Az oldal viszont csak a pontot
+érő sorokat mutatja, és a „Játszott perc"-et külön (abból dől el a „nem lépett pályára" /
+„lejátszotta, pont nélkül" üzenet is). Szűrve **40 KB** fordulónként, a szezonra 1,3 MB.
+Ez a szűrés **visszafordítható**: a `game-player-stats` a régi fordulókra is válaszol
+(eddig épp ezen múlt az egész bontás), tehát a kihagyott nyers értékek bármikor újra
+lekérhetők — az árnaplónál pont ezért *nem* lehetett szűrni, az árat visszamenőleg senki
+nem adja vissza.
+
+**Mi számít lezártnak:** a **tárolt** állapotból dől el (minden meccs eredményes, és a
+forduló nincs az ideiglenesek közt) — nem abból, hogy a gyűjtő melyik forduló keretét kérte
+le éppen ebben a futásban. Enélkül a bevezetéskor csak az utolsó fordulóhoz készült volna
+bontás, a korábbiakhoz soha.
+
 Két részlet, ami fontos:
 
 - **Félig kész fájlt nem írunk ki.** Ha a kérések több mint 10%-a elhasal, a fájl nem

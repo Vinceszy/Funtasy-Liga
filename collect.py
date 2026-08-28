@@ -522,7 +522,43 @@ def zaras_valtozas(regi_fordulo, uj_fordulo, tarolo, mai):
     return db
 
 
-def bontasok_gyujtes(lezart, valtozott, torzs):
+def zart_fordulok(schedule, provisional):
+    """Mely fordulok LEZARTAK - a tarolt allapotbol, nem a mostani futasbol.
+
+    Fontos, hogy ne a futas `lezart` szotarabol dolgozzunk: az csak azokat a
+    fordulokat ismeri, amiknek a keretet EBBEN a futasban lekertuk (a
+    celok halmaz), tehat a regebbieket sosem. Igy az elso bevezeteskor csak
+    az utolso fordulohoz keszult volna bontas. Lezart az, aminek minden
+    meccse eredmenyes ES nincs az ideiglenesek kozott - pontosan az, amit az
+    oldal is lezartkent kezel."""
+    prov = {int(x) for x in (provisional or [])}
+    ki = []
+    for r, ms in (schedule or {}).items():
+        if int(r) in prov or not ms:
+            continue
+        if all(m[2] is not None and m[3] is not None for m in ms):
+            ki.append(int(r))
+    return sorted(ki)
+
+
+def bontas_szures(sorok):
+    """Amit a bontasbol TAROLNI kell.
+
+    Az MLSZ minden jatszott jatekosra mind a 22 statisztika-sort visszaadja,
+    a nullas ertekueket is - a 385 jatekos igy fordulonkent 141 KB, a szezon
+    vegere 4,5 MB. Az oldal viszont csak a PONTOT ERO sorokat mutatja, plusz
+    a "Jatszott perc" sort (azt kulon, pont nelkul, es az uzenet-logika is
+    abbol dol el). A tobbi sor nulla ponttal all - informaciot nem visz.
+
+    Ez a szures VISSZAFORDITHATO: a game-player-stats vegpont a regi
+    fordulokra is valaszol (ezen mult eddig az egesz bontas), tehat a
+    kihagyott nyers ertekek barmikor ujra lekerhetok. Ezert lehet szurni -
+    az arnaplonal pont ezert NEM lehetett: az arat visszamenoleg senki nem
+    adja vissza. Meret: 141 KB -> 40 KB fordulonkent (4,5 MB -> 1,3 MB)."""
+    return [x for x in sorok if x.get("p") or x.get("n") == "Játszott perc"]
+
+
+def bontasok_gyujtes(zartak, valtozott, torzs):
     """A lezart fordulok TETELES pont-bontasa a repoba (bontasok/<r>.json).
 
     MIERT: a bontast ("mibol jott ossze a 9,75 pont") eddig KIZAROLAG a
@@ -551,7 +587,7 @@ def bontasok_gyujtes(lezart, valtozott, torzs):
     os.makedirs("bontasok", exist_ok=True)
     idk = sorted(torzs, key=lambda x: int(x))
     kiirt = 0
-    for r in sorted(x for x, kesz in lezart.items() if kesz):
+    for r in zartak:
         ut = os.path.join("bontasok", "%d.json" % r)
         if os.path.exists(ut) and r not in valtozott:
             continue
@@ -566,10 +602,10 @@ def bontasok_gyujtes(lezart, valtozott, torzs):
             if st != 200 or j is None:
                 hiba += 1
                 continue
-            sorok[str(cp)] = [
+            sorok[str(cp)] = bontas_szures([
                 {"n": (x.get("competition_stat_config") or {}).get("name") or "?",
                  "v": x.get("value"), "p": x.get("points")}
-                for x in (j.get("data") or [])]
+                for x in (j.get("data") or [])])
             if i % 100 == 0:
                 print("    %d/%d" % (i, len(idk)))
         if hiba > len(idk) // 10:
@@ -993,7 +1029,7 @@ def main():
     # mert abbol jon a jatekoslista; a `valtozott` halmaz miatt egy utolagos
     # MLSZ-korrekcio a bontast is frissiti.
     if torzs:
-        bontasok_gyujtes(lezart, valtozott, torzs)
+        bontasok_gyujtes(zart_fordulok(schedule, provisional), valtozott, torzs)
 
     if json.dumps(meccsek["rounds"], ensure_ascii=False, sort_keys=True) != meccsek_elotte:
         meccsek["updated"] = stamp()
