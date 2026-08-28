@@ -4,6 +4,15 @@
    "datum": "2026-08-28",
    "tipus": "funkcio",
    "ligak": [
+    "nb1"
+   ],
+   "cim": "A lezárt fordulók pontbontása azonnal nyílik",
+   "leiras": "A pontok részletezése — mi adta ki a 9,75 pontot — eddig kizárólag kattintásra, élő MLSZ-lekéréssel jött: ha az MLSZ vagy a közvetítő nem válaszolt, a lenyíló hibát írt, pedig egy lezárt forduló bontása már nem változik. Mostantól az oldal a lezárt fordulók bontását a saját tárolójából olvassa, így az azonnal nyílik, hálózati hibától függetlenül. A teljes mezőnyre megvan, nem csak a birtokolt játékosokra, ezért a főoldali listából megnyitott profilban is rögtön ott a bontás — eddig ott fordulónként külön kérés ment ki, sorban. Az élő forduló marad az élő úton: ott a bontás még változik."
+  },
+  {
+   "datum": "2026-08-28",
+   "tipus": "funkcio",
+   "ligak": [
     "nb1",
     "pl"
    ],
