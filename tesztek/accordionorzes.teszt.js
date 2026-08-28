@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
+const { BASE, jo, cim, inditas, vege, apiKi, bontasKi } = require('./kozos');
 // A NYITOTT pont-bontas nem tunhet el a hatterben beero frissitestol.
 //
 // BEJELENTETT HIBA: "ha megnyitom a jatekos pontreszletezeset a meccsben, a
@@ -19,6 +19,11 @@ const BONTAS = { data: [
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
   await apiKi(p);
+  // A LEKEREST koveto orzest merjuk: a panel a "bontás betöltése" allapoton
+  // at jut el a kesz tartalomig. A tarolt bontas ezt atugorja (a repobol
+  // azonnal megvan), ezert itt szandekosan nincs kiszolgalva - a mockolt
+  // MLSZ-valasz kell hogy ervenyesuljon.
+  await bontasKi(p);
   await p.route('**fantasy-api.mlsz.hu/**', r => /game-player-stats/.test(decodeURIComponent(r.request().url()))
     ? r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BONTAS) })
     : r.abort());
@@ -78,6 +83,7 @@ const BONTAS = { data: [
   var p2 = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err2 = []; p2.on('pageerror', e => err2.push(e.message));
   await apiKi(p2);
+  await bontasKi(p2);   // a HIBAS betoltest merjuk - tarolt bontasbol nem lenne hiba
   // A lekero TOBB uton probalkozik (direkt + proxyk), es a proxys URL-ben is
   // benne van a cel-URL - tehat "az elso keres" nem egy URL, hanem egy teljes
   // PROBALKOZAS-KOR. Kapcsoloval vezereljuk: eloszor MINDEN ut elhasal, a

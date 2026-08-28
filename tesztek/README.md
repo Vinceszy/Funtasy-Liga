@@ -28,6 +28,23 @@ Környezeti változók: `PORT` (alap: 8910), `PLAYWRIGHT_MODUL`, `CHROME_UT`.
   `nullapont.teszt.js` így takart el hat bukott állítást; a saját `hibak` tömbje
   árnyékolta a közöset, és a kilépőkód csak a lap JS-hibáit nézte.
 
+## Az élő út mérése: `bontasKi`
+
+A lezárt forduló bontása a repóból jön (`bontasok/<forduló>.json`), és **ez az
+elsődleges út**. Ezért aki az **élő** utat méri — a lekérő proxy-láncát, a hibaüzenetet,
+a profil sorban pótlódó pontjait —, annak a tárolt fájlt is el kell vágnia, különben a
+lap oda sem jut el, és a teszt némán mást mér, mint amit hisz. Erre való a
+`kozos.js` `bontasKi(page)` segédje; a tárolt utat mérő `taroltbontas.teszt.js`
+értelemszerűen nem hívja.
+
+Ez a hiányzó fájl esete élesben is előfordul: a bevezetés előtti forduló, illetve az a
+játékos, aki már nincs a jelenlegi 385-ös törzsben (öt ilyen van a `squad_history`-ban).
+
+> **Az útvonal-mintában a záró `*` nem elhagyható.** A lap gyorsítótár-törővel kéri a
+> fájlt (`bontasok/4.json?t=…`), a Playwright pedig a glob-ot a **teljes** URL-re
+> illeszti — `**/bontasok/*.json` a kérdőjeles végen nem illeszkedik, és a teszt némán a
+> valódi fájlt kapja. Minden adatfájl-útvonal ezért `*`-ra végződik.
+
 ## Gyűjtő-tesztek (Python, hálózat nélkül)
 
 Az `api_get`-et mock váltja ki, a `collect.py` egy ideiglenes könyvtárban fut.

@@ -103,6 +103,15 @@ async function plMeccs(br, keses){
   });
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#table tr', { timeout: 30000 });
+  // AZ ELOFELTETELT KIMONDJUK, ahogy az uzenetek.teszt.js-ben is: az eloKeret
+  // a USER_IDS-bol dolgozik ("if(!uid) return null"), amit a betoltesi
+  // frissites tolt fel a ranglista-valaszokbol. Ha a hivas megelozi, az elo
+  // keret-lekeres EL SEM INDUL - nincs mire jelezni, es a teszt "nincs
+  // jelzes"-t mer, mikozben a jelzovel semmi baj. Ez volt a maradek flake:
+  // egyedul futva 6/6 zold, a teljes sor terhelese alatt viszont bukott.
+  // (typeof-fal: a USER_IDS const, nincs a window-on.)
+  await p.waitForFunction(() => typeof USER_IDS !== 'undefined'
+    && USER_IDS['Bazsa'] && USER_IDS['Vince'], null, { timeout: 20000 });
   // NEM varjuk meg: a showLiveMatch async, es ha az egesz lefutasat
   // megvarnank, a jelzest mar le is vette volna magarol
   await p.evaluate(() => { showLiveMatch('Bazsa', 'Vince', 5); });

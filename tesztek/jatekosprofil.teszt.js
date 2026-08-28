@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
+const { BASE, jo, cim, inditas, vege, apiKi, bontasKi, jsonAtir } = require('./kozos');
 // Jatekosprofil. Amit rogzit (NB1 + PL):
 //   - a "Szezon jatekosai" sorai megnyitjak a profilt, es viszik a
 //     cp-azonositot (enelkul a bontas nem lenne lekerheto);
@@ -23,6 +23,12 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   const p = await br.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   await apiKi(p);
+  // Ez a resz a POTLASOS utat meri: a profil azonnal megjelenik kotojelekkel,
+  // a pontok pedig sorban, egyesevel erkeznek be (parhuzamossag = 1, mert a
+  // proxy az egyszerre kilott kereseket eldobta). Ez az ut a hianyzo tarolt
+  // bontas esete - kitalalt jatekosunk amugy sincs a 385-os torzsben, de a
+  // fordulo-osszesitok tarolt fajlbol is johetnenek, ezert kimondjuk.
+  await bontasKi(p);
 
   // ---- elofeltetel: egy kitalalt jatekos ismert szerepekkel ----
   //  1. f: senkinel sem volt

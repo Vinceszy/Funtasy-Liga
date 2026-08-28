@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
+const { BASE, jo, cim, inditas, vege, apiKi, bontasKi } = require('./kozos');
 // A lekero (FunTasy.lekero) tartalek-utjai. MIERT LETEZIK: 2026-08-27-en a
 // ket akkori proxy (corsproxy.io, allorigins) egyszerre halt meg - a
 // corsproxy 401-re valtott, az allorigins tulterhelt volt -, es ezzel
@@ -15,6 +15,11 @@ async function lap(br, utak){
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
   await apiKi(p);   // minden kulso ut zarva; az egyes esetek nyitjak, amit akarnak
+  // Ez a teszt A LEKERO UT-LANCAT meri (melyik proxy jon szoba, mit ir a
+  // hibauzenet). A lezart fordulo bontasa viszont mar a repobol jon, tehat
+  // lekeres nelkul is megvan - a lancig el sem jutnank. Ezert itt a tarolt
+  // bontas szandekosan nincs kiszolgalva.
+  await bontasKi(p);
   // FONTOS a sorrend: a '**fantasy-api.mlsz.hu/**' minta a PROXYS URL-ekre is
   // illeszkedik (cors.sh: .../proxy.cors.sh/https://fantasy-api.mlsz.hu/...),
   // de a kesobb regisztralt utvonal nyer - ezert a proxy-utak UTANA jonnek.

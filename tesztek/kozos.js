@@ -69,4 +69,22 @@ async function apiKi(page) {
     await page.route(m, r => r.abort());
 }
 
-module.exports = { BASE, chromium, jo, cim, hibak, inditas, vege, jsonAtir, apiKi };
+/** A TAROLT bontas elvagasa: a lap essen vissza az ELO lekeresre.
+
+    A lezart fordulo bontasa mostantol a repobol jon (bontasok/<r>.json), es
+    ez az elsodleges ut - eppen ezert az ELO utat (proxy-lanc, hibauzenet,
+    a profil sorban potlodo pontjai) mar nem lehet ugy merni, hogy csak az
+    MLSZ-t vagjuk el: a lap el sem jutna odaig. Aminek a hianyzo fajlt kell
+    utanoznia - ez a valos eset is: a bevezetes elotti fordulo, vagy az a
+    jatekos, aki mar nincs a jelenlegi 385-os torzsben (ot ilyen van).
+
+    Aki a TAROLT utat meri (taroltbontas.teszt.js), ezt nem hivja. */
+async function bontasKi(page) {
+  // A ZARO * NEM ELHAGYHATO: a lap gyorsitotar-torovel keri
+  // (bontasok/4.json?t=...), a Playwright pedig a glob-ot a TELJES URL-re
+  // illeszti - "*.json"-nal a kerdojeles veg nem illeszkedik, es a teszt
+  // NEMAN a valodi fajlt kapja. Ugyanez a minta minden adatfajl-utvonalon.
+  await page.route('**/bontasok/*.json*', r => r.fulfill({ status: 404, body: '' }));
+}
+
+module.exports = { BASE, chromium, jo, cim, hibak, inditas, vege, jsonAtir, apiKi, bontasKi };
