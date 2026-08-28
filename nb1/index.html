@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=62">
+<link rel="stylesheet" href="../funtasy.css?v=63">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=62"></script>
+<script src="../funtasy.js?v=63"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -485,11 +485,17 @@ let PROFIL_AKT = null;      // az eppen nyitott profil - a lenyilo ebbol dolgozi
 async function profilBontasSorok(cp, r){
   const k = cp+'|'+r;
   if(!BONTAS.has(k)){
-    const u='https://fantasy-api.mlsz.hu/game-player-stats?include=competition_stat_config'+
-      `&filter%5Bcompetition_player_id%5D=${cp}&filter%5Bround_id%5D=${75+2*r}`;
-    const j=await apiGet(u);
-    BONTAS.set(k,{t:Date.now(), sorok:(j.data||[]).map(s=>({
-      name:(s.competition_stat_config||{}).name||'?', value:s.value, points:s.points}))});
+    // lezart fordulonal a tarolt bontas (bontasok/<r>.json) - ez teszi a
+    // profil pontpotlasat azonnalive es halozat-fuggetlenne
+    const tarolt=await taroltBontas(cp, r);
+    if(tarolt) BONTAS.set(k,{t:Date.now(), sorok:tarolt});
+    else{
+      const u='https://fantasy-api.mlsz.hu/game-player-stats?include=competition_stat_config'+
+        `&filter%5Bcompetition_player_id%5D=${cp}&filter%5Bround_id%5D=${75+2*r}`;
+      const j=await apiGet(u);
+      BONTAS.set(k,{t:Date.now(), sorok:(j.data||[]).map(s=>({
+        name:(s.competition_stat_config||{}).name||'?', value:s.value, points:s.points}))});
+    }
   }
   return BONTAS.get(k).sorok;
 }
@@ -770,6 +776,30 @@ function meccsSorokHTML(klub, r){
   }).join('');
 }
 const BONTAS=new Map(), KERET_CACHE=new Map();
+// A LEZART fordulok teteles bontasa a REPOBOL jon (bontasok/<r>.json): a
+// gyujto a fordulo lezarasakor egyszer lekeri mind a 385 jatekosra. Igy a
+// lenyilo azonnal nyilik, MLSZ-tol es kozvetitotol fuggetlenul - es a soha
+// nem birtokolt jatekos profilja sem lo ki fordulonkent egy-egy elo kerest.
+// Az ELO fordulo marad az elo uton: ott a bontas meg valtozik.
+// Ha a fajl hianyzik (regi fordulo a bevezetes elottrol, vagy meg nem
+// futott a gyujto), csendben visszaesunk az elo lekeresre.
+const BONTAS_FORDULO=new Map();
+function bontasFordulo(r){
+  if(!BONTAS_FORDULO.has(r)) BONTAS_FORDULO.set(r, (async()=>{
+    try{
+      const res=await fetch(`../bontasok/${r}.json?t=`+Date.now());
+      if(res.ok){ const j=await res.json(); if(j&&j.bontasok) return j.bontasok; }
+    }catch(e){}
+    return null;
+  })());
+  return BONTAS_FORDULO.get(r);
+}
+async function taroltBontas(cp, r){
+  if(eloFordulo(r)) return null;              // elo fordulon nem tarolt adat kell
+  const b=await bontasFordulo(r);
+  const sorok=b && b[cp];
+  return sorok ? sorok.map(x=>({name:x.n, value:x.v, points:x.p})) : null;
+}
 async function keretNevrol(own,r,nm){
   const k=own+'|'+r;
   if(!KERET_CACHE.has(k)) KERET_CACHE.set(k, eloKeret(own,r));
@@ -896,14 +926,19 @@ async function bontasHTML(ds){
   // jonne a mar meglevo, alig regi adat helyett.
   const k=cp+'|'+r, most=Date.now(), rec=BONTAS.get(k);
   if(!rec || (elo && most-rec.t>=60000)){
-    const u='https://fantasy-api.mlsz.hu/game-player-stats?include=competition_stat_config'+
-      `&filter%5Bcompetition_player_id%5D=${cp}&filter%5Bround_id%5D=${75+2*r}`;
-    try{
-      const j=await apiGet(u);
-      BONTAS.set(k,{t:most, sorok:(j.data||[]).map(s=>({name:(s.competition_stat_config||{}).name||'?',
-                                                       value:s.value, points:s.points}))});
-    }catch(e){
-      if(!rec) throw e;            // nincs mire visszaesni
+    // lezart fordulonal a tarolt bontas az elsodleges forras
+    const tarolt=await taroltBontas(cp, r);
+    if(tarolt) BONTAS.set(k,{t:most, sorok:tarolt});
+    else{
+      const u='https://fantasy-api.mlsz.hu/game-player-stats?include=competition_stat_config'+
+        `&filter%5Bcompetition_player_id%5D=${cp}&filter%5Bround_id%5D=${75+2*r}`;
+      try{
+        const j=await apiGet(u);
+        BONTAS.set(k,{t:most, sorok:(j.data||[]).map(s=>({name:(s.competition_stat_config||{}).name||'?',
+                                                         value:s.value, points:s.points}))});
+      }catch(e){
+        if(!rec) throw e;            // nincs mire visszaesni
+      }
     }
   }
   const nyers=BONTAS.get(k).sorok, sorok=nyers.filter(s=>s.points);

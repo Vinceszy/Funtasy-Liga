@@ -522,6 +522,70 @@ def zaras_valtozas(regi_fordulo, uj_fordulo, tarolo, mai):
     return db
 
 
+def bontasok_gyujtes(lezart, valtozott, torzs):
+    """A lezart fordulok TETELES pont-bontasa a repoba (bontasok/<r>.json).
+
+    MIERT: a bontast ("mibol jott ossze a 9,75 pont") eddig KIZAROLAG a
+    bongeszo kerte le, kattintasra, elo MLSZ-hivassal. Ha az MLSZ vagy a
+    kozvetito eppen nem elerheto, a lenyilo hibat irt - pedig a lezart
+    fordulo bontasa mar sosem valtozik, tehat egyszer le lehet kerni es el
+    lehet tenni. Innentol a lezart fordulo bontasa a repobol jon: azonnal
+    nyilik, halozat-fuggetlenul, es a soha nem birtokolt jatekos profilja
+    sem lo ki fordulonkent egy-egy elo kerest.
+
+    MIERT A TELJES MEZONY (385 jatekos), nem csak a birtokoltak: a fooldali
+    jatekoslistabol barmelyik jatekos profilja megnyithato. A gyujto a
+    GitHub szerverérol KOZVETLENUL keri az MLSZ-t (nincs CORS, nincs
+    kozvetito), tehat ez egyik kvotankat sem terheli - csak fordulonkent
+    egyszeri ~3 perc futasido.
+
+    MIKOR: fordulonkent EGYSZER, a lezaraskor - vagy ujra, ha az adott
+    fordulo eredmenye kozben valtozott (MLSZ-korrekcio). Amig a fajl megvan
+    es a fordulo nem mozdult, nem kerunk le semmit.
+
+    HIANYOS FUTAST NEM IRUNK KI: ha a jatekosok 10%-anal tobbnel elhasal a
+    keres, a fajl nem keszul el, es a kovetkezo futas ujraprobalja. Egy
+    felig kesz fajl rosszabb a hianyzonal - azt sosem probalnank ujra."""
+    if not torzs:
+        return 0
+    os.makedirs("bontasok", exist_ok=True)
+    idk = sorted(torzs, key=lambda x: int(x))
+    kiirt = 0
+    for r in sorted(x for x, kesz in lezart.items() if kesz):
+        ut = os.path.join("bontasok", "%d.json" % r)
+        if os.path.exists(ut) and r not in valtozott:
+            continue
+        print("  bontasok: %d. fordulo, %d jatekos lekerese%s"
+              % (r, len(idk), " (ujra: az eredmeny valtozott)" if r in valtozott else ""))
+        sorok, hiba = {}, 0
+        for i, cp in enumerate(idk, 1):
+            url = (ROOT + "game-player-stats?include=competition_stat_config"
+                   "&filter%5Bcompetition_player_id%5D=" + str(cp) +
+                   "&filter%5Bround_id%5D=" + str(rid(r)))
+            st, j = api_get(url)
+            if st != 200 or j is None:
+                hiba += 1
+                continue
+            sorok[str(cp)] = [
+                {"n": (x.get("competition_stat_config") or {}).get("name") or "?",
+                 "v": x.get("value"), "p": x.get("points")}
+                for x in (j.get("data") or [])]
+            if i % 100 == 0:
+                print("    %d/%d" % (i, len(idk)))
+        if hiba > len(idk) // 10:
+            print("  ! bontasok: %d. fordulo kihagyva - %d/%d keres elhasalt,"
+                  " a kovetkezo futas ujraprobalja" % (r, hiba, len(idk)), file=sys.stderr)
+            continue
+        # Az `updated` mezo SZANDEKOSAN nincs benne - ugyanaz az ok, mint a
+        # keretek/ fajloknal: a lezart fordulo bontasa nem valtozik, es egy
+        # idobelyeg minden futasnal ujrairna a fajlt.
+        kompakt_iras(ut, {"round": r, "bontasok": sorok})
+        kiirt += 1
+        print("  bontasok/%d.json kiirva (%d jatekos%s)"
+              % (r, len(sorok), ", %d sikertelen" % hiba if hiba else ""))
+    return kiirt
+
+
 def arnaplo_frissit(torzs, mai):
     """Az arak valtozasanak naplozasa (arak.json).
 
@@ -924,6 +988,12 @@ def main():
                         atirt += 1
         if atirt:
             print("  %d tarolt jatekosnev atvezetve a torzs szerinti alakra" % atirt)
+
+    # A lezart fordulok teteles bontasa (bontasok/<r>.json). A torzs UTAN,
+    # mert abbol jon a jatekoslista; a `valtozott` halmaz miatt egy utolagos
+    # MLSZ-korrekcio a bontast is frissiti.
+    if torzs:
+        bontasok_gyujtes(lezart, valtozott, torzs)
 
     if json.dumps(meccsek["rounds"], ensure_ascii=False, sort_keys=True) != meccsek_elotte:
         meccsek["updated"] = stamp()

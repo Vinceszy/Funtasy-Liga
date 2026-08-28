@@ -72,6 +72,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva](#az-fpl-draft-api-draftpremierleaguecomapi--mérésekkel-igazolva)
 - [5. Ismert korlátok, buktatók](#5-ismert-korlátok-buktatók)
 - [5/a. Miért van fordulónként külön keret-fájl](#5a-miért-van-fordulónként-külön-keret-fájl)
+- [5/a3. A lezárt forduló bontása a repóból jön](#5a3-a-lezárt-forduló-bontása-a-repóból-jön)
   - [Írás csak akkor, ha tényleg változott](#írás-csak-akkor-ha-tényleg-változott)
 - [5/a2. Változásnapló („Mi újult meg?")](#5a2-változásnapló-mi-újult-meg)
   - [A két oldal váza kézzel van kétszer leírva](#a-két-oldal-váza-kézzel-van-kétszer-leírva)
@@ -475,6 +476,7 @@ teljes képernyős, ragadós × gombbal.
 | `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**; elemeik `{e, pts}` alakúak, mert a beállt játékos pontja mondja meg, mit hozott a csere (a régi, csak azonosítót tartalmazó alakot a lap még elfogadja). A GW1 a git-történetből lett pótolva. |
 | `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset csak akkor, ha a forduló hivatalos pontja változott (ez a **pótolt meccs** esete — az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). **Nem a forduló összes meccse:** csak azoké a kluboké, amelyeknek van játékosuk valamelyik keretben — a részletező fölötti sorhoz ennyi kell. |
 | `jatekosok.json` | A mezőny **összes** játékosa (`{players:{id:{n,t,p,u21,pts,ar}}}`) — a főoldali lista és keresés forrása. A gyűjtő írja, egy kérésből. |
+| `bontasok/<forduló>.json` | A forduló **tételes pont-bontása** minden játékosra (`{round, bontasok:{cp-azonosító:[{n,v,p}]}}`): mi adta ki a heti pontot — gól, gólpassz, játszott perc… A gyűjtő a forduló lezárásakor **egyszer** kéri le mind a 385 játékosra, és MLSZ-korrekció után újra. Az `updated` mező szándékosan nincs benne (lásd `keretek/`). |
 | `zarasok_nb1.json` | Fordulónként azok a **meccs utáni pontigazítások**, amiket az MLSZ a forduló véglegesítése előtt vezetett át. Alakja a PL `zarasok.json`-jáét követi, hogy ugyanaz a megjelenítés szolgálhassa ki: `{rounds:{forduló:{szakvezető:{pont:[{n,cp,pos,tm,elott,utan,d}]}}}}`. Az `nk:1` jelzőt viselő sor azt jelenti, hogy a játékos nem ismert: ott név helyett „Ismeretlen játékos" áll, és `elott`/`utan` helyett `dl` (a változás mértéke). Élesben ritka esemény: a fájl üres vázként létezik, és csak akkor bővül, ha tényleg történt igazítás — a panel is csak akkor jelenik meg. |
 | `arak.json` | Az árak **változásai** (`{arak:{id:[[dátum, ár], …]}}`). Csak akkor bővül, ha egy ár tényleg megváltozott. |
 | `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. |
@@ -1480,6 +1482,37 @@ tehát invazívabb átalakítás — külön körben érdemes.
 fordulóra szüksége van. Amit ténylegesen használ belőle, az fordulónként öt mező játékosonként
 — abból egy külön index ~162 KB lenne az egész szezonra, vagyis **80%-kal kevesebb**. Ez új
 adatfájl, tehát a formátumot előbb el kell dönteni; addig marad a mostani megoldás.
+
+## 5/a3. A lezárt forduló bontása a repóból jön
+
+A **tételes bontás** („mi adta ki a 9,75 pontot") sokáig kizárólag a böngészőből, kattintásra,
+élő MLSZ-hívással jött. Két baja volt ennek:
+
+- **hálózat-függő**: ha az MLSZ vagy a közvetítő éppen nem válaszolt, a lenyíló hibát írt —
+  pedig a lezárt forduló bontása már sosem változik;
+- **lassú a profilban**: a soha nem birtokolt játékosnál a profil fordulónként egy-egy külön
+  kérést lő ki, sorban (ezért „pótlódnak" a pontok utólag).
+
+Mostantól a gyűjtő a forduló **lezárásakor egyszer** lekéri mind a 385 játékos bontását
+(`bontasok/<forduló>.json`), és az oldal lezárt fordulónál onnan olvas — azonnal, hálózattól
+függetlenül. Az **élő forduló marad az élő úton**: ott a bontás még változik.
+
+Miért a teljes mezőny, és nem csak a birtokolt játékosok: a főoldali listából bárki profilja
+megnyitható. **Ez egyik kvótánkat sem terheli**: a gyűjtő a GitHub szerveréről közvetlenül
+kéri az MLSZ-t (CORS csak böngészőben létezik, közvetítő itt nincs) — az ára fordulónként
+egyszeri ~3 perc futásidő és ~40 KB a repóban.
+
+Két részlet, ami fontos:
+
+- **Félig kész fájlt nem írunk ki.** Ha a kérések több mint 10%-a elhasal, a fájl nem
+  készül el, és a következő futás újrapróbálja. Egy hiányos fájl rosszabb a hiányzónál —
+  azt sosem próbálnánk újra.
+- **A korrekció itt sem évül el.** Ha a körbeforgó újraellenőrzés egy régi forduló
+  eredményét javítja, annak a bontását is újrahúzza.
+
+Ha a fájl hiányzik (a bevezetés előtti forduló, vagy még nem futott a gyűjtő), az oldal
+csendben visszaesik az élő lekérésre. Rögzítve: `tesztek/gyujto_bontasok.py` és
+`tesztek/taroltbontas.teszt.js`.
 
 ### Írás csak akkor, ha tényleg változott
 
