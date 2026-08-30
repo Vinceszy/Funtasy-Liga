@@ -1569,9 +1569,16 @@ lementek, tehát a **részletezés** volt a valóság.
 
 Nem a mi hibánk volt: **a hivatalos FPL-app ugyanezt az ellentmondást mutatta** — a pályán
 1 pont, a játékosra kattintva 8. Az FPL a `stats.total_points`-ot és az `explain`
-eseménylistát **külön tartja**, és az összesítő beragadt. Hogy az `explain` a hiteles, azt
-maga az adat mondja: **bónusz csak lefújás után jár**, tehát azok az események lement
-meccsből valók.
+eseménylistát **külön tartja**, és az összesítő beragadt.
+
+Hogy az `explain` a hiteles, két dolog mondja meg. Egy: **a meccsek addigra lementek**.
+Kettő: a **90 játszott perc** csak lejátszott meccsből jöhet, a `stats` 9 perce viszont a
+meccs bármely pillanatában előállhat — a percszám monoton nő, tehát a kisebbik a lemaradt.
+
+> **Amivel NEM lehet érvelni: a bónusszal.** Első nekifutásra azt írtam, hogy „bónusz csak
+> lefújás után jár", tehát a bónusz-sor bizonyítja a lement meccset. Ez **téves**: az FPL a
+> bónuszt a meccs alatt is számolja a BPS-táblából, és beteszi az `explain`-be — lásd
+> a fenti „A bónuszpontok három állapota" szakaszt, amit épp ezért írtunk meg.
 
 Ezért az élő pontot (és a percet) mostantól **mi adjuk össze az `explain`-ből**, nem az
 összesítőt vesszük át. Normális esetben a kettő egyezik, tehát ez semmit nem változtat;

@@ -887,7 +887,13 @@ async function fetchLivePts(){
   // a bontasa viszont 90 percet, golt es bonuszt (2+4+2 = 8). A HIVATALOS
   // FPL-APP UGYANEZT AZ ELLENTMONDAST MUTATTA: a palyan 1, a jatekosra
   // kattintva 8 - tehat nem a mi hibank volt, de mi ki tudjuk javitani.
-  // (Bonusz ráadásul csak lefujas utan jar: az esemenyek a valosak.)
+  //
+  // Hogy az explain a hiteles: a meccsek addigra LEMENTEK, es a 90 jatszott
+  // perc csak lejatszott meccsbol johet, mig a stats 9 perce barmikor - a
+  // percszam monoton no, tehat a kisebbik a lemaradt. A BONUSSZAL NEM lehet
+  // ervelni (elsore tevesen azzal erveltem): az FPL a bonuszt a meccs
+  // alatt is szamolja es beteszi az explain-be - lasd a README "A
+  // bonuszpontok harom allapota" szakaszat es a bonuszAllapot()-ot.
   //
   // Normalis esetben a ketto egyezik, tehat ez semmit nem valtoztat.
   // Elteresnel viszont a RESZLETEZES a hiteles: az konkret esemenyekbol all
