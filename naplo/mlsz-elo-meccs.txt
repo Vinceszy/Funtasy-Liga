@@ -18,6 +18,33 @@ a meccs-objektum OSSZES kulcsa: ['away_score', 'home_score', 'id', 'round_number
   games.homeTeam + games.awayTeam    HTTP 200  ~  22.3 KB  csapat-mezok: NINCS
   games.teams                        HTTP 200  ~  22.3 KB  csapat-mezok: NINCS
 
+=== B2) a mukodo include csapat-objektuma: mi van benne? ===
+HTTP 200, valasz ~24.8 KB
+a TELJES meccs-objektum (base64 levagva):
+{
+ "id": 457,
+ "start_at": "2026-08-29T19:30:00+02:00",
+ "status": "completed",
+ "away_score": 1,
+ "home_score": 3,
+ "round_number": "6F",
+ "home_team": {
+  "id": 37,
+  "name": "ÚJPEST",
+  "short_name": "ÚJPEST",
+  "color_hex": null
+ },
+ "away_team": {
+  "id": 27,
+  "name": "VASAS",
+  "short_name": "VASAS",
+  "color_hex": null
+ }
+}
+home_team kulcsai: ['color_hex', 'id', 'name', 'short_name']
+van-e logo (ez hizlalta 118 KB-ra a lezart forduloas valaszt)? nincs
+short_name='ÚJPEST'  name='ÚJPEST'
+
 === C) van-e KULON vegpont egy konkret meccsre? (id=457) ===
   gyoker         games/457              HTTP 404  
   competitions/3 games/457              HTTP 404  
