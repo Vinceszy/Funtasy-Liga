@@ -122,6 +122,33 @@ for cimke, extra in [
     ki("  %-34s HTTP %-4s ~%6.1f KB  csapat-mezok: %s"
        % (cimke, st, meret / 1024, sorted(van) or "NINCS"))
 
+# ---- B2) MI VAN a csapat-objektumban? (a nevet ebbol vesszuk) ----
+ki("")
+ki("=== B2) a mukodo include csapat-objektuma: mi van benne? ===")
+st, j, meret = keres(collect.BASE + "user-team-players-history?include="
+                     + urllib.parse.quote(collect.INCLUDE + "," + G
+                         + "," + G + ".home_team," + G + ".away_team")
+                     + "&filter%5Buser_id%5D=" + str(egy_uid)
+                     + "&filter%5Bround_id%5D=" + str(collect.rid(R)))
+ki("HTTP %s, valasz ~%.1f KB" % (st, meret / 1024))
+kiirt = False
+for d in (j or {}).get("data") or []:
+    cr = (d.get("competition_player") or {}).get("current_round") or {}
+    for g in cr.get("games") or []:
+        if isinstance(g, dict) and g.get("home_team") and not kiirt:
+            ki("a TELJES meccs-objektum (base64 levagva):")
+            ki(json.dumps(rovidit(g), ensure_ascii=False, indent=1))
+            ht = g.get("home_team") or {}
+            ki("home_team kulcsai: %s" % sorted(ht.keys()))
+            ki("van-e logo (ez hizlalta 118 KB-ra a lezart forduloas valaszt)? %s"
+               % ("IGEN" if ht.get("logo") else "nincs"))
+            ki("short_name=%r  name=%r" % (ht.get("short_name"), ht.get("name")))
+            kiirt = True
+    if kiirt:
+        break
+if not kiirt:
+    ki("! egyetlen meccsnel sem jott csapat-objektum")
+
 # ---- C) kulon meccs-vegpont a mar ismert azonositora ----
 ki("")
 ki("=== C) van-e KULON vegpont egy konkret meccsre? (id=%s) ===" % minta_id)
