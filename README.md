@@ -840,6 +840,36 @@ jelzés marad meg (`collect.py` → `orokit_meccsjelzok()`). Egy kivétel van: a
 formátumú fordulót (nincs a rekordokban `played`) a gyűjtő **egyszer** meccslistával
 együtt kéri le, hogy a hiányzó jelzések bekerüljenek.
 
+#### A két klubot külön kell kérni (mérve, 2026-08-30)
+
+Élő fordulónál a meccs-objektum **csak** `id`, `start_at`, `status`, `home_score`,
+`away_score` és `round_number` — **klub nélkül**. A gyűjtő ilyenkor `"?"`-et írt a
+`meccsek.json`-ba, és mivel az oldal a játékos klubjára szűrve keresi a meccset, a
+profilban kötőjel állt az ellenfél helyén, holott az eredmény megvolt. Ez a 6. fordulónál
+derült ki: a `meccsek.json` csak 08-24 óta létezik, előtte az 1–5. fordulót már **lezártan**
+töltöttük le, csapatostul.
+
+A megoldás: a két csapatot **explicit kérjük** az include-ban. Amit a mérés adott
+(`naplo/mlsz-elo-meccs.txt`, élő 6. forduló):
+
+| Amit kértünk | Eredmény |
+|---|---|
+| `games.home_team` + `games.away_team` | **működik** — 22,3 KB → 24,8 KB (+2,5 KB) |
+| `games.homeTeam` / `games.awayTeam` | a mező meg sem jelenik |
+| `games.teams` | a mező meg sem jelenik |
+| `games/<id>`, `matches/<id>`, `fixtures/<id>` a gyökéren és `competitions/3` alatt | mind a tíz alak **404** |
+| a birtokolt játékosok saját klubjaiból levezetve | csak 4/6 meccs, és a hazai/vendég oldal sehogy |
+
+A csapat-objektum itt **sovány** (`id`, `name`, `short_name`, `color_hex`), **logó nélkül** —
+tehát ez nem a fenti 118 KB-os hízás, csak +2,5 KB. A pont-bontás végpontja (ami a lenyílóhoz
+amúgy is megy) semmilyen include-dal nem tud a meccsről.
+
+**Vissza nem évülő védelem:** a `"?"` klubú meccs is hiányosnak számít, tehát a forduló addig
+marad az újrakérendők közt, amíg valódi név nem érkezik. Enélkül, ha egy forduló összes meccse
+lement, mialatt a nevek még `"?"`-ek voltak, a forduló kikerült volna az újrakérendők közül, és
+az MLSZ továbblépése után **soha többé** nem kértük volna le — a `"?"` véglegesen bent ragadt
+volna. Rögzítve: `tesztek/gyujto_meccsek.py` M7 és M8, mindkettő bizonyítottan bukik a régi kódon.
+
 ### Pont-bontás (game-player-stats)
 A felület játékos-modalja ezt hívja (a bundle-ből visszafejtve, 2026-08-21):
 ```

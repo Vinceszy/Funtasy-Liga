@@ -24,6 +24,13 @@ const { BASE, jo, inditas, vege } = require('./kozos');
   });
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForFunction(() => typeof meccsSorokHTML === 'function', null, { timeout: 20000 });
+  // AZ ELOFELTETELT KIMONDJUK: a lap a meccsek.json-t NEM blokkolva tolti, es a
+  // valasz beerkezesekor FELULIRJA a MECCSEK-et (nb1/index.html: MECCSEK=null,
+  // majd a fetch .then-je allitja be). Ha a teszt elobb teszi be a sajat 7.
+  // fordulojat, a keson beero valasz eltunteti - a teszt ilyenkor ures
+  // listakat mer, es mind az ot meccs-allitas bukik. Terheles alatt jott elo.
+  await p.waitForFunction(() => typeof MECCSEK !== 'undefined' && MECCSEK !== null,
+                          null, { timeout: 20000 });
 
   const m = await p.evaluate(async () => {
     const ora = 3600e3, nap = 24 * ora;

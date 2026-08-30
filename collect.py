@@ -189,14 +189,33 @@ def rankings(uname, round_id=None):
     return rows[0]
 
 
+GAMES = "competition_player.current_round.games"
+
+
 def squad(user_id, round_no, jatek=False):
-    """jatek=True: a meccslistat is kerjuk (ki NEM jatszik a forduloban).
-    Csak az ELO fordulora hasznaljuk: ott a meccsek meg 'scheduled'
-    allapotuak, es a valasz alig no (+2 KB). A lezart forduloknal viszont
-    a kesz meccs melle az API a ket csapatot is beteszi a klublogokkal
-    egyutt (base64 kepadat), es a valasz 17 KB-rol 118 KB-ra hizik -
-    ezert oda nem kerjuk; a jelzest a fordulo alatt mar elmentettuk."""
-    inc = INCLUDE + (",competition_player.current_round.games" if jatek else "")
+    """jatek=True: a meccslistat is kerjuk (ki NEM jatszik a forduloban,
+    es kik a meccs klubjai).
+
+    A KET KLUBOT EXPLICIT KERJUK. Enelkul az ELO fordulo meccs-objektuma
+    csak id/start/status/eredmeny/round_number - klub NELKUL -, es a
+    meccs_kivonat "?"-et irt a meccsek.json-ba. Emiatt a 6. fordulo profil-
+    soraban kotojel allt az ellenfel helyen, holott az eredmeny megvolt.
+    (A lezart fordulot az API enelkul is csapatostul adja, ezert volt jo az
+    1-5. fordulo - a meccsek.json csak a lezarasuk utan keszult.)
+
+    MERVE (2026-08-30, elo 6. fordulo, naplo/mlsz-elo-meccs.txt):
+      - games.home_team + games.away_team  -> HTTP 200, a klub megjon
+      - games.homeTeam / games.teams       -> a mezo nem jelenik meg
+      - a valasz 22,3 KB -> 24,8 KB, tehat +2,5 KB: a csapat-objektum itt
+        SOVANY (id, name, short_name, color_hex), LOGO NELKUL - nem ez a
+        118 KB-os hizas, amit a lezart fordulos valasznal mertunk.
+      - kulon meccs-vegpont nincs: games/<id>, matches/<id>, fixtures/<id>
+        a gyokeren es a competitions/3 alatt is 404 (tiz alak).
+      - a birtokolt jatekosok klubjaibol csak 4/6 meccs ket oldala jott
+        volna ossze, a hazai/vendeg pedig sehogy - ezert nem abbol
+        vezetjuk le."""
+    inc = INCLUDE + (("," + GAMES + "," + GAMES + ".home_team,"
+                      + GAMES + ".away_team") if jatek else "")
     url = (BASE + "user-team-players-history?include=" + urllib.parse.quote(inc)
            + "&filter%5Buser_id%5D=" + str(user_id)
            + "&filter%5Bround_id%5D=" + str(rid(round_no)))
@@ -801,9 +820,14 @@ def main():
     # meccse. Az elo fordulo amugy is meccslistaval megy; a regiekre ez
     # egyszeri nagy lekeres (a lezart meccs melle az API a klublogokat is
     # betolti), utana a feltetel mar nem all fenn.
+    # A "?" klubu meccs is hianyos. Enelkul: ha egy fordulo OSSZES meccse
+    # lement, mikozben a klubnevek meg "?"-ek voltak, a fordulo kikerult
+    # volna az ujrakerendok kozul, es amint az MLSZ tovabblep, SOHA TOBBE
+    # nem kertuk volna le - a "?" veglegesen bent ragadt volna.
     meccs_potlas = {r for r in range(1, aktualis + 1)
                     if not meccsek["rounds"].get(str(r))
-                    or any(not m.get("vege") for m in meccsek["rounds"][str(r)])}
+                    or any(not m.get("vege") or m.get("h") == "?" or m.get("v") == "?"
+                           for m in meccsek["rounds"][str(r)])}
     if meccs_potlas - {aktualis}:
         print("  meccsek potlasa: %s. fordulo"
               % ", ".join(str(x) for x in sorted(meccs_potlas - {aktualis})))

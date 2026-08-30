@@ -59,6 +59,7 @@ MECCSEK = {
         meccs(99, "EEE", "FFF", "completed", 1)],   # visszaeso: 1F a 2-ben
 }
 jatekos_keresek = []
+csapat_keresek = []   # (fordulo, kertuk-e explicit a ket klubot)
 
 
 def keret(r, games):
@@ -91,8 +92,12 @@ def mock(url, retries=3):
             "round_statistics": [{"round_number": x, "points": API[x][valodi]} for x in (1, 2)]}}]}
     if "user-team-players-history" in url:
         r = (int(par["filter[round_id]"][0]) - 75) // 2
-        games = "current_round.games" in urllib.parse.unquote(url)
+        teljes = urllib.parse.unquote(url)
+        games = "current_round.games" in teljes
         jatekos_keresek.append((r, games))
+        if games:
+            csapat_keresek.append((r, "games.home_team" in teljes
+                                      and "games.away_team" in teljes))
         return 200, keret(r, games)
     return 404, None
 
@@ -146,6 +151,31 @@ allit(elso_gamesszel, "M6: a valtozott pontu fordulot meccslistaval keri ujra")
 allit(any(x["id"] == 13 for x in m["rounds"].get("1") or []),
       "M6: a potolt meccs bekerult: " + repr([x["id"] for x in m["rounds"]["1"]]))
 
+print("\n--- M7: a meccslistas lekeres EXPLICIT keri a ket klubot ---")
+# MERVE (2026-08-30, naplo/mlsz-elo-meccs.txt): elo fordulonal a meccs-
+# objektum klub NELKUL jon, hacsak a ket csapatot kulon nem kerjuk. Enelkul
+# a meccsek.json "?"-et tarol, es a profilban kotojel all az ellenfel helyen.
+allit(csapat_keresek and all(k for _, k in csapat_keresek),
+      "M7: minden meccslistas lekeres keri a home_team-et es az away_team-et"
+      + ("" if not csapat_keresek else " (%d keres)" % len(csapat_keresek)))
+
+print("\n--- M8: a '?' klubu meccs is hianyosnak szamit ---")
+# Ha egy fordulo MINDEN meccse lement, de a klubnevek "?"-ek maradtak, a regi
+# feltetel teljesnek latta volna: kikerul az ujrakerendok kozul, es amint az
+# MLSZ tovabblep, soha tobbe nem kernenk le - a "?" veglegesen bent ragadna.
+m = json.load(open("meccsek.json"))
+m["rounds"]["1"] = [{"id": 11, "h": "?", "v": "?", "start": "2026-08-11T17:30:00+02:00",
+                     "hp": 3, "vp": 1, "vege": True}]
+json.dump(m, open("meccsek.json", "w"))
+jatekos_keresek.clear()
+c.main()
+allit([r for r, g in jatekos_keresek if g and r == 1],
+      "M8: a '?' klubu 1. fordulot ujra lekeri meccslistaval")
+m = json.load(open("meccsek.json"))
+allit(all(x.get("h") != "?" and x.get("v") != "?" for x in m["rounds"].get("1") or []),
+      "M8: az ujrakeres utan valodi klubnev all a '?' helyen: "
+      + repr([(x.get("h"), x.get("v")) for x in m["rounds"].get("1") or []]))
+
 if hibak:
     print("\n%d allitas bukott." % len(hibak)); sys.exit(1)
-print("\nMind a het allitas rendben.")
+print("\nMind a 12 allitas rendben.")

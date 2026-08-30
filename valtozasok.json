@@ -1,6 +1,15 @@
 {
  "bejegyzesek": [
   {
+   "datum": "2026-08-30",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1"
+   ],
+   "cim": "Élő fordulóban is látszik, ki ellen játszott a klub",
+   "leiras": "A játékos szezonjában a folyó forduló sorában kötőjel állt az ellenfél helyén, pedig a meccs már lement és a pontok megvoltak. Az ok az MLSZ-nél volt: élő fordulónál a meccshez nem küldte a két klub nevét, csak az eredményt, ezért az oldal nem tudta, melyik meccsről van szó. Kimértük, hogy a neveket külön kérve élőben is megkapjuk — mostantól a gyűjtő így kéri, tehát az ellenfél és az állás már a forduló alatt megjelenik, nem csak a lezárása után."
+  },
+  {
    "datum": "2026-08-28",
    "tipus": "funkcio",
    "ligak": [

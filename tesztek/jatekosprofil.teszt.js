@@ -311,8 +311,26 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   });
   await p.selectOption('[data-szuro="tulaj"]', { label: 'Senkinél' });
   await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 0, null, { timeout: 5000 });
+  // AZ ELOFELTETELT KIMONDJUK, nem a lista sorrendjere bizzuk: a "Senkinél"
+  // szuro a JELENLEGI tulajdonost nezi, ez a teszt viszont a SOHA nem
+  // birtokolt jatekosra szol - akinek egyetlen fordulobol sincs tarolt
+  // pontja, tehat mindet az API-bol kell potolni. A ketto nem ugyanaz, es a
+  // kulonbseg elo is jott: a 6. fordulos keret bekerulesevel a lista elso
+  // "Senkinél" jatekosa mar volt valakinel korabban, igy a pontja azonnal
+  // ott allt, es a teszt NULLA lekerest mert (mindket allitasa bukott).
+  const sohaSem = await p.evaluate(async () => {
+    const h = await (await fetch('../squad_history.json?t=' + Date.now())).json();
+    const valaha = new Set();
+    for (const per of Object.values(h.rounds || {}))
+      for (const keret of Object.values(per))
+        for (const x of keret) valaha.add(String(x.id));
+    const sor = [...document.querySelectorAll('.jlsor')]
+      .find(s => !valaha.has(s.dataset.jl));
+    return sor ? sor.dataset.jl : null;
+  });
+  jo(!!sohaSem, 'van a listában soha nem birtokolt játékos (a teszt előfeltétele)');
   const t0 = Date.now();
-  await p.click('.jlsor');
+  await p.click('.jlsor[data-jl="' + sohaSem + '"]');
   await p.waitForSelector('.proflista', { timeout: 20000 });
   jo(Date.now() - t0 < 3000,
      'a profil a lassú API bevárása NÉLKÜL megjelenik (' + (Date.now() - t0) + ' ms)');
