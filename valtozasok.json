@@ -4,6 +4,16 @@
    "datum": "2026-08-30",
    "tipus": "bugfix",
    "ligak": [
+    "nb1",
+    "pl"
+   ],
+   "cim": "Élő forduló alatt magától frissül az állás",
+   "leiras": "Ha nyitva hagytad az oldalt egy forduló alatt, a pontok ott maradtak, ahol a betöltéskor álltak — óránként is ugyanazt mutatta, amíg el nem váltottál róla és vissza. Ezért fordulhatott elő, hogy egy játékos sora 1 pontot írt, a pontrészletezője viszont — ami kattintásra mindig frisset kér — már a valódi állást. Mostantól élő forduló alatt az oldal percenként magától frissül. Fordulók között és háttérbe tett lapon nem kérdez le semmit."
+  },
+  {
+   "datum": "2026-08-30",
+   "tipus": "bugfix",
+   "ligak": [
     "nb1"
    ],
    "cim": "Élő fordulóban is látszik, ki ellen játszott a klub",

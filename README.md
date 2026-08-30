@@ -73,6 +73,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 - [5. Ismert korlátok, buktatók](#5-ismert-korlátok-buktatók)
 - [5/a. Miért van fordulónként külön keret-fájl](#5a-miért-van-fordulónként-külön-keret-fájl)
 - [5/a3. A lezárt forduló bontása a repóból jön](#5a3-a-lezárt-forduló-bontása-a-repóból-jön)
+  - [Élő forduló alatt a lap magától frissül](#élő-forduló-alatt-a-lap-magától-frissül)
   - [Írás csak akkor, ha tényleg változott](#írás-csak-akkor-ha-tényleg-változott)
 - [5/a2. Változásnapló („Mi újult meg?")](#5a2-változásnapló-mi-újult-meg)
   - [A két oldal váza kézzel van kétszer leírva](#a-két-oldal-váza-kézzel-van-kétszer-leírva)
@@ -1558,6 +1559,29 @@ Két részlet, ami fontos:
 Ha a fájl hiányzik (a bevezetés előtti forduló, vagy még nem futott a gyűjtő), az oldal
 csendben visszaesik az élő lekérésre. Rögzítve: `tesztek/gyujto_bontasok.py` és
 `tesztek/taroltbontas.teszt.js`.
+
+### Élő forduló alatt a lap magától frissül
+
+**Bejelentett hiba (2026-08-30, PL):** a nyitva hagyott lap a **betöltéskori** állást
+mutatta. A LEE–BRE meccs a 9. percnél állt, amikor az oldal betöltődött, és a sorok ott is
+maradtak — percek, meccsóra, pontok egyaránt. A lenyíló bontás viszont **kattintáskor** saját,
+friss lekérést indít, ezért az már 90 percet mutatott: ugyanazon a képernyőn mondott ellent
+egymásnak a sor (9 perc, 1 pont) és a panelje (90 perc, 2 pont). **A panel volt a helyes.**
+
+Az élő réteget eddig csak három dolog frissítette: a betöltés, a lapra való visszaváltás
+(`FunTasy.ujraLathatokor`), és egy meccs vagy keret megnyitása. Időzített frissítés
+**szándékosan** nem volt — és akkor ez helyes döntés is volt: publikus közvetítőkön mentünk,
+és egy nyitva hagyott lap percenkénti lekérésekkel verte volna őket.
+
+**A saját Cloudflare Workerünk 60 másodperces peremgyorsítótárával ez az indok megszűnt:**
+akárhányan nézik ugyanazt a fordulót, az API felé percenként egy kérés megy ki. Ezért a
+`FunTasy.eloFrissito` mindkét oldalon percenként újrafuttatja az élő lekérést — de **csak
+akkor**, ha van folyó forduló, és **csak** látható lapon. Fordulók között és háttérbe tett
+lapon egyetlen kérés sem megy ki.
+
+Rögzítve: `tesztek/eloora.teszt.js` — élő fordulónál a kiírt állás kattintás nélkül vált
+44-ről 99-re; lezárt fordulónál egyetlen ismételt kérés sem megy ki. A régi kódon
+bizonyítottan bukik.
 
 ### Írás csak akkor, ha tényleg változott
 

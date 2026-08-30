@@ -1109,8 +1109,8 @@
      Ez a segito ujra lefuttatja a kapott frissitest, amikor a lap ismet
      lathatova valik. Ket vedelme van: legfeljebb minKoz ezredmasodpercenkent
      indul (kulonben a lapok kozti kapkodas lekeresekkel verne a proxykat),
-     es sosem fut belole ketto egyszerre. Idozitett (percenkenti) frissites
-     szandekosan NINCS: nyitva hagyott lapon nem kerunk le semmit. */
+     es sosem fut belole ketto egyszerre. A percenkenti frissitest lasd
+     lentebb (eloFrissito) - az csak ELO fordulo alatt jar. */
   function ujraLathatokor(fn, minKoz) {
     minKoz = (minKoz == null) ? 30000 : minKoz;
     var utolso = Date.now(), fut = false;
@@ -1130,6 +1130,45 @@
     // asztali gepen az ablakra visszakattintas sem valt visibilitychange-t
     window.addEventListener('focus', inditsd);
     return inditsd;
+  }
+
+  /* ===== Idozitett frissites, AMIG A FORDULO EL =====
+     BEJELENTETT HIBA (2026-08-30, PL): a nyitva hagyott lap a BETOLTESKORI
+     allast mutatta. A LEE-BRE meccs a 9. percnel allt, amikor a lap
+     betoltodott, es a sorok ott is maradtak - percek, meccsora, pontok
+     egyarant. A lenyilo bontas viszont KATTINTASKOR sajat, friss lekerest
+     indit, ezert az mar 90 percet mutatott: ugyanazon a kepernyon mondott
+     ellent egymasnak a sor (9 perc, 1 pont) es a panelje (90 perc, 2 pont).
+     A panel volt a helyes.
+
+     Eddig ez SZANDEKOS volt, es akkor helyes is: publikus kozvetitokon
+     mentunk, es egy nyitva hagyott lap percenkenti lekeresekkel verte volna
+     oket. A sajat Cloudflare Workerunk 60 masodperces peremgyorsitotaraval
+     ez az indok megszunt - akarhanyan nezik ugyanazt a fordulot, az API
+     fele percenkent egy keres megy ki.
+
+     Harom vedelme van: REJTETT lapon nem fut (es lapvaltaskor azonnal all),
+     sosem fut belole ketto egyszerre, es csak akkor jar, ha a hivo elindtja
+     - vagyis fordulok kozott egyetlen keres sem megy ki. */
+  function eloFrissito(fn, koz) {
+    koz = koz || 60000;
+    var id = null, fut = false, kert = false;
+    function tick() {
+      if (fut || document.visibilityState === 'hidden') return;
+      fut = true;
+      Promise.resolve().then(fn).catch(function () {}).then(function () { fut = false; });
+    }
+    function oraAll() { if (id) { clearInterval(id); id = null; } }
+    function oraIndul() {
+      if (!id && kert && document.visibilityState !== 'hidden') id = setInterval(tick, koz);
+    }
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') oraAll(); else oraIndul();
+    });
+    return {
+      indit: function () { kert = true; oraIndul(); },
+      allj:  function () { kert = false; oraAll(); }
+    };
   }
 
   /* ===== Lassu lekeres jelzese =====
@@ -1467,6 +1506,7 @@
                      kezdSzazalek: kezdSzazalek, KEZD_CIM: KEZD_CIM,
                      kezdParHTML: kezdParHTML,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
+                     eloFrissito: eloFrissito,
                      lassuJelzo: lassuJelzo, allasHTML: allasHTML,
                      nezetVerem: nezetVerem, lekero: lekero,
                      eloKereso: eloKereso, hibajelzo: hibajelzo, h2hNezo: h2hNezo };
