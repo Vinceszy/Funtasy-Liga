@@ -170,6 +170,41 @@ def zarasi_kulonbseg(regi, uj):
     return ki
 
 
+def jatekos_pont(v):
+    """Egy jatekos fordulo-pontja a live valaszbol: (pont, bontasbol_jott).
+
+    A PONT A TETELES BONTASBOL (explain) ALL OSSZE, nem a stats
+    osszesitojebol - UGYANAZ A SZABALY, mint az oldalon (pl/index.html,
+    fetchLivePts). A ket helyen ugyanannak a szamnak kell kijonnie: amit a
+    latogato lat, azt kell archivalni is.
+
+    MIERT (2026-08-30, GW2): az FPL a stats.total_points-ot es az explain
+    esemenylistat KULON tartja, es az osszesito beragadt - egy jatekosnal a
+    sor 1 pontot mutatott, a bontasa viszont 90 percet es golt, osszesen
+    8-at. Ugyanez az ellentmondas a HIVATALOS FPL-appban is latszott, tehat
+    a forras hibaja. A bontas a hiteles: az konkret esemenyekbol all ossze.
+
+    MIERT FONTOS ITT IS: a lezart fordulot a gyujto SOHA TOBBE nem keri le
+    (veglegesek), es az oldal onnantol a MENTETT szamot mutatja. Ami a
+    lezaraskor bekerult, az orokre bent marad - az FPL a regi fordulot nem
+    adja vissza.
+
+    VISSZAESES: ha az explain ures (a jatekos nem lepett palyara) vagy az
+    FPL atalakitja a szerkezetet, egyetlen sort sem talalunk, es a
+    stats.total_points marad. Egy API-valtozas igy a REGI viselkedest adja
+    vissza, nem nullakat."""
+    stats = (v or {}).get("stats") or {}
+    ossz, van = 0, False
+    for fx in (v or {}).get("explain") or []:
+        # a Draft alakja: [[stat-lista, meccs_id], ...] - dupla fordulonal
+        # ket elem, ezert osszeadjuk
+        for t in (fx[0] if isinstance(fx, (list, tuple)) and fx else None) or []:
+            if isinstance(t, dict):
+                van = True
+                ossz += t.get("points") or 0
+    return (ossz, True) if van else (stats.get("total_points") or 0, False)
+
+
 def main():
     print("FPL Draft gyujtes (liga: %s)" % LEAGUE_ID)
 
@@ -305,15 +340,24 @@ def main():
     most_teljes = {}          # gw -> ebben a futasban minden csapat kerete megjott-e
     for gw in sorted(celok):
         st, live = fetch("event/%d/live" % gw)
-        pont = {}
+        pont, eltero = {}, 0
         if st == 200 and live:
             el = live.get("elements")
-            if isinstance(el, dict):
-                for k, v in el.items():
-                    pont[str(k)] = ((v or {}).get("stats") or {}).get("total_points") or 0
-            elif isinstance(el, list):
-                for v in el:
-                    pont[str((v or {}).get("id"))] = ((v or {}).get("stats") or {}).get("total_points") or 0
+            elemek = (list(el.items()) if isinstance(el, dict)
+                      else [(str((v or {}).get("id")), v) for v in el] if isinstance(el, list)
+                      else [])
+            for k, v in elemek:
+                p, van = jatekos_pont(v)
+                if van and p != (((v or {}).get("stats") or {}).get("total_points") or 0):
+                    eltero += 1
+                pont[str(k)] = p
+        # UGYANAZ A SZABALY, MINT AZ OLDALON: az elteres nem nema. Ha
+        # rendszeres, a naplobol latszik - es akkor nezzuk meg ujra, melyik
+        # forras romlott el.
+        if eltero:
+            print("  ! %d. fordulo: %d jatekosnal az FPL osszesitoje ELTER a"
+                  " teteles bontas osszegetol - a bontast tartjuk meg"
+                  % (gw, eltero), file=sys.stderr)
         # D1: ha az elo pontok nem jottek meg, a fordulot KIHAGYJUK. Kulonben
         # minden jatekos 0 ponttal irodna be, a fordulo "teljesnek" szamitana,
         # es soha nem kernenk le ujra - a nullak veglegesen bennragadnanak.

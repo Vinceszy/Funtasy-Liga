@@ -1586,9 +1586,26 @@ eltéréskor viszont az esemény-alapú érték nyer — és ez a csapat összeg
 meccsállásra is átüt. Ha egy játékoshoz nincs `explain` (még nem lépett pályára), marad a
 `stats`.
 
-Rögzítve: `tesztek/eloosszeg.teszt.js` — beragadt összesítő mellett a sor 8 pontot és 90
-percet mutat, az élő állás 88-at (11 kezdő), és a hibás 11 sehol nem jelenik meg; üres
-bontásnál a `stats` marad a forrás. A régi kódon bizonyítottan bukik.
+**Ugyanez a szabály a gyűjtőben is.** Ez nem szépségkérdés: a lezárt fordulót a gyűjtő
+**soha többé nem kéri le** (`veglegesek`), és az oldal onnantól nem élőben számol, hanem a
+**mentett** számot mutatja. Ami a lezárás pillanatában bekerült, az véglegesen bent marad —
+az FPL a régi fordulót nem adja vissza. Ha csak az oldalt javítottuk volna, ma jó számot
+látnánk, a lezárás után viszont a beragadt érték jönne elő, örökre.
+
+A gyűjtőben ez a `collect_draft.py` → `jatekos_pont()`, a lapon a `fetchLivePts` — a kettőnek
+**ugyanazt a számot kell adnia**: amit a látogató lát, azt kell archiválni is. Eltéréskor a
+gyűjtő a futás naplójába **hangosan kiírja**, hány játékosnál tért el a két forrás; ha ez
+rendszeressé válik, onnan derül ki.
+
+**Visszaesés mindkét helyen:** ha az `explain` üres (a játékos nem lépett pályára) vagy az FPL
+átalakítja a szerkezetét, egyetlen sort sem találunk, és marad a `stats` összesítője. Egy
+API-változás így a **régi viselkedést** adja vissza, nem nullákat. A pontot és a percet külön
+tartjuk számon: lehet pontot érő sor perc-sor nélkül, és ott a 0 perc hamis lenne.
+
+Rögzítve: `tesztek/eloosszeg.teszt.js` (lap) és `tesztek/gyujto_pontforras.py` (gyűjtő) —
+beragadt összesítő mellett 8 pont és 90 perc, az élő állás 88 (11 kezdő), a hibás 11 sehol;
+üres vagy ismeretlen szerkezetű bontásnál a `stats` marad; dupla fordulónál a két meccs
+összeadódik. Mindkettő a régi kódon bizonyítottan bukik.
 
 ### Élő forduló alatt a lap magától frissül
 

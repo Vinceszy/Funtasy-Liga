@@ -7,7 +7,7 @@
     "pl"
    ],
    "cim": "A játékos pontja a részletezéséből áll össze",
-   "leiras": "Előfordult, hogy egy játékos sora 1 pontot mutatott, a pontrészletezője viszont 8-at — pedig a meccs már lement, és a részletezés volt a valóság. Az FPL a két értéket külön tartja, és az összesítő beragadt: ugyanez az ellentmondás a hivatalos FPL-appban is látszott. Mostantól az oldal maga adja össze a részletezés pontjait, tehát a keret és az élő meccsállás is a tényleges eseményekből számol."
+   "leiras": "Előfordult, hogy egy játékos sora 1 pontot mutatott, a pontrészletezője viszont 8-at — pedig a meccs már lement, és a részletezés volt a valóság. Az FPL a két értéket külön tartja, és az összesítő beragadt: ugyanez az ellentmondás a hivatalos FPL-appban is látszott. Mostantól az oldal maga adja össze a részletezés pontjait, tehát a keret és az élő meccsállás is a tényleges eseményekből számol. Ugyanez a szabály került a háttérben mentett adatba is: a lezárt forduló pontja már nem örökölheti az FPL beragadt összesítőjét."
   },
   {
    "datum": "2026-08-30",

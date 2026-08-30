@@ -899,19 +899,22 @@ async function fetchLivePts(){
   // Elteresnel viszont a RESZLETEZES a hiteles: az konkret esemenyekbol all
   // ossze, az osszesito meg egy kulon szamolt, most hibas ertek. Dupla
   // fordulonal az explain mindket meccset hozza, ezert osszeadjuk.
+  // A pontot es a percet KULON kell szamon tartani: lehet a bontasban pontot
+  // ero sor perc-sor NELKUL, es olyankor a 0 perc hamis lenne - ott a stats
+  // marad. (Ma nem fordul elo, de a visszaeses nem all meg felutig.)
   const bontasbol = v => {
-    var van = false, pont = 0, perc = 0;
+    var vanPont = false, vanPerc = false, pont = 0, perc = 0;
     (v.explain || []).forEach(fx => (fx && fx[0] || []).forEach(t => {
-      van = true;
+      vanPont = true;
       pont += t.points || 0;
-      if (t.stat === 'minutes') perc += t.value || 0;
+      if (t.stat === 'minutes'){ vanPerc = true; perc += t.value || 0; }
     }));
-    return van ? { pont: pont, perc: perc } : null;
+    return { vanPont: vanPont, vanPerc: vanPerc, pont: pont, perc: perc };
   };
   const be = (id, v) => {
     const st = v.stats || {}, b = bontasbol(v);
-    LIVEPTS[id] = b ? b.pont : (st.total_points || 0);
-    LIVEPERC[id] = { perc: b ? b.perc : (st.minutes || 0), kezdo: !!st.starts };
+    LIVEPTS[id] = b.vanPont ? b.pont : (st.total_points || 0);
+    LIVEPERC[id] = { perc: b.vanPerc ? b.perc : (st.minutes || 0), kezdo: !!st.starts };
   };
   if (Array.isArray(el)) el.forEach(v => be(v.id, v || {}));
   else for (const k in el) be(k, el[k] || {});
