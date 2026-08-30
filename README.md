@@ -73,6 +73,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 - [5. Ismert korlátok, buktatók](#5-ismert-korlátok-buktatók)
 - [5/a. Miért van fordulónként külön keret-fájl](#5a-miért-van-fordulónként-külön-keret-fájl)
 - [5/a3. A lezárt forduló bontása a repóból jön](#5a3-a-lezárt-forduló-bontása-a-repóból-jön)
+  - [Az élő pont a tételes bontásból áll össze (PL)](#az-élő-pont-a-tételes-bontásból-áll-össze-pl)
   - [Élő forduló alatt a lap magától frissül](#élő-forduló-alatt-a-lap-magától-frissül)
   - [Írás csak akkor, ha tényleg változott](#írás-csak-akkor-ha-tényleg-változott)
 - [5/a2. Változásnapló („Mi újult meg?")](#5a2-változásnapló-mi-újult-meg)
@@ -1559,6 +1560,28 @@ Két részlet, ami fontos:
 Ha a fájl hiányzik (a bevezetés előtti forduló, vagy még nem futott a gyűjtő), az oldal
 csendben visszaesik az élő lekérésre. Rögzítve: `tesztek/gyujto_bontasok.py` és
 `tesztek/taroltbontas.teszt.js`.
+
+### Az élő pont a tételes bontásból áll össze (PL)
+
+**Bejelentett hiba (2026-08-30, GW2):** egy játékos sora 1 pontot és 9 percet mutatott,
+a pontrészletezője viszont 90 percet, gólt és bónuszt — összesen 8-at. A meccsek addigra
+lementek, tehát a **részletezés** volt a valóság.
+
+Nem a mi hibánk volt: **a hivatalos FPL-app ugyanezt az ellentmondást mutatta** — a pályán
+1 pont, a játékosra kattintva 8. Az FPL a `stats.total_points`-ot és az `explain`
+eseménylistát **külön tartja**, és az összesítő beragadt. Hogy az `explain` a hiteles, azt
+maga az adat mondja: **bónusz csak lefújás után jár**, tehát azok az események lement
+meccsből valók.
+
+Ezért az élő pontot (és a percet) mostantól **mi adjuk össze az `explain`-ből**, nem az
+összesítőt vesszük át. Normális esetben a kettő egyezik, tehát ez semmit nem változtat;
+eltéréskor viszont az esemény-alapú érték nyer — és ez a csapat összegére és az élő
+meccsállásra is átüt. Ha egy játékoshoz nincs `explain` (még nem lépett pályára), marad a
+`stats`.
+
+Rögzítve: `tesztek/eloosszeg.teszt.js` — beragadt összesítő mellett a sor 8 pontot és 90
+percet mutat, az élő állás 88-at (11 kezdő), és a hibás 11 sehol nem jelenik meg; üres
+bontásnál a `stats` marad a forrás. A régi kódon bizonyítottan bukik.
 
 ### Élő forduló alatt a lap magától frissül
 

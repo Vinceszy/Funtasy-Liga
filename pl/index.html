@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=64">
+<link rel="stylesheet" href="../funtasy.css?v=65">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -106,7 +106,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=64"></script>
+<script src="../funtasy.js?v=65"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -879,12 +879,36 @@ async function fetchLivePts(){
   const el = elo.elements || {};
   // Ugyanabbol a valaszbol, amibol a pontok: a percek es a "kezdo volt-e".
   // Eddig eldobtuk oket.
-  const be = (id, st) => {
-    LIVEPTS[id] = (st.total_points) || 0;
-    LIVEPERC[id] = { perc: st.minutes || 0, kezdo: !!st.starts };
+  // A PONT ES A PERC A TETELES BONTASBOL JON, nem a stats osszesitojebol.
+  //
+  // MEGTORTENT (2026-08-30, GW2): az FPL a ket erteket KULON tartja, es az
+  // osszesito beragadt, mikozben az explain mar a lement meccs valos
+  // esemenyeit adta. Calvert-Lewinnel a sor 1 pontot es 9 percet mondott,
+  // a bontasa viszont 90 percet, golt es bonuszt (2+4+2 = 8). A HIVATALOS
+  // FPL-APP UGYANEZT AZ ELLENTMONDAST MUTATTA: a palyan 1, a jatekosra
+  // kattintva 8 - tehat nem a mi hibank volt, de mi ki tudjuk javitani.
+  // (Bonusz ráadásul csak lefujas utan jar: az esemenyek a valosak.)
+  //
+  // Normalis esetben a ketto egyezik, tehat ez semmit nem valtoztat.
+  // Elteresnel viszont a RESZLETEZES a hiteles: az konkret esemenyekbol all
+  // ossze, az osszesito meg egy kulon szamolt, most hibas ertek. Dupla
+  // fordulonal az explain mindket meccset hozza, ezert osszeadjuk.
+  const bontasbol = v => {
+    var van = false, pont = 0, perc = 0;
+    (v.explain || []).forEach(fx => (fx && fx[0] || []).forEach(t => {
+      van = true;
+      pont += t.points || 0;
+      if (t.stat === 'minutes') perc += t.value || 0;
+    }));
+    return van ? { pont: pont, perc: perc } : null;
   };
-  if (Array.isArray(el)) el.forEach(v => be(v.id, v.stats || {}));
-  else for (const k in el) be(k, ((el[k] || {}).stats) || {});
+  const be = (id, v) => {
+    const st = v.stats || {}, b = bontasbol(v);
+    LIVEPTS[id] = b ? b.pont : (st.total_points || 0);
+    LIVEPERC[id] = { perc: b ? b.perc : (st.minutes || 0), kezdo: !!st.starts };
+  };
+  if (Array.isArray(el)) el.forEach(v => be(v.id, v || {}));
+  else for (const k in el) be(k, el[k] || {});
   meccsoraFrissit();
   return true;
 }

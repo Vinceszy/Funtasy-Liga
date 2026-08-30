@@ -4,6 +4,15 @@
    "datum": "2026-08-30",
    "tipus": "bugfix",
    "ligak": [
+    "pl"
+   ],
+   "cim": "A játékos pontja a részletezéséből áll össze",
+   "leiras": "Előfordult, hogy egy játékos sora 1 pontot mutatott, a pontrészletezője viszont 8-at — pedig a meccs már lement, és a részletezés volt a valóság. Az FPL a két értéket külön tartja, és az összesítő beragadt: ugyanez az ellentmondás a hivatalos FPL-appban is látszott. Mostantól az oldal maga adja össze a részletezés pontjait, tehát a keret és az élő meccsállás is a tényleges eseményekből számol."
+  },
+  {
+   "datum": "2026-08-30",
+   "tipus": "bugfix",
+   "ligak": [
     "nb1",
     "pl"
    ],
