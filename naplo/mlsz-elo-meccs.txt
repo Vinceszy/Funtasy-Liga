@@ -1,0 +1,47 @@
+=== MERES: elo fordulo = 6. (MLSZ szerinti aktualis: 6) ===
+elert resztvevok: 8 / 8
+
+=== A) elo fordulos meccs-objektum a JELENLEGI include-dal ===
+HTTP 200, valasz ~22.3 KB
+a meccs-objektum OSSZES kulcsa: ['away_score', 'home_score', 'id', 'round_number', 'start_at', 'status']
+{
+ "id": 457,
+ "start_at": "2026-08-29T19:30:00+02:00",
+ "status": "completed",
+ "away_score": 1,
+ "home_score": 3,
+ "round_number": "6F"
+}
+
+=== B) megjon-e a ket csapat, ha EXPLICIT keruk? ===
+  games.home_team + games.away_team  HTTP 200  ~  24.8 KB  csapat-mezok: ['away_team', 'home_team']
+  games.homeTeam + games.awayTeam    HTTP 200  ~  22.3 KB  csapat-mezok: NINCS
+  games.teams                        HTTP 200  ~  22.3 KB  csapat-mezok: NINCS
+
+=== C) van-e KULON vegpont egy konkret meccsre? (id=457) ===
+  gyoker         games/457              HTTP 404  
+  competitions/3 games/457              HTTP 404  
+  gyoker         game/457               HTTP 404  
+  competitions/3 game/457               HTTP 404  
+  gyoker         matches/457            HTTP 404  
+  competitions/3 matches/457            HTTP 404  
+  gyoker         match/457              HTTP 404  
+  competitions/3 match/457              HTTP 404  
+  gyoker         fixtures/457           HTTP 404  
+  competitions/3 fixtures/457           HTTP 404  
+
+=== D) a ket klub levezetese a birtokolt jatekosok klubjaibol ===
+meccsek, amikrol tudunk: 6
+  453: MTK
+  455: NYÍREGY + PAKS
+  457: VASAS + ÚJPEST
+  459: PAFC
+  461: HONVÉD + ZTE
+  495: ETO + VÁRDA
+MINDKET oldal megvan: 4 / 6 meccsnel
+(a hazai/vendeg oldal ebbol NEM derul ki)
+
+=== E) a game-player-stats valasz ismer-e meccset? ===
+  include=competition_stat_config                          HTTP 200  kulcsok: ['competition_stat_config', 'points', 'round_id', 'value']
+  include=competition_stat_config,game                     HTTP 200  kulcsok: ['competition_stat_config', 'points', 'round_id', 'value']
+  include=competition_stat_config,game.home_team,game.away_team HTTP 200  kulcsok: ['competition_stat_config', 'points', 'round_id', 'value']
