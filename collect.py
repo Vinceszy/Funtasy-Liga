@@ -368,8 +368,13 @@ def guardiola_keret(regi_sq, nyers):
     ES KET TIZEDESRE KEREKITVE - a valodi `week` is igy jon vissza (0,75 ->
     0,38). Enelkul a kulonbseg tizedeken csuszna el.
 
-    Aki mar nincs a fordulo bontasaban (kikerult az MLSZ 385-os torzsebol),
-    az 0 pontot kap: nincs az idei mezonyben, tehat nem is szerezhetett."""
+    AKI HIANYZIK A BONTASBOL, 0 PONTOT KAP - de ez mar csak vegso tartalek.
+    Korabban ide estek a bajnoksagbol kikerult, de valaha birtokolt
+    jatekosok is, es ez ELCSUSZTATTA a mutatot: Skribek az 1. es a 3.
+    forduloban 3,25 nyers pontot szerzett, megis 0-val szerepelt - annak a
+    javara, aki eppen megvalt tole. Ezert keri le oket is a
+    bontasok_gyujtes (`extra`). Ha most hianyzik valaki, az elhasalt keres,
+    nem hianyzo jatekos - a hivo ezt ki is irja."""
     uj = []
     for pl in regi_sq:
         alap = nyers.get(str(pl.get("id")), 0)
@@ -400,7 +405,7 @@ def guardiola(hist_rounds, r):
     nyers = nyers_pontok(r)
     if nyers is None:
         return None
-    ki = {}
+    ki, hianyzok = {}, set()
     for nev, sq in mostani.items():
         regi_sq = elozo.get(nev)
         if not regi_sq or not sq:
@@ -416,6 +421,16 @@ def guardiola(hist_rounds, r):
         alt = keret_osszeg(guardiola_keret(regi_sq, nyers))
         ki[nev] = {"teny": round(teny, 2), "alt": round(alt, 2),
                    "guard": round(teny - alt, 2)}
+        # NEM NEMA: aki hianyzik a bontasbol, 0-val szamit, es azzal a
+        # mutato pontatlan. A bontas mostantol a valaha birtokolt
+        # jatekosokra is kiterjed, tehat ha ez megis megszolal, az hiba -
+        # elhasalt keres vagy elmaradt potlas.
+        for pl in list(sq) + list(regi_sq):
+            if str(pl.get("id")) not in nyers:
+                hianyzok.add(pl.get("name") or str(pl.get("id")))
+    if hianyzok:
+        print("  ! guardiola: %d. fordulo - a bontasbol hianyzik, 0 ponttal"
+              " szamit: %s" % (r, ", ".join(sorted(hianyzok))), file=sys.stderr)
     return ki or None
 
 
@@ -659,7 +674,27 @@ def bontas_szures(sorok):
     return [x for x in sorok if x.get("p") or x.get("n") == "Játszott perc"]
 
 
-def bontasok_gyujtes(zartak, valtozott, torzs):
+def bontas_lekero(idk, r):
+    """Egy fordulo bontasa a megadott jatekosokra: ({cp: sorok}, hibaszam)."""
+    sorok, hiba = {}, 0
+    for i, cp in enumerate(idk, 1):
+        url = (ROOT + "game-player-stats?include=competition_stat_config"
+               "&filter%5Bcompetition_player_id%5D=" + str(cp) +
+               "&filter%5Bround_id%5D=" + str(rid(r)))
+        st, j = api_get(url)
+        if st != 200 or j is None:
+            hiba += 1
+            continue
+        sorok[str(cp)] = bontas_szures([
+            {"n": (x.get("competition_stat_config") or {}).get("name") or "?",
+             "v": x.get("value"), "p": x.get("points")}
+            for x in (j.get("data") or [])])
+        if len(idk) > 50 and i % 100 == 0:
+            print("    %d/%d" % (i, len(idk)))
+    return sorok, hiba
+
+
+def bontasok_gyujtes(zartak, valtozott, torzs, extra=()):
     """A lezart fordulok TETELES pont-bontasa a repoba (bontasok/<r>.json).
 
     MIERT: a bontast ("mibol jott ossze a 9,75 pont") eddig KIZAROLAG a
@@ -682,33 +717,53 @@ def bontasok_gyujtes(zartak, valtozott, torzs):
 
     HIANYOS FUTAST NEM IRUNK KI: ha a jatekosok 10%-anal tobbnel elhasal a
     keres, a fajl nem keszul el, es a kovetkezo futas ujraprobalja. Egy
-    felig kesz fajl rosszabb a hianyzonal - azt sosem probalnank ujra."""
+    felig kesz fajl rosszabb a hianyzonal - azt sosem probalnank ujra.
+
+    AZ `extra` A TORZSBOL MAR KIKERULT, DE VALAHA BIRTOKOLT JATEKOSOK. A
+    torzs (`players` vegpont) csak a MOSTANI mezonyt adja: aki elment a
+    bajnoksagbol, abbol kiesik - a keret-elozmenyben viszont ott marad. Ok
+    eddig kimaradtak a bontasbol, es ennek KOVETKEZMENYE volt: a Guardiola
+    mutato a mult heti keret ilyen jatekosat 0 ponttal szamolta, holott
+    jatszott (Skribek az 1. es a 3. forduloban 3,25 nyers pontot szerzett).
+    A mutato igy annak a javara csuszott, aki eppen ilyen jatekost adott el.
+
+    EZERT A MEGLEVO FAJLT IS KIEGESZITJUK - de csak a HIANYZO jatekosokkal
+    (fordulonkent nehany keres), nem a 385 ujrakeresevel: a lezart fordulo
+    tobbi sora nem valtozik, ujra lekerni oket ingyen 3 perc futasido lenne."""
     if not torzs:
         return 0
     os.makedirs("bontasok", exist_ok=True)
-    idk = sorted(torzs, key=lambda x: int(x))
+    idk = sorted(set(torzs) | {str(x) for x in extra}, key=lambda x: int(x))
     kiirt = 0
     for r in zartak:
         ut = os.path.join("bontasok", "%d.json" % r)
+        meglevo = None
         if os.path.exists(ut) and r not in valtozott:
+            try:
+                with open(ut, encoding="utf-8") as f:
+                    meglevo = json.load(f).get("bontasok") or {}
+            except Exception:
+                meglevo = None          # olvashatatlan fajl -> teljes ujrakeres
+        if meglevo is not None:
+            hianyzo = [cp for cp in idk if cp not in meglevo]
+            if not hianyzo:
+                continue
+            print("  bontasok: %d. fordulo, %d hianyzo jatekos potlasa"
+                  % (r, len(hianyzo)))
+            sorok, hiba = bontas_lekero(hianyzo, r)
+            if not sorok:
+                print("  ! bontasok: %d. fordulo potlasa elhasalt (%d keres),"
+                      " a kovetkezo futas ujraprobalja" % (r, hiba), file=sys.stderr)
+                continue
+            meglevo.update(sorok)
+            kompakt_iras(ut, {"round": r, "bontasok": meglevo})
+            kiirt += 1
+            print("  bontasok/%d.json kiegeszitve (+%d jatekos%s)"
+                  % (r, len(sorok), ", %d sikertelen" % hiba if hiba else ""))
             continue
         print("  bontasok: %d. fordulo, %d jatekos lekerese%s"
               % (r, len(idk), " (ujra: az eredmeny valtozott)" if r in valtozott else ""))
-        sorok, hiba = {}, 0
-        for i, cp in enumerate(idk, 1):
-            url = (ROOT + "game-player-stats?include=competition_stat_config"
-                   "&filter%5Bcompetition_player_id%5D=" + str(cp) +
-                   "&filter%5Bround_id%5D=" + str(rid(r)))
-            st, j = api_get(url)
-            if st != 200 or j is None:
-                hiba += 1
-                continue
-            sorok[str(cp)] = bontas_szures([
-                {"n": (x.get("competition_stat_config") or {}).get("name") or "?",
-                 "v": x.get("value"), "p": x.get("points")}
-                for x in (j.get("data") or [])])
-            if i % 100 == 0:
-                print("    %d/%d" % (i, len(idk)))
+        sorok, hiba = bontas_lekero(idk, r)
         if hiba > len(idk) // 10:
             print("  ! bontasok: %d. fordulo kihagyva - %d/%d keres elhasalt,"
                   " a kovetkezo futas ujraprobalja" % (r, hiba, len(idk)), file=sys.stderr)
@@ -1153,7 +1208,15 @@ def main():
     # mert abbol jon a jatekoslista; a `valtozott` halmaz miatt egy utolagos
     # MLSZ-korrekcio a bontast is frissiti.
     if torzs:
-        bontasok_gyujtes(zart_fordulok(schedule, provisional), valtozott, torzs)
+        # A VALAHA BIRTOKOLT jatekosok is kellenek, nem csak a mostani torzs:
+        # aki kikerult a bajnoksagbol, az a `players` vegponton mar nincs
+        # ott, a keret-elozmenyben viszont igen - es a Guardiola mutato az o
+        # pontjat is a bontasbol olvassa.
+        birtokolt = {str(p.get("id")) for keretek_ in hist["rounds"].values()
+                     for sq_ in (keretek_ or {}).values() for p in sq_
+                     if p.get("id")}
+        bontasok_gyujtes(zart_fordulok(schedule, provisional), valtozott, torzs,
+                         birtokolt - set(torzs))
 
     if json.dumps(meccsek["rounds"], ensure_ascii=False, sort_keys=True) != meccsek_elotte:
         meccsek["updated"] = stamp()

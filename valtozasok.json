@@ -1,6 +1,15 @@
 {
  "bejegyzesek": [
   {
+   "datum": "2026-08-31",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1"
+   ],
+   "cim": "Pontosabb Guardiola mutató",
+   "leiras": "A mutató 0 ponttal számolta azt a játékost, aki azóta elment a bajnokságból — pedig játszott, és pontot is szerzett. Ez annak a javára csúszott, aki éppen megvált tőle. Mostantól a háttérben minden valaha birtokolt játékos pontrészletezése megvan, tehát a mutató a tényleges pontokból számol."
+  },
+  {
    "datum": "2026-08-30",
    "tipus": "bugfix",
    "ligak": [

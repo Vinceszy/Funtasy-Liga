@@ -1510,8 +1510,17 @@ Szándékosan **nem** a hivatalos fordulópontból vonunk: abban egy utólagos M
 benne lenne, az pedig nem a szakvezető döntése.
 
 Nincs érték az **első** fordulóra (nincs mihez hasonlítani) és a még **le nem zárt**
-fordulóra (nincs meg a `bontasok/<forduló>.json`). Aki már nincs a forduló bontásában
-(kikerült az MLSZ 385-ös törzséből), 0 pontot ad: nincs az idei mezőnyben.
+fordulóra (nincs meg a `bontasok/<forduló>.json`).
+
+**A bontás a valaha birtokolt játékosokra is kiterjed.** A játékostörzs (`players` végpont)
+csak a *mostani* mezőnyt adja: aki elmegy a bajnokságból, abból kiesik — a keret-előzményben
+viszont ott marad. Ezek a játékosok korábban kimaradtak a bontásból, és 0 ponttal
+szerepeltek a mutatóban, **holott játszottak**: Skribek az 1. és a 3. fordulóban 3,25 nyers
+pontot szerzett. A mutató így annak a javára csúszott, aki éppen megvált tőle (a 2–6.
+fordulóban 94 eladásból 6-ot érintett). Ezért a gyűjtő a `squad_history.json`-ban szereplő
+**összes** játékosra lekéri a bontást, a már meglévő fájlokat pedig **csak kiegészíti** a
+hiányzó néhány játékossal — nem kéri le újra mind a 385-öt. Ha ezután mégis hiányzik valaki,
+az elhasalt kérés, nem hiányzó játékos: a gyűjtő ilyenkor a hibakimenetre írja a nevét.
 
 Megjelenik a **meccssorok** pontja mellett, a **Fordulók** fülön oszlopként, és a
 **tabellában** kumuláltan — ugyanabból a körből, amiből a tabella is számol.

@@ -14,6 +14,11 @@ G4: a magyarszabaly az alternativara is jar - ha a kicserelt magyar miatt
 G5: nincs mihez hasonlitani (elso fordulo) -> nincs ertek.
 G6: nincs meg a fordulo bontasa (nem lezart) -> nincs ertek.
 G7: aki mar nincs a bontasban (kikerult a torzsbol), 0 pontot ad.
+G8: a bontas-gyujtes a VALAHA BIRTOKOLT jatekosokra is kiterjed (`extra`) -
+    enelkul a bajnoksagbol kikerult jatekos 0-val szamitott, es a mutato
+    annak a javara csuszott, aki eppen megvalt tole.
+G9: a MEGLEVO bontas-fajlt csak KIEGESZITJUK (a hianyzo nehany jatekossal),
+    nem kerjuk le ujra mind a 385-ot.
 """
 import os, sys
 
@@ -129,6 +134,53 @@ g = c.guardiola({"1": {"A": regi}, "2": {"A": most}}, 2)
 allit(g and g["A"]["guard"] == 2.5,
       "G7: a bontasbol hianyzo jatekos 0 pontot ad -> +2,5 - kapott: %s"
       % (g and g["A"]))
+
+print("\n--- G8-G9: a bontas-gyujtes kiterjed a valaha birtokoltakra ---")
+import json as _json, shutil, tempfile
+
+_munka = tempfile.mkdtemp()
+_regi_cwd = os.getcwd()
+_regi_api = c.api_get
+_kert = []
+
+
+def _api(url):
+    _kert.append(url.split("competition_player_id%5D=")[1].split("&")[0])
+    return 200, {"data": [{"competition_stat_config": {"name": "Gol"},
+                           "value": 1, "points": 5}]}
+
+
+try:
+    os.chdir(_munka)
+    c.api_get = _api
+    TORZS = {"1": {}, "2": {}}
+    # a 99-es mar nincs a torzsben, de valaha birtokolta valaki
+    c.bontasok_gyujtes([2], set(), TORZS, {"99"})
+    with open("bontasok/2.json", encoding="utf-8") as f:
+        b = _json.load(f)["bontasok"]
+    allit(set(b) == {"1", "2", "99"},
+          "G8: a kikerult, de birtokolt jatekos is bekerult a bontasba - kapott: %s"
+          % sorted(b))
+
+    # G9: mar letezo fajl, amibol csak a 99-es hianyzik
+    c.kompakt_iras("bontasok/2.json", {"round": 2, "bontasok": {"1": [], "2": []}})
+    del _kert[:]
+    c.bontasok_gyujtes([2], set(), TORZS, {"99"})
+    with open("bontasok/2.json", encoding="utf-8") as f:
+        b = _json.load(f)["bontasok"]
+    allit(_kert == ["99"],
+          "G9: csak a hianyzo jatekost kertuk le, a tobbit nem - kapott: %s" % _kert)
+    allit(set(b) == {"1", "2", "99"},
+          "G9: a meglevo sorok megmaradtak a potlas utan - kapott: %s" % sorted(b))
+
+    # ha mar semmi nem hianyzik, egyetlen keres sem megy ki
+    del _kert[:]
+    c.bontasok_gyujtes([2], set(), TORZS, {"99"})
+    allit(_kert == [], "G9: teljes fajlnal nincs keres - kapott: %s" % _kert)
+finally:
+    c.api_get = _regi_api
+    os.chdir(_regi_cwd)
+    shutil.rmtree(_munka, ignore_errors=True)
 
 if hibak:
     print("\n%d allitas bukott." % len(hibak))
