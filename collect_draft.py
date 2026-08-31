@@ -205,6 +205,90 @@ def jatekos_pont(v):
     return (ossz, True) if van else (stats.get("total_points") or 0, False)
 
 
+# A Draft ervenyes felallasai: pontosan 1 kapus, legalabb 3 vedo, legalabb 1
+# csatar. Az automatikus csere csak akkor mehet vegbe, ha a csere UTAN is
+# ervenyes a felallas - ezert valthatja a kapust csak kapus (ket kapus nem
+# ervenyes), es ezert nem all be egy pados, ha a felallas emiatt szetesne.
+#
+# A KOZEPPALYAS MINIMUM 2, nem 3 - EZ A SOR A KERDESES. Az FPL sajat
+# megfogalmazasa (1 kapus, legalabb 3 vedo, legalabb 1 csatar) 5 vedovel es
+# 3 csatarral eppen 2 kozeppalyast hagy, vagyis az 5-2-3 ervenyes. A tarolt
+# 20 valos felallasban a legkevesebb 3 volt, de az 5-2-3 amugy is ritka,
+# tehat ez NEM bizonyitek. Ha kiderul, hogy a Draftban 3 a minimum, EZ AZ
+# EGY SZAM valtozik (es a gyujto_draftguardiola.py D7 esete fordul meg).
+FORMACIO = {"GKP": (1, 1), "DEF": (3, 5), "MID": (2, 5), "FWD": (1, 3)}
+
+
+def ervenyes_formacio(posztok):
+    if len(posztok) != 11 or None in posztok:
+        return False
+    for p, (lo, hi) in FORMACIO.items():
+        n = sum(1 for x in posztok if x == p)
+        if not (lo <= n <= hi):
+            return False
+    return True
+
+
+def auto_csere(kezdok, pad, poszt, perc):
+    """Az FPL fordulo-vegi automatikus cserei: a palyara sem lepett kezdo
+    helyere beall az elso olyan pados, aki jatszott ES a felallitas utana is
+    ervenyes. A pad SORRENDJE szamit - azt az FPL-tol kapjuk (picks 12-15),
+    es soha nem rendezzuk at.
+
+    MIERT KELL A GUARDIOLA MUTATOHOZ: a valodi eredmenyben a cserek benne
+    vannak (a tarolt keret mar a zaras utani allapot). Ha az alternativat
+    csere nelkul szamolnank, a mult heti keretet ALULMERNENK, es a mutato
+    szisztematikusan a valtoztatas javara torzulna."""
+    kezdok, pad = list(kezdok), list(pad)
+    for i, e in enumerate(kezdok):
+        if perc.get(str(e), 0) > 0:
+            continue
+        for j, b in enumerate(pad):
+            if perc.get(str(b), 0) <= 0:
+                continue
+            proba = list(kezdok)
+            proba[i] = b
+            if ervenyes_formacio([poszt.get(str(x)) for x in proba]):
+                kezdok[i], pad[j] = b, e
+                break
+    return kezdok
+
+
+def keret_pont(keret, pontok, poszt):
+    """Egy Draft-keret fordulo-pontja: a kezdok pontja, automatikus
+    cserekkel. A `keret` a tarolt alak: [{e, b, pts}, ...] - a `b` a padot
+    jelzi, a lista sorrendje az FPL sajat sorrendje."""
+    kezdok = [x.get("e") for x in keret if not x.get("b")]
+    pad = [x.get("e") for x in keret if x.get("b")]
+    perc = {k: v[1] for k, v in pontok.items()}
+    vegso = auto_csere(kezdok, pad, poszt, perc)
+    return round(sum((pontok.get(str(e)) or [0, 0])[0] for e in vegso), 2)
+
+
+def draft_guardiola(hist_rounds, gw, pontok_gw, poszt):
+    """A "Guardiola mutato" egy fordulora: {liga_id: {teny, alt, guard}}.
+
+    guard = a MOSTANI keret pontja - a MULT HETI kerete UGYANEBBEN a
+    forduloban. Ugyanaz a definicio, mint az NB1-en (collect.py guardiola).
+
+    MINDKET oldal UGYANAZON a fuggvenyen (keret_pont) megy at, tehat a
+    valtozatlan keret pontosan 0-t ad - a cserelogika sem csuszhat el a ket
+    oldal kozott."""
+    elozo = hist_rounds.get(str(gw - 1)) or {}
+    mostani = hist_rounds.get(str(gw)) or {}
+    if not elozo or not mostani or not pontok_gw:
+        return None
+    ki = {}
+    for lid, keret in mostani.items():
+        regi = elozo.get(lid)
+        if not regi or not keret:
+            continue
+        teny = keret_pont(keret, pontok_gw, poszt)
+        alt = keret_pont(regi, pontok_gw, poszt)
+        ki[str(lid)] = {"teny": teny, "alt": alt, "guard": round(teny - alt, 2)}
+    return ki or None
+
+
 def main():
     print("FPL Draft gyujtes (liga: %s)" % LEAGUE_ID)
 
@@ -338,9 +422,10 @@ def main():
             celok.add(gw)
 
     most_teljes = {}          # gw -> ebben a futasban minden csapat kerete megjott-e
+    pontok_tar = {}           # gw -> {element: [pont, perc]} a TELJES mezonyre
     for gw in sorted(celok):
         st, live = fetch("event/%d/live" % gw)
-        pont, eltero = {}, 0
+        pont, perc, eltero = {}, {}, 0
         if st == 200 and live:
             el = live.get("elements")
             elemek = (list(el.items()) if isinstance(el, dict)
@@ -351,6 +436,9 @@ def main():
                 if van and p != (((v or {}).get("stats") or {}).get("total_points") or 0):
                     eltero += 1
                 pont[str(k)] = p
+                # A PERC az automatikus cserekhez kell (0 perc = nem lepett
+                # palyara), a Guardiola mutato alternativajaban.
+                perc[str(k)] = ((v or {}).get("stats") or {}).get("minutes") or 0
         # UGYANAZ A SZABALY, MINT AZ OLDALON: az elteres nem nema. Ha
         # rendszeres, a naplobol latszik - es akkor nezzuk meg ujra, melyik
         # forras romlott el.
@@ -411,6 +499,13 @@ def main():
         # pillanatkep akkor is teljesnek mutatna a fordulot, ha most epp
         # elhasalt egy lekeres - es akkor a csere elotti allapotot
         # rogzitenenk veglegesnek.
+        # A TELJES mezony pontja+perce a fordulora. Kell a Guardiola
+        # mutatohoz: a mult heti keretben lehet olyan jatekos, aki mar
+        # SENKINEL sincs - GW1->GW2-ben 11 ilyen volt -, es akkor a pontja
+        # sehol nem lenne meg. Csak azt tesszuk el, aki jatszott vagy pontot
+        # szerzett; a hianyzo [0, 0]-nak szamit.
+        pontok_tar[str(gw)] = {k: [pont[k], perc.get(k, 0)]
+                               for k in pont if pont[k] or perc.get(k)}
         most_teljes[gw] = (len(uj) == len(liga_idk))
         if uj:
             hist["rounds"][str(gw)] = {**(hist["rounds"].get(str(gw)) or {}), **uj}
@@ -435,6 +530,47 @@ def main():
     kiir_ha_valtozott("draft_history.json",
                       {"updated": None, "rounds": hist["rounds"],
                        "veglegesek": sorted(veglegesek)})
+
+    # ---- A TELJES mezony fordulonkenti pontja+perce (draft_pontok.json).
+    # Osszefesuljuk a tarolttal: ebben a futasban csak a `celok` fordulait
+    # kertuk le, a tobbi adatat nem szabad eldobni.
+    try:
+        with open("draft_pontok.json", encoding="utf-8") as f:
+            pontok = json.load(f).get("rounds") or {}
+    except Exception:
+        pontok = {}
+    pontok.update(pontok_tar)
+    kiir_ha_valtozott("draft_pontok.json", {"updated": None, "rounds": pontok})
+
+    # ---- Guardiola mutato. Ugyanaz a definicio, mint az NB1-en; a
+    # szamitas determinisztikus, ezert minden futasban ujra megy.
+    # A nev SZANDEKOSAN nem `poszt`: az ebben a fuggvenyben mar foglalt
+    # (poszt-tipus -> rovidnev a bootstrap-bol). Ugyanaz a nevutkozes-csapda,
+    # mint a .pos/.ppos-nal.
+    jatekos_poszt = {k: (v or {}).get("p") for k, v in (players or {}).items()}
+    gua = {}
+    # HA NINCS POSZT-ADAT, NEM SZAMOLUNK. A bootstrap-static elhasalasakor a
+    # `players` ures, es akkor az auto_csere formacio-ellenorzese MINDIG
+    # hamis lenne - egyetlen csere sem menne vegbe, es a mutato csendben
+    # rossz erteket adna. Ilyenkor a korabbi fajl marad ervenyben.
+    if jatekos_poszt:
+        for gw_ in sorted(int(x) for x in hist["rounds"]):
+            g_ = draft_guardiola(hist["rounds"], gw_, pontok.get(str(gw_)), jatekos_poszt)
+            if g_:
+                gua[str(gw_)] = g_
+    else:
+        print("  ! nincs jatekos-poszt adat, a Guardiola mutato valtozatlan",
+              file=sys.stderr)
+    try:
+        with open("draft_guardiola.json", encoding="utf-8") as f:
+            gua_regi = json.load(f).get("rounds")
+    except Exception:
+        gua_regi = None
+    if gua and json.dumps(gua, ensure_ascii=False, sort_keys=True) != \
+       json.dumps(gua_regi, ensure_ascii=False, sort_keys=True):
+        kiir_ha_valtozott("draft_guardiola.json", {"updated": stamp(), "rounds": gua})
+        print("  draft_guardiola.json frissitve (%d fordulo)" % len(gua))
+
     print("Kesz.")
     return 0
 

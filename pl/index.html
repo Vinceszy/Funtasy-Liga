@@ -207,8 +207,20 @@ function kezdErtek(id, r){
   return KEZD_MEMO.get(k);
 }
 
+// ---------- Guardiola mutato (PL) ----------
+// A SZAMITAS a gyujtoben el (collect_draft.py draft_guardiola), mert a mult
+// heti kerethez a fordulo OSSZES jatekosanak pontja ES perce kell (az
+// automatikus cserekhez) - GW1->GW2-ben 11 olyan jatekos volt, aki mar
+// senkinel sincs, tehat a bongeszo sehonnan nem tudna. A lap a kesz fajlt
+// olvassa. A kulcs a liga_id, ezert szam -> szoveg konverzio kell.
+let GUARD = null;
+fetch('../draft_guardiola.json?t=' + Date.now()).then(r => r.ok ? r.json() : null)
+  .then(j => { if (j && j.rounds){ GUARD = j.rounds; T.renderTable(); } }).catch(() => {});
+const guardErtek = (id, r) => ((GUARD || {})[r] || {})[String(id)] || null;
+
 const T = FunTasy.create({
   kezd: kezdErtek,
+  guard: guardErtek,
   entries:    () => Object.keys(ENTRIES).map(Number),
   schedule:   SCHEDULE,
   firstRound: () => liga.start_event || 1,

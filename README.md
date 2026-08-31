@@ -72,6 +72,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva](#az-fpl-draft-api-draftpremierleaguecomapi--mérésekkel-igazolva)
 - [5. Ismert korlátok, buktatók](#5-ismert-korlátok-buktatók)
 - [5/a4. A Guardiola mutató](#5a4-a-guardiola-mutató)
+  - [A PL-en ugyanez, automatikus cserékkel](#a-pl-en-ugyanez-automatikus-cserékkel)
 - [5/a. Miért van fordulónként külön keret-fájl](#5a-miért-van-fordulónként-külön-keret-fájl)
 - [5/a3. A lezárt forduló bontása a repóból jön](#5a3-a-lezárt-forduló-bontása-a-repóból-jön)
   - [Az élő pont a tételes bontásból áll össze (PL)](#az-élő-pont-a-tételes-bontásból-áll-össze-pl)
@@ -477,6 +478,8 @@ teljes képernyős, ragadós × gombbal.
 | `naplo/` | **Mérési archívum** (lezárt egyszeri megfigyelések nyers naplói — lásd `naplo/README.md`). A hozzájuk tartozó workflow-k törölve; a következtetések ebben a README-ben vannak (3/b, „Automatikus cserék”, „Ki van még a pályán”, bónusz-szakasz). |
 | `hatekonysag.json` | Kezdőállítási hatékonyság fordulónként (`{updated, rounds:{"1":{név:{sz, le}}}}`) — az NB1 KEZD% oszlopának és meccs-nézetének forrása. A gyűjtő minden futásnál az összes tárolt fordulóra újraszámolja (determinisztikus). A PL-nek nincs ilyen fájlja: ott a böngésző számol a már betöltött kerettörténetből. |
 | `guardiola.json` | A **Guardiola mutató** fordulónként: `{rounds:{forduló:{szakvezető:{teny,alt,guard}}}}`. `guard` = a mostani keret pontja mínusz a múlt hetié ugyanebben a fordulóban. A gyűjtő számolja, mert a múlt heti kerethez az adott forduló **összes** játékosának nyers pontja kell (`bontasok/<forduló>.json`, fordulónként 40 KB) — a lapnak így elég ez a pár kilobájt. |
+| `draft_pontok.json` | A PL **teljes mezőnyének** fordulónkénti pontja és perce: `{rounds:{gw:{element:[pont,perc]}}}`. A Guardiola mutatóhoz kell: a múlt heti keretben lehet olyan játékos, aki már **senkinél sincs** (GW1→GW2-ben 11 ilyen volt), és akkor a pontja sehol nem lenne meg. A perc az automatikus cserékhez. Csak az kerül bele, aki játszott vagy pontot szerzett. |
+| `draft_guardiola.json` | Ugyanaz, mint a `guardiola.json`, csak a PL-re, `liga_id` kulccsal. |
 | `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**; elemeik `{e, pts}` alakúak, mert a beállt játékos pontja mondja meg, mit hozott a csere (a régi, csak azonosítót tartalmazó alakot a lap még elfogadja). A GW1 a git-történetből lett pótolva. |
 | `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset csak akkor, ha a forduló hivatalos pontja változott (ez a **pótolt meccs** esete — az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). **Nem a forduló összes meccse:** csak azoké a kluboké, amelyeknek van játékosuk valamelyik keretben — a részletező fölötti sorhoz ennyi kell. |
 | `jatekosok.json` | A mezőny **összes** játékosa (`{players:{id:{n,t,p,u21,pts,ar}}}`) — a főoldali lista és keresés forrása. A gyűjtő írja, egy kérésből. |
@@ -1513,7 +1516,25 @@ fordulóra (nincs meg a `bontasok/<forduló>.json`). Aki már nincs a forduló b
 Megjelenik a **meccssorok** pontja mellett, a **Fordulók** fülön oszlopként, és a
 **tabellában** kumuláltan — ugyanabból a körből, amiből a tabella is számol.
 
-Rögzítve: `tesztek/gyujto_guardiola.py`.
+### A PL-en ugyanez, automatikus cserékkel
+
+A Draftban nincs kapitány, és a pad pontja nem számít — viszont a forduló végén az FPL
+**automatikus cserét** hajt végre: a pályára sem lépett kezdő helyére beáll az első olyan
+padon ülő, aki játszott **és** akivel a felállás érvényes marad (1 kapus, 3–5 védő, 2–5
+középpályás, 1–3 csatár). Ettől lesz a kapus csak kapussal cserélhető: két kapus nem
+érvényes felállás.
+
+**Ezt az alternatívára is alkalmazzuk.** A valódi eredményben a cserék benne vannak (a
+tárolt keret már a zárás utáni állapot); ha az alternatívát csere nélkül számolnánk, a múlt
+heti keretet alulmérnénk, és a mutató szisztematikusan a változtatás javára torzulna.
+
+A pad **sorrendje** dönt, és azt az FPL-től kapjuk (picks 12–15) — soha nem rendezzük át.
+
+Ha a játékos-poszt adat hiányzik (elhasalt `bootstrap-static`), a gyűjtő **nem számol
+újra**: enélkül a formáció-ellenőrzés mindig hamis lenne, egyetlen csere sem menne végbe,
+és a mutató csendben rossz értéket adna. Ilyenkor a korábbi fájl marad érvényben.
+
+Rögzítve: `tesztek/gyujto_guardiola.py` (NB1) és `tesztek/gyujto_draftguardiola.py` (PL).
 
 ## 5/a. Miért van fordulónként külön keret-fájl
 

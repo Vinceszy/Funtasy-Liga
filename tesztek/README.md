@@ -56,6 +56,7 @@ Az `api_get`-et mock váltja ki, a `collect.py` egy ideiglenes könyvtárban fut
 | `gyujto_pontforras.py` | A **mentett** fordulópont a tételes bontásból (`explain`) áll össze, nem az FPL beragadható összesítőjéből — ugyanaz a szabály, mint a lapon. Ez azért kritikus, mert a lezárt fordulót a gyűjtő soha többé nem kéri le, és onnantól a mentett szám látszik. Üres vagy ismeretlen szerkezetű bontásnál a `stats` marad a forrás (API-változásnál a régi viselkedés, nem nullák); dupla fordulónál a két meccs összeadódik. |
 | `gyujto_lezaras.py` | A forduló-lezárás kilenc esete (lásd lent). |
 | `gyujto_guardiola.py` | A **Guardiola mutató**: változatlan keretnél **pontosan 0** (a legkönnyebben elromló állítás — ha a két oldal máshonnan számol, a pados felezés 0,01-et csúszik, és a mutató „+0,01"-et írna, holott a szakvezető hozzá sem nyúlt); a múlt heti **szerepek** számítanak (kapitány, pad); a magyarszabály az alternatívára is jár; első fordulóra és bontás nélkül nincs érték; a bontásból hiányzó játékos 0 pontot ad. |
+| `gyujto_draftguardiola.py` | Ugyanez a PL-en, az **automatikus cserékkel**: a nem játszó kezdő helyére az első olyan pados áll be, aki játszott és akivel a felállás érvényes marad (a kapust csak kapus válthatja); a pad **sorrendje** dönt; ha egy pados sem játszott, nincs csere. |
 
 ### `gyujto_lezaras.py` esetei
 
