@@ -1620,6 +1620,12 @@ A kettő nem állhat ugyanazon a `left: 0`-n: a helyezés (magasabb `z-index`) r
 és a név eleje eltűnt alatta. Ezért a helyezés rögzített szélességű (34 px), és pont ennyi a
 név eltolása.
 
+A ragadó cellás tábláknak **`border-collapse: separate`** kell: a WebKit (tehát iPhone-on
+minden böngésző, a Chrome is) `collapse` mellett nem ragasztja megbízhatóan a
+táblázat-cellákat. Megmérve: a `separate` + `border-spacing: 0` a rajzolaton semmit nem
+változtat (tábla 310×652 px, sormagasság 35 px mindkét módban) — a keretek a `td`/`th` saját
+`border-bottom`-jából jönnek, felső keret nincs, tehát nincs mit megduplázni.
+
 **A névcellának valódi táblázat-cellának kell maradnia.** Amíg a `td.name` maga volt a flex
 konténer (a monogram védelme miatt), a cella kikerült a táblázat-elrendezésből — a böngésző
 névtelen cellába burkolja —, és **iPhone-on nem ragadt**: görgetésnél a SZAKVEZETŐ fejléc

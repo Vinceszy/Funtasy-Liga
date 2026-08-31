@@ -102,6 +102,7 @@ const enyem = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.GY * 3 + s.D, K
       rangPos: cs(rang).position, thPos: cs(th).position,
       nevsor: !!nev.querySelector('.nevsor'),
       nevsorDisplay: cs(nev.querySelector('.nevsor')) && cs(nev.querySelector('.nevsor')).display,
+      borderCollapse: cs(document.getElementById('table')).borderCollapse,
     };
   });
   jo(st.nevDisplay === 'table-cell',
@@ -111,6 +112,11 @@ const enyem = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.GY * 3 + s.D, K
   jo(st.nevPos === 'sticky' && st.rangPos === 'sticky' && st.thPos === 'sticky',
      'a helyezés, a név és a fejléc mind ragad (' + st.rangPos + ' / ' + st.nevPos
      + ' / ' + st.thPos + ')');
+  // A WebKit (iPhone-on MINDEN bongeszo, a Chrome is) `collapse` mellett nem
+  // ragasztja megbizhatoan a tablazat-cellakat. Megmerve: a `separate` a
+  // rajzolaton semmit nem valtoztat.
+  jo(st.borderCollapse === 'separate',
+     'a ragadó cellás tábla border-collapse-e separate (' + st.borderCollapse + ')');
   await mob.close();
 
   await br.close();

@@ -188,6 +188,14 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .matrix{padding:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 .tablewrap table{min-width:100%}
+/* A RAGADO CELLAKHOZ `separate` KELL. A WebKit (tehat iPhone-on MINDEN
+   bongeszo, a Chrome is) `border-collapse:collapse` mellett nem ragasztja
+   megbizhatoan a tablazat-cellakat. Megmerve: a `separate` +
+   `border-spacing:0` a rajzolaton semmit nem valtoztat (tabla 310x652 px,
+   sormagassag 35 px mindket modban) - a keretek a td/th sajat
+   border-bottom-jabol jonnek, felso keret nincs, tehat nincs mit
+   megdupláznia. */
+.tablewrap table,.matrix table{border-collapse:separate;border-spacing:0}
 /* Vizszintes gorgetesnel a HELYEZES es a NEV all - a tobbi oszlop csuszik
    alattuk. A ket ragadt oszlop nem allhat ugyanazon a `left:0`-n: a helyezes
    (magasabb z-index) rafeklidt a nevre, es a nev eleje eltunt alatta. Ezert
