@@ -1573,6 +1573,18 @@ Négyféle tétel:
 | **szerepváltás** | végig bent volt, de kezdő ↔ pad ↔ kapitány mozdult: a két érték különbsége |
 | **magyarszabály** | ha a változtatástól megjött vagy elveszett a 10 pont — az nem egy játékoson látszik, hanem a kereten |
 
+**Elrendezés.** Egy oszlop, a fordulók **növekvő** sorrendben — ugyanúgy, mint a Fordulók
+fülön és mindenütt máshol. Fordulónként egy kártya, azon belül *Eladva / Megvéve /
+Szerepváltás* szakaszok. A két jobb szélső oszlop fix széles, tehát a számok egymás alatt
+állnak. (Az első változat két oszlopba tördelte a blokkokat, a legfrissebbel kezdett, és a
+pontkülönbség minden sorban máshol állt — a szem cikcakkban ugrált, és a sorrend is
+szembement a többi nézettel.) Telefonon a sor két sorra bomlik: fent a poszt, a név és a
+pontkülönbség, alatta a magyarázat és a számítás.
+
+A középső oszlop a játékos **nyers** fordulópontja; ahol a szerep módosítja (kapitány duplán,
+pad felezve), ott `nyers → ennyit ért` alakban — különben a kapitányi 28,50 mellett nem
+látszana, honnan jött.
+
 **A változtatás nélküli forduló is kilátszik**, üresen. Ha kihagynánk, a néző azt hinné, hogy
 hiányzik az adat — pedig épp az a válasz, hogy a szakvezető hozzá sem nyúlt a kerethez, és a
 mutatója ezért 0.

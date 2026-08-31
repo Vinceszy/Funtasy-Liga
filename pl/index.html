@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=68">
+<link rel="stylesheet" href="../funtasy.css?v=69">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -106,7 +106,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=68"></script>
+<script src="../funtasy.js?v=69"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -390,7 +390,7 @@ let KVALT = null;
 fetch('../draft_keretvaltozasok.json?t=' + Date.now()).then(r => r.ok ? r.json() : null)
   .then(j => { if (j && j.rounds){ KVALT = j.rounds; ujraRajzol('valtoztatasok'); } })
   .catch(() => {});
-const SZLABEL = { kezdo: 'kezdő', pad: 'pad', beallt: 'beállt', kiesett: 'kiesett' };
+const SZLABEL = { kezdo: 'kezdő', pad: 'pad' };
 // A ful ujrarajzolasa, ha az adat kesobb er be, mint a megnyitas.
 function ujraRajzol(tab){
   const on = document.querySelector('#mTabs .tab.on');
@@ -399,43 +399,49 @@ function ujraRajzol(tab){
 }
 function valtoztatasokHTML(id){
   if (!KVALT) return '<div class="loading">Változtatások betöltése…</div>';
-  const gwk = Object.keys(KVALT).map(Number).sort((a, b) => b - a);   // legfrissebb elol
-  const sor = (x, cimke, dl) => ({ poszt: jat(x.e).p, nev: jat(x.e).n, klub: jat(x.e).t,
-                                   prof: { 'data-prof': x.e }, cimke: cimke, dl: dl });
+  // NOVEKVO sorrend - ugyanugy, mint a Fordulok fulon es mindenutt mashol
+  const gwk = Object.keys(KVALT).map(Number).sort((a, b) => a - b);
+  const alap = x => ({ poszt: jat(x.e).p, nev: jat(x.e).n, klub: jat(x.e).t,
+                       prof: { 'data-prof': x.e } });
   const csoportok = [];
   for (const gw of gwk){
     const v = (KVALT[gw] || {})[id];
     // Csak LEZART fordulo - ugyanaz a feltetel, mint a Fordulok fulon.
     if (!v || !T.guardErtek(id, gw)) continue;
-    const sorok = [];
-    for (const x of v.ki) sorok.push(sor(x, 'elengedve · ' + SZLABEL[x.sz], -x.ert));
-    for (const x of v.be) sorok.push(sor(x, 'megszerezve · ' + SZLABEL[x.sz], x.ert));
-    for (const x of v.szerep){
-      const s = sor(x, SZLABEL[x.szE] + ' → ' + SZLABEL[x.szU], x.ertU - x.ertE);
-      s.elott = x.ertE; s.utan = x.ertU;
-      sorok.push(s);
-    }
+    // A kozepso oszlop a jatekos fordulopontja; a padoson ez 0-t er, ezert
+    // ott "pont -> 0" alakban all - kulonben a 0 melle nem lenne magyarazat.
+    const ertek = x => x.pont === x.ert ? { ert: x.pont } : { elott: x.pont, utan: x.ert };
+    const reszek = [
+      { cim: 'Elengedve', sorok: v.ki.map(x => ({ ...alap(x), ...ertek(x),
+          cimke: x.sz === 'kezdo' ? '' : SZLABEL[x.sz], dl: -x.ert })) },
+      { cim: 'Megszerezve', sorok: v.be.map(x => ({ ...alap(x), ...ertek(x),
+          cimke: x.sz === 'kezdo' ? '' : SZLABEL[x.sz], dl: x.ert })) },
+      { cim: 'Szerepváltás', sorok: v.szerep.map(x => ({ ...alap(x),
+          cimke: SZLABEL[x.szE] + ' → ' + SZLABEL[x.szU], elott: x.ertE, utan: x.ertU,
+          dl: +(x.ertU - x.ertE).toFixed(2) })) },
+    ];
     // AMIT AZ EMBER CSINALT, ES AMIT A GEP JAVITOTT RAJTA - kulon.
     // A Draftban a forduló végén az FPL automatikus cserét hajt végre; az nem
     // a szakvezető érdeme. Egyben mutatva úgy tűnne, hogy jól variált, holott
     // a gép tette helyre a keretet (vagy fordítva). A gyűjtő ezért két részre
     // bontva adja (collect_draft.py draft_keretvaltozas).
-    const gep=+(v.gepU-v.gepE).toFixed(2);
-    const ember=+(v.guard-gep).toFixed(2);
-    if(sorok.length || gep){
-      sorok.push({nev:'A te döntéseid', dl:ember, oszt:'vareszossz'});
-      sorok.push({nev:'Automatikus csere a záráskor', cimke:'nem a te döntésed',
-                  elott:v.gepE, utan:v.gepU, dl:gep, oszt:'vagep'});
-    }
-    csoportok.push({ nev: gw + '. forduló', guard: v.guard, sorok: sorok });
+    const gep = +(v.gepU - v.gepE).toFixed(2);
+    const ember = +(v.guard - gep).toFixed(2);
+    const db = reszek.reduce((n, r) => n + r.sorok.length, 0);
+    const zaro = (db || gep) ? [
+      { nev: 'A te döntéseid', dl: ember, oszt: 'vareszossz' },
+      { nev: 'Automatikus csere a záráskor', cimke: 'nem a te döntésed',
+        elott: v.gepE, utan: v.gepU, dl: gep, oszt: 'vagep' },
+    ] : [];
+    csoportok.push({ nev: gw + '. forduló', guard: v.guard, reszek: reszek, zaro: zaro });
   }
   if (!csoportok.length)
     return '<div class="loading">Ehhez a csapathoz még nincs elmentett változtatás.</div>';
-  return '<div class="note" style="padding:0 0 6px">A pontérték mindig az ADOTT forduló pontja, '
-    + 'a <b>megnevezett</b> szereppel: a kezdő a pontjával, a padon ülő nullával. Amit az FPL a '
-    + 'záráskor <b>automatikus cserével</b> tett hozzá, külön sorban áll — az nem a te döntésed. '
-    + 'A blokkok alján az összeg — ez a forduló <b>GUARD</b> értéke, ugyanaz, ami a Fordulók fülön '
-    + 'és a tabellában áll.</div>'
+  return '<div class="note" style="padding:0 0 10px">A jobb szélső szám a forduló mérlegére '
+    + 'gyakorolt hatás; mellette a játékos fordulópontja. A padon ülő <b>0</b>-val számít, akkor '
+    + 'is, ha végül beállt: amit az FPL a záráskor <b>automatikus cserével</b> tett hozzá, külön '
+    + 'sorban áll — az nem a te döntésed. A blokk alján az összeg: ez a forduló <b>GUARD</b> '
+    + 'értéke, ugyanaz, ami a Fordulók fülön és a tabellában áll.</div>'
     + FunTasy.valtoztatasLista(csoportok, 'Nincs adat.');
 }
 

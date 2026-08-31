@@ -311,20 +311,59 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .zsor .zdiff{font-family:var(--mono);font-weight:700;min-width:34px;text-align:right}
 .zsor .zirany{font:600 11px var(--fo);color:var(--dim)}
 .zsor .zirany.pos{color:var(--win)}
-/* "Valtoztatasok" ful. Ugyanazok a sorok, mint a zarasi listaban - itt csak
-   a cimke (mi tortent a jatekossal) es a zaro OSSZESEN sor jon hozza. Az
-   osszeg a Guardiola mutato: a fulnek eppen az a dolga, hogy levezesse. */
-.valtlista{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
-.zsor .vacimke{font:600 11px var(--fo);color:var(--dim);white-space:nowrap}
-.zsor.vaures{color:var(--dim);font-style:italic;border-bottom:none}
-.zsor.vaossz{border-bottom:none;border-top:1px solid var(--line);margin-top:2px}
+/* ---- "Valtoztatasok" ful ----
+   EGY OSZLOP, novekvo fordulo-sorrendben - ugyanugy, mint a Fordulok fulon.
+   Az elso valtozat ket oszlopba tordelte a blokkokat es a legfrissebbel
+   kezdett: a szem cikcakkban ugralt, es a sorrend is szembement a tobbi
+   nezettel.
+   A ket jobb szeli oszlop FIX SZELES, tehat a szamok egymas alatt allnak.
+   Enelkul minden sorban mashol volt a pontkulonbseg. */
+.valtlista{display:block}
+.vakor{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+  padding:8px 12px 10px;margin-bottom:12px}
+.vafej{display:flex;align-items:baseline;justify-content:space-between;
+  font-family:var(--cim);font-size:13px;letter-spacing:1px;color:var(--amber);
+  padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.vafej .guardjel{font-size:13px;margin-left:0}
+.varescim{font:600 10px var(--fo);letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--dim);margin:8px 0 2px}
+.varescim:first-of-type{margin-top:4px}
+.vasor{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:13px}
+.vasor .ppos{flex:none;width:34px;text-align:center}
+.vasor .ppos.ures{background:none;border:none}
+.vanev{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vasor .vacimke{flex:none;font:600 11px var(--fo);color:var(--dim);white-space:nowrap;
+  min-width:104px;text-align:right}
+.vasor .vaert{flex:none;font-family:var(--mono);font-size:12px;color:var(--dim);
+  white-space:nowrap;min-width:96px;text-align:right}
+.vasor .zdiff{flex:none;font-family:var(--mono);font-weight:700;min-width:60px;
+  text-align:right}
+.vasor.vaures .vanev{color:var(--dim);font-style:italic}
+.vasor.vaossz{border-top:1px solid var(--line);margin-top:6px;padding-top:6px}
+.vasor.vaossz .vanev{font-family:var(--cim);font-size:11px;letter-spacing:1px;color:var(--dim)}
 /* A PL-en kulon sor az, amit a ZARASI AUTOMATIKUS CSERE hozott: az nem a
    szakvezeto dontese, tehat nem is allhat a sajat tetelei kozott. */
-.zsor.vagep,.zsor.vareszossz{border-bottom:none}
-.zsor.vareszossz{border-top:1px dashed var(--panel2);margin-top:2px}
-.zsor.vagep .znev,.zsor.vareszossz .znev{font-family:var(--cim);font-size:11px;
+.vasor.vagep .vanev,.vasor.vareszossz .vanev{font-family:var(--cim);font-size:11px;
   letter-spacing:1px;color:var(--dim)}
-.zsor.vaossz .znev{font-family:var(--cim);font-size:11px;letter-spacing:1px;color:var(--dim)}
+.vasor.vareszossz{border-top:1px dashed var(--line);margin-top:6px;padding-top:6px}
+@media(max-width:640px){
+  /* Telefonon KET SOR, racsban: fent a poszt + nev + a lenyeg (a
+     pontkulonbseg), alatta a magyarazat es a szamitas. Sima
+     sortoresre bizva a szamok osszevissza csusztak - a nev ala kerultek,
+     jobbra igazitas nelkul, es a sor olvashatatlan lett. Az ures cellak
+     display:none-nal esnek ki, igy a masodik sor magassaga nulla, ha
+     nincs mit oda irni. */
+  .vasor{display:grid;grid-template-columns:34px minmax(0,1fr) auto;
+    column-gap:8px;align-items:center;
+    grid-template-areas:"pos nev dl" "pos cim ert"}
+  .vasor .ppos{grid-area:pos;align-self:start;margin-top:2px}
+  .vasor .vanev{grid-area:nev}
+  .vasor .vacimke{grid-area:cim;text-align:left;min-width:0}
+  .vasor .vaert{grid-area:ert;text-align:right;min-width:0}
+  .vasor .zdiff{grid-area:dl}
+  .vasor .vacimke:empty,.vasor .vaert:empty{display:none}
+  .vakor{padding:8px 10px 10px}
+}
 /* kezdoallitasi hatekonysag: tabella-cella, h2h-jel, meccsfej-sor */
 td.kezdpc{font-family:var(--mono);color:var(--dim)}
 /* A Guardiola mutato jelzese a meccs-pont mellett. Ugyanaz a halvany,

@@ -90,17 +90,22 @@ async function liga(br, L){
         bajok.push(nev + ': a tabellában ' + tabella[nev] + ', a Változtatások fülön nincs lista');
       continue;
     }
-    const blokkok = await p.$$eval('#mBody .zcsapat', bs => bs.map(b => ({
-      cim: b.querySelector('h3').firstChild.textContent.trim(),
-      fejGuard: (b.querySelector('h3 .guardjel') || {}).textContent,
-      sorok: [...b.querySelectorAll('.zsor:not(.vaossz):not(.vaures):not(.vareszossz) .zdiff')].map(x => x.textContent.trim()),
-      jatekos: [...b.querySelectorAll('.zsor:not(.vaossz):not(.vaures):not(.vareszossz):not(.vagep) .zdiff')].map(x => x.textContent.trim()),
+    const blokkok = await p.$$eval('#mBody .vakor', bs => bs.map(b => ({
+      cim: b.querySelector('.vafej span').textContent.trim(),
+      fejGuard: (b.querySelector('.vafej .guardjel') || {}).textContent,
+      sorok: [...b.querySelectorAll('.vasor:not(.vaossz):not(.vaures):not(.vareszossz) .zdiff')].map(x => x.textContent.trim()),
+      jatekos: [...b.querySelectorAll('.vasor:not(.vaossz):not(.vaures):not(.vareszossz):not(.vagep) .zdiff')].map(x => x.textContent.trim()),
       reszossz: (b.querySelector('.vareszossz .zdiff') || {}).textContent,
       ures: !!b.querySelector('.vaures'),
       ossz: (b.querySelector('.vaossz .zdiff') || {}).textContent,
     })));
     jo(blokkok.length > 0, nev + ': van legalább egy forduló-blokk (' + blokkok.length + ')');
     lattunkBlokkot = true;
+    // NOVEKVO SORRENDBEN, mint mindenutt maskor. Az elso valtozat a
+    // legfrissebbel kezdett, es az szembement a Fordulok fullel.
+    const sorrend = blokkok.map(b => parseInt(b.cim));
+    if (sorrend.some((r, i) => i && r < sorrend[i - 1]))
+      bajok.push(nev + ': a fordulók nem növekvő sorrendben állnak (' + sorrend.join(', ') + ')');
     let kum = 0;
     for (const b of blokkok) {
       const r = parseInt(b.cim);
@@ -159,9 +164,9 @@ async function liga(br, L){
     await p.close();
     return;
   }
-  await p.waitForSelector('#mBody .valtlista .znev.kattint', { timeout: 10000 });
-  const nev0 = await p.$eval('#mBody .valtlista .znev.kattint', e => e.textContent.trim());
-  await p.$eval('#mBody .valtlista .znev.kattint', e => e.click());
+  await p.waitForSelector('#mBody .valtlista .vanev.kattint', { timeout: 10000 });
+  const nev0 = await p.$eval('#mBody .valtlista .vanev.kattint', e => e.textContent.trim());
+  await p.$eval('#mBody .valtlista .vanev.kattint', e => e.click());
   await p.waitForTimeout(600);
   const cimSor = await p.$eval('#mTitle', e => e.textContent.trim());
   jo(nev0.indexOf(cimSor) === 0 || cimSor.length > 0 && nev0.indexOf(cimSor.split(' ')[0]) >= 0,
@@ -200,11 +205,11 @@ async function plLezartan(br){
     });
     await p.evaluate(i => showTeam(+i, 'valtoztatasok', 'replace'), id);
     await p.waitForSelector('#mBody .valtlista', { timeout: 10000 });
-    const b = await p.$eval('#mBody .zcsapat', b => ({
-      cim: b.querySelector('h3').firstChild.textContent.trim(),
-      fej: (b.querySelector('h3 .guardjel') || {}).textContent,
-      sorok: [...b.querySelectorAll('.zsor:not(.vaossz):not(.vaures):not(.vareszossz) .zdiff')].map(x => x.textContent.trim()),
-      jatekos: [...b.querySelectorAll('.zsor:not(.vaossz):not(.vaures):not(.vareszossz):not(.vagep) .zdiff')].map(x => x.textContent.trim()),
+    const b = await p.$eval('#mBody .vakor', b => ({
+      cim: b.querySelector('.vafej span').textContent.trim(),
+      fej: (b.querySelector('.vafej .guardjel') || {}).textContent,
+      sorok: [...b.querySelectorAll('.vasor:not(.vaossz):not(.vaures):not(.vareszossz) .zdiff')].map(x => x.textContent.trim()),
+      jatekos: [...b.querySelectorAll('.vasor:not(.vaossz):not(.vaures):not(.vareszossz):not(.vagep) .zdiff')].map(x => x.textContent.trim()),
       reszossz: (b.querySelector('.vareszossz .zdiff') || {}).textContent,
       gep: (b.querySelector('.vagep .zdiff') || {}).textContent,
       ures: !!b.querySelector('.vaures'),

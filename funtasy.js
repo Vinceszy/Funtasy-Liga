@@ -1575,51 +1575,67 @@
      PONTOSAN a Guardiola mutato arra a fordulora. Ez a ful egesz ertelme:
      a tabellaban allo szam levezetheto legyen, ne kelljen elhinni.
 
+     A LAP EGY OSZLOP, es a fordulok NOVEKVO sorrendben allnak - ugyanugy,
+     mint a Fordulok fulon es mindenutt mashol. Az elso valtozat ket
+     oszlopba tordelte a blokkokat es a legfrissebbel kezdett: attol a
+     szem cikcakkban ugralt, es a sorrend is szembement a tobbi nezettel.
+
+     A soron belul a ket jobb szeli oszlop FIX SZELES, tehat a szamok
+     egymas alatt allnak - enelkul minden sorban mashol volt a
+     pontkulonbseg, es az egesz olvashatatlanna valt.
+
      A sorok NORMALIZALT alakban jonnek a lapoktol (a szamitas a gyujtoben
      el, keretvaltozasok.json / draft_keretvaltozasok.json):
-       {poszt, nev, klub, prof, cimke, elott, utan, dl}
-     `prof` a nevet kattinthatova tevo jelzo-keszlet; `elott`/`utan` az a ket
-     ertek, amibol a kulonbseg lett (elhagyhato); `dl` maga a kulonbseg.
-
-     A CSS-osztalyok SZANDEKOSAN ugyanazok, mint a zarasi listaban (zsor,
-     ppos, znev, zert, zdiff): a ket lista ugyanarrol beszel, tehat nezzen
-     ki ugyanugy - kulon stilussal elobb-utobb szetcsuszna. */
+       {poszt, nev, klub, prof, cimke, elott, utan, ert, dl}
+     `prof` a nevet kattinthatova tevo jelzo-keszlet; `cimke` a magyarazat
+     (pl. "kapitany" vagy "kezdo -> pad"); `elott`/`utan` a ket ertek,
+     amibol a kulonbseg lett; `ert` egyetlen ertek, ha nincs ket oldal;
+     `dl` maga a kulonbseg. */
+  function vaErtek(x){
+    if (x.elott != null) return fmt(x.elott) + ' → ' + fmt(x.utan);
+    return x.ert != null ? fmt(x.ert) : '';
+  }
   function vaSorHTML(x){
     var d = x.dl || 0;
-    // `oszt`: extra osztaly a sornak (pl. a PL-en a GEP tetele es a
-    // reszosszeg - azok nem jatekos-sorok, es nem is nezhetnek ki ugy)
-    return '<div class="zsor' + (x.oszt ? ' ' + x.oszt : '') + '">'
-      + (x.poszt ? '<span class="ppos">' + esc(x.poszt) + '</span>' : '')
-      + (x.prof
-          ? '<span class="znev kattint"' + jelzokHTML(x.prof) + '>' + esc(x.nev)
-            + (x.klub ? ' <span class="tm">' + esc(x.klub) + '</span>' : '') + '</span>'
-          : '<span class="znev">' + esc(x.nev) + '</span>')
+    return '<div class="vasor' + (x.oszt ? ' ' + x.oszt : '') + '">'
+      + (x.poszt ? '<span class="ppos">' + esc(x.poszt) + '</span>' : '<span class="ppos ures"></span>')
+      + '<span class="vanev' + (x.prof ? ' kattint' : '') + '"' + (x.prof ? jelzokHTML(x.prof) : '') + '>'
+      + esc(x.nev) + (x.klub ? ' <span class="tm">' + esc(x.klub) + '</span>' : '') + '</span>'
       + (x.cimke ? '<span class="vacimke">' + esc(x.cimke) + '</span>' : '')
-      + (x.elott != null ? '<span class="zert">' + fmt(x.elott) + ' → ' + fmt(x.utan) + '</span>' : '')
+      + '<span class="vaert">' + vaErtek(x) + '</span>'
       + '<span class="zdiff ' + (d > 0 ? 'pos' : d < 0 ? 'neg' : '') + '">'
       + (d > 0 ? '+' : '') + fmt(d) + '</span></div>';
   }
-  /* csoport: {nev, jelzok, guard, sorok, ures}
-     Az URES CSOPORT IS KILATSZIK, a zarasi listaval ellentetben: az a
-     fordulo, amelyikhez nem nyult hozza, ugyanolyan valasz a kerdesre, mint
-     a tobbi - es a mutatoja is pont ezert 0. Ha kihagynank, a nezo azt
-     hinne, hogy hianyzik az adat. */
+  /* csoport: {nev, guard, reszek:[{cim, sorok}], zaro:[sor], ures}
+     `reszek` a cimkezett szakaszok (Eladva / Megveve / Szerepvaltas), `zaro`
+     a lezaro sorok (a PL-en "A te donteseid" es a gepi csere).
+
+     Az URES CSOPORT IS KILATSZIK: az a fordulo, amelyikhez nem nyult hozza,
+     ugyanolyan valasz a kerdesre, mint a tobbi - es a mutatoja is pont
+     ezert 0. Ha kihagynank, a nezo azt hinne, hogy hianyzik az adat. */
   function valtoztatasLista(csoportok, ures){
     if (!csoportok || !csoportok.length)
       return '<div class="loading">' + esc(ures) + '</div>';
-    return '<div class="zlista valtlista">' + csoportok.map(function (cs){
-      var sorok = cs.sorok || [];
-      return '<div class="zcsapat"><h3' + (cs.jelzok ? ' class="kattint"' + jelzokHTML(cs.jelzok) : '') + '>'
-        + esc(cs.nev)
+    return '<div class="valtlista">' + csoportok.map(function (cs){
+      var reszek = (cs.reszek || []).filter(function (r){ return r.sorok && r.sorok.length; });
+      var db = reszek.reduce(function (n, r){ return n + r.sorok.length; }, 0);
+      return '<div class="vakor">'
+        + '<div class="vafej"><span>' + esc(cs.nev) + '</span>'
         + (cs.guard == null ? ''
            : '<span class="guardjel ' + (cs.guard > 0 ? 'pos' : cs.guard < 0 ? 'neg' : '') + '">'
-             + guardJelol(cs.guard) + '</span>')
-        + '</h3>'
-        + (sorok.length ? sorok.map(vaSorHTML).join('')
-                        : '<div class="zsor vaures">' + esc(cs.ures || 'Nem változtatott a keretén.') + '</div>')
-        + (sorok.length && cs.guard != null
-           ? '<div class="zsor vaossz"><span class="znev">Összesen</span>'
-             + '<span class="zdiff ' + (cs.guard > 0 ? 'pos' : cs.guard < 0 ? 'neg' : '') + '">'
+             + guardJelol(cs.guard) + '</span>') + '</div>'
+        + (db ? reszek.map(function (r){
+              return '<div class="varescim">' + esc(r.cim) + '</div>'
+                     + r.sorok.map(vaSorHTML).join('');
+            }).join('')
+              : '<div class="vasor vaures"><span class="vanev">'
+                + esc(cs.ures || 'Nem változtatott a keretén.') + '</span></div>')
+        + (cs.zaro || []).map(vaSorHTML).join('')
+        + (db && cs.guard != null
+           ? '<div class="vasor vaossz"><span class="ppos ures"></span>'
+             + '<span class="vanev">Összesen</span><span class="vacimke"></span>'
+             + '<span class="vaert"></span><span class="zdiff '
+             + (cs.guard > 0 ? 'pos' : cs.guard < 0 ? 'neg' : '') + '">'
              + guardJelol(cs.guard) + '</span></div>'
            : '')
         + '</div>';
