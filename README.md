@@ -76,6 +76,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 - [5/a5. A „Változtatások" fül](#5a5-a-változtatások-fül)
   - [A PL-en külön áll, amit az ember csinált, és amit a gép](#a-pl-en-külön-áll-amit-az-ember-csinált-és-amit-a-gép)
   - [Csak lezárt forduló](#csak-lezárt-forduló)
+  - [A közös réteg mindkét adatalakot érti — és ez nem kényelmi kérdés](#a-közös-réteg-mindkét-adatalakot-érti--és-ez-nem-kényelmi-kérdés)
 - [5/a. Miért van fordulónként külön keret-fájl](#5a-miért-van-fordulónként-külön-keret-fájl)
 - [5/a3. A lezárt forduló bontása a repóból jön](#5a3-a-lezárt-forduló-bontása-a-repóból-jön)
   - [Az élő pont a tételes bontásból áll össze (PL)](#az-élő-pont-a-tételes-bontásból-áll-össze-pl)
@@ -1609,6 +1610,19 @@ A fül **ugyanazt a feltételt** használja, mint a Fordulók fül és a tabella
 zárt fordulóra nincs érték. A feltétel egy helyen él (`FunTasy.guardErtek`), mert három hely
 használja — és amíg külön-külön döntött, elő is állt, hogy a PL 2. fordulója a Fordulók fülön
 még üres volt, a Változtatások fülön viszont már állt benne szám.
+
+### A közös réteg mindkét adatalakot érti — és ez nem kényelmi kérdés
+
+A `?v=` csak a `funtasy.js`/`funtasy.css` gyorsítótárát töri, a **`nb1/index.html`-t nem** — és
+a kiszolgáló a régi `?v=`-es kérésre is a **mostani** `funtasy.js`-t adja. Élesben elő is állt,
+hogy a böngésző régi lapja (ami még egyben, címkézetlen `sorok`-ként adta át a tételeket) az
+**új** megjelenítővel találkozott: a forduló fejlécében ott állt a GUARD, alatta viszont *„Nem
+változtatott a keretén."* — holott három játékost cserélt.
+
+Ezért a `FunTasy.valtoztatasLista` a címkézett `reszek` mellett a **régi, egyben átadott
+`sorok`** alakot is elfogadja. Ugyanez a szabály minden jövőbeli szerződés-változásra: ha a
+közös réteg bemenete változik, a régi alakot addig kell érteni, amíg a lapok gyorsítótára
+kifuthat. Rögzítve a `valtoztatasok.teszt.js` utolsó szakaszában.
 
 Rögzítve: `tesztek/gyujto_keretvaltozas.py` (NB1), `tesztek/gyujto_draftkeretvaltozas.py` (PL)
 és `tesztek/valtoztatasok.teszt.js` — az utóbbi **minden szakvezetőnél és minden fordulónál**

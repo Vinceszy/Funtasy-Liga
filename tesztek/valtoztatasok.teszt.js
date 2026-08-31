@@ -241,6 +241,37 @@ async function plLezartan(br){
   await p.close();
 }
 
+/* MEGTORTENT: a `?v=` csak a funtasy.js/css gyorsitotarat tori, az
+   nb1/index.html-et NEM - es a kiszolgalo a regi ?v=-es kerésre is a MOSTANI
+   funtasy.js-t adja. Igy a bongeszo REGI lapja (ami meg egyben, cimkezetlen
+   `sorok`-kent adta at a teteleket) az UJ megjelenitovel talalkozott: a
+   fordulo fejleceben ott allt a GUARD, alatta viszont "Nem valtoztatott a
+   kereten." - holott harom jatekost cserelt. A megjelenito azota MINDKET
+   alakot erti; ez a teszt ezt tartja eletben. */
+async function regiAlak(br){
+  const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
+  const err = []; p.on('pageerror', e => err.push(e.message));
+  await apiKi(p);
+  await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
+  await p.waitForSelector('#table tr', { timeout: 20000 });
+  const k = await p.evaluate(() => {
+    document.getElementById('mBody').innerHTML = FunTasy.valtoztatasLista(
+      [{ nev: '2. forduló', guard: 2,
+         sorok: [{ poszt: 'ST', nev: 'X', klub: 'K', cimke: 'kapitány', dl: -6 },
+                 { poszt: 'MID', nev: 'Y', klub: 'K', ert: 8, dl: 8 }] }], 'nincs');
+    const b = document.querySelector('#mBody .vakor');
+    return { sorok: b.querySelectorAll('.vasor:not(.vaossz):not(.vaures)').length,
+             ures: !!b.querySelector('.vaures'),
+             ossz: (b.querySelector('.vaossz .zdiff') || {}).textContent };
+  });
+  jo(k.sorok === 2 && !k.ures,
+     'a címkézetlen `sorok` alakból is kirajzolódnak a tételek (' + JSON.stringify(k) + ')');
+  jo(k.ossz && k.ossz.replace(',', '.').indexOf('2') >= 0,
+     'és az Összesen sor is ott van (' + k.ossz + ')');
+  jo(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+  await p.close();
+}
+
 (async () => {
   const br = await inditas();
   for (const L of LIGAK){
@@ -249,5 +280,7 @@ async function plLezartan(br){
   }
   cim('=== PL, lezárt fordulóval (a menetrend menet közben kiegészítve) ===');
   await plLezartan(br);
+  cim('=== A régi, címkézetlen adatalak is megjelenik ===');
+  await regiAlak(br);
   await vege(br);
 })();

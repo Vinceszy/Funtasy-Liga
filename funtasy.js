@@ -1617,7 +1617,16 @@
     if (!csoportok || !csoportok.length)
       return '<div class="loading">' + esc(ures) + '</div>';
     return '<div class="valtlista">' + csoportok.map(function (cs){
-      var reszek = (cs.reszek || []).filter(function (r){ return r.sorok && r.sorok.length; });
+      // A CIMKEZETLEN, EGYBEN ATADOTT `sorok` IS ERVENYES ALAK. Nem
+      // kenyelmi kiterjesztes: a `?v=` csak a funtasy.js/css gyorsitotarat
+      // tori, az nb1/index.html-et NEM - es a kiszolgalo a ?v=68-as kerésre
+      // is a MOSTANI funtasy.js-t adja. Elesben elo is allt, hogy a bongeszo
+      // regi lapja (ami meg `sorok`-at adott at) az UJ megjelenitovel
+      // talalkozott: a fordulo fejlecben ott allt a GUARD, alatta viszont
+      // "Nem valtoztatott a kereten." - holott harom jatekost cserelt.
+      // Amig a ket alak egyutt el, ez nem fordulhat elo.
+      var reszek = (cs.reszek || (cs.sorok ? [{ cim: '', sorok: cs.sorok }] : []))
+        .filter(function (r){ return r.sorok && r.sorok.length; });
       var db = reszek.reduce(function (n, r){ return n + r.sorok.length; }, 0);
       return '<div class="vakor">'
         + '<div class="vafej"><span>' + esc(cs.nev) + '</span>'
@@ -1625,7 +1634,7 @@
            : '<span class="guardjel ' + (cs.guard > 0 ? 'pos' : cs.guard < 0 ? 'neg' : '') + '">'
              + guardJelol(cs.guard) + '</span>') + '</div>'
         + (db ? reszek.map(function (r){
-              return '<div class="varescim">' + esc(r.cim) + '</div>'
+              return (r.cim ? '<div class="varescim">' + esc(r.cim) + '</div>' : '')
                      + r.sorok.map(vaSorHTML).join('');
             }).join('')
               : '<div class="vasor vaures"><span class="vanev">'
