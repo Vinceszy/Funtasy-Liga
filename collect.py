@@ -337,6 +337,88 @@ def keret_osszeg(sq):
     return ossz + (10 if (hun >= 5 and u21 >= 1) else 0)
 
 
+def nyers_pontok(r):
+    """Egy lezart fordulo NYERS jatekos-pontjai a bontasok/<r>.json-bol:
+    {cp-azonosito: pont}. None, ha a fajl meg nincs meg.
+
+    A bontas sorai a jatekos SAJAT esemenyei, tehat az osszeguk a nyers heti
+    pont - kapitanyi duplazas es padfelezes NELKUL. Epp ez kell ide: a
+    szorzokat a MULT HETI szerepek szerint tesszuk ra."""
+    ut = os.path.join("bontasok", "%d.json" % r)
+    if not os.path.exists(ut):
+        return None
+    try:
+        with open(ut, encoding="utf-8") as f:
+            d = json.load(f)
+    except Exception:
+        return None
+    return {cp: sum(x.get("p") or 0 for x in (sorok or []))
+            for cp, sorok in (d.get("bontasok") or {}).items()}
+
+
+def guardiola_keret(regi_sq, nyers):
+    """A MULT HETI keret rekordjai, a MOSTANI fordulo pontjaival.
+
+    "Mi lett volna, ha hozza sem nyulok": ugyanaz a 15 jatekos, UGYANAZOKBAN
+    A SZEREPEKBEN - aki kezdo volt, kezdo marad, aki a padon ult, ott marad,
+    a kapitany ugyanaz. NEM a legjobb felallitas: az mar egy masik mutato
+    lenne (azt a KEZD% meri).
+
+    A szorzokat ugyanugy tesszuk ra, mint az API: kapitany x2, pad felezve,
+    ES KET TIZEDESRE KEREKITVE - a valodi `week` is igy jon vissza (0,75 ->
+    0,38). Enelkul a kulonbseg tizedeken csuszna el.
+
+    Aki mar nincs a fordulo bontasaban (kikerult az MLSZ 385-os torzsebol),
+    az 0 pontot kap: nincs az idei mezonyben, tehat nem is szerezhetett."""
+    uj = []
+    for pl in regi_sq:
+        alap = nyers.get(str(pl.get("id")), 0)
+        w = alap * 2 if pl.get("cap") else (alap / 2.0 if pl.get("sub") else alap)
+        masolat = dict(pl)
+        masolat["week"] = round(w, 2)
+        uj.append(masolat)
+    return uj
+
+
+def guardiola(hist_rounds, r):
+    """A "Guardiola mutato" egy fordulora: {szakvezeto: {teny, alt, guard}}.
+
+    guard = a MOSTANI keret pontja - a MULT HETI kerete UGYANEBBEN a
+    forduloban. Negativ ertek: a valtoztatas pontba kerult.
+
+    MINDKET oldal UGYANAZZAL a fuggvennyel (keret_osszeg) szamol, tehat a
+    magyarszabaly es a kerekites is egyformán jatszik - a kulonbseg tisztan
+    a keretvaltozas muve. Szandekosan NEM a hivatalos fordulopontbol vonunk:
+    abban egy utolagos MLSZ-korrekcio is benne lenne, es az nem a
+    szakvezeto dontese.
+
+    None, ha nincs mihez hasonlitani (elso fordulo) vagy hianyzik az adat."""
+    elozo = (hist_rounds.get(str(r - 1)) or {})
+    mostani = (hist_rounds.get(str(r)) or {})
+    if not elozo or not mostani:
+        return None
+    nyers = nyers_pontok(r)
+    if nyers is None:
+        return None
+    ki = {}
+    for nev, sq in mostani.items():
+        regi_sq = elozo.get(nev)
+        if not regi_sq or not sq:
+            continue
+        # MINDKET oldal a BONTASBOL szamol, nem a tarolt `week`-bol. Enelkul
+        # a valtozatlan keret sem adna pontosan 0-t: a tarolt `week` a pados
+        # jatekosnal az API mar felezve-kerekitett erteke (0,75 -> 0,38), a
+        # miénk pedig a nyers pontbol szamol - a ketto 0,01-gyel elter, es
+        # ez a kulonbsegben latszana ("+0,01", holott nem nyult a kerethez).
+        # A `teny` igy egy centtel elterhet a hivatalos fordulopontto1; a
+        # MUTATO viszont pontos, es azt mutatjuk.
+        teny = keret_osszeg(guardiola_keret(sq, nyers))
+        alt = keret_osszeg(guardiola_keret(regi_sq, nyers))
+        ki[nev] = {"teny": round(teny, 2), "alt": round(alt, 2),
+                   "guard": round(teny - alt, 2)}
+    return ki or None
+
+
 def ellenorzendo(regi, db=4):
     """Rolling ellenorzes: minden futas mas nehany REGI fordulot ker le
     ujra. Igy nem kell minden korben az osszeset lekerdezni, de egy nap
@@ -1030,6 +1112,24 @@ def main():
     if json.dumps(hat, ensure_ascii=False, sort_keys=True) !=             json.dumps(hat_regi, ensure_ascii=False, sort_keys=True):
         kompakt_iras("hatekonysag.json", {"updated": stamp(), "rounds": hat})
         print("  hatekonysag.json frissitve")
+
+    # ---- Guardiola mutato: fordulonkent ujraszamolva, mint a hatekonysag.
+    # Csak arra a fordulora keszul, aminek MAR VAN bontasa (tehat lezart) es
+    # van elozo fordulos kerete - az elsore fogalmilag nincs.
+    gua = {}
+    for r_ in sorted((int(x) for x in hist["rounds"]), reverse=False):
+        g_ = guardiola(hist["rounds"], r_)
+        if g_:
+            gua[str(r_)] = g_
+    try:
+        with open("guardiola.json", encoding="utf-8") as f:
+            gua_regi = json.load(f).get("rounds")
+    except Exception:
+        gua_regi = None
+    if json.dumps(gua, ensure_ascii=False, sort_keys=True) != \
+       json.dumps(gua_regi, ensure_ascii=False, sort_keys=True):
+        kompakt_iras("guardiola.json", {"updated": stamp(), "rounds": gua})
+        print("  guardiola.json frissitve (%d fordulo)" % len(gua))
 
     # A torzs a nev-atirashoz is kell, ezert MEG a kiiras elott lekerjuk.
     torzs = jatekostorzs()

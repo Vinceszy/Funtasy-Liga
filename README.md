@@ -71,6 +71,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [A pad sorrendje (PL) — és ami még nyitott](#a-pad-sorrendje-pl--és-ami-még-nyitott)
   - [Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva](#az-fpl-draft-api-draftpremierleaguecomapi--mérésekkel-igazolva)
 - [5. Ismert korlátok, buktatók](#5-ismert-korlátok-buktatók)
+- [5/a4. A Guardiola mutató](#5a4-a-guardiola-mutató)
 - [5/a. Miért van fordulónként külön keret-fájl](#5a-miért-van-fordulónként-külön-keret-fájl)
 - [5/a3. A lezárt forduló bontása a repóból jön](#5a3-a-lezárt-forduló-bontása-a-repóból-jön)
   - [Az élő pont a tételes bontásból áll össze (PL)](#az-élő-pont-a-tételes-bontásból-áll-össze-pl)
@@ -475,6 +476,7 @@ teljes képernyős, ragadós × gombbal.
 | `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
 | `naplo/` | **Mérési archívum** (lezárt egyszeri megfigyelések nyers naplói — lásd `naplo/README.md`). A hozzájuk tartozó workflow-k törölve; a következtetések ebben a README-ben vannak (3/b, „Automatikus cserék”, „Ki van még a pályán”, bónusz-szakasz). |
 | `hatekonysag.json` | Kezdőállítási hatékonyság fordulónként (`{updated, rounds:{"1":{név:{sz, le}}}}`) — az NB1 KEZD% oszlopának és meccs-nézetének forrása. A gyűjtő minden futásnál az összes tárolt fordulóra újraszámolja (determinisztikus). A PL-nek nincs ilyen fájlja: ott a böngésző számol a már betöltött kerettörténetből. |
+| `guardiola.json` | A **Guardiola mutató** fordulónként: `{rounds:{forduló:{szakvezető:{teny,alt,guard}}}}`. `guard` = a mostani keret pontja mínusz a múlt hetié ugyanebben a fordulóban. A gyűjtő számolja, mert a múlt heti kerethez az adott forduló **összes** játékosának nyers pontja kell (`bontasok/<forduló>.json`, fordulónként 40 KB) — a lapnak így elég ez a pár kilobájt. |
 | `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**; elemeik `{e, pts}` alakúak, mert a beállt játékos pontja mondja meg, mit hozott a csere (a régi, csak azonosítót tartalmazó alakot a lap még elfogadja). A GW1 a git-történetből lett pótolva. |
 | `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset csak akkor, ha a forduló hivatalos pontja változott (ez a **pótolt meccs** esete — az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). **Nem a forduló összes meccse:** csak azoké a kluboké, amelyeknek van játékosuk valamelyik keretben — a részletező fölötti sorhoz ennyi kell. |
 | `jatekosok.json` | A mezőny **összes** játékosa (`{players:{id:{n,t,p,u21,pts,ar}}}`) — a főoldali lista és keresés forrása. A gyűjtő írja, egy kérésből. |
@@ -1482,6 +1484,36 @@ kerüljön be.
   lásd a 3. fejezetben), és a tárolt (3 óránként frissülő) adat marad látható.
 
 ---
+
+## 5/a4. A Guardiola mutató
+
+**Mennyivel hozott többet a keretváltoztatás, mint ha hozzá sem nyúlsz?**
+`guard` = a **mostani** keret pontja mínusz a **múlt heti** kerete **ugyanebben** a
+fordulóban. Negatív érték: a változtatás pontba került.
+
+Az alternatíva szó szerint „mi lett volna, ha hozzá sem nyúlok": ugyanaz a 15 játékos,
+**ugyanazokban a szerepekben** — aki kezdő volt, kezdő marad, aki a padon ült, ott marad,
+a kapitány ugyanaz. **Nem** a régi keretből kihozható legjobb felállítás: azt a KEZD% méri,
+és a kettő keveredne.
+
+**Mindkét oldal ugyanazzal a függvénnyel számol** (`keret_osszeg`), tehát a magyarszabály és
+a kerekítés is egyformán játszik — a különbség tisztán a keretváltozás műve. Ez nem
+formaság: a tárolt `week` a pados játékosnál az API már felezve-kerekített értéke
+(0,75 → 0,38), a bontásból számolt nyers pont viszont nem — ha a két oldal máshonnan
+dolgozna, a **változatlan** keret is „+0,01"-et mutatna. Ezért a `teny` egy centtel eltérhet
+a hivatalos fordulóponttól; a **mutató** viszont pontos, és azt írjuk ki.
+
+Szándékosan **nem** a hivatalos fordulópontból vonunk: abban egy utólagos MLSZ-korrekció is
+benne lenne, az pedig nem a szakvezető döntése.
+
+Nincs érték az **első** fordulóra (nincs mihez hasonlítani) és a még **le nem zárt**
+fordulóra (nincs meg a `bontasok/<forduló>.json`). Aki már nincs a forduló bontásában
+(kikerült az MLSZ 385-ös törzséből), 0 pontot ad: nincs az idei mezőnyben.
+
+Megjelenik a **meccssorok** pontja mellett, a **Fordulók** fülön oszlopként, és a
+**tabellában** kumuláltan — ugyanabból a körből, amiből a tabella is számol.
+
+Rögzítve: `tesztek/gyujto_guardiola.py`.
 
 ## 5/a. Miért van fordulónként külön keret-fájl
 

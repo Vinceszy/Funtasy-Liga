@@ -1,3 +1,13 @@
 {
- "bejegyzesek": []
+ "bejegyzesek": [
+  {
+   "datum": "2026-08-30",
+   "tipus": "funkcio",
+   "ligak": [
+    "nb1"
+   ],
+   "cim": "Guardiola mutató: mit hozott a keretváltoztatás",
+   "leiras": "Új szám a meccssoroknál, a Fordulók fülön és a tabellában: mennyivel szereztél többet vagy kevesebbet, mint ha a múlt heti kerethez hozzá sem nyúlsz. Ugyanazok a játékosok, ugyanazokban a szerepekben, csak ennek a fordulónak a pontjaival. A tabellában az egész szezonra összeadva."
+  }
+ ]
 }

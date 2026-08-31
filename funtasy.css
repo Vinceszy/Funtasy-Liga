@@ -306,6 +306,12 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .zsor .zirany.pos{color:var(--win)}
 /* kezdoallitasi hatekonysag: tabella-cella, h2h-jel, meccsfej-sor */
 td.kezdpc{font-family:var(--mono);color:var(--dim)}
+/* A Guardiola mutato jelzese a meccs-pont mellett. Ugyanaz a halvany,
+   kisebb alak, mint a KEZD%-nal - a szin a .pos/.neg-bol jon, tehat a
+   nulla ertek szandekosan szintelen. */
+.guardjel{font-size:11px;margin-left:4px;opacity:.85}
+td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:nowrap;
+  padding-left:6px;padding-right:6px}
 .kezdjel{font:500 10.5px var(--mono);color:var(--dim);margin-left:4px}
 /* A ket ertek a SAJAT terfelehez igazodik (bal/jobb), ahogy a fejlec
    minden mas adata; kozepen a halvany cimke. */
