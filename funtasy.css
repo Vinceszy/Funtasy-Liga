@@ -76,8 +76,15 @@ td.name{font-family:var(--fo);font-weight:700;text-align:left;font-size:14px}
 /* A flex a monogram vedelme miatt kell (kulonben a sor vegi ellipszis
    eppen azt vagja le) - DE flex konteneren a szoveg es a span kozotti
    szokoz elveszik, ezert a tavolsagot gap adja. E nelkul "WhiteARS" allt
-   a "White ARS" helyett. */
-td.name{display:flex;align-items:center;min-width:0;gap:6px}
+   a "White ARS" helyett.
+
+   A FLEX A CELLAN BELUL VAN, NEM A CELLAN. Amig a `td.name` maga volt a
+   flex kontener, a cella kikerult a tablazat-elrendezesbol (a bongeszo
+   nevtelen tablazat-cellaba burkolja), es IPHONE-ON A RAGADAS NEM MUKODOTT
+   rajta: vizszintes gorgetesnel a SZAKVEZETO fejlec allva maradt (azon
+   nincs flex), a nevek viszont elcsusztak a szamok ala. Chromiumban ez nem
+   latszott - ott a sticky a flexes cellan is fog. */
+td.name .nevsor{display:flex;align-items:center;min-width:0;gap:6px}
 /* a poszt-chip sajat margoja a gap-pel duplazna */
 td.name .ppos{margin-right:0}
 td.rank{text-align:left;color:var(--dim);width:30px}
@@ -638,7 +645,7 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   .nm{min-width:0}
   /* A korlat a NEVEN van, nem a cellan: a td max-width-je table-layout
      alatt nem korlatoz megbizhatoan, es a nev a monogramot tolta ki. */
-  td.name{min-width:0}
+  td.name,td.name .nevsor{min-width:0}
   td.name .nv{max-width:42vw}
   .sqcol h3{font-size:13px}
 

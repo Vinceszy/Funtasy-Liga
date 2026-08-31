@@ -69,16 +69,21 @@ const { BASE, jo, inditas, vege, apiKi } = require('./kozos');
   jo(oszlop.fej, 'a PL tabellának van KEZD% oszlopa (title-lel)');
   jo(oszlop.cellak.length === 10 && oszlop.cellak.every(x => /^\d+%$|^–$/.test(x)),
      'minden sorban százalék (vagy kötőjel) áll');
-  // A td.name FLEX (a monogram vedelme miatt) - flex konteneren a SZOVEG es
+  // A nevsor FLEX (a monogram vedelme miatt) - flex konteneren a SZOVEG es
   // a span kozotti szokoz ELVESZIK, ezert a tavolsagot gap adja. E nelkul
   // "WhiteARS" allt a "White ARS" helyett; a monogram-javitas regresszioja
   // volt, kepen fogtuk meg. A Szezon jatekosai lista sora pont ilyen:
   // [poszt-chip][nevszoveg][klub-chip].
+  //
+  // A flex kontener MOSTANTOL a cellan BELUL van (.nevsor): flexes
+  // tablazat-cellan iPhone-on nem mukodik a position:sticky, es a nevek
+  // elcsusztak a szamok ala. A meres ezert a .nevsor-ban keresi a
+  // szovegcsomopontot - a regi alakot is elfogadva, ha valahol meg ugy all.
   const koz = await p.evaluate(([id]) => {
     const d = document.createElement('div');
     d.innerHTML = jatekosokHTML(+id);
     document.body.appendChild(d);
-    const cella = d.querySelector('td.name');
+    const cella = d.querySelector('td.name .nevsor') || d.querySelector('td.name');
     const szoveg = [...cella.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
     const klub = cella.querySelector('.tm');
     let res = null;

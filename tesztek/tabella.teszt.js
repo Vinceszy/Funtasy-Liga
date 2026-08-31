@@ -78,6 +78,41 @@ const enyem = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.GY * 3 + s.D, K
   }
   jo(elteres === 0, `mátrix cellái (${db} ellenőrizve, ${elteres} eltérés)`);
 
+  cim('Vízszintes görgetésnél a helyezés ÉS a név is áll');
+  // BEJELENTETT (iPhone): gorgetesnel a SZAKVEZETO fejlec allva maradt, a
+  // nevek viszont elcsusztak a szamok ala. Ok: a `td.name` maga volt a flex
+  // kontener, es a flexes cella kikerul a tablazat-elrendezesbol - Safari
+  // ott nem ragasztja. A fejlecen (`th`) nincs flex, ezert az allt.
+  //
+  // A SAFARI-T ITT NEM TUDJUK FUTTATNI, ezert nem a ragadas latszatat
+  // merjuk, hanem az OKOT: a cella maradjon valodi tablazat-cella, es a
+  // flex a benne levo .nevsor-on legyen. Ha valaki visszateszi a flexet a
+  // cellara, ez a teszt bukik - a telefon nelkul is.
+  const mob = await br.newPage({ viewport: { width: 390, height: 800 } });
+  await apiKi(mob);
+  await mob.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
+  await mob.waitForSelector('#table td.name', { timeout: 20000 });
+  const st = await mob.evaluate(() => {
+    const tr = document.querySelectorAll('#table tr')[1];
+    const cs = e => e && getComputedStyle(e);
+    const nev = tr.querySelector('td.name'), rang = tr.querySelector('td.rank');
+    const th = document.querySelectorAll('#table tr:first-child th')[1];
+    return {
+      nevDisplay: cs(nev).display, nevPos: cs(nev).position,
+      rangPos: cs(rang).position, thPos: cs(th).position,
+      nevsor: !!nev.querySelector('.nevsor'),
+      nevsorDisplay: cs(nev.querySelector('.nevsor')) && cs(nev.querySelector('.nevsor')).display,
+    };
+  });
+  jo(st.nevDisplay === 'table-cell',
+     'a névcella VALÓDI táblázat-cella marad (display: ' + st.nevDisplay + ')');
+  jo(st.nevsor && st.nevsorDisplay === 'flex',
+     'a flex a cellán BELÜL, a .nevsor-on van (' + st.nevsorDisplay + ')');
+  jo(st.nevPos === 'sticky' && st.rangPos === 'sticky' && st.thPos === 'sticky',
+     'a helyezés, a név és a fejléc mind ragad (' + st.rangPos + ' / ' + st.nevPos
+     + ' / ' + st.thPos + ')');
+  await mob.close();
+
   await br.close();
   process.exit(hibak.length ? 1 : 0);
 })();

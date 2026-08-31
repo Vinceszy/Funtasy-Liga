@@ -76,6 +76,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 - [5/a5. A „Változtatások" fül](#5a5-a-változtatások-fül)
   - [A PL-en külön áll, amit az ember csinált, és amit a gép](#a-pl-en-külön-áll-amit-az-ember-csinált-és-amit-a-gép)
   - [Csak lezárt forduló](#csak-lezárt-forduló)
+  - [Vízszintes görgetésnél a helyezés és a név áll](#vízszintes-görgetésnél-a-helyezés-és-a-név-áll)
   - [A közös réteg mindkét adatalakot érti — és ez nem kényelmi kérdés](#a-közös-réteg-mindkét-adatalakot-érti--és-ez-nem-kényelmi-kérdés)
 - [5/a. Miért van fordulónként külön keret-fájl](#5a-miért-van-fordulónként-külön-keret-fájl)
 - [5/a3. A lezárt forduló bontása a repóból jön](#5a3-a-lezárt-forduló-bontása-a-repóból-jön)
@@ -1610,6 +1611,22 @@ A fül **ugyanazt a feltételt** használja, mint a Fordulók fül és a tabella
 zárt fordulóra nincs érték. A feltétel egy helyen él (`FunTasy.guardErtek`), mert három hely
 használja — és amíg külön-külön döntött, elő is állt, hogy a PL 2. fordulója a Fordulók fülön
 még üres volt, a Változtatások fülön viszont már állt benne szám.
+
+### Vízszintes görgetésnél a helyezés és a név áll
+
+A tabella nem fér ki telefonon, tehát oldalra görgethető — de a **helyezés** és a **név**
+oszlopa a helyén marad (`position: sticky`), különben a szám mellől eltűnik, kihez tartozik.
+A kettő nem állhat ugyanazon a `left: 0`-n: a helyezés (magasabb `z-index`) ráfeküdt a névre,
+és a név eleje eltűnt alatta. Ezért a helyezés rögzített szélességű (34 px), és pont ennyi a
+név eltolása.
+
+**A névcellának valódi táblázat-cellának kell maradnia.** Amíg a `td.name` maga volt a flex
+konténer (a monogram védelme miatt), a cella kikerült a táblázat-elrendezésből — a böngésző
+névtelen cellába burkolja —, és **iPhone-on nem ragadt**: görgetésnél a SZAKVEZETŐ fejléc
+állva maradt (azon nincs flex), a nevek viszont elcsúsztak a számok alá. Chromiumban ez nem
+látszik, ott a sticky a flexes cellán is fog. A flex azóta a cellán **belül**, a `.nevsor`
+span-on van. Rögzítve: `tesztek/tabella.teszt.js` — Safari nélkül is, mert nem a ragadás
+látszatát méri, hanem az okot (a cella `display`-ét és azt, hogy a flex beljebb van).
 
 ### A közös réteg mindkét adatalakot érti — és ez nem kényelmi kérdés
 

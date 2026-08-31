@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=70">
+<link rel="stylesheet" href="../funtasy.css?v=71">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=70"></script>
+<script src="../funtasy.js?v=71"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -414,7 +414,7 @@ function playersHTML(name, rounds){
     <table><tr><th></th><th>Játékos</th><th>F</th><th>Kezdő</th><th>Pad</th><th>C</th><th>Pont</th></tr>`;
   rows.forEach((r,i)=>{
     h+=`<tr class="clickable" data-prof="${esc(r.name)}"${r.id?` data-pcp="${r.id}"`:''} data-ptm="${esc(r.team||'')}" data-ppos="${esc(r.pos||'')}"${r.hun?' data-phun="1"':''}${r.u21?' data-pu21="1"':''}><td class="rank">${i+1}.</td>
-      <td class="name"><span class="ppos">${esc(posLabel(r.pos))}</span>${esc(r.name)}${r.hun?'<span class="flag"></span>':''}${r.u21?' <span class="u21">U21</span>':''}${r.team?` <span class="tm">${esc(r.team)}</span>`:''}</td>
+      <td class="name"><span class="nevsor"><span class="ppos">${esc(posLabel(r.pos))}</span>${esc(r.name)}${r.hun?'<span class="flag"></span>':''}${r.u21?' <span class="u21">U21</span>':''}${r.team?` <span class="tm">${esc(r.team)}</span>`:''}</span></td>
       <td>${r.rounds}</td><td>${r.st}</td><td>${r.sb}</td><td>${r.cap||''}</td>
       <td class="pont">${fmt(r.pts)}</td></tr>`;
   });

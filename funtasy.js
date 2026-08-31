@@ -220,7 +220,7 @@
           return '<span class="clickable" ' + opts.nameAttr(r.name) + '>' + nev + '</span>';
         });
         h += '<tr class="' + (i === 0 ? 'leader' : '') + '"><td class="rank">' + (i + 1) + '.</td>' +
-          '<td class="name">' + cella + '</td>' +
+          '<td class="name"><span class="nevsor">' + cella + '</span></td>' +
           '<td>' + r.M + '</td><td>' + r.GY + '</td><td>' + r.D + '</td><td>' + r.V + '</td>' +
           '<td>' + fmt(r.RG) + '</td><td>' + fmt(r.KG) + '</td>' +
           '<td class="' + (r.GK >= 0 ? 'pos' : 'neg') + '">' + fmt(r.GK) + '</td>' +
@@ -417,7 +417,7 @@
           }
           h += '<tr class="clickable" data-mh="' + esc(m[0]) + '" data-mv="' + esc(m[1]) +
             '" data-mr="' + r + '"><td class="rank">' + r + '.</td>' +
-            '<td class="name">' + esc(label(opp)) + '</td>' +
+            '<td class="name"><span class="nevsor">' + esc(label(opp)) + '</span></td>' +
             '<td>' + (own != null ? fmt(own) : '—') + '</td>' +
             '<td>' + (ov != null ? fmt(ov) : '—') + '</td>' + kezdCella + guardCella +
             '<td class="' + cls + '">' + res +
