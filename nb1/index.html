@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=67">
+<link rel="stylesheet" href="../funtasy.css?v=68">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=67"></script>
+<script src="../funtasy.js?v=68"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -419,6 +419,49 @@ function playersHTML(name, rounds){
       <td class="pont">${fmt(r.pts)}</td></tr>`;
   });
   return '<div class="tablewrap">'+h+'</table></div>';
+}
+
+// ---------- "Változtatások" fül (keretvaltozasok.json) ----------
+// A SZAMITAS a gyujtoben van (collect.py keretvaltozas), ugyanabbol a korbol
+// es ugyanazzal a kerekitessel, mint a Guardiola mutato - eppen azt vezeti
+// le. A lap csak megjeleniti; ha itt szamolna ujra, ket igazsag lenne
+// ugyanarrol a szambol.
+let KVALT=null;
+async function loadValtozasok(){
+  if(KVALT) return KVALT;
+  try{
+    const r=await fetch('../keretvaltozasok.json?t='+Date.now());
+    KVALT=r.ok ? ((await r.json()).rounds||{}) : {};
+  }catch(e){ KVALT={}; }
+  return KVALT;
+}
+const SZLABEL={C:'kapitány', pad:'pad', kezdo:'kezdő'};
+function valtoztatasokHTML(name, kv){
+  const rks=Object.keys(kv||{}).map(Number).sort((a,b)=>b-a);   // legfrissebb elol
+  const prof=x=>({'data-prof':x.n, 'data-pcp':x.id, 'data-ptm':x.tm||'', 'data-ppos':x.pos||''});
+  const csoportok=[];
+  for(const r of rks){
+    const v=(kv[r]||{})[name];
+    // Csak LEZART fordulo: elo/le nem zart forduloban a mutato nem szamolhato
+    // (a tabella es a Fordulok ful sem mutat semmit) - ugyanaz a feltetel.
+    if(!v || !T.guardErtek(name, r)) continue;
+    const sorok=[];
+    // A SORREND a valtoztatas logikajat koveti: mi ment ki, mi jott be,
+    // majd aki bent maradt, de mas szerepben. A magyarszabaly a legvegen:
+    // az nem egy jatekoson mulik, hanem a kereten.
+    for(const x of v.ki) sorok.push({poszt:posLabel(x.pos), nev:x.n, klub:x.tm, prof:prof(x),
+      cimke:'eladva'+(x.sz!=='kezdo'?' · '+SZLABEL[x.sz]:''), dl:-x.ert});
+    for(const x of v.be) sorok.push({poszt:posLabel(x.pos), nev:x.n, klub:x.tm, prof:prof(x),
+      cimke:'megvéve'+(x.sz!=='kezdo'?' · '+SZLABEL[x.sz]:''), dl:x.ert});
+    for(const x of v.szerep) sorok.push({poszt:posLabel(x.pos), nev:x.n, klub:x.tm, prof:prof(x),
+      cimke:SZLABEL[x.szE]+' → '+SZLABEL[x.szU], elott:x.ertE, utan:x.ertU, dl:+(x.ertU-x.ertE).toFixed(2)});
+    if(v.bonusz) sorok.push({nev:'Magyarszabály', cimke:v.bonusz>0?'megjött':'elveszett', dl:v.bonusz});
+    csoportok.push({nev:r+'. forduló', guard:v.guard, sorok});
+  }
+  if(!csoportok.length)
+    return '<div class="loading">Ehhez a szakvezetőhöz még nincs elmentett változtatás.</div>';
+  return `<div class="note" style="padding:0 0 6px">A pontérték mindig az ADOTT forduló pontja, a játékos akkori szerepével (kapitány duplán, pad felezve). A blokkok alján az összeg — ez a forduló <b>GUARD</b> értéke, ugyanaz, ami a Fordulók fülön és a tabellában áll.</div>`
+    + FunTasy.valtoztatasLista(csoportok, 'Nincs adat.');
 }
 
 // ---------- meccs utáni pontigazítás (zarasok_nb1.json) ----------
@@ -1140,12 +1183,20 @@ async function showSquad(names,tab,mode){
   $('mTabs').innerHTML = single
     ? `<button class="tab ${(!tab||tab==='squad')?'on':''}" data-tab="squad">Aktuális keret</button>
        <button class="tab ${tab==='season'?'on':''}" data-tab="season">Fordulók</button>
-       <button class="tab ${tab==='players'?'on':''}" data-tab="players">Szezon játékosai</button>` : '';
+       <button class="tab ${tab==='players'?'on':''}" data-tab="players">Szezon játékosai</button>
+       <button class="tab ${tab==='changes'?'on':''}" data-tab="changes">Változtatások</button>` : '';
   if(single && tab==='players'){
     $('mSub').textContent='A szezonban birtokolt játékosok és a nála termelt pontjuk (a kapitányi duplázás és a padfelezés már benne van)';
     $('mBody').innerHTML='<div class="loading">Előzmények betöltése…</div>';
     const rounds=await loadHistory();
     $('mBody').innerHTML=playersHTML(names[0], rounds);
+    return;
+  }
+  if(single && tab==='changes'){
+    $('mSub').textContent='Fordulónként: kit adott el, kit vett meg, kit ültetett le — és mennyit ért a változtatás';
+    $('mBody').innerHTML='<div class="loading">Változtatások betöltése…</div>';
+    const kv=await loadValtozasok();
+    $('mBody').innerHTML=valtoztatasokHTML(names[0], kv);
     return;
   }
   if(single && tab==='season'){

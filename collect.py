@@ -434,6 +434,86 @@ def guardiola(hist_rounds, r):
     return ki or None
 
 
+def szerep(p):
+    """A jatekos szerepe egy keretben: 'C' (kapitany), 'pad' vagy 'kezdo'."""
+    return "C" if p.get("cap") else ("pad" if p.get("sub") else "kezdo")
+
+
+def keretvaltozas(hist_rounds, r):
+    """Mit valtoztatott a szakvezeto a fordulora, es mit ert a valtoztatas.
+
+    A "Valtoztatasok" ful adata. Ugyanabbol szamol, mint a Guardiola mutato
+    (guardiola), es SZANDEKOSAN LEVEZETI AZT: minden tetel melle odakerul,
+    mennyit adott vagy vett el, es a tetelek osszege PONTOSAN a `guard`.
+    Ha nem az, az szamitasi hiba - a `stimmel` mezo ezt kiirja, es a teszt
+    (K5) is ezen bukik. Enelkul a ful csak egy lista lenne, amit senki nem
+    tud osszevetni a tabellaban allo szammal.
+
+    Harom fele tetel:
+      ki      - a mult heti keretben volt, most nincs: a MULT HETI szerepevel
+                szamit (ennyit hozott volna, ha hozza sem nyul)
+      be      - most van a keretben, mult heten nem: a MOSTANI szerepevel
+      szerep  - vegig bent volt, de valtozott a szerepe (kezdo <-> pad <-> C):
+                a ket ertek kulonbsege a tetel
+
+    Negyedik tetel a magyarszabaly: ha a valtoztatastol megjott vagy elveszett
+    a 10 pont, az nem egyik jatekoson latszik, hanem a kereten - kulon sorban
+    all. (Ez a Guardiola mutatoban is benne van, lasd keret_osszeg.)"""
+    elozo = (hist_rounds.get(str(r - 1)) or {})
+    mostani = (hist_rounds.get(str(r)) or {})
+    if not elozo or not mostani:
+        return None
+    nyers = nyers_pontok(r)
+    if nyers is None:
+        return None
+    ki_ossz = {}
+    for nev, sq in mostani.items():
+        regi_sq = elozo.get(nev)
+        if not regi_sq or not sq:
+            continue
+        # A ket oldal UGYANAZZAL a fuggvennyel keszul, mint a mutatoban -
+        # kulonben a kerekites szetcsuszna, es a levezetes nem stimmelne.
+        uj_k = guardiola_keret(sq, nyers)
+        alt_k = guardiola_keret(regi_sq, nyers)
+        regi_id = {p.get("id"): p for p in alt_k}
+        uj_id = {p.get("id"): p for p in uj_k}
+        tetel = lambda p, e: {"id": p.get("id"), "n": p.get("name"),
+                              "tm": p.get("team"), "pos": p.get("pos"),
+                              "sz": szerep(p), "nyers": nyers.get(str(p.get("id")), 0),
+                              "ert": e}
+        ki = [tetel(p, p["week"]) for i, p in regi_id.items() if i not in uj_id]
+        be = [tetel(p, p["week"]) for i, p in uj_id.items() if i not in regi_id]
+        szer = []
+        for i, p in uj_id.items():
+            q = regi_id.get(i)
+            if q is None or szerep(p) == szerep(q):
+                continue
+            szer.append({"id": i, "n": p.get("name"), "tm": p.get("team"),
+                         "pos": p.get("pos"), "nyers": nyers.get(str(i), 0),
+                         "szE": szerep(q), "szU": szerep(p),
+                         "ertE": q["week"], "ertU": p["week"]})
+        # A KEREKITES NEM DISZITES: a magyarszabaly kulonbsege lebegopontos
+        # kivonasbol jon, es 0 helyett -7,1e-15 allna a fajlban - minden
+        # futasban ujrairva, a lapon meg "0,00"-kent latszo szemettel.
+        bonusz = round((keret_osszeg(uj_k) - sum(p["week"] for p in uj_k)) -
+                       (keret_osszeg(alt_k) - sum(p["week"] for p in alt_k)), 2)
+        guard = round(keret_osszeg(uj_k) - keret_osszeg(alt_k), 2)
+        osszeg = round(sum(x["ert"] for x in be) - sum(x["ert"] for x in ki)
+                       + sum(x["ertU"] - x["ertE"] for x in szer) + bonusz, 2)
+        # A sorrend a HATAS szerint all, es determinisztikus (holtversenynel
+        # nev): az API keret-sorrendje futasonkent valtozhat, es attol a fajl
+        # ok nelkul ujraírodna.
+        ki.sort(key=lambda x: (-x["ert"], x["n"] or ""))
+        be.sort(key=lambda x: (-x["ert"], x["n"] or ""))
+        szer.sort(key=lambda x: (-(x["ertU"] - x["ertE"]), x["n"] or ""))
+        ki_ossz[nev] = {"guard": guard, "ki": ki, "be": be, "szerep": szer,
+                        "bonusz": bonusz, "stimmel": abs(osszeg - guard) < 0.005}
+        if not ki_ossz[nev]["stimmel"]:
+            print("  ! keretvaltozas: %d. fordulo, %s - a tetelek osszege %s,"
+                  " a mutato %s" % (r, nev, osszeg, guard), file=sys.stderr)
+    return ki_ossz or None
+
+
 def ellenorzendo(regi, db=4):
     """Rolling ellenorzes: minden futas mas nehany REGI fordulot ker le
     ujra. Igy nem kell minden korben az osszeset lekerdezni, de egy nap
@@ -1223,6 +1303,24 @@ def main():
        json.dumps(gua_regi, ensure_ascii=False, sort_keys=True):
         kompakt_iras("guardiola.json", {"updated": stamp(), "rounds": gua})
         print("  guardiola.json frissitve (%d fordulo)" % len(gua))
+
+    # ---- Keretvaltozasok ("Valtoztatasok" ful). Ugyanabbol a korbol es
+    # ugyanazzal a kerekitessel, mint a Guardiola mutato - a ful eppen azt
+    # vezeti le, tehat a ket fajlnak egyutt kell mozdulnia.
+    kvalt = {}
+    for r_ in sorted(int(x) for x in hist["rounds"]):
+        k_ = keretvaltozas(hist["rounds"], r_)
+        if k_:
+            kvalt[str(r_)] = k_
+    try:
+        with open("keretvaltozasok.json", encoding="utf-8") as f:
+            kvalt_regi = json.load(f).get("rounds")
+    except Exception:
+        kvalt_regi = None
+    if json.dumps(kvalt, ensure_ascii=False, sort_keys=True) != \
+       json.dumps(kvalt_regi, ensure_ascii=False, sort_keys=True):
+        kompakt_iras("keretvaltozasok.json", {"updated": stamp(), "rounds": kvalt})
+        print("  keretvaltozasok.json frissitve (%d fordulo)" % len(kvalt))
 
     if json.dumps(meccsek["rounds"], ensure_ascii=False, sort_keys=True) != meccsek_elotte:
         meccsek["updated"] = stamp()

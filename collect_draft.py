@@ -254,15 +254,25 @@ def auto_csere(kezdok, pad, poszt, perc):
     return kezdok
 
 
+def keret_vegso(keret, pontok, poszt):
+    """Akik a fordulo vegen TENYLEG szamitanak (automatikus cserekkel).
+
+    Kulon fuggveny, mert nem csak az osszeg kell: a "Valtoztatasok" ful
+    JATEKOSONKENT vezeti le a mutatot, ahhoz pedig tudni kell, ki szamitott
+    bele es ki nem. Egy keretben egy jatekos erteke = a pontja, ha benne van
+    ebben a listaban, kulonben 0 - es ezek osszege pontosan a keret_pont."""
+    kezdok = [x.get("e") for x in keret if not x.get("b")]
+    pad = [x.get("e") for x in keret if x.get("b")]
+    perc = {k: v[1] for k, v in pontok.items()}
+    return auto_csere(kezdok, pad, poszt, perc)
+
+
 def keret_pont(keret, pontok, poszt):
     """Egy Draft-keret fordulo-pontja: a kezdok pontja, automatikus
     cserekkel. A `keret` a tarolt alak: [{e, b, pts}, ...] - a `b` a padot
     jelzi, a lista sorrendje az FPL sajat sorrendje."""
-    kezdok = [x.get("e") for x in keret if not x.get("b")]
-    pad = [x.get("e") for x in keret if x.get("b")]
-    perc = {k: v[1] for k, v in pontok.items()}
-    vegso = auto_csere(kezdok, pad, poszt, perc)
-    return round(sum((pontok.get(str(e)) or [0, 0])[0] for e in vegso), 2)
+    return round(sum((pontok.get(str(e)) or [0, 0])[0]
+                     for e in keret_vegso(keret, pontok, poszt)), 2)
 
 
 def draft_guardiola(hist_rounds, gw, pontok_gw, poszt):
@@ -287,6 +297,80 @@ def draft_guardiola(hist_rounds, gw, pontok_gw, poszt):
         alt = keret_pont(regi, pontok_gw, poszt)
         ki[str(lid)] = {"teny": teny, "alt": alt, "guard": round(teny - alt, 2)}
     return ki or None
+
+
+def draft_szerep(e, keret):
+    """Amit az EMBER dontott a jatekosrol: kezdo vagy pad.
+
+    SZANDEKOSAN nem keveredik bele, hogy az automatikus csere utan
+    tenylegesen szamitott-e: az mar a GEP muve (lasd draft_keretvaltozas)."""
+    return "pad" if any(x.get("e") == e and x.get("b") for x in keret) else "kezdo"
+
+
+def draft_keretvaltozas(hist_rounds, gw, pontok_gw, poszt):
+    """Mit valtoztatott a csapat a fordulora, es mit ert - a "Valtoztatasok"
+    ful adata. Ugyanaz a szerep, mint az NB1-en (collect.py keretvaltozas):
+    LEVEZETI a Guardiola mutatot, es a tetelek osszege PONTOSAN a `guard`.
+
+    KETTEVALASZTVA: AMIT AZ EMBER CSINALT, ES AMIT A GEP JAVITOTT RAJTA.
+    A Draftban a fordulo vegen az FPL automatikus cseret hajt vegre - az nem
+    a szakvezeto erdeme vagy hibaja. Ha egyben mutatnank, ugy tunne, hogy
+    valaki jol variált, holott a gep tette helyre a keretet (vagy forditva).
+    Ezert:
+      ember: minden jatekos a MEGNEVEZETT szerepevel szamit - a kezdo a
+             pontjaval, a pados nullaval, akkor is, ha vegul beallt;
+      gep:   a keret tenyleges pontja (auto_csere-vel) MINUSZ a fenti osszeg.
+             Ez pontosan az automatikus csere hozadeka arra a keretre.
+    A ketto osszege a keret pontja, tehat a levezetes maradek nelkul kijon.
+
+    Magyarszabaly itt nincs, tehat kulon sor sem kell hozza."""
+    elozo = hist_rounds.get(str(gw - 1)) or {}
+    mostani = hist_rounds.get(str(gw)) or {}
+    if not elozo or not mostani or not pontok_gw:
+        return None
+    pont = lambda e: (pontok_gw.get(str(e)) or [0, 0])[0]
+
+    def ember(keret):
+        """{element: ertek} a MEGNEVEZETT szerepek szerint (pad = 0)."""
+        return {x.get("e"): (0 if x.get("b") else pont(x.get("e"))) for x in keret}
+
+    ki_ossz = {}
+    for lid, keret in mostani.items():
+        regi = elozo.get(lid)
+        if not regi or not keret:
+            continue
+        eU, eE = ember(keret), ember(regi)
+        teny = keret_pont(keret, pontok_gw, poszt)
+        alt = keret_pont(regi, pontok_gw, poszt)
+        gepU = round(teny - sum(eU.values()), 2)
+        gepE = round(alt - sum(eE.values()), 2)
+        ki = [{"e": e, "sz": draft_szerep(e, regi), "pont": pont(e), "ert": eE[e]}
+              for e in eE if e not in eU]
+        be = [{"e": e, "sz": draft_szerep(e, keret), "pont": pont(e), "ert": eU[e]}
+              for e in eU if e not in eE]
+        szer = []
+        for e in eU:
+            if e not in eE:
+                continue
+            szE, szU = draft_szerep(e, regi), draft_szerep(e, keret)
+            if szE == szU:
+                continue
+            szer.append({"e": e, "pont": pont(e), "szE": szE, "szU": szU,
+                         "ertE": eE[e], "ertU": eU[e]})
+        guard = round(teny - alt, 2)
+        osszeg = round(sum(x["ert"] for x in be) - sum(x["ert"] for x in ki)
+                       + sum(x["ertU"] - x["ertE"] for x in szer)
+                       + (gepU - gepE), 2)
+        ki.sort(key=lambda x: (-x["ert"], x["e"]))
+        be.sort(key=lambda x: (-x["ert"], x["e"]))
+        szer.sort(key=lambda x: (-(x["ertU"] - x["ertE"]), x["e"]))
+        ki_ossz[str(lid)] = {"guard": guard, "ki": ki, "be": be, "szerep": szer,
+                             "gepE": gepE, "gepU": gepU,
+                             "stimmel": abs(osszeg - guard) < 0.005}
+        if not ki_ossz[str(lid)]["stimmel"]:
+            print("  ! draft_keretvaltozas: %d. fordulo, %s - a tetelek osszege"
+                  " %s, a mutato %s" % (gw, lid, osszeg, guard), file=sys.stderr)
+    return ki_ossz or None
 
 
 def main():
@@ -570,6 +654,29 @@ def main():
        json.dumps(gua_regi, ensure_ascii=False, sort_keys=True):
         kiir_ha_valtozott("draft_guardiola.json", {"updated": stamp(), "rounds": gua})
         print("  draft_guardiola.json frissitve (%d fordulo)" % len(gua))
+
+    # ---- Keretvaltozasok ("Valtoztatasok" ful). Ugyanabbol a korbol, mint a
+    # mutato - a ful eppen azt vezeti le, tehat egyutt kell mozdulniuk.
+    # A jatekos NEVET nem taroljuk: a lap a draft_players.json-bol amugy is
+    # feloldja (a mezony teljes, a tavozo jatekos is benne marad) - az NB1-en
+    # ez azert mas, mert ott a jatekostorzs csak a MOSTANI mezonyt adja.
+    kvalt = {}
+    if jatekos_poszt:
+        for gw_ in sorted(int(x) for x in hist["rounds"]):
+            k_ = draft_keretvaltozas(hist["rounds"], gw_, pontok.get(str(gw_)),
+                                     jatekos_poszt)
+            if k_:
+                kvalt[str(gw_)] = k_
+    try:
+        with open("draft_keretvaltozasok.json", encoding="utf-8") as f:
+            kvalt_regi = json.load(f).get("rounds")
+    except Exception:
+        kvalt_regi = None
+    if kvalt and json.dumps(kvalt, ensure_ascii=False, sort_keys=True) != \
+       json.dumps(kvalt_regi, ensure_ascii=False, sort_keys=True):
+        kiir_ha_valtozott("draft_keretvaltozasok.json",
+                          {"updated": stamp(), "rounds": kvalt})
+        print("  draft_keretvaltozasok.json frissitve (%d fordulo)" % len(kvalt))
 
     print("Kesz.")
     return 0

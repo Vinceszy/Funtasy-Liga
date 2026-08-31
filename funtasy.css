@@ -311,6 +311,20 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .zsor .zdiff{font-family:var(--mono);font-weight:700;min-width:34px;text-align:right}
 .zsor .zirany{font:600 11px var(--fo);color:var(--dim)}
 .zsor .zirany.pos{color:var(--win)}
+/* "Valtoztatasok" ful. Ugyanazok a sorok, mint a zarasi listaban - itt csak
+   a cimke (mi tortent a jatekossal) es a zaro OSSZESEN sor jon hozza. Az
+   osszeg a Guardiola mutato: a fulnek eppen az a dolga, hogy levezesse. */
+.valtlista{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+.zsor .vacimke{font:600 11px var(--fo);color:var(--dim);white-space:nowrap}
+.zsor.vaures{color:var(--dim);font-style:italic;border-bottom:none}
+.zsor.vaossz{border-bottom:none;border-top:1px solid var(--line);margin-top:2px}
+/* A PL-en kulon sor az, amit a ZARASI AUTOMATIKUS CSERE hozott: az nem a
+   szakvezeto dontese, tehat nem is allhat a sajat tetelei kozott. */
+.zsor.vagep,.zsor.vareszossz{border-bottom:none}
+.zsor.vareszossz{border-top:1px dashed var(--panel2);margin-top:2px}
+.zsor.vagep .znev,.zsor.vareszossz .znev{font-family:var(--cim);font-size:11px;
+  letter-spacing:1px;color:var(--dim)}
+.zsor.vaossz .znev{font-family:var(--cim);font-size:11px;letter-spacing:1px;color:var(--dim)}
 /* kezdoallitasi hatekonysag: tabella-cella, h2h-jel, meccsfej-sor */
 td.kezdpc{font-family:var(--mono);color:var(--dim)}
 /* A Guardiola mutato jelzese a meccs-pont mellett. Ugyanaz a halvany,

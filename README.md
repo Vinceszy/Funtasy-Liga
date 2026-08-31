@@ -73,6 +73,9 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 - [5. Ismert korlátok, buktatók](#5-ismert-korlátok-buktatók)
 - [5/a4. A Guardiola mutató](#5a4-a-guardiola-mutató)
   - [A PL-en ugyanez, automatikus cserékkel](#a-pl-en-ugyanez-automatikus-cserékkel)
+- [5/a5. A „Változtatások" fül](#5a5-a-változtatások-fül)
+  - [A PL-en külön áll, amit az ember csinált, és amit a gép](#a-pl-en-külön-áll-amit-az-ember-csinált-és-amit-a-gép)
+  - [Csak lezárt forduló](#csak-lezárt-forduló)
 - [5/a. Miért van fordulónként külön keret-fájl](#5a-miért-van-fordulónként-külön-keret-fájl)
 - [5/a3. A lezárt forduló bontása a repóból jön](#5a3-a-lezárt-forduló-bontása-a-repóból-jön)
   - [Az élő pont a tételes bontásból áll össze (PL)](#az-élő-pont-a-tételes-bontásból-áll-össze-pl)
@@ -480,6 +483,8 @@ teljes képernyős, ragadós × gombbal.
 | `guardiola.json` | A **Guardiola mutató** fordulónként: `{rounds:{forduló:{szakvezető:{teny,alt,guard}}}}`. `guard` = a mostani keret pontja mínusz a múlt hetié ugyanebben a fordulóban. A gyűjtő számolja, mert a múlt heti kerethez az adott forduló **összes** játékosának nyers pontja kell (`bontasok/<forduló>.json`, fordulónként 40 KB) — a lapnak így elég ez a pár kilobájt. |
 | `draft_pontok.json` | A PL **teljes mezőnyének** fordulónkénti pontja és perce: `{rounds:{gw:{element:[pont,perc]}}}`. A Guardiola mutatóhoz kell: a múlt heti keretben lehet olyan játékos, aki már **senkinél sincs** (GW1→GW2-ben 11 ilyen volt), és akkor a pontja sehol nem lenne meg. A perc az automatikus cserékhez. Csak az kerül bele, aki játszott vagy pontot szerzett. |
 | `draft_guardiola.json` | Ugyanaz, mint a `guardiola.json`, csak a PL-re, `liga_id` kulccsal. |
+| `keretvaltozasok.json` | A **Változtatások** fül adata fordulónként: ki került ki (`ki`), ki jött be (`be`), kinek változott a szerepe (`szerep`), és a magyarszabály különbsége (`bonusz`) — mindegyik mellett az, hogy **mennyit ért**. A tételek összege pontosan a `guard`; ezt a `stimmel` mező is jelzi. A lap ebből vezeti le a tabellában álló számot. |
+| `draft_keretvaltozasok.json` | Ugyanaz a PL-re, `liga_id` kulccsal — plusz a `gepE`/`gepU`: mennyit hozott a **zárási automatikus csere** a régi és az új keretnek. A játékos-tételek csak azt tartalmazzák, amit az **ember** döntött; a gép hozadéka külön áll. Játékosnevet nem tárol: a lap a `draft_players.json`-ból oldja fel. |
 | `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**; elemeik `{e, pts}` alakúak, mert a beállt játékos pontja mondja meg, mit hozott a csere (a régi, csak azonosítót tartalmazó alakot a lap még elfogadja). A GW1 a git-történetből lett pótolva. |
 | `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset csak akkor, ha a forduló hivatalos pontja változott (ez a **pótolt meccs** esete — az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). **Nem a forduló összes meccse:** csak azoké a kluboké, amelyeknek van játékosuk valamelyik keretben — a részletező fölötti sorhoz ennyi kell. |
 | `jatekosok.json` | A mezőny **összes** játékosa (`{players:{id:{n,t,p,u21,pts,ar}}}`) — a főoldali lista és keresés forrása. A gyűjtő írja, egy kérésből. |
@@ -1551,6 +1556,52 @@ Ha a játékos-poszt adat hiányzik (elhasalt `bootstrap-static`), a gyűjtő **
 és a mutató csendben rossz értéket adna. Ilyenkor a korábbi fájl marad érvényben.
 
 Rögzítve: `tesztek/gyujto_guardiola.py` (NB1) és `tesztek/gyujto_draftguardiola.py` (PL).
+
+## 5/a5. A „Változtatások" fül
+
+**A Guardiola mutató levezetése**, tételesen: minden fordulónál ott áll, kit adott el, kit vett
+meg és kinek változott a szerepe a szakvezető — és hogy **melyik mennyit ért**. A blokk alján
+az összeg, ami **pontosan** a forduló GUARD értéke. Ez a fül egész értelme: a tabellában álló
+számot ne kelljen elhinni, hanem le lehessen ellenőrizni.
+
+Négyféle tétel:
+
+| Tétel | Mivel számít |
+|---|---|
+| **eladva** | a **múlt heti** szerepével (kapitány duplán, pad felezve) — ennyit hozott volna, ha hozzá sem nyúl |
+| **megvéve** | a **mostani** szerepével |
+| **szerepváltás** | végig bent volt, de kezdő ↔ pad ↔ kapitány mozdult: a két érték különbsége |
+| **magyarszabály** | ha a változtatástól megjött vagy elveszett a 10 pont — az nem egy játékoson látszik, hanem a kereten |
+
+**A változtatás nélküli forduló is kilátszik**, üresen. Ha kihagynánk, a néző azt hinné, hogy
+hiányzik az adat — pedig épp az a válasz, hogy a szakvezető hozzá sem nyúlt a kerethez, és a
+mutatója ezért 0.
+
+### A PL-en külön áll, amit az ember csinált, és amit a gép
+
+A Draftban a forduló végén az FPL **automatikus cserét** hajt végre. Az nem a szakvezető
+érdeme vagy hibája, egyben mutatva viszont úgy tűnne, hogy jól variált — holott a gép tette
+helyre a keretet (vagy fordítva). Ezért a PL-en a számítás kettéválik:
+
+- **ember:** minden játékos a **megnevezett** szerepével számít — a kezdő a pontjával, a padon
+  ülő nullával, akkor is, ha végül beállt;
+- **gép:** a keret tényleges pontja (automatikus cserékkel) mínusz a fenti összeg. Ez pontosan
+  a zárási csere hozadéka, és külön sorban áll: *„Automatikus csere a záráskor"*.
+
+A kettő összege a keret pontja, tehát a levezetés maradék nélkül kijön. A fül a részösszeget
+is kiírja (*„A te döntéseid"*), hogy egy pillantással látszódjon, mi kinek a műve.
+
+### Csak lezárt forduló
+
+A fül **ugyanazt a feltételt** használja, mint a Fordulók fül és a tabella: élő vagy még le nem
+zárt fordulóra nincs érték. A feltétel egy helyen él (`FunTasy.guardErtek`), mert három hely
+használja — és amíg külön-külön döntött, elő is állt, hogy a PL 2. fordulója a Fordulók fülön
+még üres volt, a Változtatások fülön viszont már állt benne szám.
+
+Rögzítve: `tesztek/gyujto_keretvaltozas.py` (NB1), `tesztek/gyujto_draftkeretvaltozas.py` (PL)
+és `tesztek/valtoztatasok.teszt.js` — az utóbbi **minden szakvezetőnél és minden fordulónál**
+összeveti a sorok összegét, a blokk „Összesen" sorát, a Fordulók fül GUARD oszlopát és a
+tabella GUA celláját.
 
 ## 5/a. Miért van fordulónként külön keret-fájl
 

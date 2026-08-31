@@ -7,6 +7,16 @@
     "nb1",
     "pl"
    ],
+   "cim": "Változtatások fül: mit csináltál, és mit ért",
+   "leiras": "A csapatod adatlapján új fül, fordulónként: kit adtál el, kit vettél meg, kinek változott a szerepe — és minden tétel mellett, hogy hány pontot ért. A blokk alján az összeg, ami pontosan a forduló GUARD értéke, tehát a tabellában álló szám végig levezethető. Az a forduló is szerepel, amelyikben nem nyúltál a kerethez. A PL-en külön sorban áll, amit a záráskor az FPL automatikus cseréje tett hozzá — az nem a te döntésed, és nem is keveredik a sajátjaid közé."
+  },
+  {
+   "datum": "2026-08-31",
+   "tipus": "funkcio",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
    "cim": "Guardiola mutató: mit hozott a keretváltoztatás",
    "leiras": "Új szám a meccssorokban, a Fordulók fülön és a tabellában: mennyivel hozott többet vagy kevesebbet a keret, mint ha a múlt heti csapathoz hozzá sem nyúlsz. Ugyanaz a 15 játékos, ugyanazokban a szerepekben — csak ennek a fordulónak a pontjaival; a tabellában az egész szezonra összeadva. A PL-en az FPL forduló végi automatikus cseréi az alternatívára is érvényesek, különben a régi keret alulmérve jönne ki. Az összehasonlítás azokat a játékosokat is a tényleges pontjukkal számolja, akik azóta elmentek a bajnokságból."
   },

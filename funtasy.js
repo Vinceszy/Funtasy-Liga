@@ -342,6 +342,34 @@
         + guardJelol(v.guard) + '</span>';
     }
 
+    /* Van-e Guardiola ertek egy szakvezetonek egy forduloban - EGY HELYEN.
+
+       A feltetel nem trivialis: az ELO fordulora es a meg le nem zartra
+       NINCS ertek (a fordulo kozbeni reszeredmenybol szamolt mutato hamis
+       lenne, es a tabella sem szamol belole). Ezt a feltetelt HAROM hely
+       hasznalja - a Fordulok ful oszlopa es mindket liga "Valtoztatasok"
+       fule -, es ha barmelyik maskepp dontene, ugyanaz a fordulo az egyik
+       helyen latszana, a masikon nem. Elesben pontosan ez allt elo: a
+       PL 2. forduloja a Fordulok fulon meg ures volt, a Valtoztatasok fulon
+       viszont mar allt benne szam. */
+    api.guardErtek = function (name, r) {
+      if (!opts.guard) return null;
+      var ki = null;
+      vegleges(r).forEach(function (m, i) {
+        var own;
+        if (m[0] === name) own = m[2];
+        else if (m[1] === name) own = m[3];
+        else return;
+        var elo = false;
+        if (own == null) {
+          var L = eloMeccs(r, i);
+          if (played(L)) { elo = true; own = m[0] === name ? L[2] : L[3]; }
+        }
+        ki = (!elo && own != null) ? opts.guard(name, r) : null;
+      });
+      return ki;
+    };
+
     /* Egy szakvezeto fordulonkenti eredmenyei (a "Fordulok" ful) - KOZOS:
        a PL es az NB1 korabban ket majdnem azonos peldanyban tartotta.
        A sorra kattintva a meccs nyilik (data-mh/mv/mr, mint a h2h-ban). */
@@ -381,7 +409,8 @@
           }
           var guardCella = '';
           if (opts.guard) {
-            var gv = (!elo && own != null) ? opts.guard(name, r) : null;
+            // ugyanaz a feltetel, mint a Valtoztatasok fulon - lasd guardErtek
+            var gv = api.guardErtek(name, r);
             guardCella = '<td class="guard ' +
               (gv ? (gv.guard > 0 ? 'pos' : gv.guard < 0 ? 'neg' : '') : '') + '">' +
               (gv ? guardJelol(gv.guard) : (elo || own == null ? '' : '—')) + '</td>';
@@ -1540,6 +1569,63 @@
     return '<div class="zlista">' + blokkok.join('') + '</div>';
   }
 
+  /* ---------- "Valtoztatasok" ful (mindket liga) ----------
+     Mit valtoztatott a szakvezeto fordulonkent, es MENNYIT ERT: minden sor
+     mellett ott a pontkulonbseg, a blokk aljan pedig az osszeguk - ami
+     PONTOSAN a Guardiola mutato arra a fordulora. Ez a ful egesz ertelme:
+     a tabellaban allo szam levezetheto legyen, ne kelljen elhinni.
+
+     A sorok NORMALIZALT alakban jonnek a lapoktol (a szamitas a gyujtoben
+     el, keretvaltozasok.json / draft_keretvaltozasok.json):
+       {poszt, nev, klub, prof, cimke, elott, utan, dl}
+     `prof` a nevet kattinthatova tevo jelzo-keszlet; `elott`/`utan` az a ket
+     ertek, amibol a kulonbseg lett (elhagyhato); `dl` maga a kulonbseg.
+
+     A CSS-osztalyok SZANDEKOSAN ugyanazok, mint a zarasi listaban (zsor,
+     ppos, znev, zert, zdiff): a ket lista ugyanarrol beszel, tehat nezzen
+     ki ugyanugy - kulon stilussal elobb-utobb szetcsuszna. */
+  function vaSorHTML(x){
+    var d = x.dl || 0;
+    // `oszt`: extra osztaly a sornak (pl. a PL-en a GEP tetele es a
+    // reszosszeg - azok nem jatekos-sorok, es nem is nezhetnek ki ugy)
+    return '<div class="zsor' + (x.oszt ? ' ' + x.oszt : '') + '">'
+      + (x.poszt ? '<span class="ppos">' + esc(x.poszt) + '</span>' : '')
+      + (x.prof
+          ? '<span class="znev kattint"' + jelzokHTML(x.prof) + '>' + esc(x.nev)
+            + (x.klub ? ' <span class="tm">' + esc(x.klub) + '</span>' : '') + '</span>'
+          : '<span class="znev">' + esc(x.nev) + '</span>')
+      + (x.cimke ? '<span class="vacimke">' + esc(x.cimke) + '</span>' : '')
+      + (x.elott != null ? '<span class="zert">' + fmt(x.elott) + ' → ' + fmt(x.utan) + '</span>' : '')
+      + '<span class="zdiff ' + (d > 0 ? 'pos' : d < 0 ? 'neg' : '') + '">'
+      + (d > 0 ? '+' : '') + fmt(d) + '</span></div>';
+  }
+  /* csoport: {nev, jelzok, guard, sorok, ures}
+     Az URES CSOPORT IS KILATSZIK, a zarasi listaval ellentetben: az a
+     fordulo, amelyikhez nem nyult hozza, ugyanolyan valasz a kerdesre, mint
+     a tobbi - es a mutatoja is pont ezert 0. Ha kihagynank, a nezo azt
+     hinne, hogy hianyzik az adat. */
+  function valtoztatasLista(csoportok, ures){
+    if (!csoportok || !csoportok.length)
+      return '<div class="loading">' + esc(ures) + '</div>';
+    return '<div class="zlista valtlista">' + csoportok.map(function (cs){
+      var sorok = cs.sorok || [];
+      return '<div class="zcsapat"><h3' + (cs.jelzok ? ' class="kattint"' + jelzokHTML(cs.jelzok) : '') + '>'
+        + esc(cs.nev)
+        + (cs.guard == null ? ''
+           : '<span class="guardjel ' + (cs.guard > 0 ? 'pos' : cs.guard < 0 ? 'neg' : '') + '">'
+             + guardJelol(cs.guard) + '</span>')
+        + '</h3>'
+        + (sorok.length ? sorok.map(vaSorHTML).join('')
+                        : '<div class="zsor vaures">' + esc(cs.ures || 'Nem változtatott a keretén.') + '</div>')
+        + (sorok.length && cs.guard != null
+           ? '<div class="zsor vaossz"><span class="znev">Összesen</span>'
+             + '<span class="zdiff ' + (cs.guard > 0 ? 'pos' : cs.guard < 0 ? 'neg' : '') + '">'
+             + guardJelol(cs.guard) + '</span></div>'
+           : '')
+        + '</div>';
+    }).join('') + '</div>';
+  }
+
   /* A kivitel egy resze ma csak BELUL hasznalt (navHTML, lablecHTML,
      profilFejHTML, ekezetlen, kezdSzazalek, KEZD_CIM). Szandekosan maradnak
      kint: a tervezett osszesito oldal es a toplistak pont ezeket ternek ujra
@@ -1553,6 +1639,7 @@
                      lablecHTML: lablecHTML, renderLablec: renderLablec,
                      bontasMeccsSor: bontasMeccsSor,
                      zarasLista: zarasLista,
+                     valtoztatasLista: valtoztatasLista,
                      profilHTML: profilHTML, profilFejHTML: profilFejHTML,
                      jatekosKereso: jatekosKereso, ekezetlen: ekezetlen,
                      profilNyitoHTML: profilNyitoHTML, profilNezo: profilNezo,

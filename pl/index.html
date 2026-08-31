@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=67">
+<link rel="stylesheet" href="../funtasy.css?v=68">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -106,7 +106,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=67"></script>
+<script src="../funtasy.js?v=68"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -382,6 +382,63 @@ function keretHTML(id){
   return '<div class="loading">A keret még nem került be az adatgyűjtésbe.</div>';
 }
 
+// ---------- "Valtoztatasok" ful (draft_keretvaltozasok.json) ----------
+// A SZAMITAS a gyujtoben van (collect_draft.py draft_keretvaltozas), ugyanabbol
+// a korbol, mint a Guardiola mutato - eppen azt vezeti le. A jatekos neve nem
+// a fajlbol jon, hanem a mar betoltott mezonybol (jat()).
+let KVALT = null;
+fetch('../draft_keretvaltozasok.json?t=' + Date.now()).then(r => r.ok ? r.json() : null)
+  .then(j => { if (j && j.rounds){ KVALT = j.rounds; ujraRajzol('valtoztatasok'); } })
+  .catch(() => {});
+const SZLABEL = { kezdo: 'kezdő', pad: 'pad', beallt: 'beállt', kiesett: 'kiesett' };
+// A ful ujrarajzolasa, ha az adat kesobb er be, mint a megnyitas.
+function ujraRajzol(tab){
+  const on = document.querySelector('#mTabs .tab.on');
+  if (mTeam != null && $('ov').classList.contains('open') && on && on.dataset.tab === tab)
+    $('mBody').innerHTML = valtoztatasokHTML(mTeam);
+}
+function valtoztatasokHTML(id){
+  if (!KVALT) return '<div class="loading">Változtatások betöltése…</div>';
+  const gwk = Object.keys(KVALT).map(Number).sort((a, b) => b - a);   // legfrissebb elol
+  const sor = (x, cimke, dl) => ({ poszt: jat(x.e).p, nev: jat(x.e).n, klub: jat(x.e).t,
+                                   prof: { 'data-prof': x.e }, cimke: cimke, dl: dl });
+  const csoportok = [];
+  for (const gw of gwk){
+    const v = (KVALT[gw] || {})[id];
+    // Csak LEZART fordulo - ugyanaz a feltetel, mint a Fordulok fulon.
+    if (!v || !T.guardErtek(id, gw)) continue;
+    const sorok = [];
+    for (const x of v.ki) sorok.push(sor(x, 'elengedve · ' + SZLABEL[x.sz], -x.ert));
+    for (const x of v.be) sorok.push(sor(x, 'megszerezve · ' + SZLABEL[x.sz], x.ert));
+    for (const x of v.szerep){
+      const s = sor(x, SZLABEL[x.szE] + ' → ' + SZLABEL[x.szU], x.ertU - x.ertE);
+      s.elott = x.ertE; s.utan = x.ertU;
+      sorok.push(s);
+    }
+    // AMIT AZ EMBER CSINALT, ES AMIT A GEP JAVITOTT RAJTA - kulon.
+    // A Draftban a forduló végén az FPL automatikus cserét hajt végre; az nem
+    // a szakvezető érdeme. Egyben mutatva úgy tűnne, hogy jól variált, holott
+    // a gép tette helyre a keretet (vagy fordítva). A gyűjtő ezért két részre
+    // bontva adja (collect_draft.py draft_keretvaltozas).
+    const gep=+(v.gepU-v.gepE).toFixed(2);
+    const ember=+(v.guard-gep).toFixed(2);
+    if(sorok.length || gep){
+      sorok.push({nev:'A te döntéseid', dl:ember, oszt:'vareszossz'});
+      sorok.push({nev:'Automatikus csere a záráskor', cimke:'nem a te döntésed',
+                  elott:v.gepE, utan:v.gepU, dl:gep, oszt:'vagep'});
+    }
+    csoportok.push({ nev: gw + '. forduló', guard: v.guard, sorok: sorok });
+  }
+  if (!csoportok.length)
+    return '<div class="loading">Ehhez a csapathoz még nincs elmentett változtatás.</div>';
+  return '<div class="note" style="padding:0 0 6px">A pontérték mindig az ADOTT forduló pontja, '
+    + 'a <b>megnevezett</b> szereppel: a kezdő a pontjával, a padon ülő nullával. Amit az FPL a '
+    + 'záráskor <b>automatikus cserével</b> tett hozzá, külön sorban áll — az nem a te döntésed. '
+    + 'A blokkok alján az összeg — ez a forduló <b>GUARD</b> értéke, ugyanaz, ami a Fordulók fülön '
+    + 'és a tabellában áll.</div>'
+    + FunTasy.valtoztatasLista(csoportok, 'Nincs adat.');
+}
+
 function jatekosokHTML(id){
   const agg = {};
   const gwk = Object.keys(HIST).map(Number).sort((a, b) => a - b);
@@ -565,9 +622,11 @@ function showTeam(id, tab, mode){
   $('mTabs').innerHTML =
     `<button class="tab ${tab === 'keret' ? 'on' : ''}" data-tab="keret">Aktuális keret</button>
      <button class="tab ${tab === 'fordulok' ? 'on' : ''}" data-tab="fordulok">Fordulók</button>
-     <button class="tab ${tab === 'jatekosok' ? 'on' : ''}" data-tab="jatekosok">Szezon játékosai</button>`;
+     <button class="tab ${tab === 'jatekosok' ? 'on' : ''}" data-tab="jatekosok">Szezon játékosai</button>
+     <button class="tab ${tab === 'valtoztatasok' ? 'on' : ''}" data-tab="valtoztatasok">Változtatások</button>`;
   $('mBody').innerHTML = tab === 'keret' ? keretHTML(id)
-                       : tab === 'fordulok' ? T.fordulokHTML(id) : jatekosokHTML(id);
+                       : tab === 'fordulok' ? T.fordulokHTML(id)
+                       : tab === 'valtoztatasok' ? valtoztatasokHTML(id) : jatekosokHTML(id);
   const keretLatszik = () => {
     const on = document.querySelector('#mTabs .tab.on');
     return mTeam === id && $('ov').classList.contains('open')
