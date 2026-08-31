@@ -183,13 +183,33 @@
       return t;
     }
 
+    // Kumulalt Guardiola mutato UGYANARRA a korre, amibol a tabella szamol -
+    // igy a ket szam nem csuszhat szet (elo/ideiglenes fordulo egyikbe sem
+    // szamit bele). Az elso fordulora fogalmilag nincs ertek.
+    function guardOsszesito() {
+      if (!opts.guard) return null;
+      var t = {};
+      kor().forEach(function (r) {
+        vegleges(r).forEach(function (m) {
+          if (!played(m)) return;
+          [m[0], m[1]].forEach(function (n) {
+            var v = opts.guard(n, r);
+            if (!v) return;
+            t[n] = (t[n] || 0) + v.guard;
+          });
+        });
+      });
+      return t;
+    }
+
     api.renderTable = function () {
-      var kezd = kezdOsszesito();
+      var kezd = kezdOsszesito(), guard = guardOsszesito();
       var h = '<tr><th></th><th>' + esc(opts.nameHeader || 'Szakvezető') +
         '</th><th>M</th><th>GY</th><th>D</th><th>V</th>' +
         '<th title="szerzett pont">SP</th><th title="kapott pont">KP</th>' +
         '<th title="pontkülönbség">KÜL</th><th>Pont</th>' +
         (kezd ? '<th title="' + KEZD_CIM + '">KEZD%</th>' : '') +
+        (guard ? '<th title="' + esc(GUARD_CIM) + '">GUA</th>' : '') +
         '<th>Forma</th></tr>';
       api.computeTable().forEach(function (r, i) {
         var form = r.form.slice(-5).map(function (f) {
@@ -209,6 +229,12 @@
             var v = kezd[r.name], pc = v ? kezdSzazalek(v.sz, v.le) : null;
             return '<td class="kezdpc" title="' + (v ? fmt(v.sz) + ' / ' + fmt(v.le) + ' pont' : '') +
                    '">' + (pc == null ? '–' : pc + '%') + '</td>';
+          })() : '') +
+          (guard ? (function () {
+            var g = guard[r.name];
+            return '<td class="guard ' + (g == null ? '' : (g > 0 ? 'pos' : g < 0 ? 'neg' : '')) +
+                   '" title="' + esc(GUARD_CIM) + '">' +
+                   (g == null ? '–' : guardJelol(g)) + '</td>';
           })() : '') +
           '<td style="text-align:left"><span class="form">' + form + '</span></td></tr>';
       });
@@ -306,12 +332,23 @@
           fmt(v.sz) + ' / ' + fmt(v.le) + ' pont">' + pc + '%</span>';
     }
 
+    // ugyanez a Guardiola mutatora. Elo meccsre nem irjuk ki: a fordulo
+    // bontasa meg nincs meg, tehat ertek sincs.
+    function guardJel(n, r, elo) {
+      if (!opts.guard || elo) return '';
+      var v = opts.guard(n, r);
+      return !v ? '' : ' <span class="guardjel ' + (v.guard > 0 ? 'pos' : v.guard < 0 ? 'neg' : '')
+        + '" title="' + esc(GUARD_CIM) + ' (a múlt heti kerettel ' + fmt(v.alt) + ')">'
+        + guardJelol(v.guard) + '</span>';
+    }
+
     /* Egy szakvezeto fordulonkenti eredmenyei (a "Fordulok" ful) - KOZOS:
        a PL es az NB1 korabban ket majdnem azonos peldanyban tartotta.
        A sorra kattintva a meccs nyilik (data-mh/mv/mr, mint a h2h-ban). */
     api.fordulokHTML = function (name) {
       var h = '<table><tr><th>F</th><th>Ellenfél</th><th>Pont</th><th>Ell.</th>' +
         (opts.kezd ? '<th title="' + esc(KEZD_CIM) + '">KEZD%</th>' : '') +
+        (opts.guard ? '<th title="' + esc(GUARD_CIM) + '">GUARD</th>' : '') +
         '<th>Eredm.</th></tr>';
       var gy = 0, d = 0, v = 0;
       kor().forEach(function (r) {
@@ -342,11 +379,18 @@
             kezdCella = '<td class="kezdpc">' +
               (elo || own == null ? '' : (pc == null ? '—' : pc + '%')) + '</td>';
           }
+          var guardCella = '';
+          if (opts.guard) {
+            var gv = (!elo && own != null) ? opts.guard(name, r) : null;
+            guardCella = '<td class="guard ' +
+              (gv ? (gv.guard > 0 ? 'pos' : gv.guard < 0 ? 'neg' : '') : '') + '">' +
+              (gv ? guardJelol(gv.guard) : (elo || own == null ? '' : '—')) + '</td>';
+          }
           h += '<tr class="clickable" data-mh="' + esc(m[0]) + '" data-mv="' + esc(m[1]) +
             '" data-mr="' + r + '"><td class="rank">' + r + '.</td>' +
             '<td class="name">' + esc(label(opp)) + '</td>' +
             '<td>' + (own != null ? fmt(own) : '—') + '</td>' +
-            '<td>' + (ov != null ? fmt(ov) : '—') + '</td>' + kezdCella +
+            '<td>' + (ov != null ? fmt(ov) : '—') + '</td>' + kezdCella + guardCella +
             '<td class="' + cls + '">' + res +
             (elo ? '<span class="elojel">élő</span>' : '') + '</td></tr>';
         });
@@ -377,9 +421,9 @@
           }
           sorok += '<tr class="clickable" data-mh="' + esc(m[0]) + '" data-mv="' + esc(m[1]) +
             '" data-mr="' + r + '"><td class="rank">' + r + '.</td>' +
-            '<td>' + (ap != null ? fmt(ap) : '—') + kezdJel(a, r, elo) +
+            '<td>' + (ap != null ? fmt(ap) : '—') + kezdJel(a, r, elo) + guardJel(a, r, elo) +
             (elo ? ' <span class="elojel">élő</span>' : '') + '</td>' +
-            '<td>' + (bp != null ? fmt(bp) : '—') + kezdJel(b, r, elo) + '</td>' +
+            '<td>' + (bp != null ? fmt(bp) : '—') + kezdJel(b, r, elo) + guardJel(b, r, elo) + '</td>' +
             '<td class="' + cls + '">' + (elo ? 'élő' : res) + '</td></tr>';
         });
       });
@@ -608,6 +652,15 @@
      A hook: opts.kezd(name, fordulo) -> {sz, le} | null. */
   var KEZD_CIM = 'Kezdőállítási hatékonyság — a keretből elérhető pontok ' +
                  'hány százalékát hozta a beállított kezdő';
+
+  /* A "Guardiola mutato": mennyivel lett tobb/kevesebb pont a keret-
+     valtoztatas utan. guard = a MOSTANI keret pontja MINUSZ a MULT HETI
+     kerete UGYANEBBEN a forduloban - vagyis "mi lett volna, ha hozza sem
+     nyulok". Negativ ertek: a valtoztatas pontba kerult.
+     A hook: opts.guard(name, fordulo) -> {teny, alt, guard} | null. */
+  var GUARD_CIM = 'Guardiola mutató — mennyivel hozott többet a keretváltoztatás,'
+                + ' mint ha a múlt heti kerethez hozzá sem nyúlsz';
+  var guardJelol = function (g) { return (g > 0 ? '+' : '') + fmt(g); };
   function kezdSzazalek(sz, le) {
     return le > 0 ? Math.round(100 * sz / le) : null;
   }
