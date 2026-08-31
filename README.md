@@ -1522,6 +1522,13 @@ fordulóban 94 eladásból 6-ot érintett). Ezért a gyűjtő a `squad_history.j
 hiányzó néhány játékossal — nem kéri le újra mind a 385-öt. Ha ezután mégis hiányzik valaki,
 az elhasalt kérés, nem hiányzó játékos: a gyűjtő ilyenkor a hibakimenetre írja a nevét.
 
+**A mutató a bontás-gyűjtés UTÁN számolódik, nem előtte.** Amíg előtte állt, egy futásban
+frissen pótolt bontás már nem számított bele: a mutató eggyel lemaradt, és csak a következő
+futás hozta helyre. Élesben meg is történt — a pótlás kiment, a `guardiola.json` változatlan
+maradt. A javítás mérete nem elhanyagolható: a 2. fordulóban Bence értéke +3,00-ról −25,50-re
+került (a múlt heti csapatkapitánya volt az a játékos, aki hiányzott a bontásból, tehát a
+pontja duplán számít).
+
 Megjelenik a **meccssorok** pontja mellett, a **Fordulók** fülön oszlopként, és a
 **tabellában** kumuláltan — ugyanabból a körből, amiből a tabella is számol.
 

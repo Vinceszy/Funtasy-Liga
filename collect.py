@@ -1168,24 +1168,6 @@ def main():
         kompakt_iras("hatekonysag.json", {"updated": stamp(), "rounds": hat})
         print("  hatekonysag.json frissitve")
 
-    # ---- Guardiola mutato: fordulonkent ujraszamolva, mint a hatekonysag.
-    # Csak arra a fordulora keszul, aminek MAR VAN bontasa (tehat lezart) es
-    # van elozo fordulos kerete - az elsore fogalmilag nincs.
-    gua = {}
-    for r_ in sorted((int(x) for x in hist["rounds"]), reverse=False):
-        g_ = guardiola(hist["rounds"], r_)
-        if g_:
-            gua[str(r_)] = g_
-    try:
-        with open("guardiola.json", encoding="utf-8") as f:
-            gua_regi = json.load(f).get("rounds")
-    except Exception:
-        gua_regi = None
-    if json.dumps(gua, ensure_ascii=False, sort_keys=True) != \
-       json.dumps(gua_regi, ensure_ascii=False, sort_keys=True):
-        kompakt_iras("guardiola.json", {"updated": stamp(), "rounds": gua})
-        print("  guardiola.json frissitve (%d fordulo)" % len(gua))
-
     # A torzs a nev-atirashoz is kell, ezert MEG a kiiras elott lekerjuk.
     torzs = jatekostorzs()
     # A tarolt nevek atvezetese a torzs szerinti alakra. Nem csak egyszeri
@@ -1217,6 +1199,30 @@ def main():
                      if p.get("id")}
         bontasok_gyujtes(zart_fordulok(schedule, provisional), valtozott, torzs,
                          birtokolt - set(torzs))
+
+    # ---- Guardiola mutato: fordulonkent ujraszamolva, mint a hatekonysag.
+    # Csak arra a fordulora keszul, aminek MAR VAN bontasa (tehat lezart) es
+    # van elozo fordulos kerete - az elsore fogalmilag nincs.
+    #
+    # A BONTAS-GYUJTES UTAN ALL, NEM ELOTTE. Amikor meg elotte allt, egy
+    # futasban frissen potolt bontas mar nem szamitott bele: a mutato
+    # EGGYEL LEMARADT, es csak a kovetkezo futas hozta helyre. Elesben ez
+    # meg is tortent - a potlas kiment, a guardiola.json valtozatlan
+    # maradt. A sorrend tehat nem izles kerdese.
+    gua = {}
+    for r_ in sorted((int(x) for x in hist["rounds"]), reverse=False):
+        g_ = guardiola(hist["rounds"], r_)
+        if g_:
+            gua[str(r_)] = g_
+    try:
+        with open("guardiola.json", encoding="utf-8") as f:
+            gua_regi = json.load(f).get("rounds")
+    except Exception:
+        gua_regi = None
+    if json.dumps(gua, ensure_ascii=False, sort_keys=True) != \
+       json.dumps(gua_regi, ensure_ascii=False, sort_keys=True):
+        kompakt_iras("guardiola.json", {"updated": stamp(), "rounds": gua})
+        print("  guardiola.json frissitve (%d fordulo)" % len(gua))
 
     if json.dumps(meccsek["rounds"], ensure_ascii=False, sort_keys=True) != meccsek_elotte:
         meccsek["updated"] = stamp()

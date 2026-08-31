@@ -181,9 +181,16 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .matrix{padding:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 .tablewrap table{min-width:100%}
-.tablewrap td.name,.tablewrap th:nth-child(2){position:sticky;left:0;background:var(--panel);z-index:1}
-.tablewrap td.rank,.tablewrap th:first-child{position:sticky;left:0;background:var(--panel);z-index:2}
+/* Vizszintes gorgetesnel a HELYEZES es a NEV all - a tobbi oszlop csuszik
+   alattuk. A ket ragadt oszlop nem allhat ugyanazon a `left:0`-n: a helyezes
+   (magasabb z-index) rafeklidt a nevre, es a nev eleje eltunt alatta. Ezert
+   kap a helyezes ROGZITETT szelesseget, es pont ennyi a nev eltolasa.
+   A jobb szeli vonal mutatja, hol vegzodik az allo resz. */
+.tablewrap td.rank,.tablewrap th:first-child{position:sticky;left:0;background:var(--panel);z-index:2;width:34px;min-width:34px;max-width:34px;box-sizing:border-box}
+.tablewrap td.name,.tablewrap th:nth-child(2){position:sticky;left:34px;background:var(--panel);z-index:1;box-shadow:1px 0 0 var(--line)}
 .matrix table{font-size:11px}
+/* Ugyanaz a gorgetes az EGYMAS ELLEN tablaban: a sor eleji nev all. */
+.matrix tr>th:first-child{position:sticky;left:0;background:var(--panel);z-index:1;box-shadow:1px 0 0 var(--line)}
 .matrix td,.matrix th{padding:5px 6px;text-align:center;font-family:var(--mono)}
 .matrix td.w{color:var(--win)}.matrix td.l{color:var(--lose)}.matrix td.d{color:var(--draw)}.matrix td.x{color:#3a5245}
 .matrix td.mx{cursor:pointer}

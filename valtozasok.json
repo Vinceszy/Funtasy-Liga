@@ -2,12 +2,13 @@
  "bejegyzesek": [
   {
    "datum": "2026-08-31",
-   "tipus": "bugfix",
+   "tipus": "funkcio",
    "ligak": [
-    "nb1"
+    "nb1",
+    "pl"
    ],
-   "cim": "Pontosabb Guardiola mutató",
-   "leiras": "A mutató 0 ponttal számolta azt a játékost, aki azóta elment a bajnokságból — pedig játszott, és pontot is szerzett. Ez annak a javára csúszott, aki éppen megvált tőle. Mostantól a háttérben minden valaha birtokolt játékos pontrészletezése megvan, tehát a mutató a tényleges pontokból számol."
+   "cim": "Guardiola mutató: mit hozott a keretváltoztatás",
+   "leiras": "Új szám a meccssorokban, a Fordulók fülön és a tabellában: mennyivel hozott többet vagy kevesebbet a keret, mint ha a múlt heti csapathoz hozzá sem nyúlsz. Ugyanaz a 15 játékos, ugyanazokban a szerepekben — csak ennek a fordulónak a pontjaival; a tabellában az egész szezonra összeadva. A PL-en az FPL forduló végi automatikus cseréi az alternatívára is érvényesek, különben a régi keret alulmérve jönne ki. Az összehasonlítás azokat a játékosokat is a tényleges pontjukkal számolja, akik azóta elmentek a bajnokságból."
   },
   {
    "datum": "2026-08-30",
