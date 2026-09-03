@@ -1,6 +1,15 @@
 {
  "bejegyzesek": [
   {
+   "datum": "2026-09-03",
+   "tipus": "funkcio",
+   "ligak": [
+    "nb1"
+   ],
+   "cim": "A keret már az első meccs előtt látszik",
+   "leiras": "A leadási határidő után a meccsre kattintva mostantól kirajzolódik mindkét keret — pont helyett kötőjellel —, nem kell megvárni az első sípszót. Eddig csak annyi állt ott, hogy a forduló még nem kezdődött el, pedig épp ilyenkor a legizgalmasabb, hogy kivel áll ki az ellenfél. Olyan fordulónál, amelyikhez még nincs leadott keret, továbbra is az üzenet marad."
+  },
+  {
    "datum": "2026-08-31",
    "tipus": "funkcio",
    "ligak": [

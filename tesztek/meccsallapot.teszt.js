@@ -116,12 +116,13 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
   // utani elvaras igy nem "Naprakesz": a gyujtes meg hatravan, es ezt a
   // statuszsor meg is mondja (lasd zarasires.teszt.js - ott a masik ag is).
   const hist = require(require('path').join(__dirname,'..','draft_history.json'));
-  const GW = Object.keys(hist.rounds)[0];
+  // A LEGFRISSEBB tarolt fordulo, nem az elso: a fooldal a legutobbi
+  // fordulot listazza, tehat csak annak a meccsein latszik az "elo" jeloles.
+  const GW = Object.keys(hist.rounds).map(Number).sort((a, b) => b - a)[0] + '';
   const elemek = [...new Set(Object.values(hist.rounds[GW]).flat().map(x => x.e))];
   let kesz = false;
   await jsonAtir(p2, '**/draft.json*', j => {
-    const GW2 = Object.keys(j.schedule)[0];
-    j.schedule[GW2] = j.schedule[GW2].map(m => [m[0], m[1], null, null]);
+    j.schedule[GW] = (j.schedule[GW] || []).map(m => [m[0], m[1], null, null]);
     return j;
   });
   await p2.route('**premierleague.com/api/**', route => {

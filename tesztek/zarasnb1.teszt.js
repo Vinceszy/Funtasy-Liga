@@ -57,10 +57,15 @@ const ADAT = { updated: 'x', rounds: {
   await p.waitForSelector('#znPanel:not([style*="none"])', { timeout: 20000 });
 
   cim('Tartalom');
-  // Az 5. az utolso lejatszott fordulo, es NINCS benne valtozas: a lapozo
-  // akkor is ott all, mert az is hir, hogy nem tortent semmi.
-  jo((await p.$eval('#selZaras', e => e.value)) === '5',
-     'alapból az utolsó fordulón áll a lapozó');
+  // AZ ELVART FORDULOT AZ ADATBOL SZAMOLJUK, nem beegetve. Korabban itt "5"
+  // allt - az volt akkor az utolso lejatszott fordulo -, es a 6. lezarasaval
+  // a teszt bukni kezdett, holott a termekkel semmi baj nem volt. A
+  // naptartol fuggo allando elobb-utobb mindig elavul.
+  const utolso = await p.evaluate(() => T.lastPlayedRound());
+  // Az utolso lejatszott forduloban NINCS valtozas a mockolt adatban: a
+  // lapozo akkor is ott all, mert az is hir, hogy nem tortent semmi.
+  jo((await p.$eval('#selZaras', e => e.value)) === String(utolso),
+     'alapból az utolsó fordulón áll a lapozó (' + utolso + '.)');
   jo(/Nem történt változás/.test(await p.$eval('#znBody', e => e.innerText)),
      'változás nélküli fordulónál ezt meg is mondja');
   await p.selectOption('#selZaras', '4'); await p.waitForTimeout(200);
@@ -95,8 +100,12 @@ const ADAT = { updated: 'x', rounds: {
 
   cim('Lapozás');
   const fordulok = await p.$$eval('#selZaras option', a => a.map(o => +o.value));
-  jo(JSON.stringify(fordulok) === JSON.stringify([1, 2, 3, 4, 5]),
-     'minden lejátszott forduló ott van a legördülőben (' + fordulok.join(', ') + ')');
+  // Ugyanaz: a VART lista is az oldal sajat adatabol jon - minden olyan
+  // fordulo, aminek mar van eredmenye.
+  const vart = await p.evaluate(() => ROUNDS.filter(r => (SCHEDULE[r] || []).some(m => m[2] != null)));
+  jo(JSON.stringify(fordulok) === JSON.stringify(vart),
+     'minden lejátszott forduló ott van a legördülőben (' + fordulok.join(', ')
+     + (JSON.stringify(fordulok) === JSON.stringify(vart) ? '' : ' — várt: ' + vart.join(', ')) + ')');
   await p.selectOption('#selZaras', '3'); await p.waitForTimeout(200);
   await p.click('[data-znav="-1"]');
   await p.waitForFunction(() => document.querySelector('#selZaras').value === '2',

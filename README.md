@@ -78,6 +78,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [Csak lezárt forduló](#csak-lezárt-forduló)
   - [Vízszintes görgetésnél a helyezés és a név áll](#vízszintes-görgetésnél-a-helyezés-és-a-név-áll)
   - [A közös réteg mindkét adatalakot érti — és ez nem kényelmi kérdés](#a-közös-réteg-mindkét-adatalakot-érti--és-ez-nem-kényelmi-kérdés)
+- [5/a6. A keret már a sípszó előtt látszik](#5a6-a-keret-már-a-sípszó-előtt-látszik)
 - [5/a. Miért van fordulónként külön keret-fájl](#5a-miért-van-fordulónként-külön-keret-fájl)
 - [5/a3. A lezárt forduló bontása a repóból jön](#5a3-a-lezárt-forduló-bontása-a-repóból-jön)
   - [Az élő pont a tételes bontásból áll össze (PL)](#az-élő-pont-a-tételes-bontásból-áll-össze-pl)
@@ -1651,6 +1652,32 @@ Rögzítve: `tesztek/gyujto_keretvaltozas.py` (NB1), `tesztek/gyujto_draftkeretv
 és `tesztek/valtoztatasok.teszt.js` — az utóbbi **minden szakvezetőnél és minden fordulónál**
 összeveti a sorok összegét, a blokk „Összesen" sorát, a Fordulók fül GUARD oszlopát és a
 tabella GUA celláját.
+
+## 5/a6. A keret már a sípszó előtt látszik
+
+A leadási határidő után a keret **rögzített**, és a gyűjtő le is menti (`keretek/<forduló>.json`).
+Az NB1-en a meccs-nézet eddig mégis csak annyit írt ilyenkor, hogy *„A forduló még nem kezdődött
+el."* — pedig épp ez a legizgalmasabb kérdés: **kivel áll ki az ellenfél.** Mostantól kirajzolódik
+mindkét keret, pont helyett kötőjellel.
+
+Titok nem sérül: bármelyik szakvezető neve alatt az **Aktuális keret** amúgy is ugyanezt mutatja,
+és a keret a határidő után már nem változtatható.
+
+Két dolog **szándékosan nincs** ilyenkor a fejlécben:
+
+- **„élő" jelzés** — nem zajlik semmi, az hazugság lenne;
+- **KEZD% sor** — minden pont 0, tehát a kezdőállítás hatékonysága 0/0 lenne: szám, ami semmit
+  nem mond.
+
+A fejlécben viszont ott áll a keret **mostani** összege (a magyarszabály +10 már most jár, ha a
+felállítás jó) — ugyanaz a szám, amit az első sípszó után az élő nézet mutat, tehát semmi nem
+ugrik át.
+
+**Valódi jövőbeli fordulónál marad az üzenet.** Ahhoz nincs mentett keret, és kitalálni nem
+fogunk semmit. A PL-oldalon ez a kapu sosem volt ott: a `showMatch` mindig kirajzolja a keretet,
+ha a fordulóhoz van tárolt adat.
+
+Rögzítve: `tesztek/forduloelott.teszt.js`.
 
 ## 5/a. Miért van fordulónként külön keret-fájl
 

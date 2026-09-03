@@ -20,7 +20,15 @@ async function plMeccs(br, keses){
   // (Elesben a sajat ut a leggyorsabb, ott nincs ilyen kesleltetes.)
   await p.route('**workers.dev/**', r => r.abort());
   const hist = require(require('path').join(__dirname,'..','draft_history.json'));
-  const GW = Object.keys(hist.rounds)[0];
+  // AZ ELOFELTETELT KIMONDJUK: a jelzes csak az ELO fordulo meccsen indul el
+  // (a pl/index.html showMatch-e `r === LIVEGW`-re ker le eloben). Korabban
+  // a teszt a tarolt fordulok KOZUL AZ ELSOT tette elove, es a listabol az
+  // ELSO meccsre kattintott - amig egyetlen fordulo volt, a ketto ugyanaz
+  // volt. A 2. fordulo lezarasaval szetvalt: a lap a 2. fordulot listazta,
+  // a mock az 1.-et tette elove, tehat a nem-elo ag futott, jelzes nelkul.
+  // Mostantol a LEGFRISSEBB tarolt fordulo az elo, es a kattintas is arra
+  // a fordulora megy.
+  const GW = Object.keys(hist.rounds).map(Number).sort((a, b) => b - a)[0] + '';
   const elemek = [...new Set(Object.values(hist.rounds[GW]).flat().map(x => x.e))];
   let elsoKesz = false;
   await p.route('**premierleague.com/api/**', async route => {
@@ -43,7 +51,7 @@ async function plMeccs(br, keses){
   await p.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
   await p.waitForFunction(() => document.querySelector('.match .score') &&
     /\d/.test(document.querySelector('.match .score').textContent), null, { timeout: 40000 });
-  await p.locator('.match').first().click();
+  await p.locator(`.match[data-r="${GW}"]`).first().click();
   // A LASSU agon bokezuen varunk: a jelzes a lekeres INDULASA utan 500
   // ms-mal jelenik meg, de elotte a lap meg betolti a fordulo keretet a
   // helyi szerverrol - a teljes tesztsor parhuzamos terhelese alatt ez

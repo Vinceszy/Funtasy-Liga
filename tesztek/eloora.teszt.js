@@ -30,21 +30,29 @@ const allas = p => p.evaluate(() => [...document.querySelectorAll('.match .score
   await p.addInitScript(k => { window.ELO_ORA_KOZ = k; }, KOZ);
 
   let liveKeres = 0, pont = 4;
-  // A 2. fordulo az ELO: a draft.json menetrendjeben meg nincs eredmenye,
-  // tehat a lap az elo overlaybe teszi (a lezart 1. fordulot nem irna felul).
+  // AZ ELO FORDULO a LEGFRISSEBB tarolt fordulo - nem egy beirt szam. A
+  // teszt korabban fixen a 2.-at tette elove, mert akkor annak meg nem volt
+  // eredmenye; a lezarasaval a lap mar nem az elo overlaybe tette, es a
+  // teszt semmit nem mert. Az elofeltetelt ezert KIMONDJUK: a menetrendbol
+  // menet kozben kivesszuk a fordulo eredmenyet.
+  const HIST = require(require('path').join(__dirname, '..', 'draft_history.json'));
+  const GW = Object.keys(HIST.rounds).map(Number).sort((a, b) => b - a)[0] + '';
+  await jsonAtir(p, '**/draft.json*', j => {
+    j.schedule[GW] = (j.schedule[GW] || []).map(m => [m[0], m[1], null, null]);
+    return j;
+  });
   await p.route('**premierleague.com/api/**', async route => {
     const u = decodeURIComponent(route.request().url());
     const json = b => route.fulfill({ status: 200, contentType: 'application/json',
                                       body: JSON.stringify(b) });
     if (/event-status/.test(u)) return json({ status: [] });
-    if (/\/api\/game/.test(u)) return json({ current_event: 2, current_event_finished: false });
+    if (/\/api\/game/.test(u)) return json({ current_event: +GW, current_event_finished: false });
     if (/\/fixtures/.test(u)) return json([]);
     if (/\/live/.test(u)){
       liveKeres++;
-      const hist = require(require('path').join(__dirname, '..', 'draft_history.json'));
       const el = {};
-      for (const lid of Object.keys(hist.rounds['2'] || {}))
-        for (const x of hist.rounds['2'][lid])
+      for (const lid of Object.keys(HIST.rounds[GW] || {}))
+        for (const x of HIST.rounds[GW][lid])
           el[x.e] = { stats: { total_points: pont, minutes: 90 }, explain: [] };
       return json({ elements: el });
     }

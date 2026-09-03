@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
+const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
 // A JATEKOS ELO PONTJA A TETELES BONTASBOL JON, nem az FPL osszesitojebol.
 //
 // MEGTORTENT (2026-08-30, GW2): az FPL a ket erteket kulon tartja, es az
@@ -14,25 +14,37 @@ const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
 //  - ha nincs explain (meg nem jatszott), a stats marad a forras.
 const CSAPAT_MERET = 15, KEZDOK = 11;
 
+// AZ ELO FORDULO a LEGFRISSEBB tarolt fordulo - nem egy beirt szam. A teszt
+// fixen a 2.-at tette elove, mert akkor annak meg nem volt eredmenye; a
+// lezarasaval a lap mar nem az elo overlaybe tette, es a teszt semmit nem
+// mert. Az elofeltetelt ezert KIMONDJUK: a menetrendbol menet kozben
+// kivesszuk a fordulo eredmenyet.
+const HIST = require(require('path').join(__dirname, '..', 'draft_history.json'));
+const GW = Object.keys(HIST.rounds).map(Number).sort((a, b) => b - a)[0] + '';
+const eloFordulova = p => jsonAtir(p, '**/draft.json*', j => {
+  j.schedule[GW] = (j.schedule[GW] || []).map(m => [m[0], m[1], null, null]);
+  return j;
+});
+
 (async () => {
   const br = await inditas();
   cim('PL: az élő pont a bontásból áll össze');
   const p = await br.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   await apiKi(p);
+  await eloFordulova(p);
 
   await p.route('**premierleague.com/api/**', async route => {
     const u = decodeURIComponent(route.request().url());
     const json = b => route.fulfill({ status: 200, contentType: 'application/json',
                                       body: JSON.stringify(b) });
     if (/event-status/.test(u)) return json({ status: [] });
-    if (/\/api\/game/.test(u)) return json({ current_event: 2, current_event_finished: false });
+    if (/\/api\/game/.test(u)) return json({ current_event: +GW, current_event_finished: false });
     if (/\/fixtures/.test(u)) return json([]);
     if (/\/live/.test(u)){
-      const hist = require(require('path').join(__dirname, '..', 'draft_history.json'));
       const el = {};
-      for (const lid of Object.keys(hist.rounds['2'] || {}))
-        for (const x of hist.rounds['2'][lid])
+      for (const lid of Object.keys(HIST.rounds[GW] || {}))
+        for (const x of HIST.rounds[GW][lid])
           // A CSAPDA: a stats BERAGADT (1 pont, 9 perc), az explain viszont
           // a valos esemenyeket adja (90 perc + gol + bonusz = 8 pont).
           el[x.e] = {
@@ -73,18 +85,18 @@ const CSAPAT_MERET = 15, KEZDOK = 11;
   const q = await br.newPage();
   const qerr = []; q.on('pageerror', e => qerr.push(e.message));
   await apiKi(q);
+  await eloFordulova(q);
   await q.route('**premierleague.com/api/**', async route => {
     const u = decodeURIComponent(route.request().url());
     const json = b => route.fulfill({ status: 200, contentType: 'application/json',
                                       body: JSON.stringify(b) });
     if (/event-status/.test(u)) return json({ status: [] });
-    if (/\/api\/game/.test(u)) return json({ current_event: 2, current_event_finished: false });
+    if (/\/api\/game/.test(u)) return json({ current_event: +GW, current_event_finished: false });
     if (/\/fixtures/.test(u)) return json([]);
     if (/\/live/.test(u)){
-      const hist = require(require('path').join(__dirname, '..', 'draft_history.json'));
       const el = {};
-      for (const lid of Object.keys(hist.rounds['2'] || {}))
-        for (const x of hist.rounds['2'][lid])
+      for (const lid of Object.keys(HIST.rounds[GW] || {}))
+        for (const x of HIST.rounds[GW][lid])
           el[x.e] = { stats: { total_points: 3, minutes: 45, starts: 1 }, explain: [] };
       return json({ elements: el });
     }

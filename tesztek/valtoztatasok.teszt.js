@@ -144,17 +144,40 @@ async function liga(br, L){
      + (lattunkBlokkot ? '' : ' (ebben a ligában még nincs lezárt forduló mutatóval)'));
 
   cim('A változtatás nélküli forduló is kilátszik');
+  // AZ ADATBOL DERUL KI, hogy VAN-E ilyen fordulo - nem feltetelezzuk.
+  // A PL-en peldaul a GW2-ben minden csapat valtoztatott, tehat ott nincs
+  // mit kilatszania; ha ilyenkor is "kell egy ures blokk"-ot allitanank, a
+  // teszt a VALOSAGOT hibaztatna. Ha viszont az adatban VAN valtozatlan
+  // szakvezeto-fordulo, a fulnek MUTATNIA KELL.
+  const vanAdatban = await p.evaluate(async ut => {
+    try {
+      const r = await fetch(ut + '?t=' + Date.now());
+      if (!r.ok) return false;
+      const j = (await r.json()).rounds || {};
+      return Object.values(j).some(f => Object.values(f).some(
+        v => !v.ki.length && !v.be.length && !v.szerep.length && !v.bonusz));
+    } catch (e) { return false; }
+  }, L.ut === 'pl/' ? '../draft_keretvaltozasok.json' : '../keretvaltozasok.json');
   // Ez nem diszites: ha kihagynank, a nezo azt hinne, hogy hianyzik az adat -
   // pedig eppen az a valasz, hogy a szakvezeto hozza sem nyult a kerethez.
   let vanUres = false;
   for (const nev of nevek) {
     await nyit(nev, L.tab);
-    await p.waitForTimeout(120);
+    // FIX VARAKOZAS NEM JO: a lista a keretvaltozasok.json beerkezese utan
+    // rajzolodik ki, es ahogy no az adat, ugy csuszik ki egy 120 ms-os
+    // ablakbol - a teszt ilyenkor "nincs ilyen fordulo"-t mer, holott van.
+    // Az ALLAPOTRA varunk: kesz a lista, vagy kimondtuk, hogy nincs adat.
+    await p.waitForFunction(() => {
+      const b = document.getElementById('mBody');
+      return b && (b.querySelector('.valtlista') || /nincs elmentett|Nincs adat/i.test(b.innerText));
+    }, null, { timeout: 10000 }).catch(() => {});
     if (await p.$('#mBody .vaures')) { vanUres = true; break; }
   }
-  jo(vanUres || !lattunkBlokkot,
-     'van olyan forduló, ahol "Nem változtatott a keretén." áll'
-     + (lattunkBlokkot ? '' : ' (ebben a ligában még nincs lezárt forduló mutatóval)'));
+  jo(vanUres || !vanAdatban || !lattunkBlokkot,
+     !vanAdatban
+       ? 'az adatban most nincs változtatás nélküli forduló — nincs mit kilátszania'
+       : 'van olyan forduló, ahol "Nem változtatott a keretén." áll'
+         + (lattunkBlokkot ? '' : ' (ebben a ligában még nincs lezárt forduló mutatóval)'));
 
   cim('A nevek kattinthatók');
   await nyit(nevek[0], L.tab);

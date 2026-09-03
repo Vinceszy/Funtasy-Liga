@@ -98,6 +98,7 @@ Az `api_get`-et mock váltja ki, a `collect.py` egy ideiglenes könyvtárban fut
 | `gyujto_draftzaras.py` | A draft-gyűjtő forduló-véglegesítése: a le nem zárt fordulót teljes keret mellett is újra lekéri, a **lockdown után** még egyszer (ekkor jön be az automatikus csere), utána soha többé — és hiányos lekérés után **nem** jelöli késznek. A mock a valós mérést követi: záráskor a `current_event` még a régi forduló. Külön eset arra, amikor a **tárolt** adat már teljes, de a záráskori lekérés hasal el — a véglegesítés ezért azt nézi, hogy **ebben a futásban** jött-e be minden csapat. |
 | `gyujto_meccsek.py` | A gyűjtő meccsgyűjtése (`meccsek.json`): id szerinti összevonás, **eredmény csak lezárt meccsről** (a futó meccs pontszámát akkor sem tárolja, ha az API küldi), a visszaeső meccs kimarad, a teljes forduló nem kér többé meccslistát, a futó meccsű igen — és a **pótolt meccs** is bekerül: ha a forduló hivatalos pontja változik, újra megy a meccslistás lekérés (az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). |
 | `nb1meccs.teszt.js` | A meccs-sor a NB1 részletezője fölött: lezárt meccsnél eredmény + „vége", el nem kezdődöttnél **nincs kitalált 0–0**, az időkorláton belül „a meccs zajlik"; dupla meccsű klubnál két sor; nogame játékosnál nincs sor; a Játszott perc a táblázat első sora. |
+| `forduloelott.teszt.js` | A leadási határidő után, de az első sípszó előtt is látszik **mindkét keret** (pont helyett kötőjellel), „élő" jelzés és KEZD% sor nélkül — jövőbeli fordulónál viszont marad az üzenet, mert oda nincs mentett keret. Nem a naptárra támaszkodik: a menetrendből menet közben kiveszi egy lezárt forduló eredményét, és a tárolt keretet is a sípszó előtti állapotra állítja. |
 | `nullapont.teszt.js` | A négy „0 pont" állapot és a kattinthatóság-jelzés mindkét oldalon. Az **élő forduló előfeltételét maga állítja be** (`provisional`): lezárt fordulóban a „zajlik" állapotokra más — és helyes — üzenet jár, tehát a valós adatra hagyva a teszt a gyűjtő első lezárása után mást mérne. |
 | `meccsallapot.teszt.js` | A `meccsAllapot()` négy értéke és a két időkorlát (100 / 180 perc); a lejárt éjféles helyőrző (nem ígér kezdési időt); a `round_number`-ből felismert „nincs meccse". |
 | `uzenetek.teszt.js` | Gyorsítótár-kerülés az élő lekéréseknél, és hogy meccs közben nem írjuk, hogy „lejátszotta pont nélkül". A mockolt élő sort a **teljes kezdési időbélyeghez** köti, nem a napjához: meccsnapon a tárolt sor ugyanarra a napra esik, és a teszt egy másik meccs üzenetét mérte volna (2026-08-27-én meg is tette). |
@@ -115,3 +116,34 @@ Az `api_get`-et mock váltja ki, a `collect.py` egy ideiglenes könyvtárban fut
 | `perccellak.teszt.js` | A három perc-oszlop az élő fordulóban: pályán lévő kezdő, lecserélt, becserélt, be nem állt játékos; lefújt meccsnél `vége`; el nem kezdődött meccsnél nincs cella. A meccsóra a **játékosok** perceiből jön — a mockban a fixtures `minutes` szándékosan 0, mert az FPL sosem tölti ki. Az oszlopnevek középpontra mérve a maguk oszlopa fölött állnak gépen és mobilon is. Lezárt fordulóban a meccsóra és a fejlécből a `meccs` oszlop is elmarad, az adat pedig utólag töltődik be — a teszt végpontól végpontig ellenőrzi, hogy a modal előbb jön fel, mint a percek, és az adat megérkeztével magától újrarajzolódik. |
 | `valtozasnaplo.teszt.js` | A változásnapló két szűrője. A liga **címke, és több is kijelölhető**: a mindkét ligát érintő bejegyzés bármelyikre szűrve előjön, két ligát kijelölve pedig mindkettőé látszik.  Ellenőrzi a belső margókat is (a `.panel`-nek nincs sajátja, a sávok adják — ez egyszer elcsúszott), a lábléc-linket mindhárom oldalon, és hogy a naplón nincs. |
 | `szurkites.teszt.js` | A közös játékosok halványítása gépen és mobilon — és hogy a halvány sor is nyitható marad. |
+
+## A naptártól függő állandó előbb-utóbb elavul
+
+Egy szezon közben a tesztek alatt **mozog az adat**, és a beégetett szám vagy a „legelső tárolt
+forduló" előbb-utóbb mást jelent. Hat állítás bukott így egyszerre, egyik sem termékhiba:
+
+| Teszt | Mit feltételezett | Mi lett belőle |
+|---|---|---|
+| `frissjelzo`, `eloora`, `visszateres`, `eloosszeg`, `meccsallapot` | az **első** tárolt forduló az élő | a főoldal a **legutóbbit** listázza, tehát a kattintás nem-élő meccsre ment, és a mérés csendben semmit nem mért |
+| `zarasnb1` | az utolsó lejátszott forduló az **5.** | a 6. lezárásával a lapozó a 6.-on állt |
+| `valtoztatasok` | 120 ms elég a lista kirajzolásához | ahogy nőtt az adat, kicsúszott az ablakból |
+
+A szabály ezekre: **az előfeltételt ki kell mondani, nem a repó pillanatnyi állapotából
+örökölni.** Vagy az adatból számoljuk (a legfrissebb tárolt forduló, `T.lastPlayedRound()`,
+a lejátszott fordulók listája), vagy menet közben mi állítjuk elő (`jsonAtir`-ral kivesszük a
+forduló eredményét). Fix várakozás helyett pedig **állapotra** várunk.
+
+## Az élő fordulót mérő tesztek a LEGFRISSEBB tárolt fordulót teszik élővé
+
+Négy teszt (`frissjelzo`, `eloora`, `visszateres`, és részben `valtoztatasok`) azon áll, hogy a
+PL-oldalon éppen fut egy forduló. Amíg egyetlen tárolt forduló volt, mindegy volt, melyiket
+tették élővé — az volt az egyetlen. **A 2. forduló lezárásával ez szétvált:** a főoldal a
+legutóbbi fordulót listázza, a tesztek viszont az *elsőt* tették élővé, tehát a kattintás egy
+nem-élő meccsre ment, és a mérés csendben semmit nem mért (a jelzés meg sem jelent, az élő
+állás nem íródott ki). Négy állítás bukott, egyik sem termékhiba.
+
+Mostantól mindegyik a **legfrissebb** tárolt fordulót teszi élővé, és ahol kell, az eredményt
+is kiveszi a menetrendből (`jsonAtir`) — vagyis az előfeltételt **kimondja**, nem a repó
+pillanatnyi állapotából örökli. Ugyanez a szabály minden élő fordulót mérő tesztre: a
+naptártól függő előfeltevés előbb-utóbb elavul, és akkor a teszt nem hibát jelez, hanem
+elhallgat.
