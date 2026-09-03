@@ -1682,15 +1682,19 @@ mindkét keret, pont helyett kötőjellel.
 Titok nem sérül: bármelyik szakvezető neve alatt az **Aktuális keret** amúgy is ugyanezt mutatja,
 és a keret a határidő után már nem változtatható.
 
-Két dolog **szándékosan nincs** ilyenkor a fejlécben:
+**A forduló ilyenkor már ÉL, és a nézet ezt ki is írja.** A leadási határidő lejárt, a keret
+rögzített, és az állás sem 0:0 — a **magyarszabály +10 már pontot ér**, ha jó a felállítás.
+Ezért ez az állapot nem kap külön ágat: a **meglévő élő nézet** rajzolja (`showLiveMatch`),
+„élő" jelzéssel és a keret mostani összegével. Egy korábbi változat külön ágon, „élő" jelzés
+nélkül mutatta — az téves döntés volt, és két majdnem azonos kódot jelentett.
 
-- **„élő" jelzés** — nem zajlik semmi, az hazugság lenne;
-- **KEZD% sor** — minden pont 0, tehát a kezdőállítás hatékonysága 0/0 lenne: szám, ami semmit
-  nem mond.
+Az **alcím** követi az állapotot: amíg egyetlen meccs sem kezdődött el, *„a forduló él, de még
+egy meccs sem kezdődött el"*; utána a szokásos *„élő állás — a meccs még tart"*. A hiányzó
+meccsű (start nélküli) játékos **nem** számít elindultnak: az állapota „ismeretlen", és abból
+nem következik, hogy a forduló elkezdődött.
 
-A fejlécben viszont ott áll a keret **mostani** összege (a magyarszabály +10 már most jár, ha a
-felállítás jó) — ugyanaz a szám, amit az első sípszó után az élő nézet mutat, tehát semmi nem
-ugrik át.
+A **KEZD% sor** viszont marad rejtve — ahogy minden élő fordulóban: az érték még változik, és a
+gyűjtő úgyis újraszámolja.
 
 **Valódi jövőbeli fordulónál marad az üzenet.** Ahhoz nincs mentett keret, és kitalálni nem
 fogunk semmit. A PL-oldalon ez a kapu sosem volt ott: a `showMatch` mindig kirajzolja a keretet,

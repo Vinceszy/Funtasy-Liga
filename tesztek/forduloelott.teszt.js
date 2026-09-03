@@ -51,6 +51,7 @@ const JOVOBELI = 20;     // ehhez nincs mentett keret
   await p.waitForSelector('#mBody .sqcol', { timeout: 10000 }).catch(() => {});
   const k = await p.evaluate(() => ({
     sub: document.getElementById('mSub').textContent,
+    allas: (document.querySelector('#mBody .score') || {}).textContent,
     oszlop: document.querySelectorAll('#mBody .sqcol').length,
     jatekos: document.querySelectorAll('#mBody .sqcol .plr').length,
     elojel: document.querySelectorAll('#mBody .elojel').length,
@@ -59,11 +60,19 @@ const JOVOBELI = 20;     // ehhez nincs mentett keret
   }));
   jo(k.oszlop === 2, 'MINDKÉT keret kirajzolódik (' + k.oszlop + ' oszlop)');
   jo(k.jatekos >= 30, 'a két keret együtt legalább 30 játékos (' + k.jatekos + ')');
-  jo(/nem kezdődött/.test(k.sub), 'az alcím megmondja, hogy a forduló még nem kezdődött el: "' + k.sub + '"');
-  // Az "elo" jelzes HAZUGSAG lenne: nem zajlik semmi. A kezdoallitasi
-  // hatekonysag pedig 0/0 lenne - szam, ami semmit nem mond.
-  jo(k.elojel === 0, 'nincs „élő" jelzés (' + k.elojel + ')');
+  jo(/sem kezdődött el/.test(k.sub),
+     'az alcím megmondja, hogy még egy meccs sem kezdődött el: "' + k.sub + '"');
+  // A FORDULO ILYENKOR MAR EL: a leadasi hatarido lejart, a keret rogzitett,
+  // es az allas sem 0:0 - a magyarszabaly mar pontot er. Az "elo" jelzes
+  // tehat NEM hazugsag, hanem a pontos allapot. (Egy korabbi valtozat
+  // elrejtette; az volt a teves dontes.) A kezdoallitasi hatekonysag viszont
+  // marad rejtve: 0/0 lenne, szam, ami semmit nem mond.
+  jo(k.elojel > 0, 'ott a „élő" jelzés (' + k.elojel + ')');
   jo(k.kezdsor === 0, 'nincs KEZD% sor (' + k.kezdsor + ')');
+  // Az allasban SZAM all, nem kotojel: a magyarszabaly mar most jar.
+  jo(/\d/.test(k.allas || ''),
+     'a fejlécben szám áll, nem 0:0 vagy kötőjel — a magyarszabály már pontot ér ('
+     + (k.allas || '').replace(/\s+/g, ' ').trim() + ')');
   const szamos = k.pontok.filter(x => /\d/.test(x));
   jo(k.pontok.length > 0 && szamos.length === 0,
      'minden játékosnál kötőjel áll pont helyett (' + k.pontok.length + ' cella, '

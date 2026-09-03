@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=74">
+<link rel="stylesheet" href="../funtasy.css?v=75">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=74"></script>
+<script src="../funtasy.js?v=75"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -1107,7 +1107,7 @@ function kulonbsegOszlopHTML(name, list, kozosK, realTotal, round, szabaly){
 function meccsTest(){ FunTasy.accOrzo(meccsTestRajz); }
 function meccsTestRajz(){
   if(!MECCS) return;
-  const {h,v,A,B,hp,vp,r,elo,elotte} = MECCS;
+  const {h,v,A,B,hp,vp,r,elo} = MECCS;
   const aK=new Set(A.map(szerepKulcs)), bK=new Set(B.map(szerepKulcs));
   const kozos=A.filter(p=>bK.has(szerepKulcs(p)));
   // a magyarszabaly akkor kozos, ha mindket keretben ugyanannyit er
@@ -1115,10 +1115,9 @@ function meccsTestRajz(){
   const szabaly={kozos: mbA.pts===mbB.pts, pts: mbA.pts};
   const van = SALARY_CAP && (kozos.length || szabaly.kozos);
   // kezdoallitasi hatekonysag a ket oldalra (csak lezart meccsen: elo
-  // forduloban az ertek meg valtozik, es a gyujto ugyis ujraszamolja).
-  // Az el sem kezdodott fordulora sincs: ott minden pont 0, tehat a
-  // "kezdoallitas hatekonysaga" 0/0 lenne - szam, ami semmit nem mond.
-  const kezdsor = (elo||elotte) ? '' : FunTasy.kezdParHTML(kezdErtek(h, r), kezdErtek(v, r), false);
+  // forduloban az ertek meg valtozik, es a gyujto ugyis ujraszamolja - ez
+  // all az el sem kezdodott fordulora is, ahol minden pont meg 0)
+  const kezdsor = elo ? '' : FunTasy.kezdParHTML(kezdErtek(h, r), kezdErtek(v, r), false);
   const gomb = van
     ? `<div class="szurosor">
          <button class="szurogomb${CSAK_ELTERES?' on':''}" id="elteresGomb">Különbségek</button>
@@ -1156,22 +1155,18 @@ async function showMatchRound(h, v, r, mode){
     // Pedig eppen ilyenkor a legizgalmasabb: kivel all ki az ellenfel.
     // Titok sem serul: barmelyik szakvezeto neve alatt az "Aktualis keret"
     // amugy is mutatja ugyanezt.
+    //
+    // AZ ELO NEZETRE ADJUK AT, nem kulon agra: a fordulo ilyenkor MAR EL -
+    // a hatarido lejart, a keret rogzitett -, es az allas sem 0:0, mert a
+    // magyarszabaly mar pontot er. Egy kulon ag ugyanezt rajzolta volna
+    // "elo" jelzes nelkul, ket majdnem azonos kodbol.
     // Ha nincs mentett keret (valodi jovobeli fordulo), marad az uzenet.
     $('mBody').innerHTML='<div class="loading">Keret betöltése…</div>';
     const kte=await keretFordulo(r);
     if(mCurrent[0]!==h||mCurrent[1]!==v||!$('ov').classList.contains('open')) return;
-    const HE=kte[h], VE=kte[v];
-    if(HE&&VE){
-      $('mSub').textContent=r+'. fordulós keretek · a forduló még nem kezdődött el';
-      // A fejlecben a keret MOSTANI osszege all (a magyarszabaly mar most
-      // jar, ha a felallitas jo) - ugyanaz a szam, mint amit az elso
-      // sipszo utan az elo nezet mutat, tehat semmi nem ugrik at.
-      MECCS={h,v,A:HE,B:VE,hp:keretOsszeg(HE),vp:keretOsszeg(VE),r,elo:false,elotte:true};
-      meccsTest();
-    } else {
-      MECCS=null;
-      $('mBody').innerHTML='<div class="loading">A forduló még nem kezdődött el.</div>';
-    }
+    if(kte[h]&&kte[v]) return showLiveMatch(h,v,r);
+    MECCS=null;
+    $('mBody').innerHTML='<div class="loading">A forduló még nem kezdődött el.</div>';
     return;
   }
   mCurrent=[h,v]; openModal();
@@ -1196,7 +1191,15 @@ async function showLiveMatch(h, v, r){
   }
   mCurrent=[h,v]; openModal();
   $('mTitle').textContent=h+'  vs  '+v;
-  $('mSub').textContent=r+'. forduló · élő állás — a meccs még tart';
+  // Az ALCIM az allapotot koveti: a hatarido utan, de az elso sipszo elott
+  // a fordulo mar el (a keret rogzitett, a magyarszabaly mar pontot er),
+  // csak meg egyetlen meccs sem kezdodott el.
+  // A HIANYZO meccs (start nelkuli jatekos) NEM szamit elindultnak: az
+  // allapota 'ismeretlen', es abbol nem kovetkezik, hogy a fordulo elkezdodott.
+  const indult = l => (l||[]).some(p => ['fut','utana'].includes(meccsAllapot(p.start, p.vege)));
+  $('mSub').textContent = r + (indult(H)||indult(V)
+    ? '. forduló · élő állás — a meccs még tart'
+    : '. fordulós keretek · a forduló él, de még egy meccs sem kezdődött el');
   $('mTabs').innerHTML='';
   const rajz=(A,B)=>{
     if(A&&B){ MECCS={h,v,A,B,hp:keretOsszeg(A),vp:keretOsszeg(B),r,elo:true}; meccsTest(); return; }
