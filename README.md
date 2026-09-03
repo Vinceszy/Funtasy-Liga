@@ -1741,6 +1741,13 @@ nem következik, hogy a forduló elkezdődött.
 A **KEZD% sor** viszont marad rejtve — ahogy minden élő fordulóban: az érték még változik, és a
 gyűjtő úgyis újraszámolja.
 
+**A főoldali lista is ezt a számot mutatja.** Az MLSZ ranglistája az első sípszó előtt
+0-t mond, a lista pedig a 0-0-t „el sem kezdődött”-ként dobja el — ezért állt ott sokáig
+`— : —`, holott a keret már rögzített. Ilyenkor a lap a **keretekből** számol
+(`eloKeretbol`), ugyanazzal a `keretOsszeg`-gel, mint a meccs-panel: a két nézet így nem
+mondhat mást. Csak **kitölti**, nem írja felül — amint az MLSZ valódi (nem nulla) pontot
+ad, a `refresh()` azt teszi a helyére.
+
 **Valódi jövőbeli fordulónál marad az üzenet.** Ahhoz nincs mentett keret, és kitalálni nem
 fogunk semmit. A PL-oldalon ez a kapu sosem volt ott: a `showMatch` mindig kirajzolja a keretet,
 ha a fordulóhoz van tárolt adat.

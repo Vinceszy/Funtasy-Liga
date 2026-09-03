@@ -78,6 +78,52 @@ const JOVOBELI = 20;     // ehhez nincs mentett keret
      'minden játékosnál kötőjel áll pont helyett (' + k.pontok.length + ' cella, '
      + szamos.length + ' számmal)');
 
+  cim('A főoldali lista is a keretekből mutatja az állást');
+  // BEJELENTETT: a "Kovetkezo fordulo" widgetben "- : -" allt, holott a
+  // keret mar rogzitett, es a MAGYARSZABALY +10 mar pontot er. Ok: a
+  // fooldali lista a MLSZ ranglistajabol veszi az allast, az pedig a
+  // sipszo elott 0-t mond - a 0-0-t viszont "el sem kezdodott"-kent
+  // dobjuk el. Mostantol ilyenkor a KERETBOL szamolunk, ugyanazzal a
+  // fuggvennyel (keretOsszeg), mint a meccs-panel.
+  //
+  // EZT ERINTETLEN LAPON kell merni: a fenti mereshez kivettuk egy fordulo
+  // eredmenyet, attol viszont a "kovetkezo fordulo" MAS fordulora all, es
+  // nem azt latnank, amit a nezo.
+  const p2 = await br.newPage({ viewport: { width: 900, height: 900 } });
+  const err2 = []; p2.on('pageerror', e => err2.push(e.message));
+  await apiKi(p2);
+  await p2.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
+  await p2.waitForSelector('#mNext .match', { timeout: 20000 });
+  await p2.waitForFunction(() => typeof SQUAD_FILE !== 'undefined' && SQUAD_FILE !== null,
+                           null, { timeout: 20000 }).catch(() => {});
+  await p2.waitForTimeout(600);
+  const w = await p2.evaluate(() => {
+    const r = T.rNext;
+    return {
+      r: r,
+      // csak akkor merheto, ha a KOVETKEZO fordulohoz mar van keret, de meg
+      // nincs eredmeny - eppen ez az allapot a kerdes
+      merheto: !!(r && SQUAD_ROUND === r && SQUAD_FILE
+                  && Object.keys(SQUAD_FILE).length
+                  && (SCHEDULE[r] || []).length
+                  && (SCHEDULE[r] || []).every(m => m[2] == null)),
+      allasok: [...document.querySelectorAll('#mNext .match .score')]
+        .map(x => x.textContent.replace(/\s+/g, ' ').trim()),
+      elo: document.querySelectorAll('#mNext .elojel').length,
+    };
+  });
+  if (w.merheto){
+    jo(w.allasok.length > 0 && w.allasok.every(x => /\d/.test(x)),
+       'a listában SZÁM áll, nem kötőjel (' + w.allasok.join(' | ') + ')');
+    jo(w.elo === w.allasok.length,
+       'mindegyik meccs „élő" jelölést kap (' + w.elo + '/' + w.allasok.length + ')');
+  } else {
+    jo(true, 'kihagyva: a következő fordulóhoz még nincs mentett keret (r=' + w.r + ')');
+  }
+  jo(err2.length === 0, 'nincs JS-hiba a főoldalon'
+     + (err2.length ? ': ' + err2.join(' | ') : ''));
+  await p2.close();
+
   cim('Valódi jövőbeli fordulónál marad az üzenet');
   // Ehhez NINCS mentett keret - kitalalni nem fogunk semmit.
   await p.evaluate(() => { const b = document.getElementById('ovClose'); if (b) b.click(); });

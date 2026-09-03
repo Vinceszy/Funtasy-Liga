@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=75">
+<link rel="stylesheet" href="../funtasy.css?v=76">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=75"></script>
+<script src="../funtasy.js?v=76"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -254,6 +254,7 @@ async function refresh(){
       (LIVE[r]=LIVE[r]||[])[i]=[m[0],m[1],hp,vp]; filled++;
     });
     if(!ok){ lekeresHiba(); return; }
+    eloKeretbol();          // amit az MLSZ meg nem adott meg, a keretbol
     T.rPast=lastPlayedRound(); T.rNext=nextRound();
     renderTable(); renderMatches('past'); renderMatches('next'); renderMatrix();
     st.className='ok';
@@ -276,6 +277,30 @@ async function loadSquadFile(){
     else SQUAD_FILE={};
   }catch(e){ SQUAD_FILE={}; }
   return SQUAD_FILE;
+}
+// A FOLYO FORDULO ALLASA A KERETEKBOL. Az MLSZ ranglistaja a fordulo
+// elso sipszaja elott 0-t mond, a fooldali lista pedig a 0-0-t "el sem
+// kezdodott"-kent dobja el - ezert allt ott "- : -", holott a keret mar
+// rogzitett, es a MAGYARSZABALY +10 mar pontot er. Ugyanaz a szam, amit a
+// meccs-panel mutat (keretOsszeg), tehat a ket nezet nem mond mast.
+//
+// Csak KITOLT, nem ir felul: amint az MLSZ valodi (nem nulla) pontot ad, a
+// refresh() azt teszi a helyere.
+function eloKeretbol(){
+  const r=SQUAD_ROUND;
+  if(!r || !SQUAD_FILE || !SCHEDULE[r]) return 0;
+  let db=0;
+  SCHEDULE[r].forEach((m,i)=>{
+    if(m[2]!=null) return;                       // mar vegleges eredmeny
+    if((LIVE[r]||[])[i]) return;                 // az elo lekeres mar beirta
+    const A=SQUAD_FILE[m[0]], B=SQUAD_FILE[m[1]];
+    if(!A||!A.length||!B||!B.length) return;
+    (LIVE[r]=LIVE[r]||[])[i]=[m[0],m[1],keretOsszeg(A),keretOsszeg(B)];
+    db++;
+  });
+  if(db){ T.rPast=lastPlayedRound(); T.rNext=nextRound();
+          renderMatches('past'); renderMatches('next'); }
+  return db;
 }
 async function getSquad(name){
   if(SQUAD[name]) return SQUAD[name];
@@ -1361,6 +1386,9 @@ async function boot(){
     .then(j=>{ if(j&&j.rounds){ ZNADAT=j.rounds; znInit(); } }).catch(()=>{});
   T.rPast=lastPlayedRound(); T.rNext=nextRound();
   renderTable(); renderMatches('past'); renderMatches('next'); renderMatrix();
+  // A kereteket NEM varjuk meg (a lista enelkul is all): amint megjon,
+  // kitolti a folyo fordulo allasat - lasd eloKeretbol.
+  loadSquadFile().then(eloKeretbol).catch(()=>{});
   refresh();
   // Mobilon a lapra visszaterve nincs ujratoltes, tehat a fenti egyszeri
   // lekeres utan az allas befagyna - ezert visszatereskor ujra lekerjuk.
