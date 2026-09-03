@@ -1,0 +1,43 @@
+=== MERES: klub KET meccsel egy forduloban - 7. fordulo ===
+(MLSZ szerinti aktualis fordulo: 7)
+elert resztvevok: 8 / 8
+
+=== A-C) klubonkent a current_round.games lista ===
+ETO      Štefulj                games: 2 elem
+           round_number=3F     start=2026-09-03T19:30:00+02:00  status=scheduled    ETO - FTC
+           round_number=7F     start=2026-09-06T20:00:00+02:00  status=scheduled    ETO - HONVÉD
+           MOSTANI jatek_mezok(fordulo=7) -> {'start': None, 'nogame': True}
+HONVÉD   García Ruiz            games: 1 elem
+           round_number=7F     start=2026-09-06T20:00:00+02:00  status=scheduled    ETO - HONVÉD
+           MOSTANI jatek_mezok(fordulo=7) -> {'start': '2026-09-06T20:00:00+02:00'}
+MTK      Hinora                 games: 1 elem
+           round_number=7F     start=2026-09-05T17:30:00+02:00  status=scheduled    MTK - VÁRDA
+           MOSTANI jatek_mezok(fordulo=7) -> {'start': '2026-09-05T17:30:00+02:00'}
+NYÍREGY  Kovács                 games: 1 elem
+           round_number=7F     start=2026-09-04T18:30:00+02:00  status=scheduled    VASAS - NYÍREGY
+           MOSTANI jatek_mezok(fordulo=7) -> {'start': '2026-09-04T18:30:00+02:00'}
+PAFC     Harutyunyan            games: 1 elem
+           round_number=7F     start=2026-09-06T15:30:00+02:00  status=scheduled    ZTE - PAFC
+           MOSTANI jatek_mezok(fordulo=7) -> {'start': '2026-09-06T15:30:00+02:00'}
+PAKS     Szalai                 games: 1 elem
+           round_number=7F     start=2026-09-05T20:00:00+02:00  status=scheduled    PAKS - DVSC
+           MOSTANI jatek_mezok(fordulo=7) -> {'start': '2026-09-05T20:00:00+02:00'}
+VASAS    Urblík                 games: 1 elem
+           round_number=7F     start=2026-09-04T18:30:00+02:00  status=scheduled    VASAS - NYÍREGY
+           MOSTANI jatek_mezok(fordulo=7) -> {'start': '2026-09-04T18:30:00+02:00'}
+VÁRDA    Herc                   games: 1 elem
+           round_number=7F     start=2026-09-05T17:30:00+02:00  status=scheduled    MTK - VÁRDA
+           MOSTANI jatek_mezok(fordulo=7) -> {'start': '2026-09-05T17:30:00+02:00'}
+ZTE      Barbarics              games: 1 elem
+           round_number=7F     start=2026-09-06T15:30:00+02:00  status=scheduled    ZTE - PAFC
+           MOSTANI jatek_mezok(fordulo=7) -> {'start': '2026-09-06T15:30:00+02:00'}
+ÚJPEST   Szendrei               games: 1 elem
+           round_number=7F     start=2026-09-06T17:45:00+02:00  status=scheduled    FTC - ÚJPEST
+           MOSTANI jatek_mezok(fordulo=7) -> {'start': '2026-09-06T17:45:00+02:00'}
+
+=== E) van-e szept. 3-i meccs BARMELYIK klub listajaban? ===
+ETO: {"id": 431, "start_at": "2026-09-03T19:30:00+02:00", "status": "scheduled", "away_score": null, "home_score": null, "round_number": "3F", "home_team": {"id": 39, "name": "ETO", "short_name": "ETO", "color_hex": null}, "away_team": {"id": 35, "name": "FTC", "short_name": "FTC", "color_hex": null}}
+
+=== KOVETKEZTETES ===
+tobb meccses klub a listaban: ETO
+a mostani logika szerint 'nincs meccse': ETO
