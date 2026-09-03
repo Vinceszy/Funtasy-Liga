@@ -14,7 +14,10 @@ P4: A GEP KULON: az automatikus csere hozadeka nem a jatekos-tetelek kozott
     all, hanem sajat sorban (gepE -> gepU).
 P5: A TETELEK OSSZEGE (ember + gep) = a draft_guardiola altal adott `guard`.
 P6: valtozatlan keretnel nincs tetel es a mutato 0.
-P7: nincs mihez hasonlitani / nincs pont-adat -> nincs adat.
+P7: nincs mihez hasonlitani -> nincs adat.
+P8: NINCS PONT-ADAT (a fordulo meg zajlik) -> a valtoztatas MEGIS kijon,
+    csak pontertek nelkul; a gepi csere sora sem kerul bele, hiszen az
+    automatikus csere meg meg sem tortent.
 """
 import os, sys
 
@@ -133,9 +136,17 @@ allit(v and not v["ki"] and not v["be"] and not v["szerep"] and v["guard"] == 0,
       "P6: valtozatlan keretnel nincs tetel es a mutato 0 - kapott: %s" % (v,))
 allit(c.draft_keretvaltozas({"1": {"L": keret(KEZDO, PAD)}}, 1, pontok(), POSZT) is None,
       "P7: az elso fordulora nincs adat")
-allit(c.draft_keretvaltozas({"1": {"L": keret(KEZDO, PAD)},
-                             "2": {"L": keret(KEZDO, PAD)}}, 2, None, POSZT) is None,
-      "P7: pont-adat nelkul nincs adat")
+print("\n--- P8: pont-adat nelkul is kijon a valtoztatas ---")
+most8 = keret(KEZDO[:10] + [20], PAD)          # a 11-es helyett a 20-as
+v8 = (c.draft_keretvaltozas({"1": {"L": keret(KEZDO, PAD)}, "2": {"L": most8}},
+                            2, None, POSZT) or {}).get("L")
+allit(v8 and v8["pontok"] is False and v8["guard"] is None,
+      "P8: pont nelkuli alak - kapott: %s" % ((v8 and (v8["pontok"], v8["guard"])),))
+allit(v8 and [x["e"] for x in v8["ki"]] == [11] and [x["e"] for x in v8["be"]] == [20],
+      "P8: a csere latszik - kapott: ki=%s be=%s"
+      % ((v8 and [x["e"] for x in v8["ki"]]), (v8 and [x["e"] for x in v8["be"]])))
+allit(v8 and "gepE" not in v8 and "gepU" not in v8,
+      "P8: a gepi csere sora nincs benne (meg meg sem tortent)")
 
 if hibak:
     print("\n%d allitas bukott." % len(hibak))

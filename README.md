@@ -75,7 +75,8 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [A PL-en ugyanez, automatikus cserékkel](#a-pl-en-ugyanez-automatikus-cserékkel)
 - [5/a5. A „Változtatások" fül](#5a5-a-változtatások-fül)
   - [A PL-en külön áll, amit az ember csinált, és amit a gép](#a-pl-en-külön-áll-amit-az-ember-csinált-és-amit-a-gép)
-  - [Csak lezárt forduló](#csak-lezárt-forduló)
+  - [A folyamatban lévő forduló pont nélkül szerepel](#a-folyamatban-lévő-forduló-pont-nélkül-szerepel)
+  - [Egy kapu dönt, mikor van pontszám](#egy-kapu-dönt-mikor-van-pontszám)
   - [Vízszintes görgetésnél a helyezés és a név áll](#vízszintes-görgetésnél-a-helyezés-és-a-név-áll)
   - [A közös réteg mindkét adatalakot érti — és ez nem kényelmi kérdés](#a-közös-réteg-mindkét-adatalakot-érti--és-ez-nem-kényelmi-kérdés)
 - [5/a6. A keret már a sípszó előtt látszik](#5a6-a-keret-már-a-sípszó-előtt-látszik)
@@ -1606,12 +1607,30 @@ helyre a keretet (vagy fordítva). Ezért a PL-en a számítás kettéválik:
 A kettő összege a keret pontja, tehát a levezetés maradék nélkül kijön. A fül a részösszeget
 is kiírja (*„A te döntéseid"*), hogy egy pillantással látszódjon, mi kinek a műve.
 
-### Csak lezárt forduló
+### A folyamatban lévő forduló pont nélkül szerepel
+
+A leadási határidő után a keret **rögzített**, tehát a *változtatás* már ismert — a **pontja**
+még nem. Ezt a fül ki is írja: a folyó forduló blokkja ott van, benne minden eladás, vétel és
+szerepváltás, de **egyetlen szám sincs benne** — se a sorokban, se összesenként; a fejlécben
+GUARD helyett az áll, hogy *„még nincs pontszám"*. A `0` hazugság lenne: azt állítaná, hogy a
+változtatás semmit nem ért.
+
+A gyűjtő ilyenkor `pontok: false` és `guard: null` mellett adja ki a tételeket
+(`keretvaltozas_pont_nelkul`, illetve `draft_keretvaltozas_pont_nelkul`). A PL-en a **gépi
+csere** sora sem kerül bele: az automatikus csere a forduló végén történik, tehát még meg sem
+történt.
+
+**A Guardiola mutató ettől nem készül el korábban.** A `guardiola.json` továbbra is csak lezárt
+fordulóra tartalmaz értéket, és a tabella sem számol belőle.
+
+### Egy kapu dönt, mikor van pontszám
 
 A fül **ugyanazt a feltételt** használja, mint a Fordulók fül és a tabella: élő vagy még le nem
 zárt fordulóra nincs érték. A feltétel egy helyen él (`FunTasy.guardErtek`), mert három hely
 használja — és amíg külön-külön döntött, elő is állt, hogy a PL 2. fordulója a Fordulók fülön
-még üres volt, a Változtatások fülön viszont már állt benne szám.
+még üres volt, a Változtatások fülön viszont már állt benne szám. Ha a gyűjtő fájljában mégis
+állna szám egy le nem zárt fordulóra, a lap azt **szándékosan figyelmen kívül hagyja** — egy
+helyen dőljön el, mikor van érték.
 
 ### Vízszintes görgetésnél a helyezés és a név áll
 

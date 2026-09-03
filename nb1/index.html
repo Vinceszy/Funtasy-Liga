@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=73">
+<link rel="stylesheet" href="../funtasy.css?v=74">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=73"></script>
+<script src="../funtasy.js?v=74"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -444,30 +444,43 @@ function valtoztatasokHTML(name, kv){
   const csoportok=[];
   for(const r of rks){
     const v=(kv[r]||{})[name];
-    // Csak LEZART fordulo: elo/le nem zart forduloban a mutato nem szamolhato
-    // (a tabella es a Fordulok ful sem mutat semmit) - ugyanaz a feltetel.
-    if(!v || !T.guardErtek(name, r)) continue;
+    if(!v) continue;
+    // A PONTOS agra UGYANAZ a kapu vonatkozik, mint a tabellara es a
+    // Fordulok fulre (T.guardErtek): elo vagy meg le nem zart forduloban a
+    // mutato nem szamolhato. A VALTOZTATAS viszont ilyenkor is ismert - a
+    // keret a leadasi hatarido utan rogzitett -, ezert azt kiirjuk, csak
+    // pontertek nelkul. Ha a gyujtoben mar allna szam egy le nem zart
+    // fordulora, azt itt SZANDEKOSAN figyelmen kivul hagyjuk: egy helyen
+    // doljon el, mikor van ertek.
+    const g=T.guardErtek(name, r);
+    const pontos=!!g && v.pontok!==false;
     // A kozepso oszlop a jatekos NYERS fordulopontja; ha a szerep modositja
     // (kapitany duplan, pad felezve), akkor "nyers -> ennyit ert" alakban -
     // enelkul a kapitanyi 28,5 mellett nem latszana, honnan jott.
     const ertek=x=>x.nyers===x.ert ? {ert:x.nyers} : {elott:x.nyers, utan:x.ert};
+    // a szerep-cimke ugyanaz a ket agon; csak az ertek-oszlopok hianyoznak
+    const sor=x=>({...alap(x), cimke:x.sz==='kezdo'?'':SZLABEL[x.sz]});
     const reszek=[
-      {cim:'Eladva',       sorok:v.ki.map(x=>({...alap(x), ...ertek(x),
-         cimke:x.sz==='kezdo'?'':SZLABEL[x.sz], dl:-x.ert}))},
-      {cim:'Megvéve',      sorok:v.be.map(x=>({...alap(x), ...ertek(x),
-         cimke:x.sz==='kezdo'?'':SZLABEL[x.sz], dl:x.ert}))},
-      {cim:'Szerepváltás', sorok:v.szerep.map(x=>({...alap(x),
-         cimke:SZLABEL[x.szE]+' → '+SZLABEL[x.szU], elott:x.ertE, utan:x.ertU,
-         dl:+(x.ertU-x.ertE).toFixed(2)}))},
+      {cim:'Eladva', sorok:v.ki.map(x=>pontos
+        ? {...sor(x), ...ertek(x), dl:-x.ert} : sor(x))},
+      {cim:'Megvéve', sorok:v.be.map(x=>pontos
+        ? {...sor(x), ...ertek(x), dl:x.ert} : sor(x))},
+      {cim:'Szerepváltás', sorok:v.szerep.map(x=>pontos
+        ? {...alap(x), cimke:SZLABEL[x.szE]+' → '+SZLABEL[x.szU],
+           elott:x.ertE, utan:x.ertU, dl:+(x.ertU-x.ertE).toFixed(2)}
+        : {...alap(x), cimke:SZLABEL[x.szE]+' → '+SZLABEL[x.szU]})},
     ];
-    // A magyarszabaly nem egy jatekoson mulik, hanem a kereten - sajat szakasz.
-    if(v.bonusz) reszek.push({cim:'Magyarszabály', sorok:[
+    // A magyarszabaly nem egy jatekoson mulik, hanem a kereten - sajat
+    // szakasz. Pont nelkuli fordulonal nincs: az is pont.
+    if(pontos && v.bonusz) reszek.push({cim:'Magyarszabály', sorok:[
       {nev:'Magyarszabály', cimke:v.bonusz>0?'megjött':'elveszett', dl:v.bonusz}]});
-    csoportok.push({nev:r+'. forduló', guard:v.guard, reszek});
+    csoportok.push({nev:r+'. forduló', guard:pontos?v.guard:null, reszek,
+                    megj:pontos?'':'még nincs pontszám',
+                    ures:pontos?'':'Nem változtatott a keretén.'});
   }
   if(!csoportok.length)
     return '<div class="loading">Ehhez a szakvezetőhöz még nincs elmentett változtatás.</div>';
-  return `<div class="note" style="padding:0 0 10px">Az <b>eladott</b> játékos a <b>múlt heti</b> szerepével számít (ennyit hozott volna, ha hozzá sem nyúlsz), a <b>megvett</b> a mostanival. A jobb szélső szám a forduló mérlegére gyakorolt hatás; mellette a játékos nyers fordulópontja, kapitánynál és padosnál <b>nyers → ennyit ért</b> alakban. A blokk alján az összeg: ez a forduló <b>GUARD</b> értéke, ugyanaz, ami a Fordulók fülön és a tabellában áll.</div>`
+  return `<div class="note" style="padding:0 0 10px">Az <b>eladott</b> játékos a <b>múlt heti</b> szerepével számít (ennyit hozott volna, ha hozzá sem nyúlsz), a <b>megvett</b> a mostanival. A jobb szélső szám a forduló mérlegére gyakorolt hatás; mellette a játékos nyers fordulópontja, kapitánynál és padosnál <b>nyers → ennyit ért</b> alakban. A blokk alján az összeg: ez a forduló <b>GUARD</b> értéke, ugyanaz, ami a Fordulók fülön és a tabellában áll. A <b>folyamatban lévő</b> fordulónál a változtatás már látszik, pontszám még nincs hozzá.</div>`
     + FunTasy.valtoztatasLista(csoportok, 'Nincs adat.');
 }
 

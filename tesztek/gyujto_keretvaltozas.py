@@ -13,7 +13,11 @@ K4: a magyarszabaly kulonbsege kulon sor (nem egy jatekoson mulik).
 K5: A TETELEK OSSZEGE = a guardiola() altal adott `guard`. Ez a leg-
     fontosabb allitas: ha elcsuszik, a ful szama mast mond, mint a tabella.
 K6: valtozatlan keretnel nincs tetel, es a mutato 0.
-K7: nincs mihez hasonlitani / nincs bontas -> nincs adat.
+K7: nincs mihez hasonlitani -> nincs adat.
+K8: NINCS BONTAS (a fordulo meg nem zart le) -> a valtoztatas MEGIS kijon,
+    csak pontertek nelkul (`pontok: False`, `guard: None`). A keret a leadasi
+    hatarido utan rogzitett, tehat a "kit adott el, kit vett meg" mar tudott -
+    a pontja nem.
 """
 import os, sys
 
@@ -133,9 +137,25 @@ allit(v and not v["ki"] and not v["be"] and not v["szerep"] and v["guard"] == 0,
       "K6: valtozatlan keretnel nincs tetel es a mutato 0 - kapott: %s" % (v,))
 allit(c.keretvaltozas({"1": {"A": keret(ALAP)}}, 1) is None,
       "K7: az elso fordulora nincs adat")
+print("\n--- K8: bontas nelkul is kijon a valtoztatas, pont nelkul ---")
 c.nyers_pontok = lambda r: None
-allit(c.keretvaltozas({"1": {"A": keret(ALAP)}, "2": {"A": keret(ALAP)}}, 2) is None,
-      "K7: bontas nelkul (nem lezart fordulo) nincs adat")
+regi8 = keret(ALAP)
+regi8[0]["cap"] = True
+most8 = keret([21] + ALAP[1:])
+most8[1]["sub"] = True                     # kezdobol pados
+v8 = (c.keretvaltozas({"1": {"A": regi8}, "2": {"A": most8}}, 2) or {}).get("A")
+allit(v8 and v8["pontok"] is False and v8["guard"] is None,
+      "K8: pont nelkuli alak (pontok=False, guard=None) - kapott: %s"
+      % ((v8 and (v8["pontok"], v8["guard"])),))
+allit(v8 and [x["id"] for x in v8["ki"]] == [1] and [x["id"] for x in v8["be"]] == [21],
+      "K8: a csere ettol meg latszik - kapott: ki=%s be=%s"
+      % ((v8 and [x["id"] for x in v8["ki"]]), (v8 and [x["id"] for x in v8["be"]])))
+allit(v8 and len(v8["szerep"]) == 1 and v8["szerep"][0]["szE"] == "kezdo"
+      and v8["szerep"][0]["szU"] == "pad",
+      "K8: a szerepvaltas is - kapott: %s" % ((v8 and v8["szerep"]),))
+allit(v8 and not any("ert" in x or "nyers" in x for x in v8["ki"] + v8["be"])
+      and "bonusz" not in v8,
+      "K8: PONTERTEK SEHOL nincs benne (ert/nyers/bonusz)")
 
 if hibak:
     print("\n%d allitas bukott." % len(hibak))

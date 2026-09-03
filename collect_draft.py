@@ -307,6 +307,34 @@ def draft_szerep(e, keret):
     return "pad" if any(x.get("e") == e and x.get("b") for x in keret) else "kezdo"
 
 
+def draft_keretvaltozas_pont_nelkul(elozo, mostani):
+    """A FOLYO fordulo valtoztatasai a PL-en, pontertek nelkul.
+
+    Csak azt tartalmazza, amit az EMBER dontott (elengedve / megszerezve /
+    kezdo <-> pad). A zarasi automatikus csere ilyenkor meg nem tortent meg,
+    tehat nincs is mit kulon sorba tenni."""
+    ki_ossz = {}
+    for lid, keret in mostani.items():
+        regi = elozo.get(lid)
+        if not regi or not keret:
+            continue
+        uj_id = [x.get("e") for x in keret]
+        regi_id = [x.get("e") for x in regi]
+        ki = sorted(({"e": e, "sz": draft_szerep(e, regi)}
+                     for e in regi_id if e not in uj_id), key=lambda x: x["e"])
+        be = sorted(({"e": e, "sz": draft_szerep(e, keret)}
+                     for e in uj_id if e not in regi_id), key=lambda x: x["e"])
+        szer = sorted(({"e": e, "szE": draft_szerep(e, regi),
+                        "szU": draft_szerep(e, keret)}
+                       for e in uj_id
+                       if e in regi_id
+                       and draft_szerep(e, regi) != draft_szerep(e, keret)),
+                      key=lambda x: x["e"])
+        ki_ossz[str(lid)] = {"pontok": False, "guard": None,
+                             "ki": ki, "be": be, "szerep": szer}
+    return ki_ossz or None
+
+
 def draft_keretvaltozas(hist_rounds, gw, pontok_gw, poszt):
     """Mit valtoztatott a csapat a fordulora, es mit ert - a "Valtoztatasok"
     ful adata. Ugyanaz a szerep, mint az NB1-en (collect.py keretvaltozas):
@@ -326,8 +354,14 @@ def draft_keretvaltozas(hist_rounds, gw, pontok_gw, poszt):
     Magyarszabaly itt nincs, tehat kulon sor sem kell hozza."""
     elozo = hist_rounds.get(str(gw - 1)) or {}
     mostani = hist_rounds.get(str(gw)) or {}
-    if not elozo or not mostani or not pontok_gw:
+    if not elozo or not mostani:
         return None
+    if not pontok_gw:
+        # NINCS MEG A FORDULO PONT-ADATA - a valtoztatas viszont mar ismert:
+        # a keret a hatarido utan rogzitett. Ilyenkor pont nelkul adjuk ki
+        # (lasd collect.py keretvaltozas_pont_nelkul). A mutato ettol nem
+        # keszul el korabban.
+        return draft_keretvaltozas_pont_nelkul(elozo, mostani)
     pont = lambda e: (pontok_gw.get(str(e)) or [0, 0])[0]
 
     def ember(keret):

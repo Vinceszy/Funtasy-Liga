@@ -340,6 +340,8 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
   font-family:var(--cim);font-size:13px;letter-spacing:1px;color:var(--amber);
   padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:4px}
 .vafej .guardjel{font-size:13px;margin-left:0}
+/* a meg le nem zart fordulo fejlecben: nincs szam, csak az ok */
+.vafej .vamegj{font:600 11px var(--fo);letter-spacing:0;color:var(--dim);text-transform:none}
 .varescim{font:600 10px var(--fo);letter-spacing:1.4px;text-transform:uppercase;
   color:var(--dim);margin:8px 0 2px}
 .varescim:first-of-type{margin-top:4px}

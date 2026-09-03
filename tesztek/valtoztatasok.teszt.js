@@ -92,7 +92,10 @@ async function liga(br, L){
     }
     const blokkok = await p.$$eval('#mBody .vakor', bs => bs.map(b => ({
       cim: b.querySelector('.vafej span').textContent.trim(),
-      fejGuard: (b.querySelector('.vafej .guardjel') || {}).textContent,
+      fejGuard: b.querySelector('.vafej .guardjel')
+        ? b.querySelector('.vafej .guardjel').textContent : null,
+      megj: (b.querySelector('.vafej .vamegj') || {}).textContent,
+      uresDiff: [...b.querySelectorAll('.zdiff')].every(x => !x.textContent.trim()),
       sorok: [...b.querySelectorAll('.vasor:not(.vaossz):not(.vaures):not(.vareszossz) .zdiff')].map(x => x.textContent.trim()),
       jatekos: [...b.querySelectorAll('.vasor:not(.vaossz):not(.vaures):not(.vareszossz):not(.vagep) .zdiff')].map(x => x.textContent.trim()),
       reszossz: (b.querySelector('.vareszossz .zdiff') || {}).textContent,
@@ -109,6 +112,13 @@ async function liga(br, L){
     let kum = 0;
     for (const b of blokkok) {
       const r = parseInt(b.cim);
+      // A PONT NELKULI (meg le nem zart) blokk kimarad az osszevetesbol:
+      // ott szandekosan nincs szam. Kulon allitas meri lentebb.
+      if (b.fejGuard == null){
+        if (sz(fordulok[r]) != null)
+          bajok.push(nev + ' ' + r + '.: a Fordulók fülön van GUARD, itt "még nincs pontszám"');
+        continue;
+      }
       const fej = sz(b.fejGuard);
       kum += fej;
       // a) sorok osszege = fejlec (ures blokknal nincs sor, es a fejlec 0)
@@ -178,6 +188,41 @@ async function liga(br, L){
        ? 'az adatban most nincs változtatás nélküli forduló — nincs mit kilátszania'
        : 'van olyan forduló, ahol "Nem változtatott a keretén." áll'
          + (lattunkBlokkot ? '' : ' (ebben a ligában még nincs lezárt forduló mutatóval)'));
+
+  cim('A folyamatban lévő forduló pont nélkül is ott van');
+  // A keret a leadasi hatarido utan rogzitett, tehat a valtoztatas mar
+  // ismert - a pontja meg nem. Ilyenkor a blokk ott van, de SEMMILYEN szam
+  // nincs benne: se sorokban, se osszesen. A "0" hazugsag lenne.
+  let pontNelkuli = null;
+  for (const nev of nevek) {
+    await nyit(nev, L.tab);
+    await p.waitForFunction(() => {
+      const b = document.getElementById('mBody');
+      return b && (b.querySelector('.valtlista') || /nincs elmentett|Nincs adat/i.test(b.innerText));
+    }, null, { timeout: 10000 }).catch(() => {});
+    const t = await p.$$eval('#mBody .vakor', bs => {
+      const b = bs.find(x => x.querySelector('.vafej .vamegj'));
+      return b ? { cim: b.querySelector('.vafej span').textContent.trim(),
+                   megj: b.querySelector('.vafej .vamegj').textContent.trim(),
+                   guardjel: !!b.querySelector('.vafej .guardjel'),
+                   ossz: !!b.querySelector('.vaossz'),
+                   sorok: b.querySelectorAll('.vasor:not(.vaures)').length,
+                   uresDiff: [...b.querySelectorAll('.zdiff')].every(x => !x.textContent.trim()),
+                   uresErt: [...b.querySelectorAll('.vaert')].every(x => !x.textContent.trim()) } : null;
+    });
+    if (t) { pontNelkuli = t; break; }
+  }
+  if (pontNelkuli){
+    jo(/nincs pontszám/.test(pontNelkuli.megj),
+       'a fejléc megmondja, hogy még nincs pontszám ("' + pontNelkuli.megj + '")');
+    jo(!pontNelkuli.guardjel && !pontNelkuli.ossz,
+       'nincs GUARD a fejlécben és nincs "Összesen" sor');
+    jo(pontNelkuli.sorok > 0, 'a változtatás viszont látszik (' + pontNelkuli.sorok + ' sor)');
+    jo(pontNelkuli.uresDiff && pontNelkuli.uresErt,
+       'egyetlen szám sincs a sorokban — a „0" hazugság lenne');
+  } else {
+    jo(true, 'kihagyva: most nincs olyan forduló, aminek a kerete rögzített, de pontja még nincs');
+  }
 
   cim('A nevek kattinthatók');
   await nyit(nevek[0], L.tab);
@@ -295,6 +340,46 @@ async function regiAlak(br){
   await p.close();
 }
 
+/* A PL-en eppen NINCS olyan fordulo, aminek a kerete rogzitett, de pontja
+   meg nincs - a fenti kor ezert ott kihagyja a merest. A viselkedest viszont
+   MOST kell bizonyitani: a menetrendbol kivesszuk a legutobbi fordulo
+   eredmenyet, amitol a lap "meg nem zart"-kent kezeli. */
+async function plPontNelkul(br){
+  const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
+  const err = []; p.on('pageerror', e => err.push(e.message));
+  await apiKi(p);
+  const GW = await new Promise(r => {
+    const j = require(require('path').join(__dirname, '..', 'draft_keretvaltozasok.json'));
+    r(Object.keys(j.rounds).map(Number).sort((a, b) => b - a)[0] + '');
+  });
+  await jsonAtir(p, '**/draft.json*', j => {
+    j.schedule[GW] = (j.schedule[GW] || []).map(m => [m[0], m[1], null, null]);
+    return j;
+  });
+  await p.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
+  await p.waitForSelector('#table tr', { timeout: 20000 });
+  await p.waitForTimeout(1500);
+  const id = await p.$eval('#table tr [data-team]', e => e.dataset.team);
+  await p.evaluate(i => showTeam(+i, 'valtoztatasok', 'replace'), id);
+  await p.waitForSelector('#mBody .valtlista', { timeout: 10000 });
+  const t = await p.$eval('#mBody .vakor', b => ({
+    megj: (b.querySelector('.vafej .vamegj') || {}).textContent,
+    guardjel: !!b.querySelector('.vafej .guardjel'),
+    ossz: !!b.querySelector('.vaossz'),
+    gep: !!b.querySelector('.vagep'),
+    sorok: b.querySelectorAll('.vasor:not(.vaures)').length,
+    uresDiff: [...b.querySelectorAll('.zdiff')].every(x => !x.textContent.trim()),
+  }));
+  jo(/nincs pontszám/.test(t.megj || ''),
+     'PL: a fejléc megmondja, hogy még nincs pontszám ("' + t.megj + '")');
+  jo(!t.guardjel && !t.ossz, 'PL: nincs GUARD és nincs "Összesen" sor');
+  jo(!t.gep, 'PL: a gépi csere sora sincs — az automatikus csere még meg sem történt');
+  jo(t.sorok > 0 && t.uresDiff,
+     'PL: a változtatás látszik (' + t.sorok + ' sor), szám nélkül');
+  jo(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+  await p.close();
+}
+
 (async () => {
   const br = await inditas();
   for (const L of LIGAK){
@@ -303,6 +388,8 @@ async function regiAlak(br){
   }
   cim('=== PL, lezárt fordulóval (a menetrend menet közben kiegészítve) ===');
   await plLezartan(br);
+  cim('=== PL, pontszám nélküli (még le nem zárt) forduló ===');
+  await plPontNelkul(br);
   cim('=== A régi, címkézetlen adatalak is megjelenik ===');
   await regiAlak(br);
   await vege(br);

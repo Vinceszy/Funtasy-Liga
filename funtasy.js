@@ -1596,6 +1596,16 @@
     return x.ert != null ? fmt(x.ert) : '';
   }
   function vaSorHTML(x){
+    // `dl` HIANYOZHAT: a meg le nem zart fordulonal a valtoztatas mar ismert,
+    // a pontja viszont meg nem. Ilyenkor URES a kulonbseg-cella - nem "0",
+    // mert az azt allitana, hogy nem ert semmit.
+    if (x.dl == null)
+      return '<div class="vasor' + (x.oszt ? ' ' + x.oszt : '') + '">'
+        + (x.poszt ? '<span class="ppos">' + esc(x.poszt) + '</span>' : '<span class="ppos ures"></span>')
+        + '<span class="vanev' + (x.prof ? ' kattint' : '') + '"' + (x.prof ? jelzokHTML(x.prof) : '') + '>'
+        + esc(x.nev) + (x.klub ? ' <span class="tm">' + esc(x.klub) + '</span>' : '') + '</span>'
+        + (x.cimke ? '<span class="vacimke">' + esc(x.cimke) + '</span>' : '')
+        + '<span class="vaert"></span><span class="zdiff"></span></div>';
     var d = x.dl || 0;
     return '<div class="vasor' + (x.oszt ? ' ' + x.oszt : '') + '">'
       + (x.poszt ? '<span class="ppos">' + esc(x.poszt) + '</span>' : '<span class="ppos ures"></span>')
@@ -1630,7 +1640,8 @@
       var db = reszek.reduce(function (n, r){ return n + r.sorok.length; }, 0);
       return '<div class="vakor">'
         + '<div class="vafej"><span>' + esc(cs.nev) + '</span>'
-        + (cs.guard == null ? ''
+        + (cs.guard == null
+           ? (cs.megj ? '<span class="vamegj">' + esc(cs.megj) + '</span>' : '')
            : '<span class="guardjel ' + (cs.guard > 0 ? 'pos' : cs.guard < 0 ? 'neg' : '') + '">'
              + guardJelol(cs.guard) + '</span>') + '</div>'
         + (db ? reszek.map(function (r){

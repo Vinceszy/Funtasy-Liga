@@ -439,6 +439,37 @@ def szerep(p):
     return "C" if p.get("cap") else ("pad" if p.get("sub") else "kezdo")
 
 
+def keretvaltozas_pont_nelkul(elozo, mostani):
+    """A FOLYO fordulo valtoztatasai, pontertek nelkul.
+
+    Ugyanazok a tetelek (ki / be / szerep), csak `ert`, `nyers` es `guard`
+    nelkul; a `pontok: False` mondja meg a lapnak, hogy itt nincs mit
+    osszeadni. A magyarszabaly kulonbsege sem kerul ki: az is pont."""
+    ki_ossz = {}
+    for nev, sq in mostani.items():
+        regi_sq = elozo.get(nev)
+        if not regi_sq or not sq:
+            continue
+        regi_id = {p.get("id"): p for p in regi_sq}
+        uj_id = {p.get("id"): p for p in sq}
+        tetel = lambda p: {"id": p.get("id"), "n": p.get("name"),
+                           "tm": p.get("team"), "pos": p.get("pos"),
+                           "sz": szerep(p)}
+        ki = sorted((tetel(p) for i, p in regi_id.items() if i not in uj_id),
+                    key=lambda x: x["n"] or "")
+        be = sorted((tetel(p) for i, p in uj_id.items() if i not in regi_id),
+                    key=lambda x: x["n"] or "")
+        szer = sorted(({"id": i, "n": p.get("name"), "tm": p.get("team"),
+                        "pos": p.get("pos"), "szE": szerep(regi_id[i]),
+                        "szU": szerep(p)}
+                       for i, p in uj_id.items()
+                       if i in regi_id and szerep(regi_id[i]) != szerep(p)),
+                      key=lambda x: x["n"] or "")
+        ki_ossz[nev] = {"pontok": False, "guard": None,
+                        "ki": ki, "be": be, "szerep": szer}
+    return ki_ossz or None
+
+
 def keretvaltozas(hist_rounds, r):
     """Mit valtoztatott a szakvezeto a fordulora, es mit ert a valtoztatas.
 
@@ -465,7 +496,13 @@ def keretvaltozas(hist_rounds, r):
         return None
     nyers = nyers_pontok(r)
     if nyers is None:
-        return None
+        # NINCS MEG A BONTAS (a fordulo meg nem zart le) - a VALTOZTATAS
+        # viszont mar ismert: a keret a leadasi hatarido utan rogzitett.
+        # Amit ilyenkor nem tudunk, az a PONTERTEK; amit igen, az hogy kit
+        # adott el, kit vett meg, es kinek valtozott a szerepe. Ezt kiadjuk
+        # pont nelkul. A Guardiola mutato ettol NEM keszul el korabban - az
+        # tovabbra is csak lezart fordulora van (guardiola.json valtozatlan).
+        return keretvaltozas_pont_nelkul(elozo, mostani)
     ki_ossz = {}
     for nev, sq in mostani.items():
         regi_sq = elozo.get(nev)

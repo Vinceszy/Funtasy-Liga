@@ -4,6 +4,16 @@
    "datum": "2026-09-03",
    "tipus": "funkcio",
    "ligak": [
+    "nb1",
+    "pl"
+   ],
+   "cim": "A folyó forduló változtatásai is látszanak",
+   "leiras": "A Változtatások fülön mostantól a folyamatban lévő forduló is szerepel: kit adtál el, kit vettél meg, kinek változott a szerepe. Pontszám nem tartozik hozzá — a fejlécben az áll, hogy még nincs —, mert az csak a forduló lezárásakor derül ki; a GUARD értéke is akkor kerül bele. A PL-en a záráskori automatikus csere sora is csak utólag jelenik meg, hiszen addig meg sem történt."
+  },
+  {
+   "datum": "2026-09-03",
+   "tipus": "funkcio",
+   "ligak": [
     "nb1"
    ],
    "cim": "A keret már az első meccs előtt látszik",
