@@ -6,7 +6,16 @@ M1: a keret-valaszokban utazo meccsek fordulonkent, id szerint osszevonva
 M2: EREDMENY CSAK LEZART MECCSROL: a meg futo meccs pontszamai akkor sem
     kerulnek be, ha az API mar kuldi oket - a 3 orankent futo gyujto egy
     reszallast veglegeskent orokitene meg.
-M3: a masik fordulobol visszaeso meccs (round_number nem egyezik) kimarad.
+M3: a KESOBBI fordulobol visszaeso meccs kimarad (regi fordulo lekeresekor
+    az API a klub kovetkezo meccsere esik vissza).
+M9: a POTOLT (korabbi fordulos, MOST jatszott) meccs viszont BEKERUL, es a
+    klub NEM kap "nincs meccse" jelolest. 2026-09-03: az MLSZ 7. fordulojaban
+    ott allt az ETO-FTC "3F" jelolessel (a halasztott 3. fordulos meccs),
+    plusz az ETO-HONVED "7F" - a gyujto mind a kilenc ETO-jatekost
+    `nogame`-nek jelolte, mert csak a lista ELSO elemet nezte, es annak a
+    fordulo-szama nem egyezett.
+M10: TOBB MECCSNEL a `start` a legkozelebbi MEG NEM LEMENT meccs, es a `vege`
+    csak akkor igaz, ha MINDEGYIK lement - a jatekos pontja addig valtozhat.
 M4: a hianyzo fordulot a gyujto meccslistaval keri ujra (potlas), de ha mar
     minden meccs lezart eredmennyel bent van, TOBBE NEM - a lezart fordulos
     games-valasz nagy (klublogokkal jon), feleslegesen nem kerjuk.
@@ -32,7 +41,12 @@ parok = [(NEVEK[i], NEVEK[i + 1]) for i in range(0, len(NEVEK) - 1, 2)]
 hibak = []
 
 
+osszes = 0
+
+
 def allit(felt, cimke):
+    global osszes
+    osszes += 1
     print(("OK   " if felt else "HIBA ") + cimke)
     if not felt:
         hibak.append(cimke)
@@ -176,6 +190,40 @@ allit(all(x.get("h") != "?" and x.get("v") != "?" for x in m["rounds"].get("1") 
       "M8: az ujrakeres utan valodi klubnev all a '?' helyen: "
       + repr([(x.get("h"), x.get("v")) for x in m["rounds"].get("1") or []]))
 
+print()
+print("--- M9-M10: potolt meccs (egy klubnak KET meccse van a forduloban) ---")
+# A 2026-09-03-i meres alakja: a lista ELSO eleme a potolt, korabbi fordulos
+# meccs, a masodik a fordulo sajat meccse.
+POTOLT = {"id": 431, "start_at": "2026-09-03T19:30:00+02:00",
+          "status": "scheduled", "round_number": "3F",
+          "home_team": {"short_name": "ETO"}, "away_team": {"short_name": "FTC"}}
+SAJAT = {"id": 9, "start_at": "2026-09-06T20:00:00+02:00",
+         "status": "scheduled", "round_number": "7F",
+         "home_team": {"short_name": "ETO"}, "away_team": {"short_name": "HONVÉD"}}
+mez = c.jatek_mezok({"games": [POTOLT, SAJAT]}, 7)
+allit(not mez.get("nogame"),
+      "M9: a klub NEM kap 'nincs meccse' jelolest - kapott: %s" % mez)
+allit(mez.get("start") == POTOLT["start_at"],
+      "M10: a `start` a legkozelebbi meg le nem ment meccs (a potolt) - kapott: %s"
+      % mez.get("start"))
+mez2 = c.jatek_mezok({"games": [dict(POTOLT, status="completed"), SAJAT]}, 7)
+allit(mez2.get("start") == SAJAT["start_at"] and not mez2.get("vege"),
+      "M10: a potolt utan a KOVETKEZO meccsre mutat, es meg nincs 'vege' - kapott: %s" % mez2)
+mez3 = c.jatek_mezok({"games": [dict(POTOLT, status="completed"),
+                                dict(SAJAT, status="completed")]}, 7)
+allit(mez3.get("vege") is True,
+      "M10: csak MINDKETTO lementevel lesz 'vege' - kapott: %s" % mez3)
+# a visszaeses tovabbra is kiesik: az KESOBBI fordulohoz tartozik
+kesoi = {"id": 77, "start_at": "2026-09-20T18:00:00+02:00",
+         "status": "scheduled", "round_number": "9F"}
+allit(c.jatek_mezok({"games": [kesoi]}, 3).get("nogame") is True,
+      "M3: a KESOBBI fordulos (visszaeso) meccs tovabbra is 'nincs meccse'")
+tarolo = {}
+c.meccsek_gyujtes({"data": [{"competition_player":
+                             {"current_round": {"games": [POTOLT, SAJAT]}}}]}, 7, tarolo)
+allit(sorted(tarolo) == [9, 431],
+      "M9: a potolt meccs is bekerul a meccsek.json-ba - kapott: %s" % sorted(tarolo))
+
 if hibak:
     print("\n%d allitas bukott." % len(hibak)); sys.exit(1)
-print("\nMind a 12 allitas rendben.")
+print("\nMind a %d allitas rendben." % osszes)

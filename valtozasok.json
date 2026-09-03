@@ -2,6 +2,15 @@
  "bejegyzesek": [
   {
    "datum": "2026-09-03",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1"
+   ],
+   "cim": "A pótolt meccs is beleszámít a fordulóba",
+   "leiras": "Az elhalasztott, később pótolt meccset az MLSZ abba a fordulóba teszi, amelyikben lejátsszák — az oldal viszont nem tudott róla, és az érintett klub minden játékosánál az állt, hogy „ebben a fordulóban nincs meccse”, pedig aznap este pályára léptek. Mostantól a pótolt meccs is megjelenik a forduló meccsei között, a játékos pontja pedig addig marad nyitott, amíg mindkét meccse le nem megy."
+  },
+  {
+   "datum": "2026-09-03",
    "tipus": "funkcio",
    "ligak": [
     "nb1",

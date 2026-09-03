@@ -70,6 +70,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [Kezdőállítási hatékonyság (KEZD%)](#kezdőállítási-hatékonyság-kezd)
   - [A pad sorrendje (PL) — és ami még nyitott](#a-pad-sorrendje-pl--és-ami-még-nyitott)
   - [Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva](#az-fpl-draft-api-draftpremierleaguecomapi--mérésekkel-igazolva)
+- [4/c. Egy klubnak két meccse is lehet egy fordulóban](#4c-egy-klubnak-két-meccse-is-lehet-egy-fordulóban)
 - [5. Ismert korlátok, buktatók](#5-ismert-korlátok-buktatók)
 - [5/a4. A Guardiola mutató](#5a4-a-guardiola-mutató)
   - [A PL-en ugyanez, automatikus cserékkel](#a-pl-en-ugyanez-automatikus-cserékkel)
@@ -1450,6 +1451,43 @@ kerüljön be.
 - `game` — `current_event`: a folyamatban lévő forduló száma (vagy null)
 
 ---
+
+## 4/c. Egy klubnak két meccse is lehet egy fordulóban
+
+**A fantasy forduló nem azonos a játéknappal.** Az elhalasztott meccset az MLSZ a **pótlás napja
+szerinti** fordulóba teszi — a pont is ott jár érte —, de meghagyja rajta az **eredeti forduló
+számát**. Megmérve (2026-09-03, `naplo/mlsz-dupla-meccs.txt`), a 7. fordulóban:
+
+```
+ETO   games: 2 elem
+        round_number=3F   start=2026-09-03 19:30   ETO - FTC      ← halasztott
+        round_number=7F   start=2026-09-06 20:00   ETO - HONVÉD
+```
+
+Minden más klubnak egy eleme volt.
+
+**Ez élesben elrontotta az adatot.** A gyűjtő három helyen is csak a `games[0]`-t nézte, és ha
+annak a fordulószáma nem egyezett, „nincs meccse"-t mondott: mind a kilenc ETO-játékos
+`nogame: True` jelölést kapott aznap, amikor pályára léptek; a pótolt meccs nem került be a
+`meccsek.json`-ba; és a „minden meccs lement" vizsgálat is átugrotta a klub valódi fordulós
+meccsét — vagyis a forduló lezárható lett volna egy még le nem játszott meccsel.
+
+**A szétválasztás nem a fordulószám iránya.** A *visszaesés* (a klubnak nincs meccse a kért
+fordulóban, ezért az API a másik meccsére esik vissza) szintén más fordulószámot hoz. A
+különbség: a pótolt meccs **mellett ott áll a forduló saját meccse is**, a visszaesésnél éppen
+az hiányzik. Ezért: ha a listában van a kért fordulóhoz tartozó meccs, akkor a többi is
+idetartozik; ha nincs, az egész lista visszaesés (`fordulo_meccsei_kozul`).
+
+**Több meccsnél** a játékos `start`-ja a legközelebbi **még le nem ment** meccse — az mondja meg,
+mire vár még —, és a `vege` csak akkor igaz, ha **mindegyik** lement: a pontja addig változhat.
+
+**Ismert korlát:** ha egy klubnak *csak* pótolt meccse van a fordulóban (a sajátja is elmaradt),
+ezt visszaesésnek látjuk, és „nincs meccse"-t mondunk. Ez a korábbi viselkedés is, tehát nem
+romlás — a pontos megoldás a fordulók **időhatára** lenne (a meccs a forduló ablakában van-e),
+az viszont a forduló-határok átvezetését kívánja minden hívási ponton. Ha egyszer előáll, azt
+kell megcsinálni.
+
+Rögzítve: `tesztek/gyujto_meccsek.py` M9–M10.
 
 ## 5. Ismert korlátok, buktatók
 

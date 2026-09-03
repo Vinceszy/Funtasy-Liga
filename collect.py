@@ -283,25 +283,61 @@ def rekord(d, fordulo=None):
     }
 
 
+def fordulo_meccsei_kozul(games, fordulo):
+    """A meccslistabol azok, amik EHHEZ a fordulohoz szamitanak.
+
+    KET dolgot kell szetvalasztani, es a round_number ONMAGABAN egyiket sem
+    donti el - mindketto KORABBI fordulo szamat viseli:
+
+    1. POTOLT (elmaradt) MECCS. Meres, 2026-09-03: az ETO
+       current_round.games listajaban a 7. fordulora KET meccs allt -
+       "3F" (ETO-FTC, szept. 3., a halasztott 3. fordulos meccs) es "7F"
+       (ETO-HONVED, szept. 6.). Az MLSZ tehat a POTLAS NAPJA szerinti
+       forduloba teszi a meccset, de meghagyja rajta az EREDETI fordulo
+       szamat. A pont is ott jar erte, ahol jatsszak.
+
+    2. VISSZAESES. Ha a klubnak NINCS meccse a kert forduloban, az API a
+       klub masik meccsere esik vissza (szinten mas fordulo-szammal).
+
+    A KULONBSEG: a potolt meccs MELLETT ott all a fordulo SAJAT meccse is;
+    a visszaesesnel viszont eppen az hianyzik. Ezert: ha a listaban van a
+    kert fordulohoz tartozo meccs, akkor a TOBBI is idetartozik (potlas);
+    ha nincs, akkor az egesz lista visszaeses.
+
+    ISMERT KORLAT: ha egy klubnak CSAK potolt meccse van a forduloban (a
+    sajatja is elmaradt), ezt visszaesesnek latjuk, es "nincs meccse"-t
+    mondunk. Ez a mostani viselkedes is, tehat nem romlas - a pontos
+    megoldas a fordulok IDOHATARA lenne (a meccs a fordulo ablakaban van-e),
+    az viszont a fordulo-hatarok atvezeteset kivanja minden hivasi ponton.
+    Ha egyszer eloall, ezt kell megcsinalni."""
+    sajat = [g for g in (games or []) if isinstance(g, dict)]
+    if not sajat:
+        return []
+    egyezik = [g for g in sajat
+               if meccs_forduloja(g) in (None, fordulo) or fordulo is None]
+    return sajat if egyezik else []
+
+
 def jatek_mezok(cr, fordulo=None):
     games = cr.get("games")
     if games is None:                       # nem kertuk a meccslistat
         return {"start": cr.get("first_played_at")}
-    if not games:                           # nincs meccse ebben a forduloban
+    sajat = fordulo_meccsei_kozul(games, fordulo)
+    if not sajat:                           # nincs meccse ebben a forduloban
         return {"start": None, "nogame": True}
-    g = games[0] or {}
-    # Ures lista nem az egyetlen jelzes: regi fordulonal az API a klub
-    # LEGUTOBBI meccsere esik vissza a hianyzo helyett. Maga a meccs-objektum
-    # arulja el (round_number), hogy nem ehhez a fordulohoz tartozik - ez is
-    # azt jelenti, hogy a klubnak nincs meccse ebben a forduloban.
-    mf = meccs_forduloja(g)
-    if fordulo is not None and mf is not None and mf != fordulo:
-        return {"start": None, "nogame": True}
+    # TOBB MECCS IS LEHET (potolt meccs): ilyenkor a jatekos pontja addig
+    # valtozhat, amig az UTOLSO le nem ment. A `start` ezert a legkozelebbi
+    # MEG NEM LEMENT meccse - az mondja meg, mire var meg -, es a `vege`
+    # csak akkor igaz, ha MINDEGYIK lement.
+    hatra = sorted((g for g in sajat if g.get("status") != "completed"),
+                   key=lambda g: g.get("start_at") or "")
+    mind = sorted(sajat, key=lambda g: g.get("start_at") or "")
+    g = hatra[0] if hatra else mind[-1]
     mezok = {"start": g.get("start_at") or cr.get("first_played_at")}
     # A meccs status-a onallo jelzes az is_played mellett. Az utobbibol NEM
     # kovetkezik, hogy a meccsnek vege: az MLSZ mar a meccs kozben igazra
     # billenti (ezert irtuk egy ideig meccs kozben, hogy "lejatszotta").
-    if g.get("status") == "completed":
+    if not hatra:
         mezok["vege"] = True
     return mezok
 
@@ -597,15 +633,13 @@ def meccs_kivonat(g):
 def meccsek_gyujtes(j, fordulo, tarolo):
     """A keret-valaszban utazo meccseket teszi a tarolo[game_id] ala.
     Ugyanazt a meccset tobb jatekos is hozza - az id szerinti kulcsolas
-    von ossze. A masik fordulobol visszaeso meccs (lasd meccs_forduloja)
-    nem kerul be. Csak akkor ad valamit, ha a games-t egyaltalan kertuk."""
+    von ossze. A KESOBBI fordulobol visszaeso meccs nem kerul be, a POTOLT
+    (korabbi fordulos, most jatszott) igen - lasd forduloba_tartozik.
+    Csak akkor ad valamit, ha a games-t egyaltalan kertuk."""
     for d in (j or {}).get("data") or []:
         cr = (d.get("competition_player") or {}).get("current_round") or {}
-        for g in cr.get("games") or []:
-            if not isinstance(g, dict) or g.get("id") is None:
-                continue
-            mf = meccs_forduloja(g)
-            if mf is not None and mf != fordulo:
+        for g in fordulo_meccsei_kozul(cr.get("games"), fordulo):
+            if g.get("id") is None:
                 continue
             tarolo[g["id"]] = meccs_kivonat(g)
 
@@ -1135,9 +1169,12 @@ def main():
                 # ...es csak akkor, ha a meccs tenyleg EHHEZ a fordulohoz
                 # tartozik: a masik fordulobol visszaeso meccs allapota nem
                 # mondhat semmit errol a forduloról.
-                g = cr.get("games")
-                if g and meccs_forduloja(g[0]) in (None, r) \
-                        and (g[0] or {}).get("status") != "completed":
+                # MINDEN idetartozo meccset nezzuk, nem csak az elsot: a
+                # potolt meccs a lista elejen allhat, es akkor a klub VALODI
+                # fordulos meccse sosem kerult volna sorra - a fordulo
+                # lezarhato lett volna egy meg le nem jatszott meccsel.
+                if any(g.get("status") != "completed"
+                       for g in fordulo_meccsei_kozul(cr.get("games"), r)):
                     mind_lement = False
         if not uj_fordulo:
             bizonytalan.add(r)
