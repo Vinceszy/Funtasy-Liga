@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=76">
+<link rel="stylesheet" href="../funtasy.css?v=77">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=76"></script>
+<script src="../funtasy.js?v=77"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -824,18 +824,43 @@ const KERET_INCLUDE='position,position.alternatives,competition_player,'+
 // meccs meg 'scheduled'; lezartnal a kesz meccs melle a klublogok is
 // bejonnek base64-ben (+100 KB), ezert oda a sima include megy.
 const KERET_INCLUDE_JATEK=KERET_INCLUDE+',competition_player.current_round.games';
-// "Nincs meccse ebben a forduloban" ket alakban jon: ures meccslista, vagy -
-// regi fordulonal - a klub LEGUTOBBI meccse a hianyzo helyett. Az utobbit a
-// meccs sajat round_number mezoje arulja el ("3F" / "5F"): ha nem ehhez a
-// fordulohoz tartozik, akkor a klubnak nincs meccse benne.
-function maserol(g, r){
-  if(!Array.isArray(g) || !g.length || r==null) return false;
-  const m=/^\s*(\d+)/.exec(String((g[0]||{}).round_number||''));
-  return !!m && +m[1]!==+r;
+// UGYANAZ A SZABALY, MINT A GYUJTOBEN (collect.py fordulo_meccsei_kozul).
+// Egy klubnak TOBB meccse is lehet egy fordulóban: az elhalasztott meccset az
+// MLSZ a POTLAS napja szerinti forduloba teszi, de meghagyja rajta az EREDETI
+// fordulo szamat. Megmerve 2026-09-03-an: az ETO listajaban "3F" (ETO-FTC,
+// szept. 3.) ES "7F" (ETO-HONVED, szept. 6.) allt egyszerre.
+//
+// A VISSZAESES (a klubnak nincs meccse a kert forduloban, ezert az API a
+// masikra esik vissza) szinten mas fordulo-szamot hoz - a kettot a
+// fordulo-szam IRANYA nem valasztja szet. A kulonbseg: a potolt meccs MELLETT
+// ott all a fordulo sajat meccse is, a visszaesesnel eppen az hianyzik.
+//
+// EZ A FUGGVENY KIMARADT a gyujto javitasabol, es emiatt a lapon TOVABBRA IS
+// az allt, hogy "a klubnak nincs meccse" - az elo keret-lekeres ugyanis a
+// bongeszoben epiti ujra a rekordokat, sajat logikaval.
+function forduloMeccsei(g, r){
+  if(!Array.isArray(g)) return null;                 // nem kertuk a meccslistat
+  const sajat=g.filter(x=>x && typeof x==='object');
+  if(!sajat.length) return [];
+  if(r==null) return sajat;
+  const egyezik=sajat.some(x=>{
+    const m=/^\s*(\d+)/.exec(String(x.round_number||''));
+    return !m || +m[1]===+r;
+  });
+  return egyezik ? sajat : [];
 }
 function keretRekord(d, r){
   const cp=d.competition_player||{}, po=d.position||{}, ss=d.summary_statistics||{},
-        cr=cp.current_round||{}, g=cr.games, mas=maserol(g,r), nincs=Array.isArray(g)&&(!g.length||mas);
+        cr=cp.current_round||{}, g=cr.games;
+  const sajat=forduloMeccsei(g, r), nincs=sajat!==null&&!sajat.length;
+  // TOBB MECCSNEL a `start` a legkozelebbi MEG NEM LEMENT meccs (arra var meg
+  // a jatekos), es a `vege` csak akkor igaz, ha MINDEGYIK lement - a pontja
+  // addig valtozhat.
+  const hatra=(sajat||[]).filter(x=>x.status!=='completed')
+                         .sort((a,b)=>String(a.start_at||'').localeCompare(String(b.start_at||'')));
+  const mind=(sajat||[]).slice()
+                        .sort((a,b)=>String(a.start_at||'').localeCompare(String(b.start_at||'')));
+  const meccs=hatra.length?hatra[0]:(mind.length?mind[mind.length-1]:null);
   return {name:[cp.first_name,cp.last_name].filter(Boolean).join(' ')||('#'+(cp.id||d.id)),
     team:(cp.team&&(cp.team.short_name||cp.team.name))||'', pos:po.monogram||po.name||'',
     u21:!!cp.is_u21, hun:/magyar|hungar|"HUN"/i.test(JSON.stringify(cp.countries||cp.country||'')),
@@ -844,9 +869,9 @@ function keretRekord(d, r){
     id:cp.id||null, played:!!cr.is_played,
     // meccslista nelkul a first_played_at a tartalek - de ha nincs meccse a
     // forduloban, az a KOVETKEZO fordulora mutat, ezert olyankor nincs kezdes
-    start: nincs ? null : (g ? (((g[0]||{}).start_at)||null) : (cr.first_played_at||null)),
+    start: nincs ? null : (meccs ? (meccs.start_at||null) : (cr.first_played_at||null)),
     nogame: nincs || undefined,
-    vege: (g && !mas && (g[0]||{}).status==='completed') || undefined};
+    vege: (!!(sajat&&sajat.length)&&!hatra.length) || undefined};
 }
 async function eloKeret(name, r, jatek){
   const uid=USER_IDS[name];

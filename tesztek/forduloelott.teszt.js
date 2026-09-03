@@ -124,6 +124,39 @@ const JOVOBELI = 20;     // ehhez nincs mentett keret
      + (err2.length ? ': ' + err2.join(' | ') : ''));
   await p2.close();
 
+  cim('A böngésző élő keret-lekérése is ismeri a pótolt meccset');
+  // MEGTORTENT, HAROMSZOR: a gyujtot javitottuk, a lapon megis az allt, hogy
+  // "a klubnak nincs meccse". Az ELO keret-lekeres ugyanis a BONGESZOBEN
+  // epiti ujra a rekordokat (keretRekord), sajat logikaval - es az kimaradt
+  // a javitasbol. A tarolt adat jo volt, a friss lekeres irta felul.
+  // A bemenet a VALODI meres alakja (naplo/mlsz-dupla-meccs.txt).
+  const kr = await p.evaluate(() => {
+    const ETO = [{ start_at: '2026-09-03T19:30:00+02:00', status: 'scheduled', round_number: '3F' },
+                 { start_at: '2026-09-06T20:00:00+02:00', status: 'scheduled', round_number: '7F' }];
+    const d = g => ({ competition_player: { id: 1, team: { short_name: 'ETO' },
+                        countries: [], current_round: { games: g } },
+                      position: {}, summary_statistics: {} });
+    const ki = x => ({ nogame: !!x.nogame, start: x.start, vege: !!x.vege });
+    return {
+      potolt: ki(keretRekord(d(ETO), 7)),
+      kozben: ki(keretRekord(d([{ ...ETO[0], status: 'completed' }, ETO[1]]), 7)),
+      mind: ki(keretRekord(d([{ ...ETO[0], status: 'completed' },
+                              { ...ETO[1], status: 'completed' }]), 7)),
+      visszaeso: ki(keretRekord(d([{ start_at: '2026-09-20T18:00:00+02:00',
+                                     status: 'scheduled', round_number: '9F' }]), 3)),
+      ures: ki(keretRekord(d([]), 7)),
+    };
+  });
+  jo(!kr.potolt.nogame && kr.potolt.start === '2026-09-03T19:30:00+02:00',
+     'a pótolt meccs miatt NINCS „nincs meccse", és arra a meccsre mutat ('
+     + JSON.stringify(kr.potolt) + ')');
+  jo(kr.kozben.start === '2026-09-06T20:00:00+02:00' && !kr.kozben.vege,
+     'a pótolt után a következő meccsre mutat, és még nincs „vége" ('
+     + JSON.stringify(kr.kozben) + ')');
+  jo(kr.mind.vege, 'csak mindkettő lementével lesz „vége" (' + JSON.stringify(kr.mind) + ')');
+  jo(kr.visszaeso.nogame && kr.ures.nogame,
+     'a visszaeső meccs és az üres lista viszont továbbra is „nincs meccse"');
+
   cim('Valódi jövőbeli fordulónál marad az üzenet');
   // Ehhez NINCS mentett keret - kitalalni nem fogunk semmit.
   await p.evaluate(() => { const b = document.getElementById('ovClose'); if (b) b.click(); });

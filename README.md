@@ -1494,7 +1494,14 @@ volna: a friss válasz helyesen mondta, hogy az ETO-nak van meccse, az öröklé
 visszaállította a hibát. Mostantól az öröklés **kimarad, ha épp lekértük a meccslistát** — akkor
 a friss válasz az igazság.
 
-Rögzítve: `tesztek/gyujto_meccsek.py` M9–M11.
+**A böngésző külön is megvalósítja ugyanezt.** Az élő keret-lekérés a lapon építi újra a
+rekordokat (`keretRekord`) — ugyanaz a szabály kell bele. Ez a gyűjtő javításából kimaradt,
+és emiatt a lapon **továbbra is** az állt, hogy „a klubnak nincs meccse”: a tárolt adat már
+jó volt, a friss lekérés írta felül. Ha a szabály változik, **mindkét helyen** változtatni
+kell.
+
+Rögzítve: `tesztek/gyujto_meccsek.py` M9–M11 (gyűjtő) és `tesztek/forduloelott.teszt.js`
+(böngésző, a mérés valódi alakjával).
 
 ## 5. Ismert korlátok, buktatók
 
