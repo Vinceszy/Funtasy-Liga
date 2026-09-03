@@ -342,7 +342,7 @@ def jatek_mezok(cr, fordulo=None):
     return mezok
 
 
-def orokit_meccsjelzok(regi_fordulo, uj_fordulo):
+def orokit_meccsjelzok(regi_fordulo, uj_fordulo, oroklunk=True):
     """A meccslistabol szarmazo jelzeseket at kell hozni a regi rekordbol.
 
     A meccslistat (games) csak az ELO fordulora kerjuk le - a lezaras utani
@@ -352,7 +352,16 @@ def orokit_meccsjelzok(regi_fordulo, uj_fordulo):
                A first_played_at ilyenkor a KOVETKEZO meccset adja, ezert a
                start-ot is a regi (ures) ertekre allitjuk vissza.
       vege   - a meccs mar lement. Enelkul az oldal a 100-180 perces
-               ablakban visszaesne a "meccs zajlik" allapotba."""
+               ablakban visszaesne a "meccs zajlik" allapotba.
+
+    `oroklunk=False`, HA MOST LEKERTUK A MECCSLISTAT: akkor a friss valasz az
+    igazsag, es a regi jelzo nem irhatja felul. Enelkul egy tevesen beragadt
+    `nogame` OROKRE bent maradna - 2026-09-03-an pontosan ez tortent: a
+    potolt meccs javitasa utan a gyujto helyesen mondta, hogy az ETO-nak VAN
+    meccse, de a mult futasbol orokolt `nogame` visszaallitotta a hibat. A
+    javitas onmagat blokkolta volna."""
+    if not oroklunk:
+        return
     for nev, sq in uj_fordulo.items():
         regi = {p.get("name"): p for p in (regi_fordulo.get(nev) or [])}
         for p in sq:
@@ -1142,6 +1151,10 @@ def main():
         mind_lement = True          # a meccslista szerint minden meccs lement
         fordulo_meccsei = {m["id"]: m for m in meccsek["rounds"].get(str(r)) or []
                            if m.get("id") is not None}
+        # EGY helyen dol el, kerunk-e meccslistat ehhez a fordulohoz - a
+        # squad() es az orokit_meccsjelzok() ugyanazt a valaszt hasznalja.
+        jatek_kell = (r == aktualis or r in migralando
+                      or r in meccs_potlas or r in valtozott)
         for nev, uid in ids.items():
             # A meccslistat akkor kerjuk, ha az elo fordulorol van szo, ha a
             # regi formatumot potoljuk, ha a meccsek.json-bol hianyzik valami,
@@ -1150,8 +1163,7 @@ def main():
             # a listaban (nem "eredmeny nelkuli"), tehat a meccs_potlas
             # feltetele nem venne eszre - a lejatszasakor viszont a pontok
             # biztosan valtoznak, mert a percekert is jar pont.
-            st, j = squad(uid, r, jatek=(r == aktualis or r in migralando
-                                         or r in meccs_potlas or r in valtozott))
+            st, j = squad(uid, r, jatek=jatek_kell)
             if st != 200 or not isinstance(j, dict) or not j.get("data"):
                 print("  ! %d. fordulo / %s: HTTP %s" % (r, nev, st), file=sys.stderr)
                 teljes = False
@@ -1192,7 +1204,7 @@ def main():
         if zdb:
             zarasok_nb1_valtozott = True
             print("  ! %d. fordulo: %d pontigazitas a meccs vege utan" % (r, zdb))
-        orokit_meccsjelzok(regi_fordulo, uj_fordulo)
+        orokit_meccsjelzok(regi_fordulo, uj_fordulo, oroklunk=not jatek_kell)
         hist["rounds"][str(r)] = {**regi_fordulo, **uj_fordulo}
         # A "mindenki jatszott" vizsgalat a MAR OSSZEFESULT rekordokbol dol
         # el, nem a nyers valaszbol: a "nincs meccse" jelzes csak ott van meg.

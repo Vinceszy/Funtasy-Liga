@@ -1487,7 +1487,14 @@ romlás — a pontos megoldás a fordulók **időhatára** lenne (a meccs a ford
 az viszont a forduló-határok átvezetését kívánja minden hívási ponton. Ha egyszer előáll, azt
 kell megcsinálni.
 
-Rögzítve: `tesztek/gyujto_meccsek.py` M9–M10.
+**A javítás önmagát blokkolta volna.** A `nogame` és a `vege` jelzőt a gyűjtő átörökli a
+korábbi rekordból, mert a meccslistát csak az élő fordulóra kéri le — enélkül a lezárás utáni
+újralekérésekkor elveszne. Csakhogy így a tévesen beragadt `nogame` **örökre** bent maradt
+volna: a friss válasz helyesen mondta, hogy az ETO-nak van meccse, az öröklés meg
+visszaállította a hibát. Mostantól az öröklés **kimarad, ha épp lekértük a meccslistát** — akkor
+a friss válasz az igazság.
+
+Rögzítve: `tesztek/gyujto_meccsek.py` M9–M11.
 
 ## 5. Ismert korlátok, buktatók
 

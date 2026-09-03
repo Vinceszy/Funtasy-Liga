@@ -224,6 +224,21 @@ c.meccsek_gyujtes({"data": [{"competition_player":
 allit(sorted(tarolo) == [9, 431],
       "M9: a potolt meccs is bekerul a meccsek.json-ba - kapott: %s" % sorted(tarolo))
 
+print()
+print("--- M11: a MOST lekert meccslista felulirja a regi jelzot ---")
+# MEGTORTENT: a potolt meccs javitasa utan a gyujto helyesen mondta, hogy a
+# klubnak VAN meccse - de a mult futasbol orokolt `nogame` visszaallitotta a
+# hibat. A javitas ONMAGAT BLOKKOLTA volna.
+regi = {"A": [{"name": "J1", "nogame": True, "start": None, "vege": True}]}
+uj = {"A": [{"name": "J1", "start": "2026-09-03T19:30:00+02:00"}]}
+c.orokit_meccsjelzok(regi, uj, oroklunk=False)
+allit(not uj["A"][0].get("nogame") and uj["A"][0]["start"],
+      "M11: friss meccslistaval a regi 'nogame' NEM ragad be - kapott: %s" % uj["A"][0])
+uj2 = {"A": [{"name": "J1", "start": "2026-09-03T19:30:00+02:00"}]}
+c.orokit_meccsjelzok(regi, uj2, oroklunk=True)
+allit(uj2["A"][0].get("nogame") is True and uj2["A"][0]["start"] is None,
+      "M11: meccslista NELKUL viszont tovabbra is oroklodik - kapott: %s" % uj2["A"][0])
+
 if hibak:
     print("\n%d allitas bukott." % len(hibak)); sys.exit(1)
 print("\nMind a %d allitas rendben." % osszes)
