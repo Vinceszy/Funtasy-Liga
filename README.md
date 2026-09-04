@@ -71,6 +71,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [A pad sorrendje (PL) — és ami még nyitott](#a-pad-sorrendje-pl--és-ami-még-nyitott)
   - [Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva](#az-fpl-draft-api-draftpremierleaguecomapi--mérésekkel-igazolva)
 - [4/c. Egy klubnak két meccse is lehet egy fordulóban](#4c-egy-klubnak-két-meccse-is-lehet-egy-fordulóban)
+  - [Az elavult lap magától újratölt](#az-elavult-lap-magától-újratölt)
   - [A közös játékost AZONOSÍTÓ párosítja, nem név](#a-közös-játékost-azonosító-párosítja-nem-név)
 - [5. Ismert korlátok, buktatók](#5-ismert-korlátok-buktatók)
 - [5/a4. A Guardiola mutató](#5a4-a-guardiola-mutató)
@@ -489,6 +490,7 @@ teljes képernyős, ragadós × gombbal.
 | `guardiola.json` | A **Guardiola mutató** fordulónként: `{rounds:{forduló:{szakvezető:{teny,alt,guard}}}}`. `guard` = a mostani keret pontja mínusz a múlt hetié ugyanebben a fordulóban. A gyűjtő számolja, mert a múlt heti kerethez az adott forduló **összes** játékosának nyers pontja kell (`bontasok/<forduló>.json`, fordulónként 40 KB) — a lapnak így elég ez a pár kilobájt. |
 | `draft_pontok.json` | A PL **teljes mezőnyének** fordulónkénti pontja és perce: `{rounds:{gw:{element:[pont,perc]}}}`. A Guardiola mutatóhoz kell: a múlt heti keretben lehet olyan játékos, aki már **senkinél sincs** (GW1→GW2-ben 11 ilyen volt), és akkor a pontja sehol nem lenne meg. A perc az automatikus cserékhez. Csak az kerül bele, aki játszott vagy pontot szerzett. |
 | `draft_guardiola.json` | Ugyanaz, mint a `guardiola.json`, csak a PL-re, `liga_id` kulccsal. |
+| `verzio.json` | Egyetlen szám: a jelenlegi `?v=`. A lap ebből tudja meg, hogy **elavult-e** — a `?v=` ugyanis a `funtasy.js`/`css` gyorsítótárát töri, a lap saját HTML-jét nem. Ha a fájl nagyobb számot mond, a lap **egyszer** újratölt (`FunTasy.verzioOr`). |
 | `keretvaltozasok.json` | A **Változtatások** fül adata fordulónként: ki került ki (`ki`), ki jött be (`be`), kinek változott a szerepe (`szerep`), és a magyarszabály különbsége (`bonusz`) — mindegyik mellett az, hogy **mennyit ért**. A tételek összege pontosan a `guard`; ezt a `stimmel` mező is jelzi. A lap ebből vezeti le a tabellában álló számot. |
 | `draft_keretvaltozasok.json` | Ugyanaz a PL-re, `liga_id` kulccsal — plusz a `gepE`/`gepU`: mennyit hozott a **zárási automatikus csere** a régi és az új keretnek. A játékos-tételek csak azt tartalmazzák, amit az **ember** döntött; a gép hozadéka külön áll. Játékosnevet nem tárol: a lap a `draft_players.json`-ból oldja fel. |
 | `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**; elemeik `{e, pts}` alakúak, mert a beállt játékos pontja mondja meg, mit hozott a csere (a régi, csak azonosítót tartalmazó alakot a lap még elfogadja). A GW1 a git-történetből lett pótolva. |
@@ -1503,6 +1505,23 @@ kell.
 
 Rögzítve: `tesztek/gyujto_meccsek.py` M9–M11 (gyűjtő) és `tesztek/forduloelott.teszt.js`
 (böngésző, a mérés valódi alakjával).
+
+### Az elavult lap magától újratölt
+
+A `?v=` a `funtasy.js`/`funtasy.css` gyorsítótárát töri — **a lap saját HTML-jét nem**. Az
+`nb1/index.html`-ben viszont éles logika él (közös játékosok párosítása, az élő keret-rekordok
+építése, a meccsállapot), és egy régi HTML ezeket a **régi szabály** szerint futtatja. Egy nap
+alatt kétszer állt elő, hogy a javítás kint volt, a néző mégis a régi viselkedést látta — és
+semmi nem jelezte.
+
+Ezért a lap betöltéskor megkérdezi a `verzio.json`-t, és ha ő régebbi, **egyszer** újratölt. A
+`sessionStorage`-os kapu védi a hurkot: ha az újratöltés után is régi marad (közvetítő
+gyorsítótár), többször nem próbálja — inkább csendben marad, mint hogy oda-vissza töltsön.
+
+A `verzio.json` és a `?v=` **együtt kell mozduljon**: ezt a `tesztek/dokuk.py` **D6/b** nézi,
+mert elcsúszva a védelem vagy nem fog, vagy végtelen újratöltést okozna.
+
+Rögzítve: `tesztek/verzio.teszt.js`.
 
 ### A közös játékost AZONOSÍTÓ párosítja, nem név
 

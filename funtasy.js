@@ -1662,6 +1662,32 @@
     }).join('') + '</div>';
   }
 
+  /* ---------- ELAVULT LAP FELISMERESE ----------
+     A `?v=` a funtasy.js/css gyorsitotarat tori - a LAP SAJAT HTML-jet NEM.
+     Az nb1/index.html-ben viszont eles logika van (kozos jatekosok, elo
+     keret-rekordok, meccsallapot), es egy regi HTML ezeket a regi szabaly
+     szerint futtatja. Ketszer allt elo egy nap alatt: a javitas kint volt,
+     a nezo megis a regi viselkedest latta - es semmi nem jelezte.
+
+     Ezert a lap megkerdezi, mi a MOSTANI verzio (verzio.json), es ha o
+     regebbi, EGYSZER ujratolt. A sessionStorage-os kapu vedi a hurkot: ha
+     az ujratoltes utan is regi marad (pl. kozvetito gyorsitotar), tobbszor
+     nem probalja - inkabb csendben marad, mint hogy oda-vissza toltsön. */
+  function verzioOr(){
+    var sc = document.querySelector('script[src*="funtasy.js?v="]');
+    var sajat = sc && +((sc.getAttribute('src').split('v=')[1] || '').split('&')[0]);
+    if (!sajat) return;
+    fetch('verzio.json?t=' + Date.now()).catch(function(){
+      return fetch('../verzio.json?t=' + Date.now());
+    }).then(function (r){ return r && r.ok ? r.json() : null; }).then(function (j){
+      if (!j || !j.v || +j.v <= sajat) return;
+      var k = 'funtasy-ujratoltes';
+      try { if (sessionStorage.getItem(k) === String(j.v)) return;
+            sessionStorage.setItem(k, String(j.v)); } catch (e) {}
+      location.reload();
+    }).catch(function(){});
+  }
+
   /* A kivitel egy resze ma csak BELUL hasznalt (navHTML, lablecHTML,
      profilFejHTML, ekezetlen, kezdSzazalek, KEZD_CIM). Szandekosan maradnak
      kint: a tervezett osszesito oldal es a toplistak pont ezeket ternek ujra
@@ -1674,7 +1700,7 @@
                      LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
                      lablecHTML: lablecHTML, renderLablec: renderLablec,
                      bontasMeccsSor: bontasMeccsSor,
-                     zarasLista: zarasLista,
+                     zarasLista: zarasLista, verzioOr: verzioOr,
                      valtoztatasLista: valtoztatasLista,
                      profilHTML: profilHTML, profilFejHTML: profilFejHTML,
                      jatekosKereso: jatekosKereso, ekezetlen: ekezetlen,

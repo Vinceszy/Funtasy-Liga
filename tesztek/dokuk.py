@@ -102,6 +102,7 @@ allit(not gond, "D5: a valtozasnaplo-vazlat minden bejegyzese teljes"
 # minden kiadasnal. Ha csak az egyik oldalon emelkedik, az a masikon REGI
 # funtasy.js/css-t hagy - ott a felhasznalo hetekig regi kodot lat, es a
 # hibajelentese ertelmezhetetlen lesz. Ezt gepnek kell nezni, nem szemnek.
+import json
 import re as _re
 _verziok = {}
 for _f in ("index.html", "nb1/index.html", "pl/index.html", "valtozasok/index.html"):
@@ -112,6 +113,21 @@ allit(len(_verziok) == 1,
       + ("" if len(_verziok) == 1
          else " - eltero verziok: " + "; ".join("v=%s (%s)" % (v, ", ".join(h))
                                                 for v, h in sorted(_verziok.items()))))
+
+# D6/b: a verzio.json UGYANAZT a szamot tartalmazza, mint a ?v=.
+# A ?v= a funtasy.js/css gyorsitotarat tori - a LAP SAJAT HTML-jet NEM. Az
+# oldalak HTML-jeben viszont eles logika van, es egy regi HTML a regi szabaly
+# szerint fut. Ezert a lap megkerdezi a verzio.json-t, es ha o regebbi,
+# EGYSZER ujratolt (FunTasy.verzioOr). Ha a ket szam elcsuszik, ez a vedelem
+# vagy nem fog, vagy vegtelen ujratoltest okozna - gepnek kell nezni.
+try:
+    _vj = json.loads(olvas("verzio.json")).get("v")
+except Exception as _e:
+    _vj = None
+_vhtml = int(list(_verziok)[0]) if len(_verziok) == 1 else None
+allit(_vj is not None and _vhtml is not None and int(_vj) == _vhtml,
+      "D6/b: a verzio.json egyezik a ?v= szammal (verzio.json: %s, ?v=: %s)"
+      % (_vj, _vhtml))
 
 # D7: a README tartalomjegyzeke egyezik a tenyleges cimekkel.
 # A fajl 1500+ soros; jegyzek nelkul kereshetetlen, elavult jegyzekkel meg

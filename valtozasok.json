@@ -4,6 +4,16 @@
    "datum": "2026-09-04",
    "tipus": "bugfix",
    "ligak": [
+    "nb1",
+    "pl"
+   ],
+   "cim": "Az elavult oldal magától frissül",
+   "leiras": "Eddig előfordult, hogy egy javítás már kint volt, a böngésződ mégis a régi oldalt futtatta — és semmi nem jelezte: a hiba a javítás után is megmaradt. Az oldal mostantól betöltéskor ellenőrzi, hogy a legfrissebb változatot futtatja-e, és ha nem, egyszer magától újratölt."
+  },
+  {
+   "datum": "2026-09-04",
+   "tipus": "bugfix",
+   "ligak": [
     "nb1"
    ],
    "cim": "Élő meccsnél is megjelennek a közös játékosok",
