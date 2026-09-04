@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=77">
+<link rel="stylesheet" href="../funtasy.css?v=78">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=77"></script>
+<script src="../funtasy.js?v=78"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -1104,7 +1104,17 @@ let CSAK_ELTERES = false;
 let MECCS = null;        // az eppen mutatott meccs - a gomb ebbol rajzol ujra
 // Nem eleg a nev: aki az egyik oldalon kapitany vagy pados, annal mas a
 // pontja, tehat az NEM azonos sor.
-const szerepKulcs = p => p.name+'|'+(p.cap?'C':'')+(p.sub?'P':'');
+// A ket keret kozos jatekosait AZONOSITO szerint parositjuk, nem nev szerint.
+// MEGTORTENT: az elo meccs-nezet a ket keretet KULON keri le, es ha csak az
+// egyik jon meg, a masik a tarolt marad. A ket forras viszont MAS NEVALAKOT
+// ad - a tarolt magyar sorrendet ("Lehoczki Bendegúz"), az elo lekeres a
+// keresztnev-vezeteknev alakot ("Bendegúz Lehoczki") -, es nev szerint
+// parositva ilyenkor NULLA kozos jatekos jott ki, holott ketto van.
+// Az azonosito mindket forrasban ugyanaz (competition_player.id).
+// A szerep (kapitany / pad) tovabbra is a kulcs resze: ugyanaz a jatekos
+// mas szerepben nem "kozos" - a pontja sem ugyanannyi.
+const szerepKulcs = p => (p.id!=null ? 'i'+p.id : 'n'+p.name)
+                       + '|'+(p.cap?'C':'')+(p.sub?'P':'');
 
 // A ket oszlop VEGIG ugyanaz marad: bal oldal az egyik szakvezeto, jobb a
 // masik. Gepen a kozos jatekosok ezert MINDKET oszlopban ott vannak

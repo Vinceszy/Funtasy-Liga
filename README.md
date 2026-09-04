@@ -71,6 +71,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [A pad sorrendje (PL) — és ami még nyitott](#a-pad-sorrendje-pl--és-ami-még-nyitott)
   - [Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva](#az-fpl-draft-api-draftpremierleaguecomapi--mérésekkel-igazolva)
 - [4/c. Egy klubnak két meccse is lehet egy fordulóban](#4c-egy-klubnak-két-meccse-is-lehet-egy-fordulóban)
+  - [A közös játékost AZONOSÍTÓ párosítja, nem név](#a-közös-játékost-azonosító-párosítja-nem-név)
 - [5. Ismert korlátok, buktatók](#5-ismert-korlátok-buktatók)
 - [5/a4. A Guardiola mutató](#5a4-a-guardiola-mutató)
   - [A PL-en ugyanez, automatikus cserékkel](#a-pl-en-ugyanez-automatikus-cserékkel)
@@ -1502,6 +1503,19 @@ kell.
 
 Rögzítve: `tesztek/gyujto_meccsek.py` M9–M11 (gyűjtő) és `tesztek/forduloelott.teszt.js`
 (böngésző, a mérés valódi alakjával).
+
+### A közös játékost AZONOSÍTÓ párosítja, nem név
+
+Az élő meccs-nézet a két keretet **külön** kéri le, és ha csak az egyik jön meg, a másik a
+tárolt marad. A két forrás viszont **más névalakot** ad — a tárolt a magyar sorrendet
+(`Lehoczki Bendegúz`), az élő lekérés a keresztnév-vezetéknév alakot (`Bendegúz Lehoczki`).
+Név szerint párosítva ilyenkor **nulla** közös játékos jött ki, holott kettő volt. Az
+azonosító (`competition_player.id`) mindkét forrásban ugyanaz, ezért a `szerepKulcs` azt
+használja. A **szerep** (kapitány / pad) továbbra is a kulcs része: ugyanaz a játékos más
+szerepben nem közös — a pontja sem ugyanannyi.
+
+Rögzítve: `tesztek/kulonbseg.teszt.js` — tárolt, vegyes és élő alakban is ugyanannyi közös
+játékost kell találnia.
 
 ## 5. Ismert korlátok, buktatók
 

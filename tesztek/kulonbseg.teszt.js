@@ -63,6 +63,63 @@ const nyit = async (p,w,h) => {
     jo(await p.locator('.szakasz').count()===0, 'kikapcsolva a megszokott keret-nézet jön vissza');
     await p.close();
   }
+  cim('A közös játékos VEGYES forrásnál is megvan');
+  // BEJELENTETT: "Csonginak es nekem nem ir kozos jatekost, pedig Lehoczki
+  // mindkettonknel csere". Az elo meccs-nezet a KET keretet KULON keri le,
+  // es ha csak az egyik jon meg, a masik a TAROLT marad. A ket forras viszont
+  // MAS NEVALAKOT ad - a tarolt magyar sorrendet ("Lehoczki Bendegúz"), az
+  // elo lekeres a keresztnev-vezeteknev alakot ("Bendegúz Lehoczki") -, es a
+  // parositas NEV szerint ment: ilyenkor NULLA kozos jatekos jott ki.
+  // Mostantol az AZONOSITO parosit, az mindket forrasban ugyanaz.
+  {
+    const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
+    const err = []; p.on('pageerror', e => err.push(e.message));
+    await apiKi(p);
+    await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
+    await p.waitForSelector('#table tr', { timeout: 20000 });
+    await p.waitForTimeout(1000);
+    const m = await p.evaluate(async () => {
+      const r = T.lastPlayedRound();
+      const kt = await keretFordulo(r);
+      const nevek = Object.keys(kt);
+      // olyan par kell, akiknek VAN kozos jatekosuk
+      const kulcs = x => szerepKulcs(x);
+      let A = null, B = null;
+      for (let i = 0; i < nevek.length && !A; i++)
+        for (let j = i + 1; j < nevek.length; j++) {
+          const a = new Set((kt[nevek[i]] || []).map(kulcs));
+          if ((kt[nevek[j]] || []).some(x => a.has(kulcs(x)))) {
+            A = nevek[i]; B = nevek[j]; break;
+          }
+        }
+      if (!A) return null;
+      const nyugati = n => { const q = n.split(' ');
+        return q.length > 1 ? q.slice(1).concat(q[0]).join(' ') : n; };
+      const elo = l => l.map(x => ({ ...x, name: nyugati(x.name) }));
+      const db = (X, Y) => {
+        MECCS = { h: A, v: B, A: X, B: Y, hp: null, vp: null, r: r, elo: true };
+        meccsTest();
+        const s = document.querySelector('.szuroinfo');
+        return s ? parseInt(s.textContent) : 0;
+      };
+      return { par: A + ' vs ' + B,
+               tarolt: db(kt[A], kt[B]),
+               vegyes: db(kt[A], elo(kt[B])),
+               mindketto: db(elo(kt[A]), elo(kt[B])) };
+    });
+    if (!m) jo(true, 'kihagyva: nincs olyan pár, akiknek közös játékosa van');
+    else {
+      jo(m.tarolt > 0, m.par + ': tárolt adatból ' + m.tarolt + ' közös játékos');
+      jo(m.vegyes === m.tarolt,
+         'VEGYES forrásnál (egyik élő, másik tárolt) ugyanannyi: ' + m.vegyes
+         + ' — a névsorrend nem számít');
+      jo(m.mindketto === m.tarolt,
+         'mindkettő élő alakban is ugyanannyi: ' + m.mindketto);
+    }
+    jo(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+    await p.close();
+  }
+
   console.log('pageerror:', hibak.length?hibak:'nincs');
   await br.close();
 })();

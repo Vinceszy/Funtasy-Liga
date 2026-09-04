@@ -1,6 +1,15 @@
 {
  "bejegyzesek": [
   {
+   "datum": "2026-09-04",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1"
+   ],
+   "cim": "Élő meccsnél is megjelennek a közös játékosok",
+   "leiras": "Élő forduló alatt előfordult, hogy a meccs két kerete között egyetlen közös játékost sem mutatott az oldal, pedig volt: a két keretet külön kérjük le, és ha csak az egyik frissült, a nevek eltérő sorrendben álltak a két oldalon. Mostantól a párosítás a játékos azonosítója alapján megy, tehát a névalak nem számít."
+  },
+  {
    "datum": "2026-09-03",
    "tipus": "bugfix",
    "ligak": [
