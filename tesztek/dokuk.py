@@ -129,6 +129,30 @@ allit(_vj is not None and _vhtml is not None and int(_vj) == _vhtml,
       "D6/b: a verzio.json egyezik a ?v= szammal (verzio.json: %s, ?v=: %s)"
       % (_vj, _vhtml))
 
+# D8: amit a gyujto KIIR, azt a workflow COMMITOLJA is.
+# A workflow-k KEZZEL FELSOROLT fajlokat adnak a committhoz - ez szandekos
+# (nem sopor be szemetet), de nema: 2026-09-06-ig a keretvaltozasok.json
+# egyaltalan nem volt a listan, tehat a gyujto minden korben helyesen
+# kiszamolta, es a repoba SOSEM kerult be. A "Valtoztatasok" fulon ezert
+# allt a lezart 7. fordulonal is, hogy "meg nincs pontszam". Semmi nem
+# jelezte. Ezt gepnek kell nezni.
+_MUNKAK = (("collect.py", ".github/workflows/archive.yml"),
+           ("collect_draft.py", ".github/workflows/draft.yml"))
+_hianyzo = []
+for _coll, _wf in _MUNKAK:
+    _add = _re.search(r"git add -A(?: --)? ([^\n]*?)(?: 2>/dev/null)?\n", olvas(_wf))
+    _lista = [x.strip("'\"") for x in _add.group(1).split()] if _add else []
+    for _f in sorted(set(_re.findall(r'(?:kompakt_iras|kiir_ha_valtozott)\(\s*"([^"]+)"',
+                                     olvas(_coll)))):
+        _mappa = _f.split("/")[0]
+        _fed = any(_f == x or _mappa == x or (x.endswith("*.json") and _f.startswith(x[:-6]))
+                   for x in _lista)
+        if not _fed:
+            _hianyzo.append("%s -> %s" % (_f, _wf))
+allit(not _hianyzo,
+      "D8: amit a gyujto kiir, azt a workflow commitolja is"
+      + ("" if not _hianyzo else " - HIANYZIK: " + "; ".join(_hianyzo)))
+
 # D7: a README tartalomjegyzeke egyezik a tenyleges cimekkel.
 # A fajl 1500+ soros; jegyzek nelkul kereshetetlen, elavult jegyzekkel meg
 # felrevezeto. Ezert a jegyzek NEM kezi munka: itt keszul ujra a cimekbol, es

@@ -1,6 +1,15 @@
 {
  "bejegyzesek": [
   {
+   "datum": "2026-09-07",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1"
+   ],
+   "cim": "A Változtatások fülön a lezárt forduló is pontot mutat",
+   "leiras": "A lezárt fordulónál is az állt, hogy „még nincs pontszám”, pedig a pontok megvoltak: a háttérben számolt adat elkészült, de a mentése kimaradt, így a fájlban a lezárás előtti állapot maradt. Mostantól a lezárt forduló a Változtatások fülön is a valódi pontértékekkel és a GUARD összeggel jelenik meg."
+  },
+  {
    "datum": "2026-09-04",
    "tipus": "bugfix",
    "ligak": [

@@ -71,6 +71,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [A pad sorrendje (PL) — és ami még nyitott](#a-pad-sorrendje-pl--és-ami-még-nyitott)
   - [Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva](#az-fpl-draft-api-draftpremierleaguecomapi--mérésekkel-igazolva)
 - [4/c. Egy klubnak két meccse is lehet egy fordulóban](#4c-egy-klubnak-két-meccse-is-lehet-egy-fordulóban)
+  - [Amit a gyűjtő kiír, azt a workflow commitolja is](#amit-a-gyűjtő-kiír-azt-a-workflow-commitolja-is)
   - [Az elavult lap magától újratölt](#az-elavult-lap-magától-újratölt)
   - [A közös játékost AZONOSÍTÓ párosítja, nem név](#a-közös-játékost-azonosító-párosítja-nem-név)
 - [5. Ismert korlátok, buktatók](#5-ismert-korlátok-buktatók)
@@ -1505,6 +1506,18 @@ kell.
 
 Rögzítve: `tesztek/gyujto_meccsek.py` M9–M11 (gyűjtő) és `tesztek/forduloelott.teszt.js`
 (böngésző, a mérés valódi alakjával).
+
+### Amit a gyűjtő kiír, azt a workflow commitolja is
+
+A workflow-k **kézzel felsorolt** fájlokat adnak a committhoz — ez szándékos (nem söpör be
+szemetet), de **néma**: a `keretvaltozasok.json` egyáltalán nem volt a listán, tehát a gyűjtő
+minden körben helyesen kiszámolta, és a repóba **soha nem került be**. A „Változtatások" fülön
+ezért állt a már lezárt 7. fordulónál is, hogy *„még nincs pontszám"* — a fájlban a lezárás
+előtti, pont nélküli állapot maradt. Semmi nem jelezte.
+
+Ezt gép nézi: a `tesztek/dokuk.py` **D8** összeveti a gyűjtők `kompakt_iras` / `kiir_ha_valtozott`
+hívásait a workflow `git add` listájával (a mappa-előtag és a `draft*.json`-szerű glob is
+számít). Ha egy új kimeneti fájl kimarad, a teszt megnevezi.
 
 ### Az elavult lap magától újratölt
 
