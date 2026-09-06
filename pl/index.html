@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=79">
+<link rel="stylesheet" href="../funtasy.css?v=80">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -106,7 +106,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=79"></script>
+<script src="../funtasy.js?v=80"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -137,6 +137,7 @@ let liga = {};
 let PLAYERS = {};   // jatekos-torzs: {id: {n,t,p}}
 let SQUADS = {};    // jelenlegi keretek: {liga_id: [element,...]}
 let HIST = {};      // fordulonkenti keretek: {gw: {liga_id: [{e,b,pts},...]}}
+let VEGLEGESEK = [];// a MAR LEZART fordulok (draft_history.json veglegesek)
 const LIVE = {};    // elo eredmenyek a folyo fordulora - tabellaba NEM szamit
 let LIVEGW = null;  // a most zajlo fordulo szama (ha van)
 let LIVEPTS = {};   // percre friss jatekos-pontok: {element: pont}
@@ -730,7 +731,12 @@ function zarasInit(){
   // panelen a nyilak ellenkezo iranyba vittek).
   const van = Object.keys(ZARASOK).map(Number);
   if (!van.length) return;
-  const utolso = Math.max(...van, ...Object.keys(HIST).map(Number).filter(Boolean));
+  // A LEZART fordulokig megyunk, nem a tarolt keretekig. A gyujto a FOLYO
+  // fordulo kereteit is elmenti, tehat a HIST elo fordulo alatt eggyel
+  // tovabb tart - a panel emiatt egy MEG LE SEM ZART fordulon nyilt meg,
+  // uresen ("nem tortent valtozas"), holott a zaras meg meg sem tortent.
+  // A `veglegesek` pontosan azt mondja meg, mit zart le a gyujto.
+  const utolso = Math.max(...van, ...VEGLEGESEK.map(Number).filter(Boolean));
   const fordulok = [];
   for (let r = 1; r <= utolso; r++) fordulok.push(r);
   $('selZaras').innerHTML = fordulok.map(r => `<option value="${r}">${r}. forduló</option>`).join('');
@@ -1261,6 +1267,7 @@ Promise.all([
     TEAMS = (pl && pl.teams) || {};   // regi fajlban meg nincs: akkor nincs kotojel-jelzes sem
     SQUADS = (sq && sq.squads) || {};
     HIST = (hi && hi.rounds) || {};
+    VEGLEGESEK = (hi && hi.veglegesek) || [];
 
     jatekosPanel();
     T.rPast = T.lastPlayedRound();

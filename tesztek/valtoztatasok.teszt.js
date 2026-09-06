@@ -362,14 +362,23 @@ async function plPontNelkul(br){
   const id = await p.$eval('#table tr [data-team]', e => e.dataset.team);
   await p.evaluate(i => showTeam(+i, 'valtoztatasok', 'replace'), id);
   await p.waitForSelector('#mBody .valtlista', { timeout: 10000 });
-  const t = await p.$eval('#mBody .vakor', b => ({
+  // A BLOKKOT A FORDULO SZAMA SZERINT keressuk, nem az elsot vesszuk: a
+  // fordulok NOVEKVO sorrendben allnak, tehat amint tobb lezart fordulo lett,
+  // az elso blokk mar nem a most vizsgalt (pont nelkuli) fordulo volt.
+  const t = await p.$$eval('#mBody .vakor', (bs, gw) => {
+    const b = bs.find(x => parseInt(x.querySelector('.vafej span').textContent) === +gw);
+    if (!b) return null;
+    return ({
     megj: (b.querySelector('.vafej .vamegj') || {}).textContent,
     guardjel: !!b.querySelector('.vafej .guardjel'),
     ossz: !!b.querySelector('.vaossz'),
     gep: !!b.querySelector('.vagep'),
     sorok: b.querySelectorAll('.vasor:not(.vaures)').length,
     uresDiff: [...b.querySelectorAll('.zdiff')].every(x => !x.textContent.trim()),
-  }));
+  });
+  }, GW);
+  jo(!!t, 'megvan a ' + GW + '. forduló blokkja');
+  if (!t){ await p.close(); return; }
   jo(/nincs pontszám/.test(t.megj || ''),
      'PL: a fejléc megmondja, hogy még nincs pontszám ("' + t.megj + '")');
   jo(!t.guardjel && !t.ossz, 'PL: nincs GUARD és nincs "Összesen" sor');

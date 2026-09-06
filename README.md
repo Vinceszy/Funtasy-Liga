@@ -71,6 +71,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [A pad sorrendje (PL) — és ami még nyitott](#a-pad-sorrendje-pl--és-ami-még-nyitott)
   - [Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva](#az-fpl-draft-api-draftpremierleaguecomapi--mérésekkel-igazolva)
 - [4/c. Egy klubnak két meccse is lehet egy fordulóban](#4c-egy-klubnak-két-meccse-is-lehet-egy-fordulóban)
+  - [A zárási panel a LEZÁRT fordulókig megy](#a-zárási-panel-a-lezárt-fordulókig-megy)
   - [Amit a gyűjtő kiír, azt a workflow commitolja is](#amit-a-gyűjtő-kiír-azt-a-workflow-commitolja-is)
   - [Az elavult lap magától újratölt](#az-elavult-lap-magától-újratölt)
   - [A közös játékost AZONOSÍTÓ párosítja, nem név](#a-közös-játékost-azonosító-párosítja-nem-név)
@@ -1506,6 +1507,16 @@ kell.
 
 Rögzítve: `tesztek/gyujto_meccsek.py` M9–M11 (gyűjtő) és `tesztek/forduloelott.teszt.js`
 (böngésző, a mérés valódi alakjával).
+
+### A zárási panel a LEZÁRT fordulókig megy
+
+A PL „Zárási változások" panelje a tárolt keretek (`draft_history`) legnagyobb fordulójáig
+listázott — csakhogy a gyűjtő a **folyó** forduló kereteit is elmenti, tehát élő forduló alatt
+a lista eggyel tovább tartott, és a panel egy **még le sem zárt** fordulón nyílt meg, üresen
+(*„nem történt változás"*). A zárás akkor még meg sem történt.
+
+Mostantól a `draft_history.json` **`veglegesek`** listája dönt: az mondja meg pontosan, mit
+zárt le a gyűjtő.
 
 ### Amit a gyűjtő kiír, azt a workflow commitolja is
 

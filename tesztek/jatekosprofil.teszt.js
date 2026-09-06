@@ -387,6 +387,17 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
       { event: 4, opponent: 6, is_home: false, kickoff_time: '2026-09-08T13:00:00Z' }
     ] }) }));
 
+  // AZ ELOFELTETELT KIMONDJUK: a 3. fordulo itt JOVOBELI - a mock is annak
+  // adja (fixtures: event 3). A gyujto viszont a FOLYO fordulo kereteit is
+  // eltarolja, amint az FPL tovabblep, es akkor a 3. fordulohoz mar VAN
+  // tulajdonos - a "jovobelinel ures a tulajdonos" allitas ettol bukott,
+  // holott a termekkel semmi baj. Ezert a tarolt elozmenybol menet kozben
+  // kivesszuk a 3. fordulot es az utana kovetkezoket.
+  await jsonAtir(q, '**/draft_history.json*', j => {
+    for (const k of Object.keys(j.rounds || {})) if (+k >= 3) delete j.rounds[k];
+    j.veglegesek = (j.veglegesek || []).filter(x => +x < 3);
+    return j;
+  });
   await q.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
   await q.waitForFunction(() => typeof showProfil === 'function'
     && Object.keys(HIST).length > 0, null, { timeout: 20000 });
