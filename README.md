@@ -66,6 +66,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [A meccs állása a pont-bontás fölött (PL és NB1)](#a-meccs-állása-a-pont-bontás-fölött-pl-és-nb1)
   - [Automatikus cserék a forduló zárásakor (PL)](#automatikus-cserék-a-forduló-zárásakor-pl)
   - [A zárás és a gyűjtés közötti rés (PL)](#a-zárás-és-a-gyűjtés-közötti-rés-pl)
+  - [Az indulás és a gyűjtés közötti rés (PL) — a keretet a böngésző pótolja](#az-indulás-és-a-gyűjtés-közötti-rés-pl--a-keretet-a-böngésző-pótolja)
   - [Név és monogram: a monogram sosem vágódik le](#név-és-monogram-a-monogram-sosem-vágódik-le)
   - [Kezdőállítási hatékonyság (KEZD%)](#kezdőállítási-hatékonyság-kezd)
   - [A pad sorrendje (PL) — és ami még nyitott](#a-pad-sorrendje-pl--és-ami-még-nyitott)
@@ -1344,6 +1345,41 @@ Rögzíti: `zarasires.teszt.js`.
 
 Az NB1-en ez a rés nem áll fenn: ott a gyűjtő maga dönti el a lezárást, és ugyanabban a
 futásban írja be az eredményt is.
+
+### Az indulás és a gyűjtés közötti rés (PL) — a keretet a böngésző pótolja
+
+A fenti rés párja, a forduló **elején**. Az FPL a fordulót a nevezési határidővel
+indítja (`current_event` átlép), a gyűjtőnk viszont 3 óránként fut — **mérve
+2026-09-18-án**: a 16:43 UTC-s futás még a 4. fordulót látta (a log szerint
+`fordulonkenti keret: GW4`), a következő 23:47-re volt időzítve, közben ~17:30-kor
+elindult az 5. Abban a résben a repóban **egyáltalán nem létezett keret** az 5.
+fordulóhoz.
+
+Ettől a lap élő meccs alatt nem mutatott semmit — és félrevezető módon: kiment az
+API-ra, meg is kapta az élő pontokat, csak nem volt *kire* rátérítenie őket
+(`eloAllasFrissit` a `HIST[gw]` hiányában kilépett), így élő állás helyett
+**„Naprakész"** állt a státuszsávban, miközben ment a meccs.
+
+Megoldás: a hiányzó kereteket a **böngésző kéri le** — `entry/{eid}/event/{gw}`, ami a
+forduló indulásáig 404-et ad, utána `picks`-et; mi csak élő fordulóra hívjuk. A
+`draft.json` a ligán belüli azonosítót tárolja (`league_entry "id"`), a végpont az FPL
+`entry_id`-t kéri — a kettőt a `league/{id}/details` köti össze, azt egyszer kérjük le.
+
+Két szabály védi:
+
+- **A gyűjtőé az erősebb.** Amit ő már beírt, azt a pótlás nem írja felül: az ő kerete
+  már a zárás utáni, automatikus cserékkel javított állapot lehet, a böngészőé mindig a
+  zárás előtti pillanatkép. Fordulóhatáron a pótolt keretet eldobjuk.
+- **Részleges pótlásból nem lesz hamis állás.** Akinek a kerete nem jött meg, annak a
+  meccse élő állás nélkül marad — a 0 futó meccsen nem „még nincs pont", hanem téves
+  szám. (A keret részlegesen a gyűjtőtől is hiányozhat: az egy elhasalt csapat-lekérést
+  átlép.)
+
+A parancs **közös** (`FunTasy.potKeretek`), mert a helyzet mindkét ligán ugyanez; a
+végpont ligánként más, azt a hívó adja. Az NB1-en ma azért nem áll elő, mert ott a
+gyűjtő **minden futásban** kiírja a teljes aktuális keretet (`squads.json`), és a lap
+abból tölti ki a folyó forduló állását — ha az a fájl valaha lemarad, ugyanez a pótlás
+áll oda is. Rögzíti: `keretpotlas.teszt.js`.
 
 ### Név és monogram: a monogram sosem vágódik le
 

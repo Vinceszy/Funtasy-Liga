@@ -1253,6 +1253,61 @@
     };
   }
 
+  /* ===== A FOLYO FORDULO KERETEI, AMIG A GYUJTO MEG NEM IRTA BE OKET =====
+     BEJELENTETT HIBA (2026-09-18, PL 5. fordulo): elo meccs alatt a lap nem
+     frissult. A gyujto 3 orankent fut, a fordulo viszont a nevezesi
+     hataridovel indul: a 16:43 UTC-s futas MEG a 4. fordulot latta (a log
+     szerint "fordulonkenti keret: GW4"), a kovetkezo 23:47-re volt idozitve.
+     Kozben elindult az 5., es a repoban EGYALTALAN nem letezett hozza keret.
+     A lap kiment az API-ra, meg is kapta az elo pontokat - csak nem volt
+     kire raterite oket, igy elo allas helyett "Naprakesz" allt a
+     statuszsavban egy futo meccs alatt.
+
+     A potlas a bongeszo dolga: a hianyzo kereteket fordulonkent EGYSZER
+     lekeri. Azert KOZOS, mert a helyzet mindket ligan ugyanez (a gyujto
+     ritkabban fut, mint ahogy a fordulo indul); csak a vegpont mas, azt a
+     hivo adja. Az NB1 ma azert nem eszleli, mert ott a gyujto MINDEN
+     futasban kiirja a teljes aktualis keretet (squads.json) - ha az a fajl
+     valaha lemarad, ugyanez a potlas all ide is.
+
+     - `fordulo`: amelyik fordulo kereteirol van szo (a gyorsitotar kulcsa)
+     - `kulcsok`: akiknek a keretet le kell kerni (PL: liga-id, NB1: nev)
+     - `lekero(kulcs)`: Promise<keret|null>
+
+     Ami mar megjott, azt megjegyzi: a kovetkezo hivas CSAK a meg hianyzokat
+     keri le ujra, tehat egy elhasalt lekeres magatol gyogyul a kovetkezo
+     percben, es a sikeresek nem mennek ki masodszor. A visszaadott terkep
+     ezert lehet RESZLEGES - a hivonak kell eldontenie, mit kezd azzal, akie
+     meg nincs meg; nulla pontkent mutatni NEM szabad (futo meccsen hamis
+     allas lenne belole). */
+  var POTKERET = {};
+  function potKeretek(fordulo, kulcsok, lekero) {
+    var r = String(fordulo);
+    var kesz = POTKERET[r] || (POTKERET[r] = {});
+    var kell = (kulcsok || []).filter(function (k) {
+      return !(kesz[k] && kesz[k].length);
+    });
+    if (!kell.length) {
+      return Promise.resolve(Object.keys(kesz).length ? kesz : null);
+    }
+    return Promise.all(kell.map(function (k) {
+      return Promise.resolve().then(function () { return lekero(k); })
+                    .catch(function () { return null; });
+    })).then(function (jott) {
+      kell.forEach(function (k, i) {
+        if (jott[i] && jott[i].length) kesz[k] = jott[i];
+      });
+      return Object.keys(kesz).length ? kesz : null;
+    });
+  }
+  /* Fordulohataron a potolt kereteket el kell dobni - kulonben a memoriaban
+     maradnanak, es egy kesobbi fordulo felig kesz terkepe mellol az ELOZO
+     fordulo keretei nezhetnenek vissza. Parameter nelkul mindent urit. */
+  function potKeretekUrit(fordulo) {
+    if (fordulo == null) POTKERET = {};
+    else delete POTKERET[String(fordulo)];
+  }
+
   /* ===== Lassu lekeres jelzese =====
      A meccs-adatlap es a keret-nezet eloszor a tarolt szamokkal rajzol, es
      amikor a percre friss lekeres megjon, kicsereli oket. Gyors halon ez
@@ -1709,6 +1764,7 @@
                      kezdParHTML: kezdParHTML,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
                      eloFrissito: eloFrissito,
+                     potKeretek: potKeretek, potKeretekUrit: potKeretekUrit,
                      lassuJelzo: lassuJelzo, allasHTML: allasHTML,
                      nezetVerem: nezetVerem, lekero: lekero,
                      eloKereso: eloKereso, hibajelzo: hibajelzo, h2hNezo: h2hNezo };

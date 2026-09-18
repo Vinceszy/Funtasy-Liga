@@ -1,6 +1,15 @@
 {
  "bejegyzesek": [
   {
+   "datum": "2026-09-18",
+   "tipus": "bugfix",
+   "ligak": [
+    "pl"
+   ],
+   "cim": "Élő meccs alatt is látszik az állás az új forduló első óráiban",
+   "leiras": "A forduló a nevezési határidővel indul, a gyűjtő viszont 3 óránként fut — a kettő között a tárolt adatban még nem volt keret az új fordulóhoz, így a lap élő pontokat kapott ugyan, de nem volt mihez rendelnie őket: futó meccs alatt „Naprakész” állt élő állás helyett. Mostantól a hiányzó kereteket a böngésző maga kéri le. Akinek a kerete nem jön meg, annak a meccse állás nélkül marad — 0-t írni oda félrevezető lenne."
+  },
+  {
    "datum": "2026-09-07",
    "tipus": "bugfix",
    "ligak": [

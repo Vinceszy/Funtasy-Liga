@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=80">
+<link rel="stylesheet" href="../funtasy.css?v=81">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -106,7 +106,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=80"></script>
+<script src="../funtasy.js?v=81"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -137,6 +137,19 @@ let liga = {};
 let PLAYERS = {};   // jatekos-torzs: {id: {n,t,p}}
 let SQUADS = {};    // jelenlegi keretek: {liga_id: [element,...]}
 let HIST = {};      // fordulonkenti keretek: {gw: {liga_id: [{e,b,pts},...]}}
+let POTKER = {};    // ugyanaz, a bongeszo potlasaval kiegeszitve - lasd keretPotlas
+// A FORDULO KERETEI. Ket forrasa van: a gyujto (HIST) es - amig az meg nem
+// irta be oket - a bongeszo sajat lekerese (keretPotlas). A gyujtoe az
+// erosebb: az mar a zaras utani, automatikus cserekkel javitott allapot
+// lehet, a bongeszoe mindig a zaras elotti pillanatkep. A POTKER ezert MAR
+// osszefesulve all elo (lasd keretPotlas), itt csak valasztunk kozuluk.
+const KER = gw => POTKER[gw] || HIST[gw];
+// Amelyik fordulorol egyaltalan van keretunk - barmelyik forrasbol.
+const KERGWK = () => {
+  const s = new Set(Object.keys(HIST));
+  for (const k in POTKER) s.add(k);
+  return [...s].map(Number).filter(Boolean);
+};
 let VEGLEGESEK = [];// a MAR LEZART fordulok (draft_history.json veglegesek)
 const LIVE = {};    // elo eredmenyek a folyo fordulora - tabellaba NEM szamit
 let LIVEGW = null;  // a most zajlo fordulo szama (ha van)
@@ -205,7 +218,7 @@ const KEZD_MEMO = new Map();
 function kezdErtek(id, r){
   const k = id + '|' + r;
   if (!KEZD_MEMO.has(k))
-    KEZD_MEMO.set(k, plHatekonysag(((HIST[r] || {})[id]) || null));
+    KEZD_MEMO.set(k, plHatekonysag(((KER(r) || {})[id]) || null));
   return KEZD_MEMO.get(k);
 }
 
@@ -352,10 +365,10 @@ function sqcolHTML(id, lista, cim, gw){
 // Melyik fordulot mutatja a "keret" ful? A percek utantoltesehez kell
 // tudni - a keretHTML-lel EGYUTT kell modositani.
 function keretGW(id){
-  if (LIVEGW && ((HIST[LIVEGW] || {})[id] || []).length) return LIVEGW;
+  if (LIVEGW && ((KER(LIVEGW) || {})[id] || []).length) return LIVEGW;
   if ((SQUADS[id] || []).length) return null;   // a jelenlegi keret nem fordulohoz kotott
-  const gwk = Object.keys(HIST).map(Number).sort((a, b) => b - a);
-  for (const gw of gwk) if (((HIST[gw] || {})[id] || []).length) return gw;
+  const gwk = KERGWK().sort((a, b) => b - a);
+  for (const gw of gwk) if (((KER(gw) || {})[id] || []).length) return gw;
   return null;
 }
 
@@ -363,7 +376,7 @@ function keretHTML(id){
   // Folyo fordulo kozben az elo meccskeret jar, percre friss pontokkal -
   // ugyanabbol a logikabol, mint a meccs-modal. Fordulok kozott a jelenlegi
   // tulajdon (draft + igazolasok utani allapot) a helyes valasz.
-  const eloSq = LIVEGW && (HIST[LIVEGW] || {})[id];
+  const eloSq = LIVEGW && (KER(LIVEGW) || {})[id];
   if (eloSq && eloSq.length){
     const sq = Object.keys(LIVEPTS).length
       ? eloSq.map(x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts })) : eloSq;
@@ -374,9 +387,9 @@ function keretHTML(id){
   if (sq && sq.length)
     return `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">A jelenlegi keret (draft és igazolások utáni állapot) — a heti pontok a fordulók nézetében</div>`
            + `<div class="sqwrap one">${sqcolHTML(id, sq)}</div>`;
-  const gwk = Object.keys(HIST).map(Number).sort((a, b) => b - a);
+  const gwk = KERGWK().sort((a, b) => b - a);
   for (const gw of gwk){
-    const h = (HIST[gw] || {})[id];
+    const h = (KER(gw) || {})[id];
     if (h && h.length)
       return `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">${gw}. forduló</div>`
              + ACCHINT + `<div class="sqwrap one">${sqcolHTML(id, h, null, gw)}</div>`;
@@ -464,9 +477,9 @@ function valtoztatasokHTML(id){
 
 function jatekosokHTML(id){
   const agg = {};
-  const gwk = Object.keys(HIST).map(Number).sort((a, b) => a - b);
+  const gwk = KERGWK().sort((a, b) => a - b);
   for (const gw of gwk){
-    const sq = (HIST[gw] || {})[id];
+    const sq = (KER(gw) || {})[id];
     if (!sq) continue;
     for (const x of sq){
       const a = agg[x.e] || (agg[x.e] = { e: x.e, pts: 0, rounds: 0, st: 0, pad: 0 });
@@ -535,7 +548,7 @@ async function profilAdat(e){
   const utolso = liga.stop_event || 38;   // a `lastRound` csak a T beallitasa, nem metodusa
   const gwk = new Set();
   for (let r = 1; r <= utolso; r++) gwk.add(r);
-  Object.keys(HIST).map(Number).filter(Boolean).forEach(r => gwk.add(r));
+  KERGWK().forEach(r => gwk.add(r));
   (hist || []).forEach(h => { if (h.event) gwk.add(+h.event); });
   // fordulo -> a hatralevo meccsek (dupla forduloban tobb is)
   const jovoGw = {};
@@ -547,7 +560,7 @@ async function profilAdat(e){
 
   const sorok = [];
   for (const gw of [...gwk].sort((a, b) => a - b)){
-    const per = HIST[gw] || {};
+    const per = KER(gw) || {};
     const tulajok = [];
     let tarolt = null;             // a fordulo TAROLT pontja (draft_history)
     for (const id of Object.keys(per)){
@@ -564,7 +577,7 @@ async function profilAdat(e){
       r: gw,
       tulajok,
       // a fordulo meg nem indult el: nincs rola keret-elozmeny
-      jovo: !HIST[gw],
+      jovo: !KER(gw),
       keretszam: Object.keys(per).length,
       meccsek: lejatszott.length ? lejatszott : jovobeli,
       // Ha az FPL-lekeres elhasal, NEM kotojel jon: a fordulonkenti pont ott
@@ -580,7 +593,7 @@ async function profilAdat(e){
       // jatszott (ures fordulo). A jovobeli sor egyszeruen ures.
       jegyzet: !hist ? (tarolt != null ? undefined : '—')
         : (hs.length || jovobeli.length) ? undefined
-        : (HIST[gw] ? 'nincs meccs' : '')
+        : (KER(gw) ? 'nincs meccs' : '')
     });
   }
   const osszes = sorok.reduce((x, s) => x + (s.pont || 0), 0);
@@ -659,7 +672,7 @@ function showTeam(id, tab, mode){
     // a nyitott pont-bontas maradjon nyitva (lasd FunTasy.accOrzo)
     percUtantoltes(keretGW(id), () => { if (keretLatszik())
       FunTasy.accOrzo(() => { $('mBody').innerHTML = keretHTML(id); }); });
-  if (tab === 'keret' && LIVEGW && (HIST[LIVEGW] || {})[id]){
+  if (tab === 'keret' && LIVEGW && (KER(LIVEGW) || {})[id]){
     fetchLivePts().catch(() => false).then(ok => {
       // amit itt lekertunk, azzal a mogottes fooldali lista is frissul -
       // kulonben ugyanaz a "listan 39, ravaltva 38" elteres allna elo, mint
@@ -770,7 +783,7 @@ function showMatch(h, v, r, mode){
   $('mTitle').textContent = nev(h) + '  vs  ' + nev(v);
   $('mSub').textContent = r + '. forduló';
   $('mTabs').innerHTML = '';
-  let H = (HIST[r] || {})[h], V = (HIST[r] || {})[v];
+  let H = (KER(r) || {})[h], V = (KER(r) || {})[v];
   // a folyo fordulon a repobeli (3 orankent frissulo) pontok helyett a
   // percre friss ertekeket mutatjuk, ha az elo lekeres mar megjott
   if (r === LIVEGW && Object.keys(LIVEPTS).length){
@@ -1180,13 +1193,70 @@ async function bontasHTML(e, gw, profilban){
 // kulonben a lista es a meccs-adatlap mast mutat ugyanarrol a meccsrol
 // (a bejelentett eset: a listan 39, ravaltva 38).
 function eloAllasFrissit(gw){
-  const keretek = HIST[gw];
+  const keretek = KER(gw);
   if (!keretek) return false;
   const osszeg = id => (keretek[id] || []).filter(x => !x.b)
     .reduce((s, x) => s + (LIVEPTS[x.e] ?? x.pts ?? 0), 0);
+  // Akinek a kerete nincs meg, arrol NEM allitunk allast. A keret hianyozhat
+  // reszlegesen is: a gyujto egy elhasalt csapat-lekerest atlep (continue), a
+  // bongeszo potlasa meg reszleges lehet. Osszegkent ilyenkor 0 jonne ki -
+  // ami futo meccsen nem "meg nincs pont", hanem hamis allas.
+  const van = id => ((keretek[id] || []).length > 0);
   LIVE[gw] = (SCHEDULE[gw] || []).map(m =>
-    played(m) ? null : [m[0], m[1], osszeg(m[0]), osszeg(m[1])]);
+    (played(m) || !van(m[0]) || !van(m[1])) ? null
+      : [m[0], m[1], osszeg(m[0]), osszeg(m[1])]);
   T.renderMatches('past'); T.renderMatches('next');
+  return true;
+}
+// A FOLYO FORDULO KERETEINEK POTLASA. A gyujto 3 orankent fut, a fordulo
+// viszont a nevezesi hataridovel indul - a ket idopont kozott a repoban
+// nincs keret ehhez a fordulohoz, es a lap nem tud elo allast szamolni
+// (BEJELENTVE 2026-09-18, az 5. fordulo elso meccse alatt). Ilyenkor a
+// bongeszo maga keri le oket; a kozos resz a FunTasy.potKeretek, a vegpont
+// ligankent mas.
+//
+// Az `entry/{eid}/event/{gw}` a fordulo INDULASAIG 404-et ad, utana picks-et.
+// Mi csak ELO fordulora hivjuk (LIVEGW), tehat mar van mit adnia.
+//
+// A draft.json a ligan BELULI azonositot tarolja (league_entry "id"), a
+// vegpont viszont az FPL entry_id-t keri - a kettot a league details koti
+// ossze, azt egyszer kerjuk le.
+let EIDK = null;                    // liga_id -> FPL entry_id
+async function entryIdk(){
+  if (EIDK) return EIDK;
+  if (!liga || !liga.id) return null;
+  const j = await apiGet('https://draft.premierleague.com/api/league/' + liga.id + '/details');
+  const t = {};
+  (((j || {}).league_entries) || []).forEach(e => {
+    if (e.id != null && e.entry_id != null) t[e.id] = e.entry_id;
+  });
+  EIDK = Object.keys(t).length ? t : null;
+  return EIDK;
+}
+async function keretPotlas(gw){
+  // `meglevo` = amit MAR tudunk: a gyujtoe es a korabbi potlas egyutt. Ha ezt
+  // csak a HIST-bol neznenk, a potlas minden percben "ujnak" latszana, es
+  // feleslegesen rajzoltatna ujra az egesz lapot.
+  const meglevo = KER(gw) || {};
+  const hianyzik = Object.keys(ENTRIES).filter(id => !(meglevo[id] || []).length);
+  if (!hianyzik.length) return false;
+  const eid = await entryIdk().catch(() => null);
+  if (!eid) return false;
+  const kesz = await FunTasy.potKeretek(gw, hianyzik.filter(id => eid[id]), async id => {
+    const j = await apiGet('https://draft.premierleague.com/api/entry/' + eid[id] + '/event/' + gw);
+    const picks = ((j || {}).picks) || [];
+    // ures vagy ismeretlen szerkezetu valasz: inkabb semmi, mint rossz keret
+    if (!picks.length || picks[0].element == null) return null;
+    // ugyanaz a rekord, amit a gyujto ir (collect_draft.py): a pad a 12-15.
+    // hely, a pontot a LIVEPTS adja - ide 0 kerul.
+    return picks.map(x => ({ e: x.element, b: (x.position || 0) > 11, pts: 0 }));
+  });
+  if (!kesz) return false;
+  // A gyujtoe az erosebb: a mar beirt keretet NEM irjuk felul.
+  const uj = Object.assign({}, kesz, HIST[gw] || {});
+  if (Object.keys(uj).length === Object.keys(meglevo).length) return false;
+  POTKER[gw] = uj;
+  KEZD_MEMO.clear();                // a kezdohatekonysag memoja keretbol szamol
   return true;
 }
 // Elo fordulo alatt percenkent ujra lekerjuk az allast - lasd
@@ -1209,6 +1279,9 @@ async function liveRefresh(){
       delete LIVE[LIVEGW];
       T.renderMatches('past'); T.renderMatches('next');
     }
+    // a potolt keret ugyanugy elavul, mint az elo reteg: a zaras utani
+    // (automatikus cserekkel javitott) keretet mar a gyujto adja
+    if (LIVEGW){ delete POTKER[LIVEGW]; FunTasy.potKeretekUrit(LIVEGW); }
     LIVEGW = null;
     ELOORA.allj();                       // fordulok kozott egy keres sem megy ki
     // "Naprakesz" csak akkor igaz, ha a LEZART fordulo eredmenye mar a tarolt
@@ -1231,12 +1304,20 @@ async function liveRefresh(){
   // uje gyanant - a LIVEPTS/LIVEFX ugyanis csak sikeres lekereskor frissul.
   if (LIVEGW && LIVEGW !== gw){
     delete LIVE[LIVEGW];
+    // a potolt keret a zaras ELOTTI pillanatkep: a lezarult fordulora mar
+    // nem az ervenyes (a lockdown automatikus csereket is vegrehajt), tehat
+    // eldobjuk, es a kovetkezo betoltes a gyujtoetol veszi at
+    delete POTKER[LIVEGW]; FunTasy.potKeretekUrit(LIVEGW);
     LIVEPTS = {}; LIVEPERC = {}; LIVEFX = null; LIVEMECCS = null; LIVENAP = null;
     T.renderMatches('past'); T.renderMatches('next');
   }
   LIVEGW = gw;
   if (!await fetchLivePts()){ lekeresHiba(); return; }
-  // meccsallasok a kezdok pontjaibol - csak ha a fordulo keretei mar a repoban vannak
+  // Ha a gyujto meg nem irta be a fordulo kereteit, a bongeszo potolja. Csak
+  // a hianyzokat keri le, es csak egyszer (FunTasy.potKeretek); ha kozben
+  // megjon a gyujto adata, a kovetkezo betolteskor az veszi at a helyet.
+  if (await keretPotlas(gw).catch(() => false)) T.renderAll();
+  // meccsallasok a kezdok pontjaibol - csak ha a fordulo keretei megvannak
   const keretek = eloAllasFrissit(gw);
   ELOORA.indit();                        // innentol percenkent frissul magatol
   st.className = 'ok';
