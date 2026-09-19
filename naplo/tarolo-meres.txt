@@ -1,3 +1,12 @@
 A Worker "utolso ismert allas" tarolojanak meresei.
 A fajlt a naplo/tarolo-meres.py irja (.github/workflows/tarolo-meres.yml).
 Meg nem futott meres.
+
+==============================================================
+MERES: 2026-09-19 23:07 UTC | szakvezeto: 
+1. /tarolt a lekeres ELOTT: meg nincs tarolva (278 ms)
+2. rendes proxy-keres: HTTP 200, 6068 bajt, 1742 ms
+3. /tarolt a lekeres UTAN: van, ido=2026-09-19T23:07:17.438Z, 6068 bajt (50 ms)
+   egyezik a proxy valaszaval: IGEN
+   a tarolt valasz 34.8x gyorsabban jott, mint a friss lekeres
+4. valtozatlan adat utan az idobelyeg: VALTOZATLAN - csak valtozaskor irunk, ahogy kell
