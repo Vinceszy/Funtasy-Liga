@@ -618,10 +618,14 @@ A státuszsáv a **lekérés** idejét írja ki, nem a mostanit: „Élő állá
 frissítve 21:27" pontosan azt állítja, hogy ezt látta utoljára bárki — nem azt, hogy épp
 most ellenőriztük.
 
-**Két védővonal.** A kötés hiányozhat (amíg a KV-névtér nincs meg): olyankor a Worker
-pontosan úgy működik, mint korábban, és a lap a szokásos élő úton megy. A tárolt állás
-pedig sosem helyettesíti az élő lekérést, csak megelőzi — a `refresh()` utána ugyanúgy
-fut, és ha közben változott valami, felülírja.
+**Két védővonal.** Ha a KV-kötés valaha hiányozna (törölt névtér, más fiók), a Worker
+pontosan úgy működik, mint korábban, és a lap a szokásos élő úton megy — ezt külön teszt
+méri, hogy ne álljon meg tőle semmi. A tárolt állás pedig sosem helyettesíti az élő
+lekérést, csak megelőzi: a `refresh()` utána ugyanúgy fut, és ha közben változott
+valami, felülírja.
+
+A névtér azonosítója a `wrangler.toml`-ban áll. Ez **nem titok**: önmagában semmire nem
+jogosít, a tartalmához a Cloudflare-fiók kell — ahogy a worker URL-je is a repóban van.
 
 **Ahol a szabály két helyen élne, ott nem él kétszer.** A ranglista-URL egyetlen helyen
 készül (`rangUrl`), mert ugyanaz az URL a lekérés címe **és** a tároló kulcsa — ha két

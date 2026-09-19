@@ -17,12 +17,12 @@ workers_dev = true
 # A Worker megjegyzi a ritkan valtozo valaszokat, es a lap betolteskor
 # egyetlen keresben elkeri oket (/tarolt) - lasd tartalek/proxy-worker.js.
 #
-# A KOTES MEG NINCS BEKAPCSOLVA: ehhez egy KV-nevter kell, aminek az
-# azonositoja ide jon. Amig hianyzik, a Worker pontosan ugy mukodik, mint
-# korabban (a tarolas nema no-op) - ezt a tesztek/workertarolo.teszt.js
-# meri. Bekapcsolas: hozz letre egy "funtasy-tarolt" nevu KV-nevteret, es
-# vedd ki a kovetkezo ket sor elol a kettoskeresztet, az id-t kitoltve.
+# A kotes NEM titok: a nevter azonositoja onmagaban semmire nem jogosit, a
+# tartalmahoz a fiok kell. Ezert allhat a repoban, ahogy a worker URL-je is.
 #
-# [[kv_namespaces]]
-# binding = "TAROLT"
-# id = "<a nevter azonositoja>"
+# Ha a kotes valaha hianyozna (torolt nevter, mas fiok), a Worker pontosan
+# ugy mukodik, mint korabban - a tarolas nema no-op. Ezt a
+# tesztek/workertarolo.teszt.js kulon meri, hogy ne alljon meg tole semmi.
+[[kv_namespaces]]
+binding = "TAROLT"
+id = "c2289a98dd404344b53d6a6aa7e85e36"
