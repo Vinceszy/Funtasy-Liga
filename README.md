@@ -39,9 +39,9 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [Az FPL Draft adatai (3 óránként, draft.yml)](#az-fpl-draft-adatai-3-óránként-draftyml)
   - [Élő frissítés a böngészőből (mindkét oldal)](#élő-frissítés-a-böngészőből-mindkét-oldal)
   - [Az utolsó ismert állás — „ha valaki már lekérdezte, lássam azt"](#az-utolsó-ismert-állás--ha-valaki-már-lekérdezte-lássam-azt)
-  - [Az NB1 élő lekérése két körben megy, nem nyolcban (mérve, 2026-09-19)](#az-nb1-élő-lekérése-két-körben-megy-nem-nyolcban-mérve-2026-09-19)
-  - [A CORS-proxyk cserélhetők — és cserélni is kellett (mérve, 2026-08-27)](#a-cors-proxyk-cserélhetők--és-cserélni-is-kellett-mérve-2026-08-27)
-  - [A betűkészlet nem állíthatja meg a lapot (mérve, 2026-08-27)](#a-betűkészlet-nem-állíthatja-meg-a-lapot-mérve-2026-08-27)
+  - [Az NB1 élő lekérése két körben megy, nem nyolcban (mérve)](#az-nb1-élő-lekérése-két-körben-megy-nem-nyolcban-mérve)
+  - [A CORS-proxyk cserélhetők — és cserélni is kellett (mérve)](#a-cors-proxyk-cserélhetők--és-cserélni-is-kellett-mérve)
+  - [A betűkészlet nem állíthatja meg a lapot (mérve)](#a-betűkészlet-nem-állíthatja-meg-a-lapot-mérve)
   - [Gyorsítótár: miért ragadt be a pontszám iPhone-on](#gyorsítótár-miért-ragadt-be-a-pontszám-iphone-on)
   - [„frissítés… 1,2 mp" — a néma számcsere ellen](#frissítés-12-mp--a-néma-számcsere-ellen)
   - [Fordulóhatár és lezárult PL-forduló: az élő réteget el kell dobni](#fordulóhatár-és-lezárult-pl-forduló-az-élő-réteget-el-kell-dobni)
@@ -55,11 +55,11 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [Keret (bárhonnan működik — ha jól kérdezed)](#keret-bárhonnan-működik--ha-jól-kérdezed)
   - [Ki nem játszik a fordulóban (a meccslista)](#ki-nem-játszik-a-fordulóban-a-meccslista)
   - [Pont-bontás (game-player-stats)](#pont-bontás-game-player-stats)
-  - [Játékostörzs és a szezon egésze (mérésekkel, 2026-08-25)](#játékostörzs-és-a-szezon-egésze-mérésekkel-2026-08-25)
-  - [A játékos-adatlap végpontja (mérve, 2026-08-25)](#a-játékos-adatlap-végpontja-mérve-2026-08-25)
-  - [A jövőbeli menetrend nem érhető el (mérve, 2026-08-25)](#a-jövőbeli-menetrend-nem-érhető-el-mérve-2026-08-25)
-  - [Az árakról nincs előzmény (mérve, 2026-08-25)](#az-árakról-nincs-előzmény-mérve-2026-08-25)
-  - [Amit a hivatalos szabályzat rögzít (fantasy.mlsz.hu, 2026-08-25)](#amit-a-hivatalos-szabályzat-rögzít-fantasymlszhu-2026-08-25)
+  - [Játékostörzs és a szezon egésze (mérésekkel)](#játékostörzs-és-a-szezon-egésze-mérésekkel)
+  - [A játékos-adatlap végpontja (mérve)](#a-játékos-adatlap-végpontja-mérve)
+  - [A jövőbeli menetrend nem érhető el (mérve)](#a-jövőbeli-menetrend-nem-érhető-el-mérve)
+  - [Az árakról nincs előzmény (mérve)](#az-árakról-nincs-előzmény-mérve)
+  - [Amit a hivatalos szabályzat rögzít (fantasy.mlsz.hu)](#amit-a-hivatalos-szabályzat-rögzít-fantasymlszhu)
   - [A pontszámítás kulcsa](#a-pontszámítás-kulcsa)
   - [A „szerverről tilos” tévhit története](#a-szerverről-tilos-tévhit-története)
   - [Forduló-lezárás és utólagos MLSZ-korrekciók](#forduló-lezárás-és-utólagos-mlsz-korrekciók)
@@ -113,7 +113,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   a PL-ben az FPL alappontozása szerint **a szerzett pont az első** holtverseny-szempont
   (a `tiebreak: 'rg'` opció a `pl/index.html`-ben)
   *(A liga korábbi Excel-táblája is pontkülönbség-elsős volt. Ha ezen változtatni kell,
-  egyetlen sort érint: a `funtasy.js`-ben a `computeTable()` végén a `.sort(...)`.)*
+  egyetlen sort érint: a `funtasy.js`-ben a `computeTable` végén a `.sort(...)`.)*
 - **A tabella csak lezárt fordulókból számol.** A folyamatban lévő forduló eredményei a
   meccspanelen látszanak, „élő” jelöléssel — a tabellát nem mozgatják, amíg a forduló
   le nem zárul.
@@ -230,7 +230,7 @@ Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő 
   „lejátszotta a meccset, pontot érő esemény nélkül" — miközben a meccs javában ment.
 
   Élő fordulóban ezért a **meccs állapota** dönt, nem a lejátszottság. Egyetlen helyen,
-  a `meccsAllapot()`-ban, négy értékkel: *előtte* / *fut* / *utána* / *ismeretlen* — így a
+  a `meccsAllapot`-ban, négy értékkel: *előtte* / *fut* / *utána* / *ismeretlen* — így a
   játékos sora és a pont-bontás soha nem mondhat mást ugyanarról a meccsről.
 
   A szabály **két időkorláton** áll, és mindkettőnek konkrét oka van:
@@ -241,7 +241,7 @@ Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő 
     ha ugyanúgy tenné, mint az `is_played`-del (menet közben), akkor egy naiv javítás
     semmit nem oldana meg. Így a javítás **független ettől a nyitott kérdéstől**.
   - **180 perc után nem állítjuk, hogy fut**, akkor sem, ha `vege` jelzés nem érkezett.
-    A `vege` ugyanis nem mindig áll rendelkezésre (a 2026-08-21 előtti keret-rekordokban
+    A `vege` ugyanis nem mindig áll rendelkezésre (a legkorábbi keret-rekordokban
     nincs is ilyen mező).
 
   Ha nincs kitűzött kezdési idő (az MLSZ ilyenkor éjfélt ír), a meccset **nem** tekintjük
@@ -342,7 +342,7 @@ Két dolog, ami könnyen félreérthető, ezért így csináljuk:
   megy egy lekérés az MLSZ pont-bontás végpontjára. A profil ezt **nem várja meg**: azonnal
   megjelenik kötőjelekkel, a pontok a háttérben, **sorban** pótlódnak. Párhuzamosan kilőve
   a proxy eldobta a kéréseket — a profil percekig töltött, a lenyíló bontás elhasalt
-  (bejelentett hiba, 2026-08-25).
+  (bejelentett hiba).
 
 ### A mezőny játékosai (főoldali lista)
 Mindkét liga főoldalán, a bal oszlop alján. A **teljes mezőny** benne van (NB1: 385,
@@ -588,7 +588,7 @@ a laphoz — vagy újratölteni.
 
 ### Az utolsó ismert állás — „ha valaki már lekérdezte, lássam azt"
 
-**A kérés (Vince, 2026-09-19):** *„ne lássak régebbi adatot, mint a legutóbbi
+**A kérés :** *„ne lássak régebbi adatot, mint a legutóbbi
 lekérdezés."* Megnyitod a telefonon, szépen befrissül; egy órával később a gépen
 ugyanazt a frissítést végig kell várni, és közben egy régebbi állást bámulsz.
 
@@ -621,7 +621,7 @@ most ellenőriztük.
 **Két védővonal.** Ha a KV-kötés valaha hiányozna (törölt névtér, más fiók), a Worker
 pontosan úgy működik, mint korábban, és a lap a szokásos élő úton megy — ezt külön teszt
 méri, hogy ne álljon meg tőle semmi. A tárolt állás pedig sosem helyettesíti az élő
-lekérést, csak megelőzi: a `refresh()` utána ugyanúgy fut, és ha közben változott
+lekérést, csak megelőzi: a `refresh` utána ugyanúgy fut, és ha közben változott
 valami, felülírja.
 
 A névtér azonosítója a `wrangler.toml`-ban áll. Ez **nem titok**: önmagában semmire nem
@@ -639,7 +639,7 @@ a `workers.dev`-re), ezért a logikáját hamis KV-vel mérjük
 (`tesztek/taroltallas.teszt.js`), a valódi végpontról-végpontig mérés pedig GitHub
 Actionsből megy (`naplo/tarolo-meres.py`, `.github/workflows/tarolo-meres.yml`).
 
-### Az NB1 élő lekérése két körben megy, nem nyolcban (mérve, 2026-09-19)
+### Az NB1 élő lekérése két körben megy, nem nyolcban (mérve)
 
 Az NB1 élő állása **szakvezetőnként egy külön MLSZ-lekérésből** áll össze: 8 ember =
 8 kérés, és ez élő forduló alatt percenként újra lefut. Korábban mind a nyolc **egymás
@@ -653,7 +653,7 @@ adatért ment, ami naponta 2-4-szer változik.
 Most az **első kérés megy egyedül**, a maradék hét **egyszerre**. Az első azért marad
 külön, mert a lekérő abból tanulja meg, melyik proxy-út működik (`FunTasy.lekero`
 „bevált" útja); ha mind a nyolc egyszerre indulna, egy rossz napon mind a nyolc
-végigpróbálná a teljes útlistát — 2026-08-27 pont ilyen nap volt.
+végigpróbálná a teljes útlistát — volt már ilyen nap.
 
 Aki a párhuzamos körből kiesik, azt **egyesével újrakérjük**: egy sorozatkérésre adott
 elutasítás ne hagyjon lyukat az állásban (a hiányzó szakvezető meccse különben állás
@@ -662,11 +662,11 @@ nélkül maradna abban a körben).
 Mérve a teszttel, kérésenként 250 ms késleltetéssel: **513 ms** a korábbi ~2000 ms
 helyett. Rögzíti: `parhuzamos.teszt.js`.
 
-### A CORS-proxyk cserélhetők — és cserélni is kellett (mérve, 2026-08-27)
+### A CORS-proxyk cserélhetők — és cserélni is kellett (mérve)
 
 A böngésző az MLSZ/FPL API-t közvetlenül nem érheti el (a válaszban nincs
 `Access-Control-Allow-Origin` — ezt mértük, nem hisszük), ezért minden élő lekérés
-proxyn megy át. 2026-08-27-én **a két akkori proxy egyszerre halt meg**: a `corsproxy.io`
+proxyn megy át. Egyszer **a két akkori proxy egyszerre halt meg**: a `corsproxy.io`
 401-re váltott (regisztrációhoz kötötték a szolgáltatást), az `allorigins` túlterhelt volt
 (522). Mivel minden élő kérés ezen a kettőn múlt, **mindkét liga** élő része — pont-bontás,
 élő pontok, élő keret — egyszerre állt le. A tárolt adatot ez nem érintette.
@@ -676,7 +676,7 @@ kilenc jelöltet végigmérő futás (`naplo/proxy-meres.py` → `naplo/proxy-me
 az út-sorrend most: `direkt` → `proxy.cors.sh` → `allorigins /raw` → `allorigins /get`
 (ez **csomagolva** adja a választ, `{contents: "..."}` — a lekérő kibontja) → `cors.lol` →
 `corsproxy.io` (a sor végén, hátha visszaengedik). Az első siker után a lekérő a bevált
-úton marad. A láncot a `tesztek/lekero.teszt.js` rögzíti — benne pont a 2026-08-27-i
+úton marad. A láncot a `tesztek/lekero.teszt.js` rögzíti — benne pont ez a
 hibakép: corsproxy 401 + néma allorigins mellett a cors.sh-nak kell kiszolgálnia.
 
 Ha megint minden út elhasal, a pont-bontás hibaüzenete felsorolja, melyik miért
@@ -695,7 +695,7 @@ percenként egy kérés megy. A Worker URL-je a `funtasy.js` elején álló `SAJ
 konstansba kerül — amíg üres, a lekérő kihagyja, és a publikus proxyk viszik (utána is
 ott maradnak tartaléknak).
 
-### A betűkészlet nem állíthatja meg a lapot (mérve, 2026-08-27)
+### A betűkészlet nem állíthatja meg a lapot (mérve)
 
 A három betűcsalád (Inter, JetBrains Mono, Archivo Black) a Google Fontsról jön. Sokáig
 sima `<link rel="stylesheet">`-tel — ami **renderelést blokkoló**: amíg a Google nem
@@ -828,7 +828,7 @@ Egyszer már abból lett hiba, hogy az egyiket a többi ismerete nélkül írtam
 | **egy forduló** | NB1 | mindenki játszott (`played` vagy `nogame`) **és** minden meccs lement; biztonsági háló: az MLSZ továbblépett (`mlsz_lezarta`) | bekerül-e a tabellába, vagy `provisional` marad |
 | **egy forduló** | PL | a `game` végpont **`current_event_finished`** mezője | az automatikus cserék bekerülése, a bónusz véglegessége, a státuszsor |
 
-**A PL forduló-zárás egyetlen pillanat, több jelzővel.** Mérve (2026-08-25, 08:03 és
+**A PL forduló-zárás egyetlen pillanat, több jelzővel.** Mérve (08:03 és
 08:23 UTC között) **egyszerre** billent át mind: `current_event_finished` → igaz, a H2H
 meccsek `finished`-re, az `event-status` `points` `p`-ről `r`-re, a `bonus_added` igazra.
 Ezért olvassa a gyűjtő a `current_event_finished`-ből, az oldal bónusz-jelzése pedig a
@@ -857,7 +857,7 @@ ténylegesen a lockdown műve.
 **Amit soha ne csinálj:** ne szüntesd meg az „aktuális fordulót minden körben lekérjük"
 szabályt azzal az indokkal, hogy a forduló már lezárult. Az a szabály **nem** a zárásról
 szól, hanem az utólagos korrekciókról — a zárás utáni egy hét különben vakon maradna.
-Ez pontosan egyszer már megtörtént (2026-08-25), és a saját tesztem rögzítette a hibás
+Ez pontosan egyszer már megtörtént , és a saját tesztem rögzítette a hibás
 viselkedést, mielőtt észrevettük volna.
 
 **Névhasználat.** A `collect_draft.py`-ban a `kesz` **meccset** jelent (`atalakit`), a
@@ -937,11 +937,11 @@ időpont többé, hanem annyit jelent, hogy a meccs elmaradt és újat nem tűzt
 A különbség oka: a **lejátszott** meccs mellé az API a két csapat teljes objektumát is
 beteszi, benne a klublogóval, base64 képadatként. Ezért a gyűjtő a meccslistát rendes
 esetben **csak az élő fordulóra** kéri; a lezártakhoz a forduló alatt már elmentett
-jelzés marad meg (`collect.py` → `orokit_meccsjelzok()`). Egy kivétel van: a régi
+jelzés marad meg (`collect.py` → `orokit_meccsjelzok`). Egy kivétel van: a régi
 formátumú fordulót (nincs a rekordokban `played`) a gyűjtő **egyszer** meccslistával
 együtt kéri le, hogy a hiányzó jelzések bekerüljenek.
 
-#### A két klubot külön kell kérni (mérve, 2026-08-30)
+#### A két klubot külön kell kérni (mérve)
 
 Élő fordulónál a meccs-objektum **csak** `id`, `start_at`, `status`, `home_score`,
 `away_score` és `round_number` — **klub nélkül**. A gyűjtő ilyenkor `"?"`-et írt a
@@ -972,7 +972,7 @@ az MLSZ továbblépése után **soha többé** nem kértük volna le — a `"?"`
 volna. Rögzítve: `tesztek/gyujto_meccsek.py` M7 és M8, mindkettő bizonyítottan bukik a régi kódon.
 
 ### Pont-bontás (game-player-stats)
-A felület játékos-modalja ezt hívja (a bundle-ből visszafejtve, 2026-08-21):
+A felület játékos-modalja ezt hívja (a bundle-ből visszafejtve):
 ```
 GET https://fantasy-api.mlsz.hu/game-player-stats
     ?include=competition_stat_config
@@ -989,7 +989,7 @@ a forduló keretéből). Bárhonnan, bejelentkezés nélkül működik.
 Létezik még: `GET competitions/3/stat-configs` (a 10 szezonstatisztika-kategória neve) és
 `stat-leaders` (toplisták) — jelenleg egyiket sem használjuk.
 
-### Játékostörzs és a szezon egésze (mérésekkel, 2026-08-25)
+### Játékostörzs és a szezon egésze (mérésekkel)
 A játékosprofilhoz két dolgot kerestünk: a **teljes játékostörzset** (a kereséshez) és
 minden játékos **fordulónkénti pontját**. Amit a mérések hoztak (`naplo/mlsz-jatekoslista.txt`):
 
@@ -1009,7 +1009,7 @@ viselkedése: 0 pontos játékosra üres bontást ad). A maradék **16 eltérés
 Ebből következik, hogy az alappont mindig 0,25 többszöröse — a visszaszámolásnál ezért
 kerekítünk negyedre.
 
-### A játékos-adatlap végpontja (mérve, 2026-08-25)
+### A játékos-adatlap végpontja (mérve)
 `GET competitions/3/players/{competition_player_id}` — **nincs `data` burok**, a mezők a
 gyökérben állnak (ezen csúszott el az első mérés: a `data`-t néztem, és üresnek látszott).
 Amit ad a törzs-soron felül:
@@ -1024,7 +1024,7 @@ Amit ad a törzs-soron felül:
 **Amit NEM ad: a jövőbeli ellenfelet.** A `rounds` csak az eddigi fordulókat sorolja, és
 ellenfél nincs benne.
 
-### A jövőbeli menetrend nem érhető el (mérve, 2026-08-25)
+### A jövőbeli menetrend nem érhető el (mérve)
 Emiatt az **NB1-profil csak a lejátszott fordulókat sorolja fel** — a PL-profil előre is
 megy, mert ott a Draft adja a hátralévő meccseket. Huszonhét üres sor ellenfél és időpont
 nélkül nem információ, csak zaj; ha a menetrend előkerül, az NB1 is előre megy majd.
@@ -1043,7 +1043,7 @@ amivel a pont-bontás végpontja megkerült. A PL-oldalon ez a gond nincs: ott a
 `element-summary` `fixtures` tömbje adja a hátralévő meccseket, ellenfél-azonosítóval és
 pálya-jelzéssel.
 
-### Az árakról nincs előzmény (mérve, 2026-08-25)
+### Az árakról nincs előzmény (mérve)
 A törzs a `current_round.market_price` mezőben a **mostani** árat adja. Ár-előzményt az
 MLSZ **sehol nem ad**: a `players` végpont az `include=rounds` / `player_rounds` /
 `market_prices` / `price_history` / `prices` kéréseket **némán elnyeli** (a válasz sorai
@@ -1060,7 +1060,7 @@ viszont igen, fordulónkénti bontásban (lásd fentebb), tehát a múlt játék
 kéréssel pótolható. Az `arak.json` ettől függetlenül hasznos: az minden gyűjtő-futásnál
 figyel, tehát a forduló KÖZBENI változást is rögzíti, amit a fordulónkénti bontás nem.
 
-### Amit a hivatalos szabályzat rögzít (fantasy.mlsz.hu, 2026-08-25)
+### Amit a hivatalos szabályzat rögzít (fantasy.mlsz.hu)
 A szabályzat több, addig csak mérésből ismert viselkedést megerősít — és a „zárási
 változások" kérdését el is dönti:
 
@@ -1098,7 +1098,7 @@ illetve 63,25 + 2,5 + 10 = **75,75** ✓ — mindkettő pontosan a hivatalos pon
 
 ### A „szerverről tilos” tévhit története
 Sokáig azt hittük, a keret-végpont adatközponti IP-kről tiltott: GitHub Actionsből,
-proxykon át és Playwright-tal is 403 jött. 2026-08-20-án kiderült: **a 403-at a hiányzó
+proxykon át és Playwright-tal is 403 jött. Az ok más volt: **a 403-at a hiányzó
 `filter[round_id]` okozta** — a szerveres próbák még a paraméter felfedezése előtt
 készültek. Helyes kéréssel a végpont bárhonnan, **bejelentkezés nélkül** működik
 (bizonyíték: ugyanarról a gépről, ugyanabban a másodpercben paraméter nélkül 403,
@@ -1116,7 +1116,7 @@ adnak** — piaczárásig titkosak.
 #### Akinek nincs meccse, az nem akaszthatja meg a lezárást
 
 Sokáig azt hittük, hogy a halasztott meccs játékosait az MLSZ lejátszottnak jelöli 0
-ponttal, tehát a halasztás magától megoldódik. **A 2026-08-23-i mérés ezt megcáfolta:**
+ponttal, tehát a halasztás magától megoldódik. **A mérés ezt megcáfolta:**
 
 | eset | `is_played` | meccslista |
 |---|---|---|
@@ -1133,7 +1133,7 @@ Ezért a lezárás-vizsgálat kihagyja azt, akinek nincs meccse (`nogame`). Ené
 forduló a Honvéd következő meccséig, nagyjából egy hétig a `provisional` listában maradt
 volna, pedig minden meccse lement. A jelzést a **tárolt keretből** olvassa, nem a friss
 válaszból: a meccslistát rendes esetben csak az élő fordulóra kérjük le (a lezárthoz
-hatszor akkora válasz jönne), utána az `orokit_meccsjelzok()` hozza át a korábbi
+hatszor akkora válasz jönne), utána az `orokit_meccsjelzok` hozza át a korábbi
 pillanatképből.
 
 #### Biztonsági háló: az MLSZ saját forduló-objektuma
@@ -1156,11 +1156,11 @@ A szabály: a `current_round` az erősebb jel. Ha az MLSZ szerint **még ez** az
 forduló, akkor az `end_at` eltelte sem zárja le — a futó fordulót lezárni a rosszabb téves
 lépés, mert a félig kész eredmény csendben bekerülne a tabellába. Az `end_at` csak akkor
 dönt, ha a `current_round` egyáltalán nem jött meg.
-- **Az MLSZ utólag korrigál** — három megfigyelt esetünk van. 2026-08-20-án a
+- **Az MLSZ utólag korrigál** — három megfigyelt esetünk van. Az egyikben a
   fantasy.mlsz.hu már más hivatalos fordulóösszeget mutatott Csendinél, mint amit a
   lezáráskor rögzítettünk (1. forduló +1, 2. +1, 3. −2,5; képernyőképpel igazolva).
   **Hogy melyik játékosnál mozdult a pont, ez a három eset nem visszakereshető**, és nem is
-  lesz: a `squad_history.json` első játékos-szintű pillanatképe 2026-08-18 12:19-ből van, és
+  lesz: a `squad_history.json` első játékos-szintű pillanatképe már a korrekció utáni, és
   már az — és utána mindegyik — a JAVÍTOTT összegeket adja ki (38,00 / 42,88 / 42,88 alap +
   10 bónusz = 48 / 52,88 / 52,88). A régi értékek csak a `results.json` csapatösszegében
   éltek, bontás nélkül. A `zarasok_nb1.json`-ban ezért „Ismeretlen játékos" névvel állnak
@@ -1185,7 +1185,7 @@ Három egymást kiegészítő fogása van:
 
 1. **Körbeforgó újraellenőrzés.** A ranglista-végpont alapból csak a két legfrissebb
    fordulót adja vissza, ezért minden futás **négy régi fordulót** kér le újra
-   (`ellenorzendo()`), a három óránkénti ciklushoz igazított kezdőponttal. Napi nyolc futás
+   (`ellenorzendo`), a három óránkénti ciklushoz igazított kezdőponttal. Napi nyolc futás
    × négy forduló = 32 ellenőrzés, a lista pedig legfeljebb 31 elemű (az utolsó két
    fordulót amúgy is minden futás lekéri), tehát **egy napon belül** körbeér. A lekért
    érték felülírja a tároltat (`setdefault` helyett értékadás): a végpont az igazság.
@@ -1195,11 +1195,11 @@ Három egymást kiegészítő fogása van:
    javított adattal jön ki.
 3. **A keresztellenőrzés is javít.** Ha a keretből számolt összeg eltér a tárolt
    hivatalostól, a gyűjtő **újra lekéri a hivatalos értéket** arra a fordulóra, és ha
-   tényleg változott, beírja a `results.json`-ba (`beir_eredmeny()`). ELTÉRÉS-figyelmeztetés
+   tényleg változott, beírja a `results.json`-ba (`beir_eredmeny`). ELTÉRÉS-figyelmeztetés
    már csak akkor megy a naplóba, ha a két forrás az újralekérés után **sem** egyezik —
    az valódi ellentmondás, nem korrekció.
 
-Ehhez tartozott egy régi hiba is: a `rankings()` a `round_id` paramétert
+Ehhez tartozott egy régi hiba is: a `rankings` a `round_id` paramétert
 `"...filter%5Bround_id%5D=%d" % round_id` módon fűzte a linkre, amiben a `%5B`-t a Python
 formázó jelnek olvasta (`ValueError`). A backfill-ág addig sosem futott le élesben, ezért
 nem derült ki; a körbeforgó ellenőrzés viszont minden futásban használja, így javítva
@@ -1235,7 +1235,7 @@ GET https://fantasy.premierleague.com/api/event-status/
 {"status":[{"bonus_added":false,"date":"2026-08-21","event":1,"points":"p"}, ...]}
 ```
 
-**A mezők jelentését a Draft frontendjének forrásából olvastuk ki** (2026-08-24), tehát
+**A mezők jelentését a Draft frontendjének forrásából olvastuk ki** , tehát
 nem tippelés. Ez rajzolja azt a naponkénti táblázatot, amit a Draft „Current team" lapja
 mutat:
 
@@ -1260,7 +1260,7 @@ válnak — az utolsó meccs **utáni nap 09:00 UK**-kor van; korábban ez a lef
 beleszámíthasson a bónuszba és a védekező pontokba. Ezért szól a jelölés a **forduló**
 végéig, nem a napéig.
 
-Ezt megerősíti a mérés is: 2026-08-23 este, négy lekérésben 21:04 és 22:06 UTC között
+Ezt megerősíti a mérés is: egy este, négy lekérésben 21:04 és 22:06 UTC között
 mind a kilenc lejátszott meccs `finished_provisional` volt, egyik sem `finished`, minden
 nap `points: "p"`, és sehol nem volt `bonus_added` — pedig a pénteki meccs két nappal
 korábban lement. A GW1 zárása kedden 09:00 UK-kor lesz.
@@ -1270,7 +1270,7 @@ A kód szerint véglegesnek az számít, ha az FPL **bármelyik** jelzője kimon
 meccs `finished` mezője marad, ha a napi adat nem jön meg — pontatlanabb (tovább hagyja
 kint a jelölést), de nem állít valótlant.
 
-**Mérve, lezárva (2026-08-25):** napi zárás NINCS — a napok napokig `p`-n álltak, és
+**Mérve, lezárva :** napi zárás NINCS — a napok napokig `p`-n álltak, és
 mind a forduló lockdownjakor váltottak `r`-re (08:03–08:23 UTC, két lépésben: előbb a
 pontok/bónusz, ~15 perccel később a `current_event_finished`). A nyers napló:
 `naplo/fpl-allapot.txt` (archívum).
@@ -1322,7 +1322,7 @@ tűréshatár kellene, és egy egyperces csúszás a két végpont között hami
 A két számból magától látszik, pályán van-e: ha egyeznek, igen.
 
 **A meccsóra a játékosok perceinek maximuma**, klubonként összegyűjtve — nem a fixtures
-`minutes` mezője. Élő meccs alatt mérve (2026-08-24) az **mindig 0**, még a lement
+`minutes` mezője. Élő meccs alatt mérve  az **mindig 0**, még a lement
 meccseknél is. A játékosok percei viszont együtt ketyegnek: 15 mintában, fél óra alatt a
 futó meccs minden pályán lévő kezdője ugyanazt a számot mutatta. Ez nem becslés: 11
 kezdővel és legfeljebb 5 cserével mindig marad valaki, aki végigjátssza a meccset.
@@ -1383,7 +1383,7 @@ van-e még — a perc-oszlopok felelnek, azt ez nem váltja ki.
 
 Az FPL a forduló végén **automatikus cseréket** hajt végre: a nem játszó kezdő helyére
 beállítja az első beférőt a padról — ezért számít a pad sorrendje. Mérve
-(2026-08-25, `naplo/fpl-cserek.txt`):
+(`naplo/fpl-cserek.txt`):
 
 - **Az FPL átírja a pick `position` mezőjét** (a becserélt 12→11 alá kerül, a kikerülő a
   helyére a padra), és **külön `subs` listát is ad** (`{element_in, element_out, event}`).
@@ -1405,11 +1405,11 @@ megjött (különben egy elhasalt lekérés a csere előtti állapotot rögzíte
 a `veglegesek` lista csak a *régi* fordulókról dönt. Lásd „3/b. A lezárás": ez a szabály
 nem a zárásról szól, hanem az utólagos korrekciókról. Rögzíti: `gyujto_draftzaras.py`.
 
-2026-08-25-én ez **csak azon múlt**, hogy a futás hat perccel a zárás után esett.
+Egyszer ez **csak azon múlt**, hogy a futás hat perccel a zárás után esett.
 
 ### A zárás és a gyűjtés közötti rés (PL)
 
-Az FPL a fordulót a **lockdownkor** zárja le egyszerre — mérve 2026-08-25-én 08:03 és
+Az FPL a fordulót a **lockdownkor** zárja le egyszerre — mérve 08:03 és
 08:23 UTC között billent át minden: a H2H meccsek `finished`-re, a `points` `p`-ről
 `r`-re, a `bonus_added` igazra, a `current_event_finished` igazra. A gyűjtőnk viszont
 3 óránként fut, tehát van egy rés, amikor a `game` végpont már lezártat mond, de a
@@ -1427,8 +1427,8 @@ futásban írja be az eredményt is.
 ### Az indulás és a gyűjtés közötti rés (PL) — a keretet a böngésző pótolja
 
 A fenti rés párja, a forduló **elején**. Az FPL a fordulót a nevezési határidővel
-indítja (`current_event` átlép), a gyűjtőnk viszont 3 óránként fut — **mérve
-2026-09-18-án**: a 16:43 UTC-s futás még a 4. fordulót látta (a log szerint
+indítja (`current_event` átlép), a gyűjtőnk viszont 3 óránként fut — **mérve**: a
+16:43 UTC-s futás még a 4. fordulót látta (a log szerint
 `fordulonkenti keret: GW4`), a következő 23:47-re volt időzítve, közben ~17:30-kor
 elindult az 5. Abban a résben a repóban **egyáltalán nem létezett keret** az 5.
 fordulóhoz.
@@ -1558,8 +1558,7 @@ kerüljön be.
   dupla fordulón ugyanis egy klubnak két meccse van. Ha egy klub **egyáltalán nem
   szerepel** a forduló meccsei között, akkor üres fordulója van (blank gameweek): a
   játékosai kötőjelet kapnak, és a bontás is ezt írja ki
-- `element-summary/{element_id}` — **egy játékos egész szezonja EGY kérésből** (mérve
-  2026-08-25): a `history` tömbben fordulónként `event`, `total_points`, minden statisztika,
+- `element-summary/{element_id}` — **egy játékos egész szezonja EGY kérésből** (mérve): a `history` tömbben fordulónként `event`, `total_points`, minden statisztika,
   és egy `detail` mező `"AVL (H) 4-0"` alakban — vagyis az ellenfél, a pálya és a végeredmény
   együtt. A `fixtures` a hátralévő meccseket adja. Ez a PL-oldali játékosprofil forrása;
   a gyűjtőnek nem kerül semmibe, mert a böngésző kéri le, akkor, amikor kell.
@@ -1575,7 +1574,7 @@ kerüljön be.
 
 **A fantasy forduló nem azonos a játéknappal.** Az elhalasztott meccset az MLSZ a **pótlás napja
 szerinti** fordulóba teszi — a pont is ott jár érte —, de meghagyja rajta az **eredeti forduló
-számát**. Megmérve (2026-09-03, `naplo/mlsz-dupla-meccs.txt`), a 7. fordulóban:
+számát**. Megmérve (`naplo/mlsz-dupla-meccs.txt`), a 7. fordulóban:
 
 ```
 ETO   games: 2 elem
@@ -1702,14 +1701,14 @@ játékost kell találnia.
 - **A PL-en a GW első óráiban** (amíg a gyűjtő először le nem tárolja a forduló kereteit,
   legfeljebb ~3 óra) élő meccsállás még nem számolható — utána percre pontos.
 - **A régi keret-rekordokban nem volt `id`, `played`, `start` és `nogame` mező** (ezek
-  2026-08-21-én kerültek be). Emiatt az oldal a pont-bontáshoz élő lekérést volt kénytelen
+  később kerültek be). Emiatt az oldal a pont-bontáshoz élő lekérést volt kénytelen
   indítani, és a „nincs meccse" jelölés teljesen hiányzott — a 3. fordulós ETO-játékosoknál
   ezért írta az oldal egy már elmúlt helyőrző dátummal, hogy a meccs még nem kezdődött el.
   A gyűjtő azóta **egyszer újra lekéri** az ilyen fordulót, a meccslistával együtt, és a
   hiányzó mezőket pótolja; utána a feltétel már nem teljesül, tehát nem ismétlődik.
 - **A „nincs meccse a fordulóban" jelzés a forduló alatt rögzül**, és a lezárás után már
   nem kérjük le újra a meccslistát (hatszor akkora válasz jönne), hanem az
-  `orokit_meccsjelzok()` hozza át a korábbi pillanatképből.
+  `orokit_meccsjelzok` hozza át a korábbi pillanatképből.
 - **A pont-bontás sorait a magyar eseménynév azonosítja** (pl. a „nem lépett pályára”
   eset a „Játszott perc” sor 0 értékéből derül ki). Az API nem ad stabil kulcsot ezekhez,
   úgyhogy ha az MLSZ átnevez egy eseményt, az oldal a részletesebb üzenet helyett az
@@ -1924,7 +1923,7 @@ gyűjtő úgyis újraszámolja.
 `— : —`, holott a keret már rögzített. Ilyenkor a lap a **keretekből** számol
 (`eloKeretbol`), ugyanazzal a `keretOsszeg`-gel, mint a meccs-panel: a két nézet így nem
 mondhat mást. Csak **kitölti**, nem írja felül — amint az MLSZ valódi (nem nulla) pontot
-ad, a `refresh()` azt teszi a helyére.
+ad, a `refresh` azt teszi a helyére.
 
 **Valódi jövőbeli fordulónál marad az üzenet.** Ahhoz nincs mentett keret, és kitalálni nem
 fogunk semmit. A PL-oldalon ez a kapu sosem volt ott: a `showMatch` mindig kirajzolja a keretet,
@@ -2012,7 +2011,7 @@ csendben visszaesik az élő lekérésre. Rögzítve: `tesztek/gyujto_bontasok.p
 
 ### Az élő pont a tételes bontásból áll össze (PL)
 
-**Bejelentett hiba (2026-08-30, GW2):** egy játékos sora 1 pontot és 9 percet mutatott,
+**Bejelentett hiba (GW2):** egy játékos sora 1 pontot és 9 percet mutatott,
 a pontrészletezője viszont 90 percet, gólt és bónuszt — összesen 8-at. A meccsek addigra
 lementek, tehát a **részletezés** volt a valóság.
 
@@ -2041,7 +2040,7 @@ meccsállásra is átüt. Ha egy játékoshoz nincs `explain` (még nem lépett 
 az FPL a régi fordulót nem adja vissza. Ha csak az oldalt javítottuk volna, ma jó számot
 látnánk, a lezárás után viszont a beragadt érték jönne elő, örökre.
 
-A gyűjtőben ez a `collect_draft.py` → `jatekos_pont()`, a lapon a `fetchLivePts` — a kettőnek
+A gyűjtőben ez a `collect_draft.py` → `jatekos_pont`, a lapon a `fetchLivePts` — a kettőnek
 **ugyanazt a számot kell adnia**: amit a látogató lát, azt kell archiválni is. Eltéréskor a
 gyűjtő a futás naplójába **hangosan kiírja**, hány játékosnál tért el a két forrás; ha ez
 rendszeressé válik, onnan derül ki.
@@ -2058,7 +2057,7 @@ beragadt összesítő mellett 8 pont és 90 perc, az élő állás 88 (11 kezdő
 
 ### Élő forduló alatt a lap magától frissül
 
-**Bejelentett hiba (2026-08-30, PL):** a nyitva hagyott lap a **betöltéskori** állást
+**Bejelentett hiba (PL):** a nyitva hagyott lap a **betöltéskori** állást
 mutatta. A LEE–BRE meccs a 9. percnél állt, amikor az oldal betöltődött, és a sorok ott is
 maradtak — percek, meccsóra, pontok egyaránt. A lenyíló bontás viszont **kattintáskor** saját,
 friss lekérést indít, ezért az már 90 percet mutatott: ugyanazon a képernyőn mondott ellent
@@ -2095,7 +2094,7 @@ Ez kétszer csúszott el:
 
 Mindkettőt teszt fedi (`tesztek/gyujto_ideiglenes.py`, C3 és C4): a C3 a gyűjtőt kétszer
 futtatja változatlan adaton, és **egyetlen** kimeneti fájl sem változhat — nem csak a
-`results.json`, hanem minden, amit a futás után talál. A `stamp()` helyére számláló kerül,
+`results.json`, hanem minden, amit a futás után talál. A `stamp` helyére számláló kerül,
 különben a másodperc-pontosságú időbélyeg elrejtené a fölösleges írást.
 
 ## 5/a2. Változásnapló („Mi újult meg?")
@@ -2117,7 +2116,7 @@ Felhasználói napló, nem technikai: **csak az kerül bele, amit a használó l
   az első visszajelzésre) igazítás, az nem külön bugfix-bejegyzés — a funkció bejegyzése
   írja le a végállapotot. (Egyszer már becsúszott egy külön „a panel a helyére állt"
   bejegyzés; törölni kellett.)
-- **Dátumozva**, naponként csoportosítva, a legfrissebb elöl. A napló 2026-08-23 estétől
+- **Dátumozva**, naponként csoportosítva, a legfrissebb elöl. A napló a szezon elején
   indul, a korábbi változások nincsenek benne.
 - **Összevonáskor a bejegyzést ÚJRA KELL FOGALMAZNI, nem hozzáfűzni.** Ha egy meglévő
   bejegyzéshez újabb rész kerül, a leírás nem bővül egy odabiggyesztett mondattal: az

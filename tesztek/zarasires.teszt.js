@@ -1,7 +1,7 @@
 const { BASE, jo, inditas, vege, jsonAtir } = require('./kozos');
 // A ZARAS ES A GYUJTES KOZOTTI RES (PL).
 //
-// Az FPL a fordulot a "lockdown"-kor zarja (merve: 2026-08-25 08:03 es 08:23
+// Az FPL a fordulot a "lockdown"-kor zarja (merve: 08:03 es 08:23
 // UTC kozott billent at minden), a gyujtonk viszont 3 orankent fut. A ket
 // idopont kozott a game vegpont mar azt mondja, hogy current_event_finished,
 // de a tarolt draft.json-ban meg nincs benne a fordulo eredmenye.

@@ -114,7 +114,7 @@ else:
     print("HIBA a provisional kiurult - a reszeredmeny veglegeskent szamitana")
 
 # ---------------------------------------------------------------- C2
-# MEGTORTENT (2026-08-25 21:47): egy DNS-hiba miatt EGY tag ranglista-adata
+# MERVE: egy DNS-hiba miatt EGY tag ranglista-adata
 # (es igy az azonositoja) nem jott meg -> minden cel-fordulo "hianyos" lett,
 # es a mar veglegeskent kozolt aktualis-1 fordulo ideiglenesse valt: a
 # tabella a 4 fordulos allast mutatta. A szabaly: amit mar veglegeskent
@@ -156,7 +156,7 @@ else:
 
 # ---------------------------------------------------------------- C3
 # A results.json csak akkor irodhat ujra, ha TENYLEG valtozott valami.
-# MEGTORTENT: a feltetel egy listat hasonlitott halmazhoz
+# MERVE: a feltetel egy listat hasonlitott halmazhoz
 # (`provisional != regi_prov`), ami sosem egyenlo - igy minden futas friss
 # idobelyeggel ujrairta a fajlt. A 36 utolso results.json-commitbol 30-ban
 # CSAK az `updated` mezo valtozott. (A tobbi fajl mind tartalmat hasonlit.)
@@ -176,7 +176,7 @@ c.api_get = mock
 c.ellenorzendo = lambda regi, db=4: []
 # Az idobelyeg MASODPERC-pontossagu: ket egymas utani futas ugyanazt a
 # szoveget irna, es a teszt akkor is atmenne, ha a fajl ujrairodik. Ezert a
-# stamp() helyere szamlalo kerul - igy minden iras LATSZIK.
+# stamp helyere szamlalo kerul - igy minden iras LATSZIK.
 eredeti_stamp, szamlalo = c.stamp, [0]
 def szamlalo_stamp():
     szamlalo[0] += 1

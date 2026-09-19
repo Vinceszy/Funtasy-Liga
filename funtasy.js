@@ -21,7 +21,7 @@
    meccspanelen jelennek meg, "elo" jelolessel. Igy a meg le nem zart
    fordulo nem latszik veglegesnek.
 
-   A create()-en kivul ket nevter-szintu segito is exportalodik a
+   A create-en kivul ket nevter-szintu segito is exportalodik a
    pont-bontas accordionhoz (FunTasy.accToggle, FunTasy.accTable) -
    reszletek a fajl vegen. */
 (function (global) {
@@ -639,7 +639,7 @@
              ' (a tabella csak lezárt fordulókból számol)';
     },
     naprakesz: function (mikor) { return 'Naprakész · ellenőrizve ' + ora(mikor); },
-    // Ezt a szoveget a folyo fordulora Vince fogalmazta - ne irjuk at.
+    // A folyo fordulo hibauzenetenek rogzitett szovege - ne irjuk at.
     hibaElo: 'Automata lekérés hiba: az állások a forduló végén frissülnek.',
     hibaNyugodt: function (mentve) {
       return 'Az élő frissítés most nem elérhető — a tárolt állás látható' +
@@ -873,7 +873,7 @@
 
   /* ===== Fooldali jatekoslista: kereso + oszlop-szuro + rendezes =====
      Mindket ligaban ugyanaz a viselkedes, csak az adat mas: a hivo ad egy
-     `adat()` fuggvenyt, ami a mar betoltott fajlokbol osszerakja a listat,
+     `adat` fuggvenyt, ami a mar betoltott fajlokbol osszerakja a listat,
      es egy `nyit(id)`-t, ami a profilt megnyitja.
 
      Harom fele szukites, mert harom fele kerdes van:
@@ -1215,7 +1215,7 @@
   }
 
   /* ===== Idozitett frissites, AMIG A FORDULO EL =====
-     BEJELENTETT HIBA (2026-08-30, PL): a nyitva hagyott lap a BETOLTESKORI
+     A KIZART HIBA (PL): a nyitva hagyott lap a BETOLTESKORI
      allast mutatta. A LEE-BRE meccs a 9. percnel allt, amikor a lap
      betoltodott, es a sorok ott is maradtak - percek, meccsora, pontok
      egyarant. A lenyilo bontas viszont KATTINTASKOR sajat, friss lekerest
@@ -1254,7 +1254,7 @@
   }
 
   /* ===== A FOLYO FORDULO KERETEI, AMIG A GYUJTO MEG NEM IRTA BE OKET =====
-     BEJELENTETT HIBA (2026-09-18, PL 5. fordulo): elo meccs alatt a lap nem
+     A KIZART HIBA (PL 5. fordulo): elo meccs alatt a lap nem
      frissult. A gyujto 3 orankent fut, a fordulo viszont a nevezesi
      hataridovel indul: a 16:43 UTC-s futas MEG a 4. fordulot latta (a log
      szerint "fordulonkenti keret: GW4"), a kovetkezo 23:47-re volt idozitve.
@@ -1384,7 +1384,7 @@
   var SAJAT_PROXY = 'https://funtasy-liga.swick00.workers.dev';
 
   /* ===== AZ UTOLSO ISMERT ALLAS =====
-     A problema (Vince, 2026-09-19): "ha valaki mar lekerdezte, lassam azt -
+     A problema : "ha valaki mar lekerdezte, lassam azt -
      ne lassak regebbi adatot, mint a legutobbi lekerdezes". A lap elso kepe
      eddig a repobol jott, amit a gyujto 3 orankent frissit; ha a telefonod
      tiz perce mar lekerte a friss allast, a gepen megis a regit lattad, es
@@ -1431,8 +1431,8 @@
       return be.belsoBelyeg ? u + (u.indexOf('?') < 0 ? '?' : '&') +
         be.belsoBelyeg + '=' + Date.now() : u;
     };
-    /* Az ut-sorrend MERT megbizhatosag, nem izles (naplo/proxy-meres.txt,
-       2026-08-27): aznap a corsproxy.io 401-re valtott (regisztraciohoz
+    /* Az ut-sorrend MERT megbizhatosag, nem izles (naplo/proxy-meres.txt):
+       egy napon a corsproxy.io 401-re valtott (regisztraciohoz
        kotottek), az allorigins tulterhelt volt - es mivel minden elo lekeres
        ezen a ketton mult, MINDKET liga elo resze egyszerre halt meg. A
        tanulsag beepitve: tobb fuggetlen ut, es az elso siker utan a lekero
@@ -1448,7 +1448,7 @@
       { n: 'allorigins', f: function (u) {
           return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(belyeg(u)) + '&_=' + Date.now(); } },
       // az allorigins masik utja CSOMAGOLVA adja a valaszt ({contents: "..."}) -
-      // a meresben pont ez ment, amikor a /raw eppen nem. A kibont() bontja ki.
+      // a meresben pont ez ment, amikor a /raw eppen nem. A kibont bontja ki.
       { n: 'allorigins-get', f: function (u) {
           return 'https://api.allorigins.win/get?url=' + encodeURIComponent(belyeg(u)) + '&_=' + Date.now(); },
         kibont: function (j) { return JSON.parse(j.contents); } },

@@ -1,7 +1,7 @@
 const { BASE, jo, cim, inditas, vege } = require('./kozos');
 // AZ UTOLSO ISMERT ALLAS MAR AZ ELSO KEPEN OTT VAN (NB1).
 //
-// BEJELENTVE (Vince, 2026-09-19): "ha valaki mar lekerdezte, lassam azt -
+// A KIZART HIBA: "ha valaki mar lekerdezte, lassam azt -
 // ne lassak regebbi adatot, mint a legutobbi lekerdezes". A lap elso kepe
 // eddig a repobol jott, amit a gyujto 3 orankent frissit: ha a telefon tiz
 // perce mar lekerte a friss allast, a gepen megis a regi latszott, es meg

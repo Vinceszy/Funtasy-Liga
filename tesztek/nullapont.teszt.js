@@ -37,7 +37,7 @@ const ell = (cimke, kapott, vart) =>
 
 (async () => {
   const browser = await inditas();
-  // Csak a lap JS-hibai gyulnek ide; MINDEN allitas a kozos jo()-n megy at,
+  // Csak a lap JS-hibai gyulnek ide; MINDEN allitas a kozos jo-n megy at,
   // kulonben a futtato zoldnek latja a bukott tesztet is (igy is volt).
   const oldalHiba = [];
 
@@ -86,7 +86,7 @@ const ell = (cimke, kapott, vart) =>
     JATEKOS('Nincs Meccse',      106, { played: false, start: null, nogame: true }),
     // Kituzetlen kezdes: az MLSZ ejfelt ir, ha az idopont meg nincs meg
     JATEKOS('Ejfeli Placeholder',107, { played: false, start: '2026-12-24T00:00:00+01:00' }),
-    // A BEJELENTETT HIBA esete: az MLSZ az is_played-et mar a meccs KOZBEN
+    // A A KIZART HIBA esete: az MLSZ az is_played-et mar a meccs KOZBEN
     // igazra billenti. Ilyenkor sem szabad azt irni, hogy "lejatszotta".
     JATEKOS('Futó Meccsű Tesztjátékos', 104, { played: true, start: ora(-0.5), sub: true }),
   ];

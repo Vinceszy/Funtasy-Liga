@@ -79,7 +79,7 @@ const enyem = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.GY * 3 + s.D, K
   jo(elteres === 0, `mátrix cellái (${db} ellenőrizve, ${elteres} eltérés)`);
 
   cim('Vízszintes görgetésnél a helyezés ÉS a név is áll');
-  // BEJELENTETT (iPhone): gorgetesnel a SZAKVEZETO fejlec allva maradt, a
+  // A KIZART HIBA (iPhone): gorgetesnel a SZAKVEZETO fejlec allva maradt, a
   // nevek viszont elcsusztak a szamok ala. Ok: a `td.name` maga volt a flex
   // kontener, es a flexes cella kikerul a tablazat-elrendezesbol - Safari
   // ott nem ragasztja. A fejlecen (`th`) nincs flex, ezert az allt.

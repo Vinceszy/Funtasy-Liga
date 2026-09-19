@@ -3,7 +3,7 @@
 
 MIERT KELL: az FPL a fordulo vegen AUTOMATIKUS CSEREKET hajt vegre (a nem
 jatszo kezdo helyere beall az elso befero padrol), es ilyenkor ATIRJA a pick
-"position" mezojet. Merve (2026-08-25): ez a "lockdown"-kor tortenik, a
+"position" mezojet. Merve : ez a "lockdown"-kor tortenik, a
 jelzese a game vegpont "current_event_finished" mezoje - es EKKOR A
 current_event MEG A REGI FORDULO. Ha a gyujto a zaras utan nem keri le
 megegyszer a fordulot, a keret veglegesen a csere elotti allapotban fagy be.

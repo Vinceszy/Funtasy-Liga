@@ -38,7 +38,7 @@ def keret(r, nev, status, nogame=False, games=True, meccs_fordulo=None):
     """15 jatekos; a meccs status-a allithato (scheduled = meg tart).
 
     nogame=True: a klubnak nincs meccse a forduloban - ures meccslista, es az
-      MLSZ is_played=false-t ad (2026-08-23-i meres).
+      MLSZ is_played=false-t ad (merve).
     games=False: a meccslistat nem kertuk (nem az elo fordulo) - ilyenkor a
       valaszban egyaltalan nincs games kulcs."""
     if nogame:
@@ -192,7 +192,7 @@ allit(AKT not in prov, "a masik fordulo meccse nogame-nek szamit, es nem akasztj
       "ideiglenes maradt - a masik fordulobol valo meccs allapota megtevesztett", "R6")
 
 # ---- R7: regi formatumu keret potlasa
-#      A 2026-08-21 elotti rekordokban nincs "played"/"id"/"start". Az ilyen
+#      A legkorabbi rekordokban nincs "played"/"id"/"start". Az ilyen
 #      fordulot a gyujto ujra lekeri, meccslistaval egyutt.
 os.chdir(tempfile.mkdtemp())
 regi_formatum = {n: [{"name": "J%d %s" % (i, n), "team": "XYZ", "pos": "H", "week": 0,

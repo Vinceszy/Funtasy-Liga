@@ -1,7 +1,7 @@
 const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
 // ELO FORDULO ALATT A LAP MAGATOL FRISSUL (FunTasy.eloFrissito).
 //
-// BEJELENTETT HIBA (2026-08-30, PL): a nyitva hagyott lap a BETOLTESKORI
+// A KIZART HIBA (PL): a nyitva hagyott lap a BETOLTESKORI
 // allast mutatta - a meccs a 9. percnel allt, es a sorok ott is maradtak.
 // A lenyilo bontas viszont kattintaskor sajat, friss lekerest indit, ezert
 // az mar 90 percet mutatott: ugyanazon a kepernyon mondott ellent egymasnak

@@ -1,7 +1,7 @@
 const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
 // A JATEKOS ELO PONTJA A TETELES BONTASBOL JON, nem az FPL osszesitojebol.
 //
-// MEGTORTENT (2026-08-30, GW2): az FPL a ket erteket kulon tartja, es az
+// MERVE (GW2): az FPL a ket erteket kulon tartja, es az
 // osszesito beragadt, mikozben az explain mar a lement meccs valos
 // esemenyeit adta. Calvert-Lewinnel a sor 1 pontot es 9 percet mutatott,
 // a bontasa viszont 90 percet, golt es bonuszt (2+4+2 = 8). Ugyanez a

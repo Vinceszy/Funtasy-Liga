@@ -10,7 +10,7 @@ K2: megvett jatekos a MOSTANI szerepevel.
 K3: aki bent maradt, de valtozott a szerepe, kulon tetel - a ket ertek
     kulonbsegevel.
 K4: a magyarszabaly kulonbsege kulon sor (nem egy jatekoson mulik).
-K5: A TETELEK OSSZEGE = a guardiola() altal adott `guard`. Ez a leg-
+K5: A TETELEK OSSZEGE = a guardiola altal adott `guard`. Ez a leg-
     fontosabb allitas: ha elcsuszik, a ful szama mast mond, mint a tabella.
 K6: valtozatlan keretnel nincs tetel, es a mutato 0.
 K7: nincs mihez hasonlitani -> nincs adat.

@@ -1,7 +1,7 @@
 const { BASE, jo, hibak, inditas, vege } = require('./kozos');
 // A bonusz harom allapota a PL-oldalon.
 //
-// MERVE (2026-08-23): az FPL a bonuszt a meccs alatt is szamolja a
+// MERVE : az FPL a bonuszt a meccs alatt is szamolja a
 // BPS-tablabol, es az explain-be is beteszi (stat: "bonus"). Harom allapot:
 //   megy a meccs                          -> a bonusz percrol percre valtozhat
 //   lefujva, de a NAPZARAS meg hatravan   -> rogzult, de meg valtozhat

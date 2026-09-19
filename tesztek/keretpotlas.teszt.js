@@ -2,7 +2,7 @@ const path = require('path');
 const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
 // A FOLYO FORDULO KERETEIT A BONGESZO POTOLJA, AMIG A GYUJTO MEG NEM IRTA BE.
 //
-// MEGTORTENT (2026-09-18, PL 5. fordulo): elo meccs alatt a lap nem frissult.
+// MERVE (PL 5. fordulo): elo meccs alatt a lap nem frissult.
 // A gyujto 3 orankent fut, a fordulo viszont a nevezesi hataridovel indul: a
 // 16:43 UTC-s futas MEG a 4. fordulot latta, a kovetkezo 23:47-re volt
 // idozitve - kozben elindult az 5., es a repoban egyaltalan nem letezett

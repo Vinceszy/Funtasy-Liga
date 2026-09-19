@@ -79,7 +79,7 @@ const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
     // olyan uzenet, ami NEM allitja, hogy a jatekos pontszama vegleges.
     const uzenetSzerintNincsAdat = /nem játszik|nem volt meccse|még nem kezdődött|elmaradt|A meccs zajlik|nincs rögzített esemény|feldolgozása még tart/.test(s.uzenet);
     if (s.kotojel !== uzenetSzerintNincsAdat) {
-      // ELFOGADOTT KIVETEL (N3, Vince dontese): a meccs lement, de az MLSZ meg
+      // ELFOGADOTT KIVETEL (N3): a meccs lement, de az MLSZ meg
       // nem tette be a pontokat -> a sor 0-t mutat, a bontas megmondja az
       // igazat. A sor nem tudhatja, megjott-e mar a bontas, es kideritni csak
       // jatekosonkenti lekeressel lehetne. Barmi MAS elteres viszont hiba.

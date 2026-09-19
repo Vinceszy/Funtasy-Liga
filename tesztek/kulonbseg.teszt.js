@@ -19,7 +19,7 @@ const nyit = async (p,w,h) => {
     // A modalra szukitunk (#mBody): a fooldali jatekoslista sorai UGYANAZT a
     // .plr osztalyt viselik, tehat egy oldal-szintu lekerdezes azokat is
     // beszamolna - a kozos jatekos harmadszor is elojonne a lista sorai
-    // kozott, es a szamlalas hamisan bukna. (Igy is tortent, 2026-08-25.)
+    // kozott, es a szamlalas hamisan bukna. (Elo futasban igy is tortent.)
     await p.waitForSelector('#mBody .plr');
     console.log('=== '+cimke+' ===');
     await p.click('#elteresGomb'); await p.waitForTimeout(250);
@@ -64,7 +64,7 @@ const nyit = async (p,w,h) => {
     await p.close();
   }
   cim('A közös játékos VEGYES forrásnál is megvan');
-  // BEJELENTETT: "Csonginak es nekem nem ir kozos jatekost, pedig Lehoczki
+  // A KIZART HIBA: "Csonginak es nekem nem ir kozos jatekost, pedig Lehoczki
   // mindkettonknel csere". Az elo meccs-nezet a KET keretet KULON keri le,
   // es ha csak az egyik jon meg, a masik a TAROLT marad. A ket forras viszont
   // MAS NEVALAKOT ad - a tarolt magyar sorrendet ("Lehoczki Bendegúz"), az

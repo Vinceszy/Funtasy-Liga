@@ -1,7 +1,7 @@
 const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
 // A LEADASI HATARIDO UTAN, DE AZ ELSO SIPSZO ELOTT is latszik a ket keret.
 //
-// BEJELENTETT: elo fordulo alatt, amig egyetlen meccs sem kezdodott el, a
+// A KIZART HIBA: elo fordulo alatt, amig egyetlen meccs sem kezdodott el, a
 // meccs-nezet csak annyit irt, hogy "A fordulo meg nem kezdodott el" -
 // pedig a keret ilyenkor mar rogzitett, a gyujto le is mentette, es eppen
 // ez a legizgalmasabb kerdes: kivel all ki az ellenfel. Titok sem serul: a
@@ -79,7 +79,7 @@ const JOVOBELI = 20;     // ehhez nincs mentett keret
      + szamos.length + ' számmal)');
 
   cim('A főoldali lista is a keretekből mutatja az állást');
-  // BEJELENTETT: a "Kovetkezo fordulo" widgetben "- : -" allt, holott a
+  // A KIZART HIBA: a "Kovetkezo fordulo" widgetben "- : -" allt, holott a
   // keret mar rogzitett, es a MAGYARSZABALY +10 mar pontot er. Ok: a
   // fooldali lista a MLSZ ranglistajabol veszi az allast, az pedig a
   // sipszo elott 0-t mond - a 0-0-t viszont "el sem kezdodott"-kent
@@ -125,7 +125,7 @@ const JOVOBELI = 20;     // ehhez nincs mentett keret
   await p2.close();
 
   cim('A böngésző élő keret-lekérése is ismeri a pótolt meccset');
-  // MEGTORTENT, HAROMSZOR: a gyujtot javitottuk, a lapon megis az allt, hogy
+  // MERVE, HAROM ESETBEN: a gyujtot javitottuk, a lapon megis az allt, hogy
   // "a klubnak nincs meccse". Az ELO keret-lekeres ugyanis a BONGESZOBEN
   // epiti ujra a rekordokat (keretRekord), sajat logikaval - es az kimaradt
   // a javitasbol. A tarolt adat jo volt, a friss lekeres irta felul.

@@ -169,7 +169,7 @@ const REGIPERC = {}; // ugyanez a LEZART fordulokra: {gw: {element: {perc,
                     // kezdo}}}. Forrasa a gwElems(gw) valasza - ugyanaz a
                     // (fordulonkent gyorsitotarazott) keres, amibol a
                     // pont-bontas is jon, tehat nincs miatta plusz lekeres.
-let LIVENAP = null; // a NAPI pontzaras allapota: {"2026-08-21": {lezart}}.
+let LIVENAP = null; // a NAPI pontzaras allapota: {"<nap>": {lezart}}.
                     // Az FPL naponta zarja a pontokat, es a bonuszt is akkor
                     // veglegesiti - a sajat felulete is naponkent irja ki,
                     // hogy PROVISIONAL. Ez a jelzes nem a Draft API-bol jon,
@@ -265,7 +265,7 @@ T.bindNav();
 const eloAllas = FunTasy.eloKereso(LIVE);
 // Eredmenysor a meccs-adatlap tetejere - ugyanaz a doboz, mint a fooldali
 // meccspanelen (az NB1-oldalon is igy nez ki).
-// kozos doboz; itt azonositobol kell nevet oldani, ezert a nev() burkolat
+// kozos doboz; itt azonositobol kell nevet oldani, ezert a nev burkolat
 const allasHTML = (h, v, hp, vp, elo) => FunTasy.allasHTML(nev(h), nev(v), hp, vp, elo);
 
 // Az NB1-oldal meccs-nezeteben van "Kulonbsegek" szuro (az azonos sorok
@@ -400,7 +400,7 @@ function keretHTML(id){
 // ---------- "Valtoztatasok" ful (draft_keretvaltozasok.json) ----------
 // A SZAMITAS a gyujtoben van (collect_draft.py draft_keretvaltozas), ugyanabbol
 // a korbol, mint a Guardiola mutato - eppen azt vezeti le. A jatekos neve nem
-// a fajlbol jon, hanem a mar betoltott mezonybol (jat()).
+// a fajlbol jon, hanem a mar betoltott mezonybol (jat).
 let KVALT = null;
 fetch('../draft_keretvaltozasok.json?t=' + Date.now()).then(r => r.ok ? r.json() : null)
   .then(j => { if (j && j.rounds){ KVALT = j.rounds; ujraRajzol('valtoztatasok'); } })
@@ -612,7 +612,7 @@ async function profilAdat(e){
 
 // A mezony osszes jatekosa a fooldali listahoz es kereseshez. A torzs
 // (draft_players.json) mar betoltodik az oldal indulasakor, a szezonpont
-// pedig 2026-08-25 ota benne van - plusz lekeres nem kell hozza.
+// pedig benne van - plusz lekeres nem kell hozza.
 // Draft ligaban egy jatekos legfeljebb EGY keretben van, tehat a
 // "kinel van most" itt egyetlen nev vagy semmi.
 function jatekosPanel(){
@@ -879,9 +879,9 @@ const lekeresHiba = FunTasy.hibajelzo({
 // A fordulo allapota naponkenti bontasban. A Draft API-ban NINCS ilyen
 // vegpont (event-status ott 404), a klasszikus FPL-ben viszont van, es
 // pontosan ezt rajzolja ki a Draft sajat "Current team" lapja is:
-//   {"bonus_added": false, "date": "2026-08-21", "event": 1, "points": "p"}
+//   {"bonus_added": false, "date": "<nap>", "event": 1, "points": "p"}
 //
-// A Draft frontendjenek forrasabol kiolvasva (2026-08-24) a ket oszlop:
+// A Draft frontendjenek forrasabol kiolvasva  a ket oszlop:
 //   Match Points <- points:  "" = ures, l = Live, p = Provisional, r = Confirmed
 //   Bonus Points <- bonus_added:  igaz eseten "Added"
 //
@@ -914,7 +914,7 @@ async function napiZarasFrissit(){
   LIVENAP = uj;
 }
 // A MECCSORAT a jatekosok perceibol szamoljuk, nem a meccs sajat mezojebol.
-// MERVE (2026-08-24, elo meccs alatt): a fixtures "minutes" mezoje MINDIG 0 -
+// MERVE (elo meccs alatt): a fixtures "minutes" mezoje MINDIG 0 -
 // meg a mar lement meccseknel is. A jatekosok percei viszont egyutt ketyegnek:
 // a futo meccsen minden palyan levo kezdo ugyanazt a szamot mutatta (40').
 //
@@ -966,7 +966,7 @@ async function fetchLivePts(){
     // "indult", ha barmelyik elkezdodott; "kesz", ha MINDEGYIK lement; a
     // "kezdes" a legkozelebbi meg el nem kezdodott meccse.
     LIVEFX = {};
-    // MERVE (2026-08-23): a meccsnek harom allapota van. started, de meg nem
+    // MERVE : a meccsnek harom allapota van. started, de meg nem
     // finished_provisional = megy; finished_provisional, de meg nem finished
     // = lefujva, a bonusz rogzult, de az FPL meg atnezi; finished =
     // hivatalos. A bonusz-sor jelzese ebbol jon.
@@ -993,7 +993,7 @@ async function fetchLivePts(){
   // Eddig eldobtuk oket.
   // A PONT ES A PERC A TETELES BONTASBOL JON, nem a stats osszesitojebol.
   //
-  // MEGTORTENT (2026-08-30, GW2): az FPL a ket erteket KULON tartja, es az
+  // MERVE (GW2): az FPL a ket erteket KULON tartja, es az
   // osszesito beragadt, mikozben az explain mar a lement meccs valos
   // esemenyeit adta. Calvert-Lewinnel a sor 1 pontot es 9 percet mondott,
   // a bontasa viszont 90 percet, golt es bonuszt (2+4+2 = 8). A HIVATALOS
@@ -1005,7 +1005,7 @@ async function fetchLivePts(){
   // percszam monoton no, tehat a kisebbik a lemaradt. A BONUSSZAL NEM lehet
   // ervelni (elsore tevesen azzal erveltem): az FPL a bonuszt a meccs
   // alatt is szamolja es beteszi az explain-be - lasd a README "A
-  // bonuszpontok harom allapota" szakaszat es a bonuszAllapot()-ot.
+  // bonuszpontok harom allapota" szakaszat es a bonuszAllapot-ot.
   //
   // Normalis esetben a ketto egyezik, tehat ez semmit nem valtoztat.
   // Elteresnel viszont a RESZLETEZES a hiteles: az konkret esemenyekbol all
@@ -1211,7 +1211,7 @@ function eloAllasFrissit(gw){
 // A FOLYO FORDULO KERETEINEK POTLASA. A gyujto 3 orankent fut, a fordulo
 // viszont a nevezesi hataridovel indul - a ket idopont kozott a repoban
 // nincs keret ehhez a fordulohoz, es a lap nem tud elo allast szamolni
-// (BEJELENTVE 2026-09-18, az 5. fordulo elso meccse alatt). Ilyenkor a
+// (a KIZART HIBA: elo meccs alatt a lap nem frissult). Ilyenkor a
 // bongeszo maga keri le oket; a kozos resz a FunTasy.potKeretek, a vegpont
 // ligankent mas.
 //
@@ -1285,7 +1285,7 @@ async function liveRefresh(){
     LIVEGW = null;
     ELOORA.allj();                       // fordulok kozott egy keres sem megy ki
     // "Naprakesz" csak akkor igaz, ha a LEZART fordulo eredmenye mar a tarolt
-    // adatban van. Az FPL a fordulot a lockdownkor zarja (merve 2026-08-25
+    // adatban van. Az FPL a fordulot a lockdownkor zarja (merve:
     // 08:03-08:23 UTC kozott), a gyujtonk viszont 3 orankent fut - a ket
     // idopont kozott a tabella meg a zaras elotti allapot. Korabban ez a
     // res is "Naprakesz · ellenorizve <most>"-ot irt, holott a kiirt ido a

@@ -1,7 +1,7 @@
 const { BASE, jo, cim, inditas, vege, apiKi, bontasKi } = require('./kozos');
 // A NYITOTT pont-bontas nem tunhet el a hatterben beero frissitestol.
 //
-// BEJELENTETT HIBA: "ha megnyitom a jatekos pontreszletezeset a meccsben, a
+// A KIZART HIBA: "ha megnyitom a jatekos pontreszletezeset a meccsben, a
 // 'bontas betoltese' utan visszazar az accordion, ujra meg kell nyitni".
 // Nem maga a bontas zarta be: a nezet utolag ujrarajzolodik (beer a percre
 // friss keret, a jatszott percek, az elo pontok), es a teljes #mBody
@@ -74,7 +74,7 @@ const BONTAS = { data: [
   jo(k2 === k1, 'a keret-nézetben is megmarad a nyitott bontás');
 
   cim('Hibás betöltést NEM őrzünk meg (a megőrzés maga okozott hibát)');
-  // MEGTORTENT: az orzes a HIBAUZENETET is visszatette, es a sort nyitva
+  // MERVE: az orzes a HIBAUZENETET is visszatette, es a sort nyitva
   // hagyta - egy atmeneti halozati hiba igy beragadt, es a kovetkezo
   // kattintas becsukta a sort ahelyett, hogy ujraprobalta volna. A bontas
   // ket kattintasra jott csak vissza. Most: hibas panel nem orzodik meg,

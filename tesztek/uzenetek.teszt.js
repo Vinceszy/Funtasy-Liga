@@ -76,7 +76,7 @@ function keret(opts){
     // valodi 5. fordulo meccsei ugyanazon a napon vannak, mint a mockolt
     // kezdes, tehat a nap-egyezes MECCSNAPON a tarolt sort is atengedi - es
     // akkor a teszt egy hetekkel kesobbi kezdesu meccs uzenetet meri.
-    // (Megtortent: 2026-08-27 00:30 UTC, a masodik eset bukott ezzel.)
+    // (Elo futasban a masodik eset bukott ezzel.)
     await p.waitForFunction(st => [...document.querySelectorAll('.plr[data-acc]')]
       .some(x => x.dataset.st === st), start, { timeout: 20000 });
     const kattintott = await p.evaluate(st => {

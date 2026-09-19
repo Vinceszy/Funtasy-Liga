@@ -1,5 +1,5 @@
 const { BASE, jo, cim, inditas, vege, apiKi, bontasKi } = require('./kozos');
-// A lekero (FunTasy.lekero) tartalek-utjai. MIERT LETEZIK: 2026-08-27-en a
+// A lekero (FunTasy.lekero) tartalek-utjai. MIERT LETEZIK: egyszer a
 // ket akkori proxy (corsproxy.io, allorigins) egyszerre halt meg - a
 // corsproxy 401-re valtott, az allorigins tulterhelt volt -, es ezzel
 // MINDKET liga minden elo lekerese (pont-bontas, elo pontok) leallt. A
@@ -45,7 +45,7 @@ async function lap(br, utak){
   const br = await inditas();
 
   cim('corsproxy 401 + allorigins néma → a cors.sh úton megjön a bontás');
-  // Pontosan a 2026-08-27-i hibakep: direkt CORS-hiba, corsproxy 401,
+  // Pontosan a megtortent hibakep: direkt CORS-hiba, corsproxy 401,
   // allorigins nem valaszol. A cors.sh-nak kell kiszolgalnia.
   let { p, err, panel } = await lap(br, [
     ['**fantasy-api.mlsz.hu/**', r => r.abort('failed')],          // direkt: CORS

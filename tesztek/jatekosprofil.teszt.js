@@ -295,7 +295,7 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   await p.click('#ovClose');
 
   // ---- soha nem birtokolt jatekos: a profil nem varhat az API-ra ----
-  // BEJELENTETT HIBA (2026-08-25): az ilyen jatekosnal fordulonkent egy
+  // A KIZART HIBA: az ilyen jatekosnal fordulonkent egy
   // proxys keres ment ki, mind EGYSZERRE - a proxy eldobta oket, a profil
   // percekig toltott, a lenyilo bontas elhasalt. A szabaly azota: a profil
   // AZONNAL megjelenik kotojelekkel, a pontok SORBAN potladnak.

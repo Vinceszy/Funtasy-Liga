@@ -359,7 +359,7 @@ async function plLezartan(br){
   await p.close();
 }
 
-/* MEGTORTENT: a `?v=` csak a funtasy.js/css gyorsitotarat tori, az
+/* MERVE: a `?v=` csak a funtasy.js/css gyorsitotarat tori, az
    nb1/index.html-et NEM - es a kiszolgalo a regi ?v=-es kerésre is a MOSTANI
    funtasy.js-t adja. Igy a bongeszo REGI lapja (ami meg egyben, cimkezetlen
    `sorok`-kent adta at a teteleket) az UJ megjelenitovel talalkozott: a

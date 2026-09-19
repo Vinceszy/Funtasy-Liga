@@ -10,7 +10,7 @@ Negy fajlt gondoz (mind kompakt JSON, a repo tobbi adatfajljanak stilusaban):
                        {rounds: {gw: {liga_id: [{e, b, pts}, ...]}}}
                        e=jatekos-azonosito, b=pad (bench), pts=heti pont
 
-VEGPONTOK (2026-08-20-an merve, a GitHub futojarol):
+VEGPONTOK (a GitHub futojarol merve):
   - league/{id}/details        200 - resztvevok, menetrend, eredmenyek
   - bootstrap-static           200 - 599 jatekos, klubok, posztok
   - league/{id}/element-status 200 - ki birtokolja most az adott jatekost
@@ -21,7 +21,7 @@ VEGPONTOK (2026-08-20-an merve, a GitHub futojarol):
 FONTOS - adatvedelem:
 A details valasza a resztvevok VALODI NEVET is tartalmazza. A repo publikus,
 ezert soha nem mentunk nyers valaszt: minden kimeno rekord mezonkent epul,
-es a mentes elott a nevszures() ellenorzi, hogy tiltott mezo (valodi nev,
+es a mentes elott a nevszures ellenorzi, hogy tiltott mezo (valodi nev,
 entry_id) nem szivargott-e ki. A labdarugok neve nyilvanos adat, az mehet.
 
 FONTOS - ket kulonbozo azonosito:
@@ -142,7 +142,7 @@ def zarasi_kulonbseg(regi, uj):
     """A zaras elotti (tarolt) es utani (friss) keretek kulonbsege.
     Csapatonkent: "pont" = jatekosonkenti pontvaltozas (a bonusz-korrekcio),
     "ki"/"be" = az automatikus cserek (a pad-jelzo valtozasabol - a zaraskor
-    az FPL atirja a position mezot, merve 2026-08-25). None, ha nincs mibol
+    az FPL atirja a position mezot, merve). None, ha nincs mibol
     szamolni (nincs tarolt pillanatkep); ures dict, ha semmi sem valtozott -
     az is eredmeny: azt jelenti, a zaras nem hozott valtozast."""
     if not regi:
@@ -178,7 +178,7 @@ def jatekos_pont(v):
     fetchLivePts). A ket helyen ugyanannak a szamnak kell kijonnie: amit a
     latogato lat, azt kell archivalni is.
 
-    MIERT (2026-08-30, GW2): az FPL a stats.total_points-ot es az explain
+    MIERT (GW2): az FPL a stats.total_points-ot es az explain
     esemenylistat KULON tartja, es az osszesito beragadt - egy jatekosnal a
     sor 1 pontot mutatott, a bontasa viszont 90 percet es golt, osszesen
     8-at. Ugyanez az ellentmondas a HIVATALOS FPL-appban is latszott, tehat
@@ -514,13 +514,13 @@ def main():
     #
     # MIERT: az FPL a fordulo vegen AUTOMATIKUS CSEREKET hajt vegre - a nem
     # jatszo kezdo helyere beallitja az elso beferot a padrol -, es ilyenkor
-    # ATIRJA a pick "position" mezojet. Merve (2026-08-25, naplo/fpl-cserek.txt):
+    # ATIRJA a pick "position" mezojet. Merve (naplo/fpl-cserek.txt):
     # ez a "lockdown"-kor tortenik, egyszerre a tobbivel, 08:03 es 08:23 UTC
     # kozott; a jelzese a game vegpont "current_event_finished" mezoje.
     # A gyujto 3 orankent fut, tehat ha a current_event azelott lepne tovabb,
     # hogy a zaras utan meg egyszer lekertuk volna a fordulot, a keret
     # VEGLEGESEN a csere elotti allapotban fagyna be (rossz "b" jelzo, rossz
-    # "Kezdok" osszeg). 2026-08-25-en ez csak azon mult, hogy a futas hat
+    # "Kezdok" osszeg). Egyszer ez csak azon mult, hogy a futas hat
     # perccel a zaras utan esett.
     #
     # A mar lezartnak ismert fordulokat a hist["veglegesek"] tartja szamon, hogy egy

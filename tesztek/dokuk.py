@@ -15,6 +15,13 @@ Amit ellenoriz:
   D4: a valtozasok.json minden bejegyzese teljes es jol formazott
       (datum, ismert tipus, legalabb egy liga, cim, leiras).
   D5: ugyanez a valtozasok-vazlat.json meg nem publikalt bejegyzeseire.
+  D6: minden oldal ugyanazt a ?v= verziot hivatkozza, es a verzio.json
+      ugyanazt a szamot tartalmazza.
+  D7: a README tartalomjegyzeke egyezik a cimekkel.
+  D8: amit a gyujto kiir, azt a workflow commitolja is.
+  D9: a megjegyzesek es a fejlesztoi doksi a SZABALYT mondjak el, nem a
+      fejlesztes tortenetet - nincs bennuk datum, dontes-kontextusu nev,
+      sem "bejelentett / megtortent" jellegu naplo-jelzo.
 """
 import glob, json, os, re, sys
 
@@ -131,7 +138,7 @@ allit(_vj is not None and _vhtml is not None and int(_vj) == _vhtml,
 
 # D8: amit a gyujto KIIR, azt a workflow COMMITOLJA is.
 # A workflow-k KEZZEL FELSOROLT fajlokat adnak a committhoz - ez szandekos
-# (nem sopor be szemetet), de nema: 2026-09-06-ig a keretvaltozasok.json
+# (nem sopor be szemetet), de nema: sokaig a keretvaltozasok.json
 # egyaltalan nem volt a listan, tehat a gyujto minden korben helyesen
 # kiszamolta, es a repoba SOSEM kerult be. A "Valtoztatasok" fulon ezert
 # allt a lezart 7. fordulonal is, hogy "meg nincs pontszam". Semmi nem
@@ -210,7 +217,127 @@ else:
           + ("" if _mostani == _kell else
              " - futtasd: python3 tesztek/dokuk.py --javit"))
 
+# ---- D9: a repo a kode, nem a fejlesztes naploja ----
+# A kodmegjegyzes es a dokumentacio a SZABALYT es annak okat mondja el, nem a
+# tortenetet: ki kerte, ki dontotte el, mikor, es mi derult ki elesben. Ezt
+# emlekezetre bizni nem lehet - ez az allitas orzi.
+#
+# Csak MEGJEGYZESEKET es dokumentacio-prozat vizsgal: a kodban es az
+# adatfajlokban allo datum lehet valodi ertek (teszt-fixtura kezdesi ido,
+# changelog-datum, wrangler compatibility_date), azt nem szabad bantani.
+# A naplo/ konyvtar kivetel: ott a mereseknek IDEJUK van, az az adat resze.
+TILTOTT = [
+    (re.compile(r"\b\d{4}-\d{2}-\d{2}\b"), "datum"),
+    (re.compile(r"\b\d{4}\.\s*(janu|febru|marci|april|maju|juni|juli|augusz|"
+                r"szeptem|oktob|novem|decem)", re.I), "datum"),
+    # A resztvevok neve LIGA-ADAT, az szerepelhet (peldaban, kodban is).
+    # Amit tiltunk, az a dontes-kontextus: ki kerte, ki dontotte el.
+    (re.compile(r"Vince\s+(k[eé]r|d[oö]nt|fogalmaz|szerint)", re.I), "nev"),
+    (re.compile(r"BEJELENTETT|BEJELENTVE|MEGTORTENT|MEGTÖRTÉNT"), "naplo-jelzo"),
+    (re.compile(r"kiderült|kiderult", re.I), "naplo-jelzo"),
+]
+KIVETEL_MAPPA = ("naplo/", "tartalek/")
+
+
+def _c_megjegyzesek(szoveg):
+    """JS/CSS/HTML megjegyzesei, a sztringliteralokat atugorva.
+
+    Sajat palyagep kell hozza: egy egyszeru regex a sztringben allo `//`-t is
+    megjegyzesnek latna, a megjegyzesben allo idezojel pedig sztringet
+    nyitna. Mindketto hamis talalatot adna eles kod felett."""
+    ki, i, sor, n = [], 0, 1, len(szoveg)
+    while i < n:
+        c = szoveg[i]
+        if c == "\n":
+            sor += 1
+            i += 1
+        elif c in "\"'`":
+            zaro, i = c, i + 1
+            while i < n and szoveg[i] != zaro:
+                if szoveg[i] == "\\":
+                    i += 1
+                elif szoveg[i] == "\n":
+                    sor += 1
+                i += 1
+            i += 1
+        elif szoveg.startswith("//", i):
+            v = szoveg.find("\n", i)
+            v = n if v < 0 else v
+            ki.append((sor, szoveg[i:v]))
+            i = v
+        elif szoveg.startswith("/*", i):
+            v = szoveg.find("*/", i + 2)
+            v = n if v < 0 else v + 2
+            ki.append((sor, szoveg[i:v]))
+            sor += szoveg.count("\n", i, v)
+            i = v
+        elif szoveg.startswith("<!--", i):
+            v = szoveg.find("-->", i + 4)
+            v = n if v < 0 else v + 3
+            ki.append((sor, szoveg[i:v]))
+            sor += szoveg.count("\n", i, v)
+            i = v
+        else:
+            i += 1
+    return ki
+
+
+def _py_megjegyzesek(szoveg):
+    """Python megjegyzesek es dokumentacios sztringek (tokenize-zal)."""
+    import io as _io
+    import tokenize
+    ki = []
+    try:
+        for t in tokenize.generate_tokens(_io.StringIO(szoveg).readline):
+            if t.type == tokenize.COMMENT:
+                ki.append((t.start[0], t.string))
+            elif t.type == tokenize.STRING and t.string[:3] in ('"""', "'''"):
+                ki.append((t.start[0], t.string))
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        pass
+    return ki
+
+
+def _md_proza(szoveg):
+    """Markdown-proza: a koddal keritett blokkok nelkul."""
+    ki, kodban = [], False
+    for sz, sor in enumerate(szoveg.split("\n"), 1):
+        if sor.lstrip().startswith("```"):
+            kodban = not kodban
+            continue
+        if not kodban:
+            ki.append((sz, sor))
+    return ki
+
+
+def _yml_megjegyzesek(szoveg):
+    return [(sz, sor) for sz, sor in enumerate(szoveg.split("\n"), 1)
+            if sor.lstrip().startswith("#")]
+
+
+_D9_MINTAK = (("*.js", _c_megjegyzesek), ("*.css", _c_megjegyzesek),
+              ("*.html", _c_megjegyzesek), ("*.py", _py_megjegyzesek),
+              ("*.md", _md_proza), ("*.yml", _yml_megjegyzesek))
+_d9 = []
+for _minta, _bonto in _D9_MINTAK:
+    for _ut in glob.glob(os.path.join(GYOKER, "**", _minta), recursive=True):
+        _rel = os.path.relpath(_ut, GYOKER).replace(os.sep, "/")
+        if _rel.startswith(".git/") or _rel.startswith(KIVETEL_MAPPA):
+            continue
+        with open(_ut, encoding="utf-8") as _f:
+            _szoveg = _f.read()
+        for _sor, _reszlet in _bonto(_szoveg):
+            for _re, _mi in TILTOTT:
+                _t = _re.search(_reszlet)
+                if _t:
+                    _d9.append("%s:%d (%s) %s" % (_rel, _sor, _mi, _t.group(0)))
+                    break
+allit(not _d9, "D9: a megjegyzesek es a doksi nem naplozzak a fejlesztest"
+      + ("" if not _d9 else " - %d talalat" % len(_d9)))
+if _d9 and "--d9" in sys.argv:
+    print("\n".join("  . " + x for x in _d9))
+
 if hibak:
     print("\n%d allitas bukott." % len(hibak))
     sys.exit(1)
-print("\nMind a het allitas rendben.")
+print("\nMind a nyolc allitas rendben.")

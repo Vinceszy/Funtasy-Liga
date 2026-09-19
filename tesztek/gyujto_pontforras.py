@@ -3,7 +3,7 @@
 osszesitojebol - ugyanaz a szabaly, mint az oldalon.
 
 MIERT: az FPL a stats.total_points-ot es az explain esemenylistat KULON
-tartja, es az osszesito be tud ragadni (2026-08-30, GW2: a sor 1 pontot
+tartja, es az osszesito be tud ragadni (GW2: a sor 1 pontot
 mutatott, a bontas 90 percet es golt, osszesen 8-at; ugyanez a hivatalos
 FPL-appban is). A lezart fordulot a gyujto SOHA TOBBE nem keri le, es az
 oldal onnantol a MENTETT szamot mutatja - ami a lezaraskor bekerult, az

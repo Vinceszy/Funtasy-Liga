@@ -9,7 +9,7 @@ M2: EREDMENY CSAK LEZART MECCSROL: a meg futo meccs pontszamai akkor sem
 M3: a KESOBBI fordulobol visszaeso meccs kimarad (regi fordulo lekeresekor
     az API a klub kovetkezo meccsere esik vissza).
 M9: a POTOLT (korabbi fordulos, MOST jatszott) meccs viszont BEKERUL, es a
-    klub NEM kap "nincs meccse" jelolest. 2026-09-03: az MLSZ 7. fordulojaban
+    klub NEM kap "nincs meccse" jelolest. Merve: az MLSZ 7. fordulojaban
     ott allt az ETO-FTC "3F" jelolessel (a halasztott 3. fordulos meccs),
     plusz az ETO-HONVED "7F" - a gyujto mind a kilenc ETO-jatekost
     `nogame`-nek jelolte, mert csak a lista ELSO elemet nezte, es annak a
@@ -166,7 +166,7 @@ allit(any(x["id"] == 13 for x in m["rounds"].get("1") or []),
       "M6: a potolt meccs bekerult: " + repr([x["id"] for x in m["rounds"]["1"]]))
 
 print("\n--- M7: a meccslistas lekeres EXPLICIT keri a ket klubot ---")
-# MERVE (2026-08-30, naplo/mlsz-elo-meccs.txt): elo fordulonal a meccs-
+# MERVE (naplo/mlsz-elo-meccs.txt): elo fordulonal a meccs-
 # objektum klub NELKUL jon, hacsak a ket csapatot kulon nem kerjuk. Enelkul
 # a meccsek.json "?"-et tarol, es a profilban kotojel all az ellenfel helyen.
 allit(csapat_keresek and all(k for _, k in csapat_keresek),
@@ -192,7 +192,7 @@ allit(all(x.get("h") != "?" and x.get("v") != "?" for x in m["rounds"].get("1") 
 
 print()
 print("--- M9-M10: potolt meccs (egy klubnak KET meccse van a forduloban) ---")
-# A 2026-09-03-i meres alakja: a lista ELSO eleme a potolt, korabbi fordulos
+# A meres alakja: a lista ELSO eleme a potolt, korabbi fordulos
 # meccs, a masodik a fordulo sajat meccse.
 POTOLT = {"id": 431, "start_at": "2026-09-03T19:30:00+02:00",
           "status": "scheduled", "round_number": "3F",
@@ -226,7 +226,7 @@ allit(sorted(tarolo) == [9, 431],
 
 print()
 print("--- M11: a MOST lekert meccslista felulirja a regi jelzot ---")
-# MEGTORTENT: a potolt meccs javitasa utan a gyujto helyesen mondta, hogy a
+# MERVE: a potolt meccs javitasa utan a gyujto helyesen mondta, hogy a
 # klubnak VAN meccse - de a mult futasbol orokolt `nogame` visszaallitotta a
 # hibat. A javitas ONMAGAT BLOKKOLTA volna.
 regi = {"A": [{"name": "J1", "nogame": True, "start": None, "vege": True}]}

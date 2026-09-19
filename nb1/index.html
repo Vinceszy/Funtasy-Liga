@@ -268,14 +268,14 @@ function kirajzol(got){
 }
 // AZ UTOLSO ISMERT ALLAS - egyetlen kor-utbol, meg az elo lekeres elott.
 //
-// BEJELENTVE (Vince, 2026-09-19): "ha valaki mar lekerdezte, lassam azt".
+// A KIZART HIBA: "ha valaki mar lekerdezte, lassam azt".
 // A lap elso kepe eddig a repobol jott, amit a gyujto 3 orankent frissit -
 // tehat ha a telefonod tiz perce mar lekerte a friss allast, a gepen megis
 // a regit lattad, es meg is kellett varnod, amig a nyolc lekeres ujra
 // lefut. A Worker megjegyzi, amit o maga kert le (tartalek/proxy-worker.js),
 // es ezt egy keresben visszaadja.
 //
-// NEM helyettesiti az elo lekerest, csak MEGELOZI: a refresh() utana ugyis
+// NEM helyettesiti az elo lekerest, csak MEGELOZI: a refresh utana ugyis
 // fut, es ha kozben valtozott valami, felulirja. A kiirt ido a LEKERESE,
 // nem a mostani pillanat - pontosan az az allitas, hogy ezt latta utoljara
 // barki.
@@ -304,7 +304,7 @@ async function refresh(){
   const st=$('status'); st.className='';
   const tagok=TAGOK, n=tagok.length;
   const got={}; let filled=0, ok=0;
-  // EGY szakvezeto lekerese. Az ertelmezes a kozos beolvas()-ban van, hogy
+  // EGY szakvezeto lekerese. Az ertelmezes a kozos beolvas-ban van, hogy
   // az elso (egyedul indulo), a tobbi (egyszerre indulo) es a tarolt ut ne
   // ertelmezhesse maskepp ugyanazt az adatot.
   const egy = async ([name,uname], cimke) => {
@@ -315,7 +315,7 @@ async function refresh(){
     // AZ ELSO KERES EGYEDUL MEGY. A lekero abbol tanulja meg, melyik
     // proxy-ut mukodik (FunTasy.lekero "bevalt"), es a tobbi mar azzal
     // indul. Ha mind a nyolc egyszerre indulna, egy rossz napon mind a
-    // nyolc vegigprobalna a teljes utlistat - 2026-08-27 pont ilyen nap
+    // nyolc vegigprobalna a teljes utlistat - volt mar ilyen nap
     // volt (naplo/proxy-meres.txt: ket kozvetito egyszerre esett ki).
     if (await egy(tagok[0], `(1/${n}) ${tagok[0][0]}`)) ok++;
     // A TOBBI EGYSZERRE. Korabban mind a nyolc EGYMAS UTAN ment, egyenkent
@@ -363,7 +363,7 @@ async function loadSquadFile(){
 // meccs-panel mutat (keretOsszeg), tehat a ket nezet nem mond mast.
 //
 // Csak KITOLT, nem ir felul: amint az MLSZ valodi (nem nulla) pontot ad, a
-// refresh() azt teszi a helyere.
+// refresh azt teszi a helyere.
 function eloKeretbol(){
   const r=SQUAD_ROUND;
   if(!r || !SQUAD_FILE || !SCHEDULE[r]) return 0;
@@ -905,7 +905,7 @@ const KERET_INCLUDE_JATEK=KERET_INCLUDE+',competition_player.current_round.games
 // UGYANAZ A SZABALY, MINT A GYUJTOBEN (collect.py fordulo_meccsei_kozul).
 // Egy klubnak TOBB meccse is lehet egy fordulóban: az elhalasztott meccset az
 // MLSZ a POTLAS napja szerinti forduloba teszi, de meghagyja rajta az EREDETI
-// fordulo szamat. Megmerve 2026-09-03-an: az ETO listajaban "3F" (ETO-FTC,
+// fordulo szamat. Megmerve: az ETO listajaban "3F" (ETO-FTC,
 // szept. 3.) ES "7F" (ETO-HONVED, szept. 6.) allt egyszerre.
 //
 // A VISSZAESES (a klubnak nincs meccse a kert forduloban, ezert az API a
@@ -1183,7 +1183,7 @@ let MECCS = null;        // az eppen mutatott meccs - a gomb ebbol rajzol ujra
 // Nem eleg a nev: aki az egyik oldalon kapitany vagy pados, annal mas a
 // pontja, tehat az NEM azonos sor.
 // A ket keret kozos jatekosait AZONOSITO szerint parositjuk, nem nev szerint.
-// MEGTORTENT: az elo meccs-nezet a ket keretet KULON keri le, es ha csak az
+// MERVE: az elo meccs-nezet a ket keretet KULON keri le, es ha csak az
 // egyik jon meg, a masik a tarolt marad. A ket forras viszont MAS NEVALAKOT
 // ad - a tarolt magyar sorrendet ("Lehoczki Bendegúz"), az elo lekeres a
 // keresztnev-vezeteknev alakot ("Bendegúz Lehoczki") -, es nev szerint
@@ -1477,7 +1477,7 @@ async function boot(){
       // viszont latszik "elo" jelolessel.
       window.TAROLT_IDO = j && j.updated;      // a statuszsav hibauzenetehez
       const ideiglenes = new Set((j&&j.provisional||[]).map(Number));
-      window.PROVISIONAL = [...ideiglenes];   // a lekeresHiba() hasznalja
+      window.PROVISIONAL = [...ideiglenes];   // a lekeresHiba hasznalja
       if(j&&j.schedule) for(const k in j.schedule){
         if(ideiglenes.has(+k))
           LIVE[k]=j.schedule[k].map(m=>played(m)?[m[0],m[1],m[2],m[3]]:null);

@@ -11,12 +11,12 @@ Ket dolgot gyujt 3 orankent (.github/workflows/archive.yml):
    mostantol csak tartalek, lasd tartalek/KERET-MENTES.md.
 
 A KERET-VEGPONT TORTENETE: sokaig azt hittuk, szerverrol tiltott (GitHub
-Actionsbol, proxykon at, Playwrighttal is 403 volt). 2026-08-20-an kiderult:
+Actionsbol, proxykon at, Playwrighttal is 403 volt). Az ok:
 a 403-at a hianyzo filter[round_id] parameter okozta - a korabbi szerveres
 probak meg a parameter felfedezese elott keszultek. Helyes keressel a
 vegpont barhonnan, bejelentkezes nelkul mukodik.
 
-TOVABBI MERESSEL IGAZOLT TENYEK (2026-08-20):
+TOVABBI MERESSEL IGAZOLT TENYEK :
 
 - round_id = 75 + 2 x forduloszam.
 - A ranglista alapbol csak az utolso lezart es az aktualis fordulot adja
@@ -28,7 +28,7 @@ TOVABBI MERESSEL IGAZOLT TENYEK (2026-08-20):
   AKINEK VAN MECCSE, lejatszotta (current_round.is_played), es a meccse le
   is ment (games[0].status == "completed"). Akinek nincs meccse a
   forduloban (nogame), az nem szamit bele.
-  Korabban a nogame-esek is szamitottak, arra a - 2026-08-23-an megmert -
+  Korabban a nogame-esek is szamitottak, arra a megmert
   teves feltevesre, hogy az MLSZ oket is lejatszottnak jeloli 0 ponttal.
   A meres ezt megcafolta: az 5. fordulos Honved-jatekosoknal (nincs meccs)
   is_played=false, a 3. fordulos ETO-jatekosoknal viszont mar igaz - de
@@ -46,16 +46,16 @@ TOVABBI MERESSEL IGAZOLT TENYEK (2026-08-20):
   marad orokre ideiglenes.
 - A current_round az ELO fordulo lekeresenel csak explicit
   competition_player.current_round include-dal jon vissza (lezart fordulonal
-  enelkul is megjelenik) - ezert szerepel az INCLUDE-ban (2026-08-21).
+  enelkul is megjelenik) - ezert szerepel az INCLUDE-ban .
 - KI NEM JATSZIK A FORDULOBAN: a competition_player.current_round.games
-  include adja meg biztosan, KET alakban (2026-08-23-i meres):
+  include adja meg biztosan, KET alakban (merve):
     * ures lista - az ELO fordulonal ez jon, ha a klubnak nincs meccse;
     * MASIK fordulo meccse - regi fordulonal az API a klub legutobbi
       meccsere esik vissza a hianyzo helyett. Maga a meccs-objektum arulja
       el: a round_number mezoje "3F" / "5F" alaku, es ha nem a kert
       fordulora mutat, akkor a klubnak nincs meccse benne.
   A first_played_at ilyenkor sem hasznalhato: vagy a klub KOVETKEZO meccsere
-  mutat, vagy egy ejfeles helyorzore (a 3. fordulos ETO-nal 2026-08-15T00:00,
+  mutat, vagy egy ejfeles helyorzore (a 3. fordulos ETO-nal ejfel,
   vagyis egy mar elmult nap kituzetlen idoponttal). A meccslistat csak az ELO fordulora
   kerjuk: ott +2 KB, a lezartaknal viszont a kesz meccs melle bejonnek a
   klublogok is base64-ben, es a valasz 17 KB-rol 118 KB-ra no.
@@ -68,7 +68,7 @@ TOVABBI MERESSEL IGAZOLT TENYEK (2026-08-20):
 - A le nem zarult fordulo szamai IDEIGLENESEK: a results.json "provisional"
   listajaba kerulnek, es az oldal nem szamolja oket a tabellaba.
 - Az MLSZ utolag korrigal: harom megfigyelt esetunk van (Csendi, 1-3.
-  fordulo, +1/+1/-2,5; 2026-08-20). Ezert a lekert ertekhez MINDIG
+  fordulo, +1/+1/-2,5). Ezert a lekert ertekhez MINDIG
   szinkronizalunk, a keretbol szamolt osszeget osszevetjuk a hivatalossal,
   es a valtozast NAPLOZZUK is (zarasok_nb1.json) - utolag mar nem
   rekonstrualhato, hogy mi mozdult.
@@ -203,7 +203,7 @@ def squad(user_id, round_no, jatek=False):
     (A lezart fordulot az API enelkul is csapatostul adja, ezert volt jo az
     1-5. fordulo - a meccsek.json csak a lezarasuk utan keszult.)
 
-    MERVE (2026-08-30, elo 6. fordulo, naplo/mlsz-elo-meccs.txt):
+    MERVE (elo 6. fordulo, naplo/mlsz-elo-meccs.txt):
       - games.home_team + games.away_team  -> HTTP 200, a klub megjon
       - games.homeTeam / games.teams       -> a mezo nem jelenik meg
       - a valasz 22,3 KB -> 24,8 KB, tehat +2,5 KB: a csapat-objektum itt
@@ -289,7 +289,7 @@ def fordulo_meccsei_kozul(games, fordulo):
     KET dolgot kell szetvalasztani, es a round_number ONMAGABAN egyiket sem
     donti el - mindketto KORABBI fordulo szamat viseli:
 
-    1. POTOLT (elmaradt) MECCS. Meres, 2026-09-03: az ETO
+    1. POTOLT (elmaradt) MECCS. Merve: az ETO
        current_round.games listajaban a 7. fordulora KET meccs allt -
        "3F" (ETO-FTC, szept. 3., a halasztott 3. fordulos meccs) es "7F"
        (ETO-HONVED, szept. 6.). Az MLSZ tehat a POTLAS NAPJA szerinti
@@ -356,7 +356,7 @@ def orokit_meccsjelzok(regi_fordulo, uj_fordulo, oroklunk=True):
 
     `oroklunk=False`, HA MOST LEKERTUK A MECCSLISTAT: akkor a friss valasz az
     igazsag, es a regi jelzo nem irhatja felul. Enelkul egy tevesen beragadt
-    `nogame` OROKRE bent maradna - 2026-09-03-an pontosan ez tortent: a
+    `nogame` OROKRE bent maradna - elo futasban pontosan ez tortent: a
     potolt meccs javitasa utan a gyujto helyesen mondta, hogy az ETO-nak VAN
     meccse, de a mult futasbol orokolt `nogame` visszaallitotta a hibat. A
     javitas onmagat blokkolta volna."""
@@ -1098,7 +1098,7 @@ def main():
     # ha egy regi fordulo hivatalos pontja most valtozott, akkor a hozza
     # tartozo keret is elavult - azt is ujra le kell kerni
     celok |= valtozott
-    # REGI FORMATUM POTLASA. A 2026-08-21 elotti keret-rekordokban meg nincs
+    # REGI FORMATUM POTLASA. A legkorabbi keret-rekordokban meg nincs
     # "id", "played" es "start" - emiatt az oldal a pont-bontashoz elohivast
     # kenytelen inditani, es a "nincs meccse" jelzes teljesen hianyzik (a 3.
     # fordulos ETO-jatekosoknal ezert irta az oldal, hogy a meccs meg nem
@@ -1152,7 +1152,7 @@ def main():
         fordulo_meccsei = {m["id"]: m for m in meccsek["rounds"].get(str(r)) or []
                            if m.get("id") is not None}
         # EGY helyen dol el, kerunk-e meccslistat ehhez a fordulohoz - a
-        # squad() es az orokit_meccsjelzok() ugyanazt a valaszt hasznalja.
+        # squad es az orokit_meccsjelzok ugyanazt a valaszt hasznalja.
         jatek_kell = (r == aktualis or r in migralando
                       or r in meccs_potlas or r in valtozott)
         for nev, uid in ids.items():
@@ -1289,7 +1289,7 @@ def main():
             # A mar LEZART fordulo veglegeskent allt kint - egy hianyos futas
             # (halozati hiba, reszleges valasz) nem nyithatja ujra. Enelkul
             # egyetlen DNS-hiba kivette az 5. fordulot a tabellabol
-            # (megtortent: 2026-08-25 21:47, "nincs ranglista-adat: Katyul"
+            # (elo futasban: "nincs ranglista-adat: Katyul"
             # -> a tabella a 4 fordulos allast mutatta).
             # Az ELO fordulora (r == aktualis) a vedelem NEM all: ott a
             # "veglegesnek latszo" tarolt szam reszeredmeny is lehet, es a

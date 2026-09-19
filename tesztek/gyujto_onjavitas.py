@@ -139,7 +139,7 @@ if os.path.isdir("keretek"):
     all(len(fajlok) == len(kesz["rounds"]),
         "minden fordulohoz keszult keret-fajl (%d db)" % len(fajlok))
     baj = []
-    # a ciklusvaltozo NEM "keret": az elarnyekolna a fenti keret() fuggvenyt
+    # a ciklusvaltozo NEM "keret": az elarnyekolna a fenti keret fuggvenyt
     for r, keret_ in kesz["rounds"].items():
         try:
             egy = json.load(open(os.path.join("keretek", "%s.json" % r)))
