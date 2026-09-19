@@ -1377,6 +1377,38 @@
     };
   }
 
+  /* SAJAT proxy (Cloudflare Worker, tartalek/proxy-worker.js): ha be van
+     allitva, ez az elso ut minden elo lekeresnel - a sajat fiok alatt fut,
+     senki nem kapcsolja le, es az ingyenes kerete (100k/nap) a forgalmunk
+     sokszorosa. Amig ures, a lekero kihagyja, es a publikus proxyk viszik. */
+  var SAJAT_PROXY = 'https://funtasy-liga.swick00.workers.dev';
+
+  /* ===== AZ UTOLSO ISMERT ALLAS =====
+     A problema (Vince, 2026-09-19): "ha valaki mar lekerdezte, lassam azt -
+     ne lassak regebbi adatot, mint a legutobbi lekerdezes". A lap elso kepe
+     eddig a repobol jott, amit a gyujto 3 orankent frissit; ha a telefonod
+     tiz perce mar lekerte a friss allast, a gepen megis a regit lattad, es
+     meg is kellett varnod, amig a lekeresek ujra lefutnak.
+
+     Gyorsitotarral ez NEM oldhato meg: az lejar es eldob, tehat aki a
+     lejarat utan erkezik, ugyanott van. A Worker ezert MEGJEGYZI, amit o
+     maga lekert (lasd tartalek/proxy-worker.js), es itt egyetlen keresben
+     vissza is adja - barhany cel-URL-re egyszerre.
+
+     Visszaad: Promise<{<url>: {ido, adat}} | null>. `adat` a nyers valasz
+     szovege, `ido` a lekerese. Hianyzo vagy meg nem tarolt URL egyszeruen
+     nincs benne a valaszban - a hivo ilyenkor az elo utra tamaszkodik.
+     SOSEM dob: ez egy gyorsito lepes, nem lehet belole hiba. */
+  function taroltak(urlok) {
+    if (!SAJAT_PROXY || !urlok || !urlok.length) return Promise.resolve(null);
+    var q = urlok.map(function (u) { return 'url=' + encodeURIComponent(u); }).join('&');
+    return fetch(SAJAT_PROXY + '/tarolt?' + q,
+                 { cache: 'no-store', headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { return (j && Object.keys(j).length) ? j : null; })
+      .catch(function () { return null; });
+  }
+
   /* ===== Lekeres CORS-proxyn at =====
      Harom utvonalat probal sorban (direkt -> corsproxy -> allorigins), es
      megjegyzi, melyik valt be: a munkamenet tobbi kerese mar azzal indul.
@@ -1399,12 +1431,6 @@
       return be.belsoBelyeg ? u + (u.indexOf('?') < 0 ? '?' : '&') +
         be.belsoBelyeg + '=' + Date.now() : u;
     };
-    /* SAJAT proxy (Cloudflare Worker, tartalek/proxy-worker.js): ha be van
-       allitva, ez az elso ut - a sajat fiok alatt fut, senki nem kapcsolja
-       le, es az ingyenes kerete (100k/nap) a forgalmunk sokszorosa. Amig
-       ures, a lekero kihagyja, es a publikus proxyk viszik (backup). */
-    var SAJAT_PROXY = 'https://funtasy-liga.swick00.workers.dev';
-
     /* Az ut-sorrend MERT megbizhatosag, nem izles (naplo/proxy-meres.txt,
        2026-08-27): aznap a corsproxy.io 401-re valtott (regisztraciohoz
        kotottek), az allorigins tulterhelt volt - es mivel minden elo lekeres
@@ -1763,7 +1789,7 @@
                      kezdSzazalek: kezdSzazalek, KEZD_CIM: KEZD_CIM,
                      kezdParHTML: kezdParHTML,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
-                     eloFrissito: eloFrissito,
+                     eloFrissito: eloFrissito, taroltak: taroltak,
                      potKeretek: potKeretek, potKeretekUrit: potKeretekUrit,
                      lassuJelzo: lassuJelzo, allasHTML: allasHTML,
                      nezetVerem: nezetVerem, lekero: lekero,

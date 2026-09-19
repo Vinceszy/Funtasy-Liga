@@ -38,6 +38,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [Minden automatikusan megy (GitHub Actions, 3 óránként)](#minden-automatikusan-megy-github-actions-3-óránként)
   - [Az FPL Draft adatai (3 óránként, draft.yml)](#az-fpl-draft-adatai-3-óránként-draftyml)
   - [Élő frissítés a böngészőből (mindkét oldal)](#élő-frissítés-a-böngészőből-mindkét-oldal)
+  - [Az utolsó ismert állás — „ha valaki már lekérdezte, lássam azt"](#az-utolsó-ismert-állás--ha-valaki-már-lekérdezte-lássam-azt)
   - [Az NB1 élő lekérése két körben megy, nem nyolcban (mérve, 2026-09-19)](#az-nb1-élő-lekérése-két-körben-megy-nem-nyolcban-mérve-2026-09-19)
   - [A CORS-proxyk cserélhetők — és cserélni is kellett (mérve, 2026-08-27)](#a-cors-proxyk-cserélhetők--és-cserélni-is-kellett-mérve-2026-08-27)
   - [A betűkészlet nem állíthatja meg a lapot (mérve, 2026-08-27)](#a-betűkészlet-nem-állíthatja-meg-a-lapot-mérve-2026-08-27)
@@ -584,6 +585,55 @@ bfcache-es `pageshow` és a `focus` eseményre futtatja újra a frissítést, le
 **Időzített frissítés szándékosan nincs:** nyitva hagyott lapon nem megy lekérés a
 proxykon át (mobilon adat és akku). Ha nézni akarod, hogy változik, vissza kell térni
 a laphoz — vagy újratölteni.
+
+### Az utolsó ismert állás — „ha valaki már lekérdezte, lássam azt"
+
+**A kérés (Vince, 2026-09-19):** *„ne lássak régebbi adatot, mint a legutóbbi
+lekérdezés."* Megnyitod a telefonon, szépen befrissül; egy órával később a gépen
+ugyanazt a frissítést végig kell várni, és közben egy régebbi állást bámulsz.
+
+**Miért állt elő.** A közös állapotunk egyetlen dolog: a repóban fekvő JSON-ok, amiket
+a gyűjtő 3 óránként ír. Az élő számot viszont minden eszköz a saját böngészőjében
+számolja ki, és az eredmény ott is marad. A telefon munkája nem írt vissza sehova.
+
+**Amivel NEM oldható meg: gyorsítótár.** A lejáratos gyorsítótár csak akkor segít, ha a
+lejáraton belül érkezel; egyébként eldobja a másolatot, és kezdheted elölről. A
+stale-while-revalidate meg épp fordítva rossz: hosszú szünet után **az elsőként érkező**
+kapja a régi másolatot — vagyis pont az, akinek segíteni akarnánk.
+
+**A megoldás: tároló a Workerben.** Nem lejáró gyorsítótár, hanem tároló, ami megőrzi,
+amíg jobb nem jön. A Worker — ami eddig is ott ült minden lekérés útjában — megjegyzi a
+választ, amit **ő maga** kért le (tehát nincs mit meghamisítani: nem a böngésző küld fel
+adatot), a lap pedig betöltéskor **egyetlen kérésben** elkéri az egészet
+(`/tarolt?url=..&url=..`), még az élő lekérés előtt.
+
+| | |
+|---|---|
+| Mit tárol | amit **ritkán** változik: NB1 élő pont (naponta 2-4×), PL keretek és liga-adat (fordulónként fix) |
+| Mit nem | a PL élő pontot — az percenként változik, a legutóbbi válasz egy perc múlva értéktelen |
+| Mikor ír | **csak változáskor** — enélkül a KV napi 1000 írásos ingyenes kerete pár óra alatt elfogyna |
+| Mennyibe kerül | NB1: ~30 írás/nap · PL keretek: 10-20 írás/forduló |
+
+A státuszsáv a **lekérés** idejét írja ki, nem a mostanit: „Élő állás — 8. forduló ·
+frissítve 21:27" pontosan azt állítja, hogy ezt látta utoljára bárki — nem azt, hogy épp
+most ellenőriztük.
+
+**Két védővonal.** A kötés hiányozhat (amíg a KV-névtér nincs meg): olyankor a Worker
+pontosan úgy működik, mint korábban, és a lap a szokásos élő úton megy. A tárolt állás
+pedig sosem helyettesíti az élő lekérést, csak megelőzi — a `refresh()` utána ugyanúgy
+fut, és ha közben változott valami, felülírja.
+
+**Ahol a szabály két helyen élne, ott nem él kétszer.** A ranglista-URL egyetlen helyen
+készül (`rangUrl`), mert ugyanaz az URL a lekérés címe **és** a tároló kulcsa — ha két
+helyen állna össze, észrevétlenül elcsúszhatna, és a tároló sosem találna. A válasz
+értelmezése (`beolvas`) és a kirajzolás (`kirajzol`) szintén közös az élő és a tárolt
+úton.
+
+**Mérés.** A Workert a fejlesztői környezetből nem lehet elérni (a hálózat nem enged ki
+a `workers.dev`-re), ezért a logikáját hamis KV-vel mérjük
+(`tesztek/workertarolo.teszt.js`), a lap oldalát böngészőből
+(`tesztek/taroltallas.teszt.js`), a valódi végpontról-végpontig mérés pedig GitHub
+Actionsből megy (`naplo/tarolo-meres.py`, `.github/workflows/tarolo-meres.yml`).
 
 ### Az NB1 élő lekérése két körben megy, nem nyolcban (mérve, 2026-09-19)
 

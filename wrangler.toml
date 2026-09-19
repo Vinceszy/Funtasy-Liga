@@ -12,3 +12,17 @@ name = "funtasy-liga"
 main = "tartalek/proxy-worker.js"
 compatibility_date = "2026-08-27"
 workers_dev = true
+
+# ---- "utolso ismert allas" tarolo (Workers KV) ----
+# A Worker megjegyzi a ritkan valtozo valaszokat, es a lap betolteskor
+# egyetlen keresben elkeri oket (/tarolt) - lasd tartalek/proxy-worker.js.
+#
+# A KOTES MEG NINCS BEKAPCSOLVA: ehhez egy KV-nevter kell, aminek az
+# azonositoja ide jon. Amig hianyzik, a Worker pontosan ugy mukodik, mint
+# korabban (a tarolas nema no-op) - ezt a tesztek/workertarolo.teszt.js
+# meri. Bekapcsolas: hozz letre egy "funtasy-tarolt" nevu KV-nevteret, es
+# vedd ki a kovetkezo ket sor elol a kettoskeresztet, az id-t kitoltve.
+#
+# [[kv_namespaces]]
+# binding = "TAROLT"
+# id = "<a nevter azonositoja>"

@@ -1,0 +1,3 @@
+A Worker "utolso ismert allas" tarolojanak meresei.
+A fajlt a naplo/tarolo-meres.py irja (.github/workflows/tarolo-meres.yml).
+Meg nem futott meres.

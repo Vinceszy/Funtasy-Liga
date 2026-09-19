@@ -6,6 +6,15 @@
    "ligak": [
     "nb1"
    ],
+   "cim": "Amit valaki már lekérdezett, azt rögtön látod",
+   "leiras": "Eddig minden eszköz külön kezdte elölről: a telefonon szépen befrissült az állás, egy órával később a gépen mégis egy régebbit láttál, és végig kellett várni ugyanazt a frissítést. Mostantól a kiszolgáló megjegyzi a legutóbb lekért állást, és a lap betöltéskor egyetlen kérésben megkapja — az első kép már az, amit bárki utoljára lekért. A státuszsáv is a lekérés idejét írja ki, nem a mostanit. Az élő frissítés ettől függetlenül fut tovább."
+  },
+  {
+   "datum": "2026-09-19",
+   "tipus": "funkcio",
+   "ligak": [
+    "nb1"
+   ],
    "cim": "Négyszer gyorsabb élő frissítés",
    "leiras": "Az élő állás szakvezetőnként külön lekérésből áll össze, és eddig mind a nyolc egymás után ment — nyolc kör-út sorban, percenként. Mostantól az első megy egyedül (abból derül ki, melyik útvonal működik), a maradék hét egyszerre. Mérve: 513 ezredmásodperc a korábbi ~2000 helyett. Aki kiesik a körből, azt újrakérjük, hogy senki állása ne maradjon ki."
   },
