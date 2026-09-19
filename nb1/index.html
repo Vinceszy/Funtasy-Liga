@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=81">
+<link rel="stylesheet" href="../funtasy.css?v=82">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=81"></script>
+<script src="../funtasy.js?v=82"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -231,18 +231,42 @@ const lekeresHiba = FunTasy.hibajelzo({
 const ELOORA = FunTasy.eloFrissito(() => refresh(), window.ELO_ORA_KOZ);
 async function refresh(){
   const st=$('status'); st.className='';
-  const got={}; let filled=0, i=0, ok=0, n=Object.keys(MEMBERS).length;
+  const tagok=Object.entries(MEMBERS), n=tagok.length;
+  const got={}; let filled=0, ok=0;
+  // EGY szakvezeto fordulopontjai. A valasz ertelmezese is itt van, hogy az
+  // elso (egyedul indulo) es a tobbi (egyszerre indulo) keres ne
+  // ertelmezhesse maskepp ugyanazt az adatot.
+  const egy = async ([name,uname], cimke) => {
+    const u=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/rankings?include=user_team.user.id,summary_statistics,ranking,rounds,competition_rank&page=1&per_page=5&filter%5Bsearch%5D=${encodeURIComponent(uname)}`;
+    let j; try{ j=await apiGet(u,cimke); }catch(e){ return false; }
+    const row=(j.data||[]).find(d=>d.user_team?.user?.username===uname)||j.data?.[0];
+    if(!row) return false;
+    if(row.user_team?.user?.id) USER_IDS[name]=row.user_team.user.id;
+    got[name]={};
+    for(const rs of (row.user_team?.round_statistics||[])) got[name][rs.round_number]=rs.points;
+    return true;
+  };
   try{
-    for(const [name,uname] of Object.entries(MEMBERS)){
-      i++;
-      const u=`https://fantasy-api.mlsz.hu/competitions/${COMPETITION}/rankings?include=user_team.user.id,summary_statistics,ranking,rounds,competition_rank&page=1&per_page=5&filter%5Bsearch%5D=${encodeURIComponent(uname)}`;
-      let j; try{ j=await apiGet(u,`(${i}/${n}) ${name}`);}catch(e){ continue; }
-      const row=(j.data||[]).find(d=>d.user_team?.user?.username===uname)||j.data?.[0];
-      if(!row) continue;
-      ok++;
-      if(row.user_team?.user?.id) USER_IDS[name]=row.user_team.user.id;
-      got[name]={};
-      for(const rs of (row.user_team?.round_statistics||[])) got[name][rs.round_number]=rs.points;
+    // AZ ELSO KERES EGYEDUL MEGY. A lekero abbol tanulja meg, melyik
+    // proxy-ut mukodik (FunTasy.lekero "bevalt"), es a tobbi mar azzal
+    // indul. Ha mind a nyolc egyszerre indulna, egy rossz napon mind a
+    // nyolc vegigprobalna a teljes utlistat - 2026-08-27 pont ilyen nap
+    // volt (naplo/proxy-meres.txt: ket kozvetito egyszerre esett ki).
+    if (await egy(tagok[0], `(1/${n}) ${tagok[0][0]}`)) ok++;
+    // A TOBBI EGYSZERRE. Korabban mind a nyolc EGYMAS UTAN ment, egyenkent
+    // megvarva - nyolc kor-ut sorban, percenkent ujra, olyan adatert, ami
+    // az NB1-en naponta 2-4-szer valtozik (az MLSZ meccs kozben nem ad
+    // pontot: `eloPontok: false`). Ugyanaz az adat most ket kor-ut alatt.
+    const tobbi = tagok.slice(1);
+    if (tobbi.length){
+      const jott = await Promise.all(tobbi.map(t => egy(t, `(még ${tobbi.length})`)));
+      ok += jott.filter(Boolean).length;
+      // Aki a parhuzamos korbol kimaradt, azt egyesevel ujraprobaljuk. Egy
+      // sorozat-keresre adott elutasitas (vagy egy rossz pillanat) ne
+      // hagyjon lyukat az allasban: a hianyzo szakvezeto meccse kulonben
+      // allas nelkul maradna ebben a korben.
+      const hianyzo = tobbi.filter((t,k) => !jott[k]);
+      for (const t of hianyzo) if (await egy(t, `(újra) ${t[0]}`)) ok++;
     }
     // A lekert eredmeny NEM a menetrendbe kerul, hanem a LIVE overlaybe: nem
     // tudjuk rola, hogy a fordulo lezarult-e, ezert a tabellaba nem szamit

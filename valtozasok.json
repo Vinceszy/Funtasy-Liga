@@ -1,6 +1,15 @@
 {
  "bejegyzesek": [
   {
+   "datum": "2026-09-19",
+   "tipus": "funkcio",
+   "ligak": [
+    "nb1"
+   ],
+   "cim": "Négyszer gyorsabb élő frissítés",
+   "leiras": "Az élő állás szakvezetőnként külön lekérésből áll össze, és eddig mind a nyolc egymás után ment — nyolc kör-út sorban, percenként. Mostantól az első megy egyedül (abból derül ki, melyik útvonal működik), a maradék hét egyszerre. Mérve: 513 ezredmásodperc a korábbi ~2000 helyett. Aki kiesik a körből, azt újrakérjük, hogy senki állása ne maradjon ki."
+  },
+  {
    "datum": "2026-09-18",
    "tipus": "bugfix",
    "ligak": [

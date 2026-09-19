@@ -38,6 +38,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [Minden automatikusan megy (GitHub Actions, 3 óránként)](#minden-automatikusan-megy-github-actions-3-óránként)
   - [Az FPL Draft adatai (3 óránként, draft.yml)](#az-fpl-draft-adatai-3-óránként-draftyml)
   - [Élő frissítés a böngészőből (mindkét oldal)](#élő-frissítés-a-böngészőből-mindkét-oldal)
+  - [Az NB1 élő lekérése két körben megy, nem nyolcban (mérve, 2026-09-19)](#az-nb1-élő-lekérése-két-körben-megy-nem-nyolcban-mérve-2026-09-19)
   - [A CORS-proxyk cserélhetők — és cserélni is kellett (mérve, 2026-08-27)](#a-cors-proxyk-cserélhetők--és-cserélni-is-kellett-mérve-2026-08-27)
   - [A betűkészlet nem állíthatja meg a lapot (mérve, 2026-08-27)](#a-betűkészlet-nem-állíthatja-meg-a-lapot-mérve-2026-08-27)
   - [Gyorsítótár: miért ragadt be a pontszám iPhone-on](#gyorsítótár-miért-ragadt-be-a-pontszám-iphone-on)
@@ -583,6 +584,29 @@ bfcache-es `pageshow` és a `focus` eseményre futtatja újra a frissítést, le
 **Időzített frissítés szándékosan nincs:** nyitva hagyott lapon nem megy lekérés a
 proxykon át (mobilon adat és akku). Ha nézni akarod, hogy változik, vissza kell térni
 a laphoz — vagy újratölteni.
+
+### Az NB1 élő lekérése két körben megy, nem nyolcban (mérve, 2026-09-19)
+
+Az NB1 élő állása **szakvezetőnként egy külön MLSZ-lekérésből** áll össze: 8 ember =
+8 kérés, és ez élő forduló alatt percenként újra lefut. Korábban mind a nyolc **egymás
+után** ment, egyenként megvárva — nyolc kör-út sorban. Ez volt a fő oka annak, hogy az
+oldal „szép lassan" frissült be, nem a gyorsítótár.
+
+Az arány külön rossz volt, mert az MLSZ **meccs közben nem ad pontot** (`eloPontok:
+false`): a pontok a lefújás után kerülnek be, vagyis a nyolc kör-út percenként olyan
+adatért ment, ami naponta 2-4-szer változik.
+
+Most az **első kérés megy egyedül**, a maradék hét **egyszerre**. Az első azért marad
+külön, mert a lekérő abból tanulja meg, melyik proxy-út működik (`FunTasy.lekero`
+„bevált" útja); ha mind a nyolc egyszerre indulna, egy rossz napon mind a nyolc
+végigpróbálná a teljes útlistát — 2026-08-27 pont ilyen nap volt.
+
+Aki a párhuzamos körből kiesik, azt **egyesével újrakérjük**: egy sorozatkérésre adott
+elutasítás ne hagyjon lyukat az állásban (a hiányzó szakvezető meccse különben állás
+nélkül maradna abban a körben).
+
+Mérve a teszttel, kérésenként 250 ms késleltetéssel: **513 ms** a korábbi ~2000 ms
+helyett. Rögzíti: `parhuzamos.teszt.js`.
 
 ### A CORS-proxyk cserélhetők — és cserélni is kellett (mérve, 2026-08-27)
 
