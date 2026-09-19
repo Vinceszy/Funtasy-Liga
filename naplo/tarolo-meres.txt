@@ -10,3 +10,12 @@ MERES: 2026-09-19 23:07 UTC | szakvezeto:
    egyezik a proxy valaszaval: IGEN
    a tarolt valasz 34.8x gyorsabban jott, mint a friss lekeres
 4. valtozatlan adat utan az idobelyeg: VALTOZATLAN - csak valtozaskor irunk, ahogy kell
+
+==============================================================
+MERES: 2026-09-19 23:08 UTC | szakvezeto: HolVanSalah
+1. /tarolt a lekeres ELOTT: meg nincs tarolva (254 ms)
+2. rendes proxy-keres: HTTP 200, 1418 bajt, 2308 ms
+3. /tarolt a lekeres UTAN: van, ido=2026-09-19T23:08:16.594Z, 1418 bajt (104 ms)
+   egyezik a proxy valaszaval: IGEN
+   a tarolt valasz 22.2x gyorsabban jott, mint a friss lekeres
+4. valtozatlan adat utan az idobelyeg: VALTOZATLAN - csak valtozaskor irunk, ahogy kell
