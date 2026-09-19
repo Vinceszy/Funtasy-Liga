@@ -24,11 +24,14 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-PROXY = os.environ.get("PROXY_URL", "https://funtasy-liga.swick00.workers.dev")
+PROXY = os.environ.get("PROXY_URL") or "https://funtasy-liga.swick00.workers.dev"
 EREDET = "https://vinceszy.github.io"
 VERSENY = 3
-# Egy valodi szakvezeto - a lap is pontosan ezt az URL-t keri le
-UNAME = os.environ.get("MERES_UNAME", "HolVanSalah")
+# Egy valodi szakvezeto - a lap is pontosan ezt az URL-t keri le.
+# A `or` (nem a get() alapertelmezese) azert kell, mert a workflow URES
+# sztringet ad at, ha a bemenetet nem toltik ki - a get() olyankor nem lep
+# alapertelmezesre, es a meres mas URL-t mert volna, mint amit a lap ker.
+UNAME = os.environ.get("MERES_UNAME") or "HolVanSalah"
 CEL = (f"https://fantasy-api.mlsz.hu/competitions/{VERSENY}/rankings"
        "?include=user_team.user.id,summary_statistics,ranking,rounds,"
        "competition_rank&page=1&per_page=5"
