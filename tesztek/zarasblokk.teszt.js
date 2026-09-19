@@ -1,4 +1,4 @@
-const { BASE, jo, inditas, vege } = require('./kozos');
+const { BASE, jo, inditas, vege, jsonAtir } = require('./kozos');
 // A "Zarasi valtozasok" panel a PL fooldalon (zarasok.json).
 //
 // Amit rogzit: a panel csak adat mellett latszik; a harom nezet (Mind /
@@ -16,6 +16,17 @@ const { BASE, jo, inditas, vege } = require('./kozos');
   const csapatok = Object.keys(Object.values(hist.rounds)[0]);
   const [csA, csB] = csapatok;
 
+  // AZ ELOFELTETELT KIMONDJUK. A panel a LEGUTOBB LEZART fordulon nyilik meg,
+  // es azt a `draft_history.json` `veglegesek` listaja mondja meg - nem a
+  // zarasok.json. Ha csak az utobbit hamisitanank (1. es 2. fordulo), a lap
+  // a valos adatbol vett kesobbi lezart fordulot nyitna meg, amihez a
+  // hamisitott fajlban nincs sor: a panel uresen allna, es a teszt a
+  // valosagot hibaztatna. Ahogy haladt a szezon, pontosan ez tortent.
+  // A ketto egyutt jar, tehat egyutt is allitjuk be.
+  await jsonAtir(p, '**/draft_history.json*', j => {
+    j.veglegesek = [1, 2];
+    return j;
+  });
   // ket fordulo: az 1-ben pont- ES csere-valtozas, a 2-ben SEMMI (ures dict)
   await p.route('**/zarasok.json*', route => route.fulfill({
     status: 200, contentType: 'application/json',

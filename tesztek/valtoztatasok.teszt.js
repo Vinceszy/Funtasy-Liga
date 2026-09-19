@@ -193,35 +193,85 @@ async function liga(br, L){
   // A keret a leadasi hatarido utan rogzitett, tehat a valtoztatas mar
   // ismert - a pontja meg nem. Ilyenkor a blokk ott van, de SEMMILYEN szam
   // nincs benne: se sorokban, se osszesen. A "0" hazugsag lenne.
-  let pontNelkuli = null;
-  for (const nev of nevek) {
+  //
+  // AZ ADATBOL DERUL KI, KIT NYITUNK MEG. A korabbi valtozat az ELSO olyan
+  // szakvezetot vizsgalta, akinek volt pont nelkuli blokkja, es megkovetelte,
+  // hogy legyen benne sor - holott aki hozza sem nyult a kerethez, annak
+  // helyesen NINCS sora. Amint a sorrendben elsonek epp nem volt
+  // valtoztatasa, a teszt a valosagot hibaztatta. Most az adat mondja meg,
+  // kinek KELL sort mutatnia es kinek "Nem valtoztatott"-at.
+  const folyo = await p.evaluate(async ut => {
+    try {
+      const r = await fetch(ut + '?t=' + Date.now());
+      if (!r.ok) return null;
+      const j = (await r.json()).rounds || {};
+      // a folyamatban levo fordulo: ott MINDENKINEL null a mutato
+      const kulcsok = Object.keys(j).map(Number).sort((a, b) => b - a);
+      for (const r2 of kulcsok){
+        const f = j[r2], ertekek = Object.values(f);
+        if (!ertekek.length || !ertekek.every(v => v.guard == null)) continue;
+        const valt = x => !!((x.ki || []).length || (x.be || []).length
+                             || (x.szerep || []).length);
+        return {
+          r: r2,
+          valtoztatott: Object.keys(f).find(k => valt(f[k])) || null,
+          valtozatlan:  Object.keys(f).find(k => !valt(f[k])) || null,
+        };
+      }
+      return null;
+    } catch (e) { return null; }
+  }, L.ut === 'pl/' ? '../draft_keretvaltozasok.json' : '../keretvaltozasok.json');
+
+  // A pont nelkuli blokk allapota EGY megnyitott szakvezetonel.
+  const pontNelkuliBlokk = async nev => {
     await nyit(nev, L.tab);
     await p.waitForFunction(() => {
       const b = document.getElementById('mBody');
       return b && (b.querySelector('.valtlista') || /nincs elmentett|Nincs adat/i.test(b.innerText));
     }, null, { timeout: 10000 }).catch(() => {});
-    const t = await p.$$eval('#mBody .vakor', bs => {
+    return p.$$eval('#mBody .vakor', bs => {
       const b = bs.find(x => x.querySelector('.vafej .vamegj'));
       return b ? { cim: b.querySelector('.vafej span').textContent.trim(),
                    megj: b.querySelector('.vafej .vamegj').textContent.trim(),
                    guardjel: !!b.querySelector('.vafej .guardjel'),
                    ossz: !!b.querySelector('.vaossz'),
                    sorok: b.querySelectorAll('.vasor:not(.vaures)').length,
+                   ures: !!b.querySelector('.vaures'),
                    uresDiff: [...b.querySelectorAll('.zdiff')].every(x => !x.textContent.trim()),
                    uresErt: [...b.querySelectorAll('.vaert')].every(x => !x.textContent.trim()) } : null;
     });
-    if (t) { pontNelkuli = t; break; }
-  }
-  if (pontNelkuli){
-    jo(/nincs pontszám/.test(pontNelkuli.megj),
-       'a fejléc megmondja, hogy még nincs pontszám ("' + pontNelkuli.megj + '")');
-    jo(!pontNelkuli.guardjel && !pontNelkuli.ossz,
-       'nincs GUARD a fejlécben és nincs "Összesen" sor');
-    jo(pontNelkuli.sorok > 0, 'a változtatás viszont látszik (' + pontNelkuli.sorok + ' sor)');
-    jo(pontNelkuli.uresDiff && pontNelkuli.uresErt,
-       'egyetlen szám sincs a sorokban — a „0" hazugság lenne');
-  } else {
+  };
+
+  if (!folyo){
     jo(true, 'kihagyva: most nincs olyan forduló, aminek a kerete rögzített, de pontja még nincs');
+  } else {
+    if (folyo.valtoztatott){
+      const t = await pontNelkuliBlokk(folyo.valtoztatott);
+      jo(!!t, 'aki változtatott (' + folyo.valtoztatott + '), annak ott a pont nélküli blokk');
+      if (t){
+        jo(t.cim.includes(folyo.r), 'a blokk a folyó fordulóé (' + t.cim + ')');
+        jo(/nincs pontszám/.test(t.megj),
+           'a fejléc megmondja, hogy még nincs pontszám ("' + t.megj + '")');
+        jo(!t.guardjel && !t.ossz, 'nincs GUARD a fejlécben és nincs "Összesen" sor');
+        jo(t.sorok > 0, 'a változtatás viszont látszik (' + t.sorok + ' sor)');
+        jo(t.uresDiff && t.uresErt, 'egyetlen szám sincs a sorokban — a „0" hazugság lenne');
+      }
+    } else {
+      jo(true, 'kihagyva: a folyó fordulóban senki nem változtatott');
+    }
+    // A MASIK eset, ami korabban hibasan bukast okozott: aki hozza sem nyult
+    // a kerethez, annak nem sorok jarnak, hanem az "Nem valtoztatott" uzenet.
+    if (folyo.valtozatlan){
+      const u = await pontNelkuliBlokk(folyo.valtozatlan);
+      jo(!!u, 'aki nem változtatott (' + folyo.valtozatlan + '), annál is ott a blokk');
+      if (u){
+        jo(/nincs pontszám/.test(u.megj), 'ott is "még nincs pontszám" áll');
+        jo(u.sorok === 0 && u.ures,
+           'sorok helyett a „Nem változtatott a keretén." üzenet áll');
+      }
+    } else {
+      jo(true, 'kihagyva: a folyó fordulóban mindenki változtatott');
+    }
   }
 
   cim('A nevek kattinthatók');
