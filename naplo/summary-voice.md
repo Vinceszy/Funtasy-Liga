@@ -102,6 +102,18 @@ hold, and the piece says the opposite thing.
 opponent also owns wins only the doubling; doubling a man nobody else has makes every
 point of his a margin. Say which one is on the table.
 
+## When a piece comes back with a note
+
+**Fix the fault, do not rewrite around it.** A note on one sentence is a note on one
+sentence. Rewriting the whole piece to accommodate it throws away the parts that were
+working, and they are rarely rebuilt as well the second time - a full restore then brings
+back the bad half along with the good. Change what was named, leave the rest, and keep
+the closing line: that is usually the part that was earned.
+
+**Say when a change was not asked for.** If applying one note to the other pieces seems
+right, do it and say so - silently reworking an approved text is how a good one
+disappears.
+
 ## Length
 
 Ten to fourteen sentences per head-to-head. Short enough to read on a phone between two
