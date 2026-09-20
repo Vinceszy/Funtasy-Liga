@@ -167,6 +167,8 @@ def tsdb_meres(sorok):
 # --- kulcsos forras (api-football): csak ha a titok be van allitva ---
 AF_ALAP = "https://v3.football.api-sports.io"
 AF_LIGAK = [("angol elso osztaly", 39), ("magyar elso osztaly", 271)]
+# Az ingyenes csomag a folyo szezont nem adja, csak 2022-2024-et.
+TARTALEK_EVAD = 2024
 
 
 def af_meres(sorok):
@@ -191,7 +193,26 @@ def af_meres(sorok):
         hibak = j.get("errors")
         if hibak:
             sorok.append("  fixtures hiba: %s" % json.dumps(hibak, ensure_ascii=False))
-            continue
+            # A csomag a FOLYO szezont zarhatja ki, a szerkezetet viszont egy
+            # regebbi szezonon is meg lehet nezni - abbol derul ki, mit erne
+            # a fizetos valtozat. A hibat is es a potlast is rogzitjuk.
+            if not any("plan" in h for h in hibak):
+                continue
+            evad = TARTALEK_EVAD
+            sorok.append("  -> ujraprobalas engedett szezonnal: %d" % evad)
+            k = urllib.request.Request(
+                "%s/fixtures?league=%d&season=%d&last=1" % (AF_ALAP, lid, evad),
+                headers=fej)
+            try:
+                with urllib.request.urlopen(k, timeout=25) as v:
+                    j = json.loads(v.read().decode("utf-8", "replace"))
+            except Exception as e:                           # noqa: BLE001
+                sorok.append("  fixtures: %s: %s" % (type(e).__name__, e))
+                continue
+            if j.get("errors"):
+                sorok.append("  fixtures hiba (%d): %s"
+                             % (evad, json.dumps(j["errors"], ensure_ascii=False)))
+                continue
         val = j.get("response") or []
         if not val:
             sorok.append("  nincs lejatszott meccs a valaszban - a liga nem elerheto"
