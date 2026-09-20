@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=90">
+<link rel="stylesheet" href="../funtasy.css?v=91">
 </head>
 <body class="kezdolap">
 <div class="wrap">
@@ -29,12 +29,8 @@
 </header>
 
 <div class="panel magpanel">
-  <div class="vlt-szurok" id="magSzuroSav">
-    <div class="vlt-szurocsoport">
-      <span class="vlt-szurocim">Liga</span>
-      <div class="vlt-szurosor" id="magSzuro"></div>
-    </div>
-  </div>
+  <div class="vlt-szurok" id="magSzuroSav"></div>
+  <div class="magszam" id="magSzam"></div>
   <div id="lista" class="maglista"><div class="vlt-ures">Betöltés…</div></div>
 </div>
 <a class="ujdonsagsor" id="magMasik" href="./" style="display:none">
@@ -45,7 +41,7 @@
 </div>
 <div class="lablec" id="lablec"></div>
 
-<script src="../funtasy.js?v=90"></script>
+<script src="../funtasy.js?v=91"></script>
 <script>
 // ======= NEMZETHY SPORT =======
 // Egy helyen az osszes iras, fordulonkent visszafele. A meccs adatlapjan a
@@ -87,7 +83,12 @@ if (LIGAOBJ){
   a.style.display = '';
 }
 
-let CIKKEK = null, ZART = { nb1: new Set(), pl: new Set() }, SZURO = LIGAOBJ ? LIGA : 'mind';
+let CIKKEK = null, ZART = { nb1: new Set(), pl: new Set() };
+// Negy szempont, egymastol fuggetlenul. Mindegyik "Mind"-del indul, es
+// mindegyik CSAK azokat az ertekeket kinalja, amik a tobbi szuro mellett
+// tenylegesen leteznek - kulonben ures talalati listara lehetne kattintani.
+const SZURO = { liga: 'mind', ki: 'mind', fordulo: 'mind', fajta: 'mind' };
+const FAJTANEV = { summary: 'Összefoglaló', preview: 'Beharangozó' };
 
 const opcional = u => fetch(u + '?t=' + Date.now())
   .then(r => r.ok ? r.json() : null).catch(() => null);
@@ -107,20 +108,58 @@ function zarasBetolt(res, hist){
 }
 const zartE = (liga, fordulo) => (ZART[liga] || new Set()).has(+fordulo);
 
-function szuroRajz(){
-  if (LIGAOBJ) return;
-  const gombok = [['mind', 'Mind']].concat(
-    FunTasy.LIGAK.map(l => [l.id, l.nev]));
-  $('magSzuro').innerHTML = gombok.map(([ertek, felirat]) =>
-    `<button class="vlt-chip${SZURO === ertek ? ' on' : ''}" data-liga="${ertek}">${
-      FunTasy.esc(felirat)}</button>`).join('');
+// Egy cikk atmegy-e a szuron, EGY szempontot kihagyva. A kihagyas kell
+// ahhoz, hogy az adott szempont gombjai a tobbi szuro melletti valos
+// valasztekot mutassak.
+const atmegy = (be, kiveve) =>
+  (kiveve === 'liga'    || SZURO.liga    === 'mind' || be.liga === SZURO.liga) &&
+  (kiveve === 'ki'      || SZURO.ki      === 'mind' || be.hazai === SZURO.ki
+                                                   || be.vendeg === SZURO.ki) &&
+  (kiveve === 'fordulo' || SZURO.fordulo === 'mind' || String(be.fordulo) === SZURO.fordulo) &&
+  (kiveve === 'fajta'   || SZURO.fajta   === 'mind' || be.fajta === SZURO.fajta);
+
+function gombsor(nev, cim, ertekek){
+  if (ertekek.length < 2) return '';
+  const g = [['mind', 'Mind']].concat(ertekek).map(([e, f]) =>
+    `<button class="vlt-chip${SZURO[nev] === e ? ' on' : ''}" data-szuro="${nev}" ` +
+    `data-ertek="${FunTasy.esc(e)}">${FunTasy.esc(f)}</button>`).join('');
+  return `<div class="vlt-szurocsoport"><span class="vlt-szurocim">${
+    FunTasy.esc(cim)}</span><div class="vlt-szurosor">${g}</div></div>`;
+}
+
+function szuroRajz(mind){
+  const egyedi = (kiveve, kulcs) => {
+    const k = [];
+    for (const be of mind) if (atmegy(be, kiveve)) for (const x of [].concat(kulcs(be)))
+      if (!k.includes(x)) k.push(x);
+    return k;
+  };
+  let h = '';
+  if (!LIGAOBJ) h += gombsor('liga', 'Liga',
+    FunTasy.LIGAK.filter(l => egyedi('liga', b => b.liga).includes(l.id))
+      .map(l => [l.id, l.nev]));
+  h += gombsor('ki', 'Szakvezető',
+    egyedi('ki', b => [b.hazai, b.vendeg]).sort((a, b) => a.localeCompare(b, 'hu'))
+      .map(n => [n, n]));
+  h += gombsor('fordulo', 'Forduló',
+    egyedi('fordulo', b => String(b.fordulo)).sort((a, b) => b - a)
+      .map(r => [r, r + '.']));
+  h += gombsor('fajta', 'Típus',
+    egyedi('fajta', b => b.fajta).map(f => [f, FAJTANEV[f] || f]));
+  $('magSzuroSav').innerHTML = h;
+  $('magSzuroSav').style.display = h ? '' : 'none';
 }
 
 function rajzol(){
-  const mind = FunTasy.articleList(CIKKEK, zartE);
-  const lista = mind.filter(x => SZURO === 'mind' || x.liga === SZURO);
+  const mind = FunTasy.articleList(CIKKEK, zartE)
+    .filter(x => !LIGAOBJ || x.liga === LIGA);
+  szuroRajz(mind);
+  const lista = mind.filter(x => atmegy(x, null));
+  $('magSzam').textContent = lista.length === mind.length
+    ? `${mind.length} írás`
+    : `${lista.length} írás a ${mind.length}-ból`;
   if (!lista.length){
-    $('lista').innerHTML = '<div class="vlt-ures">Ehhez még nincs írás.</div>';
+    $('lista').innerHTML = '<div class="vlt-ures">Erre a szűrésre nincs írás.</div>';
     return;
   }
   // Liganként egy cim, alatta a fordulok visszafele - az articleList mar
@@ -150,13 +189,12 @@ function rajzol(){
 }
 
 document.addEventListener('click', e => {
-  const g = e.target.closest('[data-liga]');
+  const g = e.target.closest('[data-szuro]');
   if (!g) return;
-  SZURO = g.getAttribute('data-liga');
-  szuroRajz(); rajzol();
+  SZURO[g.getAttribute('data-szuro')] = g.getAttribute('data-ertek');
+  rajzol();
 });
 
-szuroRajz();
 Promise.all([opcional('../articles.json'),
              FunTasy.articleDraftMode() ? opcional('../articles-draft.json') : null,
              opcional('../results.json'), opcional('../draft_history.json')])

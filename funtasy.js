@@ -674,9 +674,12 @@
     }
     h += '</span>';
     if (!opts || opts.ujsag !== false)
+      // A liga neve kulon elemben all: keskeny kepernyon a CSS elrejti, es a
+      // gomb elfer egy sorban. Enelkul a felso sav harom sorba tort.
       h += '<a class="ujsaglink" href="' + gyoker + 'nemzethy/' +
-           (aktiv ? '?liga=' + encodeURIComponent(aktiv) : '') + '">' +
-           UJSAG_NEV + (aktiv ? ' ' + esc(liga(aktiv).nev) : '') + '</a>';
+           (aktiv ? '?liga=' + encodeURIComponent(aktiv) : '') + '">' + UJSAG_NEV +
+           (aktiv ? '<span class="ujsagliga"> ' + esc(liga(aktiv).nev) + '</span>' : '') +
+           '</a>';
     return h;
   }
   /* ===== Lablec =====
@@ -1462,20 +1465,28 @@
     return ki;
   }
 
-  /** One article in full - the magazine shows the text, not a teaser. */
+  /** One article in full - the magazine shows the text, not a teaser.
+
+      Ujsagszeru sorrend: felul a rovat (kicsi, halk), alatta a parharc
+      CIMKENT, aztan a rovid valtozat FELUTESKENT - ugyanaz a mondat, ami a
+      meccs adatlapjan a becsukott savban all, itt a bevezeto szerepet
+      jatssza. A torzs csak ezutan jon. Igy a lapon vegiggorgetve is el
+      lehet donteni, mit akar elolvasni az ember. */
   function articleCardHTML(be) {
     var body = (be.cikk.text || []).map(function (p) {
       return '<p>' + esc(p) + '</p>';
     }).join('');
     var azon = 'c-' + be.kulcs.replace(/[^A-Za-z0-9]+/g, '-');
     return '<article class="magcikk" id="' + esc(azon) + '">' +
-      '<div class="magfej">' +
-        '<span class="artstriptag">' + esc(be.cimke) + '</span>' +
-        '<span class="magpar">' + esc(be.hazai) + ' – ' + esc(be.vendeg) + '</span>' +
+      '<div class="magkicker">' +
+        '<span class="magrovat">' + esc(be.cimke) + '</span>' +
         '<span class="magfordulo">' + be.fordulo + '. forduló</span>' +
         '<button class="magmaso" data-maso="' + esc(azon) + '" ' +
           'data-rovid="' + esc(be.cikk.short || '') + '">Másolom</button>' +
       '</div>' +
+      '<h3 class="magpar">' + esc(be.hazai) +
+        '<span class="magvs">–</span>' + esc(be.vendeg) + '</h3>' +
+      (be.cikk.short ? '<p class="maglead">' + esc(be.cikk.short) + '</p>' : '') +
       '<div class="magtest">' + body + '</div>' +
       rateBar(be.kulcs) + '</article>';
   }

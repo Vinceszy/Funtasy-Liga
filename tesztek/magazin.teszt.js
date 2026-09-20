@@ -14,7 +14,9 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
 //  - a fejlec a lap neve es a szlogen;
 //  - minden kint levo iras megjelenik, TELJES szoveggel (nem felutessel);
 //  - le nem zart fordulo osszefoglaloja itt sem latszik, csak a beharangozoja;
-//  - a liga-szuro mukodik, es a ligankenti cim vele mozog;
+//  - negy szuro (liga, szakvezeto, fordulo, tipus), egymassal osszjatekban:
+//    mindegyik CSAK azokat az ertekeket kinalja, amik a tobbi szuro mellett
+//    tenylegesen leteznek - ures talalatra nem lehet kattintani;
 //  - minden cikk alatt ott az ertekelo sav;
 //  - a "Masolom" a ROVID valtozatot es a cikkre mutato hivatkozast adja;
 //  - a lablecbol elerheto az oldal.
@@ -88,20 +90,54 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
   jo(bennmaradt.length === 0,
      'le nem zárt forduló összefoglalója itt sincs kint — ' + JSON.stringify(bennmaradt));
 
-  // ---- szuro ----
-  cim('Liga-szűrő');
+  // ---- szurok ----
+  cim('Szűrők');
   const mind = await p.locator('.magcikk').count();
-  await p.locator('#magSzuro .vlt-chip', { hasText: 'NB1' }).click();
-  await p.waitForTimeout(150);
+  const csoportok = async () => p.$$eval('.vlt-szurocsoport .vlt-szurocim',
+                                         n => n.map(x => x.textContent));
+  jo(JSON.stringify(await csoportok()) ===
+       JSON.stringify(['Liga', 'Szakvezető', 'Forduló', 'Típus']),
+     'négy szempont: ' + (await csoportok()).join(', '));
+
+  const valaszt = async (szuro, szoveg) => {
+    await p.locator(`.vlt-chip[data-szuro="${szuro}"]`, { hasText: szoveg }).first().click();
+    await p.waitForTimeout(150);
+  };
+  await valaszt('liga', 'NB1');
   const nb1db = await p.locator('.magcikk').count();
-  jo(nb1db > 0 && nb1db < mind, `NB1-re szűrve kevesebb (${nb1db}/${mind})`);
+  jo(nb1db > 0 && nb1db < mind, `ligára szűrve kevesebb (${nb1db}/${mind})`);
   jo(await p.$$eval('.magliga', n => n.length) === 1, 'egyetlen liga-cím maradt');
-  await p.locator('#magSzuro .vlt-chip', { hasText: 'PL' }).click();
-  await p.waitForTimeout(150);
+  await valaszt('liga', 'PL');
   const pldb = await p.locator('.magcikk').count();
   jo(nb1db + pldb === mind, `a két liga kiadja az egészet (${nb1db} + ${pldb} = ${mind})`);
-  await p.locator('#magSzuro .vlt-chip', { hasText: 'Mind' }).click();
-  await p.waitForTimeout(150);
+  await valaszt('liga', 'Mind');
+
+  // szakvezeto: aki a parharc BARMELYIK oldalan all
+  const ki = await p.$$eval('.vlt-chip[data-szuro="ki"]',
+                            n => n.map(x => x.getAttribute('data-ertek')));
+  jo(ki.length > 3, `szakvezetők a szűrőben: ${ki.length - 1}`);
+  const valasztott = ki[3];
+  await valaszt('ki', valasztott);
+  const sajat = await p.$$eval('.magcikk .magpar', n => n.map(x => x.textContent));
+  jo(sajat.length > 0 && sajat.every(t => t.includes(valasztott)),
+     `${valasztott}: mind a ${sajat.length} írás róla szól`);
+  // a tobbi szuro MAR CSAK a hozza tartozo ertekeket kinalja
+  const fordulok = await p.$$eval('.vlt-chip[data-szuro="fordulo"]',
+                                  n => n.map(x => x.getAttribute('data-ertek')));
+  const vartFordulok = await p.$$eval('.magcikk .magfordulo',
+                                      n => [...new Set(n.map(x => parseInt(x.textContent)))]);
+  jo(fordulok.filter(x => x !== 'mind').length === vartFordulok.length,
+     `a fordulók listája vele szűkült (${fordulok.filter(x => x !== 'mind').join(',')})`);
+
+  await valaszt('fajta', 'Összefoglaló');
+  const cimkek2 = await p.$$eval('.magcikk .magrovat', n => n.map(x => x.textContent));
+  jo(cimkek2.length > 0 && cimkek2.every(t => /Összefoglaló/i.test(t)),
+     `típusra is szűr (${cimkek2.length} összefoglaló)`);
+  jo(/a \d+-b[oó]l/.test(await p.locator('#magSzam').textContent()),
+     'a fejlécben ott áll, hányból hány — ' + await p.locator('#magSzam').textContent());
+  await valaszt('ki', 'Mind');
+  await valaszt('fajta', 'Mind');
+  jo(await p.locator('.magcikk').count() === mind, 'a „Mind" visszaadja az egészet');
 
   // ---- ertekeles es masolas ----
   cim('Értékelés és másolás');
@@ -133,7 +169,8 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
       cimke: (document.querySelector('.magcim .tag') || {}).textContent,
       szlogen: document.querySelector('.magszlogen').textContent,
       cikkek: document.querySelectorAll('.magcikk').length,
-      szuro: getComputedStyle(document.getElementById('magSzuroSav')).display,
+      ligaszuro: document.querySelectorAll('.vlt-chip[data-szuro="liga"]').length,
+      szurocsoport: document.querySelectorAll('.vlt-szurocsoport').length,
       ligacim: document.querySelectorAll('.magliga').length,
       masik: document.getElementById('magMasik').style.display !== 'none',
       magassag: document.scrollingElement.scrollHeight,
@@ -142,8 +179,10 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
     jo(a.tema === 'liga-' + lg, `${lg}: a lap átveszi a liga színeit (${a.tema})`);
     jo((a.cimke || '').trim().toLowerCase() === lg, `a fejlécben a liga neve (${a.cimke})`);
     jo(a.cikkek > 0 && a.cikkek < mind, `csak ennek a ligának az írásai (${a.cikkek}/${mind})`);
-    jo(a.szuro === 'none' && a.ligacim === 0,
+    jo(a.ligaszuro === 0 && a.ligacim === 0,
        'nincs liga-szűrő és nincs liga-cím — ez már eleve az ő újságja');
+    jo(a.szurocsoport === 3,
+       `a másik három szűrő viszont megvan (${a.szurocsoport})`);
     jo(a.masik, 'és van átjárás a közös kiadásra');
     jo(a.tullogas === 0, `telefonon nem lóg ki oldalra (${a.tullogas} px)`);
     console.log(`   lap magassága telefonon: ${a.magassag} px`);
