@@ -1,0 +1,2 @@
+A cikk-ertekelesek osszesitoje. A fajlt a naplo/ertekeles-lekeres.py irja.
+Az indokok NEM kerulnek ide - azok csak a futas naplojaban latszanak.
