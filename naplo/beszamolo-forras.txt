@@ -1,3 +1,40 @@
 Meccsbeszamolo-forrasok elerhetosegenek meresei.
 A fajlt a naplo/beszamolo-forras-meres.py irja. Cikkszoveget nem tarol.
 Meg nem futott meres.
+
+======================================================================
+MERES: 2026-09-20 10:02 UTC | beszamolo-forrasok elerhetosege
+
+--- magyar | nemzetisport ---
+  cim: https://www.nemzetisport.hu/foci-nb-i
+  robots.txt: TILTJA
+  -> nem kerjuk le; a tiltast tiszteletben tartjuk
+
+--- magyar | m4sport ---
+  cim: https://m4sport.hu/labdarugas/
+  robots.txt: ENGEDI
+  lekeres: HTTP 200, 538 kbajt, 4923 ms
+  perc-jellegu mintazat a valaszban: 77 db
+
+--- magyar | mlsz ---
+  cim: https://www.mlsz.hu/hirek
+  robots.txt: TILTJA
+  -> nem kerjuk le; a tiltast tiszteletben tartjuk
+
+--- angol | bbc ---
+  cim: https://www.bbc.com/sport/football/premier-league
+  robots.txt: ENGEDI
+  lekeres: HTTP 200, 603 kbajt, 523 ms
+  perc-jellegu mintazat a valaszban: 0 db
+
+--- angol | guardian ---
+  cim: https://www.theguardian.com/football/premierleague
+  robots.txt: ENGEDI
+  lekeres: HTTP 200, 385 kbajt, 459 ms
+  perc-jellegu mintazat a valaszban: 1 db
+
+--- angol | premierleague ---
+  cim: https://www.premierleague.com/news
+  robots.txt: ENGEDI
+  lekeres: HTTP 200, 93 kbajt, 695 ms
+  perc-jellegu mintazat a valaszban: 1 db
