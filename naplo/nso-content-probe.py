@@ -22,6 +22,11 @@ HOST = "https://www.nemzetisport.hu"
 LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "beszamolo-forras.txt")
 MONTH = os.environ.get("PROBE_MONTH") or "2026/09"
 SECTION = os.environ.get("PROBE_SECTION") or "labdarugo-nb-i"
+# Egy FORDULO beszamoloi kellenek, nem a honap eleje. A terkep `lastmod`
+# datuma szerint szurunk, es annyit hozunk, ahany meccs van - kulonben a
+# betűrendes lista elejerol jon hat cikk, kozottuk regi fordulokkal.
+SINCE = os.environ.get("PROBE_SINCE") or ""
+LIMIT = int(os.environ.get("PROBE_LIMIT") or "6")
 
 
 def fetch(url):
@@ -59,10 +64,20 @@ def main():
         c, b = fetch(m)
         if c != 200:
             continue
-        found = [u for u in re.findall(r"<loc>\s*([^<\s]+)\s*</loc>", b)
-                 if "/%s/%s/" % (SECTION, MONTH) in u]
-        urls.extend(found)
-    urls = sorted(set(urls))
+        # A <url> blokkbol a cim ES a datum is kell: igy tudunk egy fordulora
+        # szukiteni. Ahol nincs lastmod, ott a cim datum nelkul marad, es csak
+        # akkor esik ki, ha kifejezetten datumra szurunk.
+        for blokk in re.findall(r"<url>(.*?)</url>", b, re.S):
+            cim = re.search(r"<loc>\s*([^<\s]+)\s*</loc>", blokk)
+            mod = re.search(r"<lastmod>\s*([0-9-]{10})", blokk)
+            if not cim or "/%s/%s/" % (SECTION, MONTH) not in cim.group(1):
+                continue
+            urls.append((cim.group(1), mod.group(1) if mod else ""))
+    if SINCE:
+        elotte = len(urls)
+        urls = [(u, d) for u, d in urls if d >= SINCE]
+        out.append("  %s ota: %d cim (%d-bol)" % (SINCE, len(urls), elotte))
+    urls = sorted({u for u, _ in urls})
     # Match REPORTS, not transfer news or photo galleries: the earlier run
     # pulled a gallery and a transfer piece, which say nothing about how a
     # goal was scored. Report slugs carry a result verb or a drama word.
@@ -75,14 +90,14 @@ def main():
     out.append("  of these, report-like: %d" % len(reports))
     urls = reports or urls
     out.append("  %s articles in %s: %d" % (SECTION, MONTH, len(urls)))
-    for u in urls[:12]:
+    for u in urls[:16]:
         out.append("    %s" % u[len(HOST):][:100])
 
     print("\n".join(out))
     print("\n" + "#" * 70)
     print("# ARTICLE EXTRACTS - run log only, not stored in the repository")
     print("#" * 70)
-    for u in urls[:6]:
+    for u in urls[:LIMIT]:
         c, b = fetch(u)
         t = text_of(b)
         print("\n### %s  (HTTP %s, %d chars of text)" % (u[len(HOST):], c, len(t)))
