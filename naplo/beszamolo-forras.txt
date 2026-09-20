@@ -1,0 +1,3 @@
+Meccsbeszamolo-forrasok elerhetosegenek meresei.
+A fajlt a naplo/beszamolo-forras-meres.py irja. Cikkszoveget nem tarol.
+Meg nem futott meres.
