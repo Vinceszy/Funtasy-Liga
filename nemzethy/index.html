@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=92">
+<link rel="stylesheet" href="../funtasy.css?v=93">
 </head>
 <body class="kezdolap">
 <div class="wrap">
@@ -29,8 +29,7 @@
 </header>
 
 <div class="panel magpanel">
-  <div class="vlt-szurok" id="magSzuroSav"></div>
-  <div class="magszam" id="magSzam"></div>
+  <div class="magszurok" id="magSzuroSav"></div>
   <div id="lista" class="maglista"><div class="vlt-ures">Betöltés…</div></div>
 </div>
 <a class="ujdonsagsor" id="magMasik" href="./" style="display:none">
@@ -41,7 +40,7 @@
 </div>
 <div class="lablec" id="lablec"></div>
 
-<script src="../funtasy.js?v=92"></script>
+<script src="../funtasy.js?v=93"></script>
 <script>
 // ======= NEMZETHY SPORT =======
 // Egy helyen az osszes iras, fordulonkent visszafele. A meccs adatlapjan a
@@ -118,13 +117,16 @@ const atmegy = (be, kiveve) =>
   (kiveve === 'fordulo' || SZURO.fordulo === 'mind' || String(be.fordulo) === SZURO.fordulo) &&
   (kiveve === 'fajta'   || SZURO.fajta   === 'mind' || be.fajta === SZURO.fajta);
 
+// Legordulo, nem gombsor. Tizennyolc szakvezeto-gomb harom sorban tobb
+// helyet vett el, mint amennyi cikk latszott alatta; a legordulo egy sor,
+// es telefonon a rendszer sajat valasztojat nyitja meg.
 function gombsor(nev, cim, ertekek){
   if (ertekek.length < 2) return '';
-  const g = [['mind', 'Mind']].concat(ertekek).map(([e, f]) =>
-    `<button class="vlt-chip${SZURO[nev] === e ? ' on' : ''}" data-szuro="${nev}" ` +
-    `data-ertek="${FunTasy.esc(e)}">${FunTasy.esc(f)}</button>`).join('');
-  return `<div class="vlt-szurocsoport"><span class="vlt-szurocim">${
-    FunTasy.esc(cim)}</span><div class="vlt-szurosor">${g}</div></div>`;
+  const o = [['mind', cim]].concat(ertekek).map(([e, f]) =>
+    `<option value="${FunTasy.esc(e)}"${SZURO[nev] === e ? ' selected' : ''}>${
+      FunTasy.esc(f)}</option>`).join('');
+  return `<select class="magszuro${SZURO[nev] === 'mind' ? '' : ' on'}" ` +
+         `data-szuro="${nev}" aria-label="${FunTasy.esc(cim)}">${o}</select>`;
 }
 
 function szuroRajz(mind){
@@ -146,8 +148,14 @@ function szuroRajz(mind){
       .map(r => [r, r + '.']));
   h += gombsor('fajta', 'Típus',
     egyedi('fajta', b => b.fajta).map(f => [f, FAJTANEV[f] || f]));
-  $('magSzuroSav').innerHTML = h;
-  $('magSzuroSav').style.display = h ? '' : 'none';
+  // A szamlalo a szurok MELLE kerul, nem alajuk: egy sorral kevesebb.
+  const lathato = FunTasy.articleList(CIKKEK, zartE)
+    .filter(x => (!LIGAOBJ || x.liga === LIGA) && atmegy(x, null)).length;
+  const szur = Object.values(SZURO).some(x => x !== 'mind');
+  $('magSzuroSav').innerHTML = h +
+    `<span class="magszam">${lathato}${szur ? ' / ' + mind.length : ''} írás</span>` +
+    (szur ? '<button class="magtorol" data-szuro="mind">Szűrők törlése</button>' : '');
+  $('magSzuroSav').style.display = (h || szur) ? '' : 'none';
 }
 
 function rajzol(){
@@ -155,9 +163,6 @@ function rajzol(){
     .filter(x => !LIGAOBJ || x.liga === LIGA);
   szuroRajz(mind);
   const lista = mind.filter(x => atmegy(x, null));
-  $('magSzam').textContent = lista.length === mind.length
-    ? `${mind.length} írás`
-    : `${lista.length} írás a ${mind.length}-ból`;
   if (!lista.length){
     $('lista').innerHTML = '<div class="vlt-ures">Erre a szűrésre nincs írás.</div>';
     return;
@@ -190,10 +195,15 @@ function rajzol(){
   }
 }
 
-document.addEventListener('click', e => {
-  const g = e.target.closest('[data-szuro]');
+document.addEventListener('change', e => {
+  const g = e.target.closest('select[data-szuro]');
   if (!g) return;
-  SZURO[g.getAttribute('data-szuro')] = g.getAttribute('data-ertek');
+  SZURO[g.getAttribute('data-szuro')] = g.value;
+  rajzol();
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.magtorol')) return;
+  for (const k in SZURO) SZURO[k] = 'mind';
   rajzol();
 });
 

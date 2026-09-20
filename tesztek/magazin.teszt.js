@@ -93,28 +93,34 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
   // ---- szurok ----
   cim('Szűrők');
   const mind = await p.locator('.magcikk').count();
-  const csoportok = async () => p.$$eval('.vlt-szurocsoport .vlt-szurocim',
-                                         n => n.map(x => x.textContent));
+  const csoportok = async () => p.$$eval('.magszuro',
+                                         n => n.map(x => x.options[0].text));
   jo(JSON.stringify(await csoportok()) ===
        JSON.stringify(['Liga', 'Szakvezető', 'Forduló', 'Típus']),
      'négy szempont: ' + (await csoportok()).join(', '));
+  jo(await p.evaluate(() =>
+       Math.round(document.querySelector('.magszurok').getBoundingClientRect().height)) < 130,
+     'a szűrősáv nem eszi meg a lapot — '
+     + await p.evaluate(() =>
+         Math.round(document.querySelector('.magszurok').getBoundingClientRect().height)) + ' px');
 
-  const valaszt = async (szuro, szoveg) => {
-    await p.locator(`.vlt-chip[data-szuro="${szuro}"]`, { hasText: szoveg }).first().click();
+  // legordulo, nem gombsor: a rendszer sajat valasztojat nyitja telefonon
+  const valaszt = async (szuro, ertek) => {
+    await p.selectOption(`.magszuro[data-szuro="${szuro}"]`, ertek);
     await p.waitForTimeout(150);
   };
-  await valaszt('liga', 'NB1');
+  await valaszt('liga', 'nb1');
   const nb1db = await p.locator('.magcikk').count();
   jo(nb1db > 0 && nb1db < mind, `ligára szűrve kevesebb (${nb1db}/${mind})`);
   jo(await p.$$eval('.magliga', n => n.length) === 1, 'egyetlen liga-cím maradt');
-  await valaszt('liga', 'PL');
+  await valaszt('liga', 'pl');
   const pldb = await p.locator('.magcikk').count();
   jo(nb1db + pldb === mind, `a két liga kiadja az egészet (${nb1db} + ${pldb} = ${mind})`);
-  await valaszt('liga', 'Mind');
+  await valaszt('liga', 'mind');
 
   // szakvezeto: aki a parharc BARMELYIK oldalan all
-  const ki = await p.$$eval('.vlt-chip[data-szuro="ki"]',
-                            n => n.map(x => x.getAttribute('data-ertek')));
+  const ki = await p.$$eval('.magszuro[data-szuro="ki"] option',
+                            n => n.map(x => x.value));
   jo(ki.length > 3, `szakvezetők a szűrőben: ${ki.length - 1}`);
   const valasztott = ki[3];
   await valaszt('ki', valasztott);
@@ -122,22 +128,24 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
   jo(sajat.length > 0 && sajat.every(t => t.includes(valasztott)),
      `${valasztott}: mind a ${sajat.length} írás róla szól`);
   // a tobbi szuro MAR CSAK a hozza tartozo ertekeket kinalja
-  const fordulok = await p.$$eval('.vlt-chip[data-szuro="fordulo"]',
-                                  n => n.map(x => x.getAttribute('data-ertek')));
+  const fordulok = await p.$$eval('.magszuro[data-szuro="fordulo"] option',
+                                  n => n.map(x => x.value));
   const vartFordulok = await p.$$eval('.magcikk .magfordulo',
                                       n => [...new Set(n.map(x => parseInt(x.textContent)))]);
   jo(fordulok.filter(x => x !== 'mind').length === vartFordulok.length,
      `a fordulók listája vele szűkült (${fordulok.filter(x => x !== 'mind').join(',')})`);
 
-  await valaszt('fajta', 'Összefoglaló');
+  await valaszt('fajta', 'summary');
   const cimkek2 = await p.$$eval('.magcikk .magrovat', n => n.map(x => x.textContent));
   jo(cimkek2.length > 0 && cimkek2.every(t => /Összefoglaló/i.test(t)),
      `típusra is szűr (${cimkek2.length} összefoglaló)`);
-  jo(/a \d+-b[oó]l/.test(await p.locator('#magSzam').textContent()),
-     'a fejlécben ott áll, hányból hány — ' + await p.locator('#magSzam').textContent());
-  await valaszt('ki', 'Mind');
-  await valaszt('fajta', 'Mind');
-  jo(await p.locator('.magcikk').count() === mind, 'a „Mind" visszaadja az egészet');
+  jo(/\d+ \/ \d+/.test(await p.locator('.magszam').textContent()),
+     'ott áll, hányból hány látszik — ' + await p.locator('.magszam').textContent());
+  jo(await p.locator('.magtorol').count() === 1, 'és egy gombbal törölhető az egész szűrés');
+  await p.locator('.magtorol').click();
+  await p.waitForTimeout(150);
+  jo(await p.locator('.magcikk').count() === mind, 'a törlés visszaadja az egészet');
+  jo(await p.locator('.magtorol').count() === 0, 'szűrés nélkül a törlés el is tűnik');
 
   // ---- ertekeles es masolas ----
   cim('Értékelés és másolás');
@@ -169,8 +177,8 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
       cimke: (document.querySelector('.magcim .tag') || {}).textContent,
       szlogen: document.querySelector('.magszlogen').textContent,
       cikkek: document.querySelectorAll('.magcikk').length,
-      ligaszuro: document.querySelectorAll('.vlt-chip[data-szuro="liga"]').length,
-      szurocsoport: document.querySelectorAll('.vlt-szurocsoport').length,
+      ligaszuro: document.querySelectorAll('.magszuro[data-szuro="liga"]').length,
+      szurocsoport: document.querySelectorAll('.magszuro').length,
       ligacim: document.querySelectorAll('.magliga').length,
       masik: document.getElementById('magMasik').style.display !== 'none',
       magassag: document.scrollingElement.scrollHeight,

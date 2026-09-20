@@ -648,23 +648,41 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   color:var(--dim);margin-top:8px}
 /* A .panel-nek nincs sajat belso margoja - a gyerekei adjak. */
 .maglista{padding:2px 20px 20px}
-.magszam{padding:10px 20px;font-size:11.5px;color:var(--dim);
-  border-bottom:1px solid var(--line)}
+/* Szurosav: legordulok egy sorban. Korabban gombsorok alltak itt, es tizennyolc
+   szakvezeto-gomb harom sorban tobb helyet vett el, mint amennyi cikk latszott
+   alatta. A legordulo telefonon a rendszer sajat valasztojat nyitja meg. */
+.magszurok{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:11px 20px;border-bottom:1px solid var(--line)}
+.magszuro{background:var(--panel2);border:1px solid var(--line);color:var(--dim);
+  padding:5px 26px 5px 10px;border-radius:999px;font:600 12px var(--fo);cursor:pointer;
+  appearance:none;-webkit-appearance:none;max-width:44vw;text-overflow:ellipsis;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),
+                   linear-gradient(135deg,currentColor 50%,transparent 50%);
+  background-position:calc(100% - 14px) 52%,calc(100% - 9px) 52%;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+.magszuro.on{color:var(--ink);border-color:var(--amber)}
+.magszuro:focus{outline:none;border-color:var(--amber)}
+.magszam{margin-left:auto;font-size:11.5px;color:var(--dim);white-space:nowrap}
+.magtorol{background:none;border:0;padding:0;cursor:pointer;font:600 11.5px var(--fo);
+  color:var(--dim);text-decoration:underline}
+.magtorol:hover{color:var(--amber)}
 .magliga{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);
   border-bottom:1px solid var(--line);padding-bottom:7px;margin:26px 0 2px}
 .magliga:first-child{margin-top:8px}
 
-/* A magazin egyetlen, nagyon hosszu lap: telefonon tizezer pixel folott is
-   lehet. Ket dolog teszi gordulove.
-   1) content-visibility: a kepernyon kivuli cikk elrendezese es festese
-      kimarad, amig oda nem er a nezo; a becsult magassag tartja a
-      gorgetosav helyet, tehat nem ugral.
-   2) A szovegoszlop szelesseget PIXELBEN adjuk meg, nem ch-ban: a ch a
-      betukeszlet meretebol szamol, tehat amikor a webfont kesobb beer,
-      az egesz lap ujratordelne magat - pont az a rangatas, ami hosszu
-      lapon a legrosszabbul erzodik. */
-.magcikk{border-bottom:1px solid var(--line);padding:22px 0 20px;
-  content-visibility:auto;contain-intrinsic-size:auto 680px}
+/* A szovegoszlop szelessege PIXELBEN all, nem ch-ban: a ch a betukeszlet
+   meretebol szamol, tehat amikor a webfont kesobb beer, az egesz lap
+   ujratordelne magat - pont az a rangatas, ami hosszu lapon a legrosszabbul
+   erzodik.
+
+   CONTENT-VISIBILITY NINCS, es szandekosan nincs. Egy ideig itt allt, hogy
+   a kepernyon kivuli cikkek ne keruljenek elrendezesre - csakhogy a becsult
+   magassag helyere gorgetes kozben lep be a valodi, es ezzel a LAP MAGASSAGA
+   valtozik meg alattad. Megmerve: egyetlen vegiggorgetes alatt nyolcszor,
+   egyszerre akar 361 pixelt. Lendulettel gorgetve ez pontosan az a
+   rangatas, amit meg akart oldani. Egy statikus, hosszu szoveglapot a
+   bongeszo enelkul kezel jol. */
+.magcikk{border-bottom:1px solid var(--line);padding:22px 0 20px}
 .magcikk:last-child{border-bottom:0}
 /* A .panel alap overflow:hidden-je a tablazatos lapok kerekitett sarkaert
    van; itt nincs tablazat, viszont egy tizezer pixeles vagodobozt hagyna
@@ -693,8 +711,8 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   .magtest p{font-size:13.5px}
   .maglead{font-size:13.5px}
   .maglista{padding:2px 14px 18px}
-  .magszam{padding:9px 14px}
-  .vlt-szurok{padding:13px 14px;gap:11px 20px}
+  .magszurok{padding:10px 14px;gap:7px}
+  .magszam{margin-left:0}
 }
 }
 
