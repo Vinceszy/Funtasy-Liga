@@ -107,3 +107,53 @@ MERES: 2026-09-20 10:08 UTC | nemzetisport.hu: mit enged
   /feed                      HTTP 404 (817 ms)
 
   hasznalhato csatorna: nincs
+
+======================================================================
+MERES: 2026-09-20 10:09 UTC | nemzetisport.hu: mit enged
+
+--- robots.txt (HTTP 200, 202 ms) ---
+  | User-agent: YandexBot
+  | Disallow: /
+  | 
+  | User-agent: *
+  | Disallow: /hirdetesek
+  | Disallow: /cikk-elonezet
+  | Disallow: /publicapi
+  | Allow: /publicapi/hu/rss/
+  | Sitemap: https://www.nemzetisport.hu/sitemapindex.xml
+
+--- utvonalankenti dontes (ugynok: sajat) ---
+  /                  sajat: ENGEDI (nincs ra szabaly) | konyvtar: tiltja
+  /foci-nb-i         sajat: ENGEDI (nincs ra szabaly) | konyvtar: tiltja
+  /rss               sajat: ENGEDI (nincs ra szabaly) | konyvtar: tiltja
+  /rss.xml           sajat: ENGEDI (nincs ra szabaly) | konyvtar: tiltja
+  /feed              sajat: ENGEDI (nincs ra szabaly) | konyvtar: tiltja
+  /feed/             sajat: ENGEDI (nincs ra szabaly) | konyvtar: tiltja
+  /hirek             sajat: ENGEDI (nincs ra szabaly) | konyvtar: tiltja
+
+--- miert tert el a konyvtar ---
+  robots.txt az alapertelmezett urllib-ugynokkel: HTTP 403 (41 ms)
+  (401/403 eseten a RobotFileParser mindent tiltottnak vesz)
+
+--- sitemap: a cikkek gepi jegyzeke ---
+  sitemapindex.xml: HTTP 200, 43 kbajt (222 ms)
+  hivatkozott terkepek: 303
+    https://www.nemzetisport.hu/home_page_sitemap.xml
+    https://www.nemzetisport.hu/190003_sitemap.xml
+    https://www.nemzetisport.hu/200101_sitemap.xml
+    https://www.nemzetisport.hu/200108_sitemap.xml
+    https://www.nemzetisport.hu/200205_sitemap.xml
+  legutolso terkep (news_sitemap.xml): HTTP 200, 148 cim (232 ms)
+  ebbol foci-jellegu cim: 0
+
+--- hircsatorna keresese ---
+  /publicapi/hu/rss/         HTTP 404 (516 ms)
+  /publicapi/hu/rss/index    HTTP 404 (220 ms)
+  /publicapi/hu/rss/all      HTTP 404 (207 ms)
+  /publicapi/hu/rss/labdarugas HTTP 404 (208 ms)
+  /publicapi/hu/rss/foci-nb-i HTTP 404 (200 ms)
+  /rss                       HTTP 404 (769 ms)
+  /rss.xml                   HTTP 404 (192 ms)
+  /feed                      HTTP 404 (807 ms)
+
+  hasznalhato csatorna: nincs
