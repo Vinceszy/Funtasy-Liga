@@ -139,7 +139,9 @@ const csakNb1 = cimekEbbol(b => b.ligak.includes('nb1') && !b.ligak.includes('pl
     const hrefek = await o.$$eval('.lablec a', n => n.map(x => x.getAttribute('href')));
     jo(hrefek.indexOf(gyoker + 'valtozasok/') >= 0,
        `/${ut || ''} láblécében a napló linkje (${JSON.stringify(hrefek)})`);
-    if (!ut) jo((await o.locator('a.ujdonsagsor').count()) === 1,
+    // A kezdolapon TOBB kiemelt sor is allhat (az ujsag is onnan nyilik),
+    // ezert a naplo sorat celzottan keressuk - nem a sorok szamat.
+    if (!ut) jo((await o.locator('a.ujdonsagsor[href="valtozasok/"]').count()) === 1,
       'a kezdőlapon külön sor is mutat rá');
     await o.close();
   }

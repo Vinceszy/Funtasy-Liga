@@ -6,6 +6,10 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
 // elcsuszhatna abban, mit szabad mutatni. Ezert a lenyeg itt a KAPU: a
 // magazin nem mutathat tobbet, mint a meccs adatlapja.
 //
+// KET UZEMMOD. `?liga=nb1` az ADOTT LIGA ujsagja - sajat szinekkel, sajat
+// nevvel, csak az o irasaival -, parameter nelkul a kozos kiadas. A liga
+// oldalarol a felso savbol nyilik, a kezdolaprol a kozos.
+//
 // Amit rogzit:
 //  - a fejlec a lap neve es a szlogen;
 //  - minden kint levo iras megjelenik, TELJES szoveggel (nem felutessel);
@@ -118,6 +122,52 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
   await p.waitForSelector('#lablec a');
   jo(await p.locator('#lablec a[href$="nemzethy/"]').count() === 1,
      'a láblécből elérhető a liga-oldalról is');
+
+  // ---- liga-uzemmod ----
+  for (const lg of ['nb1', 'pl']){
+    cim('Liga-újság — ' + lg);
+    await p.goto(BASE + 'nemzethy/?liga=' + lg);
+    await p.waitForSelector('.magcikk', { timeout: 20000 });
+    const a = await p.evaluate(() => ({
+      tema: document.body.className,
+      cimke: (document.querySelector('.magcim .tag') || {}).textContent,
+      szlogen: document.querySelector('.magszlogen').textContent,
+      cikkek: document.querySelectorAll('.magcikk').length,
+      szuro: getComputedStyle(document.getElementById('magSzuroSav')).display,
+      ligacim: document.querySelectorAll('.magliga').length,
+      masik: document.getElementById('magMasik').style.display !== 'none',
+      magassag: document.scrollingElement.scrollHeight,
+      tullogas: document.scrollingElement.scrollWidth - document.documentElement.clientWidth,
+    }));
+    jo(a.tema === 'liga-' + lg, `${lg}: a lap átveszi a liga színeit (${a.tema})`);
+    jo((a.cimke || '').trim().toLowerCase() === lg, `a fejlécben a liga neve (${a.cimke})`);
+    jo(a.cikkek > 0 && a.cikkek < mind, `csak ennek a ligának az írásai (${a.cikkek}/${mind})`);
+    jo(a.szuro === 'none' && a.ligacim === 0,
+       'nincs liga-szűrő és nincs liga-cím — ez már eleve az ő újságja');
+    jo(a.masik, 'és van átjárás a közös kiadásra');
+    jo(a.tullogas === 0, `telefonon nem lóg ki oldalra (${a.tullogas} px)`);
+    console.log(`   lap magassága telefonon: ${a.magassag} px`);
+  }
+
+  // ---- belepesi pontok ----
+  cim('Belépési pontok');
+  for (const [ut, varthref] of [['nb1/', '../nemzethy/?liga=nb1'],
+                                ['pl/', '../nemzethy/?liga=pl']]){
+    await p.goto(BASE + ut);
+    await p.waitForSelector('.liganav .ujsaglink', { timeout: 20000 });
+    const g = p.locator('.liganav .ujsaglink');
+    jo(await g.getAttribute('href') === varthref,
+       `/${ut} felső sávjából a SAJÁT újságja nyílik (${await g.getAttribute('href')})`);
+    jo((await g.textContent()).includes('Nemzethy Sport'), 'és a neve is ott áll');
+  }
+  await p.goto(BASE);
+  await p.waitForSelector('.ujdonsagsor');
+  jo(await p.locator('.ujdonsagsor[href="nemzethy/"]').count() === 1,
+     'a kezdőlapról a KÖZÖS kiadás nyílik, kiemelt soron');
+  await p.goto(BASE + 'nemzethy/');
+  await p.waitForSelector('.magcikk');
+  jo(await p.locator('.liganav .ujsaglink').count() === 0,
+     'az újság saját lapján nincs önmagára mutató gomb');
 
   hibak.forEach(x => jo(false, 'oldalhiba: ' + x));
   await vege(br);

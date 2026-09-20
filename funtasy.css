@@ -226,6 +226,13 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
   text-decoration:none;font:600 12px var(--fo);white-space:nowrap;transition:color .12s,border-color .12s}
 .ligalink:hover{color:var(--ink);border-color:var(--dim)}
 .ligalink.on{background:var(--amber);border-color:var(--amber);color:#12140F;font-weight:700}
+/* Az ujsag a felso sav jobb szelen: nem ligaful, hanem sajat belepesi pont,
+   ezert masik forma - kitoltott helyett keretes, a liga kiemelo szinevel. */
+.ujsaglink{margin-left:auto;padding:5px 14px;border:1px solid var(--amber);border-radius:999px;
+  color:var(--amber);text-decoration:none;font:700 12px var(--fo);white-space:nowrap;
+  transition:background .12s,color .12s}
+.ujsaglink:hover{background:var(--amber);color:#12140F}
+@media(max-width:560px){.ujsaglink{margin-left:0}}
 
 /* Kezdolap: ligavalaszto kartyak. A bal szeli sav az adott liga szine -
    ezek a temak fo kiemelo szinei (a kezdolapnak nincs sajat ligateamaja). */
@@ -620,6 +627,7 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .maghead{text-align:center;margin-bottom:22px}
 .magcim{font-family:var(--cim);font-size:clamp(30px,7vw,52px);letter-spacing:.02em;
   margin:0;color:var(--ink);text-transform:uppercase}
+.magcim .tag{font-size:.5em;vertical-align:.35em;margin-left:8px}
 .magszlogen{font-size:12px;letter-spacing:.22em;text-transform:uppercase;
   color:var(--dim);margin-top:6px}
 /* A .panel-nek nincs sajat belso margoja - a gyerekei adjak. */
@@ -627,7 +635,21 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .magliga{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);
   border-bottom:1px solid var(--line);padding-bottom:7px;margin:26px 0 4px}
 .magliga:first-child{margin-top:4px}
-.magcikk{border-bottom:1px solid var(--line);padding:18px 0}
+/* A magazin egyetlen, nagyon hosszu lap: telefonon tizezer pixel folott is
+   lehet. Ket dolog teszi gordulove.
+   1) content-visibility: a kepernyon kivuli cikk elrendezese es festese
+      kimarad, amig oda nem er a nezo; a becsult magassag tartja a
+      gorgetosav helyet, tehat nem ugral.
+   2) A szovegoszlop szelesseget PIXELBEN adjuk meg, nem ch-ban: a ch a
+      betukeszlet meretebol szamol, tehat amikor a webfont kesobb beer,
+      az egesz lap ujratordelne magat - pont az a rangatas, ami hosszu
+      lapon a legrosszabbul erzodik. */
+.magcikk{border-bottom:1px solid var(--line);padding:18px 0;
+  content-visibility:auto;contain-intrinsic-size:auto 640px}
+/* A .panel alap overflow:hidden-je a tablazatos lapok kerekitett sarkaert
+   van; itt nincs tablazat, viszont egy tizezer pixeles vagodobozt hagyna
+   maga utan. */
+.magpanel{overflow:visible}
 .magcikk:last-child{border-bottom:0}
 .magfej{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .magpar{font-weight:700;font-size:14.5px;color:var(--ink)}
@@ -637,7 +659,7 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   cursor:pointer;transition:border-color .12s,color .12s}
 .magmaso:hover{border-color:var(--amber);color:var(--amber)}
 .magtest p{margin:0 0 11px;font-size:14px;line-height:1.68;color:var(--ink);
-  max-width:62ch}
+  max-width:640px}
 .magtest p:last-child{margin-bottom:0}
 .magcikk .artrate{margin-top:13px}
 @media(max-width:560px){

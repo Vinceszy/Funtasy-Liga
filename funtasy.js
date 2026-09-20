@@ -64,6 +64,11 @@
     return null;
   }
 
+  // Az ujsag neve es mottoja EGY helyen all: a fejlecben, a felso savban es
+  // a lablecben ugyanaz a szo kell hogy alljon.
+  var UJSAG_NEV = 'Nemzethy Sport';
+  var UJSAG_MOTTO = 'Heti Funtasy Magazin';
+
   var esc = function (s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -655,7 +660,11 @@
      `gyoker` a webhely gyokerehez vezeto relativ ut ('../' egy liga-oldalrol,
      '' a kezdolaprol) - a GitHub Pages aloldalon szolgal ki, ezert nem lehet
      abszolut '/' utakat hasznalni. */
-  function navHTML(aktiv, gyoker) {
+  /* A felso savban a ligak mellett ott az UJSAG is. Liga-oldalrol AZ ADOTT
+     LIGA ujsagjara visz (?liga=), a kezdolaprol a kozosre - a nezo ott
+     folytatja, ahol all, nem kell visszanavigalnia. Az ujsag sajat lapjan
+     nem kerjuk ki (ujsag: false), mert onmagara mutatna. */
+  function navHTML(aktiv, gyoker, opts) {
     gyoker = gyoker || '';
     var h = '<a class="markanev" href="' + gyoker + '">FunTasy</a><span class="ligak">';
     for (var i = 0; i < LIGAK.length; i++) {
@@ -663,7 +672,12 @@
       h += '<a class="ligalink' + (l.id === aktiv ? ' on' : '') + '" href="' + gyoker + l.mappa +
            '" title="' + esc(l.cim) + '">' + esc(l.nev) + '</a>';
     }
-    return h + '</span>';
+    h += '</span>';
+    if (!opts || opts.ujsag !== false)
+      h += '<a class="ujsaglink" href="' + gyoker + 'nemzethy/' +
+           (aktiv ? '?liga=' + encodeURIComponent(aktiv) : '') + '">' +
+           UJSAG_NEV + (aktiv ? ' ' + esc(liga(aktiv).nev) : '') + '</a>';
+    return h;
   }
   /* ===== Lablec =====
      Minden oldal aljan ugyanaz a sor. Azert kozos, mert harom oldalra
@@ -1160,7 +1174,7 @@
   /* 'itt' az EPPEN NYITOTT oldal azonositoja: onmagara mutato linket nem
      teszunk ki. A valtozasnaplo ezt ugy oldotta meg, hogy egyaltalan nem
      kert lablecet - ket oldalnal mar az sem jo, mert a masikra kellene. */
-  var LABLEC = [{ id: 'nemzethy', ut: 'nemzethy/', nev: 'Nemzethy Sport' },
+  var LABLEC = [{ id: 'nemzethy', ut: 'nemzethy/', nev: UJSAG_NEV },
                 { id: 'valtozasok', ut: 'valtozasok/', nev: 'Mi újult meg?' }];
   function lablecHTML(gyoker, itt) {
     gyoker = gyoker || '';
@@ -1177,9 +1191,9 @@
      tipusat (body-osztalykent, hogy CSS-bol es JS-bol is fogodzo legyen) es
      az alcimet. Igy a liga neve/leirasa egyetlen helyen, a LIGAK listaban
      el; az oldal sajat, adatbol szamolt alcimet ezutan is felulirhat. */
-  function renderNav(aktiv, gyoker) {
+  function renderNav(aktiv, gyoker, opts) {
     var el = document.getElementById('liganav');
-    if (el) el.innerHTML = navHTML(aktiv, gyoker);
+    if (el) el.innerHTML = navHTML(aktiv, gyoker, opts);
     var l = liga(aktiv);
     if (!l) return;
     if (document.body) document.body.classList.add('tipus-' + l.tipus);
@@ -2171,6 +2185,7 @@
                      rateBar: rateBar,
                      articleList: articleList, articleCardHTML: articleCardHTML,
                      watchMagazine: watchMagazine,
+                     UJSAG_NEV: UJSAG_NEV, UJSAG_MOTTO: UJSAG_MOTTO,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
                      eloFrissito: eloFrissito, taroltak: taroltak,
                      potKeretek: potKeretek, potKeretekUrit: potKeretekUrit,

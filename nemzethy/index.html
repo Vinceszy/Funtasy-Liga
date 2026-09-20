@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=89">
+<link rel="stylesheet" href="../funtasy.css?v=90">
 </head>
 <body class="kezdolap">
 <div class="wrap">
@@ -24,12 +24,12 @@
   böngésző tölti be a mentett adatokból. JavaScript nélkül csak az üres keret látszik.</div></noscript>
 <div class="liganav" id="liganav"></div>
 <header class="maghead">
-  <h1 class="magcim">Nemzethy Sport</h1>
-  <div class="magszlogen">Heti Funtasy Magazin</div>
+  <h1 class="magcim" id="magCim">Nemzethy Sport</h1>
+  <div class="magszlogen" id="magSzlogen">Heti Funtasy Magazin</div>
 </header>
 
-<div class="panel">
-  <div class="vlt-szurok">
+<div class="panel magpanel">
+  <div class="vlt-szurok" id="magSzuroSav">
     <div class="vlt-szurocsoport">
       <span class="vlt-szurocim">Liga</span>
       <div class="vlt-szurosor" id="magSzuro"></div>
@@ -37,26 +37,57 @@
   </div>
   <div id="lista" class="maglista"><div class="vlt-ures">Betöltés…</div></div>
 </div>
+<a class="ujdonsagsor" id="magMasik" href="./" style="display:none">
+  <span class="cim"></span>
+  <span class="leiras"></span>
+  <span class="tovabb">→</span>
+</a>
 </div>
 <div class="lablec" id="lablec"></div>
 
-<script src="../funtasy.js?v=89"></script>
+<script src="../funtasy.js?v=90"></script>
 <script>
 // ======= NEMZETHY SPORT =======
 // Egy helyen az osszes iras, fordulonkent visszafele. A meccs adatlapjan a
 // sav arra valaszol, mi tortent AZON a meccsen; ide az jon, aki hetfon
 // egyben olvasna vegig az egeszet.
 //
+// KET UZEMMOD. `?liga=nb1` eseten AZ ADOTT LIGA ujsagja: a liga sajat
+// szineivel, a liga nevevel a fejlecben, es csak az o irasaival - a felso
+// savban innen nyilik, tehat a nezo nem esik ki a liga vilagabol. Parameter
+// nelkul a kozos kiadas, liga-szurovel; erre a kezdolap mutat.
+//
 // A KAPU UGYANAZ, mint a meccs adatlapjan: le nem zart fordulonak csak a
 // beharangozoja latszik. A valasztast a FunTasy.articleList vegzi - ha itt
 // ujra megirodna, a ket nezet elcsuszhatna abban, mit szabad mutatni.
 const $ = id => document.getElementById(id);
-FunTasy.renderNav(null, '../');
+const LIGA = (new URLSearchParams(location.search).get('liga') || '').toLowerCase();
+const LIGAOBJ = FunTasy.liga(LIGA);
+FunTasy.renderNav(LIGAOBJ ? LIGA : null, '../', { ujsag: false });
 FunTasy.renderLablec('../', 'nemzethy');
 FunTasy.verzioOr();
 FunTasy.watchMagazine();
 
-let CIKKEK = null, ZART = { nb1: new Set(), pl: new Set() }, SZURO = 'mind';
+// Liga-uzemmodban az oldal atveszi a liga temajat es nevet: ez a liga sajat
+// ujsagja, nem egy szuro egy kozos lapon.
+if (LIGAOBJ){
+  document.body.className = LIGAOBJ.tema;
+  document.title = `${FunTasy.UJSAG_NEV} ${LIGAOBJ.nev} — ${FunTasy.UJSAG_MOTTO}`;
+  $('magCim').innerHTML = `${FunTasy.esc(FunTasy.UJSAG_NEV)} <span class="tag">${
+    FunTasy.esc(LIGAOBJ.nev)}</span>`;
+  $('magSzlogen').textContent = `${FunTasy.UJSAG_MOTTO} · ${LIGAOBJ.cim}`;
+  $('magSzuroSav').style.display = 'none';
+}
+// A masik kiadasra mutato sor: ligabol a kozosre, kozosbol nincs mire.
+if (LIGAOBJ){
+  const a = $('magMasik');
+  a.href = './';
+  a.querySelector('.cim').textContent = 'Mindkét liga egyben';
+  a.querySelector('.leiras').textContent = 'A közös kiadás: az NB1 és a PL írásai egy lapon.';
+  a.style.display = '';
+}
+
+let CIKKEK = null, ZART = { nb1: new Set(), pl: new Set() }, SZURO = LIGAOBJ ? LIGA : 'mind';
 
 const opcional = u => fetch(u + '?t=' + Date.now())
   .then(r => r.ok ? r.json() : null).catch(() => null);
@@ -77,6 +108,7 @@ function zarasBetolt(res, hist){
 const zartE = (liga, fordulo) => (ZART[liga] || new Set()).has(+fordulo);
 
 function szuroRajz(){
+  if (LIGAOBJ) return;
   const gombok = [['mind', 'Mind']].concat(
     FunTasy.LIGAK.map(l => [l.id, l.nev]));
   $('magSzuro').innerHTML = gombok.map(([ertek, felirat]) =>
@@ -92,10 +124,11 @@ function rajzol(){
     return;
   }
   // Liganként egy cim, alatta a fordulok visszafele - az articleList mar
-  // ebben a sorrendben adja vissza.
+  // ebben a sorrendben adja vissza. A liga sajat ujsagjaban a cim felesleges:
+  // a fejlecben ugyis az all.
   let h = '', elozoLiga = null;
   for (const be of lista){
-    if (be.liga !== elozoLiga){
+    if (!LIGAOBJ && be.liga !== elozoLiga){
       elozoLiga = be.liga;
       h += `<h2 class="magliga">${FunTasy.esc(FunTasy.liga(be.liga).cim)}</h2>`;
     }
@@ -103,9 +136,16 @@ function rajzol(){
   }
   $('lista').innerHTML = h;
   // A hivatkozassal erkezot odavisszuk, ahova jott (a "Masolom" ilyet ad).
+  // KETSZER: a kepernyon kivuli cikkek magassaga eloszor csak BECSLES
+  // (content-visibility), tehat az elso ugras melle mehet; mire a masodik
+  // fut, a kozbeeso cikkek valodi merete mar megvan.
   if (location.hash){
-    const cel = document.getElementById(location.hash.slice(1));
-    if (cel) cel.scrollIntoView();
+    const ugras = () => {
+      const cel = document.getElementById(location.hash.slice(1));
+      if (cel) cel.scrollIntoView();
+    };
+    ugras();
+    requestAnimationFrame(() => requestAnimationFrame(ugras));
   }
 }
 
