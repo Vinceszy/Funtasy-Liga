@@ -8,9 +8,16 @@ of sentence a summary is worth reading for - but only if the data is really
 there and really joins to the squads we already store.
 
 Probed here:
-  draft/<league>/choices       who picked whom, in which round, at which pick
-  draft/<league>/transactions  the waiver and free-agent moves behind them
-  draft/<league>/trades        offers between managers
+  draft/<league>/choices        who picked whom, in which round, at which pick
+  draft/<league>/transactions   the waiver moves behind them (league level)
+  draft/<league>/trades         offers between managers
+  draft/entry/<entry>/transactions  the same, per team
+
+OUR OWN CHANGE LOG ALREADY HAS the ins and outs: it is derived by comparing
+one round's squad with the next. What comparison can never show is the
+mechanism (a waiver claim or a free agent taken afterwards), the waiver
+order, and the claims that FAILED - somebody who tried and was beaten to a
+player never touches a squad at all. That is what these endpoints are for.
 
 For each: the status, the keys, and - the part that decides whether it is
 usable - whether the ids JOIN to the element and entry ids we already have.
@@ -70,10 +77,29 @@ def main():
           % (time.strftime("%Y-%m-%d %H:%M"), LEAGUE),
           "  sajat azonositoink: %d csapat, %d jatekos" % (len(entryk), len(elemek))]
 
-    for nev, path in (("choices", "draft/%s/choices" % LEAGUE),
-                      ("transactions", "draft/%s/transactions" % LEAGUE),
-                      ("trades", "draft/%s/trades" % LEAGUE),
-                      ("league details (mar hasznaljuk)", "league/%s/details" % LEAGUE)):
+    # Egy valodi csapat-azonosito a csapat-szintu vegponthoz. A repoban nem
+    # taroljuk (publikus), ezert futasidoben kerjuk el a liga-adatbol.
+    egy_entry = None
+    code, torzs, _ = keres("league/%s/details" % LEAGUE)
+    if code == 200:
+        try:
+            for e in (json.loads(torzs).get("league_entries") or []):
+                if e.get("entry_id") is not None:
+                    egy_entry = str(e["entry_id"])
+                    break
+        except Exception:                                    # noqa: BLE001
+            pass
+    ki.append("  csapat-szintu vegponthoz van azonosito: %s" % bool(egy_entry))
+
+    utak = [("choices", "draft/%s/choices" % LEAGUE),
+            ("transactions (liga)", "draft/%s/transactions" % LEAGUE),
+            ("trades", "draft/%s/trades" % LEAGUE),
+            ("league details (mar hasznaljuk)", "league/%s/details" % LEAGUE)]
+    if egy_entry:
+        utak += [("transactions (csapat)", "draft/entry/%s/transactions" % egy_entry),
+                 ("transactions (entry alatt)", "entry/%s/transactions" % egy_entry),
+                 ("watchlist", "watchlist/%s" % egy_entry)]
+    for nev, path in utak:
         code, torzs, ms = keres(path)
         ki.append("")
         ki.append("--- %s ---" % nev)
