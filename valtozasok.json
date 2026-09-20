@@ -1,6 +1,15 @@
 {
  "bejegyzesek": [
   {
+   "datum": "2026-09-20",
+   "tipus": "funkcio",
+   "ligak": [
+    "nb1"
+   ],
+   "cim": "Beharangozó a forduló elé, összefoglaló utána",
+   "leiras": "A meccsek adatlapjára felkerült egy rövid írás: a lezárt fordulóknál összefoglaló arról, hogyan alakult a párharc, a következő forduló elé pedig beharangozó. Csukva jön, egyetlen sor magasan, és csak akkor nyílik ki, ha rákattintasz — a keret és a pontok ugyanott maradnak, ahol eddig. Ahol még nincs keret-adat, ott a beharangozó rögtön nyitva várja, hiszen nincs mit eltakarnia."
+  },
+  {
    "datum": "2026-09-19",
    "tipus": "funkcio",
    "ligak": [

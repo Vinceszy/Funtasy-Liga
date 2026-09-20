@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=83">
+<link rel="stylesheet" href="../funtasy.css?v=84">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=83"></script>
+<script src="../funtasy.js?v=84"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -169,6 +169,16 @@ let GUARD = null;
 fetch('../guardiola.json?t='+Date.now()).then(r=>r.ok?r.json():null)
   .then(j=>{ if(j&&j.rounds){ GUARD=j.rounds; renderTable(); } }).catch(()=>{});
 const guardErtek=(nev,r)=>((GUARD||{})[r]||{})[nev]||null;
+
+// ---------- Round preview / round summary (articles.json) ----------
+// A short piece of writing about one fixture, shown on its match page. A
+// missing or empty file is not an error - then there is simply no strip.
+// If the file lands AFTER a match page was opened, redraw it: otherwise
+// the strip would stay away until the reader closed and reopened it.
+let ARTICLES = null;
+fetch('../articles.json?t='+Date.now()).then(r=>r.ok?r.json():null)
+  .then(j=>{ if(!j) return; ARTICLES=j;
+             if(MECCS && $('ov').classList.contains('open')) meccsTest(); }).catch(()=>{});
 
 const T = FunTasy.create({
   kezd: kezdErtek,
@@ -1267,9 +1277,10 @@ function meccsTestRajz(){
     ? `<div class="mobilkozos">${kozosSzakaszHTML(kozos,h,r,szabaly,mbA,'Közös játékosok — mindkét keretben')}</div>` +
       `<div class="sqwrap">${kulonbsegOszlopHTML(h,A,bK,hp,r,szabaly)}${kulonbsegOszlopHTML(v,B,aK,vp,r,szabaly)}</div>`
     : ACCHINT + `<div class="sqwrap">${squadHTML(h,A,hp,r)}${squadHTML(v,B,vp,r)}</div>`;
+  const article = FunTasy.matchArticle(ARTICLES, 'nb1', r, h, v);
   // az allas es a kapcsolo EGY dobozban all: igy nem harom kulon kozepre
   // zart sor lebeg egymas alatt, es a gomb is odatartozik, ahova valo
-  $('mBody').innerHTML = `<div class="meccsfej">${allasHTML(h,v,hp,vp,elo)}${kezdsor}${gomb}</div>` + test;
+  $('mBody').innerHTML = `<div class="meccsfej">${allasHTML(h,v,hp,vp,elo)}${kezdsor}${gomb}</div>` + article + test;
 }
 
 // Egyseges meccs-nezet: fordulohu keretek. Elo fordulonal az elo folyamat
@@ -1304,7 +1315,10 @@ async function showMatchRound(h, v, r, mode){
     if(mCurrent[0]!==h||mCurrent[1]!==v||!$('ov').classList.contains('open')) return;
     if(kte[h]&&kte[v]) return showLiveMatch(h,v,r);
     MECCS=null;
-    $('mBody').innerHTML='<div class="loading">A forduló még nem kezdődött el.</div>';
+    // No squads yet - but this is exactly when a preview is worth reading,
+    // and here it has nothing to cover, so it comes open.
+    $('mBody').innerHTML=FunTasy.matchArticle(ARTICLES,'nb1',r,h,v,true)
+      + '<div class="loading">A forduló még nem kezdődött el.</div>';
     return;
   }
   mCurrent=[h,v]; openModal();

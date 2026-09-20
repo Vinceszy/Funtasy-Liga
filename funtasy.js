@@ -1335,6 +1335,82 @@
       '<span class="csapat">' + esc(v) + '</span></div>';
   }
 
+  /* ===== Article strip (round preview / round summary) =====
+     A short piece of writing about one fixture, shown on the match page
+     above the squad columns. It renders COLLAPSED, one line high: reading
+     it is a one-off pleasure, while the numbers underneath are what people
+     open the page for - the text must never push them down the screen.
+
+     A <details> element carries the open/closed state itself, so there is
+     no click handler, no class juggling and keyboard access comes free. */
+
+  /* Which strips the reader has opened, by article key. The match body is
+     redrawn while a round is live (fresh points arrive every few seconds),
+     and without this the text would snap shut mid-sentence under them. */
+  var OPEN_ARTICLES = {};
+  var articleWatched = false;
+  function watchArticles() {
+    if (articleWatched) return;
+    articleWatched = true;
+    // 'toggle' does not bubble, so a delegated listener must capture
+    document.addEventListener('toggle', function (e) {
+      var d = e.target;
+      if (!d || !d.classList || !d.classList.contains('artstrip')) return;
+      var k = d.getAttribute('data-art');
+      if (!k) return;
+      // the reader's choice is remembered BOTH ways: a strip that opens by
+      // default must stay shut once they shut it
+      OPEN_ARTICLES[k] = !!d.open;
+    }, true);
+  }
+
+  /** One article as a collapsed strip. Empty string when there is none:
+      a fixture nobody wrote about must look exactly as it did before.
+
+      'defaultOpen' opens it up front. That is for the one case where it
+      is all there is - a round with no squads yet, where the text cannot
+      be in the way of anything. The reader's own click always wins. */
+  function articleStrip(article, key, label, defaultOpen) {
+    if (!article || !article.text || !article.text.length) return '';
+    watchArticles();
+    var isOpen = OPEN_ARTICLES.hasOwnProperty(key) ? OPEN_ARTICLES[key] : !!defaultOpen;
+    var lead = article.short || article.text[0];
+    var body = article.text.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('');
+    return '<details class="artstrip" data-art="' + esc(key) + '"' +
+      (isOpen ? ' open' : '') + '>' +
+      '<summary class="artstriphead">' +
+        '<span class="artstriptag">' + esc(label) + '</span>' +
+        '<span class="artstriplead">' + esc(lead) + '</span>' +
+        '<span class="accarr">▼</span>' +
+      '</summary>' +
+      '<div class="artstripbody">' + body + '</div></details>';
+  }
+
+  /** The strip for one fixture, straight from a loaded articles.json.
+
+      A round can hold both kinds at once - the preview is written before it
+      and the summary after - and then the summary wins: it is the one that
+      knows how the match ended.
+
+      The two sides are looked up in BOTH orders. Which name is the home one
+      is a property of the fixture list, not of the article, so a reversed
+      pair must not silently drop the text. */
+  var ARTICLE_LABEL = { summary: 'Összefoglaló', preview: 'Beharangozó' };
+  function matchArticle(store, league, round, a, b, defaultOpen) {
+    var r = store && store.leagues && store.leagues[league] &&
+            store.leagues[league][round];
+    if (!r) return '';
+    var kinds = ['summary', 'preview'];
+    for (var i = 0; i < kinds.length; i++) {
+      var m = r[kinds[i]];
+      if (!m) continue;
+      var k = m[a + '|' + b] ? a + '|' + b : (m[b + '|' + a] ? b + '|' + a : null);
+      if (k) return articleStrip(m[k], league + '|' + round + '|' + kinds[i] + '|' + k,
+                                 ARTICLE_LABEL[kinds[i]], defaultOpen);
+    }
+    return '';
+  }
+
   /* ===== Nezet-verem: egy modal, amiben lapozni lehet =====
      Nem nyitunk modalt a modalban: a tartalom cserelodik, es a "vissza" gomb
      az elozo nezetre lep. Az x / felrekattintas / Escape mindig mindent zar.
@@ -1788,6 +1864,7 @@
                      profilNyitoHTML: profilNyitoHTML, profilNezo: profilNezo,
                      kezdSzazalek: kezdSzazalek, KEZD_CIM: KEZD_CIM,
                      kezdParHTML: kezdParHTML,
+                     articleStrip: articleStrip, matchArticle: matchArticle,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
                      eloFrissito: eloFrissito, taroltak: taroltak,
                      potKeretek: potKeretek, potKeretekUrit: potKeretekUrit,
