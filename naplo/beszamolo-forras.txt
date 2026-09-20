@@ -240,3 +240,28 @@ PROBE: 2026-09-20 10:46 UTC | nemzetisport report content
     /labdarugo-nb-i/2026/09/a-nyiregyhaza-szerzodest-bontott-ket-labdarugojaval
     /labdarugo-nb-i/2026/09/a-nyiregyhaza-valogatott-csatara-tavozik-a-fradi-szelsoje-az-nb-i-ben-ben-ne
     /labdarugo-nb-i/2026/09/a-paks-helyzetjelentest-adott-bode-daniel-gyogyulasarol
+
+======================================================================
+PROBE: 2026-09-20 11:20 UTC | nemzetisport report content
+  sitemapindex: HTTP 200, 303 maps
+  maps matching 202609: 9
+    https://www.nemzetisport.hu/202604_sitemap.xml
+    https://www.nemzetisport.hu/202605_sitemap.xml
+    https://www.nemzetisport.hu/202606_sitemap.xml
+    https://www.nemzetisport.hu/202607_sitemap.xml
+    https://www.nemzetisport.hu/202608_sitemap.xml
+    https://www.nemzetisport.hu/202609_sitemap.xml
+  of these, report-like: 37
+  labdarugo-nb-i articles in 2026/09: 37
+    /labdarugo-nb-i/2026/09/a-kisvardai-lippai-tibor-mar-tudja-milyen-az-igazi-gol
+    /labdarugo-nb-i/2026/09/a-paks-kisvardan-szerezte-meg-elso-idegenbeli-gyozelmet
+    /labdarugo-nb-i/2026/09/akit-nem-csak-a-fiatalszabaly-tart-a-golvonal-elott
+    /labdarugo-nb-i/2026/09/az-eddig-utolso-zte-a-friss-erkezoje-goljaval-legyozte-az-ellovas-puskas-aka
+    /labdarugo-nb-i/2026/09/az-elso-legyozte-az-utolsot-felcsuti-siker-a-kispest-honved-ellen
+    /labdarugo-nb-i/2026/09/az-eto-13-ev-alatt-ketszer-verte-meg-a-fradit-mind-a-ketszer-borbely-balazs-
+    /labdarugo-nb-i/2026/09/az-mtk-es-a-ferencvaros-is-gyozott-a-noi-nb-i-ben
+    /labdarugo-nb-i/2026/09/az-ujpest-21-golt-szerezve-nyert-a-futsal-nb-i-ben
+    /labdarugo-nb-i/2026/09/bodog-visszater-a-nyiregyhaza-17-eve-nem-nyert-otthon-a-fradi-ellen
+    /labdarugo-nb-i/2026/09/borbely-balazs-nem-allt-mellenk-a-szerencse-tobbet-tettunk-a-gyozelemert
+    /labdarugo-nb-i/2026/09/debrecenben-nyert-a-cimvedo-ujpest-a-futsal-nb-i-ben
+    /labdarugo-nb-i/2026/09/elkeszult-a-labdarugo-nb-i-9-es-10-fordulojanak-pontos-idorendje
