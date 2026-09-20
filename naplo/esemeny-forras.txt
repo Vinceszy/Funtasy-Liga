@@ -264,3 +264,88 @@ MERES: 2026-09-20 10:29 UTC
   fixtures hiba: {"plan": "Free plans do not have access to the Last parameter."}
   -> ujraprobalas engedett szezonnal: 2024
   fixtures hiba (2024): {"plan": "Free plans do not have access to the Last parameter."}
+
+======================================================================
+MERES: 2026-09-20 10:32 UTC
+
+### kulcs nelkuli forras (ESPN)
+
+--- angol elso osztaly (eng.1) ---
+  scoreboard 20260919: HTTP 403 (54 ms)
+  scoreboard 20260918: HTTP 403 (22 ms)
+  scoreboard 20260917: HTTP 403 (31 ms)
+  scoreboard 20260916: HTTP 403 (23 ms)
+  scoreboard 20260915: HTTP 403 (21 ms)
+  scoreboard 20260914: HTTP 403 (19 ms)
+  scoreboard 20260913: HTTP 403 (122 ms)
+  scoreboard 20260912: HTTP 403 (25 ms)
+  scoreboard 20260911: HTTP 403 (26 ms)
+  scoreboard 20260910: HTTP 403 (121 ms)
+  scoreboard 20260909: HTTP 403 (23 ms)
+  scoreboard 20260908: HTTP 403 (25 ms)
+  scoreboard 20260907: HTTP 403 (22 ms)
+  scoreboard 20260906: HTTP 403 (30 ms)
+  A FORRAS ELUTASIT (HTTP 403) - ez hozzaferes, nem adathiany; errol a ligarol semmit nem allitottunk meg
+
+--- magyar elso osztaly (hun.1) ---
+  scoreboard 20260919: HTTP 403 (23 ms)
+  scoreboard 20260918: HTTP 403 (22 ms)
+  scoreboard 20260917: HTTP 403 (23 ms)
+  scoreboard 20260916: HTTP 403 (21 ms)
+  scoreboard 20260915: HTTP 403 (26 ms)
+  scoreboard 20260914: HTTP 403 (23 ms)
+  scoreboard 20260913: HTTP 403 (121 ms)
+  scoreboard 20260912: HTTP 403 (20 ms)
+  scoreboard 20260911: HTTP 403 (23 ms)
+  scoreboard 20260910: HTTP 403 (25 ms)
+  scoreboard 20260909: HTTP 403 (21 ms)
+  scoreboard 20260908: HTTP 403 (115 ms)
+  scoreboard 20260907: HTTP 403 (27 ms)
+  scoreboard 20260906: HTTP 403 (25 ms)
+  A FORRAS ELUTASIT (HTTP 403) - ez hozzaferes, nem adathiany; errol a ligarol semmit nem allitottunk meg
+
+### masodik kulcs nelkuli forras (thesportsdb)
+
+--- angol elso osztaly (thesportsdb, England) ---
+  nincs meg a vart liga (English Premier League); talalatok: EFL Cup, EFL Trophy, English Isthmian League North Division, English Isthmian League Premier Division, English Isthmian League South Central Division
+
+--- magyar elso osztaly (thesportsdb, Hungary) ---
+  liga: Hungarian NB I (id=4690) | osszes talalat: 5
+  utolso meccs: Debrecen vs Vasas (2026-09-19), id=2498363
+  lookuptimeline: HTTP 200, ures idovonal - ez a forras erre a ligara nem ad golpercet
+
+### kulcsos forras (api-football)
+
+--- angol elso osztaly (api-football liga=39, evad=2026) ---
+  fixtures hiba: {"plan": "Free plans do not have access to this season, try from 2022 to 2024."}
+  -> ujraprobalas engedett szezonnal: 2024
+  a szezonban 380 meccs, ebbol lejatszott: 380
+  utolso meccs: Manchester United - Fulham (id=1208021)
+  events: 16 elem
+     18' | Card         | Yellow Card    | Mason Mount
+     25' | Card         | Yellow Card    | Calvin Bassey
+     40' | Card         | Yellow Card    | Harry Maguire
+     61' | subst        | Substitution 1 | A. Diallo
+     61' | subst        | Substitution 2 | M. Mount
+     64' | subst        | Substitution 1 | E. Smith Rowe
+     70' | Card         | Yellow Card    | Andreas Pereira
+     73' | Card         | Yellow Card    | Tom Cairney
+     78' | subst        | Substitution 2 | Rodrigo Muniz
+     78' | subst        | Substitution 3 | Adama Traoré
+  elofordulo reszletessegek: Normal Goal, Substitution 1, Substitution 2, Substitution 3, Substitution 4, Substitution 5, Yellow Card
+
+--- magyar elso osztaly (api-football liga=271, evad=2024) ---
+  a szezonban 198 meccs, ebbol lejatszott: 198
+  utolso meccs: Zalaegerszegi TE - MTK Budapest (id=1211330)
+  events: 15 elem
+     46' | subst        | Substitution 1 | J. Špoljarić
+     56' | Card         | Yellow Card    | Nemanja Antonov
+     61' | Card         | Yellow Card    | Bence Várkonyi
+     67' | subst        | Substitution 2 | C. Dénes
+     67' | subst        | Substitution 1 | N. Antonov
+     67' | subst        | Substitution 2 | R. Polievka
+     68' | subst        | Substitution 3 | M. Sajbán
+     76' | subst        | Substitution 3 | M. Kata
+     81' | Card         | Yellow Card    | Yohan Croizet
+     82' | subst        | Substitution 4 | I. Bognár
+  elofordulo reszletessegek: Normal Goal, Substitution 1, Substitution 2, Substitution 3, Substitution 4, Substitution 5, Yellow Card
