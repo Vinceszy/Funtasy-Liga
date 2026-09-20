@@ -61,6 +61,13 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
 
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForFunction(() => typeof showProfil === 'function', null, { timeout: 20000 });
+  // A meccsek.json NEM blokkolo uton tolt be, es a profil sorai egyszer
+  // rajzolodnak ki: aki elobb nyitja meg a profilt, annal az ellenfel es az
+  // allas meg nincs a sorban, es a teszt ezen bukik - meresben minden
+  // masodik futasban. A fenti jsonAtir determinisztikussa tette az ADATOT,
+  // de az IDOZITEST nem; ezert megvarjuk, hogy megjojjon.
+  await p.waitForFunction(() => typeof MECCSEK !== 'undefined' && MECCSEK !== null,
+                          null, { timeout: 20000 });
 
   // ---- a belepesi pont: "Szezon jatekosai" ----
   cim('Belépési pont');

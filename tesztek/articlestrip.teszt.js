@@ -205,6 +205,74 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   jo(await q.evaluate(() => document.querySelector('#mBody .artstrip').open),
      'PL: újrarajzolás után is nyitva marad');
 
+  // ---- a ZARAS-KAPU: le nem zart fordulo osszefoglaloja nem latszik ----
+  // Amig a fordulo nem vegleges, a pontok meg elmozdulhatnak (NB1: meccs
+  // utani igazitasok, Draft: kulon veglegesites), tehat egy "X nyert
+  // ennyivel" szoveg hazudhat. A beharangozora ez nem all: az arrol szol,
+  // ami jon. A szoveget a lapon allitjuk be, hogy a repoban ne kelljen
+  // hozza le nem zart fordulos cikket tartani.
+  for (const [ut, cimke, vazlat] of [['nb1/', 'KAPU — NB1', false],
+                                     ['nb1/?draft=1', 'KAPU — NB1, ?draft=1', true],
+                                     ['pl/', 'KAPU — PL', false],
+                                     ['pl/?draft=1', 'KAPU — PL, ?draft=1', true]]) {
+    const g = await br.newPage({ viewport: { width: 1000, height: 900 } });
+    g.on('pageerror', e => hibak.push(cimke + ': ' + e.message));
+    for (const m of ['**mlsz.hu/**', '**premierleague.com/**',
+                     '**corsproxy.io/**', '**allorigins**'])
+      await g.route(m, r => r.abort());
+    await g.goto(BASE + ut);
+    await g.waitForSelector('#table tr');
+    cim(cimke);
+    const nb1 = ut.startsWith('nb1');
+    // egy olyan fordulo, aminek MAR van kerete, de meg nem vegleges
+    await g.waitForFunction(() => typeof roundClosed === 'function', null, { timeout: 20000 });
+    const nyitott = await g.evaluate(async nb1 => {
+      // ugyanarra a meccsre MINDKET fajta szoveg megvan: igy az is latszik,
+      // hogy a kapu valaszt kozuluk, nem csak elrejt
+      const tarol = (liga, r, h, v) => ({ updated: null, leagues: { [liga]: { [r]: {
+        summary: { [h + '|' + v]: { text: ['Osszefoglalo bekezdes.'],
+                                    short: 'Osszefoglalo.', source: 'manual' } },
+        preview: { [h + '|' + v]: { text: ['Beharangozo bekezdes.'],
+                                    short: 'Beharangozo.', source: 'manual' } } } } } });
+      if (nb1) {
+        // a provisional fordulo a LIVE-ba kerul (nb1/index.html boot)
+        await new Promise(r => setTimeout(r, 400));
+        const r = Object.keys(LIVE).map(Number).find(x => (LIVE[x] || []).some(Boolean));
+        if (!r) return null;
+        const [h, v] = LIVE[r].find(Boolean);
+        ARTICLES = tarol('nb1', r, h, v);
+        await showMatchRound(h, v, r);
+        return { r, zart: roundClosed(r) };
+      }
+      const gw = Object.keys(HIST).map(Number).sort((a, b) => b - a)
+                   .find(x => !roundClosed(x) && (SCHEDULE[x] || []).length);
+      if (!gw) return null;
+      const [h, v] = SCHEDULE[gw][0];
+      ARTICLES = tarol('pl', gw, nev(h), nev(v));
+      showMatch(h, v, gw, 'root');
+      return { r: gw, zart: roundClosed(gw) };
+    }, nb1);
+    jo(!!nyitott && nyitott.zart === false,
+       `van le nem zárt forduló keretekkel (${nyitott && nyitott.r}.)`);
+    await g.waitForSelector('#mBody .artstrip', { timeout: 15000 });
+    const allapot = await g.evaluate(() => {
+      const s = document.querySelector('#mBody .artstrip');
+      return { cimke: s.querySelector('.artstriptag').textContent,
+               vazlat: s.classList.contains('draft'),
+               szoveg: s.querySelector('.artstripbody p').textContent };
+    });
+    if (!vazlat) {
+      jo(allapot.cimke === 'Beharangozó' && allapot.szoveg === 'Beharangozo bekezdes.',
+         `le nem zárt fordulón CSAK a beharangozó látszik (${allapot.cimke})`);
+      jo(allapot.vazlat === false, 'publikált szövegen nincs vázlat-jelzés');
+    } else {
+      jo(allapot.cimke === 'Összefoglaló · vázlat' && allapot.szoveg === 'Osszefoglalo bekezdes.',
+         `?draft=1 felengedi a kaput, és vázlatnak jelöli (${allapot.cimke})`);
+      jo(allapot.vazlat === true, 'a vázlat kap saját jelzést (szaggatott keret)');
+    }
+    await g.close();
+  }
+
   hibak.forEach(x => jo(false, 'oldalhiba: ' + x));
   await vege(br);
 })();

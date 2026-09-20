@@ -1369,14 +1369,18 @@
 
       'defaultOpen' opens it up front. That is for the one case where it
       is all there is - a round with no squads yet, where the text cannot
-      be in the way of anything. The reader's own click always wins. */
-  function articleStrip(article, key, label, defaultOpen) {
+      be in the way of anything. The reader's own click always wins.
+
+      'draft' marks a text that is only visible because the gate was
+      lifted for testing - it must look different from a published one. */
+  function articleStrip(article, key, label, defaultOpen, draft) {
     if (!article || !article.text || !article.text.length) return '';
     watchArticles();
     var isOpen = OPEN_ARTICLES.hasOwnProperty(key) ? OPEN_ARTICLES[key] : !!defaultOpen;
     var lead = article.short || article.text[0];
     var body = article.text.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('');
-    return '<details class="artstrip" data-art="' + esc(key) + '"' +
+    return '<details class="artstrip' + (draft ? ' draft' : '') +
+      '" data-art="' + esc(key) + '"' +
       (isOpen ? ' open' : '') + '>' +
       '<summary class="artstriphead">' +
         '<span class="artstriptag">' + esc(label) + '</span>' +
@@ -1384,6 +1388,21 @@
         '<span class="accarr">▼</span>' +
       '</summary>' +
       '<div class="artstripbody">' + body + '</div></details>';
+  }
+
+  /* A SUMMARY IS HELD BACK UNTIL ITS ROUND IS CLOSED.
+
+     Until then the numbers can still move under it: the NB1 carries
+     post-match point adjustments, the Draft finalises a round in a
+     separate step. A text that says who won by how much, published while
+     that can still change, is simply wrong - and it would be wrong in the
+     one place the reader trusts. A preview has no such problem: it talks
+     about what is coming, so it shows from the moment it is written.
+
+     The gate defaults to CLOSED-NO: a caller that does not say cannot leak
+     an early summary by forgetting. */
+  function articleDraftMode() {
+    return /(^|[?&])draft=1(&|$)/.test(location.search);
   }
 
   /** The strip for one fixture, straight from a loaded articles.json.
@@ -1394,19 +1413,29 @@
 
       The two sides are looked up in BOTH orders. Which name is the home one
       is a property of the fixture list, not of the article, so a reversed
-      pair must not silently drop the text. */
+      pair must not silently drop the text.
+
+      opts.closed     - is this round final? (see the gate above)
+      opts.defaultOpen - open the strip up front
+      ?draft=1 in the URL lifts the gate, and then the held-back summary is
+      labelled as a draft so it can never be mistaken for a published one. */
   var ARTICLE_LABEL = { summary: 'Összefoglaló', preview: 'Beharangozó' };
-  function matchArticle(store, league, round, a, b, defaultOpen) {
+  function matchArticle(store, league, round, a, b, opts) {
+    opts = opts || {};
     var r = store && store.leagues && store.leagues[league] &&
             store.leagues[league][round];
     if (!r) return '';
-    var kinds = ['summary', 'preview'];
+    var lifted = !opts.closed && articleDraftMode();
+    var kinds = (opts.closed || lifted) ? ['summary', 'preview'] : ['preview'];
     for (var i = 0; i < kinds.length; i++) {
       var m = r[kinds[i]];
       if (!m) continue;
       var k = m[a + '|' + b] ? a + '|' + b : (m[b + '|' + a] ? b + '|' + a : null);
-      if (k) return articleStrip(m[k], league + '|' + round + '|' + kinds[i] + '|' + k,
-                                 ARTICLE_LABEL[kinds[i]], defaultOpen);
+      if (!k) continue;
+      var held = lifted && kinds[i] === 'summary';
+      return articleStrip(m[k], league + '|' + round + '|' + kinds[i] + '|' + k,
+                          ARTICLE_LABEL[kinds[i]] + (held ? ' · vázlat' : ''),
+                          opts.defaultOpen, held);
     }
     return '';
   }
@@ -1865,6 +1894,7 @@
                      kezdSzazalek: kezdSzazalek, KEZD_CIM: KEZD_CIM,
                      kezdParHTML: kezdParHTML,
                      articleStrip: articleStrip, matchArticle: matchArticle,
+                     articleDraftMode: articleDraftMode,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
                      eloFrissito: eloFrissito, taroltak: taroltak,
                      potKeretek: potKeretek, potKeretekUrit: potKeretekUrit,

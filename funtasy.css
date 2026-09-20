@@ -574,6 +574,11 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .artstripbody{padding:0 14px 13px;border-top:1px solid var(--line)}
 .artstripbody p{margin:12px 0 0;font-size:13.5px;line-height:1.65;color:var(--ink)}
 @media(max-width:560px){.artstripbody p{font-size:13px}}
+/* A summary that is only on screen because ?draft=1 lifted the gate. It
+   has to be unmistakable: the round is not final, so the numbers it talks
+   about can still move. */
+.artstrip.draft{border-style:dashed;border-color:var(--valtozo)}
+.artstrip.draft .artstriptag{color:var(--valtozo);border-color:var(--valtozo)}
 
 /* eredmenysor a meccs-adatlap tetejen - ugyanaz a .score doboz, mint a
    fooldali meccspaneleken, hogy az allas ott is egy pillantasra lathato

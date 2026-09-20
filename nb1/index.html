@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=84">
+<link rel="stylesheet" href="../funtasy.css?v=85">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=84"></script>
+<script src="../funtasy.js?v=85"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -179,6 +179,11 @@ let ARTICLES = null;
 fetch('../articles.json?t='+Date.now()).then(r=>r.ok?r.json():null)
   .then(j=>{ if(!j) return; ARTICLES=j;
              if(MECCS && $('ov').classList.contains('open')) meccsTest(); }).catch(()=>{});
+// A round is CLOSED when the collector has written its results into the
+// schedule. A round still in progress goes into LIVE instead (collect.py
+// marks it "provisional"), and its points can still move - see the gate
+// in FunTasy.matchArticle.
+const roundClosed = r => !LIVE[r] && (SCHEDULE[r]||[]).some(played);
 
 const T = FunTasy.create({
   kezd: kezdErtek,
@@ -1277,7 +1282,7 @@ function meccsTestRajz(){
     ? `<div class="mobilkozos">${kozosSzakaszHTML(kozos,h,r,szabaly,mbA,'Közös játékosok — mindkét keretben')}</div>` +
       `<div class="sqwrap">${kulonbsegOszlopHTML(h,A,bK,hp,r,szabaly)}${kulonbsegOszlopHTML(v,B,aK,vp,r,szabaly)}</div>`
     : ACCHINT + `<div class="sqwrap">${squadHTML(h,A,hp,r)}${squadHTML(v,B,vp,r)}</div>`;
-  const article = FunTasy.matchArticle(ARTICLES, 'nb1', r, h, v);
+  const article = FunTasy.matchArticle(ARTICLES, 'nb1', r, h, v, {closed: roundClosed(r)});
   // az allas es a kapcsolo EGY dobozban all: igy nem harom kulon kozepre
   // zart sor lebeg egymas alatt, es a gomb is odatartozik, ahova valo
   $('mBody').innerHTML = `<div class="meccsfej">${allasHTML(h,v,hp,vp,elo)}${kezdsor}${gomb}</div>` + article + test;
@@ -1317,7 +1322,8 @@ async function showMatchRound(h, v, r, mode){
     MECCS=null;
     // No squads yet - but this is exactly when a preview is worth reading,
     // and here it has nothing to cover, so it comes open.
-    $('mBody').innerHTML=FunTasy.matchArticle(ARTICLES,'nb1',r,h,v,true)
+    $('mBody').innerHTML=FunTasy.matchArticle(ARTICLES,'nb1',r,h,v,
+                                              {closed: roundClosed(r), defaultOpen: true})
       + '<div class="loading">A forduló még nem kezdődött el.</div>';
     return;
   }

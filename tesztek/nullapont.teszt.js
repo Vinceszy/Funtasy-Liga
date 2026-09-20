@@ -188,7 +188,16 @@ const ell = (cimke, kapott, vart) =>
   });
   await page2.goto(BASE + 'pl/');
   await page2.waitForSelector('#table tr');
-  await page2.waitForFunction(() => document.getElementById('status').textContent.includes('Élő'));
+  // NEM a statuszsav szovegere varunk. Ket kulonbozo uzenet tartalmazza az
+  // "Élő" szot - a lekeres KEZDETE ("Élő állás lekérése…") es a VEGE ("Élő
+  // állás — 1. forduló · frissítve …") -, tehat a szubsztring-figyeles a
+  // lekeres alatt is atengedett. Aki ilyenkor kattintott, a keret-nezetben
+  // meg a "jelenlegi keret" agat kapta (nincs rajta data-acc), es a teszt
+  // felrevezeto uzenettel bukott - meresben minden masodik futasban.
+  // Ezert arra varunk, AMITOL a nezet fugg: all a folyo fordulo, es
+  // megjottek az elo pontok.
+  await page2.waitForFunction(() => typeof LIVEGW !== 'undefined' && LIVEGW
+                                    && Object.keys(LIVEPTS).length > 0);
   await page2.click(`[data-team="${csapat}"]`);
   await page2.waitForSelector('.plr[data-acc]');
 
