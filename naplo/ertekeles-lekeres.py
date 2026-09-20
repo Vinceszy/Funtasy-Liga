@@ -40,7 +40,10 @@ def main():
            "LEKERES: %s UTC | cikk-ertekelesek" % time.strftime("%Y-%m-%d %H:%M")]
     c, b = keres(PROXY + "/ertekelesek")
     if c != 200:
-        sor.append("  /ertekelesek: HTTP %s" % c)
+        # 503 = a Workernek NINCS tarolo-kotese, vagyis nem "nulla ertekeles",
+        # hanem "minden ertekeles elveszik". A kettot kulon kell latni.
+        sor.append("  /ertekelesek: HTTP %s%s" % (
+            c, "  <- NINCS TAROLO-KOTES, az ertekelesek elvesznek" if c == 503 else ""))
         print("\n".join(sor))
         with open(LOG, "a", encoding="utf-8") as f:
             f.write("\n".join(sor) + "\n")

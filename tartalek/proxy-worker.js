@@ -147,7 +147,12 @@ export default {
       const fej = new Headers(cors);
       fej.set('Content-Type', 'application/json');
       fej.set('Cache-Control', 'no-store');
-      if (!env || !env.TAROLT) return new Response('[]', { headers: fej });
+      // Ures lista es "nincs tarolo" NEM ugyanaz: az elso azt jelenti, hogy
+      // meg senki nem ertekelt, a masodik azt, hogy minden ertekeles elveszik.
+      // Ugyanaz a valasz mindkettore azt jelentette volna, hogy a hiba
+      // nulla ertekeleskent latszik - eppen akkor, amikor baj van.
+      if (!env || !env.TAROLT)
+        return new Response('[]', { status: 503, headers: fej });
       const lista = await env.TAROLT.list({ prefix: 'ert/', limit: 1000 });
       const ki = [];
       await Promise.all((lista.keys || []).map(async k => {

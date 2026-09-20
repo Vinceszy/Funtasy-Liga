@@ -138,5 +138,17 @@ function ujKV(){
   jo(lista.every(x => x.cikk === CIKK), 'mindkettő a cikkhez tartozik');
   jo(lista.some(x => x.indok === 'Unalmas.'), 'az indok is benne van');
 
+  // "Meg senki nem ertekelt" es "nincs tarolo" ket kulonbozo allapot. Ha
+  // mindketto ures listat adna, egy elszallt kotes nulla ertekelesnek
+  // latszana - vagyis pont akkor hallgatnank, amikor szolni kellene.
+  const kotesNelkul = await worker.fetch(new Request(PROXY + '/ertekelesek',
+    { headers: { Origin: EREDET } }), {}, ctx);
+  jo(kotesNelkul.status === 503, 'kötés nélkül a lista is 503-at ad — '
+     + kotesNelkul.status + ' (az üres lista nem hazudhat nullát)');
+  const uresKv = await worker.fetch(new Request(PROXY + '/ertekelesek',
+    { headers: { Origin: EREDET } }), { TAROLT: ujKV() }, ctx);
+  jo(uresKv.status === 200 && (await uresKv.json()).length === 0,
+     'üres tárolónál viszont 200 és üres lista — ott tényleg nincs értékelés');
+
   await vege(null);
 })();
