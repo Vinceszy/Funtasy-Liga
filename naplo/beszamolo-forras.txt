@@ -318,3 +318,29 @@ PROBE: 2026-09-20 21:50 UTC | nemzetisport report content
     /labdarugo-nb-i/2026/09/supka-attila-fajo-modon-veszitunk-pontokat
     /labdarugo-nb-i/2026/09/temesvari-attila-bodog-tamassal-a-kispadon-ket-harom-ponttal-tobbet-szereztu
     /labdarugo-nb-i/2026/09/tiz-perc-alatt-ket-golt-kapott-a-vasas-debrecenben-megis-harom-ponttal-tavoz
+
+======================================================================
+PROBE: 2026-09-20 21:51 UTC | nemzetisport report content
+  sitemapindex: HTTP 200, 303 maps
+  maps matching 202609: 9
+    https://www.nemzetisport.hu/202604_sitemap.xml
+    https://www.nemzetisport.hu/202605_sitemap.xml
+    https://www.nemzetisport.hu/202606_sitemap.xml
+    https://www.nemzetisport.hu/202607_sitemap.xml
+    https://www.nemzetisport.hu/202608_sitemap.xml
+    https://www.nemzetisport.hu/202609_sitemap.xml
+  2026-09-19 ota: 21 cim (190-bol)
+  of these, report-like: 12
+  labdarugo-nb-i articles in 2026/09: 12
+    /labdarugo-nb-i/2026/09/a-paks-kisvardan-szerezte-meg-elso-idegenbeli-gyozelmet
+    /labdarugo-nb-i/2026/09/csak-egyenliteni-tudott-ertekes-pontokat-hullajtott-el-nyiregyhazan-a-ferenc
+    /labdarugo-nb-i/2026/09/golok-goloromok-es-pontosztozkodas-nyiregyhazan-kepek
+    /labdarugo-nb-i/2026/09/hatalmas-gollal-szerezte-meg-elso-idegenbeli-gyozelmet-az-eto-fc
+    /labdarugo-nb-i/2026/09/kimondani-konnyu-nem-szabad-golt-kapni
+    /labdarugo-nb-i/2026/09/most-mondjam-azt-hogy-minden-jo-ha-a-vege-jo-szelesi-zoltan-az-ujpesti-fordi
+    /labdarugo-nb-i/2026/09/noi-nb-i-a-fradi-megnyerte-az-mtk-elleni-rangadot-17-golt-kapott-a-videoton
+    /labdarugo-nb-i/2026/09/noi-nb-i-idegenben-nyert-a-honved
+    /labdarugo-nb-i/2026/09/oriasi-hiba-dontott-a-vegen-az-ujpest-az-utolso-negyedoraban-forditotta-meg-
+    /labdarugo-nb-i/2026/09/supka-attila-fajo-modon-veszitunk-pontokat
+    /labdarugo-nb-i/2026/09/temesvari-attila-bodog-tamassal-a-kispadon-ket-harom-ponttal-tobbet-szereztu
+    /labdarugo-nb-i/2026/09/tiz-perc-alatt-ket-golt-kapott-a-vasas-debrecenben-megis-harom-ponttal-tavoz
