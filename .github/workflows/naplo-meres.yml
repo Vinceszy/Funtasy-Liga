@@ -1,0 +1,52 @@
+name: Napló-mérés (kézi)
+# EGY workflow minden naplo-mereshez, a szkript nevevel parameterezve -
+# kulonben minden uj kerdes egy uj, majdnem azonos workflow-fajlt szulne.
+# A fejlesztoi kornyezet halozata minden kulso forrast blokkol, ezert megy
+# Actionsbol. A meresek csak olvasnak es a naplot irjak.
+#
+# Alapbol a MUNKAAGRA ir, nem a main-re.
+on:
+  workflow_dispatch:
+    inputs:
+      szkript:
+        description: 'A futtatando meres (naplo/... .py)'
+        required: true
+      branch:
+        description: 'Melyik agra irja az eredmenyt'
+        required: false
+        default: 'claude/github-claude-code-integration-x4pk4k'
+permissions: { contents: write }
+jobs:
+  meres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: '${{ github.event.inputs.branch }}' }
+      - env:
+          SZKRIPT: ${{ github.event.inputs.szkript }}
+          AG: ${{ github.event.inputs.branch }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Csak a naplo alol futtatunk, es csak .py-t: a workflow bemenete
+          # nem valhat tetszoleges parancs futtatasava.
+          case "$SZKRIPT" in
+            naplo/*.py) ;;
+            *) echo "csak naplo/*.py futtathato: $SZKRIPT"; exit 1;;
+          esac
+          case "$SZKRIPT" in
+            *..*) echo "nem tartalmazhat '..'-t"; exit 1;;
+          esac
+          [ -f "$SZKRIPT" ] || { echo "nincs ilyen fajl: $SZKRIPT"; exit 1; }
+          git config user.name  "funtasy-figyelo"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          python3 "$SZKRIPT"
+          [ -z "$(git status --porcelain naplo/)" ] && exit 0
+          git add naplo/
+          git commit -q -m "Meres eredmenye: $(basename "$SZKRIPT")"
+          for i in 1 2 3; do
+            git pull -q --rebase origin "$AG" && git push -q origin "HEAD:$AG" && exit 0
+            sleep $((i * 5))
+          done
+          exit 1

@@ -1,0 +1,4 @@
+A Draft-liga sajat draftjarol es tranzakcioirol szolo meres.
+A fajlt a naplo/draft-picks-probe.py irja. Nevet NEM tarol:
+csak alakot, darabszamot es azonosito-illeszkedest.
+Meg nem futott meres.
