@@ -1,3 +1,40 @@
 Meccs-esemenyek kulso forrasanak meresei (golperc, esemeny-reszletesseg).
 A fajlt a naplo/esemeny-forras-meres.py irja.
 Meg nem futott meres.
+
+======================================================================
+MERES: 2026-09-20 07:03 UTC | forras: ESPN (kulcs nelkuli)
+
+--- angol elso osztaly (eng.1) ---
+  scoreboard 20260919: HTTP 403 (231 ms)
+  scoreboard 20260918: HTTP 403 (56 ms)
+  scoreboard 20260917: HTTP 403 (87 ms)
+  scoreboard 20260916: HTTP 403 (104 ms)
+  scoreboard 20260915: HTTP 403 (53 ms)
+  scoreboard 20260914: HTTP 403 (46 ms)
+  scoreboard 20260913: HTTP 403 (95 ms)
+  scoreboard 20260912: HTTP 403 (194 ms)
+  scoreboard 20260911: HTTP 403 (89 ms)
+  scoreboard 20260910: HTTP 403 (85 ms)
+  scoreboard 20260909: HTTP 403 (52 ms)
+  scoreboard 20260908: HTTP 403 (87 ms)
+  scoreboard 20260907: HTTP 403 (55 ms)
+  scoreboard 20260906: HTTP 403 (58 ms)
+  NEM talaltam lezajlott meccset 14 napra visszamenoleg - a liga valoszinuleg nincs a forrasban
+
+--- magyar elso osztaly (hun.1) ---
+  scoreboard 20260919: HTTP 403 (53 ms)
+  scoreboard 20260918: HTTP 403 (91 ms)
+  scoreboard 20260917: HTTP 403 (56 ms)
+  scoreboard 20260916: HTTP 403 (91 ms)
+  scoreboard 20260915: HTTP 403 (74 ms)
+  scoreboard 20260914: HTTP 403 (71 ms)
+  scoreboard 20260913: HTTP 403 (51 ms)
+  scoreboard 20260912: HTTP 403 (76 ms)
+  scoreboard 20260911: HTTP 403 (57 ms)
+  scoreboard 20260910: HTTP 403 (82 ms)
+  scoreboard 20260909: HTTP 403 (83 ms)
+  scoreboard 20260908: HTTP 403 (84 ms)
+  scoreboard 20260907: HTTP 403 (57 ms)
+  scoreboard 20260906: HTTP 403 (83 ms)
+  NEM talaltam lezajlott meccset 14 napra visszamenoleg - a liga valoszinuleg nincs a forrasban
