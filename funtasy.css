@@ -35,7 +35,15 @@ body.kezdolap{--bg:#0E1114;--panel:#171B20;--panel2:#12161A;--line:#2A3138;
 body.liga-nb1 h1 .fun{color:#E0433D}
 body.liga-nb1 h1 .tag{color:#43E27F}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{max-width:100%;overflow-x:hidden}
+/* NINCS overflow-x:hidden. Egy ideig itt allt, hogy semmi ne tudjon
+   oldalra kilogni - csakhogy az iOS Safari a html-re tett vizszintes
+   vagastol sajat gorgeto-dobozza teszi az elemet, es a lendulettel valo
+   gorgetes elromlik: a lap nem indul el, megremeg, elindul, majd
+   visszaszalad. A leghosszabb lapon a legrosszabb.
+   Amit vedett volna, azt most meres orzi (tesztek/vizszintes.teszt.js):
+   egyetlen oldal sem log ki oldalra 320 pixelen sem, nyitott meccs-
+   adatlappal sem - tehat a vagasra nem volt szukseg, csak a kara volt meg. */
+html,body{max-width:100%}
 img,table{max-width:100%}
 body{background:var(--bg);color:var(--ink);font-family:var(--fo);min-height:100vh}
 .wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
