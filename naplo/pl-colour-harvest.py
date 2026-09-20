@@ -50,14 +50,40 @@ def js(url):
         return c, None
 
 
+# Az FPL sajat roviditeseit a FotMob teljes nevere kotjuk. Az elso valtozat
+# ellenkezoleg csinalta - kivagta a "united"/"city"/"hotspur" szavakat -, es
+# pont a negy legismertebb klubot vesztette el ("Man Utd" vs "Manchester
+# United"). Rovidites-tablat kell hasznalni, nem szo-irtast.
+ALIAS = {
+    "manutd": "manchesterunited", "manunited": "manchesterunited",
+    "mancity": "manchestercity",
+    "spurs": "tottenhamhotspur",
+    "nottmforest": "nottinghamforest", "nottsforest": "nottinghamforest",
+    "wolves": "wolverhamptonwanderers",
+    "sheffieldutd": "sheffieldunited",
+}
+
+
 def kulcs(nev):
-    """Klubnev osszehasonlitashoz. A ket forras maskepp irja ugyanazt
-       ('Spurs', 'Tottenham Hotspur'), ezert ekezet es toltelekszo nelkul,
-       kisbetuvel hasonlitunk - es ami nem talal, azt KIIRJUK."""
+    """Klubnev osszehasonlitashoz: ekezet es irasjel nelkul, kisbetuvel.
+       Szot NEM vagunk ki belole - az vesztette el a meccseket."""
     n = unicodedata.normalize("NFKD", nev or "")
     n = "".join(c for c in n if not unicodedata.combining(c)).lower()
-    n = re.sub(r"\b(fc|afc|cf|united|city|hotspur|albion|wanderers|town|the)\b", " ", n)
-    return re.sub(r"[^a-z]", "", n)
+    n = re.sub(r"[^a-z]", "", n)
+    return ALIAS.get(n, n)
+
+
+def egyezik(a, b):
+    """Ket klubnev ugyanaz-e. A ket forras kulonbozo hosszan irja ugyanazt
+       ("Brighton" / "Brighton & Hove Albion"), ezert a rovidebbnek eleg az
+       elejen egyeznie - de legalabb ot betun, kulonben a "man" mindenre
+       illeszkedne."""
+    if not a or not b:
+        return False
+    if a == b:
+        return True
+    rovid, hosszu = (a, b) if len(a) <= len(b) else (b, a)
+    return len(rovid) >= 5 and hosszu.startswith(rovid)
 
 
 def main():
@@ -97,9 +123,9 @@ def main():
         db = 0
         for lg in pl:
             for m in lg.get("matches", []):
-                h = kulcs((m.get("home") or {}).get("name"))
-                v = kulcs((m.get("away") or {}).get("name"))
-                fm[(h, v)] = str(m.get("id"))
+                h = (m.get("home") or {}).get("name")
+                v = (m.get("away") or {}).get("name")
+                fm[str(m.get("id"))] = (kulcs(h), kulcs(v), h, v)
                 db += 1
         ki("  fotmob %s: %d PL-meccs" % (d, db))
 
@@ -107,9 +133,15 @@ def main():
     hianyzo = []
     for f in fx:
         h, v = klub.get(f.get("team_h")), klub.get(f.get("team_a"))
-        mid = fm.get((kulcs(h), kulcs(v)))
+        mid = None
+        for azon, (fh, fv, nh, nv) in fm.items():
+            if egyezik(kulcs(h), fh) and egyezik(kulcs(v), fv):
+                mid = azon
+                break
         if not mid:
-            hianyzo.append("%s - %s" % (h, v))
+            # A hianyt KIIRJUK a szemkozti nevekkel egyutt: enelkul egy elavult
+            # rovidites-tabla csendben tuntetne el egy meccset.
+            hianyzo.append("%s - %s (kulcs: %s / %s)" % (h, v, kulcs(h), kulcs(v)))
             continue
         c, j = js("https://www.fotmob.com/api/data/matchDetails?matchId=" + mid)
         if not j:
@@ -168,7 +200,11 @@ def main():
     ki("")
     ki("  feldolgozott meccs: %d / %d" % (len(eredmeny), len(fx)))
     if hianyzo:
-        ki("  NEM SIKERULT PAROSITANI (%d): %s" % (len(hianyzo), "; ".join(hianyzo)))
+        ki("  NEM SIKERULT PAROSITANI (%d):" % len(hianyzo))
+        for x in hianyzo:
+            ki("    %s" % x)
+        ki("    a fotmob oldalan latott nevek: %s" % "; ".join(
+            sorted({"%s - %s" % (a[2], a[3]) for a in fm.values()})))
     else:
         ki("  minden meccs parositva")
 
