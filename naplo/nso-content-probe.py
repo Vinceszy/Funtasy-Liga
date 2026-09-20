@@ -63,19 +63,30 @@ def main():
                  if "/%s/%s/" % (SECTION, MONTH) in u]
         urls.extend(found)
     urls = sorted(set(urls))
+    # Match REPORTS, not transfer news or photo galleries: the earlier run
+    # pulled a gallery and a transfer piece, which say nothing about how a
+    # goal was scored. Report slugs carry a result verb or a drama word.
+    REPORT = ("verte", "nyert", "gyozott", "gyoz", "dontetlen", "kikapott",
+              "hajra", "gol", "fordit", "vezetes", "pont")
+    SKIP = ("kepgaleria", "galeria", "hivatalos", "szerzodest", "igazol",
+            "helyzetjelentest", "tavozik", "kolcsonadta")
+    reports = [u for u in urls
+               if any(w in u for w in REPORT) and not any(w in u for w in SKIP)]
+    out.append("  of these, report-like: %d" % len(reports))
+    urls = reports or urls
     out.append("  %s articles in %s: %d" % (SECTION, MONTH, len(urls)))
-    for u in urls[:10]:
+    for u in urls[:12]:
         out.append("    %s" % u[len(HOST):][:100])
 
     print("\n".join(out))
     print("\n" + "#" * 70)
     print("# ARTICLE EXTRACTS - run log only, not stored in the repository")
     print("#" * 70)
-    for u in urls[:3]:
+    for u in urls[:6]:
         c, b = fetch(u)
         t = text_of(b)
         print("\n### %s  (HTTP %s, %d chars of text)" % (u[len(HOST):], c, len(t)))
-        print(t[:2500])
+        print(t[:3000])
 
     with open(LOG, "a", encoding="utf-8") as f:
         f.write("\n".join(out) + "\n")
