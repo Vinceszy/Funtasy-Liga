@@ -146,3 +146,60 @@ MERES: 2026-09-20 07:08 UTC
 ### kulcsos forras (api-football)
 
 --- kulcsos forras: KIHAGYVA (nincs APIFOOTBALL_KULCS titok) ---
+
+======================================================================
+MERES: 2026-09-20 10:28 UTC
+
+### kulcs nelkuli forras (ESPN)
+
+--- angol elso osztaly (eng.1) ---
+  scoreboard 20260919: HTTP 403 (47 ms)
+  scoreboard 20260918: HTTP 403 (22 ms)
+  scoreboard 20260917: HTTP 403 (36 ms)
+  scoreboard 20260916: HTTP 403 (24 ms)
+  scoreboard 20260915: HTTP 403 (27 ms)
+  scoreboard 20260914: HTTP 403 (25 ms)
+  scoreboard 20260913: HTTP 403 (24 ms)
+  scoreboard 20260912: HTTP 403 (23 ms)
+  scoreboard 20260911: HTTP 403 (117 ms)
+  scoreboard 20260910: HTTP 403 (30 ms)
+  scoreboard 20260909: HTTP 403 (24 ms)
+  scoreboard 20260908: HTTP 403 (26 ms)
+  scoreboard 20260907: HTTP 403 (25 ms)
+  scoreboard 20260906: HTTP 403 (22 ms)
+  A FORRAS ELUTASIT (HTTP 403) - ez hozzaferes, nem adathiany; errol a ligarol semmit nem allitottunk meg
+
+--- magyar elso osztaly (hun.1) ---
+  scoreboard 20260919: HTTP 403 (24 ms)
+  scoreboard 20260918: HTTP 403 (23 ms)
+  scoreboard 20260917: HTTP 403 (25 ms)
+  scoreboard 20260916: HTTP 403 (20 ms)
+  scoreboard 20260915: HTTP 403 (20 ms)
+  scoreboard 20260914: HTTP 403 (19 ms)
+  scoreboard 20260913: HTTP 403 (24 ms)
+  scoreboard 20260912: HTTP 403 (23 ms)
+  scoreboard 20260911: HTTP 403 (24 ms)
+  scoreboard 20260910: HTTP 403 (20 ms)
+  scoreboard 20260909: HTTP 403 (24 ms)
+  scoreboard 20260908: HTTP 403 (25 ms)
+  scoreboard 20260907: HTTP 403 (22 ms)
+  scoreboard 20260906: HTTP 403 (22 ms)
+  A FORRAS ELUTASIT (HTTP 403) - ez hozzaferes, nem adathiany; errol a ligarol semmit nem allitottunk meg
+
+### masodik kulcs nelkuli forras (thesportsdb)
+
+--- angol elso osztaly (thesportsdb, England) ---
+  nincs meg a vart liga (English Premier League); talalatok: EFL Cup, EFL Trophy, English Isthmian League North Division, English Isthmian League Premier Division, English Isthmian League South Central Division
+
+--- magyar elso osztaly (thesportsdb, Hungary) ---
+  liga: Hungarian NB I (id=4690) | osszes talalat: 5
+  utolso meccs: Debrecen vs Vasas (2026-09-19), id=2498363
+  lookuptimeline: HTTP 200, ures idovonal - ez a forras erre a ligara nem ad golpercet
+
+### kulcsos forras (api-football)
+
+--- angol elso osztaly (api-football liga=39, evad=2026) ---
+  fixtures hiba: {"plan": "Free plans do not have access to this season, try from 2022 to 2024."}
+
+--- magyar elso osztaly (api-football liga=271, evad=2026) ---
+  fixtures hiba: {"plan": "Free plans do not have access to this season, try from 2022 to 2024."}
