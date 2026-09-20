@@ -106,6 +106,39 @@ def main():
                          % (ut, "ENGEDI" if enged else "tiltja", mi,
                             "engedi" if konyvtar else "tiltja"))
 
+    # MIERT TERT EL A KONYVTAR: a RobotFileParser a sajat lekeresehez az
+    # alapertelmezett urllib-ugynokot hasznalja. Ha arra a site 401/403-at ad,
+    # a parser "mindent tilt"-ra all - a verdikt tehat a sajat elutasitasabol
+    # jott, nem a fajl szabalyaibol. Ezt kulon megmerjuk.
+    sorok.append("")
+    sorok.append("--- miert tert el a konyvtar ---")
+    kod2, _, ms2 = kerd(HOSZT + "/robots.txt", {"User-Agent": "Python-urllib/3.11"})
+    sorok.append("  robots.txt az alapertelmezett urllib-ugynokkel: HTTP %s (%d ms)"
+                 % (kod2, ms2))
+    sorok.append("  (401/403 eseten a RobotFileParser mindent tiltottnak vesz)")
+
+    sorok.append("")
+    sorok.append("--- sitemap: a cikkek gepi jegyzeke ---")
+    kod3, sm, ms3 = kerd(HOSZT + "/sitemapindex.xml")
+    sorok.append("  sitemapindex.xml: HTTP %s, %d kbajt (%d ms)"
+                 % (kod3, len(sm) // 1024, ms3))
+    import re as _re
+    gyerekek = _re.findall(r"<loc>\s*([^<\s]+)\s*</loc>", sm)
+    sorok.append("  hivatkozott terkepek: %d" % len(gyerekek))
+    for g in gyerekek[:5]:
+        sorok.append("    %s" % g)
+    if gyerekek:
+        # a legutolso altalaban a legfrissebb
+        cel = gyerekek[-1]
+        kod4, gy, ms4 = kerd(cel)
+        cimek = _re.findall(r"<loc>\s*([^<\s]+)\s*</loc>", gy)
+        sorok.append("  legutolso terkep (%s): HTTP %s, %d cim (%d ms)"
+                     % (cel.rsplit("/", 1)[-1], kod4, len(cimek), ms4))
+        foci = [c for c in cimek if "/foci" in c or "/labdarugas" in c]
+        sorok.append("  ebbol foci-jellegu cim: %d" % len(foci))
+        for c in foci[:5]:
+            sorok.append("    %s" % c[:110])
+
     sorok.append("")
     sorok.append("--- hircsatorna keresese ---")
     talalt = []
