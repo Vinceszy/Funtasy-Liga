@@ -7,6 +7,16 @@
     "nb1",
     "pl"
    ],
+   "cim": "Értékelni lehet az írásokat",
+   "leiras": "A beharangozó és az összefoglaló alá került egy értékelés: egytől négyig pontozhatod, miután kinyitottad. Ha jónak találtad, egy koppintás az egész. Ha nem, megkérdezzük, mi volt a baj — pár kész válasz közül lehet választani, vagy be lehet írni saját szóval. Ez nem udvariassági kérdés: ebből fog javulni a következő szöveg. Indok nélkül is el lehet küldeni, csak akkor nem tudunk vele mit kezdeni. Egy eszközről egy írást egyszer értékelhetsz, de bármikor meggondolhatod magad."
+  },
+  {
+   "datum": "2026-09-20",
+   "tipus": "funkcio",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
    "cim": "Beharangozó a forduló elé, összefoglaló utána",
    "leiras": "A meccsek adatlapjára felkerült egy rövid írás: a lezárt fordulóknál összefoglaló arról, hogyan alakult a párharc, a következő forduló elé pedig beharangozó — mindkét ligában. Csukva jön, egyetlen sor magasan, és csak akkor nyílik ki, ha rákattintasz: a keret és a pontok ugyanott maradnak, ahol eddig. Az összefoglaló csak azután jelenik meg, hogy a forduló véglegessé vált — addig a pontok még elmozdulhatnak, és a szöveg hazudna. Ahol még nincs keret-adat, ott a beharangozó rögtön nyitva várja, hiszen nincs mit eltakarnia."
   },

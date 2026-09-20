@@ -1376,6 +1376,7 @@
   function articleStrip(article, key, label, defaultOpen, draft) {
     if (!article || !article.text || !article.text.length) return '';
     watchArticles();
+    watchRating();
     var isOpen = OPEN_ARTICLES.hasOwnProperty(key) ? OPEN_ARTICLES[key] : !!defaultOpen;
     var lead = article.short || article.text[0];
     var body = article.text.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('');
@@ -1387,7 +1388,7 @@
         '<span class="artstriplead">' + esc(lead) + '</span>' +
         '<span class="accarr">▼</span>' +
       '</summary>' +
-      '<div class="artstripbody">' + body + '</div></details>';
+      '<div class="artstripbody">' + body + rateBar(key) + '</div></details>';
   }
 
   /* A SUMMARY IS HELD BACK UNTIL ITS ROUND IS CLOSED.
@@ -1403,6 +1404,143 @@
      an early summary by forgetting. */
   function articleDraftMode() {
     return /(^|[?&])draft=1(&|$)/.test(location.search);
+  }
+
+  /* ===== Rating an article =====
+     Why it exists: the writing gets better from knowing WHY something did
+     not land. A bare "two" says nothing we can act on, so the two lower
+     scores ask for a reason - with one-tap choices first, because the
+     barrier, not the willingness, is what usually stops people.
+
+     The pressure is honest, not a trap: the way out is always on screen,
+     it just says out loud what taking it means. The top two scores go
+     through in one tap and ask nothing - somebody who liked it should not
+     be made to work for it. */
+  var RATE_LABEL = { 1: 'Rossz', 2: 'Gyenge', 3: 'Jó', 4: 'Nagyon jó' };
+  var RATE_REASONS = ['Unalmas', 'Túl száraz, csak számok', 'Nem erről szólt a meccs',
+                      'Túl hosszú', 'Valami nem igaz benne',
+                      'Ismétli, amit úgyis látok', 'Erőltetett a poén'];
+
+  /* Egy eszkoz egy irast egyszer ertekel. Az azonositot a bongeszo tarolja,
+     nem mi adjuk ki: nem szemely azonositasara valo, hanem arra, hogy az
+     ujraertekeles a sajat korabbit irja felul, ne halmozzon. */
+  function rateDevice() {
+    try {
+      var d = localStorage.getItem('funtasy-eszkoz');
+      if (!d) {
+        d = (Date.now().toString(36) + Math.random().toString(36).slice(2, 10))
+              .replace(/[^a-z0-9]/g, '').slice(0, 24);
+        localStorage.setItem('funtasy-eszkoz', d);
+      }
+      return d;
+    } catch (e) { return null; }
+  }
+  function rateRemembered(key) {
+    try { return localStorage.getItem('funtasy-ert:' + key); } catch (e) { return null; }
+  }
+
+  /* 'uzenet' a most elkuldott ertekeles nyugtazasa; nelkule a korabbi
+     ertekelesre emlekezik. MINDKET allapot ugyanazt a kiutat kinalja: aki
+     epp most adott pontot, ugyanugy meggondolhatja magat, mint aki egy hete. */
+  function rateBar(key, uzenet) {
+    var volt = rateRemembered(key);
+    if (uzenet || volt)
+      return '<div class="artrate" data-art="' + esc(key) + '">' +
+             '<span class="artratedone">' +
+             esc(uzenet || ('Köszi, ' + volt + '-esre értékelted.')) + '</span>' +
+             '<button class="artrateagain" data-ujra="1">Mégis mást gondolok</button></div>';
+    var g = '';
+    for (var i = 1; i <= 4; i++)
+      g += '<button class="artrateg" data-pont="' + i + '" title="' + esc(RATE_LABEL[i]) +
+           '">' + i + '</button>';
+    return '<div class="artrate" data-art="' + esc(key) + '">' +
+           '<span class="artratekerdes">Milyen lett?</span>' + g +
+           '<span class="artratesegit">1 = rossz · 4 = nagyon jó</span></div>';
+  }
+
+  function rateReasonHTML(pont) {
+    var chips = RATE_REASONS.map(function (r) {
+      return '<button class="artchip" data-ok="' + esc(r) + '">' + esc(r) + '</button>';
+    }).join('');
+    return '<div class="artreason">' +
+      '<div class="artreasonq">' + (pont === 1 ? 'Ennyire rossz? Mondd meg, mi a baj vele.'
+                                               : 'Mi hiányzott belőle?') + '</div>' +
+      '<div class="artchips">' + chips + '</div>' +
+      '<textarea class="artreasont" rows="3" maxlength="600" ' +
+      'placeholder="Egy mondat is elég — ebből lesz jobb a következő."></textarea>' +
+      '<div class="artreasonb">' +
+        '<button class="artsend">Elküldöm</button>' +
+        '<button class="artskip">Kötekszem, de indokolni már nem fogok</button>' +
+      '</div></div>';
+  }
+
+  function rateSend(key, pont, okok, indok) {
+    var eszkoz = rateDevice();
+    if (!eszkoz) return Promise.resolve(false);
+    return fetch(SAJAT_PROXY + '/ertekeles', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cikk: key, eszkoz: eszkoz, pont: pont,
+                             okok: okok || [], indok: indok || '' }),
+    }).then(function (r) { return r.ok; }).catch(function () { return false; });
+  }
+
+  function rateThanks(sav, key, pont, indokolt) {
+    try { localStorage.setItem('funtasy-ert:' + key, String(pont)); } catch (e) {}
+    sav.outerHTML = rateBar(key, indokolt ? 'Köszi — ebből tényleg tanulunk.'
+                                          : 'Köszi, megjegyeztük.');
+  }
+
+  var rateWatched = false;
+  function watchRating() {
+    if (rateWatched) return;
+    rateWatched = true;
+    document.addEventListener('click', function (e) {
+      var sav = e.target.closest && e.target.closest('.artrate');
+      if (!sav) return;
+      var key = sav.getAttribute('data-art');
+      var g = e.target.closest('button');
+      if (!g || !key) return;
+      // a sav a cikken BELUL van: a kattintas ne csukja be a <details>-t
+      e.preventDefault();
+      e.stopPropagation();
+      if (g.hasAttribute('data-ujra')) {
+        try { localStorage.removeItem('funtasy-ert:' + key); } catch (err) {}
+        sav.outerHTML = rateBar(key);
+        return;
+      }
+      if (g.classList.contains('artchip')) { g.classList.toggle('on'); return; }
+      if (g.classList.contains('artsend') || g.classList.contains('artskip')) {
+        var p = +sav.getAttribute('data-pont');
+        var okok = [].slice.call(sav.querySelectorAll('.artchip.on'))
+                     .map(function (x) { return x.getAttribute('data-ok'); });
+        var t = sav.querySelector('.artreasont');
+        var indok = g.classList.contains('artskip') ? '' : ((t && t.value) || '').trim();
+        var jott = okok.length || indok;
+        g.disabled = true;
+        rateSend(key, p, g.classList.contains('artskip') ? [] : okok, indok)
+          .then(function (ok) {
+            if (ok) rateThanks(sav, key, p, !!jott && !g.classList.contains('artskip'));
+            else { g.disabled = false;
+                   sav.querySelector('.artreasonq').textContent =
+                     'Nem sikerült elküldeni. Próbáld meg még egyszer.'; }
+          });
+        return;
+      }
+      var pont = +g.getAttribute('data-pont');
+      if (!(pont >= 1 && pont <= 4)) return;
+      // HARMAS-NEGYES: egy koppintas, semmi tovabbi kerdes.
+      if (pont >= 3) {
+        sav.innerHTML = '<span class="artratedone">Küldjük…</span>';
+        rateSend(key, pont, [], '').then(function (ok) {
+          if (ok) rateThanks(sav, key, pont, false);
+          else sav.innerHTML = '<span class="artratedone">Nem sikerült elküldeni.</span>';
+        });
+        return;
+      }
+      // EGYES-KETTES: itt kerjuk az indokot.
+      sav.setAttribute('data-pont', String(pont));
+      sav.innerHTML = rateReasonHTML(pont);
+    }, false);
   }
 
   /** The published store with the draft one laid over it.
@@ -1469,10 +1607,20 @@
   }
 
   /* ===== Nezet-verem: egy modal, amiben lapozni lehet =====
-     Nem nyitunk modalt a modalban: a tartalom cserelodik, es a "vissza" gomb
-     az elozo nezetre lep. Az x / felrekattintas / Escape mindig mindent zar.
-     A belepesi pont 'root', a fulvaltas 'replace', a listabol nyilo nezet
-     'push'; a 'noop' a verembol ujrarajzolt nezet (nem tolunk ra semmit).
+     NAVIGACIOT egy feluleten belul valtunk: a tartalom cserelodik, es a
+     "vissza" gomb az elozo nezetre lep. Az x / felrekattintas / Escape
+     mindig mindent zar. A belepesi pont 'root', a fulvaltas 'replace', a
+     listabol nyilo nezet 'push'; a 'noop' a verembol ujrarajzolt nezet
+     (nem tolunk ra semmit).
+
+     Ez a szabaly korabban ugy szolt, hogy "modalba nem nyitunk modalt" -
+     ennel szukebb az igazsag, es a szeles valtozat rossz helyen allitott
+     volna meg. Amit ved, az a navigacio: ket egymasra csuszo nezet kozt a
+     nezo elveszti, hol jar, es melyik x-et nyomja. Egy REteg (megerosites,
+     rovid urlap) attol meg nyilhat egy modal folott - de csak akkor, ha az
+     alatta levo tartalom elvesztese nem szamit. Ahol szamit - peldaul a
+     cikk ertekelesenel, ahol epp arrol kerunk velemenyt, ami alatta all -,
+     ott helyben nyilo panel jar, nem uj reteg.
 
      Mindket liga-oldal ugyanezt hasznalta, kulon-kulon lemasolva - egy uj
      liga harmadszor is lemasolta volna. */
@@ -1924,6 +2072,7 @@
                      articleStrip: articleStrip, matchArticle: matchArticle,
                      articleDraftMode: articleDraftMode,
                      mergeArticles: mergeArticles,
+                     rateBar: rateBar, RATE_REASONS: RATE_REASONS,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
                      eloFrissito: eloFrissito, taroltak: taroltak,
                      potKeretek: potKeretek, potKeretekUrit: potKeretekUrit,

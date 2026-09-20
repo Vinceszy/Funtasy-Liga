@@ -41,9 +41,23 @@
    listan: ott a legutobbi lekeres egy perc mulva ugyis ertektelen.
 
    A kotes HIANYOZHAT (pl. amig a KV-nevter nincs meg): olyankor a Worker
-   pontosan ugy viselkedik, mint korabban - a tarolas nema no-op. */
+   pontosan ugy viselkedik, mint korabban - a tarolas nema no-op.
+
+   CIKK-ERTEKELES (`/ertekeles`): a lapon minden irashoz jar egy egytol
+   negyig tarto ertekeles. A ket also fokozathoz indokot is kerunk, mert az
+   a fajta visszajelzes, amibol a kovetkezo szoveg jobb lesz - a puszta
+   "ketto" abbol semmit nem mond meg. Egy eszkoz egy irast egyszer ertekel:
+   a kulcsban benne van az eszkoz azonositoja, tehat az ujraertekeles a
+   sajat korabbit irja felul, nem halmoz. A tartalom a mienk, nem szemelyes
+   adat - eszkoz-azonositon kivul semmit nem kerunk es nem tarolunk. */
 
 const CEL_HOSZTOK = ['fantasy-api.mlsz.hu', 'draft.premierleague.com'];
+// Az ertekeles kulcsa a cikk azonositoja: liga|fordulo|fajta|hazai|vendeg.
+// Szigoru minta, mert ebbol KV-kulcs lesz: amit nem ismerunk fel, azt nem
+// irjuk be.
+export const CIKK_MINTA = /^(nb1|pl)\|\d{1,3}\|(summary|preview)\|[^\n\r/]{1,120}$/;
+export const ESZKOZ_MINTA = /^[a-z0-9]{8,32}$/;
+export const MAX_INDOK = 600;
 const EREDETEK = ['https://vinceszy.github.io',
                   'http://localhost:8910', 'http://127.0.0.1:8910'];
 
@@ -80,17 +94,67 @@ export default {
     if (request.method === 'OPTIONS')
       return new Response(null, { status: 204, headers: {
         ...cors,
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Accept',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Accept, Content-Type',
         'Access-Control-Max-Age': '86400',
       } });
-    if (request.method !== 'GET')
+    const sajatUt = new URL(request.url).pathname.replace(/\/+$/, '');
+    if (request.method !== 'GET' && !(request.method === 'POST' && sajatUt === '/ertekeles'))
       return new Response('csak GET', { status: 405, headers: cors });
     // Bongeszobol jovo keresnel az Origin kotelezoen a mienk; Origin nelkuli
     // kerest (pl. curl, meres) atengedunk - a cel-korlatozas ugyanugy vedi.
     if (eredet && EREDETEK.indexOf(eredet) < 0)
       return new Response('ismeretlen eredet', { status: 403, headers: cors });
     const sajat = new URL(request.url);
+    // ---- /ertekeles: egy iras ertekelese (1-4), indokkal ----
+    // Az ERTEK a valasz, nem a keres: ha nincs KV-kotes, ezt meg is mondjuk,
+    // kulonben a lap azt hinne, elment - es a nezo hiaba irt volna.
+    if (sajatUt === '/ertekeles') {
+      const fej = new Headers(cors);
+      fej.set('Content-Type', 'application/json');
+      fej.set('Cache-Control', 'no-store');
+      if (!env || !env.TAROLT)
+        return new Response('{"ok":false,"ok_nelkul":"nincs tarolo"}',
+                            { status: 503, headers: fej });
+      let be;
+      try { be = await request.json(); } catch (e) { be = null; }
+      const pont = be && Number(be.pont);
+      if (!be || !CIKK_MINTA.test(String(be.cikk || '')) ||
+          !ESZKOZ_MINTA.test(String(be.eszkoz || '')) ||
+          !(pont >= 1 && pont <= 4) || pont !== Math.round(pont))
+        return new Response('{"ok":false}', { status: 400, headers: fej });
+      const ertek = {
+        pont: pont,
+        // Az okok a lapon felkinalt gyorsvalasztok; a szabad szoveg a
+        // vegen all. Mindkettot vagjuk, hogy egy elszallt kliens se
+        // tolthesse tele a tarolot.
+        okok: Array.isArray(be.okok) ? be.okok.slice(0, 8).map(x => String(x).slice(0, 60)) : [],
+        indok: String(be.indok == null ? '' : be.indok).slice(0, MAX_INDOK),
+        ido: new Date().toISOString(),
+      };
+      await env.TAROLT.put('ert/' + be.cikk + '/' + be.eszkoz, JSON.stringify(ertek));
+      return new Response('{"ok":true}', { headers: fej });
+    }
+    // ---- /ertekelesek: amit eddig kaptunk ----
+    // Nem titok: a sajat irasainkrol szol, es a liga sajat kozonsegenek.
+    if (sajatUt === '/ertekelesek') {
+      const fej = new Headers(cors);
+      fej.set('Content-Type', 'application/json');
+      fej.set('Cache-Control', 'no-store');
+      if (!env || !env.TAROLT) return new Response('[]', { headers: fej });
+      const lista = await env.TAROLT.list({ prefix: 'ert/', limit: 1000 });
+      const ki = [];
+      await Promise.all((lista.keys || []).map(async k => {
+        const v = await env.TAROLT.get(k.name, { type: 'text' });
+        if (!v) return;
+        // a kulcs vege az eszkoz, elotte a cikk azonositoja
+        const t = k.name.slice(4);
+        const i = t.lastIndexOf('/');
+        try { ki.push({ cikk: t.slice(0, i), ...JSON.parse(v) }); } catch (e) {}
+      }));
+      ki.sort((a, b) => String(b.ido).localeCompare(String(a.ido)));
+      return new Response(JSON.stringify(ki), { headers: fej });
+    }
     // ---- /tarolt: az UTOLSO ISMERT allas, azonnal ----
     // Egyetlen keresben tobb cel-URL is kerheto (?url=..&url=..): a lap igy
     // EGY kor-utbol megkapja mind a nyolc szakvezeto legutobbi allasat.
