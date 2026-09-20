@@ -8,7 +8,17 @@
     "pl"
    ],
    "cim": "Nemzethy Sport — beharangozó és összefoglaló minden meccshez",
-   "leiras": "Minden meccsnek lett szövege. A lezárt fordulók után összefoglaló arról, hogyan alakult a párharc, a következő forduló elé pedig beharangozó — mindkét ligában.\n\nHárom helyen találkozol vele. A meccs adatlapján egy becsukott sávban, egyetlen sor magasan: csak akkor nyílik ki, ha rákattintasz, tehát a keret és a pontok ugyanott maradnak, ahol eddig. A liga oldalán, a felső sávban ott a Nemzethy Sport gombja — az a liga saját újságja, a saját színeivel, csak az ő írásaival. A kezdőlapról pedig a közös kiadás nyílik, ahol mindkét liga egy lapon van.\n\nA közös kiadásban négy külön szűrő van: liga, szakvezető, forduló és cikktípus — szabadon kombinálva. Aki mindkét ligában játszik, egyetlen sorban áll a két nevével (az NB1-es beceneve és a PL-csapata egyben), és rá szűrve mindkét liga írásai előjönnek. Minden írást ki tudsz másolni — a rövid változatát a cikkre mutató hivatkozással együtt —, ha be akarod dobni a csoportba.\n\nÉrtékelni is lehet, egytől négyig. Ha jónak találtad, egy koppintás az egész. Ha nem, megkérdezzük, mi volt a baj, a saját szavaddal: ebből lesz jobb a következő szöveg. Indok nélkül is elküldheted, csak akkor nem tudunk vele mit kezdeni. Egy eszközről egy írást egyszer értékelhetsz, de bármikor meggondolhatod magad.\n\nMenet közben a görgetés is javult, mindenhol: egy régi CSS-beállítás miatt iPhone-on a hosszú lapok nehezen indultak el, megremegtek, majd visszaugrottak."
+   "leiras": "Minden meccsnek lett szövege. A lezárt fordulók után összefoglaló arról, hogyan alakult a párharc, a következő forduló elé pedig beharangozó — mindkét ligában.\n\nHárom helyen találkozol vele. A meccs adatlapján egy becsukott sávban, egyetlen sor magasan: csak akkor nyílik ki, ha rákattintasz, tehát a keret és a pontok ugyanott maradnak, ahol eddig. A liga oldalán, a felső sávban ott a Nemzethy Sport gombja — az a liga saját újságja, a saját színeivel, csak az ő írásaival. A kezdőlapról pedig a közös kiadás nyílik, ahol mindkét liga egy lapon van.\n\nA közös kiadásban négy külön szűrő van: liga, szakvezető, forduló és cikktípus — szabadon kombinálva. Aki mindkét ligában játszik, egyetlen sorban áll a két nevével (az NB1-es beceneve és a PL-csapata egyben), és rá szűrve mindkét liga írásai előjönnek. Minden írást ki tudsz másolni — a rövid változatát a cikkre mutató hivatkozással együtt —, ha be akarod dobni a csoportba.\n\nÉrtékelni is lehet, egytől négyig. Ha jónak találtad, egy koppintás az egész. Ha nem, megkérdezzük, mi volt a baj, a saját szavaddal: ebből lesz jobb a következő szöveg. Indok nélkül is elküldheted, csak akkor nem tudunk vele mit kezdeni. Egy eszközről egy írást egyszer értékelhetsz, de bármikor meggondolhatod magad."
+  },
+  {
+   "datum": "2026-09-20",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
+   "cim": "Telefonon nem esik szét az oldal, és megindul a görgetés",
+   "leiras": "Telefonon néhány helyen szétcsúszott az elrendezés: a meccs fejléce laza sorokra bomlott, a szűrők pedig nem a helyükre álltak. A stíluslap egy hibája miatt a böngésző a lap alsó harmadát egyszerűen eldobta, benne a telefonos elrendezéssel. Most megint a helyén van minden.\n\nUgyanitt a hosszú lapok görgetése is rendbe jött iPhone-on: eddig nem indult el rendesen, csak megremegett, elindult lefelé, majd visszaugrott."
   },
   {
    "datum": "2026-09-19",

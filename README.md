@@ -2121,6 +2121,11 @@ Felhasználói napló, nem technikai: **csak az kerül bele, amit a használó l
   az első visszajelzésre) igazítás, az nem külön bugfix-bejegyzés — a funkció bejegyzése
   írja le a végállapotot. (Egyszer már becsúszott egy külön „a panel a helyére állt"
   bejegyzés; törölni kellett.)
+- **De a funkció bejegyzése nem gyűjtőhely.** Csak az kerül bele, ami MAGÁHOZ A FUNKCIÓHOZ
+  tartozik. Ami mást érint — akkor is, ha ugyanabban a körben készült el —, az **vagy külön
+  javítás-bejegyzés, vagy semmi**: ha olyan apró, hogy a néző nem érzékeli, nem kerül a
+  naplóba egyáltalán. A két szabály együtt: a funkciót nem daraboljuk szét, és nem is
+  aggatunk rá mást.
 - **Dátumozva**, naponként csoportosítva, a legfrissebb elöl. A napló a szezon elején
   indul, a korábbi változások nincsenek benne.
 - **Összevonáskor a bejegyzést ÚJRA KELL FOGALMAZNI, nem hozzáfűzni.** Ha egy meglévő
