@@ -38,3 +38,37 @@ MERES: 2026-09-20 10:02 UTC | beszamolo-forrasok elerhetosege
   robots.txt: ENGEDI
   lekeres: HTTP 200, 93 kbajt, 695 ms
   perc-jellegu mintazat a valaszban: 1 db
+
+======================================================================
+MERES: 2026-09-20 10:07 UTC | nemzetisport.hu: mit enged
+
+--- robots.txt (HTTP 200, 158 ms) ---
+  | User-agent: YandexBot
+  | Disallow: /
+  | User-agent: *
+  | Disallow: /hirdetesek
+  | Disallow: /cikk-elonezet
+  | Disallow: /publicapi
+  | Allow: /publicapi/hu/rss/
+  | Sitemap: https://www.nemzetisport.hu/sitemapindex.xml
+
+--- utvonalankenti dontes (ugynok: sajat) ---
+  /                tiltja
+  /foci-nb-i       tiltja
+  /rss             tiltja
+  /rss.xml         tiltja
+  /feed            tiltja
+  /feed/           tiltja
+  /hirek           tiltja
+
+--- hircsatorna keresese ---
+  /rss               robots tiltja, nem kerjuk le
+  /rss.xml           robots tiltja, nem kerjuk le
+  /rss/              robots tiltja, nem kerjuk le
+  /feed              robots tiltja, nem kerjuk le
+  /feed/             robots tiltja, nem kerjuk le
+  /atom.xml          robots tiltja, nem kerjuk le
+  /rss/foci-nb-i     robots tiltja, nem kerjuk le
+  /foci-nb-i/rss     robots tiltja, nem kerjuk le
+
+  hasznalhato csatorna: nincs
