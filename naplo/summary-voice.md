@@ -85,6 +85,23 @@ man belong in the piece - see round-pipeline.md for where they come from.
 **The lead is not the first sentence again.** On the card the lead sits directly above
 the body; the two are read together, so they may not say the same thing twice.
 
+## A preview is not a summary pointed forwards
+
+**Put in what can change the result.** A preview may only spend space on something that
+bears on the coming round: who is shared and who is not, whether the two armbands land on
+the same man, a habit that costs points every week (four starters on a four-man bench),
+dead weight in a starting eleven, a three-week break to fix it. What happened last
+weekend belongs in it only as the cause of one of those.
+
+**Do the squad arithmetic out loud, then check it.** Fifteen a side: eight shared leaves
+SEVEN different each, not two. And verify who actually owns whom before calling a player
+shared - a captain that belongs to one side only is the opposite of a captain they both
+hold, and the piece says the opposite thing.
+
+**An exclusive captain and a shared captain are different levers.** Doubling a man the
+opponent also owns wins only the doubling; doubling a man nobody else has makes every
+point of his a margin. Say which one is on the table.
+
 ## Length
 
 Ten to fourteen sentences per head-to-head. Short enough to read on a phone between two
