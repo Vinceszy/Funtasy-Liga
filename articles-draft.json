@@ -1,4 +1,94 @@
 {
  "updated": null,
- "leagues": {}
+ "leagues": {
+  "nb1": {
+   "8": {
+    "summary": {
+     "Bazsa|Katyul": {
+      "text": [
+       "Katyul ebben a fordulóban nem csinált semmit. Se igazolás, se szerepváltás, se karszalag-mozdítás: ugyanaz a tizenöt ember, ugyanabban a felállásban, mint egy héttel korábban.",
+       "Bazsa ezalatt dolgozott. Eladott egy embert, vett helyette egy jobbat, és hármat felhozott a padról a kezdőbe — összesen 7,13 ponttal javított a kereten, ami a forduló harmadik legjobb kereskedése volt. Tizennéggyel kapott ki.",
+       "Mert a párharc nem ott dőlt el. Öt közös emberük volt, és az öt mindkét oldalon pontosan ugyanannyit ért: 37,75-öt. Szalai a karszalaggal mindkettejüknél 14,5 — a forduló legnépszerűbb kapitánya egyébként gólt sem rúgott, kilenc megnyert támadó párharcért kapta a pontjait.",
+       "Maradt tíz ember, akiben különböztek, és ott 38,88 állt 24,88 ellen. Pontosan tizennégy. Katyulnál Kern gólpasszt adott és végigjátszotta a meccset, Štefulj hat kulcspasszt osztott ki, Szendrei is kilencven percet ment — hárman huszonnégy és felet. Bazsánál a kezdőben ott állt Njie nulla ponttal, a négyfős padja pedig 3,13-at hozott összesen.",
+       "Katyul péntek estétől vasárnap estig vezetett, egyetlen percre sem került hátrányba. Huszonegy ponttal áll a tabella élén, nyolc fordulóból hetet megnyert — és ezen a héten a legnagyobb döntése az volt, hogy nem döntött semmiről."
+      ],
+      "short": "Katyul hozzá sem nyúlt a kerethez, és tizennéggyel nyert. Bazsa a forduló harmadik legjobb kereskedését hozta, és pont tizennéggyel kapott ki."
+     },
+     "Csongi|Bence": {
+      "text": [
+       "Bence megvette a forduló emberét, aztán másra tette a karszalagot. Ennyi volt a különbség.",
+       "Németh András a péntek esti meccsen gólt szerzett, hetvenhárom percet játszott, tíz pontot hozott. Bence a forduló előtt igazolta le — tíz ponttal ő lett a forduló legtöbbet hozó érkezője —, a karszalagot viszont Szalaira tette. Csongi nem igazolt senkit és nem mozdított semmin, de Németh nála kapitány volt: ugyanaz az ember, ugyanaz a gól, húsz pont.",
+       "A két keretben mindössze két közös név állt, Németh és Lehoczki. Ez a kettő Csonginál 22,63-at ért, Bencénél 15,25-öt. A maradék tizenháromban Bence volt előrébb, 48 a 44,76 ellen — és mégis kikapott 4,14-gyel. Ennyit tud két ember, ha az egyiket a másik oldalon duplázzák.",
+       "Bence egyébként jól kereskedett: három eladás, három vétel, plusz 8,88 pont. Ő engedte el Lukács Dánielt is, aki hat fordulón át 54,75 pontot hozott neki. Lukács ezen a hétvégén végigjátszotta a győztes meccset és 6,75-öt szerzett — több mint kétszer annyit, mint azon a vasárnapon, ami miatt Bence megvált tőle.",
+       "Csongi eközben a padján felejtette Kernt nyolc és háromnegyeddel, a kezdőjében pedig két olyan ember állt, aki nem hozott semmit. Vasárnap kora délután hátrányba is került. Aztán jött az MTK–ETO, ahonnan három embere tizennyolc pontot hozott, és ennyi elég volt.",
+       "Aki nem csinál semmit, annak a forduló csinálja meg helyette — ha jó helyen vannak az emberei."
+      ],
+      "short": "Bence megvette a forduló emberét, aztán másra tette a karszalagot. Csongi nem igazolt senkit, viszont ő kapitánynak tette meg. 4,14 pont döntött."
+     },
+     "Csendi|Vince": {
+      "text": [
+       "A forduló legjobb keretmunkája ebben a párharcban kapott ki a legrosszabbtól.",
+       "Csendi hármat cserélt, és mindhárommal jól járt: 9,25 ponttal ért többet a kerete, mint mozdulatlanul. Vince ugyanezen a héten 9,61-et vesztett a saját döntésein — eladta Kernt, aki aztán nyolc és háromnegyedet hozott, és leigazolt egy kapust, aki négy gólt kapott, és mínusz öt és féllel zárt. Közel tizenkilenc pont döntési különbség, és a meccs 5,25-ön dőlt el. Vince javára.",
+       "Hat közös emberük volt, és azok szinte fillérre ugyanannyit értek: 36,25 és 36,88. A párharc így arra szűkült, hogy ki mit tesz melléjük.",
+       "Csendi a karszalagot Amenyidóra tette, egyedüliként a mezőnyben, és tíz és felet kapott érte. Vince ugyanezt az embert a padon tartotta 2,63-ért, és Szalait duplázta. A két karszalag között pontosan két pont volt a különbség — Vince javára az is.",
+       "Vasárnap kora délutánig Csendi vezetett, egy ponton tizenhárommal. Aztán jött az MTK–ETO: Vince onnan 17,5 pontot hozott, Csendi 1,25-öt, egyetlen padosból.",
+       "Vince keretében senki nem nullázott. Egy embere mínuszban zárt — és még így is ő nyert, sorozatban a negyediket."
+      ],
+      "short": "A forduló legjobb keretmunkája kikapott a legrosszabbtól. Csendi +9,25, Vince −9,61 — és Vince nyert 5,25-tel."
+     },
+     "Sámsi|Ádám": {
+      "text": [
+       "Ebben a párharcban egyik szakvezető sem nyúlt a kerethez: két mozdulatlan tizenöt fő, ugyanúgy felállítva, mint egy héttel korábban. Ilyenkor nem a forduló előtti döntések számítanak, hanem a régiek.",
+       "Ádámnál ezek a régi döntések nyolc forduló óta ugyanazt hozzák. Markek Tamás és Nagy Zoárd Kornél a szezon mind a nyolc fordulójában ott volt a keretében, és mind a nyolcban nullát szerzett: tizenhat játékos-forduló, nulla pont. Rajtuk kívül még hárman nem hoztak semmit, közülük ketten a kezdőből.",
+       "A karszalag Kerezsire került, aki hatvannyolc percet játszott, megnyert két védekező párharcot, és ennyi: két és fél pont, duplázva öt. A mezőny többsége ezen a héten Szalait duplázta 14,5-ért. Kilenc és fél pont különbség egyetlen döntésen, tizenhat pont a végén.",
+       "Ami működött nála, az Újpest volt: Matko a győztes gólt szerezte, Krajcsovics negyvenöt percet kapott, és abba is belefért egy gól. Tizennyolc pont kettejüktől, huszonhárom és fél a maradék tizenháromtól.",
+       "Sámsinál sem tolongtak a nagy számok: karszalag nélkül a legjobb embere hét pontot ért. Csak épp péntek estétől nem került hátrányba, szombat este már huszonnyolccal vezetett, és onnan ezt elveszteni kellett volna.",
+       "A forduló második legalacsonyabb pontszámával nyert tizenhattal — mert a legalacsonyabb a másik oldalon volt."
+      ],
+      "short": "Ádám karszalagja öt pontot hozott, a mezőny többségéé 14,5-öt. Két embere nyolc forduló óta nullázik."
+     }
+    }
+   },
+   "9": {
+    "preview": {
+     "Bazsa|Csongi": {
+      "text": [
+       "Kilenc pont, kilenc pont: a tabellán egymás mellett állnak. A szezon összpontszámában viszont 55 pont van köztük, Bazsa javára — vagyis Csongi lényegesen kevesebből hozza ki ugyanazt.",
+       "A múlt fordulóban ez a különbség egy mondatban látszott. Bazsa eladott, vett, hármat felhozott a padról, 7,13 ponttal javított a kereten — és kikapott tizennéggyel. Csongi nem igazolt senkit, nem mozdított semmin, és nyert.",
+       "Csongi ugyanakkor a padján hagyott egy nyolc és háromnegyedes embert, és két nullázóval kezdett. Ez a keret nem azért nyert, mert jól volt felállítva, hanem mert a győri meccs neki dolgozott.",
+       "Négy közös emberük van, köztük Lehoczki Bendegúz, aki mostanra hét keretben ott van a nyolcból. Ez a párharc arról fog szólni, hogy Bazsa nagyobb kerete vagy Csongi kevesebb hibája ér többet."
+      ],
+      "short": "Bazsa a forduló harmadik legjobb kereskedésével kapott ki, Csongi úgy nyert, hogy hozzá sem nyúlt a kerethez. Most egymás ellen jönnek."
+     },
+     "Katyul|Bence": {
+      "text": [
+       "Az éllovashoz az az ember érkezik, aki három forduló óta veszít — és aki a legutóbbit úgy bukta el 4,14-gyel, hogy ő igazolta le a forduló emberét, csak épp a karszalagot tette másra.",
+       "Katyul huszonegy ponttal vezet, nyolc fordulóból hetet megnyert, és a szezonban ő gyűjtötte a legtöbb fantasy-pontot is. A múlt héten mindezt úgy, hogy egyetlen igazolása, egyetlen szerepváltása, egyetlen karszalag-mozdítása sem volt.",
+       "Bence pontosan az ellenkezőjét csinálja: sorozatban a harmadik fordulóban nyúlt bele a keretbe, és sorozatban a harmadikat veszítette el. A múlt héten 8,88 ponttal javított a kereten, egy fordulóval korábban 5,89-et vesztett rajta — a három vereség együtt sem tett ki huszonhárom pontot. A döntései nem rosszak. Az időzítésük az.",
+       "Hat közös emberük van, köztük a liga legnépszerűbb kapitánya. Bencének tehát megint azon a kilencen kell nyernie, amiben különböznek."
+      ],
+      "short": "Katyul nyolcból hetet megnyert, és a múlt héten úgy, hogy egyetlen döntést sem hozott. Bence három vereséggel érkezik, pedig kettőben jól kereskedett."
+     },
+     "Csendi|Sámsi": {
+      "text": [
+       "Nyolc közös emberük van — a két keret több mint fele ugyanaz. Ha innen már egyikük sem lép, gyakorlatilag ugyanazt a csapatot nézzük kétszer, és a maradék héten meg a karszalagon múlik minden.",
+       "Csendi tizenöt ponttal áll, összpontszámban viszont csak a hatodik. Ez sokáig működő üzemmód volt: két meccset is hat pontnál kisebb különbséggel nyert meg. A múlt héten viszont a forduló legjobb keretmunkáját hozta — 9,25 pont javulás —, és 5,25-tel kikapott. Ugyanaz a szűk margó, a másik irányba.",
+       "Sámsi három vereség után nyert egyet, és rögtön tizenhattal. Nem attól, hogy bármit is csinált: a keretéhez hozzá sem nyúlt. Az ellenfele karszalagja hozott öt pontot.",
+       "A karszalag viszont sosem esik egybe náluk: Csendi három forduló óta Amenyidót duplázza, Sámsi három forduló óta Szalait. Mindkét ember ott van mindkét keretben, tehát a különbség pontosan annyi, amennyivel az egyikük többet hoz a másiknál. Szalai a múlt héten gól nélkül, kilenc megnyert párharcból szedte össze a pontjait; Amenyido tíz és felet hozott karszalaggal. Aki jól választ, az nyer — más aligha dönti el."
+      ],
+      "short": "Nyolc közös emberük van. Ha egyikük sem lép, a maradék héten és a karszalagon múlik minden."
+     },
+     "Vince|Ádám": {
+      "text": [
+       "A mezőny két széle találkozik. Vince négy fordulót nyert meg sorban, és nyolc forduló alatt 572 fantasy-pontot gyűjtött; Ádám 425-öt, ami a mezőny legkevesebbje. Közös játékosuk egy van, Kerezsi Zalán Márk.",
+       "A furcsa az, hogy Vince ezzel is csak a második helyen áll tizenöt ponttal, Ádám pedig kilenccel ott ül az ötfős középmezőnyben. Ez a liga nem azt jutalmazza, aki sokat szerez, hanem azt, aki a megfelelő héten szerzi.",
+       "Vince ráadásul a múlt héten a forduló legrosszabb kereskedését hozta — 9,61 pontot vesztett a saját döntésein, köztük egy kapust igazolt, aki négy gólt kapott —, és így is nyert. Négy meccse nem tud veszíteni.",
+       "Ádám legutóbb 51,50-et hozott, a forduló legkevesebbjét, és a keretében nyolc forduló óta ott van két ember, aki még egyetlen pontot sem szerzett. Ha ez így marad, ez a párharc vasárnap délutánra lefut."
+      ],
+      "short": "Vince négy meccset nyert sorban, Ádám négyből hármat elvesztett. Egyetlen közös játékosuk van."
+     }
+    }
+   }
+  }
+ }
 }
