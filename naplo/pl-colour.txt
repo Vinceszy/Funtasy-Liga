@@ -1,0 +1,4 @@
+Premier League szin-forrasok merese.
+A fajlt a naplo/pl-colour-probe.py irja. Cikkszoveget NEM tarol:
+a talalt mondatok csak a futas naplojaban (stdout) latszanak.
+Meg nem futott meres.
