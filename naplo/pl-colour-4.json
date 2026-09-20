@@ -1,66 +1,57 @@
 {
  "event": "4",
- "keszult": "2026-09-20T15:03:09Z",
+ "keszult": "2026-09-20T15:06:11Z",
  "meccsek": {
-  "Bournemouth - Brentford": {
-   "fotmob": "5795445",
+  "Aston Villa - Nott'm Forest": {
+   "fotmob": "5795446",
    "golok": [
     {
-     "perc": 34,
-     "jatekos": "Kevin Schade",
-     "gólpassz": "assist by Yehor Yarmoliuk",
-     "leiras": "Header",
-     "mód": "Header",
-     "helyzet": "RegularPlay",
-     "öngól": false,
-     "xG": 0.174
-    },
-    {
-     "perc": 38,
-     "jatekos": "Justin Kluivert",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
-     "xG": 0.114
-    },
-    {
-     "perc": 52,
-     "jatekos": "Marcus Tavernier",
-     "gólpassz": "assist by Evanilson",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
-     "xG": 0.048
-    },
-    {
-     "perc": 56,
-     "jatekos": "Kevin Schade",
-     "gólpassz": null,
+     "perc": 46,
+     "jatekos": "Liam Delap",
+     "gólpassz": "assist by Murillo",
      "leiras": null,
      "mód": "RightFoot",
      "helyzet": "RegularPlay",
      "öngól": false,
-     "xG": 0.033
+     "xG": 0.032
+    },
+    {
+     "perc": 74,
+     "jatekos": "Alysson Edward",
+     "gólpassz": "assist by John McGinn",
+     "leiras": "Header",
+     "mód": "Header",
+     "helyzet": "FromCorner",
+     "öngól": false,
+     "xG": 0.064
+    },
+    {
+     "perc": 88,
+     "jatekos": "Igor Jesus",
+     "gólpassz": "assist by Morgan Gibbs-White",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.132
     }
    ],
    "var": [],
    "kihagyott_nagy_helyzet": [
     {
      "perc": 7,
-     "jatekos": "António Silva",
-     "xG": 0.328,
-     "mód": "Header",
-     "helyzet": "SetPiece",
-     "kapura": false
+     "jatekos": "Victor Nilsson Lindelöf",
+     "xG": 0.463,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "kapura": true
     }
    ],
    "vedesek_kapusonkent": {
-    "776689": 8
+    "181069": 4,
+    "1053679": 5
    },
-   "loves_db": 28
+   "loves_db": 29
   },
   "Chelsea - Hull City": {
    "fotmob": "5795447",
@@ -214,6 +205,17 @@
    },
    "loves_db": 24
   },
+  "Spurs - Everton": {
+   "fotmob": "5795454",
+   "golok": [],
+   "var": [],
+   "kihagyott_nagy_helyzet": [],
+   "vedesek_kapusonkent": {
+    "1341475": 3,
+    "303919": 2
+   },
+   "loves_db": 26
+  },
   "Sunderland - Arsenal": {
    "fotmob": "5795453",
    "golok": [
@@ -271,6 +273,107 @@
     "562727": 2
    },
    "loves_db": 23
+  },
+  "Coventry City - Brighton": {
+   "fotmob": "5795448",
+   "golok": [
+    {
+     "perc": 35,
+     "jatekos": "Charalampos Kostoulas",
+     "gólpassz": "assist by Pascal Groß",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.15
+    },
+    {
+     "perc": 51,
+     "jatekos": "Malick Junior Yalcouyé",
+     "gólpassz": "assist by Maxim De Cuyper",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.399
+    },
+    {
+     "perc": 70,
+     "jatekos": "Pascal Groß",
+     "gólpassz": null,
+     "leiras": "Penalty",
+     "mód": "RightFoot",
+     "helyzet": "Penalty",
+     "öngól": false,
+     "xG": 0.788
+    },
+    {
+     "perc": 83,
+     "jatekos": "Lewis Dunk",
+     "gólpassz": "assist by Chema Andrés",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.027
+    },
+    {
+     "perc": "90 + 4",
+     "jatekos": "Yasin Ayari",
+     "gólpassz": "assist by Pascal Groß",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.053
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [],
+   "vedesek_kapusonkent": {
+    "1187236": 2,
+    "1131987": 6
+   },
+   "loves_db": 36
+  },
+  "Man Utd - Man City": {
+   "fotmob": "5795452",
+   "golok": [
+    {
+     "perc": 60,
+     "jatekos": "Erling Haaland",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.442
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 76,
+     "jatekos": "Erling Haaland",
+     "xG": 0.425,
+     "mód": "LeftFoot",
+     "helyzet": "SetPiece",
+     "kapura": false
+    },
+    {
+     "perc": 90,
+     "jatekos": "Bryan Mbeumo",
+     "xG": 0.412,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "kapura": true
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "618878": 3,
+    "1178602": 1
+   },
+   "loves_db": 22
   },
   "Leeds - Newcastle": {
    "fotmob": "5795450",
