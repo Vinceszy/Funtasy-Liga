@@ -40,3 +40,61 @@ PROBE: 2026-09-20 16:59 UTC | draft choices / transactions (liga 48093)
 --- league details (mar hasznaljuk) ---
   league/48093/details: HTTP 200, 40 kb, 78 ms
   felso kulcsok: league, league_entries, matches, standings
+
+======================================================================
+PROBE: 2026-09-20 17:16 UTC | draft choices / transactions (liga 48093)
+  sajat azonositoink: 10 csapat, 187 jatekos
+  csapat-szintu vegponthoz van azonosito: True
+
+--- choices ---
+  draft/48093/choices: HTTP 200, 84 kb, 156 ms
+  felso kulcsok: choices, element_status, idle
+  'choices' lista: 150 elem
+  elem-kulcsok: choice_time, draft, element, entry, entry_name, id, index, league, pick, player_first_name, player_last_name, round, seconds_to_pick, was_auto
+  element  mezo: 150 ertek, ebbol a sajat jatekos-azonositoinkkal egyezik: 148
+  entry    mezo: 150 ertek, ebbol a sajat csapat-azonositoinkkal egyezik: 0
+
+--- transactions (liga) ---
+  draft/48093/transactions: HTTP 404, 0 kb, 100 ms
+  valasz: 
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Not Found</title>
+</head>
+<body>
+  <h1>Not Found</h1><p>The requested resource was not found on this server.</
+
+--- trades ---
+  draft/48093/trades: HTTP 404, 0 kb, 116 ms
+  valasz: 
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Not Found</title>
+</head>
+<body>
+  <h1>Not Found</h1><p>The requested resource was not found on this server.</
+
+--- league details (mar hasznaljuk) ---
+  league/48093/details: HTTP 200, 40 kb, 47 ms
+  felso kulcsok: league, league_entries, matches, standings
+
+--- transactions (csapat) ---
+  draft/entry/252606/transactions: HTTP 403, 0 kb, 101 ms
+  valasz: {"detail":"Authentication credentials were not provided."}
+
+--- transactions (entry alatt) ---
+  entry/252606/transactions: HTTP 404, 0 kb, 104 ms
+  valasz: 
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Not Found</title>
+</head>
+<body>
+  <h1>Not Found</h1><p>The requested resource was not found on this server.</
+
+--- watchlist ---
+  watchlist/252606: HTTP 403, 0 kb, 105 ms
+  valasz: {"detail":"Authentication credentials were not provided."}
