@@ -125,9 +125,17 @@ def tsdb_meres(sorok):
         if not ligak:
             sorok.append("  nincs liga ehhez az orszaghoz")
             continue
-        # az elso osztalyt a nev alapjan valasztjuk, kulonben az elso talalat
-        elso = next((x for x in ligak if "Premier" in (x.get("strLeague") or "")
-                     or "NB I" in (x.get("strLeague") or "")), ligak[0])
+        # A ligat PONTOS nevvel valasztjuk. Reszlet-egyezessel nem lehet: a
+        # "Premier" szora az angol ötödosztalyu Isthmian League Premier
+        # Division is illeszkedik, es a meres akkor mas ligat mer, mint amit
+        # a fejlecebe ir.
+        VART = {"England": "English Premier League", "Hungary": "Hungarian NB I"}
+        elso = next((x for x in ligak if (x.get("strLeague") or "") == VART[orszag]), None)
+        if elso is None:
+            sorok.append("  nincs meg a vart liga (%s); talalatok: %s"
+                         % (VART[orszag],
+                            ", ".join((x.get("strLeague") or "?") for x in ligak)))
+            continue
         lid, lnev = elso["idLeague"], elso.get("strLeague")
         sorok.append("  liga: %s (id=%s) | osszes talalat: %d" % (lnev, lid, len(ligak)))
         j2, kod2, _ = json_kerd("%s/eventspastleague.php?id=%s" % (TSDB, lid))
