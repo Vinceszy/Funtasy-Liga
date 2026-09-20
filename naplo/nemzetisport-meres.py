@@ -134,10 +134,19 @@ def main():
         cimek = _re.findall(r"<loc>\s*([^<\s]+)\s*</loc>", gy)
         sorok.append("  legutolso terkep (%s): HTTP %s, %d cim (%d ms)"
                      % (cel.rsplit("/", 1)[-1], kod4, len(cimek), ms4))
-        foci = [c for c in cimek if "/foci" in c or "/labdarugas" in c]
-        sorok.append("  ebbol foci-jellegu cim: %d" % len(foci))
-        for c in foci[:5]:
+        # SZURES NELKUL is mutatunk mintat: a korabbi futas a sajat szurojere
+        # nulla talalatot adott, es abbol nem derult ki, hogy rossz-e a szuro
+        # vagy tenyleg nincs foci a jegyzekben.
+        sorok.append("  minta a cimekbol (szures nelkul):")
+        for c in cimek[:10]:
             sorok.append("    %s" % c[:110])
+        from collections import Counter
+        elotag = Counter()
+        for c in cimek:
+            r = c.split("//", 1)[-1].split("/")[1:]
+            elotag[r[0] if r else "(gyoker)"] += 1
+        sorok.append("  utvonal-elotagok: %s"
+                     % ", ".join("%s (%d)" % (k, v) for k, v in elotag.most_common(8)))
 
     sorok.append("")
     sorok.append("--- hircsatorna keresese ---")
