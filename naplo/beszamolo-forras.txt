@@ -218,3 +218,25 @@ MERES: 2026-09-20 10:10 UTC | nemzetisport.hu: mit enged
   /feed                      HTTP 404 (719 ms)
 
   hasznalhato csatorna: nincs
+
+======================================================================
+PROBE: 2026-09-20 10:46 UTC | nemzetisport report content
+  sitemapindex: HTTP 200, 303 maps
+  maps matching 202609: 9
+    https://www.nemzetisport.hu/202604_sitemap.xml
+    https://www.nemzetisport.hu/202605_sitemap.xml
+    https://www.nemzetisport.hu/202606_sitemap.xml
+    https://www.nemzetisport.hu/202607_sitemap.xml
+    https://www.nemzetisport.hu/202608_sitemap.xml
+    https://www.nemzetisport.hu/202609_sitemap.xml
+  labdarugo-nb-i articles in 2026/09: 160
+    /labdarugo-nb-i/2026/09/a-10-es-mez-mi-allhat-kanikovszki-eladasa-mogott-es-ki-lesz-a-kovetkezo
+    /labdarugo-nb-i/2026/09/a-98-percben-jott-a-drama-az-eto-es-a-honved-meccsen-kepgaleria
+    /labdarugo-nb-i/2026/09/a-diagnozis-tulsulyos-volt-a-pesti-futball-ime-az-nb-i-3-fordulojanak-valoga
+    /labdarugo-nb-i/2026/09/a-ferencvaros-harmadszor-is-kolcsonadta-a-szelsojet-hivatalos
+    /labdarugo-nb-i/2026/09/a-kisvarda-lecsapott-a-dvsc-tol-tavozo-kozeppalyasra-hivatalos
+    /labdarugo-nb-i/2026/09/a-kisvardai-lippai-tibor-mar-tudja-milyen-az-igazi-gol
+    /labdarugo-nb-i/2026/09/a-megyeri-uton-kiderulhet-a-magyar-jatekos-vagy-a-legios-jobb-e
+    /labdarugo-nb-i/2026/09/a-nyiregyhaza-szerzodest-bontott-ket-labdarugojaval
+    /labdarugo-nb-i/2026/09/a-nyiregyhaza-valogatott-csatara-tavozik-a-fradi-szelsoje-az-nb-i-ben-ben-ne
+    /labdarugo-nb-i/2026/09/a-paks-helyzetjelentest-adott-bode-daniel-gyogyulasarol
