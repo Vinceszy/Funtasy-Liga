@@ -133,8 +133,12 @@ const csakNb1 = cimekEbbol(b => b.ligak.includes('nb1') && !b.ligak.includes('pl
     await apiKi(o);
     await o.goto(BASE + ut, { waitUntil: 'domcontentloaded' });
     await o.waitForSelector('.lablec a', { timeout: 15000 });
-    const href = await o.locator('.lablec a').getAttribute('href');
-    jo(href === gyoker + 'valtozasok/', `/${ut || ''} láblécében a napló linkje (${href})`);
+    // A lablecben TOBB link is allhat (a magazin is onnan nyilik), ezert a
+    // naplo linkjet celzottan keressuk - korabban itt egyetlen linket
+    // feltetelezett a teszt, es a masodik megjelenesekor bukott.
+    const hrefek = await o.$$eval('.lablec a', n => n.map(x => x.getAttribute('href')));
+    jo(hrefek.indexOf(gyoker + 'valtozasok/') >= 0,
+       `/${ut || ''} láblécében a napló linkje (${JSON.stringify(hrefek)})`);
     if (!ut) jo((await o.locator('a.ujdonsagsor').count()) === 1,
       'a kezdőlapon külön sor is mutat rá');
     await o.close();

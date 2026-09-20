@@ -8,7 +8,9 @@ kimenet kozepen elveszett), es csak kezi atnezes vette eszre. A kezi
 ellenorzes terheles alatt csuszik el; ez a teszt azota kenyszeriti ki.
 
 Amit ellenoriz:
-  D1: minden tesztfajlnak van sora a tesztek/README.md tablazataban.
+  D1: minden tesztfajlnak van sora a tesztek/README.md tablazataban, es
+      EGY sora van - a duplan beirt sor eddig eszrevetlen maradt, mert a
+      meglet onmagaban teljesult.
   D2: a repo gyokereben minden .json adatfajlnak van sora a fo README
       fajl-tablazataban - egy uj adatfajl dokumentacio nelkul bukik.
   D3: a fo README fajl-tablazata nem hivatkozik nem letezo fajlra.
@@ -29,8 +31,14 @@ GYOKER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 hibak = []
 
 
+# Az allitasok szamat SZAMOLJUK, nem irjuk be a zaro sorba: a "Mind a nyolc"
+# ugyanugy elavult, ahogy uj eset kerult be.
+allitasok = []
+
+
 def allit(felt, cimke):
     print(("OK   " if felt else "HIBA ") + cimke)
+    allitasok.append(cimke)
     if not felt:
         hibak.append(cimke)
 
@@ -48,6 +56,13 @@ tesztek = sorted(os.path.basename(f) for f in
 hianyzo = [t for t in tesztek if "`%s`" % t not in teszt_readme]
 allit(not hianyzo, "D1: minden tesztfajlnak van sora a tesztek/README-ben"
       + ("" if not hianyzo else " - HIANYZIK: %s" % ", ".join(hianyzo)))
+# Csak a TABLAZAT sorait szamoljuk (sor eleji "| `nev` |"), mert a fajlnevre
+# a szoveg torzseben is lehet hivatkozni.
+dupla = [t for t in tesztek
+         if sum(1 for l in teszt_readme.splitlines()
+                if l.startswith("| `%s` |" % t)) > 1]
+allit(not dupla, "D1/b: egy teszthez egy sor tartozik"
+      + ("" if not dupla else " - DUPLAN: %s" % ", ".join(dupla)))
 
 # ---- D2: minden gyokerbeli adatfajl dokumentalva ----
 readme = olvas("README.md")
@@ -340,4 +355,4 @@ if _d9 and "--d9" in sys.argv:
 if hibak:
     print("\n%d allitas bukott." % len(hibak))
     sys.exit(1)
-print("\nMind a nyolc allitas rendben.")
+print("\nMind a %d allitas rendben." % len(allitasok))

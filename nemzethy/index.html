@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nemzethy Sport — Heti Funtasy Magazin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- A betukeszlet-ivet NEM blokkolokent toltjuk. Egy sima <link rel=stylesheet>
+     megallitja a lap megjeleneset, amig a Google valaszol: kimerve DOMContentLoaded
+     57 ms helyett 12,6 MASODPERC, ha a fonts.googleapis.com nem elerheto - addig
+     a lapon SEMMI nincs. A media="print" + onload trukk aszinkronna teszi: a
+     tartalom azonnal latszik a tartalek betuvel (a `display=swap` miatt ugyis az
+     lenne az elso festes), es a webfont akkor lep be, amikor megjott. -->
+<link rel="stylesheet" media="print" onload="this.media='all';this.onload=null"
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<noscript><link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
+<link rel="stylesheet" href="../funtasy.css?v=89">
+</head>
+<body class="kezdolap">
+<div class="wrap">
+<noscript><div class="note nojs">Ehhez az oldalhoz <b>JavaScript</b> kell: a cikkeket a
+  böngésző tölti be a mentett adatokból. JavaScript nélkül csak az üres keret látszik.</div></noscript>
+<div class="liganav" id="liganav"></div>
+<header class="maghead">
+  <h1 class="magcim">Nemzethy Sport</h1>
+  <div class="magszlogen">Heti Funtasy Magazin</div>
+</header>
+
+<div class="panel">
+  <div class="vlt-szurok">
+    <div class="vlt-szurocsoport">
+      <span class="vlt-szurocim">Liga</span>
+      <div class="vlt-szurosor" id="magSzuro"></div>
+    </div>
+  </div>
+  <div id="lista" class="maglista"><div class="vlt-ures">Betöltés…</div></div>
+</div>
+</div>
+<div class="lablec" id="lablec"></div>
+
+<script src="../funtasy.js?v=89"></script>
+<script>
+// ======= NEMZETHY SPORT =======
+// Egy helyen az osszes iras, fordulonkent visszafele. A meccs adatlapjan a
+// sav arra valaszol, mi tortent AZON a meccsen; ide az jon, aki hetfon
+// egyben olvasna vegig az egeszet.
+//
+// A KAPU UGYANAZ, mint a meccs adatlapjan: le nem zart fordulonak csak a
+// beharangozoja latszik. A valasztast a FunTasy.articleList vegzi - ha itt
+// ujra megirodna, a ket nezet elcsuszhatna abban, mit szabad mutatni.
+const $ = id => document.getElementById(id);
+FunTasy.renderNav(null, '../');
+FunTasy.renderLablec('../', 'nemzethy');
+FunTasy.verzioOr();
+FunTasy.watchMagazine();
+
+let CIKKEK = null, ZART = { nb1: new Set(), pl: new Set() }, SZURO = 'mind';
+
+const opcional = u => fetch(u + '?t=' + Date.now())
+  .then(r => r.ok ? r.json() : null).catch(() => null);
+
+// Melyik fordulo vegleges? Ugyanabbol, amibol a ket liga-oldal tudja:
+// az NB1-nel az eredmeny mar a menetrendben all (a folyamatban levot a
+// gyujto "provisional"-kent jeloli), a Draftnal a kulon veglegesitett lista.
+function zarasBetolt(res, hist){
+  if (res && res.schedule){
+    const ideiglenes = new Set((res.provisional || []).map(Number));
+    for (const r in res.schedule){
+      if (ideiglenes.has(+r)) continue;
+      if ((res.schedule[r] || []).some(m => FunTasy.played(m))) ZART.nb1.add(+r);
+    }
+  }
+  if (hist) for (const r of (hist.veglegesek || [])) ZART.pl.add(+r);
+}
+const zartE = (liga, fordulo) => (ZART[liga] || new Set()).has(+fordulo);
+
+function szuroRajz(){
+  const gombok = [['mind', 'Mind']].concat(
+    FunTasy.LIGAK.map(l => [l.id, l.nev]));
+  $('magSzuro').innerHTML = gombok.map(([ertek, felirat]) =>
+    `<button class="vlt-chip${SZURO === ertek ? ' on' : ''}" data-liga="${ertek}">${
+      FunTasy.esc(felirat)}</button>`).join('');
+}
+
+function rajzol(){
+  const mind = FunTasy.articleList(CIKKEK, zartE);
+  const lista = mind.filter(x => SZURO === 'mind' || x.liga === SZURO);
+  if (!lista.length){
+    $('lista').innerHTML = '<div class="vlt-ures">Ehhez még nincs írás.</div>';
+    return;
+  }
+  // Liganként egy cim, alatta a fordulok visszafele - az articleList mar
+  // ebben a sorrendben adja vissza.
+  let h = '', elozoLiga = null;
+  for (const be of lista){
+    if (be.liga !== elozoLiga){
+      elozoLiga = be.liga;
+      h += `<h2 class="magliga">${FunTasy.esc(FunTasy.liga(be.liga).cim)}</h2>`;
+    }
+    h += FunTasy.articleCardHTML(be);
+  }
+  $('lista').innerHTML = h;
+  // A hivatkozassal erkezot odavisszuk, ahova jott (a "Masolom" ilyet ad).
+  if (location.hash){
+    const cel = document.getElementById(location.hash.slice(1));
+    if (cel) cel.scrollIntoView();
+  }
+}
+
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-liga]');
+  if (!g) return;
+  SZURO = g.getAttribute('data-liga');
+  szuroRajz(); rajzol();
+});
+
+szuroRajz();
+Promise.all([opcional('../articles.json'),
+             FunTasy.articleDraftMode() ? opcional('../articles-draft.json') : null,
+             opcional('../results.json'), opcional('../draft_history.json')])
+  .then(([kint, vazlat, res, hist]) => {
+    zarasBetolt(res, hist);
+    CIKKEK = FunTasy.mergeArticles(kint, vazlat) || { leagues: {} };
+    rajzol();
+  })
+  .catch(() => { $('lista').innerHTML =
+    '<div class="vlt-ures">Az írásokat most nem sikerült betölteni.</div>'; });
+</script>
+</body>
+</html>

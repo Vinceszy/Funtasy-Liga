@@ -107,6 +107,7 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
   font-size:12px;color:var(--dim);text-align:center}
 .lablec a{color:var(--dim);text-decoration:none;border-bottom:1px solid var(--line)}
 .lablec a:hover{color:var(--ink);border-bottom-color:var(--dim)}
+.lablec a + a{margin-left:18px}
 
 /* ===== Valtozasnaplo =====
    Felhasznaloi naplo, ket szurosorral: tipus es liga. A liga CIMKE, tehat
@@ -612,6 +613,37 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   font:400 11.5px var(--fo);color:var(--dim);text-decoration:underline}
 .artskip:hover{color:var(--ink)}
 .artskip:disabled{opacity:.5;cursor:default}
+
+/* ===== Nemzethy Sport: a magazin-oldal =====
+   Ujsagfejlec, alatta a cikkek egyben, fordulonkent visszafele. Itt nincs
+   becsukott sav: aki ide jon, olvasni jott. */
+.maghead{text-align:center;margin-bottom:22px}
+.magcim{font-family:var(--cim);font-size:clamp(30px,7vw,52px);letter-spacing:.02em;
+  margin:0;color:var(--ink);text-transform:uppercase}
+.magszlogen{font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--dim);margin-top:6px}
+/* A .panel-nek nincs sajat belso margoja - a gyerekei adjak. */
+.maglista{padding:4px 20px 20px}
+.magliga{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);
+  border-bottom:1px solid var(--line);padding-bottom:7px;margin:26px 0 4px}
+.magliga:first-child{margin-top:4px}
+.magcikk{border-bottom:1px solid var(--line);padding:18px 0}
+.magcikk:last-child{border-bottom:0}
+.magfej{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.magpar{font-weight:700;font-size:14.5px;color:var(--ink)}
+.magfordulo{font-size:11.5px;color:var(--dim)}
+.magmaso{margin-left:auto;background:var(--panel);border:1px solid var(--line);
+  color:var(--dim);font:600 11.5px var(--fo);padding:5px 12px;border-radius:999px;
+  cursor:pointer;transition:border-color .12s,color .12s}
+.magmaso:hover{border-color:var(--amber);color:var(--amber)}
+.magtest p{margin:0 0 11px;font-size:14px;line-height:1.68;color:var(--ink);
+  max-width:62ch}
+.magtest p:last-child{margin-bottom:0}
+.magcikk .artrate{margin-top:13px}
+@media(max-width:560px){
+  .magtest p{font-size:13.5px}
+  .magmaso{margin-left:0}
+}
 
 /* eredmenysor a meccs-adatlap tetejen - ugyanaz a .score doboz, mint a
    fooldali meccspaneleken, hogy az allas ott is egy pillantasra lathato

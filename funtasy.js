@@ -1157,13 +1157,20 @@
     return { rajzol: rajzol };
   }
 
-  function lablecHTML(gyoker) {
+  /* 'itt' az EPPEN NYITOTT oldal azonositoja: onmagara mutato linket nem
+     teszunk ki. A valtozasnaplo ezt ugy oldotta meg, hogy egyaltalan nem
+     kert lablecet - ket oldalnal mar az sem jo, mert a masikra kellene. */
+  var LABLEC = [{ id: 'nemzethy', ut: 'nemzethy/', nev: 'Nemzethy Sport' },
+                { id: 'valtozasok', ut: 'valtozasok/', nev: 'Mi újult meg?' }];
+  function lablecHTML(gyoker, itt) {
     gyoker = gyoker || '';
-    return '<a href="' + gyoker + 'valtozasok/">Mi újult meg?</a>';
+    return LABLEC.filter(function (x) { return x.id !== itt; })
+      .map(function (x) { return '<a href="' + gyoker + x.ut + '">' + esc(x.nev) + '</a>'; })
+      .join('');
   }
-  function renderLablec(gyoker) {
+  function renderLablec(gyoker, itt) {
     var el = document.getElementById('lablec');
-    if (el) el.innerHTML = lablecHTML(gyoker);
+    if (el) el.innerHTML = lablecHTML(gyoker, itt);
   }
 
   /* Egy hivas beallitja a kozos fejlec-reszeket: a ligavalto savot, a liga
@@ -1404,6 +1411,91 @@
      an early summary by forgetting. */
   function articleDraftMode() {
     return /(^|[?&])draft=1(&|$)/.test(location.search);
+  }
+
+  /* ===== The magazine: every article in one list =====
+     The strip on a match page answers "what happened in THIS match". On a
+     Monday someone wants the other thing: read the lot in one sitting,
+     without opening eight match pages. Same texts, same gate - the
+     selection lives here so the two views cannot drift apart on what may
+     be shown.
+
+     'zartE(liga, fordulo)' answers whether a round is final. Each page
+     knows that from its own data; the magazine loads the two small files
+     it needs. Same rule as the strip: an unfinished round shows only its
+     preview. */
+  function articleList(store, zartE) {
+    var ki = [];
+    var L = (store && store.leagues) || {};
+    for (var i = 0; i < LIGAK.length; i++) {
+      var lg = LIGAK[i].id;
+      var fordulok = Object.keys(L[lg] || {}).map(Number).sort(function (a, b) { return b - a; });
+      for (var j = 0; j < fordulok.length; j++) {
+        var r = fordulok[j], zart = !!(zartE && zartE(lg, r));
+        var fajtak = zart ? ['summary', 'preview'] : ['preview'];
+        for (var k = 0; k < fajtak.length; k++) {
+          var m = L[lg][r][fajtak[k]] || {};
+          for (var par in m) {
+            var felek = par.split('|');
+            ki.push({ liga: lg, fordulo: r, fajta: fajtak[k], par: par,
+                      hazai: felek[0], vendeg: felek[1], cikk: m[par],
+                      kulcs: lg + '|' + r + '|' + fajtak[k] + '|' + par,
+                      cimke: ARTICLE_LABEL[fajtak[k]] });
+          }
+        }
+      }
+    }
+    return ki;
+  }
+
+  /** One article in full - the magazine shows the text, not a teaser. */
+  function articleCardHTML(be) {
+    var body = (be.cikk.text || []).map(function (p) {
+      return '<p>' + esc(p) + '</p>';
+    }).join('');
+    var azon = 'c-' + be.kulcs.replace(/[^A-Za-z0-9]+/g, '-');
+    return '<article class="magcikk" id="' + esc(azon) + '">' +
+      '<div class="magfej">' +
+        '<span class="artstriptag">' + esc(be.cimke) + '</span>' +
+        '<span class="magpar">' + esc(be.hazai) + ' – ' + esc(be.vendeg) + '</span>' +
+        '<span class="magfordulo">' + be.fordulo + '. forduló</span>' +
+        '<button class="magmaso" data-maso="' + esc(azon) + '" ' +
+          'data-rovid="' + esc(be.cikk.short || '') + '">Másolom</button>' +
+      '</div>' +
+      '<div class="magtest">' + body + '</div>' +
+      rateBar(be.kulcs) + '</article>';
+  }
+
+  /* A "Masolom" a ROVID valtozatot es a cikkre mutato hivatkozast teszi a
+     vagolapra: a csoportba beilleszteni ezt akarja az ember, nem harom
+     bekezdest. A regi execCommand-os utat is meghagyjuk - a navigator API
+     nem biztonsagos kontextusban (http://) nem letezik. */
+  var magWatched = false;
+  function watchMagazine() {
+    if (magWatched) return;
+    magWatched = true;
+    document.addEventListener('click', function (e) {
+      var g = e.target.closest && e.target.closest('.magmaso');
+      if (!g) return;
+      var szoveg = (g.getAttribute('data-rovid') || '') + '\n' +
+                   location.href.split('#')[0] + '#' + g.getAttribute('data-maso');
+      var kesz = function (ok) {
+        g.textContent = ok ? 'Kimásolva' : 'Nem sikerült';
+        setTimeout(function () { g.textContent = 'Másolom'; }, 1800);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText)
+        navigator.clipboard.writeText(szoveg).then(function () { kesz(true); },
+                                                   function () { kesz(false); });
+      else {
+        var t = document.createElement('textarea');
+        t.value = szoveg; t.style.position = 'fixed'; t.style.opacity = '0';
+        document.body.appendChild(t); t.select();
+        var ok = false;
+        try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
+        document.body.removeChild(t);
+        kesz(ok);
+      }
+    }, false);
   }
 
   /* ===== Rating an article =====
@@ -2077,6 +2169,8 @@
                      articleDraftMode: articleDraftMode,
                      mergeArticles: mergeArticles,
                      rateBar: rateBar,
+                     articleList: articleList, articleCardHTML: articleCardHTML,
+                     watchMagazine: watchMagazine,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
                      eloFrissito: eloFrissito, taroltak: taroltak,
                      potKeretek: potKeretek, potKeretekUrit: potKeretekUrit,
