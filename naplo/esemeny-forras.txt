@@ -1,0 +1,3 @@
+Meccs-esemenyek kulso forrasanak meresei (golperc, esemeny-reszletesseg).
+A fajlt a naplo/esemeny-forras-meres.py irja.
+Meg nem futott meres.

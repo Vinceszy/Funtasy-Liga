@@ -1,0 +1,29 @@
+name: Esemény-forrás mérés (kézi)
+# Van-e kulcs nelkuli kulso forras, ami GOLPERCET es esemeny-reszletesseget ad
+# mindket ligara? A sajat adatunk csak osszeget ad, idopontot nem. A fejlesztoi
+# kornyezet halozata minden kulso forrast blokkol, ezert megy Actionsbol.
+# Csak olvas es a naplot irja.
+on:
+  workflow_dispatch:
+permissions: { contents: write }
+jobs:
+  meres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git config user.name  "funtasy-figyelo"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          python3 naplo/esemeny-forras-meres.py
+          [ -z "$(git status --porcelain naplo/esemeny-forras.txt)" ] && exit 0
+          git add naplo/esemeny-forras.txt
+          git commit -q -m "Esemeny-forras meres eredmenye"
+          for i in 1 2 3; do
+            git pull -q --rebase origin main && git push -q origin HEAD:main && exit 0
+            sleep $((i * 5))
+          done
+          exit 1
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
