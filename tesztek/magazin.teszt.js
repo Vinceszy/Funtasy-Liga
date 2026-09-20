@@ -100,8 +100,8 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
      'a liga és a szakvezető EGY vezérlő — ' + (await csoportok()).join(', '));
   jo(JSON.stringify(await p.$$eval('.magszuro[data-szuro="ligaki"] optgroup',
                                    n => n.map(x => x.label)))
-       === JSON.stringify(['NB1', 'PL']),
-     'a szakvezetők ligánként csoportosítva állnak benne');
+       === JSON.stringify(['Liga', 'Szakvezető']),
+     'elöl a két liga, alatta a szakvezetők');
   jo(await p.evaluate(() =>
        Math.round(document.querySelector('.magszurok').getBoundingClientRect().height)) < 130,
      'a szűrősáv nem eszi meg a lapot — '
@@ -122,16 +122,43 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
   jo(nb1db + pldb === mind, `a két liga kiadja az egészet (${nb1db} + ${pldb} = ${mind})`);
   await valaszt('ligaki', 'mind');
 
-  // szakvezeto: aki a parharc BARMELYIK oldalan all
-  const ki = await p.$$eval('.magszuro[data-szuro="ligaki"] option',
-                            n => n.map(x => x.value).filter(v => v !== 'mind'
-                                                              && !v.startsWith('liga:')));
-  jo(ki.length > 3, `szakvezetők a szűrőben: ${ki.length}`);
-  const valasztott = ki[2];
-  await valaszt('ligaki', valasztott);
-  const sajat = await p.$$eval('.magcikk .magpar', n => n.map(x => x.textContent));
-  jo(sajat.length > 0 && sajat.every(t => t.includes(valasztott)),
-     `${valasztott}: mind a ${sajat.length} írás róla szól`);
+  // EGY EMBER, EGY SOR. A ket liga MAS NEVEN ismeri ugyanazt a szakvezetot
+  // (az NB1-ben becenev, a PL-ben csapatnev), es a kozos kiadas ettol
+  // ketszer kinalta oket, ket kulon emberkent. Amit ez rogzit: aki mindket
+  // ligaban jatszik, EGY sorban all a ket nevevel - es rea szurve MINDKET
+  // liga irasai eljonnek.
+  const nep = await p.$$eval(
+    '.magszuro[data-szuro="ligaki"] optgroup[label="Szakvezető"] option',
+    n => n.map(x => ({ ertek: x.value, felirat: x.text })));
+  // A nevek magukbol a cikkekbol jonnek (a parositas ket szoveges csomopontja),
+  // az emberek pedig a lap sajat nev->ember feloldasabol: igy a teszt nem
+  // ismetli meg a csatolotablat, csak azt allitja, hogy ossze VAN vonva.
+  const szam = await p.evaluate(() => {
+    const nevek = new Set();
+    document.querySelectorAll('.magcikk .magpar').forEach(h =>
+      [...h.childNodes].forEach(c => {
+        const t = c.nodeType === 3 ? c.textContent.trim() : '';
+        if (t) nevek.add(t);
+      }));
+    return { nevek: nevek.size,
+             emberek: new Set([...nevek].map(n => SZEMELY(n).kulcs)).size };
+  });
+  jo(nep.length === szam.emberek && szam.emberek < szam.nevek,
+     `${szam.nevek} név, de ${nep.length} sor a szűrőben — aki mindkét ligában `
+     + 'játszik, egyszer szerepel');
+  const ketligas = nep.filter(x => x.felirat.includes(' · '));
+  jo(ketligas.length === szam.nevek - szam.emberek,
+     `és a két liganevét egyben mutatja — ${ketligas.map(x => x.felirat).join(' | ')}`);
+
+  const valasztott = ketligas[0];
+  await valaszt('ligaki', valasztott.ertek);
+  const sorok = await p.$$eval('.magcikk', n => n.map(x => ({
+    liga: x.id.split('-')[1], par: x.querySelector('.magpar').textContent })));
+  const nevei = valasztott.felirat.split(' · ');
+  jo(sorok.length > 0 && sorok.every(x => nevei.some(n => x.par.includes(n))),
+     `${valasztott.felirat}: mind a ${sorok.length} írás róla szól`);
+  jo(new Set(sorok.map(x => x.liga)).size === 2,
+     'és mindkét ligából — egy ember, egy szűrés');
   // a tobbi szuro MAR CSAK a hozza tartozo ertekeket kinalja
   const fordulok = await p.$$eval('.magszuro[data-szuro="fordulo"] option',
                                   n => n.map(x => x.value));

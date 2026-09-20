@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=97">
+<link rel="stylesheet" href="../funtasy.css?v=98">
 </head>
 <body class="kezdolap">
 <div class="wrap">
@@ -40,7 +40,7 @@
 </div>
 <div class="lablec" id="lablec"></div>
 
-<script src="../funtasy.js?v=97"></script>
+<script src="../funtasy.js?v=98"></script>
 <script>
 // ======= NEMZETHY SPORT =======
 // Egy helyen az osszes iras, fordulonkent visszafele. A meccs adatlapjan a
@@ -83,6 +83,12 @@ if (LIGAOBJ){
 }
 
 let CIKKEK = null, ZART = { nb1: new Set(), pl: new Set() };
+// Nev -> ember. A ket liga mas neven ismeri ugyanazt a szakvezetot (NB1-ben
+// becenev, PL-ben csapatnev), es a kozos kiadasban EGY emberkent kell
+// megjelennie - a tabla a kozos retegben all. A PL-oldali nevet a draft.json
+// adja: amig az meg nem jott, mindenki a sajat neven all, es mivel a szurot
+// ugyis a betoltes utan rajzoljuk, ez sehol nem latszik.
+let SZEMELY = FunTasy.szemelyTar(null);
 // Negy szempont, egymastol fuggetlenul. Mindegyik "Mind"-del indul, es
 // mindegyik CSAK azokat az ertekeket kinalja, amik a tobbi szuro mellett
 // tenylegesen leteznek - kulonben ures talalati listara lehetne kattintani.
@@ -113,12 +119,13 @@ const zartE = (liga, fordulo) => (ZART[liga] || new Set()).has(+fordulo);
 // es a szakvezeto egyetlen vezerlon osztozik, tehat a listajahoz mindkettot
 // figyelmen kivul kell hagyni - kulonben az NB1-re allitott szuro elrejti a
 // PL csoportjat, es nem lehet atvaltani rola.
+const emberE = (be, kulcs) => SZEMELY(be.hazai).kulcs === kulcs
+                           || SZEMELY(be.vendeg).kulcs === kulcs;
 const atmegy = (be, kiveve) => {
   const k = [].concat(kiveve || []);
   const ki = n => k.indexOf(n) >= 0;
   return (ki('liga')    || SZURO.liga    === 'mind' || be.liga === SZURO.liga) &&
-         (ki('ki')      || SZURO.ki      === 'mind' || be.hazai === SZURO.ki
-                                                    || be.vendeg === SZURO.ki) &&
+         (ki('ki')      || SZURO.ki      === 'mind' || emberE(be, SZURO.ki)) &&
          (ki('fordulo') || SZURO.fordulo === 'mind' || String(be.fordulo) === SZURO.fordulo) &&
          (ki('fajta')   || SZURO.fajta   === 'mind' || be.fajta === SZURO.fajta);
 };
@@ -138,31 +145,43 @@ function gombsor(nev, cim, ertekek){
          `data-szuro="${nev}" aria-label="${FunTasy.esc(cim)}">${o}</select>`;
 }
 
+// Kik szerepelnek a szuresben - EMBERENKENT, nem nevenkent. Aki mindket
+// ligaban jatszik, EGY sor: a ket neve egyben all a feliratban, es rea
+// szurve mindket liga irasai eljonnek. Korabban ketszer szerepelt, ket
+// kulon szakvezetokent, pedig egy ember.
+function emberek(mind, kiveve){
+  const nep = new Map();
+  for (const be of mind) if (atmegy(be, kiveve))
+    for (const n of [be.hazai, be.vendeg]){
+      const sz = SZEMELY(n);
+      // A liga sajat ujsagjaban a masik liganev nem mond semmit: ott mindenki
+      // az ITTENI neven all.
+      if (!nep.has(sz.kulcs)) nep.set(sz.kulcs, LIGAOBJ ? n : sz.felirat);
+    }
+  return [...nep.entries()].sort((a, b) => a[1].localeCompare(b[1], 'hu'));
+}
+
 // A kozos kiadasban a liga es a szakvezeto KET legordoloje ugyanarrol szolt:
-// egy szakvezeto pontosan egy ligahoz tartozik, tehat a valasztasa a ligat is
-// eldonti. Egy vezerlo lett beloluk, ligankent csoportositva - es maga a liga
-// is valaszthato benne, ha valaki az egeszet akarja latni.
+// egy szakvezeto valasztasa a ligat is eldonti. Egy vezerlo lett beloluk:
+// elol a ket liga, alatta az emberek - egy ember egy sorban.
 function ligaEsKi(mind){
-  const nevek = liga => {
-    const k = [];
-    for (const be of mind) if (be.liga === liga && atmegy(be, ['liga', 'ki']))
-      for (const n of [be.hazai, be.vendeg]) if (!k.includes(n)) k.push(n);
-    return k.sort((a, b) => a.localeCompare(b, 'hu'));
-  };
-  let h = '', volt = false;
-  for (const l of FunTasy.LIGAK){
-    const n = nevek(l.id);
-    if (!n.length) continue;
-    volt = true;
-    h += `<optgroup label="${FunTasy.esc(l.nev)}">` +
-         opcio('liga:' + l.id, `${l.nev} — mind`, SZURO.liga === l.id && SZURO.ki === 'mind') +
-         n.map(x => opcio(x, x, SZURO.ki === x)).join('') + '</optgroup>';
-  }
-  if (!volt) return '';
+  const ligak = FunTasy.LIGAK.filter(l =>
+    mind.some(be => be.liga === l.id && atmegy(be, ['liga', 'ki'])));
+  const nep = emberek(mind, ['liga', 'ki']);
+  if (!nep.length) return '';
   const szur = SZURO.liga !== 'mind' || SZURO.ki !== 'mind';
+  // Egyetlen liga mellett a liga-csoport ures valasztas volna: a lapon
+  // ugyis csak az az egy van.
+  const ligacsoport = ligak.length < 2 ? '' :
+    `<optgroup label="Liga">` + ligak.map(l =>
+      opcio('liga:' + l.id, `${l.nev} — mind`,
+            SZURO.liga === l.id && SZURO.ki === 'mind')).join('') + '</optgroup>';
   return `<select class="magszuro${szur ? ' on' : ''}" data-szuro="ligaki" ` +
          `aria-label="Liga vagy szakvezető">` +
-         opcio('mind', 'Liga vagy szakvezető', !szur) + h + '</select>';
+         opcio('mind', 'Liga vagy szakvezető', !szur) + ligacsoport +
+         '<optgroup label="Szakvezető">' +
+         nep.map(([k, f]) => opcio(k, f, SZURO.ki === k)).join('') +
+         '</optgroup></select>';
 }
 
 function szuroRajz(mind){
@@ -175,11 +194,8 @@ function szuroRajz(mind){
   let h = '';
   // Kozos kiadas: egy vezerlo a ligara ES a szakvezetore. Liga-uzemmodban
   // nincs mit osszekotni, ott a szakvezeto all onmagaban.
-  h += LIGAOBJ
-    ? gombsor('ki', 'Szakvezető',
-        egyedi('ki', b => [b.hazai, b.vendeg]).sort((a, b) => a.localeCompare(b, 'hu'))
-          .map(n => [n, n]))
-    : ligaEsKi(mind);
+  h += LIGAOBJ ? gombsor('ki', 'Szakvezető', emberek(mind, 'ki'))
+               : ligaEsKi(mind);
   h += gombsor('fordulo', 'Forduló',
     egyedi('fordulo', b => String(b.fordulo)).sort((a, b) => b - a)
       .map(r => [r, r + '.']));
@@ -254,9 +270,15 @@ document.addEventListener('click', e => {
 
 Promise.all([opcional('../articles.json'),
              FunTasy.articleDraftMode() ? opcional('../articles-draft.json') : null,
-             opcional('../results.json'), opcional('../draft_history.json')])
-  .then(([kint, vazlat, res, hist]) => {
+             opcional('../results.json'), opcional('../draft_history.json'),
+             // Csak a kozos kiadasnak kell: ebbol derul ki, melyik csapatnev
+             // melyik azonositohoz tartozik, vagyis kit kell egy emberkent
+             // mutatni a ket ligabol. A liga sajat ujsagjaban nincs mit
+             // osszekotni, ott ez a keres el is marad.
+             LIGAOBJ ? null : opcional('../draft.json')])
+  .then(([kint, vazlat, res, hist, draft]) => {
     zarasBetolt(res, hist);
+    SZEMELY = FunTasy.szemelyTar(draft && draft.entries);
     CIKKEK = FunTasy.mergeArticles(kint, vazlat) || { leagues: {} };
     rajzol();
   })

@@ -64,6 +64,52 @@
     return null;
   }
 
+  /* ===== SZEMELYEK - ugyanaz az ember ket liganeven =====
+     A ket liga mas neven ismeri ugyanazt az embert: az NB1-ben becenev
+     (MLSZ-felhasznalonev), a PL-ben csapatnev. Ahol a ket liga egy lapon
+     talalkozik, ez ketszer kinalta oket, ket kulon szakvezetokent - pedig
+     egy ember. Itt all EGY helyen, ki kicsoda.
+
+     A PL oldalt AZONOSITO koti be (league_entry "id", NEM az FPL
+     "entry_id"): a csapatnevet a tulajdonos barmikor atirhatja, az
+     azonosito marad - a nevet a draft.json entries listajabol olvassuk
+     hozza. Aki csak az egyik ligaban jatszik, annak nincs sora: o egy
+     neven szerepel, osszekotni nincs mivel. */
+  var SZEMELYEK = [
+    { nb1: 'Ádám',   pl: 254960 },
+    { nb1: 'Bazsa',  pl: 267607 },
+    { nb1: 'Bence',  pl: 254810 },
+    { nb1: 'Csendi', pl: 267857 },
+    { nb1: 'Csongi', pl: 277905 },
+    { nb1: 'Katyul', pl: 267429 },
+    { nb1: 'Vince',  pl: 268988 }
+  ];
+
+  /* Nevrol emberre. A `plNevek` a draft.json `entries` tombje ({id, name});
+     nelkule - vagy amig meg nem jott - mindenki a sajat neven marad, a lap
+     ettol mukodik, csak nem vonja ossze a ket ligat.
+     A visszaadott fuggveny minden nevre ad embert: akit nem ismerunk, az
+     onmaga, a sajat neven. A `kulcs` az azonossag: ket nev akkor ugyanaz az
+     ember, ha a kulcsuk egyezik. */
+  function szemelyTar(plNevek) {
+    var idNev = {}, nevhez = {};
+    (plNevek || []).forEach(function (e) {
+      if (e && e.id != null && e.name) idNev[e.id] = e.name;
+    });
+    SZEMELYEK.forEach(function (sz) {
+      var plNev = idNev[sz.pl];
+      if (!plNev) return;
+      var ember = { kulcs: 'sz' + sz.pl, nevek: [sz.nb1, plNev],
+                    felirat: sz.nb1 + ' · ' + plNev };
+      nevhez[sz.nb1] = ember;
+      nevhez[plNev] = ember;
+    });
+    return function (nev) {
+      return nevhez[nev] ||
+             { kulcs: 'n:' + nev, nevek: [nev], felirat: String(nev) };
+    };
+  }
+
   // Az ujsag neve es mottoja EGY helyen all: a fejlecben, a felso savban es
   // a lablecben ugyanaz a szo kell hogy alljon.
   var UJSAG_NEV = 'Nemzethy Sport';
@@ -2194,6 +2240,7 @@
   global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played,
                      accToggle: accToggle, accTable: accTable, accOrzo: accOrzo,
                      LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
+                     SZEMELYEK: SZEMELYEK, szemelyTar: szemelyTar,
                      lablecHTML: lablecHTML, renderLablec: renderLablec,
                      bontasMeccsSor: bontasMeccsSor,
                      zarasLista: zarasLista, verzioOr: verzioOr,
