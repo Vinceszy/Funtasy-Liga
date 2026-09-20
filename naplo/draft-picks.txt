@@ -2,3 +2,41 @@ A Draft-liga sajat draftjarol es tranzakcioirol szolo meres.
 A fajlt a naplo/draft-picks-probe.py irja. Nevet NEM tarol:
 csak alakot, darabszamot es azonosito-illeszkedest.
 Meg nem futott meres.
+
+======================================================================
+PROBE: 2026-09-20 16:59 UTC | draft choices / transactions (liga 48093)
+  sajat azonositoink: 10 csapat, 187 jatekos
+
+--- choices ---
+  draft/48093/choices: HTTP 200, 84 kb, 438 ms
+  felso kulcsok: choices, element_status, idle
+  'choices' lista: 150 elem
+  elem-kulcsok: choice_time, draft, element, entry, entry_name, id, index, league, pick, player_first_name, player_last_name, round, seconds_to_pick, was_auto
+  element  mezo: 150 ertek, ebbol a sajat jatekos-azonositoinkkal egyezik: 148
+  entry    mezo: 150 ertek, ebbol a sajat csapat-azonositoinkkal egyezik: 0
+
+--- transactions ---
+  draft/48093/transactions: HTTP 404, 0 kb, 183 ms
+  valasz: 
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Not Found</title>
+</head>
+<body>
+  <h1>Not Found</h1><p>The requested resource was not found on this server.</
+
+--- trades ---
+  draft/48093/trades: HTTP 404, 0 kb, 210 ms
+  valasz: 
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Not Found</title>
+</head>
+<body>
+  <h1>Not Found</h1><p>The requested resource was not found on this server.</
+
+--- league details (mar hasznaljuk) ---
+  league/48093/details: HTTP 200, 40 kb, 78 ms
+  felso kulcsok: league, league_entries, matches, standings
