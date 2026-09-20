@@ -108,6 +108,54 @@ def liga_meres(nev, slug, sorok):
     sorok.append("  elofordulo tipusok: %s" % ", ".join(tipusok))
 
 
+# --- masodik kulcs nelkuli forras (thesportsdb, nyilvanos teszt-kulccsal) ---
+TSDB = "https://www.thesportsdb.com/api/v1/json/123"
+
+
+def tsdb_meres(sorok):
+    for orszag, nev in (("England", "angol elso osztaly"),
+                        ("Hungary", "magyar elso osztaly")):
+        sorok.append("")
+        sorok.append("--- %s (thesportsdb, %s) ---" % (nev, orszag))
+        j, kod, ms = json_kerd("%s/search_all_leagues.php?c=%s&s=Soccer" % (TSDB, orszag))
+        if j is None:
+            sorok.append("  liga-kereses: HTTP %s (%d ms)" % (kod, ms))
+            continue
+        ligak = [x for x in (j.get("countries") or []) if x.get("idLeague")]
+        if not ligak:
+            sorok.append("  nincs liga ehhez az orszaghoz")
+            continue
+        # az elso osztalyt a nev alapjan valasztjuk, kulonben az elso talalat
+        elso = next((x for x in ligak if "Premier" in (x.get("strLeague") or "")
+                     or "NB I" in (x.get("strLeague") or "")), ligak[0])
+        lid, lnev = elso["idLeague"], elso.get("strLeague")
+        sorok.append("  liga: %s (id=%s) | osszes talalat: %d" % (lnev, lid, len(ligak)))
+        j2, kod2, _ = json_kerd("%s/eventspastleague.php?id=%s" % (TSDB, lid))
+        ese = (j2 or {}).get("events") or []
+        if not ese:
+            sorok.append("  eventspastleague: HTTP %s, nincs lezajlott meccs" % kod2)
+            continue
+        e = ese[0]
+        sorok.append("  utolso meccs: %s (%s), id=%s"
+                     % (e.get("strEvent"), e.get("dateEvent"), e.get("idEvent")))
+        j3, kod3, _ = json_kerd("%s/lookuptimeline.php?id=%s" % (TSDB, e.get("idEvent")))
+        tl = (j3 or {}).get("timeline")
+        if not tl:
+            sorok.append("  lookuptimeline: HTTP %s, ures idovonal"
+                         " - ez a forras erre a ligara nem ad golpercet" % kod3)
+            continue
+        sorok.append("  idovonal: %d elem | mezok: %s"
+                     % (len(tl), ", ".join(sorted(tl[0].keys()))))
+        for x in tl[:10]:
+            sorok.append("    %3s' | %-14s | %-16s | %s"
+                         % (x.get("intTime"), x.get("strTimeline"),
+                            x.get("strTimelineDetail"), x.get("strPlayer")))
+        sorok.append("  elofordulo tipusok: %s"
+                     % ", ".join(sorted({str(x.get("strTimeline")) for x in tl})))
+        sorok.append("  elofordulo reszletessegek: %s"
+                     % ", ".join(sorted({str(x.get("strTimelineDetail")) for x in tl})))
+
+
 # --- kulcsos forras (api-football): csak ha a titok be van allitva ---
 AF_ALAP = "https://v3.football.api-sports.io"
 AF_LIGAK = [("angol elso osztaly", 39), ("magyar elso osztaly", 271)]
@@ -170,6 +218,9 @@ def main():
     sorok.append("### kulcs nelkuli forras (ESPN)")
     for nev, slug in LIGAK:
         liga_meres(nev, slug, sorok)
+    sorok.append("")
+    sorok.append("### masodik kulcs nelkuli forras (thesportsdb)")
+    tsdb_meres(sorok)
     sorok.append("")
     sorok.append("### kulcsos forras (api-football)")
     af_meres(sorok)
