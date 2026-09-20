@@ -24,8 +24,9 @@ import urllib.robotparser
 UGYNOK = "FunTasy-meres (github.com/Vinceszy/Funtasy-Liga)"
 HOSZT = "https://www.nemzetisport.hu"
 UTAK = ["/", "/foci-nb-i", "/rss", "/rss.xml", "/feed", "/feed/", "/hirek"]
-CSATORNAK = ["/rss", "/rss.xml", "/rss/", "/feed", "/feed/", "/atom.xml",
-             "/rss/foci-nb-i", "/foci-nb-i/rss"]
+CSATORNAK = ["/publicapi/hu/rss/", "/publicapi/hu/rss/index",
+             "/publicapi/hu/rss/all", "/publicapi/hu/rss/labdarugas",
+             "/publicapi/hu/rss/foci-nb-i", "/rss", "/rss.xml", "/feed"]
 NAPLO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "beszamolo-forras.txt")
 
 
@@ -49,12 +50,42 @@ def main():
     sorok.append("")
     sorok.append("--- robots.txt (HTTP %s, %d ms) ---" % (kod, ms))
     if kod == 200:
+        # URES SOROKKAL EGYUTT irjuk ki: a csoportokat azok valasztjak el, es
+        # eppen ezen mult a korabbi teves verdikt.
         for sor in torzs.splitlines():
-            if sor.strip():
-                sorok.append("  | " + sor.rstrip()[:110])
+            sorok.append("  | " + sor.rstrip()[:110])
     else:
         sorok.append("  nem olvashato - ilyenkor a korabbi 'tiltja' verdikt"
                      " NEM a site dontese volt, hanem olvasasi hiba")
+
+    def sajat_dontes(txt, ut):
+        """A `*` csoport szabalyai alapjan dont, csoporthatart is tartva.
+
+        A konyvtar a csoportokat osszevonta, amikor a fajlban nem volt ures
+        sor a kettö kozott, es igy egy MASIK ugynoknek szolo `Disallow: /`
+        rank is ervenyesnek latszott. A leghosszabb illeszkedo szabaly nyer,
+        egyezo hossznal az Allow."""
+        aktiv, szabalyok, ugynokok = False, [], []
+        for sor in txt.splitlines():
+            t = sor.split("#", 1)[0].strip()
+            if not t:
+                ugynokok = []
+                continue
+            if ":" not in t:
+                continue
+            kulcs, ertek = (x.strip() for x in t.split(":", 1))
+            k = kulcs.lower()
+            if k == "user-agent":
+                ugynokok.append(ertek)
+                aktiv = "*" in ugynokok
+            elif k in ("allow", "disallow") and aktiv and ertek:
+                szabalyok.append((k == "allow", ertek))
+        legjobb = None
+        for enged, minta in szabalyok:
+            if ut.startswith(minta) and (legjobb is None or len(minta) > len(legjobb[1])
+                                         or (len(minta) == len(legjobb[1]) and enged)):
+                legjobb = (enged, minta)
+        return (True, "nincs ra szabaly") if legjobb is None else (legjobb[0], legjobb[1])
 
     rp = urllib.robotparser.RobotFileParser()
     rp.set_url(HOSZT + "/robots.txt")
@@ -69,15 +100,19 @@ def main():
         sorok.append("  a robots.txt nem volt beolvashato a konyvtarral")
     else:
         for ut in UTAK:
-            sorok.append("  %-16s %s" % (ut, "ENGEDI" if rp.can_fetch(UGYNOK, HOSZT + ut)
-                                         else "tiltja"))
+            konyvtar = rp.can_fetch(UGYNOK, HOSZT + ut)
+            enged, mi = sajat_dontes(torzs, ut)
+            sorok.append("  %-18s sajat: %-6s (%s) | konyvtar: %s"
+                         % (ut, "ENGEDI" if enged else "tiltja", mi,
+                            "engedi" if konyvtar else "tiltja"))
 
     sorok.append("")
     sorok.append("--- hircsatorna keresese ---")
     talalt = []
     for ut in CSATORNAK:
-        if olvasva and not rp.can_fetch(UGYNOK, HOSZT + ut):
-            sorok.append("  %-18s robots tiltja, nem kerjuk le" % ut)
+        enged, mi = sajat_dontes(torzs, ut)
+        if not enged:
+            sorok.append("  %-26s a robots tiltja (%s), nem kerjuk le" % (ut, mi))
             continue
         kod, torzs, ms = kerd(HOSZT + ut, {"User-Agent": UGYNOK,
                                            "Accept": "application/rss+xml, application/xml"})
@@ -89,7 +124,7 @@ def main():
                 talalt.append(ut)
             else:
                 jel = " | nem XML (valoszinuleg HTML-oldal)"
-        sorok.append("  %-18s HTTP %s (%d ms)%s" % (ut, kod, ms, jel))
+        sorok.append("  %-26s HTTP %s (%d ms)%s" % (ut, kod, ms, jel))
     sorok.append("")
     sorok.append("  hasznalhato csatorna: %s" % (", ".join(talalt) if talalt else "nincs"))
 
