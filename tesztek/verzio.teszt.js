@@ -13,6 +13,12 @@ const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
 //   V2: ujabb verzio  -> EGYSZER ujratolt
 //   V3: ha az ujratoltes utan is regi marad, TOBBSZOR NEM probalja - inkabb
 //       csendben marad, mint hogy oda-vissza toltson (hurok-vedelem)
+//
+// A HURKOT VEDO SZABALY MELLEKHATASA: a `location.reload()` a HTTP-
+// gyorsitotarat nem keruli meg, tehat a lap ugyanazt a regi HTML-t kaphatja
+// vissza - es akkor a vedelem miatt ott is ragad. Ezert az ujratoltes elott
+// frissen lehuzzuk a dokumentumot (`cache: 'reload'`); a navigaciok szama
+// ettol nem valtozik, ezt meri a V2 es a V3.
 async function meres(br, v, ut){
   const p = await br.newPage();
   let nav = 0;

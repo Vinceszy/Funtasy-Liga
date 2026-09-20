@@ -2297,7 +2297,16 @@
       var k = 'funtasy-ujratoltes';
       try { if (sessionStorage.getItem(k) === String(j.v)) return;
             sessionStorage.setItem(k, String(j.v)); } catch (e) {}
-      location.reload();
+      // A `location.reload()` a HTTP-gyorsitotarat NEM keruli meg: a lap
+      // ugyanazt a REGI HTML-t kaphatja vissza (a kiszolgalo tiz percre adja
+      // ki), a hurok-vedelem pedig utana mar nem probalkozik - a nezo ott
+      // ragad a regi lapon, es csak kezi frissitessel jut tovabb. Ezert
+      // eloszor FRISSEN lehuzzuk magat a dokumentumot: a `cache: 'reload'`
+      // felulirja a tarolt peldanyt, es az utana kovetkezo toltes mar az ujat
+      // kapja. Ha a lehuzas elhasal, akkor is toltunk - rosszabb nem lesz
+      // tole, mint a regi viselkedes.
+      var ujra = function (){ location.reload(); };
+      fetch(location.href, { cache: 'reload' }).then(ujra, ujra);
     }).catch(function(){});
   }
 
