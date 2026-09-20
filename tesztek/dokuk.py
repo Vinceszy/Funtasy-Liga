@@ -257,9 +257,13 @@ for _fajl in ("articles.json", "articles-draft.json"):
             if "summary" in _fajtak and int(_r) not in (_ZART.get(_liga) or set()):
                 _baj.append("%s: %s %s. osszefoglalo, pedig a fordulo nem vegleges"
                             % (_fajl, _liga, _r))
-            if "preview" in _fajtak and int(_r) != _utolso_liga + 1:
-                _baj.append("%s: %s %s. beharangozo, pedig a soron kovetkezo a %d."
-                            % (_fajl, _liga, _r, _utolso_liga + 1))
+            # Lezart fordulo beharangozoja ARCHIVUM: akkor helyen van, ha az
+            # osszefoglaloja is ott all mellette. Ami hianyzik mellole, az a
+            # rothado beharangozo - az a hiba, amit ez a teszt keres.
+            if "preview" in _fajtak and int(_r) != _utolso_liga + 1 \
+                    and not (int(_r) <= _utolso_liga and "summary" in _fajtak):
+                _baj.append("%s: %s %s. beharangozo osszefoglalo nelkul, pedig a "
+                            "soron kovetkezo a %d." % (_fajl, _liga, _r, _utolso_liga + 1))
 allit(not _baj, "D11: cikk csak lezart adatbol keszult"
       + ("" if not _baj else " - " + "; ".join(_baj)))
 
