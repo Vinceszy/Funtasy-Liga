@@ -38,3 +38,58 @@ MERES: 2026-09-20 07:03 UTC | forras: ESPN (kulcs nelkuli)
   scoreboard 20260907: HTTP 403 (57 ms)
   scoreboard 20260906: HTTP 403 (83 ms)
   NEM talaltam lezajlott meccset 14 napra visszamenoleg - a liga valoszinuleg nincs a forrasban
+
+======================================================================
+MERES: 2026-09-20 07:07 UTC
+
+### kulcs nelkuli forras (ESPN)
+
+--- angol elso osztaly (eng.1) ---
+  scoreboard 20260919: HTTP 403 (60 ms)
+  scoreboard 20260918: HTTP 403 (23 ms)
+  scoreboard 20260917: HTTP 403 (23 ms)
+  scoreboard 20260916: HTTP 403 (23 ms)
+  scoreboard 20260915: HTTP 403 (25 ms)
+  scoreboard 20260914: HTTP 403 (28 ms)
+  scoreboard 20260913: HTTP 403 (36 ms)
+  scoreboard 20260912: HTTP 403 (31 ms)
+  scoreboard 20260911: HTTP 403 (22 ms)
+  scoreboard 20260910: HTTP 403 (22 ms)
+  scoreboard 20260909: HTTP 403 (38 ms)
+  scoreboard 20260908: HTTP 403 (35 ms)
+  scoreboard 20260907: HTTP 403 (22 ms)
+  scoreboard 20260906: HTTP 403 (23 ms)
+  A FORRAS ELUTASIT (HTTP 403) - ez hozzaferes, nem adathiany; errol a ligarol semmit nem allitottunk meg
+
+--- magyar elso osztaly (hun.1) ---
+  scoreboard 20260919: HTTP 403 (21 ms)
+  scoreboard 20260918: HTTP 403 (25 ms)
+  scoreboard 20260917: HTTP 403 (31 ms)
+  scoreboard 20260916: HTTP 403 (17 ms)
+  scoreboard 20260915: HTTP 403 (20 ms)
+  scoreboard 20260914: HTTP 403 (29 ms)
+  scoreboard 20260913: HTTP 403 (24 ms)
+  scoreboard 20260912: HTTP 403 (22 ms)
+  scoreboard 20260911: HTTP 403 (23 ms)
+  scoreboard 20260910: HTTP 403 (123 ms)
+  scoreboard 20260909: HTTP 403 (29 ms)
+  scoreboard 20260908: HTTP 403 (28 ms)
+  scoreboard 20260907: HTTP 403 (22 ms)
+  scoreboard 20260906: HTTP 403 (20 ms)
+  A FORRAS ELUTASIT (HTTP 403) - ez hozzaferes, nem adathiany; errol a ligarol semmit nem allitottunk meg
+
+### masodik kulcs nelkuli forras (thesportsdb)
+
+--- angol elso osztaly (thesportsdb, England) ---
+  liga: English Isthmian League Premier Division (id=4647) | osszes talalat: 5
+  utolso meccs: Maldon and Tiptree vs Carshalton Athletic (2026-09-19), id=2542740
+  lookuptimeline: HTTP 200, ures idovonal - ez a forras erre a ligara nem ad golpercet
+
+--- magyar elso osztaly (thesportsdb, Hungary) ---
+  liga: Hungarian NB I (id=4690) | osszes talalat: 5
+  utolso meccs: Debrecen vs Vasas (2026-09-19), id=2498363
+  lookuptimeline: HTTP 200, ures idovonal - ez a forras erre a ligara nem ad golpercet
+
+### kulcsos forras (api-football)
+
+--- kulcsos forras: KIHAGYVA (nincs APIFOOTBALL_KULCS titok) ---
