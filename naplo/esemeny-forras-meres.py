@@ -170,10 +170,10 @@ AF_LIGAK = [("angol elso osztaly", 39), ("magyar elso osztaly", 271)]
 
 
 def af_meres(sorok):
-    kulcs = os.environ.get("APIFOOTBALL_KULCS") or ""
+    kulcs = os.environ.get("APIFOOTBALL_KEY") or ""
     if not kulcs:
         sorok.append("")
-        sorok.append("--- kulcsos forras: KIHAGYVA (nincs APIFOOTBALL_KULCS titok) ---")
+        sorok.append("--- kulcsos forras: KIHAGYVA (nincs APIFOOTBALL_KEY titok) ---")
         return
     fej = {"x-apisports-key": kulcs, "Accept": "application/json"}
     evad = time.gmtime().tm_year - (1 if time.gmtime().tm_mon < 7 else 0)

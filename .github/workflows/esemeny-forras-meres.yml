@@ -29,4 +29,4 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           # Ha be van allitva, a meres a kulcsos forrast is kiprobalja.
           # Nelkule azt a reszt kihagyja - a workflow igy is lefut.
-          APIFOOTBALL_KULCS: "${{ secrets.APIFOOTBALL_KULCS }}"
+          APIFOOTBALL_KEY: "${{ secrets.APIFOOTBALL_KEY }}"
