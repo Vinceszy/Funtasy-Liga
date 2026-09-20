@@ -25,7 +25,7 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     p.on('pageerror', e => hibak.push(cimke + ': ' + e.message));
     for (const m of ['**mlsz.hu/**', '**corsproxy.io/**', '**allorigins**'])
       await p.route(m, r => r.abort());
-    await p.goto(BASE + 'nb1/?draft=1');
+    await p.goto(BASE + 'nb1/');
     await p.waitForSelector('#table tr');
     // the strip only renders once articles.json is in - the page loads it
     // beside everything else, so wait for it rather than for a timer
@@ -82,7 +82,7 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
 
     // the text is the file's text, paragraph for paragraph
     const egyezik = await p.evaluate(async ([a, b, r]) => {
-      const j = await (await fetch('../articles-draft.json')).json();
+      const j = await (await fetch('../articles.json')).json();
       const c = j.leagues.nb1[r].summary[a + '|' + b];
       const pk = [...document.querySelectorAll('#mBody .artstripbody p')].map(x => x.textContent);
       return { db: pk.length, vart: c.text.length,
@@ -130,12 +130,12 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     await p.route(m, r => r.abort());
   // a round the collector has not archived: there is no squad file for it
   await p.route('**/keretek/*.json*', r => r.fulfill({ status: 404, body: '' }));
-  await p.goto(BASE + 'nb1/?draft=1');
+  await p.goto(BASE + 'nb1/');
   await p.waitForSelector('#table tr');
   await p.waitForFunction(() => typeof ARTICLES !== 'undefined' && ARTICLES !== null,
                           null, { timeout: 20000 });
   const [bh, bv] = await p.evaluate(async () => {
-    const j = await (await fetch('../articles-draft.json')).json();
+    const j = await (await fetch('../articles.json')).json();
     return Object.keys(j.leagues.nb1['9'].preview)[0].split('|');
   });
   cim('BEHARANGOZÓ (nincs még keret)');
@@ -273,43 +273,44 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     await g.close();
   }
 
-  // ---- A LENYEG: ?draft=1 NELKUL a nezo SEMMIT nem lat ----
-  // A meg nem publikalt szoveg kulon fajlban all, amit a lap alapbol le sem
-  // ker. Ez a blokk minden olyan meccset megnyit, amihez van vazlat-szoveg,
-  // es azt allitja, hogy nyoma sincs a savnak.
-  const VAZLAT = require('path').join(__dirname, '..', 'articles-draft.json');
-  const vaz = JSON.parse(require('fs').readFileSync(VAZLAT, 'utf8'));
-  for (const [lg, ut] of [['nb1', 'nb1/'], ['pl', 'pl/']]) {
+  // ---- A vazlat-fajl: ?draft=1 NELKUL a lap le sem keri ----
+  // A meg nem publikalt szoveg kulon fajlban all. Az allitas nem fugghet
+  // attol, hogy epp van-e benne valami: a merest sajat, HAMIS vazlat-fajllal
+  // vegezzuk, olyan meccsre, amirol a kint levo fajlban nincs szo.
+  const VR = 6, VH = 'Bazsa', VV = 'Sámsi';        // lezart fordulo, nincs rola cikk
+  for (const [mod, cimke, varunk] of [['nb1/', 'VÁZLAT-FÁJL — zárva', false],
+                                      ['nb1/?draft=1', 'VÁZLAT-FÁJL — ?draft=1', true]]) {
     const g = await br.newPage({ viewport: { width: 1000, height: 900 } });
-    g.on('pageerror', e => hibak.push('ZART ' + lg + ': ' + e.message));
-    for (const m of ['**mlsz.hu/**', '**premierleague.com/**',
-                     '**corsproxy.io/**', '**allorigins**'])
+    g.on('pageerror', e => hibak.push(cimke + ': ' + e.message));
+    for (const m of ['**mlsz.hu/**', '**corsproxy.io/**', '**allorigins**'])
       await g.route(m, r => r.abort());
-    await g.goto(BASE + ut);
+    let kertek = 0;
+    await g.route('**/articles-draft.json*', r => {
+      kertek++;
+      return r.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ updated: null, leagues: { nb1: { [VR]: { summary: {
+          [VH + '|' + VV]: { text: ['Vazlat bekezdes.'], short: 'Vazlat.',
+                             source: 'manual' } } } } } }) });
+    });
+    await g.goto(BASE + mod);
     await g.waitForSelector('#table tr');
     await g.waitForFunction(() => typeof ARTICLES !== 'undefined' && ARTICLES !== null,
                             null, { timeout: 20000 });
-    cim('NINCS KINT — ' + lg);
-    jo(await g.evaluate(() => Object.keys(ARTICLES.leagues || {}).length === 0),
-       `${lg}: a kint lévő tároló üres — a lap nem is kérte le a vázlatot`);
-    let nyitott = 0;
-    for (const [r, kinds] of Object.entries(vaz.leagues[lg] || {}))
-      for (const parok of Object.values(kinds))
-        for (const par of Object.keys(parok)) {
-          const [a, b] = par.split('|');
-          await g.evaluate(async ([lg, a, b, r]) => {
-            if (lg === 'nb1') return showMatchRound(a, b, +r);
-            const id = n => +Object.keys(ENTRIES).find(k => nev(k) === n);
-            return showMatch(id(a), id(b), +r, 'root');
-          }, [lg, a, b, r]);
-          await g.waitForTimeout(120);
-          nyitott++;
-          if (await g.locator('#mBody .artstrip').count() !== 0)
-            jo(false, `${lg} ${r}. ${par}: KINT VAN, pedig csak vázlat`);
-        }
-    jo(nyitott > 0, `${lg}: ${nyitott} vázlatos meccset néztünk végig`);
-    jo(await g.locator('.artstrip').count() === 0,
-       `${lg}: egyetlen sáv sincs sehol a lapon ?draft=1 nélkül`);
+    cim(cimke);
+    jo(kertek === (varunk ? 1 : 0),
+       `a lap ${varunk ? 'lekéri' : 'LE SEM KÉRI'} a vázlat-fájlt (${kertek} kérés)`);
+    await g.evaluate(([a, b, r]) => showMatchRound(a, b, r), [VH, VV, VR]);
+    await g.waitForSelector('#mBody .plr', { timeout: 20000 });
+    const van = await g.locator('#mBody .artstrip').count() > 0;
+    jo(van === varunk, `a vázlatos meccsen ${varunk ? 'ott a sáv' : 'NINCS sáv'}`);
+    if (varunk)
+      jo(await g.evaluate(() => document.querySelector('#mBody .artstripbody p').textContent)
+           === 'Vazlat bekezdes.', 'a vázlat szövege jön elő');
+    // a kint lévő cikk ettől függetlenül látszik: a vázlat ráolvad, nem kicseréli
+    await g.evaluate(() => showMatchRound('Bence', 'Csendi', 7));
+    await g.waitForSelector('#mBody .plr', { timeout: 20000 });
+    jo(await g.locator('#mBody .artstrip').count() === 1,
+       'a publikált cikk mindkét módban ott van');
     await g.close();
   }
 
