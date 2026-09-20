@@ -1,0 +1,42 @@
+name: PL szín-gyűjtés (kézi)
+# Egy PL-fordulo szinezese TENYKENT: a golok perce es modja (fejes, bal/jobb
+# lab, szabadrugas, szoglet), a VAR-pillanatok, a kihagyott nagy helyzetek es a
+# vedesek. A FotMob adja, kulcs nelkul; a sajat fordulonkat az FPL meccslistajan
+# keresztul kotjuk valodi meccsekhez. A fejlesztoi kornyezet halozata minden
+# kulso forrast blokkol, ezert megy Actionsbol. Csak olvas es a naplot irja.
+on:
+  workflow_dispatch:
+    inputs:
+      event:
+        description: 'Melyik FPL-fordulo'
+        required: false
+        default: '4'
+      branch:
+        description: 'Melyik agra irja az eredmenyt'
+        required: false
+        default: 'claude/github-claude-code-integration-x4pk4k'
+permissions: { contents: write }
+jobs:
+  gyujtes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: '${{ github.event.inputs.branch }}' }
+      - env:
+          HARVEST_EVENT: ${{ github.event.inputs.event }}
+          AG: ${{ github.event.inputs.branch }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name  "funtasy-figyelo"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          python3 naplo/pl-colour-harvest.py
+          [ -z "$(git status --porcelain naplo/)" ] && exit 0
+          git add naplo/
+          git commit -q -m "PL szin-gyujtes: ${HARVEST_EVENT}. fordulo"
+          for i in 1 2 3; do
+            git pull -q --rebase origin "$AG" && git push -q origin "HEAD:$AG" && exit 0
+            sleep $((i * 5))
+          done
+          exit 1
