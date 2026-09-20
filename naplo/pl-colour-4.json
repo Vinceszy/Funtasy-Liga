@@ -1,6 +1,6 @@
 {
  "event": "4",
- "keszult": "2026-09-20T15:06:11Z",
+ "keszult": "2026-09-20T15:09:02Z",
  "meccsek": {
   "Aston Villa - Nott'm Forest": {
    "fotmob": "5795446",
@@ -52,6 +52,66 @@
     "1053679": 5
    },
    "loves_db": 29
+  },
+  "Bournemouth - Brentford": {
+   "fotmob": "5795445",
+   "golok": [
+    {
+     "perc": 34,
+     "jatekos": "Kevin Schade",
+     "gólpassz": "assist by Yehor Yarmoliuk",
+     "leiras": "Header",
+     "mód": "Header",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.174
+    },
+    {
+     "perc": 38,
+     "jatekos": "Justin Kluivert",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.114
+    },
+    {
+     "perc": 52,
+     "jatekos": "Marcus Tavernier",
+     "gólpassz": "assist by Evanilson",
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.048
+    },
+    {
+     "perc": 56,
+     "jatekos": "Kevin Schade",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.033
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 7,
+     "jatekos": "António Silva",
+     "xG": 0.328,
+     "mód": "Header",
+     "helyzet": "SetPiece",
+     "kapura": false
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "776689": 8
+   },
+   "loves_db": 28
   },
   "Chelsea - Hull City": {
    "fotmob": "5795447",
