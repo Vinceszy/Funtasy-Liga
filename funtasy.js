@@ -1797,17 +1797,22 @@
     if (!r) return '';
     var lifted = !opts.closed && articleDraftMode();
     var kinds = (opts.closed || lifted) ? ['summary', 'preview'] : ['preview'];
+    // MINDKETTO kint marad a lezart fordulon, az osszefoglalo elol. A
+    // beharangozo nem avul el a lefujassal: az mondja meg, mi volt a kerdes,
+    // az osszefoglalo meg azt, mi lett a valasz - egymas mellett a ketto
+    // tobbet er, mint kulon. Nyitva viszont csak az elso all.
+    var ki = '';
     for (var i = 0; i < kinds.length; i++) {
       var m = r[kinds[i]];
       if (!m) continue;
       var k = m[a + '|' + b] ? a + '|' + b : (m[b + '|' + a] ? b + '|' + a : null);
       if (!k) continue;
       var held = lifted && kinds[i] === 'summary';
-      return articleStrip(m[k], league + '|' + round + '|' + kinds[i] + '|' + k,
-                          ARTICLE_LABEL[kinds[i]] + (held ? ' · vázlat' : ''),
-                          opts.defaultOpen, held);
+      ki += articleStrip(m[k], league + '|' + round + '|' + kinds[i] + '|' + k,
+                         ARTICLE_LABEL[kinds[i]] + (held ? ' · vázlat' : ''),
+                         opts.defaultOpen && !ki, held);
     }
-    return '';
+    return ki;
   }
 
   /* ===== Nezet-verem: egy modal, amiben lapozni lehet =====

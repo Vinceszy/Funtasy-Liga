@@ -205,6 +205,44 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   jo(await q.evaluate(() => document.querySelector('#mBody .artstrip').open),
      'PL: újrarajzolás után is nyitva marad');
 
+  // ---- a lezart fordulon MINDKET szoveg kint marad ----
+  // A lefujas nem avultatja el a beharangozot: az mondja meg, mi volt a kerdes
+  // a meccs elott, az osszefoglalo meg azt, mi lett a valasz - egymas alatt a
+  // ketto tobbet er. A parost a TAROLOBOL keressuk ki, nem beirjuk: igy a
+  // teszt nem avul el azzal, hogy melyik fordulohoz mit irtunk.
+  cim('Lezárt forduló: mindkét szöveg');
+  const mk = await br.newPage({ viewport: { width: 1000, height: 900 } });
+  mk.on('pageerror', e => hibak.push('MINDKETTO: ' + e.message));
+  for (const m of ['**mlsz.hu/**', '**corsproxy.io/**', '**allorigins**'])
+    await mk.route(m, r => r.abort());
+  await mk.goto(BASE + 'nb1/');
+  await mk.waitForFunction(() => typeof ARTICLES !== 'undefined' && ARTICLES !== null,
+                          null, { timeout: 20000 });
+  const par = await mk.evaluate(async () => {
+    const j = await (await fetch('../articles.json')).json();
+    const nb1 = (j.leagues || {}).nb1 || {};
+    for (const r of Object.keys(nb1).sort((a, b) => b - a)) {
+      const k = nb1[r];
+      if (!k.summary || !k.preview) continue;
+      const p = Object.keys(k.summary).find(x => k.preview[x]);
+      if (p) return { r: +r, felek: p.split('|') };
+    }
+    return null;
+  });
+  if (!par) {
+    jo(false, 'nincs olyan forduló, amihez összefoglaló ÉS beharangozó is van');
+  } else {
+    await mk.evaluate(([h, v, r]) => showMatchRound(h, v, r),
+                     [par.felek[0], par.felek[1], par.r]);
+    await mk.waitForSelector('#mBody .artstrip');
+    const cimkek = await mk.$$eval('#mBody .artstriptag', n => n.map(x => x.textContent));
+    jo(JSON.stringify(cimkek) === JSON.stringify(['Összefoglaló', 'Beharangozó']),
+       `a ${par.r}. fordulón mindkettő ott van, az összefoglaló elöl — ` + cimkek.join(', '));
+    jo(await mk.$$eval('#mBody .artstrip', n => n.filter(x => x.open).length) === 0,
+       'és mindkettő csukva jön, nem tolja el a kereteket');
+  }
+  await mk.close();
+
   // ---- a ZARAS-KAPU: le nem zart fordulo osszefoglaloja nem latszik ----
   // Amig a fordulo nem vegleges, a pontok meg elmozdulhatnak (NB1: meccs
   // utani igazitasok, Draft: kulon veglegesites), tehat egy "X nyert
@@ -229,8 +267,13 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     // amikor a fordulo-adat meg nincs meg. Igy a kereses ures allapotban
     // futott le, es a teszt "nincs ilyen fordulo"-val bukott - felrevezetoen,
     // mert nem a kapuval volt baj.
-    await g.waitForFunction(nb1 => nb1 ? (typeof LIVE !== 'undefined'
-                                          && Object.keys(LIVE).length > 0)
+    //
+    // Az NB1-en a MENETRENDRE varunk, nem az elo fordulora: a kapu barmelyik
+    // le nem zart fordulon vizsgalhato, es ELO FORDULO NINCS MINDIG. Amikor a
+    // bajnokseg szunetel, a LIVE ures marad, es a teszt ettol allt meg -
+    // holott a vizsgalt viselkedessel semmi baj nem volt.
+    await g.waitForFunction(nb1 => nb1 ? (typeof SCHEDULE !== 'undefined'
+                                          && Object.keys(SCHEDULE).length > 0)
                                        : (typeof HIST !== 'undefined'
                                           && Object.keys(HIST).length > 0),
                             nb1, { timeout: 20000 });
@@ -243,10 +286,11 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
         preview: { [h + '|' + v]: { text: ['Beharangozo bekezdes.'],
                                     short: 'Beharangozo.', source: 'manual' } } } } } });
       if (nb1) {
-        // a provisional fordulo a LIVE-ba kerul (nb1/index.html boot)
-        const r = Object.keys(LIVE).map(Number).find(x => (LIVE[x] || []).some(Boolean));
+        // a legkozelebbi MEG NEM LEZART fordulo - fut vagy csak ezutan jon
+        const r = Object.keys(SCHEDULE).map(Number).sort((a, b) => a - b)
+                    .find(x => !roundClosed(x) && (SCHEDULE[x] || []).length);
         if (!r) return null;
-        const [h, v] = LIVE[r].find(Boolean);
+        const [h, v] = SCHEDULE[r][0];
         ARTICLES = tarol('nb1', r, h, v);
         await showMatchRound(h, v, r);
         return { r, zart: roundClosed(r) };
