@@ -1,0 +1,350 @@
+{
+ "fordulo": 8,
+ "liga": "nb1",
+ "forras": "nemzetisport.hu meccsbeszamolok (naplo/nso-content-probe.py, futasi naplo)",
+ "meccsek": {
+  "PAFC 3-1 HONVÉD": {
+   "helyszin": "Felcsút, Pancho Aréna",
+   "nezo": 1964,
+   "jatekvezeto": "Rúsz Márton",
+   "golok": [
+    {
+     "perc": 16,
+     "ki": "Németh András"
+    },
+    {
+     "perc": 24,
+     "ki": "Orján"
+    },
+    {
+     "perc": 66,
+     "ki": "Dárdai P."
+    },
+    {
+     "perc": 38,
+     "ki": "Kállai",
+     "csapat": "HONVÉD"
+    }
+   ]
+  },
+  "VÁRDA 0-1 PAKS": {
+   "helyszin": "Kisvárda, Városi Stadion",
+   "nezo": 1683,
+   "golok": [
+    {
+     "perc": 71,
+     "ki": "Lenzsér Bence"
+    }
+   ]
+  },
+  "DVSC 2-4 VASAS": {
+   "helyszin": "Debrecen, Nagyerdei Stadion",
+   "nezo": 6694,
+   "golok": [
+    {
+     "perc": 4,
+     "ki": "Szendrei Ákos"
+    },
+    {
+     "perc": 10,
+     "ki": "Batik Bence"
+    },
+    {
+     "perc": 45,
+     "ki": "Koszta"
+    },
+    {
+     "perc": 61,
+     "ki": "Pávkovics Bence Gábor"
+    },
+    {
+     "perc": "90+1",
+     "ki": "Pethő"
+    },
+    {
+     "perc": "90+8",
+     "ki": "Tóth Milán László"
+    }
+   ]
+  },
+  "ÚJPEST 2-1 ZTE": {
+   "helyszin": "Budapest, Szusza Ferenc Stadion",
+   "nezo": 5541,
+   "golok": [
+    {
+     "perc": 30,
+     "ki": "Krevszun",
+     "csapat": "ZTE"
+    },
+    {
+     "perc": 75,
+     "ki": "Krajcsovics Ábel György"
+    },
+    {
+     "perc": 90,
+     "ki": "Matko Aljoša"
+    }
+   ]
+  },
+  "MTK 1-2 ETO": {
+   "helyszin": "Budapest, Új Hidegkuti Nándor Stadion",
+   "nezo": 3085,
+   "golok": [
+    {
+     "perc": 53,
+     "ki": "Szép Márton"
+    },
+    {
+     "perc": 64,
+     "ki": "Bognár István",
+     "csapat": "MTK"
+    },
+    {
+     "perc": 83,
+     "ki": "Agba"
+    }
+   ]
+  },
+  "NYÍREGY 1-1 FTC": {
+   "helyszin": "Nyíregyháza, Városi Stadion",
+   "nezo": 7168,
+   "golok": [
+    {
+     "perc": 7,
+     "ki": "Hős"
+    },
+    {
+     "perc": 60,
+     "ki": "M. Gómez",
+     "csapat": "FTC"
+    }
+   ]
+  }
+ },
+ "allitasok": [
+  {
+   "jatekos": "Németh András",
+   "perc": 16,
+   "tag": "goal_manner",
+   "mondat": "fejesével jutott vezetéshez a Puskás Akadémia",
+   "horgony": "event",
+   "meccs": "PAFC 3-1 HONVÉD"
+  },
+  {
+   "jatekos": "Kern Martin",
+   "perc": null,
+   "tag": "assist",
+   "mondat": "gólpassz a felcsúti gólok egyikénél",
+   "horgony": "event",
+   "meccs": "PAFC 3-1 HONVÉD"
+  },
+  {
+   "jatekos": "Lehoczki Bendegúz",
+   "perc": null,
+   "tag": "keeper_save",
+   "mondat": "négy védés, egy kapott gól",
+   "horgony": "event",
+   "meccs": "PAFC 3-1 HONVÉD"
+  },
+  {
+   "jatekos": "Szalai József",
+   "perc": null,
+   "tag": "big_miss",
+   "mondat": "kilépett, de a húszéves kapus messzire kifutva kiterelte a veszélyes zónából",
+   "horgony": "article_only",
+   "meccs": "VÁRDA 0-1 PAKS"
+  },
+  {
+   "jatekos": "Szalai József",
+   "perc": null,
+   "tag": "milestone",
+   "mondat": "a válogatott keretbe bekerülő csatár",
+   "horgony": "article_only",
+   "meccs": "VÁRDA 0-1 PAKS"
+  },
+  {
+   "jatekos": "Pető Milán",
+   "perc": null,
+   "tag": "keeper_save",
+   "mondat": "a gólszerzésért ő tette a legtöbbet, de a lövése után Popovics megóvta a kapuját",
+   "horgony": "article_only",
+   "meccs": "VÁRDA 0-1 PAKS"
+  },
+  {
+   "jatekos": "Lenzsér Bence",
+   "perc": 71,
+   "tag": "milestone",
+   "mondat": "védő szerezte a győztes gólt, holott gólkirály és gólkirályjelölt is volt a pályán",
+   "horgony": "article_only",
+   "meccs": "VÁRDA 0-1 PAKS"
+  },
+  {
+   "jatekos": "Plamenov Andreev Plamen",
+   "perc": null,
+   "tag": "match_picture",
+   "mondat": "a Debrecen tíz perc alatt kétgólos előnyben volt, a végén 2-4",
+   "horgony": "event",
+   "meccs": "DVSC 2-4 VASAS"
+  },
+  {
+   "jatekos": "Pávkovics Bence Gábor",
+   "perc": 61,
+   "tag": "goal",
+   "mondat": "a Vasas fordító gólja",
+   "horgony": "event",
+   "meccs": "DVSC 2-4 VASAS"
+  },
+  {
+   "jatekos": "Tóth Milán László",
+   "perc": "90+8",
+   "tag": "goal",
+   "mondat": "a negyedik vasas gól a hosszabbítás nyolcadik percében",
+   "horgony": "event",
+   "meccs": "DVSC 2-4 VASAS"
+  },
+  {
+   "jatekos": "Csóka Dániel",
+   "perc": 21,
+   "tag": "card",
+   "mondat": "sárga lap",
+   "horgony": "event",
+   "meccs": "DVSC 2-4 VASAS"
+  },
+  {
+   "jatekos": "Rab Boldizsár",
+   "perc": 56,
+   "tag": "sub",
+   "mondat": "csereként állt be",
+   "horgony": "event",
+   "meccs": "DVSC 2-4 VASAS"
+  },
+  {
+   "jatekos": "Krajcsovics Ábel György",
+   "perc": 75,
+   "tag": "goal",
+   "mondat": "a szünetben állt be, és megszerezte az egyenlítő gólt",
+   "horgony": "event",
+   "meccs": "ÚJPEST 2-1 ZTE"
+  },
+  {
+   "jatekos": "Matko Aljoša",
+   "perc": 90,
+   "tag": "goal",
+   "mondat": "a kilencvenedik percben szerezte a győztes gólt",
+   "horgony": "event",
+   "meccs": "ÚJPEST 2-1 ZTE"
+  },
+  {
+   "jatekos": "Amenyido Etienne",
+   "perc": 72,
+   "tag": "sub",
+   "mondat": "a hetvenkettedik percben lecserélték",
+   "horgony": "event",
+   "meccs": "ÚJPEST 2-1 ZTE"
+  },
+  {
+   "jatekos": "Ljujić Matija",
+   "perc": 25,
+   "tag": "match_picture",
+   "mondat": "a tankönyvekbe illő újpesti akció közepe, Gundel-Takács bravúrral védett",
+   "horgony": "article_only",
+   "meccs": "ÚJPEST 2-1 ZTE"
+  },
+  {
+   "jatekos": "Szendrei Norbert",
+   "perc": 25,
+   "tag": "big_miss",
+   "mondat": "a káprázatos támadás végén elé tálalták, a kapus bravúrral védett",
+   "horgony": "article_only",
+   "meccs": "ÚJPEST 2-1 ZTE"
+  },
+  {
+   "jatekos": null,
+   "perc": null,
+   "tag": "match_picture",
+   "mondat": "hétszer érintette a labda a kapufát",
+   "horgony": "article_only",
+   "meccs": "MTK 1-2 ETO"
+  },
+  {
+   "jatekos": "Szép Márton",
+   "perc": 53,
+   "tag": "milestone",
+   "mondat": "első NB I-es találata",
+   "horgony": "article_only",
+   "meccs": "MTK 1-2 ETO"
+  },
+  {
+   "jatekos": "Bognár István",
+   "perc": 64,
+   "tag": "goal",
+   "mondat": "a szünetben állt be, és ő szerezte az MTK gólját",
+   "horgony": "record",
+   "meccs": "MTK 1-2 ETO"
+  },
+  {
+   "jatekos": "Agba",
+   "perc": 83,
+   "tag": "goal_manner",
+   "mondat": "szédületes lövéssel döntötte el a három pont sorsát",
+   "horgony": "article_only",
+   "meccs": "MTK 1-2 ETO"
+  },
+  {
+   "jatekos": "Kerezsi Zalán Márk",
+   "perc": 68,
+   "tag": "sub",
+   "mondat": "a hatvannyolcadik percben lecserélték",
+   "horgony": "event",
+   "meccs": "MTK 1-2 ETO"
+  },
+  {
+   "jatekos": "Bumba Claudiu Vasile",
+   "perc": 45,
+   "tag": "sub",
+   "mondat": "a szünetben lecserélték",
+   "horgony": "event",
+   "meccs": "MTK 1-2 ETO"
+  },
+  {
+   "jatekos": "Đukanović Viktor",
+   "perc": 70,
+   "tag": "sub",
+   "mondat": "a hetvenedik percben cserélte le Gavrić",
+   "horgony": "event",
+   "meccs": "MTK 1-2 ETO"
+  },
+  {
+   "jatekos": "Kovács Milán",
+   "perc": 38,
+   "tag": "card",
+   "mondat": "sárga lap",
+   "horgony": "event",
+   "meccs": "NYÍREGY 1-1 FTC"
+  },
+  {
+   "jatekos": "Kvasina Marko",
+   "perc": 85,
+   "tag": "card",
+   "mondat": "sárga lap",
+   "horgony": "event",
+   "meccs": "NYÍREGY 1-1 FTC"
+  },
+  {
+   "jatekos": "Manner Balázs",
+   "perc": 79,
+   "tag": "sub",
+   "mondat": "a hetvenkilencedik percben lecserélték",
+   "horgony": "event",
+   "meccs": "NYÍREGY 1-1 FTC"
+  },
+  {
+   "jatekos": null,
+   "perc": null,
+   "tag": "history",
+   "mondat": "a Nyíregyháza tizenhét éve nem nyert otthon a Ferencváros ellen",
+   "horgony": "article_only",
+   "meccs": "NYÍREGY 1-1 FTC"
+  }
+ ]
+}

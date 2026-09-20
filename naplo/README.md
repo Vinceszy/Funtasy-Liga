@@ -9,6 +9,12 @@ Minden mérés **egy** munkafolyamattal indul (`.github/workflows/naplo-meres.ym
 a fejlesztői környezet hálózata minden külső forrást blokkol, ezért Actionsből
 futnak. Paramétert a `kornyezet` bemenet ad át (`NÉV=érték` soronként).
 
+A fordulónkénti **kitöltött szín-táblázat** is itt áll (`nb1-colour-<forduló>.json`):
+soronként egy állítás `{játékos, perc, tag, mondat, horgony, meccs}` alakban. Az
+írások ebből készülnek, nem a cikkek szövegéből — így minden mondat visszakereshető,
+és a horgony dönti el, hogy tényként, hivatkozva vagy sehogy nem mondható ki. A
+módszer egy helyen: `round-pipeline.md`.
+
 Itt van két **szabály-dokumentum** is, nem mérés: a `summary-voice.md` (hogyan
 szólhat egy meccsről szóló szöveg) és a `colour-taxonomy.md` (milyen tényt
 nevezünk színnek, és melyik forrásból jöhet). Ezek a Nemzethy Sport írásaira
