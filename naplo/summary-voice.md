@@ -38,6 +38,14 @@ two roles; the Bazsa-Adam piece opens on a list of names who did nothing.
 **Not a match report.** The league is the subject, the football is the setting. A goal in
 the 67th minute matters here because of whose captain scored it.
 
+**Not about anyone else.** The piece belongs to the two managers in the fixture, and no
+third manager's name appears in it - not as a comparison, not as the opponent of a
+result being cited. A reader opening this match has no reason to care what someone in
+another match did. Form and context still belong there, stated without the name: "sorban
+nyeri a szoros meccseket, legutóbb 53,38-49-re" says everything "Vince ellen 53,38-49-re"
+said. League-wide standing is fine the same way - "only three managers have scored more"
+names nobody.
+
 ## Length
 
 Ten to fourteen sentences per head-to-head. Short enough to read on a phone between two
