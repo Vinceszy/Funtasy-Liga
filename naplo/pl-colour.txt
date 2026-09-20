@@ -2,3 +2,55 @@ Premier League szin-forrasok merese.
 A fajlt a naplo/pl-colour-probe.py irja. Cikkszoveget NEM tarol:
 a talalt mondatok csak a futas naplojaban (stdout) latszanak.
 Meg nem futott meres.
+
+======================================================================
+PROBE: 2026-09-20 14:59 UTC | Premier League colour sources
+
+--- fotmob: strukturalt szin prozai forras nelkul ---
+  robots: ENGEDI (nincs ra tilto szabaly)
+  20260919: 185 liga, PL-lezart meccs: True
+  meccs: Tottenham Hotspur - Aston Villa (20260919, id=5795464)
+  matchDetails: HTTP 200, 346 kb, 159 ms
+  content kulcsai: attackingZones, buzz, h2h, hasPlayoff, heatmapUrl, lineup, liveticker, matchFacts, momentum, playerStats, shotmap, stats, superlive, table, weather
+  esemenyek: 24 db, tipusok: AddedTime, Card, Goal, Half, Substitution, VAR
+  GOL-esemeny kulcsai: assistInput, assistKey, assistPlayerId, assistProfileUrl, assistStr, awayScore, eventId, firstName, fullName, goalDescription, goalDescriptionKey, homeScore, isHome, isPenaltyShootoutEvent, lastName, nameStr, newScore, overloadTime, overloadTimeStr, player, playerId, profileUrl, reactKey, shotmapEvent, time, timeStr, type
+  shotmap: 35 loves
+  loves-kulcsok: blockedX, blockedY, eventType, expectedGoals, expectedGoalsOnTarget, firstName, fullName, goalCrossedY, goalCrossedZ, id, isBlocked, isFromInsideBox, isOnTarget, isOwnGoal, isSavedOffLine, keeperId, lastName, min, minAdded, onGoalShot, period, playerId, playerName, shotType, situation, teamColor, teamId, x, y
+    situation : FastBreak, FreeKick, FromCorner, RegularPlay, SetPiece
+    shotType  : Header, LeftFoot, RightFoot
+    eventType : AttemptSaved, Goal, Miss
+    xG>=0.3 de nem gol (kihagyott nagy helyzet): 0
+    kapusvedes-jellegu esemeny: 15
+  liveticker alkulcsai: langs, teams
+  matchFacts alkulcsai: QAData, countryCode, events, highlights, infoBox, insights, matchId, matchInsightsConfig, momentum, playerOfTheMatch, poll, postReview, preReview, teamForm, topPlayers
+
+--- premierleague (pulselive): sajat perces kommentar ---
+  compseasons: HTTP 200 (247 ms)
+  legujabb szezonok: English Premier League Season 2026/2027=841; 2025/26=777; 2024/25=719
+  lezart meccsek: HTTP 200 (343 ms)
+  kapott meccs: 5
+  meccs: Bournemouth - Liverpool (id=128963)
+  textstream /fixtures/128963/textstream/EN: HTTP 200, 17 kb (473 ms)
+    bejegyzes: 102
+    cimkek: {"goal_manner": 26, "disputed": 6, "keeper_save": 4}
+    mondat: 115
+
+--- guardian content api (fejlesztoi kulcs: test) ---
+  robots: ? (robots.txt HTTP 401)
+  kereses (Tottenham Hotspur Aston Villa): HTTP 401, 0 kb (366 ms)
+  valasz: {
+  "message": "Unauthorized"
+}
+
+--- bbc sport ---
+  robots: ENGEDI (nincs ra tilto szabaly)
+  2026-09-19: HTTP 404 (121 ms)
+  2026-09-18: HTTP 404 (118 ms)
+  2026-09-17: HTTP 404 (116 ms)
+  2026-09-16: HTTP 404 (118 ms)
+  2026-09-15: HTTP 404 (131 ms)
+  2026-09-14: HTTP 404 (115 ms)
+  2026-09-13: HTTP 404 (122 ms)
+  2026-09-12: HTTP 404 (128 ms)
+  2026-09-11: HTTP 404 (123 ms)
+  2026-09-10: HTTP 404 (112 ms)
