@@ -183,7 +183,7 @@ def af_meres(sorok):
         sorok.append("")
         sorok.append("--- %s (api-football liga=%d, evad=%d) ---" % (nev, lid, evad))
         k = urllib.request.Request(
-            "%s/fixtures?league=%d&season=%d&last=1" % (AF_ALAP, lid, evad), headers=fej)
+            "%s/fixtures?league=%d&season=%d" % (AF_ALAP, lid, evad), headers=fej)
         try:
             with urllib.request.urlopen(k, timeout=25) as v:
                 j = json.loads(v.read().decode("utf-8", "replace"))
@@ -201,7 +201,7 @@ def af_meres(sorok):
             evad = TARTALEK_EVAD
             sorok.append("  -> ujraprobalas engedett szezonnal: %d" % evad)
             k = urllib.request.Request(
-                "%s/fixtures?league=%d&season=%d&last=1" % (AF_ALAP, lid, evad),
+                "%s/fixtures?league=%d&season=%d" % (AF_ALAP, lid, evad),
                 headers=fej)
             try:
                 with urllib.request.urlopen(k, timeout=25) as v:
@@ -218,8 +218,14 @@ def af_meres(sorok):
             sorok.append("  nincs lejatszott meccs a valaszban - a liga nem elerheto"
                          " ezen a csomagon")
             continue
-        fx = val[0]["fixture"]
-        csap = val[0]["teams"]
+        kesz = [x for x in val
+                if (((x.get("fixture") or {}).get("status") or {}).get("short")) == "FT"]
+        sorok.append("  a szezonban %d meccs, ebbol lejatszott: %d" % (len(val), len(kesz)))
+        if not kesz:
+            sorok.append("  nincs lejatszott meccs a valaszban")
+            continue
+        fx = kesz[0]["fixture"]
+        csap = kesz[0]["teams"]
         sorok.append("  utolso meccs: %s - %s (id=%s)"
                      % (csap["home"]["name"], csap["away"]["name"], fx["id"]))
         k2 = urllib.request.Request("%s/fixtures/events?fixture=%s" % (AF_ALAP, fx["id"]),
