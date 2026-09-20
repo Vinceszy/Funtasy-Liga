@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=91">
+<link rel="stylesheet" href="../funtasy.css?v=92">
 </head>
 <body class="kezdolap">
 <div class="wrap">
@@ -41,7 +41,7 @@
 </div>
 <div class="lablec" id="lablec"></div>
 
-<script src="../funtasy.js?v=91"></script>
+<script src="../funtasy.js?v=92"></script>
 <script>
 // ======= NEMZETHY SPORT =======
 // Egy helyen az osszes iras, fordulonkent visszafele. A meccs adatlapjan a
@@ -71,7 +71,7 @@ if (LIGAOBJ){
   document.title = `${FunTasy.UJSAG_NEV} ${LIGAOBJ.nev} — ${FunTasy.UJSAG_MOTTO}`;
   $('magCim').innerHTML = `${FunTasy.esc(FunTasy.UJSAG_NEV)} <span class="tag">${
     FunTasy.esc(LIGAOBJ.nev)}</span>`;
-  $('magSzlogen').textContent = `${FunTasy.UJSAG_MOTTO} · ${LIGAOBJ.cim}`;
+
   $('magSzuroSav').style.display = 'none';
 }
 // A masik kiadasra mutato sor: ligabol a kozosre, kozosbol nincs mire.
@@ -169,7 +169,9 @@ function rajzol(){
   for (const be of lista){
     if (!LIGAOBJ && be.liga !== elozoLiga){
       elozoLiga = be.liga;
-      h += `<h2 class="magliga">${FunTasy.esc(FunTasy.liga(be.liga).cim)}</h2>`;
+      // A liga ROVID neve eleg: a hosszu leiras ("NB1 salary cap fantasy")
+      // minden blokk folott elvenne egy sort abbol, amiert ide jott a nezo.
+      h += `<h2 class="magliga">${FunTasy.esc(FunTasy.liga(be.liga).nev)}</h2>`;
     }
     h += FunTasy.articleCardHTML(be);
   }
