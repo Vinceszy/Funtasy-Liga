@@ -74,16 +74,17 @@ def kulcs(nev):
 
 
 def egyezik(a, b):
-    """Ket klubnev ugyanaz-e. A ket forras kulonbozo hosszan irja ugyanazt
-       ("Brighton" / "Brighton & Hove Albion"), ezert a rovidebbnek eleg az
-       elejen egyeznie - de legalabb ot betun, kulonben a "man" mindenre
-       illeszkedne."""
+    """Ket klubnev ugyanaz-e. A ket forras kulonbozo hosszan irja ugyanazt, es
+       a toldalek nem mindig a VEGERE kerul: "Brighton" / "Brighton & Hove
+       Albion", de "Bournemouth" / "AFC Bournemouth". Ezert a rovidebbnek
+       BARHOL benne kell lennie a hosszabban - legalabb ot betun, kulonben a
+       "man" mindenre illeszkedne."""
     if not a or not b:
         return False
     if a == b:
         return True
     rovid, hosszu = (a, b) if len(a) <= len(b) else (b, a)
-    return len(rovid) >= 5 and hosszu.startswith(rovid)
+    return len(rovid) >= 5 and rovid in hosszu
 
 
 def main():
