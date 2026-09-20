@@ -16,6 +16,11 @@ Amit ellenoriz:
   D3: a fo README fajl-tablazata nem hivatkozik nem letezo fajlra.
   D4: a valtozasok.json minden bejegyzese teljes es jol formazott
       (datum, ismert tipus, legalabb egy liga, cim, leiras).
+  D4/b: EGY FUNKCIO = EGY BEJEGYZES. Nem darabolunk szet egy uj funkciot
+      tobb naplo-bejegyzesre; amit a nezo egy dolognak lat, az egy
+      bejegyzes, akar tobb resze is van. A hatart ott huzzuk meg, ahol a
+      szetdarabolas mar felreismerhetetlen: harom vagy tobb bejegyzes
+      ugyanarra a napra. Ket kulon dolog egy napon eloforduhat.
   D5: ugyanez a valtozasok-vazlat.json meg nem publikalt bejegyzeseire.
   D6: minden oldal ugyanazt a ?v= verziot hivatkozza, es a verzio.json
       ugyanazt a szamot tartalmazza.
@@ -106,6 +111,23 @@ naplo = json.loads(olvas("valtozasok.json"))
 gond = bejegyzes_gondok(naplo.get("bejegyzesek"))
 allit(not gond, "D4: a valtozasnaplo minden bejegyzese teljes"
       + ("" if not gond else " - " + "; ".join(gond)))
+
+# ---- D4/b: egy funkcio = egy bejegyzes ----
+# Ez a szabaly sokszor elhangzott, es sehol nem allt leirva - ezert csuszott
+# el ujra meg ujra. A gepi forma nem tudja megmondani, mi "egy funkcio", de
+# azt igen, hogy harom bejegyzes egy napon mar biztosan szetdarabolas.
+# NEM VISSZAMENOLEGES: a korabbi napokon tobb kulon dolog is kikerult, azokat
+# nem irjuk at. A hatar az a nap, amikor a szabaly leirasra kerult.
+NAPLO_EGYBEN_TOL = "2026-09-20"
+naponta = {}
+for b in (naplo.get("bejegyzesek") or []):
+    if (b.get("datum") or "") < NAPLO_EGYBEN_TOL:
+        continue
+    naponta[b.get("datum")] = naponta.get(b.get("datum"), 0) + 1
+sok = sorted(d for d, n in naponta.items() if n >= 3)
+allit(not sok, "D4/b: egy funkcio egy bejegyzes, nincs szetdarabolva"
+      + ("" if not sok else " - egy napra eso bejegyzesek: %s"
+         % ", ".join("%s (%d)" % (d, naponta[d]) for d in sok)))
 
 # A vazlat-fajl a MEG NEM PUBLIKALT bejegyzeseket orzi (tobb szakaszban
 # keszulo funkcional a naplo csak a vegen megy ki). Ugyanaz az alaki

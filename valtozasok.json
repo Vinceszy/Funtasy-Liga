@@ -2,43 +2,13 @@
  "bejegyzesek": [
   {
    "datum": "2026-09-20",
-   "tipus": "bugfix",
-   "ligak": [
-    "nb1",
-    "pl"
-   ],
-   "cim": "Szűrhető újság, gördülékenyebb görgetés",
-   "leiras": "A Nemzethy Sportban szűrhetsz szakvezetőre, fordulóra és cikktípusra is — legördülő menükből, egyetlen sorban, mellettük a találatszám. A szűrők csak azt kínálják, amiből tényleg van találat. A cikkek újságszerűbb sorrendben állnak: rovat, a párharc címként, egy felütés, aztán a szöveg. A görgetés is javult: a lap magassága eddig menet közben változott, ettől telefonon rángatott — most végig ugyanaz marad. A felső sávban az újság gombja keskeny kijelzőn külön sorba tört; most egy sorban marad 320 pixelen is."
-  },
-  {
-   "datum": "2026-09-20",
    "tipus": "funkcio",
    "ligak": [
     "nb1",
     "pl"
    ],
-   "cim": "Nemzethy Sport — a ligák saját újsága",
-   "leiras": "Minden ligának lett saját újsága: a liga oldalán, a felső sávban ott a Nemzethy Sport gombja, és a saját színeivel nyílik — csak annak a ligának a beharangozóival és összefoglalóival, fordulónként visszafelé, teljes szöveggel. A kezdőlapról a közös kiadás érhető el, ahol mindkét liga írásai egy lapon vannak. Minden írást értékelhetsz innen is, és egy gombbal kimásolhatod a rövid változatát a cikkre mutató hivatkozással együtt."
-  },
-  {
-   "datum": "2026-09-20",
-   "tipus": "funkcio",
-   "ligak": [
-    "nb1",
-    "pl"
-   ],
-   "cim": "Értékelni lehet az írásokat",
-   "leiras": "A beharangozó és az összefoglaló alá került egy értékelés: egytől négyig pontozhatod, miután kinyitottad. Ha jónak találtad, egy koppintás az egész. Ha nem, megkérdezzük, mi volt a baj — a saját szavaddal, mert kész válaszokból nem derül ki az, amire nem gondoltunk. Egy mondat is elég. Indok nélkül is el lehet küldeni, csak akkor nem tudunk vele mit kezdeni. Egy eszközről egy írást egyszer értékelhetsz, de bármikor meggondolhatod magad."
-  },
-  {
-   "datum": "2026-09-20",
-   "tipus": "funkcio",
-   "ligak": [
-    "nb1",
-    "pl"
-   ],
-   "cim": "Beharangozó a forduló elé, összefoglaló utána",
-   "leiras": "A meccsek adatlapjára felkerült egy rövid írás: a lezárt fordulóknál összefoglaló arról, hogyan alakult a párharc, a következő forduló elé pedig beharangozó — mindkét ligában. Csukva jön, egyetlen sor magasan, és csak akkor nyílik ki, ha rákattintasz: a keret és a pontok ugyanott maradnak, ahol eddig. Az összefoglaló csak azután jelenik meg, hogy a forduló véglegessé vált — addig a pontok még elmozdulhatnak, és a szöveg hazudna. Ahol még nincs keret-adat, ott a beharangozó rögtön nyitva várja, hiszen nincs mit eltakarnia."
+   "cim": "Nemzethy Sport — beharangozó és összefoglaló minden meccshez",
+   "leiras": "Minden meccsnek lett szövege. A lezárt fordulók után összefoglaló arról, hogyan alakult a párharc, a következő forduló elé pedig beharangozó — mindkét ligában.\n\nHárom helyen találkozol vele. A meccs adatlapján egy becsukott sávban, egyetlen sor magasan: csak akkor nyílik ki, ha rákattintasz, tehát a keret és a pontok ugyanott maradnak, ahol eddig. A liga oldalán, a felső sávban ott a Nemzethy Sport gombja — az a liga saját újságja, a saját színeivel, csak az ő írásaival. A kezdőlapról pedig a közös kiadás nyílik, ahol mindkét liga egy lapon van.\n\nAz újságban szűrhetsz ligára, szakvezetőre, fordulóra és cikktípusra, és minden írást ki tudsz másolni — a rövid változatát a cikkre mutató hivatkozással együtt —, ha be akarod dobni a csoportba.\n\nÉrtékelni is lehet, egytől négyig. Ha jónak találtad, egy koppintás az egész. Ha nem, megkérdezzük, mi volt a baj, a saját szavaddal: ebből lesz jobb a következő szöveg. Indok nélkül is elküldheted, csak akkor nem tudunk vele mit kezdeni. Egy eszközről egy írást egyszer értékelhetsz, de bármikor meggondolhatod magad.\n\nAz összefoglaló csak azután jelenik meg, hogy a forduló véglegessé vált. Addig a pontok még elmozdulhatnak, és egy „X nyert ennyivel” mondat épp ott hazudna, ahol hiszel neki. A beharangozóra ez nem áll, az a megírás pillanatától látszik.\n\nA szövegeket egyelőre kézzel írjuk."
   },
   {
    "datum": "2026-09-19",

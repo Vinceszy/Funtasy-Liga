@@ -68,6 +68,27 @@ const valasz = (uname, pont) => ({
     }
     return ki;
   }, sz);
+  // A statuszsav szovegeit VEGIG gyujtjuk, nem egyszer olvassuk le. Amit a
+  // teszt allit - hogy a tarolt allas mellett a LEKERES ideje all -, az egy
+  // ALLAPOT, nem egy pillanat: a kovetkezo elo lekeres ugyanis maga irja
+  // felul a savot. Egyetlen leolvasas ezert terheles alatt mar a kovetkezo
+  // allapotot latta, es a teszt felrevezetoen bukott.
+  await p.addInitScript(() => {
+    window.__statuszok = [];
+    const fut = () => {
+      const el = document.getElementById('status');
+      if (!el) return setTimeout(fut, 10);
+      const jegyez = () => {
+        const t = el.textContent;
+        if (t && window.__statuszok[window.__statuszok.length - 1] !== t)
+          window.__statuszok.push(t);
+      };
+      jegyez();
+      new MutationObserver(jegyez).observe(el, { childList: true, characterData: true,
+                                                 subtree: true });
+    };
+    fut();
+  });
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
 
   // A LIVE reteget nezzuk, nem a kiirt szoveget: a "88" veletlenul benne van
@@ -83,10 +104,12 @@ const valasz = (uname, pont) => ({
      + eloKesz + ' élő válasz volt eddig');
   jo(sz.tarolt === 1, 'a tárolt állás EGYETLEN kör-útból jött — ' + sz.tarolt + ' kérés');
 
-  const statusz = await p.evaluate(() => document.getElementById('status').textContent);
+  const statuszok = await p.evaluate(() => window.__statuszok || []);
   const vartOra = ketjegy(ido.getHours()) + ':' + ketjegy(ido.getMinutes());
-  jo(statusz.includes(vartOra),
-     'a státuszsáv a LEKÉRÉS idejét írja (' + vartOra + '), nem a mostanit: ' + statusz);
+  const mostOra = ketjegy(new Date().getHours()) + ':' + ketjegy(new Date().getMinutes());
+  jo(statuszok.some(t => t.includes(vartOra)),
+     'a státuszsáv a LEKÉRÉS idejét írta ki (' + vartOra + '), nem a mostanit ('
+     + mostOra + '): ' + JSON.stringify(statuszok));
 
   // ---- 2) az elo lekeres atveszi a helyet ----
   await p.waitForFunction(v => Object.values(LIVE).flat().filter(Boolean)
