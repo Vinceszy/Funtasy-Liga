@@ -22,8 +22,10 @@ vezetett. Ez most pont annyit ért, mint a második hely."*
 disappear. When the running score is mentioned it should be because something caused it,
 not because it is the next row.
 
-**No sourcing in the text.** Where a claim comes from is an internal matter - see
-colour-taxonomy.md. The reader gets the fact, not the footnote. A judgement is rendered
+**No sourcing in the text, and no hedging either.** Where a claim comes from is an
+internal matter - see colour-taxonomy.md. We write a newspaper: what we publish, we
+state. "A beszámoló szerint", "az adatok szerint" and every other cushion is out; if a
+claim cannot be stated plainly, it does not go in. A judgement is rendered
 as the events underneath it: not "vitatott tizenegyes" but "kézzel ért a labdához, a bíró
 továbbot intett, a VAR nem szólt közbe".
 

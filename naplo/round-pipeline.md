@@ -66,7 +66,7 @@ be phrased (fact / attributed / dropped).
 |---|---|---|
 | `event` | the structured block AND our own data agree | stated as fact |
 | `record` | the structured block only - a player nobody owns, or one sold before the round, so we hold no data on him | stated as fact |
-| `article_only` | the prose alone (a save, a big miss, the pattern of play) | attributed: "a beszámoló szerint" |
+| `article_only` | the prose alone (a save, a big miss, the pattern of play) | stated as fact, in our own words - never sourced in the text |
 | `none` | contradicts our data, or names a player who did not play | dropped |
 
 The anchors are checked by machine, not by memory: every `event` row must

@@ -33,16 +33,20 @@ The anchor decides what may be done with the claim:
   our own data. The claim may be stated as fact.
 - **`article_only`** - the prose says it but no structured counterpart exists, which is
   normal for whole categories: a missed chance, a save and the pattern of play are never
-  in event data. Publishable only as attributed ("a beszámoló szerint"), and only for the
-  tags where that is legitimate: `big_miss`, `keeper_save`, `match_picture`.
+  in event data. Publishable for those tags (`big_miss`, `keeper_save`, `match_picture`),
+  and **published as fact, in our own words**. The anchor governs what we are allowed to
+  say, not how we hedge it: a paper states what happened, it does not cite where it read
+  it. "A beszámoló szerint" never appears in a piece - if a claim is too thin to state
+  plainly, it is too thin to publish.
 - **`none`** - the claim contradicts the structured block, or names a player who did not
   play. **Dropped.**
 
 Two rules on top:
 
-1. **Opinion is always attributed.** `disputed` is a judgement, not an observation. Even
-   when it anchors to a real event, it is published as "a beszámoló szerint vitatott",
-   never as our own assertion.
+1. **A judgement is rendered as the events underneath it.** `disputed` is not an
+   observation, so it is not published as one - but it is not sourced either. Instead of
+   "vitatott tizenegyes" the piece says what happened: handled the ball, the referee waved
+   play on, the VAR stayed silent. The reader gets the facts and draws the conclusion.
 2. **Only our own players.** A claim is kept only if the player is in somebody's squad
    that round. The rest is noise for us however interesting it is.
 
