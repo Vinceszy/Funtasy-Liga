@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=85">
+<link rel="stylesheet" href="../funtasy.css?v=86">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -106,7 +106,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=85"></script>
+<script src="../funtasy.js?v=86"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // CSATOLÓTÁBLA a majdani összesítő oldalhoz: a ligán belüli azonosító
@@ -1348,8 +1348,12 @@ opcional('../zarasok.json').then(j => {
   if (j && j.rounds && Object.keys(j.rounds).length){ ZARASOK = j.rounds; zarasInit(); }
 });
 // Round preview / round summary for the match page. A missing or empty
-// file is not an error - then there is simply no strip.
-opcional('../articles.json').then(j => { if (j) ARTICLES = j; });
+// file is not an error - then there is simply no strip. The unpublished
+// text is in a SEPARATE file, which only draft mode asks for: nothing
+// half-finished can reach a visitor by a forgotten flag.
+Promise.all([opcional('../articles.json'),
+             FunTasy.articleDraftMode() ? opcional('../articles-draft.json') : null])
+  .then(([kint, vazlat]) => { const j = FunTasy.mergeArticles(kint, vazlat); if (j) ARTICLES = j; });
 // mindket betoltesi ut vegen probalkozunk: amelyik kesobb er ide, az rajzol
 Promise.all([
   fetch('../draft.json?t=' + Date.now()).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),

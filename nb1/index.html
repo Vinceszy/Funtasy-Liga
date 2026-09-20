@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=85">
+<link rel="stylesheet" href="../funtasy.css?v=86">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=85"></script>
+<script src="../funtasy.js?v=86"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -175,10 +175,15 @@ const guardErtek=(nev,r)=>((GUARD||{})[r]||{})[nev]||null;
 // missing or empty file is not an error - then there is simply no strip.
 // If the file lands AFTER a match page was opened, redraw it: otherwise
 // the strip would stay away until the reader closed and reopened it.
+// The unpublished text is in a SEPARATE file, which only draft mode asks
+// for: nothing half-finished can reach a visitor by a forgotten flag.
 let ARTICLES = null;
-fetch('../articles.json?t='+Date.now()).then(r=>r.ok?r.json():null)
-  .then(j=>{ if(!j) return; ARTICLES=j;
-             if(MECCS && $('ov').classList.contains('open')) meccsTest(); }).catch(()=>{});
+const cikkTarolo = u => fetch(u+'?t='+Date.now()).then(r=>r.ok?r.json():null).catch(()=>null);
+Promise.all([cikkTarolo('../articles.json'),
+             FunTasy.articleDraftMode() ? cikkTarolo('../articles-draft.json') : null])
+  .then(([kint, vazlat])=>{ const j = FunTasy.mergeArticles(kint, vazlat);
+    if(!j) return; ARTICLES=j;
+    if(MECCS && $('ov').classList.contains('open')) meccsTest(); });
 // A round is CLOSED when the collector has written its results into the
 // schedule. A round still in progress goes into LIVE instead (collect.py
 // marks it "provisional"), and its points can still move - see the gate

@@ -1405,6 +1405,34 @@
     return /(^|[?&])draft=1(&|$)/.test(location.search);
   }
 
+  /** The published store with the draft one laid over it.
+
+      Unpublished text lives in its own file, which the pages fetch only in
+      draft mode - so nothing half-finished can reach a visitor by a
+      forgotten flag. This merges the two down to the fixture, rather than
+      letting the draft file replace the published one wholesale: in draft
+      mode we want to see everything that exists, not only the new part. */
+  function mergeArticles(published, draft) {
+    if (!draft || !draft.leagues) return published;
+    var ki = { updated: draft.updated || (published && published.updated) || null,
+               leagues: {} };
+    var be = [published, draft];
+    for (var i = 0; i < be.length; i++) {
+      var L = (be[i] && be[i].leagues) || {};
+      for (var lg in L) {
+        ki.leagues[lg] = ki.leagues[lg] || {};
+        for (var r in L[lg]) {
+          ki.leagues[lg][r] = ki.leagues[lg][r] || {};
+          for (var k in L[lg][r]) {
+            ki.leagues[lg][r][k] = ki.leagues[lg][r][k] || {};
+            for (var par in L[lg][r][k]) ki.leagues[lg][r][k][par] = L[lg][r][k][par];
+          }
+        }
+      }
+    }
+    return ki;
+  }
+
   /** The strip for one fixture, straight from a loaded articles.json.
 
       A round can hold both kinds at once - the preview is written before it
@@ -1895,6 +1923,7 @@
                      kezdParHTML: kezdParHTML,
                      articleStrip: articleStrip, matchArticle: matchArticle,
                      articleDraftMode: articleDraftMode,
+                     mergeArticles: mergeArticles,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
                      eloFrissito: eloFrissito, taroltak: taroltak,
                      potKeretek: potKeretek, potKeretekUrit: potKeretekUrit,
