@@ -48,6 +48,43 @@ nyeri a szoros meccseket, legutóbb 53,38-49-re" says everything "Vince ellen 53
 said. League-wide standing is fine the same way - "only three managers have scored more"
 names nobody.
 
+## What was learned writing round 8
+
+Each of these cost a rewrite, so they are rules now.
+
+**A round is one continuous story, so the summary must not re-tell the preview.** The
+preview posed a question; the summary answers it with what happened, in different words.
+Not the same phrase, and not the same thought dressed up - the reader read both, one
+after the other. A phrase used in the preview is spent.
+
+**Do not repeat a word within a piece either.** "Ember" eight times is the surest sign
+that nothing is being described. Name the footballers - that is what they are for, and a
+name is more concrete than any noun standing in for it.
+
+**Never state what cannot be otherwise.** Shared players in the same role score the same
+on both sides; writing that down as a finding wastes a paragraph. The shared column is
+worth a sentence only when it DIFFERS - one side captained him, the other benched him.
+
+**No spatial metaphor that means nothing in the game.** "The bottom of the squad", "it was
+decided lower down" - a fantasy squad has no top or bottom. Say what is meant: the bench,
+the players they did not share, the substitutes.
+
+**An apposition must carry something worth knowing.** "Popovics, a húszéves hazai kapus"
+spends a clause on nothing; "Popovics, aki egy héttel korábban nyolc lövést hárított"
+spends it on a fact. If nothing interesting is known about the man, leave the apposition
+out.
+
+**Plain Hungarian, checked as prose.** "Öten tették meg kapitánynak, köztük mindketten"
+points at nothing. Read every sentence once for what it actually says, not for what it
+was meant to say.
+
+**Colour is not optional.** A piece made only of fantasy numbers is a table with
+sentences around it. Every match has a report; the goal's minute, the save, the sent-off
+man belong in the piece - see round-pipeline.md for where they come from.
+
+**The lead is not the first sentence again.** On the card the lead sits directly above
+the body; the two are read together, so they may not say the same thing twice.
+
 ## Length
 
 Ten to fourteen sentences per head-to-head. Short enough to read on a phone between two

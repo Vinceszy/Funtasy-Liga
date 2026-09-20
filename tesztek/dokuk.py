@@ -33,6 +33,9 @@ Amit ellenoriz:
   D9: a megjegyzesek es a fejlesztoi doksi a SZABALYT mondjak el, nem a
       fejlesztes tortenetet - nincs bennuk datum, dontes-kontextusu nev,
       sem "bejelentett / megtortent" jellegu naplo-jelzo.
+  D12: egy fordulo beharangozoja es osszefoglaloja nem ismetli egymast.
+      A nezo egymas utan olvassa a kettot; ami a beharangozoban elhangzott,
+      az ott el is fogyott. Ot szonal hosszabb szo szerinti atfedes bukik.
   D11: cikk csak LEZART adatbol keszulhet. Osszefoglalo csak vegleges
       fordulora, beharangozo pedig csak a soron kovetkezore - egy fordulo
       KOZBEN irt szoveg a meg mozgo szamokbol dolgozik, es a fordulo vegere
@@ -267,6 +270,30 @@ for _fajl in ("articles.json", "articles-draft.json"):
                             % (_fajl, _liga, _r, _utolso_liga + 1))
 allit(not _baj, "D11: cikk csak lezart adatbol keszult"
       + ("" if not _baj else " - " + "; ".join(_baj)))
+
+# ---- D12: a beharangozo es az osszefoglalo nem ismetli egymast ----
+# Ket kezi atiras utan gepre bizzuk: a szem atsiklik egy visszakoszono
+# mondaton, kulonosen a sajat mondatan.
+def _szavak(cikk):
+    szoveg = " ".join(cikk.get("text") or []) + " " + (cikk.get("short") or "")
+    return _re.findall(r"\w+", szoveg.lower(), _re.UNICODE)
+
+
+_atfedes = []
+for _fajl in ("articles.json", "articles-draft.json"):
+    _cikkek = json.loads(olvas(_fajl))
+    for _liga, _fordulok in (_cikkek.get("leagues") or {}).items():
+        for _r, _fajtak in _fordulok.items():
+            _be, _ossz = _fajtak.get("preview") or {}, _fajtak.get("summary") or {}
+            for _par in set(_be) & set(_ossz):
+                _a, _b = _szavak(_be[_par]), _szavak(_ossz[_par])
+                _hatos = {tuple(_a[i:i + 6]) for i in range(len(_a) - 5)}
+                _kozos = [" ".join(t) for i in range(len(_b) - 5)
+                          for t in [tuple(_b[i:i + 6])] if t in _hatos]
+                if _kozos:
+                    _atfedes.append("%s %s. %s: \"%s\"" % (_liga, _r, _par, _kozos[0]))
+allit(not _atfedes, "D12: a beharangozo es az osszefoglalo nem ismetli egymast"
+      + ("" if not _atfedes else " - ATFEDES: " + "; ".join(_atfedes[:3])))
 
 # ---- D10: minden munkafolyamat es minden meres dokumentalva ----
 # Ket helyen szokott elmaradni: egy uj workflow a fo README fajl-tablazatabol,
