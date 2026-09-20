@@ -96,8 +96,12 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
   const csoportok = async () => p.$$eval('.magszuro',
                                          n => n.map(x => x.options[0].text));
   jo(JSON.stringify(await csoportok()) ===
-       JSON.stringify(['Liga', 'Szakvezető', 'Forduló', 'Típus']),
-     'négy szempont: ' + (await csoportok()).join(', '));
+       JSON.stringify(['Liga vagy szakvezető', 'Forduló', 'Típus']),
+     'a liga és a szakvezető EGY vezérlő — ' + (await csoportok()).join(', '));
+  jo(JSON.stringify(await p.$$eval('.magszuro[data-szuro="ligaki"] optgroup',
+                                   n => n.map(x => x.label)))
+       === JSON.stringify(['NB1', 'PL']),
+     'a szakvezetők ligánként csoportosítva állnak benne');
   jo(await p.evaluate(() =>
        Math.round(document.querySelector('.magszurok').getBoundingClientRect().height)) < 130,
      'a szűrősáv nem eszi meg a lapot — '
@@ -109,21 +113,22 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
     await p.selectOption(`.magszuro[data-szuro="${szuro}"]`, ertek);
     await p.waitForTimeout(150);
   };
-  await valaszt('liga', 'nb1');
+  await valaszt('ligaki', 'liga:nb1');
   const nb1db = await p.locator('.magcikk').count();
   jo(nb1db > 0 && nb1db < mind, `ligára szűrve kevesebb (${nb1db}/${mind})`);
   jo(await p.$$eval('.magliga', n => n.length) === 1, 'egyetlen liga-cím maradt');
-  await valaszt('liga', 'pl');
+  await valaszt('ligaki', 'liga:pl');
   const pldb = await p.locator('.magcikk').count();
   jo(nb1db + pldb === mind, `a két liga kiadja az egészet (${nb1db} + ${pldb} = ${mind})`);
-  await valaszt('liga', 'mind');
+  await valaszt('ligaki', 'mind');
 
   // szakvezeto: aki a parharc BARMELYIK oldalan all
-  const ki = await p.$$eval('.magszuro[data-szuro="ki"] option',
-                            n => n.map(x => x.value));
-  jo(ki.length > 3, `szakvezetők a szűrőben: ${ki.length - 1}`);
-  const valasztott = ki[3];
-  await valaszt('ki', valasztott);
+  const ki = await p.$$eval('.magszuro[data-szuro="ligaki"] option',
+                            n => n.map(x => x.value).filter(v => v !== 'mind'
+                                                              && !v.startsWith('liga:')));
+  jo(ki.length > 3, `szakvezetők a szűrőben: ${ki.length}`);
+  const valasztott = ki[2];
+  await valaszt('ligaki', valasztott);
   const sajat = await p.$$eval('.magcikk .magpar', n => n.map(x => x.textContent));
   jo(sajat.length > 0 && sajat.every(t => t.includes(valasztott)),
      `${valasztott}: mind a ${sajat.length} írás róla szól`);
@@ -177,7 +182,7 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
       cimke: (document.querySelector('.magcim .tag') || {}).textContent,
       szlogen: document.querySelector('.magszlogen').textContent,
       cikkek: document.querySelectorAll('.magcikk').length,
-      ligaszuro: document.querySelectorAll('.magszuro[data-szuro="liga"]').length,
+      ligaszuro: document.querySelectorAll('.magszuro[data-szuro="ligaki"]').length,
       szurocsoport: document.querySelectorAll('.magszuro').length,
       ligacim: document.querySelectorAll('.magliga').length,
       masik: document.getElementById('magMasik').style.display !== 'none',
@@ -190,7 +195,7 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
     jo(a.ligaszuro === 0 && a.ligacim === 0,
        'nincs liga-szűrő és nincs liga-cím — ez már eleve az ő újságja');
     jo(a.szurocsoport === 3,
-       `a másik három szűrő viszont megvan (${a.szurocsoport})`);
+       `a három szűrő viszont megvan: szakvezető, forduló, típus (${a.szurocsoport})`);
     jo(a.masik, 'és van átjárás a közös kiadásra');
     jo(a.tullogas === 0, `telefonon nem lóg ki oldalra (${a.tullogas} px)`);
     console.log(`   lap magassága telefonon: ${a.magassag} px`);
@@ -211,10 +216,32 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
   await p.waitForSelector('.ujdonsagsor');
   jo(await p.locator('.ujdonsagsor[href="nemzethy/"]').count() === 1,
      'a kezdőlapról a KÖZÖS kiadás nyílik, kiemelt soron');
-  await p.goto(BASE + 'nemzethy/');
-  await p.waitForSelector('.magcikk');
-  jo(await p.locator('.liganav .ujsaglink').count() === 0,
-     'az újság saját lapján nincs önmagára mutató gomb');
+  // A KET SZINT. A ligak egymas alternativai; az ujsag AZ ADOTT LIGA resze.
+  // Ezert mindenhol PONTOSAN EGY elem vilagit - az, ahol vagy -, es az
+  // ujsag gombja nem tunik el, amikor rajta allsz. Korabban eltunt, es a
+  // visszaut maga a liga pottye volt, ami nem nezett ki visszautnak.
+  cim('A felső sáv két szintje');
+  for (const [ut, vartAktiv, vartLigaLink] of [
+        ['nb1/', 'NB1', null],
+        ['nemzethy/?liga=nb1', 'Nemzethy Sport NB1', '../nb1/'],
+        ['nemzethy/', 'Nemzethy Sport', null]]) {
+    await p.goto(BASE + ut);
+    await p.waitForSelector('.liganav a', { timeout: 20000 });
+    const a = await p.evaluate(() => ({
+      aktivak: [...document.querySelectorAll('.liganav a.on')]
+                 .map(x => x.textContent.trim()),
+      ujsag: !!document.querySelector('.liganav .ujsaglink'),
+      nb1href: (document.querySelector('.liganav .ligalink') || {}).getAttribute
+                 ? document.querySelector('.liganav .ligalink').getAttribute('href') : null,
+      nb1aktiv: (document.querySelector('.liganav .ligalink') || {}).className || '',
+    }));
+    jo(a.aktivak.length === 1 && a.aktivak[0] === vartAktiv,
+       `/${ut || ''}: pontosan egy elem világít, az, ahol vagy — ${JSON.stringify(a.aktivak)}`);
+    jo(a.ujsag, `/${ut || ''}: az újság gombja ott van (nem tűnik el)`);
+    if (vartLigaLink)
+      jo(!a.nb1aktiv.includes('on') && a.nb1href === vartLigaLink,
+         `az újságból a liga pöttye a liga oldalára visz vissza (${a.nb1href})`);
+  }
 
   hibak.forEach(x => jo(false, 'oldalhiba: ' + x));
   await vege(br);

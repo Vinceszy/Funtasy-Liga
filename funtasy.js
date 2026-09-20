@@ -660,26 +660,39 @@
      `gyoker` a webhely gyokerehez vezeto relativ ut ('../' egy liga-oldalrol,
      '' a kezdolaprol) - a GitHub Pages aloldalon szolgal ki, ezert nem lehet
      abszolut '/' utakat hasznalni. */
-  /* A felso savban a ligak mellett ott az UJSAG is. Liga-oldalrol AZ ADOTT
-     LIGA ujsagjara visz (?liga=), a kezdolaprol a kozosre - a nezo ott
-     folytatja, ahol all, nem kell visszanavigalnia. Az ujsag sajat lapjan
-     nem kerjuk ki (ujsag: false), mert onmagara mutatna. */
+  /* ===== Felso sav: ket szint, es mindig EGY vilagit =====
+     A ligak (NB1, PL) egymas ALTERNATIVAI - ez az elso szint. Az ujsag nem
+     a testverei, hanem AZ ADOTT LIGA egyik resze: a masodik szint.
+
+     Korabban ez osszekeveredett. Az ujsag lapjan a liga pottye vilagitott -
+     mintha a liga oldalan allnal -, az ujsag gombja pedig eltunt, tehat a
+     visszaut maga az a potty volt, ami nem nezett ki visszautnak.
+
+     Most: KITOLTVE az all, AHOL VAGY. A liga oldalan a liga pottye, az
+     ujsagban az ujsag gombja - es a liga pottye ilyenkor sima hivatkozas,
+     vagyis lathatoan az ut vissza a liga oldalara. A gomb sosem tunik el.
+
+     opts.szakasz: 'ujsag', ha eppen az ujsagot nezed; barmi mas a liga
+     oldala. opts.ujsag === false teljesen elhagyja a gombot. */
   function navHTML(aktiv, gyoker, opts) {
     gyoker = gyoker || '';
+    opts = opts || {};
+    var ujsagban = opts.szakasz === 'ujsag';
     var h = '<a class="markanev" href="' + gyoker + '">FunTasy</a><span class="ligak">';
     for (var i = 0; i < LIGAK.length; i++) {
       var l = LIGAK[i];
-      h += '<a class="ligalink' + (l.id === aktiv ? ' on' : '') + '" href="' + gyoker + l.mappa +
-           '" title="' + esc(l.cim) + '">' + esc(l.nev) + '</a>';
+      h += '<a class="ligalink' + (l.id === aktiv && !ujsagban ? ' on' : '') +
+           '" href="' + gyoker + l.mappa + '" title="' + esc(l.cim) + '">' +
+           esc(l.nev) + '</a>';
     }
     h += '</span>';
-    if (!opts || opts.ujsag !== false)
+    if (opts.ujsag !== false)
       // A liga neve kulon elemben all: keskeny kepernyon a CSS elrejti, es a
       // gomb elfer egy sorban. Enelkul a felso sav harom sorba tort.
-      h += '<a class="ujsaglink" href="' + gyoker + 'nemzethy/' +
-           (aktiv ? '?liga=' + encodeURIComponent(aktiv) : '') + '">' + UJSAG_NEV +
-           (aktiv ? '<span class="ujsagliga"> ' + esc(liga(aktiv).nev) + '</span>' : '') +
-           '</a>';
+      h += '<a class="ujsaglink' + (ujsagban ? ' on' : '') + '" href="' + gyoker +
+           'nemzethy/' + (aktiv ? '?liga=' + encodeURIComponent(aktiv) : '') + '">' +
+           UJSAG_NEV + (aktiv ? '<span class="ujsagliga"> ' + esc(liga(aktiv).nev) +
+           '</span>' : '') + '</a>';
     return h;
   }
   /* ===== Lablec =====

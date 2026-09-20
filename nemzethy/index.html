@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=95">
+<link rel="stylesheet" href="../funtasy.css?v=97">
 </head>
 <body class="kezdolap">
 <div class="wrap">
@@ -40,7 +40,7 @@
 </div>
 <div class="lablec" id="lablec"></div>
 
-<script src="../funtasy.js?v=95"></script>
+<script src="../funtasy.js?v=97"></script>
 <script>
 // ======= NEMZETHY SPORT =======
 // Egy helyen az osszes iras, fordulonkent visszafele. A meccs adatlapjan a
@@ -58,7 +58,7 @@
 const $ = id => document.getElementById(id);
 const LIGA = (new URLSearchParams(location.search).get('liga') || '').toLowerCase();
 const LIGAOBJ = FunTasy.liga(LIGA);
-FunTasy.renderNav(LIGAOBJ ? LIGA : null, '../', { ujsag: false });
+FunTasy.renderNav(LIGAOBJ ? LIGA : null, '../', { szakasz: 'ujsag' });
 FunTasy.renderLablec('../', 'nemzethy');
 FunTasy.verzioOr();
 FunTasy.watchMagazine();
@@ -107,26 +107,62 @@ function zarasBetolt(res, hist){
 }
 const zartE = (liga, fordulo) => (ZART[liga] || new Set()).has(+fordulo);
 
-// Egy cikk atmegy-e a szuron, EGY szempontot kihagyva. A kihagyas kell
-// ahhoz, hogy az adott szempont gombjai a tobbi szuro melletti valos
-// valasztekot mutassak.
-const atmegy = (be, kiveve) =>
-  (kiveve === 'liga'    || SZURO.liga    === 'mind' || be.liga === SZURO.liga) &&
-  (kiveve === 'ki'      || SZURO.ki      === 'mind' || be.hazai === SZURO.ki
-                                                   || be.vendeg === SZURO.ki) &&
-  (kiveve === 'fordulo' || SZURO.fordulo === 'mind' || String(be.fordulo) === SZURO.fordulo) &&
-  (kiveve === 'fajta'   || SZURO.fajta   === 'mind' || be.fajta === SZURO.fajta);
+// Egy cikk atmegy-e a szuron, EGY VAGY TOBB szempontot kihagyva. A kihagyas
+// kell ahhoz, hogy az adott szempont valasztekat a TOBBI szuro mellett
+// letezo ertekekbol allitsuk ossze. Tobbet is ki kell tudni hagyni: a liga
+// es a szakvezeto egyetlen vezerlon osztozik, tehat a listajahoz mindkettot
+// figyelmen kivul kell hagyni - kulonben az NB1-re allitott szuro elrejti a
+// PL csoportjat, es nem lehet atvaltani rola.
+const atmegy = (be, kiveve) => {
+  const k = [].concat(kiveve || []);
+  const ki = n => k.indexOf(n) >= 0;
+  return (ki('liga')    || SZURO.liga    === 'mind' || be.liga === SZURO.liga) &&
+         (ki('ki')      || SZURO.ki      === 'mind' || be.hazai === SZURO.ki
+                                                    || be.vendeg === SZURO.ki) &&
+         (ki('fordulo') || SZURO.fordulo === 'mind' || String(be.fordulo) === SZURO.fordulo) &&
+         (ki('fajta')   || SZURO.fajta   === 'mind' || be.fajta === SZURO.fajta);
+};
 
 // Legordulo, nem gombsor. Tizennyolc szakvezeto-gomb harom sorban tobb
 // helyet vett el, mint amennyi cikk latszott alatta; a legordulo egy sor,
 // es telefonon a rendszer sajat valasztojat nyitja meg.
+const opcio = (ertek, felirat, kivalasztott) =>
+  `<option value="${FunTasy.esc(ertek)}"${kivalasztott ? ' selected' : ''}>${
+    FunTasy.esc(felirat)}</option>`;
+
 function gombsor(nev, cim, ertekek){
   if (ertekek.length < 2) return '';
-  const o = [['mind', cim]].concat(ertekek).map(([e, f]) =>
-    `<option value="${FunTasy.esc(e)}"${SZURO[nev] === e ? ' selected' : ''}>${
-      FunTasy.esc(f)}</option>`).join('');
+  const o = [['mind', cim]].concat(ertekek)
+    .map(([e, f]) => opcio(e, f, SZURO[nev] === e)).join('');
   return `<select class="magszuro${SZURO[nev] === 'mind' ? '' : ' on'}" ` +
          `data-szuro="${nev}" aria-label="${FunTasy.esc(cim)}">${o}</select>`;
+}
+
+// A kozos kiadasban a liga es a szakvezeto KET legordoloje ugyanarrol szolt:
+// egy szakvezeto pontosan egy ligahoz tartozik, tehat a valasztasa a ligat is
+// eldonti. Egy vezerlo lett beloluk, ligankent csoportositva - es maga a liga
+// is valaszthato benne, ha valaki az egeszet akarja latni.
+function ligaEsKi(mind){
+  const nevek = liga => {
+    const k = [];
+    for (const be of mind) if (be.liga === liga && atmegy(be, ['liga', 'ki']))
+      for (const n of [be.hazai, be.vendeg]) if (!k.includes(n)) k.push(n);
+    return k.sort((a, b) => a.localeCompare(b, 'hu'));
+  };
+  let h = '', volt = false;
+  for (const l of FunTasy.LIGAK){
+    const n = nevek(l.id);
+    if (!n.length) continue;
+    volt = true;
+    h += `<optgroup label="${FunTasy.esc(l.nev)}">` +
+         opcio('liga:' + l.id, `${l.nev} — mind`, SZURO.liga === l.id && SZURO.ki === 'mind') +
+         n.map(x => opcio(x, x, SZURO.ki === x)).join('') + '</optgroup>';
+  }
+  if (!volt) return '';
+  const szur = SZURO.liga !== 'mind' || SZURO.ki !== 'mind';
+  return `<select class="magszuro${szur ? ' on' : ''}" data-szuro="ligaki" ` +
+         `aria-label="Liga vagy szakvezető">` +
+         opcio('mind', 'Liga vagy szakvezető', !szur) + h + '</select>';
 }
 
 function szuroRajz(mind){
@@ -137,12 +173,13 @@ function szuroRajz(mind){
     return k;
   };
   let h = '';
-  if (!LIGAOBJ) h += gombsor('liga', 'Liga',
-    FunTasy.LIGAK.filter(l => egyedi('liga', b => b.liga).includes(l.id))
-      .map(l => [l.id, l.nev]));
-  h += gombsor('ki', 'Szakvezető',
-    egyedi('ki', b => [b.hazai, b.vendeg]).sort((a, b) => a.localeCompare(b, 'hu'))
-      .map(n => [n, n]));
+  // Kozos kiadas: egy vezerlo a ligara ES a szakvezetore. Liga-uzemmodban
+  // nincs mit osszekotni, ott a szakvezeto all onmagaban.
+  h += LIGAOBJ
+    ? gombsor('ki', 'Szakvezető',
+        egyedi('ki', b => [b.hazai, b.vendeg]).sort((a, b) => a.localeCompare(b, 'hu'))
+          .map(n => [n, n]))
+    : ligaEsKi(mind);
   h += gombsor('fordulo', 'Forduló',
     egyedi('fordulo', b => String(b.fordulo)).sort((a, b) => b - a)
       .map(r => [r, r + '.']));
@@ -198,7 +235,15 @@ function rajzol(){
 document.addEventListener('change', e => {
   const g = e.target.closest('select[data-szuro]');
   if (!g) return;
-  SZURO[g.getAttribute('data-szuro')] = g.value;
+  if (g.getAttribute('data-szuro') === 'ligaki'){
+    // Egy vezerlo, ket szempont: a "liga:" elotag az egesz ligat jelenti,
+    // barmi mas egy szakvezetot - az pedig a ligat is eldonti.
+    const v = g.value;
+    SZURO.liga = v.startsWith('liga:') ? v.slice(5) : 'mind';
+    SZURO.ki = (v === 'mind' || v.startsWith('liga:')) ? 'mind' : v;
+  } else {
+    SZURO[g.getAttribute('data-szuro')] = g.value;
+  }
   rajzol();
 });
 document.addEventListener('click', e => {

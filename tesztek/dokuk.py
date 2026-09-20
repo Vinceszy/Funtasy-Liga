@@ -21,6 +21,10 @@ Amit ellenoriz:
       bejegyzes, akar tobb resze is van. A hatart ott huzzuk meg, ahol a
       szetdarabolas mar felreismerhetetlen: harom vagy tobb bejegyzes
       ugyanarra a napra. Ket kulon dolog egy napon eloforduhat.
+  D4/c: a funtasy.css kapcsos zarojelei kiegyensulyozottak. Egy tobblet
+      zaro jel a bongeszot ELDOBATJA a tobbi szabalyt - a lap nem hibazik,
+      csak szetesik tole valahol lentebb, es ez semmilyen viselkedes-
+      tesztben nem latszik.
   D5: ugyanez a valtozasok-vazlat.json meg nem publikalt bejegyzeseire.
   D6: minden oldal ugyanazt a ?v= verziot hivatkozza, es a verzio.json
       ugyanazt a szamot tartalmazza.
@@ -128,6 +132,26 @@ sok = sorted(d for d, n in naponta.items() if n >= 3)
 allit(not sok, "D4/b: egy funkcio egy bejegyzes, nincs szetdarabolva"
       + ("" if not sok else " - egy napra eso bejegyzesek: %s"
          % ", ".join("%s (%d)" % (d, naponta[d]) for d in sok)))
+
+# ---- D4/c: a stiluslap kapcsos zarojelei stimmelnek ----
+# Egy tobblet zaro jel utan a bongeszo a KOVETKEZO szabalyokat dobja el, es
+# a lap valahol lentebb esik szet - olyan helyen, aminek semmi koze ahhoz,
+# amit epp szerkesztettunk. Elesben igy tunt el egy meccs-fejlec elrendezese.
+_css = olvas("funtasy.css")
+_css_t = re.sub(r"/\*.*?\*/", "", _css, flags=re.S)
+_m, _hiba = 0, None
+for _i, _ch in enumerate(_css_t):
+    if _ch == "{":
+        _m += 1
+    elif _ch == "}":
+        _m -= 1
+        if _m < 0 and _hiba is None:
+            _hiba = "tobblet zaro jel"
+            break
+if _hiba is None and _m > 0:
+    _hiba = "%d lezaratlan blokk" % _m
+allit(_hiba is None, "D4/c: a funtasy.css kapcsos zarojelei kiegyensulyozottak"
+      + ("" if _hiba is None else " - " + _hiba))
 
 # A vazlat-fajl a MEG NEM PUBLIKALT bejegyzeseket orzi (tobb szakaszban
 # keszulo funkcional a naplo csak a vegen megy ki). Ugyanaz az alaki
