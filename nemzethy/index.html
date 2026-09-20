@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=98">
+<link rel="stylesheet" href="../funtasy.css?v=99">
 </head>
 <body class="kezdolap">
 <div class="wrap">
@@ -40,7 +40,7 @@
 </div>
 <div class="lablec" id="lablec"></div>
 
-<script src="../funtasy.js?v=98"></script>
+<script src="../funtasy.js?v=99"></script>
 <script>
 // ======= NEMZETHY SPORT =======
 // Egy helyen az osszes iras, fordulonkent visszafele. A meccs adatlapjan a
@@ -113,12 +113,10 @@ function zarasBetolt(res, hist){
 }
 const zartE = (liga, fordulo) => (ZART[liga] || new Set()).has(+fordulo);
 
-// Egy cikk atmegy-e a szuron, EGY VAGY TOBB szempontot kihagyva. A kihagyas
-// kell ahhoz, hogy az adott szempont valasztekat a TOBBI szuro mellett
-// letezo ertekekbol allitsuk ossze. Tobbet is ki kell tudni hagyni: a liga
-// es a szakvezeto egyetlen vezerlon osztozik, tehat a listajahoz mindkettot
-// figyelmen kivul kell hagyni - kulonben az NB1-re allitott szuro elrejti a
-// PL csoportjat, es nem lehet atvaltani rola.
+// Egy cikk atmegy-e a szuron, egy szempontot kihagyva. A kihagyas kell
+// ahhoz, hogy az adott szempont valasztekat a TOBBI szuro mellett letezo
+// ertekekbol allitsuk ossze: a sajat ertekere szurve ugyanis mindig csak
+// egy ertek maradna, es nem lehetne atvaltani rola.
 const emberE = (be, kulcs) => SZEMELY(be.hazai).kulcs === kulcs
                            || SZEMELY(be.vendeg).kulcs === kulcs;
 const atmegy = (be, kiveve) => {
@@ -147,41 +145,19 @@ function gombsor(nev, cim, ertekek){
 
 // Kik szerepelnek a szuresben - EMBERENKENT, nem nevenkent. Aki mindket
 // ligaban jatszik, EGY sor: a ket neve egyben all a feliratban, es rea
-// szurve mindket liga irasai eljonnek. Korabban ketszer szerepelt, ket
+// szurve mindket liga irasai eljonnek - kulonben ketszer szerepelne, ket
 // kulon szakvezetokent, pedig egy ember.
 function emberek(mind, kiveve){
+  // Ha ugyis egy ligat nezunk, a masik liganev nem mond semmit: ott
+  // mindenki az ITTENI neven all.
+  const egyLiga = LIGAOBJ || SZURO.liga !== 'mind';
   const nep = new Map();
   for (const be of mind) if (atmegy(be, kiveve))
     for (const n of [be.hazai, be.vendeg]){
       const sz = SZEMELY(n);
-      // A liga sajat ujsagjaban a masik liganev nem mond semmit: ott mindenki
-      // az ITTENI neven all.
-      if (!nep.has(sz.kulcs)) nep.set(sz.kulcs, LIGAOBJ ? n : sz.felirat);
+      if (!nep.has(sz.kulcs)) nep.set(sz.kulcs, egyLiga ? n : sz.felirat);
     }
   return [...nep.entries()].sort((a, b) => a[1].localeCompare(b[1], 'hu'));
-}
-
-// A kozos kiadasban a liga es a szakvezeto KET legordoloje ugyanarrol szolt:
-// egy szakvezeto valasztasa a ligat is eldonti. Egy vezerlo lett beloluk:
-// elol a ket liga, alatta az emberek - egy ember egy sorban.
-function ligaEsKi(mind){
-  const ligak = FunTasy.LIGAK.filter(l =>
-    mind.some(be => be.liga === l.id && atmegy(be, ['liga', 'ki'])));
-  const nep = emberek(mind, ['liga', 'ki']);
-  if (!nep.length) return '';
-  const szur = SZURO.liga !== 'mind' || SZURO.ki !== 'mind';
-  // Egyetlen liga mellett a liga-csoport ures valasztas volna: a lapon
-  // ugyis csak az az egy van.
-  const ligacsoport = ligak.length < 2 ? '' :
-    `<optgroup label="Liga">` + ligak.map(l =>
-      opcio('liga:' + l.id, `${l.nev} — mind`,
-            SZURO.liga === l.id && SZURO.ki === 'mind')).join('') + '</optgroup>';
-  return `<select class="magszuro${szur ? ' on' : ''}" data-szuro="ligaki" ` +
-         `aria-label="Liga vagy szakvezető">` +
-         opcio('mind', 'Liga vagy szakvezető', !szur) + ligacsoport +
-         '<optgroup label="Szakvezető">' +
-         nep.map(([k, f]) => opcio(k, f, SZURO.ki === k)).join('') +
-         '</optgroup></select>';
 }
 
 function szuroRajz(mind){
@@ -192,10 +168,16 @@ function szuroRajz(mind){
     return k;
   };
   let h = '';
-  // Kozos kiadas: egy vezerlo a ligara ES a szakvezetore. Liga-uzemmodban
-  // nincs mit osszekotni, ott a szakvezeto all onmagaban.
-  h += LIGAOBJ ? gombsor('ki', 'Szakvezető', emberek(mind, 'ki'))
-               : ligaEsKi(mind);
+  // Negy KULON szuro. A liga es a szakvezeto egy ideig egy vezerlon osztozott,
+  // azzal az indokkal, hogy egy szakvezeto ugyis egy ligahoz tartozik - ez nem
+  // igaz: aki mindket ligaban jatszik, egy ember, es a ket szempont fuggetlen.
+  // Igy "Vince + NB1" is kerdezheto, es egyik lista sem rejti el a masikat.
+  // A liga-szuro a liga sajat ujsagjaban magatol elmarad: ott egy liga van,
+  // egy ertek mellett pedig a gombsor ures marad.
+  h += gombsor('liga', 'Liga',
+    FunTasy.LIGAK.filter(l => mind.some(be => be.liga === l.id && atmegy(be, 'liga')))
+      .map(l => [l.id, l.nev]));
+  h += gombsor('ki', 'Szakvezető', emberek(mind, 'ki'));
   h += gombsor('fordulo', 'Forduló',
     egyedi('fordulo', b => String(b.fordulo)).sort((a, b) => b - a)
       .map(r => [r, r + '.']));
@@ -251,15 +233,7 @@ function rajzol(){
 document.addEventListener('change', e => {
   const g = e.target.closest('select[data-szuro]');
   if (!g) return;
-  if (g.getAttribute('data-szuro') === 'ligaki'){
-    // Egy vezerlo, ket szempont: a "liga:" elotag az egesz ligat jelenti,
-    // barmi mas egy szakvezetot - az pedig a ligat is eldonti.
-    const v = g.value;
-    SZURO.liga = v.startsWith('liga:') ? v.slice(5) : 'mind';
-    SZURO.ki = (v === 'mind' || v.startsWith('liga:')) ? 'mind' : v;
-  } else {
-    SZURO[g.getAttribute('data-szuro')] = g.value;
-  }
+  SZURO[g.getAttribute('data-szuro')] = g.value;
   rajzol();
 });
 document.addEventListener('click', e => {
