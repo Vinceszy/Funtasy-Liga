@@ -1,3 +1,55 @@
 Survey of sources that could give per-minute match events.
 Written by naplo/match-event-sources.py. Stores no response bodies.
 No run yet.
+
+======================================================================
+SURVEY: 2026-09-20 10:37 UTC | per-minute match event sources
+
+--- sofascore (both) ---
+  url: https://api.sofascore.com/api/v1/sport/football/scheduled-events/2026-09-19
+  robots: unknown (robots.txt HTTP 403)
+  request: HTTP 403, 0 kb, 37 ms
+  answer: {"error": {"code": 403, "reason": "Forbidden" }}
+
+--- premierleague (pulselive) (english) ---
+  url: https://footballapi.pulselive.com/football/competitions
+  robots: unknown (robots.txt HTTP 404)
+  request: HTTP 200, 1 kb, 147 ms
+  body: json | minute-like keys: none
+  top-level keys: content, pageInfo
+
+--- football-data.org (english) ---
+  url: https://api.football-data.org/v4/competitions/PL
+  robots: unknown (robots.txt HTTP 404)
+  request: HTTP 403, 0 kb, 518 ms
+  answer: {"message":"The resource you are looking for is restricted and apparently not within your permissions. Please check your
+
+--- mlsz adatbank (hungarian) ---
+  url: https://adatbank.mlsz.hu/
+  robots: unknown (robots.txt HTTP 404)
+  request: HTTP 200, 153 kb, 6876 ms
+  body: html/other | minute-like keys: none
+
+--- eredmenyek.com (both) ---
+  url: https://www.eredmenyek.com/
+  robots: ALLOWS (no rule matches)
+  request: HTTP 200, 367 kb, 1429 ms
+  body: html/other | minute-like keys: incident, minute, perc
+
+--- livescore.com (both) ---
+  url: https://www.livescore.com/en/football/england/premier-league/
+  robots: ALLOWS (/)
+  request: HTTP 200, 190 kb, 424 ms
+  body: html/other | minute-like keys: incident, minute, perc
+
+--- fotmob (both) ---
+  url: https://www.fotmob.com/api/matches?date=20260919
+  robots: ALLOWS (/)
+  request: HTTP 404, 0 kb, 267 ms
+  answer: <!DOCTYPE html><html lang="en" dir="ltr"><head><meta name="apple-itunes-app" content="app-id=488575683"/><link rel="alte
+
+--- worldfootball.net (both) ---
+  url: https://www.worldfootball.net/
+  robots: ALLOWS (/)
+  request: HTTP 403, 0 kb, 42 ms
+  answer: <!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/htm
