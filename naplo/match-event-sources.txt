@@ -78,3 +78,50 @@ PROBE: 2026-09-20 10:39 UTC | official sources, deeper
   /api/data/matches?date=20260919    HTTP 200, 441 kb, json (452 ms)
   /api/matches?date=20260919         HTTP 404, 0 kb, html/other (146 ms)
   /api/data/match?matchId=0          HTTP 200, 0 kb, json (258 ms)
+
+======================================================================
+PROBE: 2026-09-20 10:40 UTC | official sources, deeper
+
+--- english league own feed (pulselive) ---
+  compseasons: HTTP 200 (251 ms)
+  newest season: English Premier League Season 2026/2027 (id=841)
+  finished fixtures: HTTP 200 (348 ms)
+  fixture: Nottingham Forest - Coventry City (id=128971.0)
+  fixture detail: HTTP 400, 0 kb (559 ms)
+
+--- hungarian federation data bank ---
+  root: HTTP 200, 153 kb (7371 ms)
+  api-like paths referenced by the page: 0
+  scripts: 18 (the endpoints usually live in these)
+    //cdnjs.cloudflare.com/ajax/libs/jquery.lazy/1.7.9/jquery.lazy.min.js
+    //cdnjs.cloudflare.com/ajax/libs/jquery.lazy/1.7.9/jquery.lazy.plugins.min.js
+    https://ada1bank.mlsz.hu/meccs-center/js/adatbank.js?t1789899001.947
+    https://ada1bank.mlsz.hu/meccs-center/js/datepicker.js
+    https://ada1bank.mlsz.hu/meccs-center/js/jquery.drawDoughnutChart.js
+    https://ada1bank.mlsz.hu/meccs-center/js/lightslider.js
+
+--- fotmob match events ---
+  day list: HTTP 200, 441 kb (346 ms)
+  matches in the two leagues: 55
+    ENG | Premier League | id=5795464
+    ENG | Premier League | id=5795457
+    ENG | Premier League | id=5795458
+  match detail: HTTP 200, 345 kb (187 ms)
+  top-level keys: content, general, hasPendingVAR, header, nav, ongoing, seo
+  matchFacts.events: 24 item
+    19     | Substitution | None
+    45     | AddedTime    | None
+    45     | Goal         | Johan Manzambi
+    45     | Card         | Jan Paul van Hecke
+    45     | Half         | None
+    46     | Substitution | None
+    46     | Substitution | None
+    46     | Card         | Nicolas Jackson
+  event types: AddedTime, Card, Goal, Half, Substitution, VAR
+
+--- hungarian data bank: endpoints inside its own script ---
+  adatbank.js: HTTP 200, 30 kb (797 ms)
+  endpoint-like strings: 3
+    getGoalShooterByJersey
+    getInstatDataByMatchIdAndType
+    json
