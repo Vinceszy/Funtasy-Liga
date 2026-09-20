@@ -33,6 +33,10 @@ Amit ellenoriz:
   D9: a megjegyzesek es a fejlesztoi doksi a SZABALYT mondjak el, nem a
       fejlesztes tortenetet - nincs bennuk datum, dontes-kontextusu nev,
       sem "bejelentett / megtortent" jellegu naplo-jelzo.
+  D10: minden munkafolyamat es minden meres dokumentalva van. A D2 csak a
+      gyokerbeli adatfajlokat nezte, es a naplo/ ala tizenharom meres kerult
+      be ugy, hogy a naplo README tablazata nem tudott roluk - a nyers adat
+      igy ott all, de senki nem tudja, mit mert es mire jutott.
 """
 import glob, json, os, re, sys
 
@@ -220,6 +224,21 @@ for _coll, _wf in _MUNKAK:
 allit(not _hianyzo,
       "D8: amit a gyujto kiir, azt a workflow commitolja is"
       + ("" if not _hianyzo else " - HIANYZIK: " + "; ".join(_hianyzo)))
+
+# ---- D10: minden munkafolyamat es minden meres dokumentalva ----
+# Ket helyen szokott elmaradni: egy uj workflow a fo README fajl-tablazatabol,
+# egy uj meres pedig a naplo sajat tablazatabol. Mindketto csendes: a fajl ott
+# van, fut is, csak senki nem tudja, mi az.
+_naplo_readme = olvas("naplo/README.md")
+_hianyzo = [os.path.basename(f) for f in
+            sorted(glob.glob(os.path.join(GYOKER, ".github", "workflows", "*.yml")))
+            if "`.github/workflows/%s`" % os.path.basename(f) not in readme]
+_hianyzo += [os.path.basename(f) for f in
+             sorted(glob.glob(os.path.join(GYOKER, "naplo", "*.py"))
+                    + glob.glob(os.path.join(GYOKER, "naplo", "*.txt")))
+             if "`%s`" % os.path.basename(f) not in _naplo_readme]
+allit(not _hianyzo, "D10: minden munkafolyamat es meres dokumentalva van"
+      + ("" if not _hianyzo else " - HIANYZIK: %s" % ", ".join(_hianyzo)))
 
 # D7: a README tartalomjegyzeke egyezik a tenyleges cimekkel.
 # A fajl 1500+ soros; jegyzek nelkul kereshetetlen, elavult jegyzekkel meg

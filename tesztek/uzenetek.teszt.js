@@ -101,7 +101,8 @@ function keret(opts){
       }))));
     jo(eset.vart.test(szoveg), eset.nev);
     if (/zajlik/.test(szoveg))
-      jo(!/eddig nincs pontot érő/.test(szoveg) && /MLSZ a pontokat a meccs végén/.test(szoveg),
+      jo(!/eddig nincs pontot érő/.test(szoveg)
+         && /a pontok csak a meccs végén kerülnek be/.test(szoveg),
         'a "zajlik" szöveg nem ígér élő pontot, hanem megmondja, mikor jön');
     jo(perr.length === 0, 'nincs JS-hiba (' + eset.nev + ')');
     await p.close();

@@ -264,8 +264,9 @@ Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő 
   `LIGAK`-ban). A PL-en az FPL percről percre adja a pontot, tehát a 0 tényleg azt jelenti,
   hogy *eddig* nem volt pontot érő eseménye. Az MLSZ viszont csak a meccs után rögzíti a
   pontokat, ott ilyen állapot sosem áll elő — ezért az NB1-en az „eddig nincs pontot érő
-  eseménye" hamis ígéret volt, és helyette az áll, hogy *az MLSZ a pontokat a meccs végén
-  rögzíti*.
+  eseménye" hamis ígéret volt, és helyette az áll, hogy *a pontok csak a meccs végén
+  kerülnek be*. **A mondatot a közös réteg adja** (`FunTasy.UZENET.meccsKozben(liga)`), nem
+  az oldal írja le magának: két példányban állt, és már el is kezdtek elcsúszni egymástól.
 - **Ahol a kezdés időpontja még nincs kitűzve**, ott csak a dátum jelenik meg
   („kezdés: aug. 29. (időpont még nincs kitűzve)") — az MLSZ ilyenkor éjfélt ír, amit
   hiba lenne valódi kezdésként kiírni.
@@ -521,6 +522,7 @@ teljes képernyős, ragadós × gombbal.
 | `keretek/<forduló>.json` | Egy forduló keretei külön fájlban (`{round, squads}`). A meccs-nézet **ezt** tölti le, nem a teljes előzményt. |
 | `.github/workflows/archive.yml` | 3 óránként futó munkafolyamat: `collect.py` + commit. |
 | `.github/workflows/draft.yml` | 3 óránként futó (és kézzel is indítható) munkafolyamat: `collect_draft.py` + commit. |
+| `.github/workflows/naplo-meres.yml` | **Kézi mérésfuttató**: egy `naplo/*.py`-t futtat Actionsből (a fejlesztői környezet hálózata minden külső forrást blokkol), és amit a mérés kiírt, azt a megadott ágra commitolja. Bemenetei: `szkript`, `branch`, `kornyezet` (soronként egy `NÉV=érték`, pl. `HARVEST_EVENT=5`). **Minden méréshez ez az egy munkafolyamat van** — mérésenként külön fájl nem készül: abból tizennégy majdnem azonos példány lett, bennük három elgépelt `git add` úttal, amitől a mérés eredménye némán elveszett. |
 | `tartalek/` | Minden, ami nem kell a napi működéshez: a tartalék könyvjelző (`GOMB-bookmarklet.txt`, forrása és építője), az útmutatója (`KERET-MENTES.md`) és az elavult kézi pótlás leírása (`BACKFILL.md`). A weboldal és a gyűjtők semmit nem olvasnak innen. |
 
 ---
@@ -642,7 +644,7 @@ helyen állna össze, észrevétlenül elcsúszhatna, és a tároló sosem talá
 a `workers.dev`-re), ezért a logikáját hamis KV-vel mérjük
 (`tesztek/workertarolo.teszt.js`), a lap oldalát böngészőből
 (`tesztek/taroltallas.teszt.js`), a valódi végpontról-végpontig mérés pedig GitHub
-Actionsből megy (`naplo/tarolo-meres.py`, `.github/workflows/tarolo-meres.yml`).
+Actionsből megy (`naplo/tarolo-meres.py` a közös `.github/workflows/naplo-meres.yml`-lel).
 
 ### Az NB1 élő lekérése két körben megy, nem nyolcban (mérve)
 
@@ -2250,7 +2252,7 @@ Nincs build lépés, nincs függőség. A kód három rétegben él:
   lekérést (fojtással, párhuzamos futás nélkül) — enélkül mobilon befagy az állás.
 - **`nb1/index.html` / `pl/index.html`** — csak az oldalspecifikus rész: konfiguráció, betöltés
   és élő frissítés, meg az oldal saját modalja (a főoldalon `showSquad` / `showMatchRound` /
-  `squadHTML` / `seasonHTML` / `playersHTML`, a PL-en `showTeam` / `showMatch` /
+  `squadHTML` / `playersHTML`, a PL-en `showTeam` / `showMatch` /
   `keretHTML` / `fordulokHTML` / `jatekosokHTML`). A modalon belüli lapozást mindkét
   oldalon ugyanaz a kis nézet-verem viszi (`vShow` / `vBack`): a belépési pont `root`,
   a fülváltás `replace`, a listából nyíló nézet `push` — a vissza gomb ebből él.

@@ -105,6 +105,12 @@ export default {
     // kerest (pl. curl, meres) atengedunk - a cel-korlatozas ugyanugy vedi.
     if (eredet && EREDETEK.indexOf(eredet) < 0)
       return new Response('ismeretlen eredet', { status: 403, headers: cors });
+    // IRASNAL viszont kotelezo az Origin. A GET-eket az vedi, hogy csak a ket
+    // ismert API-ra mennek - az ertekeles ezzel szemben a MI tarolonkba ir,
+    // es az eszkoz-azonositot a hivo adja, tehat Origin nelkul barhonnan
+    // korlatlan sok kulcs keletkezhetne benne.
+    if (request.method === 'POST' && !eredet)
+      return new Response('ismeretlen eredet', { status: 403, headers: cors });
     const sajat = new URL(request.url);
     // ---- /ertekeles: egy iras ertekelese (1-4), indokkal ----
     // Az ERTEK a valasz, nem a keres: ha nincs KV-kotes, ezt meg is mondjuk,

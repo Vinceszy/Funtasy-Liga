@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=99">
+<link rel="stylesheet" href="../funtasy.css?v=100">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=99"></script>
+<script src="../funtasy.js?v=100"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -145,7 +145,6 @@ const LAST_ROUND = ROUNDS[ROUNDS.length-1];
 // szamit bele - oda csak a lezart fordulo kerul. A meccspanelen "elo"
 // jelolessel jelenik meg.
 const LIVE = {};
-const eloMeccs = (r,i) => (LIVE[r] && LIVE[r][i]) || null;
 // ugyanaz nev szerint: a fordulo-lista es a meccs-adatlap innen veszi az
 // elo allast (ott nincs kezunkben a menetrendbeli sorszam)
 const eloAllas = FunTasy.eloKereso(LIVE);
@@ -598,8 +597,7 @@ function valtoztatasokHTML(name, kv){
     if(pontos && v.bonusz) reszek.push({cim:'Magyarszabály', sorok:[
       {nev:'Magyarszabály', cimke:v.bonusz>0?'megjött':'elveszett', dl:v.bonusz}]});
     csoportok.push({nev:r+'. forduló', guard:pontos?v.guard:null, reszek,
-                    megj:pontos?'':'még nincs pontszám',
-                    ures:pontos?'':'Nem változtatott a keretén.'});
+                    megj:pontos?'':'még nincs pontszám'});
   }
   if(!csoportok.length)
     return '<div class="loading">Ehhez a szakvezetőhöz még nincs elmentett változtatás.</div>';
@@ -629,15 +627,16 @@ function znHTML(r){
           elott: x.elott, utan: x.utan })
   }));
   const ismeretlen = csoportok.some(cs=>cs.sorok.some(x=>!x.prof));
-  return FunTasy.zarasLista(csoportok, 'Nem történt változás ebben a fordulóban.')
+  return FunTasy.zarasLista(csoportok, FunTasy.UZENET.nincsValtozas)
     + (ismeretlen ? '<div class="note">Ezekről a fordulókról az oldal még nem gyűjtött '
         + 'játékos-szintű adatot: csak az látszik, mennyivel változott a pont — az nem, '
         + 'hogy kinél.</div>' : '');
 }
+// A legordulot es a ket nyilat a kozos lapozo viszi (FunTasy.forduloLapozo)
+// - ugyanaz a vezerlo, mint a PL zarasi panelje folott.
+let ZNLAPOZO = null;
 function znRajzol(){
   $('znBody').innerHTML = znHTML(ZNFORDULO);
-  const sel = $('selZaras');
-  if(sel) sel.value = String(ZNFORDULO);
 }
 function znInit(){
   const van = Object.keys(ZNADAT).map(Number).filter(r=>Object.keys(ZNADAT[r]||{}).length).sort((a,b)=>a-b);
@@ -654,7 +653,9 @@ function znInit(){
   // legutoljara volt valtozas: az a hir, ami a legfrissebb fordulorol tudhato
   // - akkor is, ha az annyi, hogy nem tortent valtozas.
   ZNFORDULO = rk[rk.length-1];
-  $('selZaras').innerHTML = rk.map(r=>`<option value="${r}">${r}. forduló</option>`).join('');
+  ZNLAPOZO = FunTasy.forduloLapozo({ sel:'selZaras',
+                                     valt:r=>{ ZNFORDULO=r; znRajzol(); } });
+  ZNLAPOZO.tolt(rk, ZNFORDULO);
   $('znPanel').style.display = '';
   znRajzol();
 }
@@ -1064,12 +1065,11 @@ const idoFmt=s=>{
   return d.toLocaleDateString('hu-HU',{month:'short',day:'numeric'})+' '
          +d.toLocaleTimeString('hu-HU',{hour:'2-digit',minute:'2-digit'});
 };
-// Az MLSZ a pontokat csak a meccs UTAN rogziti (eloPontok:false a ligaban),
-// ezert meccs kozben nem szabad ugy fogalmazni, mintha a 0 azt jelentene,
-// hogy "eddig" nem szerzett pontot - olyan allapot itt sosem all elo.
-const MECCS_KOZBEN=ELO_PONTOK
-  ? 'A meccs zajlik — eddig nincs pontot érő eseménye.'
-  : 'A meccs zajlik — az MLSZ a pontokat a meccs végén rögzíti.';
+// Ugyanaz a mondat, mint a PL-oldalon: a kozos retegbol jon, es a liga
+// eloPontok tulajdonsaga dont rola. Az MLSZ a pontokat csak a meccs UTAN
+// rogziti, ezert itt nem szabad ugy fogalmazni, mintha a 0 azt jelentene,
+// hogy "eddig" nem szerzett pontot.
+const MECCS_KOZBEN=FunTasy.UZENET.meccsKozben('nb1');
 // Ha egyetlen pontot ero esemeny sincs, a 0-nak tobb oka lehet. Elsokent a
 // "nincs is meccse ebben a forduloban" esetet zarjuk ki (ezt a meccslista
 // mondja meg, lasd keretRekord), utana a kezdesi ido, majd a meccs allapota
@@ -1125,14 +1125,13 @@ function nincsPontUzenet(played, start, nyers, nogame, vege, elo){
     ? 'Ehhez a fordulóhoz nincs rögzített esemény.'
     : 'A meccs véget ért — a pontok feldolgozása még tart.';
   const perc=(nyers||[]).find(s=>s.name==='Játszott perc');
-  if(perc && !perc.value) return 'Nem lépett pályára ebben a fordulóban.';
+  if(perc && !perc.value) return FunTasy.UZENET.nemLepettPalyara;
   // MERT MEGMERTUK: az MLSZ a 0 pontos jatekosra URES bontast ad vissza -
   // Heitor (Ujpest) 0 ponttal ures bontast kapott, mikozben klubtarsa,
   // Ljujic ugyanabbol a meccsbol 1,75-ot, tehat a meccs FEL VOLT dolgozva.
   // A "nincs sor" tehat NEM jelent feldolgozatlant; erre alapozni hiba volt.
   // A meccs kozbeni tevedes ellen nem ez ved, hanem a fenti allapot-kapu.
-  if(played===true || (nyers||[]).length)
-    return 'Lejátszotta a meccset, pontot érő esemény nélkül.';
+  if(played===true || (nyers||[]).length) return FunTasy.UZENET.esemenyNelkul;
   return 'Ehhez a fordulóhoz nincs rögzített esemény.';
 }
 async function bontasHTML(ds){
@@ -1453,9 +1452,6 @@ async function showSquad(names,tab,mode){
 }
 
 // ---------- események ----------
-document.addEventListener('change',e=>{
-  if(e.target && e.target.id==='selZaras'){ ZNFORDULO=+e.target.value; znRajzol(); }
-});
 document.addEventListener('click',e=>{
   if(e.target===$('ovBack')){ vBack(); return; }
   if(e.target.id==='elteresGomb'){ CSAK_ELTERES=!CSAK_ELTERES; meccsTest(); return; }
@@ -1464,21 +1460,12 @@ document.addEventListener('click',e=>{
   // jatekosprofilban a fordulo szamabol (data-pr) tolt
   if(pr){ FunTasy.accToggle(pr, ()=> pr.dataset.pr!==undefined
             ? profilBontasHTML(+pr.dataset.pr) : bontasHTML(pr.dataset)); return; }
-  const zn=e.target.closest('[data-znav]');
-  if(zn){
-    const rk=[...$('selZaras').options].map(o=>+o.value);
-    const i=rk.indexOf(ZNFORDULO)+ +zn.dataset.znav;
-    if(i>=0 && i<rk.length){ ZNFORDULO=rk[i]; znRajzol(); }
-    return;
-  }
   const pf=e.target.closest('[data-prof]');
   if(pf){ showProfil({nev:pf.dataset.prof, cp:pf.dataset.pcp?+pf.dataset.pcp:null,
                       klub:pf.dataset.ptm||null, poszt:pf.dataset.ppos||null,
                       hun:pf.dataset.phun==='1', u21:pf.dataset.pu21==='1'}, 'push'); return; }
   const mem=e.target.closest('[data-member]');
   if(mem){ showSquad([mem.dataset.member]); return; }
-  const zsel=e.target.closest('#selZaras');
-  if(zsel) return;                       // a select sajat change-esemenyt kap
   const tab=e.target.closest('[data-tab]');
   if(tab){ showSquad(mCurrent, tab.dataset.tab, 'replace'); return; }
   const ms=e.target.closest('[data-mh]');

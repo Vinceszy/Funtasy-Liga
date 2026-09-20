@@ -135,7 +135,8 @@ const ell = (cimke, kapott, vart) =>
   jo(lementPont.trim() !== '–', 'lement meccs, 0 pont -> szám marad (' + JSON.stringify(lementPont.trim()) + ')');
   const futSzoveg = await kattints('Futó Meccsű');   // ujrakattintas zarna a panelt
   ell('fut, de is_played ', futSzoveg, 'A meccs zajlik');
-  jo(/az MLSZ a pontokat a meccs végén rögzíti/.test(futSzoveg), 'NB1: a "zajlik" nem ígér élő pontot');
+  jo(/a pontok csak a meccs végén kerülnek be/.test(futSzoveg),
+     'NB1: a "zajlik" nem ígér élő pontot');
   ell('ejfel = nincs ido  ', await kattints('Ejfeli Placeholder'), 'A meccs még nem kezdődött el — kezdés: dec. 24. (időpont még nincs kitűzve)');
   const kj = await page.$$eval('.plr', ns => ns.filter(n => n.dataset.ng === '1')
     .map(n => (n.querySelector('.pts')||{}).textContent));

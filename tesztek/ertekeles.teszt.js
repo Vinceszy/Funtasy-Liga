@@ -117,7 +117,19 @@ function ujKV(){
   jo(n.status === 503, 'kötés nélkül HTTP 503 — ' + n.status
      + ' (nem hazudjuk azt, hogy elment)');
 
-  // ---- 6) a lista visszaadja ----
+  // ---- 6) Origin nelkul nem lehet irni ----
+  // A GET-eket az vedi, hogy csak a ket ismert API-ra mennek; az ertekeles
+  // viszont a MI tarolonkba ir, es az eszkoz-azonositot a hivo adja. Origin
+  // nelkul (curl, szkript) barhonnan korlatlan sok kulcs keletkezhetne benne.
+  cim('Értékelés: Origin nélkül nem lehet írni');
+  const kv3 = ujKV(), env3 = { TAROLT: kv3 };
+  const nyers = await worker.fetch(new Request(PROXY + '/ertekeles',
+    { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cikk: CIKK, eszkoz: ESZKOZ, pont: 4 }) }), env3, ctx);
+  jo(nyers.status === 403, 'Origin nélküli POST-ra HTTP 403 — ' + nyers.status);
+  jo(kv3.irasok === 0, 'és nem is írt a tárolóba — ' + kv3.irasok + ' írás');
+
+  // ---- 7) a lista visszaadja ----
   cim('Értékelés: a lista visszaadja, amit kaptunk');
   const l = await worker.fetch(new Request(PROXY + '/ertekelesek',
     { headers: { Origin: EREDET } }), env, ctx);

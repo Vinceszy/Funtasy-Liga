@@ -1,10 +1,18 @@
 # Mérési archívum
 
-Egyszeri megfigyelések nyers naplói 2026 augusztusából. A fájlok azért maradnak,
-mert a bennük lévő nyers adat
-később még jól jöhet (pl. ha az FPL évközben viselkedést vált, van mihez
-hasonlítani). A következtetések a fő README-be kerültek (3/b, „Automatikus
+Egyszeri megfigyelések nyers naplói. A fájlok azért maradnak, mert a bennük lévő
+nyers adat később még jól jöhet (pl. ha az FPL évközben viselkedést vált, van
+mihez hasonlítani). A következtetések a fő README-be kerültek (3/b, „Automatikus
 cserék", „Ki van még a pályán", bónusz-szakasz).
+
+Minden mérés **egy** munkafolyamattal indul (`.github/workflows/naplo-meres.yml`):
+a fejlesztői környezet hálózata minden külső forrást blokkol, ezért Actionsből
+futnak. Paramétert a `kornyezet` bemenet ad át (`NÉV=érték` soronként).
+
+Itt van két **szabály-dokumentum** is, nem mérés: a `summary-voice.md` (hogyan
+szólhat egy meccsről szóló szöveg) és a `colour-taxonomy.md` (milyen tényt
+nevezünk színnek, és melyik forrásból jöhet). Ezek a Nemzethy Sport írásaira
+vonatkoznak.
 
 | fájl | mit mért | fő tanulság |
 |---|---|---|
@@ -14,4 +22,12 @@ cserék", „Ki van még a pályán", bónusz-szakasz).
 | `proxy-meres.txt` + `proxy-meres.py` | 9 CORS-proxy + a két API közvetlenül, Origin-fejléccel (2026-08-27, élő leállás alatt) | az MLSZ és az FPL válaszában nincs ACAO (direkt böngésző-kérés sosem fog menni); a corsproxy.io 401-re váltott, az allorigins túlterhelt; a `proxy.cors.sh` mindkét API-ra jó — az út-lista a `funtasy.js` lekérőjében eszerint áll |
 | `mlsz-adat.txt` + `mlsz-adat-meres.py` | mit ad az MLSZ API az NB1-hez | a meccs-objektumban VAN eredmény; „kezdő volt-e" adat NINCS; a tömeges perc-lekérdezés sorai nem köthetők játékoshoz |
 | `mlsz-elo-meccs.txt` + `mlsz-elo-meccs-meres.py` | megkapható-e ÉLŐ fordulónál a meccs két klubja (2026-08-30) | igen, de **csak explicit** `games.home_team`/`games.away_team` include-dal (+2,5 KB, logó nélkül); külön meccs-végpont nincs (10 alak, mind 404); a birtokolt játékosokból csak 4/6 meccs jönne ki, hazai/vendég sehogy |
+| `mlsz-jatekoslista.txt` + `mlsz-jatekoslista-meres.py` | van-e az MLSZ-nél **jövőbeli menetrend** (a profil következő ellenfeleihez), és mennyire pontos a játékos alappontja | önálló meccs-végpont nincs (~25 alak, mind 404); a játékos alappontja **mindig 0,25 többszöröse** (238 forduló, kivétel nélkül), tehát a padfelezés kerekítése visszaszámolható |
+| `tarolo-meres.txt` + `tarolo-meres.py` | a Worker „utolsó ismert állás" tárolója végponttól végpontig | a tárolt válasz ~35× gyorsabban jön, mint a friss lekérés; változatlan adatnál az időbélyeg nem íródik újra |
+| `fpl-profil.txt` + `fpl-profil-meres.py` | az FPL `detail` szövegének alakja (`BHA (A) 4-0`) | a számpár mindig **hazai–vendég** sorrendben áll, nem a játékos szemszögéből — enélkül minden idegenbeli meccs fordítva látszana |
+| `match-event-sources.txt` + `match-event-sources.py`, `official-sources-probe.py` | van-e percre pontos meccs-esemény kulcs nélkül | a nagy adatszolgáltatók 403-at adnak vagy tiltják a robots-ban; a hivatalos oldalak szöveges közvetítése marad |
+| `esemeny-forras.txt` + `esemeny-forras-meres.py` | ugyanez kulcsos szolgáltatóval (ESPN, API-Football) | kulcs nélkül 403; kulccsal is csak a nagy ligákra |
+| `beszamolo-forras.txt` + `beszamolo-forras-meres.py`, `nemzetisport-meres.py`, `nso-content-probe.py` | magyar meccsbeszámolók elérhetősége az NB1-hez | a Nemzeti Sport `robots.txt`-je **tiltja** — nem kérjük le; az NB1 színezéséhez más út kell |
+| `pl-colour.txt` + `pl-colour-probe.py`, `pl-colour-harvest.py` (`pl-colour-4.json`), `round-colour-harvest.py` | honnan jöhet a PL-fordulók színezése kulcs nélkül | a FotMob engedi és **strukturáltan** adja (gól perce és módja, VAR, kihagyott helyzetek, védések); ebből készül a forduló gyűjtése |
+| `draft-picks.txt` + `draft-picks-probe.py`, `draft-picks-harvest.py` | mit tudunk meg a saját draftunkról és a tranzakciókról | a `choices` kulcs nélkül elérhető (ebből lett a `draft_picks.json`); a waiver-előzmény **bejelentkezéshez kötött** (403), ezért nem gyűjtjük |
 | `mlsz-dupla-meccs.txt` + `mlsz-dupla-meccs-meres.py` | mit küld az MLSZ, ha egy klubnak **két meccse** van egy fantasy fordulóban (pótolt, elmaradt meccs) — 2026-09-03, MLSZ 7. forduló | az ETO `current_round.games` listája **két elemű**: `3F` (ETO–FTC, szept. 3., a halasztott 3. fordulós meccs) és `7F` (ETO–HONVÉD, szept. 6.). Az MLSZ tehát a **pótlás napja szerinti** fordulóba teszi a meccset, de meghagyja rajta az **eredeti forduló számát**. Minden más klubnak 1 eleme volt. |

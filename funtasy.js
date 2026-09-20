@@ -115,6 +115,27 @@
   var UJSAG_NEV = 'Nemzethy Sport';
   var UJSAG_MOTTO = 'Heti Funtasy Magazin';
 
+  /* ===== KOZOS UZENETEK =====
+     Ugyanaz a jelenseg a ket ligaban ugyanazt a mondatot kapja. Ket
+     peldanyban alltak, es mar el is kezdtek elcsuszni egymastol: a meccs
+     kozbeni mondat "vege" fele a ket oldal mast mondott ugyanarrol.
+     Amelyik mondat ligankent MAS (mert a szabaly mas), az fuggveny, es a
+     ligat kerdezi meg - nem az oldal dont rola helyben. */
+  var UZENET = {
+    nemLepettPalyara: 'Nem lépett pályára ebben a fordulóban.',
+    esemenyNelkul: 'Lejátszotta a meccset, pontot érő esemény nélkül.',
+    nincsValtozas: 'Nem történt változás ebben a fordulóban.',
+    /* Meccs kozben a 0 nem mindenhol jelenti ugyanazt: az FPL percrol percre
+       ad pontot (eloPontok), tehat ott a 0 tenyleg annyit tesz, hogy eddig
+       nem volt pontot ero esemenye. Az MLSZ a pontokat a meccs UTAN rogziti,
+       tehat ott ilyet allitani hazugsag volna. */
+    meccsKozben: function (ligaId) {
+      return (liga(ligaId) || {}).eloPontok
+        ? 'A meccs zajlik — eddig nincs pontot érő eseménye.'
+        : 'A meccs zajlik — a pontok csak a meccs végén kerülnek be.';
+    }
+  };
+
   var esc = function (s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -1765,7 +1786,10 @@
       opts.defaultOpen - open the strip up front
       ?draft=1 in the URL lifts the gate, and then the held-back summary is
       labelled as a draft so it can never be mistaken for a published one. */
+  /* A rovat neve EGY helyen all: a meccs adatlapjan, a magazin kartyajan es
+     a magazin tipus-szurojeben ugyanaz a szo kell hogy alljon. */
   var ARTICLE_LABEL = { summary: 'Összefoglaló', preview: 'Beharangozó' };
+  function rovatNev(fajta) { return ARTICLE_LABEL[fajta] || fajta; }
   function matchArticle(store, league, round, a, b, opts) {
     opts = opts || {};
     var r = store && store.leagues && store.leagues[league] &&
@@ -2204,6 +2228,48 @@
     }).join('') + '</div>';
   }
 
+  /* ===== FORDULO-LAPOZO =====
+     Egy legordulo es ket nyil: ugyanaz a vezerlo all a ket liga zarasi
+     panelje folott. Ket peldanyban allt, ket kulon allapotmodellel - az
+     egyik a valasztott ERTEKBOL szamolta a kovetkezo fordulot, a masik az
+     INDEXBOL -, es a ket panel lapozoja mar el is csuszott egymastol.
+     A hivo annyit ad meg, hova rajzoljon, es mi tortenjen valtaskor.
+
+     A muveletek: `tolt(ertekek, aktiv)` feltolti a legordulot, `ertek()`
+     megmondja, melyik fordulon all. Egy legordulohoz EGY lapozo tartozik:
+     ujabb hivasra ugyanazt adja vissza, nem koti be megegyszer az
+     esemenyeket (a betolto ut tobbszor is lefuthat). */
+  function forduloLapozo(opts) {
+    var sel = document.getElementById(opts.sel);
+    if (!sel) return null;
+    if (sel.__lapozo) return sel.__lapozo;
+    var valt = opts.valt || function () {};
+    function lep(irany) {
+      var i = sel.selectedIndex + irany;
+      if (i < 0 || i >= sel.options.length) return;
+      sel.selectedIndex = i;
+      valt(+sel.value);
+    }
+    sel.addEventListener('change', function () { valt(+sel.value); });
+    // A nyilak a legordulo MELLETT allnak, nem benne; a kozos szulojukre
+    // figyelunk, igy a ket lap sajat elrendezese valtozatlan maradhat.
+    var sav = sel.parentNode;
+    if (sav) sav.addEventListener('click', function (e) {
+      var g = e.target.closest && e.target.closest('[data-znav]');
+      if (g) lep(+g.getAttribute('data-znav'));
+    });
+    sel.__lapozo = {
+      tolt: function (ertekek, aktiv) {
+        sel.innerHTML = ertekek.map(function (r) {
+          return '<option value="' + r + '">' + r + '. forduló</option>';
+        }).join('');
+        sel.value = String(aktiv != null ? aktiv : ertekek[ertekek.length - 1]);
+      },
+      ertek: function () { return +sel.value; }
+    };
+    return sel.__lapozo;
+  }
+
   /* ---------- ELAVULT LAP FELISMERESE ----------
      A `?v=` a funtasy.js/css gyorsitotarat tori - a LAP SAJAT HTML-jet NEM.
      Az nb1/index.html-ben viszont eles logika van (kozos jatekosok, elo
@@ -2240,20 +2306,21 @@
   global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played,
                      accToggle: accToggle, accTable: accTable, accOrzo: accOrzo,
                      LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
+                     UZENET: UZENET,
                      SZEMELYEK: SZEMELYEK, szemelyTar: szemelyTar,
                      lablecHTML: lablecHTML, renderLablec: renderLablec,
                      bontasMeccsSor: bontasMeccsSor,
-                     zarasLista: zarasLista, verzioOr: verzioOr,
+                     zarasLista: zarasLista, forduloLapozo: forduloLapozo,
+                     verzioOr: verzioOr,
                      valtoztatasLista: valtoztatasLista,
                      profilHTML: profilHTML, profilFejHTML: profilFejHTML,
                      jatekosKereso: jatekosKereso, ekezetlen: ekezetlen,
                      profilNyitoHTML: profilNyitoHTML, profilNezo: profilNezo,
                      kezdSzazalek: kezdSzazalek, KEZD_CIM: KEZD_CIM,
                      kezdParHTML: kezdParHTML,
-                     articleStrip: articleStrip, matchArticle: matchArticle,
+                     matchArticle: matchArticle,
                      articleDraftMode: articleDraftMode,
-                     mergeArticles: mergeArticles,
-                     rateBar: rateBar,
+                     mergeArticles: mergeArticles, rovatNev: rovatNev,
                      articleList: articleList, articleCardHTML: articleCardHTML,
                      watchMagazine: watchMagazine,
                      UJSAG_NEV: UJSAG_NEV, UJSAG_MOTTO: UJSAG_MOTTO,

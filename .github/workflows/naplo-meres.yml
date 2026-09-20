@@ -15,6 +15,10 @@ on:
         description: 'Melyik agra irja az eredmenyt'
         required: false
         default: 'claude/github-claude-code-integration-x4pk4k'
+      kornyezet:
+        description: 'Soronkent egy NEV=ertek a meresnek (pl. HARVEST_EVENT=5)'
+        required: false
+        default: ''
 permissions: { contents: write }
 jobs:
   meres:
@@ -26,7 +30,12 @@ jobs:
       - env:
           SZKRIPT: ${{ github.event.inputs.szkript }}
           AG: ${{ github.event.inputs.branch }}
+          KORNYEZET: ${{ github.event.inputs.kornyezet }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # A meresek egy resze kulcsot kap; a titok itt all, nem a
+          # szkriptben. Ami nincs beallitva, az ures - a meres maga dont
+          # arrol, mit kezd vele.
+          APIFOOTBALL_KEY: ${{ secrets.APIFOOTBALL_KEY }}
         run: |
           # Csak a naplo alol futtatunk, es csak .py-t: a workflow bemenete
           # nem valhat tetszoleges parancs futtatasava.
@@ -38,6 +47,23 @@ jobs:
             *..*) echo "nem tartalmazhat '..'-t"; exit 1;;
           esac
           [ -f "$SZKRIPT" ] || { echo "nincs ilyen fajl: $SZKRIPT"; exit 1; }
+          # A meresek egy resze parametert var (melyik fordulo, hany nap).
+          # Soronkent EGY "NEV=ertek"; szigoru minta, es `export`-tal adjuk
+          # at, nem `eval`-lal - a bemenet igy nem valhat parancsca.
+          while IFS= read -r sor; do
+            [ -z "$sor" ] && continue
+            case "$sor" in
+              [A-Z_]*=*) ;;
+              *) echo "rossz alaku kornyezeti valtozo: $sor"; exit 1;;
+            esac
+            case "$sor" in
+              *[\`\$\;\|\&\<\>\(\)]*)
+                echo "tiltott karakter: $sor"; exit 1;;
+            esac
+            export "${sor%%=*}=${sor#*=}"
+          done <<EOF
+          $KORNYEZET
+          EOF
           git config user.name  "funtasy-figyelo"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"

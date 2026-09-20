@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=99">
+<link rel="stylesheet" href="../funtasy.css?v=100">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -106,7 +106,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=99"></script>
+<script src="../funtasy.js?v=100"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // A két liga résztvevőinek összekötése a KÖZÖS rétegben áll
@@ -725,11 +725,14 @@ function zarasHTML(r, nezet){
     ? 'A zárás nem hozott pontváltozást ebben a fordulóban.'
     : nezet === 'csere'
     ? 'A zárásnál nem történt automatikus csere ebben a fordulóban.'
-    : 'Nem történt változás ebben a fordulóban.');
+    : FunTasy.UZENET.nincsValtozas);
 }
 
+// A legordulot es a ket nyilat a kozos lapozo viszi (FunTasy.forduloLapozo)
+// - ugyanaz a vezerlo, mint az NB1 zarasi panelje folott.
+let ZARASLAPOZO = null;
 function zarasRajzol(){
-  const r = $('selZaras').value;
+  const r = ZARASLAPOZO ? ZARASLAPOZO.ertek() : $('selZaras').value;
   $('zarasSzuro').innerHTML = ZNEZETEK.map(([k, cim]) =>
     `<button class="vlt-chip${zarasNezet === k ? ' on' : ''}" data-znezet="${k}">${cim}</button>`).join('');
   $('zarasBody').innerHTML = zarasHTML(r, zarasNezet);
@@ -754,22 +757,16 @@ function zarasInit(){
   const utolso = Math.max(...van, ...VEGLEGESEK.map(Number).filter(Boolean));
   const fordulok = [];
   for (let r = 1; r <= utolso; r++) fordulok.push(r);
-  $('selZaras').innerHTML = fordulok.map(r => `<option value="${r}">${r}. forduló</option>`).join('');
-  $('selZaras').value = String(utolso);
+  ZARASLAPOZO = FunTasy.forduloLapozo({ sel: 'selZaras', valt: zarasRajzol });
+  ZARASLAPOZO.tolt(fordulok, utolso);
   $('zarasPanel').style.display = '';
   zarasRajzol();
 }
 
 document.addEventListener('click', e => {
   const chip = e.target.closest('[data-znezet]');
-  if (chip){ zarasNezet = chip.dataset.znezet; zarasRajzol(); return; }
-  const nav = e.target.closest('[data-znav]');
-  if (nav){
-    const sel = $('selZaras'), i = sel.selectedIndex + (+nav.dataset.znav);
-    if (i >= 0 && i < sel.options.length){ sel.selectedIndex = i; zarasRajzol(); }
-  }
+  if (chip){ zarasNezet = chip.dataset.znezet; zarasRajzol(); }
 });
-document.addEventListener('change', e => { if (e.target.id === 'selZaras') zarasRajzol(); });
 
 // Matrix-cellara kattintva a ket csapat egymas elleni meccsei.
 const showH2H = FunTasy.h2hNezo({
@@ -1129,12 +1126,11 @@ const idoFmt = s => new Date(s).toLocaleString('hu-HU',
 // allapotat az elo fordulonal a fixtures adja (indult / kesz), a lezart
 // fordulokra minden meccs kesz; hogy palyara lepett-e, a live 'minutes'
 // mutatja - ez 0 percnel is megjon, tehat megbizhato jelzes.
-// Az FPL percrol percre adja a pontot (eloPontok:true a ligaban), tehat itt
-// a meccs alatti 0 tenyleg azt jelenti, hogy eddig nem volt pontot ero
-// esemenye. Az NB1-en ez nincs igy - lasd a liga eloPontok mezojet.
-const MECCS_KOZBEN = FunTasy.liga('pl').eloPontok
-  ? 'A meccs zajlik — eddig nincs pontot érő eseménye.'
-  : 'A meccs zajlik — a pontok a meccs végén kerülnek be.';
+// Ugyanaz a mondat, mint az NB1-oldalon: a kozos retegbol jon, es a liga
+// eloPontok tulajdonsaga dont rola. Az FPL percrol percre adja a pontot,
+// tehat itt a meccs alatti 0 tenyleg azt jelenti, hogy eddig nem volt
+// pontot ero esemenye.
+const MECCS_KOZBEN = FunTasy.UZENET.meccsKozben('pl');
 function nincsPontUzenet(e, gw, perc){
   const klub = jat(e).t;
   const elo = gw === LIVEGW && LIVEFX;
@@ -1144,8 +1140,8 @@ function nincsPontUzenet(e, gw, perc){
   if (fx && !fx.indult)
     return 'A meccs még nem kezdődött el' + (fx.kezdes ? ' — kezdés: ' + idoFmt(fx.kezdes) : '.');
   if (fx && !fx.kesz) return MECCS_KOZBEN;
-  if (perc === 0) return 'Nem lépett pályára ebben a fordulóban.';
-  return 'Lejátszotta a meccset, pontot érő esemény nélkül.';
+  if (perc === 0) return FunTasy.UZENET.nemLepettPalyara;
+  return FunTasy.UZENET.esemenyNelkul;
 }
 // A bonusz nem ugy vegleges, mint a tobbi pont. Az FPL a meccs alatt is
 // szamolja a BPS-tablabol, tehat a kiirt ertek meg valtozhat; lefujaskor
