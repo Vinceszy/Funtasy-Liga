@@ -52,12 +52,24 @@ def main():
     st, det = js("league/%s/details" % liga)
     if st != 200 or not det:
         print("league details: HTTP %s - megallunk" % st); return 1
-    # entry (valodi csapat-azonosito) -> league_entry (amit mi tarolunk)
-    terkep = {}
-    for e in det.get("league_entries") or []:
-        if e.get("entry") is not None and e.get("id") is not None:
-            terkep[str(e["entry"])] = str(e["id"])
-    print("csapat-leképezés: %d" % len(terkep))
+    # entry_id (valodi csapat-azonosito) -> id (league_entry, amit mi tarolunk).
+    # A mezo neve entry_id, nem entry - az elso valtozat 'entry'-t keresett, es
+    # ures leképezéssel allt meg. Tobb nevet is elfogadunk, es KIIRJUK, melyik
+    # talalt: egy nema atnevezes igy nem tunik el.
+    terkep, mezo = {}, None
+    for jelolt in ("entry_id", "entry"):
+        t = {}
+        for e in det.get("league_entries") or []:
+            if e.get(jelolt) is not None and e.get("id") is not None:
+                t[str(e[jelolt])] = str(e["id"])
+        if t:
+            terkep, mezo = t, jelolt
+            break
+    print("csapat-leképezés: %d (mezo: %s)" % (len(terkep), mezo))
+    if not terkep:
+        print("  ! a liga-adatban egyik mezo sincs meg; ami van: %s"
+              % ", ".join(sorted((det.get("league_entries") or [{}])[0].keys())))
+        return 1
 
     st, ch = js("draft/%s/choices" % liga)
     if st != 200 or not ch:
