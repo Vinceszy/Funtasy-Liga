@@ -33,6 +33,11 @@ Amit ellenoriz:
   D9: a megjegyzesek es a fejlesztoi doksi a SZABALYT mondjak el, nem a
       fejlesztes tortenetet - nincs bennuk datum, dontes-kontextusu nev,
       sem "bejelentett / megtortent" jellegu naplo-jelzo.
+  D11: cikk csak LEZART adatbol keszulhet. Osszefoglalo csak vegleges
+      fordulora, beharangozo pedig csak a soron kovetkezore - egy fordulo
+      KOZBEN irt szoveg a meg mozgo szamokbol dolgozik, es a fordulo vegere
+      valotlant allit (egy beharangozo azt irta, hogy valaki megnyerte azt a
+      meccset, amit a vegen elvesztett).
   D10: minden munkafolyamat es minden meres dokumentalva van. A D2 csak a
       gyokerbeli adatfajlokat nezte, es a naplo/ ala tizenharom meres kerult
       be ugy, hogy a naplo README tablazata nem tudott roluk - a nyers adat
@@ -224,6 +229,39 @@ for _coll, _wf in _MUNKAK:
 allit(not _hianyzo,
       "D8: amit a gyujto kiir, azt a workflow commitolja is"
       + ("" if not _hianyzo else " - HIANYZIK: " + "; ".join(_hianyzo)))
+
+# ---- D11: cikk csak lezart adatbol ----
+# A lap sajat kapuja futasidoben elrejti a le nem zart fordulo osszefoglalojat,
+# de az MEGIRNI nem akadalyozza meg - es a baj nem is ott volt: a KOVETKEZO
+# fordulo beharangozoja hivatkozik a mostani allasra, tehat egy meg futo
+# fordulo kozben irva a szamai a fordulo vegere megfordulhatnak.
+def _vegso_fordulo():
+    eredmeny = json.loads(olvas("results.json"))
+    ideiglenes = {int(x) for x in (eredmeny.get("provisional") or [])}
+    zart = {int(r) for r, ms in (eredmeny.get("schedule") or {}).items()
+            if int(r) not in ideiglenes
+            and any(m[2] is not None for m in ms)}
+    return max(zart) if zart else 0, zart
+
+
+_utolso, _zart_nb1 = _vegso_fordulo()
+_pl_zart = {int(x) for x in
+            (json.loads(olvas("draft_history.json")).get("veglegesek") or [])}
+_ZART = {"nb1": _zart_nb1, "pl": _pl_zart}
+_baj = []
+for _fajl in ("articles.json", "articles-draft.json"):
+    _cikkek = json.loads(olvas(_fajl))
+    for _liga, _fordulok in (_cikkek.get("leagues") or {}).items():
+        _utolso_liga = max(_ZART.get(_liga) or {0})
+        for _r, _fajtak in _fordulok.items():
+            if "summary" in _fajtak and int(_r) not in (_ZART.get(_liga) or set()):
+                _baj.append("%s: %s %s. osszefoglalo, pedig a fordulo nem vegleges"
+                            % (_fajl, _liga, _r))
+            if "preview" in _fajtak and int(_r) != _utolso_liga + 1:
+                _baj.append("%s: %s %s. beharangozo, pedig a soron kovetkezo a %d."
+                            % (_fajl, _liga, _r, _utolso_liga + 1))
+allit(not _baj, "D11: cikk csak lezart adatbol keszult"
+      + ("" if not _baj else " - " + "; ".join(_baj)))
 
 # ---- D10: minden munkafolyamat es minden meres dokumentalva ----
 # Ket helyen szokott elmaradni: egy uj workflow a fo README fajl-tablazatabol,
