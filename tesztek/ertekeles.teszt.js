@@ -10,12 +10,13 @@ const { jo, cim, vege } = require('./kozos');
 // ugyanugy, mint a tarolonal (tesztek/workertarolo.teszt.js).
 //
 // Amit rogzit:
-//  - ervenyes ertekeles eltarolodik, a pont, az okok es az indok egyutt;
+//  - ervenyes ertekeles eltarolodik, a pont es az indok egyutt;
 //  - UGYANAZ AZ ESZKOZ ugyanarra a cikkre nem halmoz, hanem felulir;
 //  - mas eszkoz kulon sort kap;
 //  - a tartomanyon kivuli pont, az ismeretlen cikk-azonosito es a rossz
 //    eszkoz-azonosito 400-at kap, es NEM ir;
 //  - a tul hosszu indok le van vagva (egy elszallt kliens se tolthesse tele);
+//  - keszre valaszthato okokat NEM tarolunk: a nezo sajat szavai kellenek;
 //  - GET-tel nem lehet ertekelni, es KV-kotes nelkul megmondja, hogy nem ment el;
 //  - a /ertekelesek visszaadja, amit kaptunk.
 const PROXY = 'https://funtasy-liga.swick00.workers.dev';
@@ -56,10 +57,10 @@ function ujKV(){
   };
 
   // ---- 1) ervenyes ertekeles ----
-  cim('Értékelés: eltárolódik a pont, az ok és az indok');
+  cim('Értékelés: eltárolódik a pont és az indok');
   const kv = ujKV(), env = { TAROLT: kv };
   let r = await kuld({ cikk: CIKK, eszkoz: ESZKOZ, pont: 2,
-                       okok: ['Túl száraz, csak számok'], indok: 'Semmi nem derült ki belőle.' }, env);
+                       indok: 'Semmi nem derült ki belőle.' }, env);
   jo(r.status === 200, 'HTTP 200 — ' + r.status);
   jo((await r.json()).ok === true, 'a válasz nyugtáz');
   jo(kv.irasok === 1, 'egy írás — ' + kv.irasok);
@@ -67,9 +68,9 @@ function ujKV(){
   jo(kulcs === 'ert/' + CIKK + '/' + ESZKOZ, 'a kulcsban a cikk ÉS az eszköz — ' + kulcs);
   const mentett = JSON.parse(kv.tar.get(kulcs));
   jo(mentett.pont === 2, 'a pont elmentődött — ' + mentett.pont);
-  jo(mentett.okok.length === 1 && mentett.okok[0] === 'Túl száraz, csak számok',
-     'a gyorsválasztó is — ' + JSON.stringify(mentett.okok));
-  jo(mentett.indok === 'Semmi nem derült ki belőle.', 'és a szabad szöveg is');
+  jo(mentett.indok === 'Semmi nem derült ki belőle.', 'a néző saját szavai is');
+  jo(!('okok' in mentett),
+     'készre választható okokat nem tárolunk — a mi kategóriáink nem tanítanak semmire');
   jo(!!mentett.ido, 'időbélyeggel');
 
   // ---- 2) ugyanaz az eszkoz nem halmoz ----
@@ -106,8 +107,7 @@ function ujKV(){
                okok: new Array(50).fill('y'.repeat(200)) }, env2);
   const m2 = JSON.parse(kv2.tar.get('ert/' + CIKK + '/' + ESZKOZ));
   jo(m2.indok.length === modul.MAX_INDOK, 'az indok ' + m2.indok.length + ' karakter');
-  jo(m2.okok.length === 8, 'legfeljebb nyolc ok — ' + m2.okok.length);
-  jo(m2.okok[0].length === 60, 'és azok is vágva — ' + m2.okok[0].length);
+  jo(!('okok' in m2), 'a kívülről küldött okokat el sem tároljuk');
 
   // ---- 5) GET-tel nem lehet ertekelni, kotes nelkul pedig szol ----
   cim('Értékelés: GET nem megy, kötés nélkül megmondja');

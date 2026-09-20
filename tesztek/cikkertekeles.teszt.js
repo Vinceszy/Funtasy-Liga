@@ -9,8 +9,8 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
 //  - a sav csak a KINYITOTT cikkben van ott (amit nem olvastal, ne ertekeld);
 //  - harmas-negyes: egy koppintas, semmi kerdes, es a kuldott adat helyes;
 //  - egyes-kettes: HELYBEN nyilik az indok-panel (a cikk lathato marad),
-//    gyorsvalasztokkal es szovegdobozzal;
-//  - a gyorsvalaszto egy koppintas, es a kuldott adatban benne van;
+//    es a nezo SAJAT SZAVAIT keri - keszre valaszthato okok nincsenek;
+//  - az "Elkuldom" indokot var: ures szovegdoboznal nem is kinalja magat;
 //  - a kiut ("indokolni nem fogok") elmegy, de indok NELKUL - nem hamisit;
 //  - a kattintas nem csukja be a cikket;
 //  - egy eszkoz egy cikket egyszer ertekel, de at tudja ertekelni;
@@ -95,28 +95,32 @@ const nyit = async (p, kertek) => {
   await p.locator('#mBody .artrateg[data-pont="2"]').click();
   await p.waitForSelector('#mBody .artreason');
   jo(kertek.length === 0, 'még nem küldött semmit — előbb az indok');
-  jo(await p.locator('#mBody .artchip').count() >= 5, 'gyorsválasztók: '
-     + await p.locator('#mBody .artchip').count());
-  jo(await p.locator('#mBody .artreasont').isVisible(), 'szabad szöveg is');
+  jo(await p.locator('#mBody .artchip').count() === 0,
+     'nincs készre választható ok — a saját szavait kérjük');
+  jo(await p.locator('#mBody .artreasont').isVisible(), 'szabad szöveg');
   jo(await p.locator('#mBody .artsend').isVisible()
      && await p.locator('#mBody .artskip').isVisible(), 'két gomb: küldés és kiút');
+  jo(await p.locator('#mBody .artsend').isDisabled(),
+     'az „Elküldöm" üres dobozzal nem kínálja magát');
+  jo(await p.locator('#mBody .artskip').isEnabled(), 'a kiút viszont végig elérhető');
   const utanaY = await p.evaluate(() =>
     document.querySelector('#mBody .artstripbody p').getBoundingClientRect().top);
   jo(Math.abs(utanaY - elotteY) < 2,
      'a cikk szövege a helyén maradt — nem takarja el, amiről véleményt kérünk');
 
   // ---- gyorsvalaszto + szoveg ----
-  cim('Kettes: a gyorsválasztó és a szöveg is elmegy');
-  await p.locator('#mBody .artchip').first().click();
+  cim('Kettes: a saját szavai mennek el');
   await p.locator('#mBody .artreasont').fill('Nem derült ki belőle, mi döntött.');
+  jo(await p.locator('#mBody .artsend').isEnabled(),
+     'ahogy van mit elküldeni, a gomb élesedik');
   await p.locator('#mBody .artsend').click();
   await p.waitForFunction(() => /Köszi/.test(document.querySelector('#mBody .artrate').textContent),
                           null, { timeout: 5000 });
   jo(kertek.length === 1, 'egy POST ment ki');
   const t2 = kertek[0].torzs;
   jo(t2.pont === 2, 'a pont kettes — ' + t2.pont);
-  jo((t2.okok || []).length === 1, 'a kiválasztott ok is elment — ' + JSON.stringify(t2.okok));
-  jo(t2.indok === 'Nem derült ki belőle, mi döntött.', 'és a szöveg is');
+  jo(t2.indok === 'Nem derült ki belőle, mi döntött.', 'a beírt mondat ment el');
+  jo(!('okok' in t2), 'kész kategóriát nem küldünk mellé');
 
   // ---- a kiut: elmegy, de indok nelkul ----
   cim('A kiút indok nélkül küld — nem hamisít');
@@ -125,16 +129,15 @@ const nyit = async (p, kertek) => {
   kertek = [];
   await p.locator('#mBody .artrateg[data-pont="1"]').click();
   await p.waitForSelector('#mBody .artreason');
-  await p.locator('#mBody .artchip').first().click();
   await p.locator('#mBody .artreasont').fill('Ezt mégsem küldöm el.');
   await p.locator('#mBody .artskip').click();
   await p.waitForFunction(() => /Köszi/.test(document.querySelector('#mBody .artrate').textContent),
                           null, { timeout: 5000 });
   const t1 = kertek[0].torzs;
   jo(t1.pont === 1, 'az egyes elment — ' + t1.pont);
-  jo(!t1.indok && (t1.okok || []).length === 0,
-     'de indok nélkül: amit a kiúttal küldött, azt nem írjuk mellé — '
-     + JSON.stringify({ okok: t1.okok, indok: t1.indok }));
+  jo(!t1.indok,
+     'de indok nélkül: amit beírt, mielőtt meggondolta magát, nem megy el a háta mögött — '
+     + JSON.stringify({ indok: t1.indok }));
 
   // ---- sikertelen kuldes: nem vesz el, amit beirtak ----
   cim('Hibás küldésnél nem vész el, amit beírtak');

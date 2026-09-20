@@ -44,9 +44,9 @@
    pontosan ugy viselkedik, mint korabban - a tarolas nema no-op.
 
    CIKK-ERTEKELES (`/ertekeles`): a lapon minden irashoz jar egy egytol
-   negyig tarto ertekeles. A ket also fokozathoz indokot is kerunk, mert az
-   a fajta visszajelzes, amibol a kovetkezo szoveg jobb lesz - a puszta
-   "ketto" abbol semmit nem mond meg. Egy eszkoz egy irast egyszer ertekel:
+   negyig tarto ertekeles. A ket also fokozathoz indokot is kerunk, a nezo
+   SAJAT SZAVAIVAL, mert az a fajta visszajelzes, amibol a kovetkezo szoveg
+   jobb lesz - a puszta "ketto" abbol semmit nem mond meg. Egy eszkoz egy irast egyszer ertekel:
    a kulcsban benne van az eszkoz azonositoja, tehat az ujraertekeles a
    sajat korabbit irja felul, nem halmoz. A tartalom a mienk, nem szemelyes
    adat - eszkoz-azonositon kivul semmit nem kerunk es nem tarolunk. */
@@ -125,10 +125,10 @@ export default {
         return new Response('{"ok":false}', { status: 400, headers: fej });
       const ertek = {
         pont: pont,
-        // Az okok a lapon felkinalt gyorsvalasztok; a szabad szoveg a
-        // vegen all. Mindkettot vagjuk, hogy egy elszallt kliens se
+        // A nezo SAJAT SZAVAI. Keszre valaszthato okok szandekosan nincsenek:
+        // azok a mi kategoriainkat adnak vissza, es epp az a mondat maradna
+        // ki, amire nem gondoltunk. Vagjuk, hogy egy elszallt kliens se
         // tolthesse tele a tarolot.
-        okok: Array.isArray(be.okok) ? be.okok.slice(0, 8).map(x => String(x).slice(0, 60)) : [],
         indok: String(be.indok == null ? '' : be.indok).slice(0, MAX_INDOK),
         ido: new Date().toISOString(),
       };

@@ -224,8 +224,16 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     await g.waitForSelector('#table tr');
     cim(cimke);
     const nb1 = ut.startsWith('nb1');
-    // egy olyan fordulo, aminek MAR van kerete, de meg nem vegleges
-    await g.waitForFunction(() => typeof roundClosed === 'function', null, { timeout: 20000 });
+    // AZ ELOFELTETELT KIVARJUK, nem a tablazatra hagyatkozunk: a fejlec-sor
+    // mar a betoltes elott ott all, tehat a '#table tr' akkor is teljesul,
+    // amikor a fordulo-adat meg nincs meg. Igy a kereses ures allapotban
+    // futott le, es a teszt "nincs ilyen fordulo"-val bukott - felrevezetoen,
+    // mert nem a kapuval volt baj.
+    await g.waitForFunction(nb1 => nb1 ? (typeof LIVE !== 'undefined'
+                                          && Object.keys(LIVE).length > 0)
+                                       : (typeof HIST !== 'undefined'
+                                          && Object.keys(HIST).length > 0),
+                            nb1, { timeout: 20000 });
     const nyitott = await g.evaluate(async nb1 => {
       // ugyanarra a meccsre MINDKET fajta szoveg megvan: igy az is latszik,
       // hogy a kapu valaszt kozuluk, nem csak elrejt
@@ -236,7 +244,6 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
                                     short: 'Beharangozo.', source: 'manual' } } } } } });
       if (nb1) {
         // a provisional fordulo a LIVE-ba kerul (nb1/index.html boot)
-        await new Promise(r => setTimeout(r, 400));
         const r = Object.keys(LIVE).map(Number).find(x => (LIVE[x] || []).some(Boolean));
         if (!r) return null;
         const [h, v] = LIVE[r].find(Boolean);

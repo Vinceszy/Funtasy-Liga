@@ -1409,17 +1409,17 @@
   /* ===== Rating an article =====
      Why it exists: the writing gets better from knowing WHY something did
      not land. A bare "two" says nothing we can act on, so the two lower
-     scores ask for a reason - with one-tap choices first, because the
-     barrier, not the willingness, is what usually stops people.
+     scores ask for a reason - IN THE READER'S OWN WORDS. There is no menu
+     of ready answers on purpose: a menu hands back our own categories, and
+     the sentence we have not thought of yet is exactly the one worth
+     having.
 
-     The pressure is honest, not a trap: the way out is always on screen,
-     it just says out loud what taking it means. The top two scores go
-     through in one tap and ask nothing - somebody who liked it should not
-     be made to work for it. */
+     The pressure is honest, not a trap. "Elküldöm" wants a reason and
+     stays out of reach until there is one; beside it the way out is always
+     on screen, and says out loud what taking it means. The top two scores
+     go through in one tap and ask nothing - somebody who liked it should
+     not be made to work for it. */
   var RATE_LABEL = { 1: 'Rossz', 2: 'Gyenge', 3: 'Jó', 4: 'Nagyon jó' };
-  var RATE_REASONS = ['Unalmas', 'Túl száraz, csak számok', 'Nem erről szólt a meccs',
-                      'Túl hosszú', 'Valami nem igaz benne',
-                      'Ismétli, amit úgyis látok', 'Erőltetett a poén'];
 
   /* Egy eszkoz egy irast egyszer ertekel. Az azonositot a bongeszo tarolja,
      nem mi adjuk ki: nem szemely azonositasara valo, hanem arra, hogy az
@@ -1459,28 +1459,24 @@
   }
 
   function rateReasonHTML(pont) {
-    var chips = RATE_REASONS.map(function (r) {
-      return '<button class="artchip" data-ok="' + esc(r) + '">' + esc(r) + '</button>';
-    }).join('');
     return '<div class="artreason">' +
       '<div class="artreasonq">' + (pont === 1 ? 'Ennyire rossz? Mondd meg, mi a baj vele.'
                                                : 'Mi hiányzott belőle?') + '</div>' +
-      '<div class="artchips">' + chips + '</div>' +
       '<textarea class="artreasont" rows="3" maxlength="600" ' +
-      'placeholder="Egy mondat is elég — ebből lesz jobb a következő."></textarea>' +
+      'placeholder="A saját szavaddal — egy mondat is elég. Ebből lesz jobb a következő."' +
+      '></textarea>' +
       '<div class="artreasonb">' +
-        '<button class="artsend">Elküldöm</button>' +
+        '<button class="artsend" disabled>Elküldöm</button>' +
         '<button class="artskip">Kötekszem, de indokolni már nem fogok</button>' +
       '</div></div>';
   }
 
-  function rateSend(key, pont, okok, indok) {
+  function rateSend(key, pont, indok) {
     var eszkoz = rateDevice();
     if (!eszkoz) return Promise.resolve(false);
     return fetch(SAJAT_PROXY + '/ertekeles', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cikk: key, eszkoz: eszkoz, pont: pont,
-                             okok: okok || [], indok: indok || '' }),
+      body: JSON.stringify({ cikk: key, eszkoz: eszkoz, pont: pont, indok: indok || '' }),
     }).then(function (r) { return r.ok; }).catch(function () { return false; });
   }
 
@@ -1508,22 +1504,19 @@
         sav.outerHTML = rateBar(key);
         return;
       }
-      if (g.classList.contains('artchip')) { g.classList.toggle('on'); return; }
       if (g.classList.contains('artsend') || g.classList.contains('artskip')) {
         var p = +sav.getAttribute('data-pont');
-        var okok = [].slice.call(sav.querySelectorAll('.artchip.on'))
-                     .map(function (x) { return x.getAttribute('data-ok'); });
         var t = sav.querySelector('.artreasont');
+        // A kiuttal kuldott ertekeles mellol az indok AKKOR SEM megy el, ha
+        // mar beirta: meggondolta magat, nem a hata mogott kuldozgetunk.
         var indok = g.classList.contains('artskip') ? '' : ((t && t.value) || '').trim();
-        var jott = okok.length || indok;
         g.disabled = true;
-        rateSend(key, p, g.classList.contains('artskip') ? [] : okok, indok)
-          .then(function (ok) {
-            if (ok) rateThanks(sav, key, p, !!jott && !g.classList.contains('artskip'));
-            else { g.disabled = false;
-                   sav.querySelector('.artreasonq').textContent =
-                     'Nem sikerült elküldeni. Próbáld meg még egyszer.'; }
-          });
+        rateSend(key, p, indok).then(function (ok) {
+          if (ok) rateThanks(sav, key, p, !!indok);
+          else { g.disabled = false;
+                 sav.querySelector('.artreasonq').textContent =
+                   'Nem sikerült elküldeni. Próbáld meg még egyszer.'; }
+        });
         return;
       }
       var pont = +g.getAttribute('data-pont');
@@ -1531,7 +1524,7 @@
       // HARMAS-NEGYES: egy koppintas, semmi tovabbi kerdes.
       if (pont >= 3) {
         sav.innerHTML = '<span class="artratedone">Küldjük…</span>';
-        rateSend(key, pont, [], '').then(function (ok) {
+        rateSend(key, pont, '').then(function (ok) {
           if (ok) rateThanks(sav, key, pont, false);
           else sav.innerHTML = '<span class="artratedone">Nem sikerült elküldeni.</span>';
         });
@@ -1540,6 +1533,17 @@
       // EGYES-KETTES: itt kerjuk az indokot.
       sav.setAttribute('data-pont', String(pont));
       sav.innerHTML = rateReasonHTML(pont);
+      var t = sav.querySelector('.artreasont');
+      if (t) t.focus();
+    }, false);
+    // Az "Elkuldom" indokot var: amig nincs, nem is kinalja magat. A kiut
+    // vegig elerheto marad, tehat ez nem csapda, hanem az, hogy a ket gomb
+    // ket kulonbozo dolgot jelent.
+    document.addEventListener('input', function (e) {
+      if (!e.target.classList || !e.target.classList.contains('artreasont')) return;
+      var sav = e.target.closest('.artrate');
+      var kuld = sav && sav.querySelector('.artsend');
+      if (kuld) kuld.disabled = !e.target.value.trim();
     }, false);
   }
 
@@ -2072,7 +2076,7 @@
                      articleStrip: articleStrip, matchArticle: matchArticle,
                      articleDraftMode: articleDraftMode,
                      mergeArticles: mergeArticles,
-                     rateBar: rateBar, RATE_REASONS: RATE_REASONS,
+                     rateBar: rateBar,
                      statusz: statusz, ujraLathatokor: ujraLathatokor,
                      eloFrissito: eloFrissito, taroltak: taroltak,
                      potKeretek: potKeretek, potKeretekUrit: potKeretekUrit,
