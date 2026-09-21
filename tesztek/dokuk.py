@@ -48,6 +48,10 @@ Amit ellenoriz:
       begyujteni. Ha egy fordulohoz osszefoglalo all a lapon, akkor a
       naplo/<liga>-colour-<fordulo>.json is all mellette, tele sorral, es
       atmegy a naplo/colour-check.py ellenorzesen.
+  D14: egy cikk nem pontfelsorolas. Ki hany pontot hozott, azt a nezo ket
+      kattintassal megnezi; a szoveg arrol szol, amit a tabla nem mutat.
+      A "pont" szo es alakjai cikkenkent legfeljebb negyszer szerepelhetnek
+      - efolott a szoveg a tablazatot irja ujra vesszokkel.
   D10: minden munkafolyamat es minden meres dokumentalva van. A D2 csak a
       gyokerbeli adatfajlokat nezte, es a naplo/ ala tizenharom meres kerult
       be ugy, hogy a naplo README tablazata nem tudott roluk - a nyers adat
@@ -337,6 +341,37 @@ for _fajl in ("articles.json", "articles-draft.json"):
                                              (_f.stdout or _f.stderr).strip().splitlines()[-1]))
 allit(not _szin, "D13: osszefoglalo csak rogzitett szinestablabol keszult"
       + ("" if not _szin else " - " + "; ".join(_szin[:3])))
+
+# ---- D14: a cikk nem pontfelsorolas ----
+# Nem a szamokkal van baj, hanem azzal, amikor a szoveg helyett allnak ott.
+# A "pontos", "pontosan", "pontjan" nem ide tartozik: azok mast jelentenek.
+_PONT = _re.compile(
+    r"\bpont(ok|ot|okat|ja|jai|jat|jaik|tal|ttal|nyi|ig|ba|ban|ra|rol|hoz|szam\w*)?\b",
+    _re.IGNORECASE | _re.UNICODE)
+_PONT_MAX = 4
+
+# A szabaly elott irt fordulok. Ezek a szovegek atmentek a jovahagyason, es
+# nem irjuk at oket utolag a hatunk mogott: a lista nevre szol es fogy.
+_D14_KIVETEL = {
+    ("nb1", "7", "summary"), ("nb1", "8", "preview"), ("nb1", "8", "summary"),
+    ("nb1", "9", "preview"), ("pl", "4", "summary"), ("pl", "5", "preview"),
+}
+
+_suru = []
+for _fajl in ("articles.json", "articles-draft.json"):
+    _cikkek = json.loads(olvas(_fajl))
+    for _liga, _fordulok in (_cikkek.get("leagues") or {}).items():
+        for _r, _fajtak in _fordulok.items():
+            for _fajta, _parok in _fajtak.items():
+                if (_liga, _r, _fajta) in _D14_KIVETEL:
+                    continue
+                for _par, _cikk in (_parok or {}).items():
+                    _sz = " ".join(_cikk.get("text") or []) + " " + (_cikk.get("short") or "")
+                    _db = len(_PONT.findall(_sz))
+                    if _db > _PONT_MAX:
+                        _suru.append("%s %s. %s (%s): %dx" % (_liga, _r, _par, _fajta, _db))
+allit(not _suru, "D14: a cikkek nem pontfelsorolasok"
+      + ("" if not _suru else " - TULSURU: " + "; ".join(_suru[:3])))
 
 # ---- D10: minden munkafolyamat es minden meres dokumentalva ----
 # Ket helyen szokott elmaradni: egy uj workflow a fo README fajl-tablazatabol,

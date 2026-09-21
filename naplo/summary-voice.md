@@ -94,6 +94,32 @@ goals in a piece need no minute at all.
 **The lead is not the first sentence again.** On the card the lead sits directly above
 the body; the two are read together, so they may not say the same thing twice.
 
+## What was learned writing the Draft's round 5
+
+**One piece, one spine.** A summary is an argument about a fixture, not an
+inventory of it. Before writing, say in one sentence what the piece claims -
+"they got every decision wrong and won by a street", "their round was run by
+the machine, not by them", "they lost this before anyone kicked a ball" -
+and then let every paragraph serve it. Anything that does not serve it is
+cut however true it is. Five pieces with five different spines read as a
+round; five pieces built the same way read as a form letter, whatever the
+facts inside them.
+
+**The points are on the page already; the piece is for what they do not
+show.** A reader can look up who scored what in two clicks. "X nyolcat
+hozott, Y négyet, Z hármat" is that table retyped with commas. Name a
+number when it is the argument - a one-point margin, a bench that would have
+flipped the result - and otherwise write what happened: who was not in the
+matchday squad, whose penalty was saved, who was on the pitch for six
+minutes. Machine-checked: `pont` and its forms may appear at most four times
+in a piece (D14).
+
+**Do not ride one device through the whole round.** If the round taught us
+about the automatic substitution, that is the spine of the one fixture it
+decided - not the opening of all five. The same goes for kick-off times,
+transfers, benches and anything else newly learned. A device used five times
+in one round is a tic.
+
 ## A preview is not a summary pointed forwards
 
 **Put in what can change the result.** A preview may only spend space on something that
