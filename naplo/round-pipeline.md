@@ -64,6 +64,12 @@ A quote may name another team, which the rest of a match piece may not. The
 rule it must still obey: it belongs in the piece of the manager who said it,
 not in the piece of the one it is about.
 
+**Record who a nickname refers to, do not infer it.** A quote calls a rival
+something - "az illegitim bajnok" - and the nearest-looking club name is not
+the answer: that one was a different team entirely. The referent is asked
+for and written into the row (`cel`), because a piece built on a guessed
+target says something about a manager who was never mentioned.
+
 ## The order
 
 1. `round-colour-harvest.py <round>` - the fantasy layer.

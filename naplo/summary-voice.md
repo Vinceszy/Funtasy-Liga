@@ -102,6 +102,11 @@ hold, and the piece says the opposite thing.
 opponent also owns wins only the doubling; doubling a man nobody else has makes every
 point of his a margin. Say which one is on the table.
 
+**Ask who a nickname means.** A jab in a quote points at somebody, and the
+name it resembles is not evidence. Guessing the target writes a real person
+into a piece they had nothing to do with - the one mistake in this work that
+cannot be corrected by rewording.
+
 ## When a piece comes back with a note
 
 **Fix the fault, do not rewrite around it.** A note on one sentence is a note on one
