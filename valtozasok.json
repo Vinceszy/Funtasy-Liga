@@ -2,6 +2,15 @@
  "bejegyzesek": [
   {
    "datum": "2026-09-21",
+   "tipus": "funkcio",
+   "ligak": [
+    "nb1"
+   ],
+   "cim": "Játékos adatlap: ott a fordulónkénti ár",
+   "leiras": "A játékos adatlapján minden forduló sorában ott áll, mennyibe került akkor — és ha változott az előző fordulóhoz képest, a különbség is, zölddel vagy pirossal.\n\nAz ár a forduló első meccsének napján érvényes érték. Az MLSZ csak a mindenkori árat adja meg, a múltat nem, ezért az oldal a saját árnaplójából dolgozik: az a szezon közben indult, tehát az azelőtti fordulóknál nem áll ott semmi. Találgatni nem találgatunk — egy későbbi ár nem az adott fordulóé."
+  },
+  {
+   "datum": "2026-09-21",
    "tipus": "bugfix",
    "ligak": [
     "pl"

@@ -45,10 +45,23 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
     return j;
   });
   // a PAKS meccsei, hogy az ellenfel es az allas determinisztikus legyen
+  // A KEZDES IS KELL: a fordulonkenti ar ahhoz kotodik, hogy mikor jatszottak
+  // a fordulo elso meccset - enelkul nem lehet eldonteni, melyik arfeljegyzes
+  // volt akkor ervenyben.
   await jsonAtir(p, '**/meccsek.json*', j => {
-    j.rounds['1'] = [{ id: 1, h: 'PAKS', v: 'FTC', hp: 1, vp: 3, vege: true }];
-    j.rounds['2'] = [{ id: 2, h: 'ZTE',  v: 'PAKS', hp: 0, vp: 2, vege: true }];
-    j.rounds['3'] = [{ id: 3, h: 'PAKS', v: 'DVSC', hp: 2, vp: 2, vege: true }];
+    j.rounds['1'] = [{ id: 1, h: 'PAKS', v: 'FTC', hp: 1, vp: 3, vege: true,
+                       start: '2026-08-01T19:00:00+02:00' }];
+    j.rounds['2'] = [{ id: 2, h: 'ZTE',  v: 'PAKS', hp: 0, vp: 2, vege: true,
+                       start: '2026-08-08T19:00:00+02:00' }];
+    j.rounds['3'] = [{ id: 3, h: 'PAKS', v: 'DVSC', hp: 2, vp: 2, vege: true,
+                       start: '2026-08-15T19:00:00+02:00' }];
+    return j;
+  });
+  // Arnaplo: csak a VALTOZAS all benne. Ket feljegyzes harom fordulora - a
+  // masodik fordulora tehat az elso ar ervenyes, a harmadikra a masodik.
+  await jsonAtir(p, '**/arak.json*', j => {
+    j.arak = j.arak || {};
+    j.arak[String(CP)] = [['2026-07-20', 8], ['2026-08-12', 8.4]];
     return j;
   });
   // a bontas-vegpont: az apiKi utan allitjuk be, ezert ez nyer
@@ -67,6 +80,8 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   // masodik futasban. A fenti jsonAtir determinisztikussa tette az ADATOT,
   // de az IDOZITEST nem; ezert megvarjuk, hogy megjojjon.
   await p.waitForFunction(() => typeof MECCSEK !== 'undefined' && MECCSEK !== null,
+                          null, { timeout: 20000 });
+  await p.waitForFunction(() => typeof ARAK !== 'undefined' && ARAK !== null,
                           null, { timeout: 20000 });
 
   // ---- a belepesi pont: "Szezon jatekosai" ----
@@ -96,7 +111,8 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
     allas: (x.querySelector('.pallas') || {}).textContent || '',
     pts: x.querySelector('.pts').textContent.trim(),
     tul: (x.querySelector('.ptulajok') || {}).innerText || '',
-    ar: (x.querySelector('.parany') || {}).textContent || ''
+    ar: (x.querySelector('.parany') || {}).textContent || '',
+    arSor: (x.querySelector('.par') || {}).textContent || ''
   })));
   const f = n => sorok.find(s => s.r === n + '.');
 
@@ -112,6 +128,19 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
      + (f('2') ? ' — kapott: ' + f('2').pts : ''));
   jo(f('2') && /Katyul/.test(f('2').tul) && /pad/.test(f('2').tul),
      '2. forduló: Katyul padján volt');
+
+  // ---- fordulonkenti ar ----
+  cim('Fordulónkénti ár');
+  jo(f('1') && f('1').arSor.replace(/\s/g, '') === '8',
+     '1. forduló: a fordulóra érvényes ár áll ott, változás nélkül'
+     + (f('1') ? ' — kapott: ' + JSON.stringify(f('1').arSor) : ''));
+  jo(f('2') && f('2').arSor.replace(/\s/g, '') === '8',
+     '2. forduló: a korábbi feljegyzés marad érvényben, amíg nincs újabb');
+  jo(f('3') && /^8,4/.test(f('3').arSor.replace(/\s/g, '')),
+     '3. forduló: az újabb feljegyzés ára látszik'
+     + (f('3') ? ' — kapott: ' + JSON.stringify(f('3').arSor) : ''));
+  jo(f('3') && /\+0,4/.test(f('3').arSor.replace(/\s/g, '')),
+     '3. forduló: az előző fordulóhoz képesti változás is ki van írva (+0,4)');
 
   jo(f('3') && f('3').pts === '9,5',
      'KAPITÁNY: a 19-es heti értékből 9,5 alappont lesz (a duplázás nélkül)');
