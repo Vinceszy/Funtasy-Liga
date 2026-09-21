@@ -114,6 +114,16 @@ matchday squad, whose penalty was saved, who was on the pitch for six
 minutes. Machine-checked: `pont` and its forms may appear at most four times
 in a piece (D14).
 
+**When a sentence turns, put the hinge in.** Half of what this paper says is
+a contradiction - they got it wrong and won, he played ninety minutes and
+scored nothing, the bench was full and none of it counted. Hungarian marks
+that turn with a word, and leaving it out makes the second half read as a
+continuation of the first: "mindent elrontott, és lemosta az ellenfelét" is
+a list; "mindent elrontott, és MÉGIS lemosta az ellenfelét" is the sentence
+that was meant. Mégis, viszont, csak, pedig, mégsem - one of them belongs
+wherever the clause reverses the one before it. Once per piece, though: a
+second "mégis" three sentences later cancels the first.
+
 **Do not ride one device through the whole round.** If the round taught us
 about the automatic substitution, that is the spine of the one fixture it
 decided - not the opening of all five. The same goes for kick-off times,
