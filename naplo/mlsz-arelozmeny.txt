@@ -1,20 +1,19 @@
-lista elso jatekosa: 915
 adatlap gyoker-kulcsai: ['birth_date', 'countries', 'extended_summary_statistics', 'fantasy_summary_statistics', 'first_name', 'has_red_card_in_last_game', 'id', 'injury_status', 'is_u21', 'last_name', 'position', 'profile_picture', 'rounds', 'team']
 rounds tipusa: list, hossza: 9
 egy sor kulcsai: ['first_played_at', 'has_statistics', 'id', 'is_played', 'market_price', 'round', 'round_id']
 
 id         round_id   ar       jatszott  
-32499      77         4        True      
-33435      79         4        True      
-34365      81         4        True      
-35311      83         4        True      
-36267      85         4        True      
-37229      87         4        True      
-38209      89         4        True      
-39213      91         4        True      
-40229      93         4        False     
+32579      77         11       True      
+33515      79         11       True      
+34445      81         11       True      
+35391      83         11       True      
+36347      85         11       True      
+37309      87         11       True      
+38289      89         10.9     True      
+39293      91         10.8     True      
+40309      93         10.8     False     
 
 round_id-bol (id-75)/2: [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0] -> ERVENYES fordulo-szamok
-id-bol (id-75)/2: [16212.0, 16680.0, 17145.0, 17618.0, 18096.0, 18577.0, 19067.0, 19569.0] -> nem fordulo
+id-bol (id-75)/2: [16252.0, 16720.0, 17185.0, 17658.0, 18136.0, 18617.0, 19107.0, 19609.0] -> nem fordulo
 
-a torzs MOSTANI ara: None | az utolso sor ara: 4
+a torzs MOSTANI ara: None | az utolso sor ara: 10.8
