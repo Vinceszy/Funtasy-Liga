@@ -1546,13 +1546,18 @@
       var fordulok = Object.keys(L[lg] || {}).map(Number).sort(function (a, b) { return b - a; });
       for (var j = 0; j < fordulok.length; j++) {
         var r = fordulok[j], zart = !!(zartE && zartE(lg, r));
-        var fajtak = zart ? ['summary', 'preview'] : ['preview'];
+        // A HETI ROVAT nem parharchoz tartozik, hanem a fordulohoz, es nincs
+        // rajta kapu: elore is nezhet, vissza is. Ezert all a lista elen, es
+        // ezert nem fugg attol, lezart-e a fordulo. A kulcsa a sajat cime, `|`
+        // nelkul - onnan tudni, hogy nincs ellenfele.
+        var fajtak = ['elemzes'].concat(zart ? ['summary', 'preview'] : ['preview']);
         for (var k = 0; k < fajtak.length; k++) {
           var m = L[lg][r][fajtak[k]] || {};
           for (var par in m) {
             var felek = par.split('|');
             ki.push({ liga: lg, fordulo: r, fajta: fajtak[k], par: par,
-                      hazai: felek[0], vendeg: felek[1], cikk: m[par],
+                      hazai: felek[0], vendeg: felek.length > 1 ? felek[1] : null,
+                      cikk: m[par],
                       kulcs: lg + '|' + r + '|' + fajtak[k] + '|' + par,
                       cimke: ARTICLE_LABEL[fajtak[k]] });
           }
@@ -1582,7 +1587,7 @@
           'data-rovid="' + esc(be.cikk.short || '') + '">Másolom</button>' +
       '</div>' +
       '<h3 class="magpar">' + esc(be.hazai) +
-        '<span class="magvs">–</span>' + esc(be.vendeg) + '</h3>' +
+        (be.vendeg ? '<span class="magvs">–</span>' + esc(be.vendeg) : '') + '</h3>' +
       (be.cikk.short ? '<p class="maglead">' + esc(be.cikk.short) + '</p>' : '') +
       '<div class="magtest">' + body + '</div>' +
       rateBar(be.kulcs) + '</article>';
@@ -1805,7 +1810,8 @@
       labelled as a draft so it can never be mistaken for a published one. */
   /* A rovat neve EGY helyen all: a meccs adatlapjan, a magazin kartyajan es
      a magazin tipus-szurojeben ugyanaz a szo kell hogy alljon. */
-  var ARTICLE_LABEL = { summary: 'Összefoglaló', preview: 'Beharangozó' };
+  var ARTICLE_LABEL = { summary: 'Összefoglaló', preview: 'Beharangozó',
+                        elemzes: 'Kele Janek elemez' };
   function rovatNev(fajta) { return ARTICLE_LABEL[fajta] || fajta; }
   function matchArticle(store, league, round, a, b, opts) {
     opts = opts || {};

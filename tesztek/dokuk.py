@@ -196,7 +196,15 @@ allit(not gond, "D5: a valtozasnaplo-vazlat minden bejegyzese teljes"
 import json
 import re as _re
 _verziok = {}
-for _f in ("index.html", "nb1/index.html", "pl/index.html", "valtozasok/index.html"):
+# A lista nem KEZI: minden HTML-lap szamit, ami a kozos reteget hivatkozza.
+# A nemzethy/index.html kimaradt belole, es ket verzioval lemaradva szolgalta
+# ki a cikkeket - eppen az a lap, amelyik a legtobbet hasznal beloluk.
+_V_OLDALAK = sorted(
+    os.path.relpath(x, GYOKER).replace(os.sep, "/")
+    for x in glob.glob(os.path.join(GYOKER, "**", "*.html"), recursive=True)
+    if not os.path.relpath(x, GYOKER).replace(os.sep, "/").startswith(("tesztek/", "tartalek/"))
+    and _re.search(r"funtasy\.(js|css)\?v=", open(x, encoding="utf-8").read()))
+for _f in _V_OLDALAK:
     for _m in _re.findall(r'(funtasy\.(?:js|css))\?v=(\d+)', olvas(_f)):
         _verziok.setdefault(_m[1], []).append("%s -> %s" % (_f, _m[0]))
 allit(len(_verziok) == 1,
@@ -275,7 +283,9 @@ for _fajl in ("articles.json", "articles-draft.json"):
             # fordulo eloszor beharangozot kap, aztan osszefoglalot. Az a
             # hiba, ha a beharangozo ELORE szalad: a kovetkezo utani fordulot
             # a mostani allasbol kellene megirni, az pedig meg mozog.
-            if "preview" in _fajtak and int(_r) > _utolso_liga + 1:
+            # A heti rovat ugyanezt a hatart tartja: elore nezhet, de csak a
+            # soron kovetkezo fordulora - azon tul a sajat szamai mozognanak.
+            if ("preview" in _fajtak or "elemzes" in _fajtak) and int(_r) > _utolso_liga + 1:
                 _baj.append("%s: %s %s. beharangozo, pedig a soron kovetkezo a %d. "
                             "- a szamai meg valtoznak"
                             % (_fajl, _liga, _r, _utolso_liga + 1))
