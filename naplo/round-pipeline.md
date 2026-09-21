@@ -13,9 +13,17 @@ weekly points per player, transfers with what they cost or gained (`guard`),
 the Hungarian-rule bonus, the head-to-head score, and the running total after
 each real fixture (who led, and when it turned).
 
-`naplo/round-colour-harvest.py <round>` prints this for a whole round,
-including the checksum against the stored score. **Always run it first** - a
-claim about points that this does not support is not published.
+`naplo/round-colour-harvest.py <round>` prints this for an NB1 round,
+including the checksum against the stored score;
+`naplo/draft-round-harvest.py <round>` does the same for the Draft.
+**Always run it first** - a claim about points that this does not support is
+not published.
+
+The two leagues turn on different things, and the harvests say so. The NB1
+has a captain, shared players and a bench that scores half; the Draft has
+none of those - a footballer belongs to one squad only, and a point left on
+the bench is lost outright rather than halved. So a Draft piece is about the
+line-up and the week's waiver moves, and never about a shared man.
 
 ## 2. The match record - the report's structured block
 
