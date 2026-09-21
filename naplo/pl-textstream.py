@@ -57,10 +57,24 @@ def js(url):
         return c, None
 
 
+# A ket forras maskepp roviditi ugyanazt a klubot, es a tartalmazas nem
+# segit: a "mancity" nincs benne a "manchestercity"-ben. Ugyanaz a tabla,
+# amit a FotMob-gyujtes hasznal - nelkule pont a nagy meccsek maradtak ki.
+ALIAS = {
+    "manutd": "manchesterunited", "manunited": "manchesterunited",
+    "mancity": "manchestercity",
+    "spurs": "tottenhamhotspur",
+    "nottmforest": "nottinghamforest", "nottsforest": "nottinghamforest",
+    "wolves": "wolverhamptonwanderers",
+    "sheffieldutd": "sheffieldunited",
+}
+
+
 def kulcs(nev):
     n = unicodedata.normalize("NFKD", nev or "")
     n = "".join(c for c in n if not unicodedata.combining(c)).lower()
-    return re.sub(r"[^a-z]", "", n)
+    n = re.sub(r"[^a-z]", "", n)
+    return ALIAS.get(n, n)
 
 
 def egyezik(a, b):
