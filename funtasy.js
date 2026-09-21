@@ -1456,6 +1456,20 @@
       '<span class="csapat">' + esc(v) + '</span></div>';
   }
 
+  /* ===== A cikk torzse bekezdesekre bontva =====
+     A hosszu irasnak tagolodnia kell, kulonben a nyolcadik bekezdesnel
+     senki nem tudja, mirol szol. A tarolt szoveg egy tomb, amiben egy elem
+     "## "-gal kezdve NEM bekezdes, hanem alcim - igy a szerkesztonek nem
+     kell HTML-t irnia, es a tarolt adat tovabbra is sima szoveg marad,
+     amit barmelyik masik feluleten is fel lehet olvasni. */
+  function cikkTorzsHTML(bekezdesek) {
+    return (bekezdesek || []).map(function (p) {
+      var cim = /^##\s+/.test(p);
+      return cim ? '<h4 class="cikkfej">' + esc(p.replace(/^##\s+/, '')) + '</h4>'
+                 : '<p>' + esc(p) + '</p>';
+    }).join('');
+  }
+
   /* ===== Article strip (round preview / round summary) =====
      A short piece of writing about one fixture, shown on the match page
      above the squad columns. It renders COLLAPSED, one line high: reading
@@ -1499,8 +1513,10 @@
     watchArticles();
     watchRating();
     var isOpen = OPEN_ARTICLES.hasOwnProperty(key) ? OPEN_ARTICLES[key] : !!defaultOpen;
-    var lead = article.short || article.text[0];
-    var body = article.text.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('');
+    var lead = article.short || article.text.filter(function (p) {
+      return !/^##\s+/.test(p);
+    })[0] || '';
+    var body = cikkTorzsHTML(article.text);
     return '<details class="artstrip' + (draft ? ' draft' : '') +
       '" data-art="' + esc(key) + '"' +
       (isOpen ? ' open' : '') + '>' +
@@ -1575,9 +1591,7 @@
       jatssza. A torzs csak ezutan jon. Igy a lapon vegiggorgetve is el
       lehet donteni, mit akar elolvasni az ember. */
   function articleCardHTML(be) {
-    var body = (be.cikk.text || []).map(function (p) {
-      return '<p>' + esc(p) + '</p>';
-    }).join('');
+    var body = cikkTorzsHTML(be.cikk.text);
     var azon = 'c-' + be.kulcs.replace(/[^A-Za-z0-9]+/g, '-');
     return '<article class="magcikk" id="' + esc(azon) + '">' +
       '<div class="magkicker">' +

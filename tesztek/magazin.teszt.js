@@ -13,6 +13,8 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
 // Amit rogzit:
 //  - a fejlec a lap neve es a szlogen;
 //  - minden kint levo iras megjelenik, TELJES szoveggel (nem felutessel);
+//  - a hosszu irasban a "## "-gal kezdodo elem ALCIM, nem bekezdes: a
+//    tarolt szoveg sima szoveg marad, a lapon viszont tagolodik;
 //  - le nem zart fordulo osszefoglaloja itt sem latszik, csak a beharangozoja;
 //  - negy KULON szuro (liga, szakvezeto, fordulo, tipus), egymassal
 //    osszjatekban: mindegyik CSAK azokat az ertekeket kinalja, amik a tobbi
@@ -53,7 +55,10 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
       for (const [r, ks] of Object.entries(rs))
         for (const [k, m] of Object.entries(ks))
           for (const [par, a] of Object.entries(m))
-            out[lg + '|' + r + '|' + k + '|' + par] = { bek: a.text.length, rovid: a.short };
+            out[lg + '|' + r + '|' + k + '|' + par] = {
+              bek: a.text.filter(t => !/^##\s/.test(t)).length,
+              fej: a.text.filter(t => /^##\s/.test(t)).length,
+              rovid: a.short };
     return out;
   });
   const elsoBek = await p.$$eval('.magcikk .magtest p', n => n.length);
@@ -62,6 +67,14 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
      `minden írás kint van (${await p.locator('.magcikk').count()}/${Object.keys(varat).length})`);
   jo(elsoBek === varhatoBek,
      `és teljes szöveggel, nem felütéssel (${elsoBek}/${varhatoBek} bekezdés)`);
+  // Az alcim alcimkent all ki, nem bekezdeskent - kulonben a hosszu iras
+  // ugyanaz a tomb marad, csak "## " jelekkel teleszorva.
+  const fejek = await p.$$eval('.magcikk .magtest .cikkfej', n => n.length);
+  const varhatoFej = Object.values(varat).reduce((s, x) => s + x.fej, 0);
+  jo(fejek === varhatoFej,
+     `az alcímek alcímként állnak ki (${fejek}/${varhatoFej})`);
+  jo(!(await p.$$eval('.magcikk .magtest p', n => n.some(x => /^##\s/.test(x.textContent)))),
+     'és nem marad "##" a szövegben');
 
   // ---- a kapu: nem mutat tobbet, mint a meccs adatlapja ----
   cim('A kapu itt is zár');

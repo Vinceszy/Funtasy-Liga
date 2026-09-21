@@ -176,7 +176,8 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
                  .find(g => (SCHEDULE[g] || []).some(played));
     const [h, v] = SCHEDULE[gw][0];
     ARTICLES = { updated: null, leagues: { pl: { [gw]: { summary: {
-      [nev(h) + '|' + nev(v)]: { text: ['Elso bekezdes.', 'Masodik bekezdes.'],
+      [nev(h) + '|' + nev(v)]: { text: ['Elso bekezdes.', '## Egy alcim',
+                                        'Masodik bekezdes.'],
                                  short: 'Egy mondat a sav szamara.', source: 'manual' } } } } } };
     showMatch(h, v, gw, 'root');
     return { gw, h, v };
@@ -200,6 +201,11 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   await q.waitForTimeout(120);
   jo(await q.$$eval('#mBody .artstripbody p', n => n.length) === 2,
      'PL: kinyitva mindkét bekezdés kint van');
+  // A "## "-gal kezdodo elem alcim, nem bekezdes - a hosszu iras kulonben
+  // egyetlen szovegfolyam lenne, a jel meg ott maradna a lapon.
+  jo(await q.$$eval('#mBody .artstripbody .cikkfej',
+                    n => n.length === 1 && n[0].textContent === 'Egy alcim'),
+     'PL: a "##"-os sor alcímként áll ki, jel nélkül');
   await q.evaluate(([h, v, gw]) => showMatch(h, v, gw, 'root'), [plm.h, plm.v, plm.gw]);
   await q.waitForSelector('#mBody .artstrip');
   jo(await q.evaluate(() => document.querySelector('#mBody .artstrip').open),

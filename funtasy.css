@@ -725,6 +725,12 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .magtest p{margin:0 0 11px;font-size:14px;line-height:1.68;color:var(--ink);
   max-width:640px}
 .magtest p:last-child{margin-bottom:0}
+/* Alcim a hosszu irasban. A szedes ugyanaz, mint a torzse, csak nagyobb
+   es sotetebb - egy rovat nem cimlap, nem kell masik betutipus hozza. */
+.cikkfej{margin:20px 0 9px;font-size:14.5px;line-height:1.4;font-weight:600;
+  color:var(--ink);max-width:640px}
+.magtest>.cikkfej:first-child,.artstripbody>.cikkfej:first-child{margin-top:12px}
+.artstripbody .cikkfej{margin:16px 0 2px;font-size:14px}
 .magcikk .artrate{margin-top:15px;max-width:640px}
 @media(max-width:560px){
   .magtest p{font-size:13.5px}

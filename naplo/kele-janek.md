@@ -169,6 +169,19 @@ several in every one:
 ## Shape
 
 One story, developed at length - this is the paper's main read of the week, not
-a match note. Five to seven paragraphs,
-a headline of its own - the column has no fixture to name it, so the title
-carries the argument. It closes on a judgement, not a summary.
+a match note, and it is the longest thing on the page. Sixteen to twenty-four
+paragraphs, six numbered sections, each opened by a heading that is a whole
+sentence stating that section's claim. In the stored text a paragraph beginning
+with `## ` is such a heading; everything else is a paragraph.
+
+The title carries the argument, because the column has no fixture to name it.
+Prefer a title that reframes - the subject is not what the reader thinks it is -
+over one that labels the subject.
+
+The order that works: a three-part lead (a verbless opening, an explaining
+middle, a short blade), then the announcement, then the sections. One section
+must be the one that turns the piece around, where the obvious reading of the
+numbers is shown to be false. The counter-argument gets its own section and is
+conceded in full before it is answered; a column that only prosecutes is a
+press release with the sign flipped. It closes on a judgement standing alone on
+one line, not on a summary.
