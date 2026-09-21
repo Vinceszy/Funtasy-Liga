@@ -225,10 +225,24 @@ def main():
         if a["vedesek_kapusonkent"]:
             ki("   vedesek kapusonkent: %s" % a["vedesek_kapusonkent"])
 
+    # A fordulo tablajaban KEZZEL felvitt sorok is allnak (szakvezetoi
+    # nyilatkozat, amit nekunk mondtak el) - azokat a gyujtes nem irhatja
+    # felul. Amit a gep tud, azt frissitjuk; a tobbi marad.
     ut = os.path.join(HERE, "pl-colour-%s.json" % EVENT)
+    regi = {}
+    if os.path.exists(ut):
+        try:
+            with open(ut, encoding="utf-8") as f:
+                regi = json.load(f)
+        except Exception:                                    # noqa: BLE001
+            regi = {}
+    regi.update({"event": EVENT, "fordulo": int(EVENT), "liga": "pl",
+                 "keszult": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                 "meccsek": eredmeny})
+    regi.setdefault("allitasok", [])
     open(ut, "w", encoding="utf-8").write(
-        json.dumps({"event": EVENT, "keszult": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                    "meccsek": eredmeny}, ensure_ascii=False, indent=1) + "\n")
+        json.dumps(regi, ensure_ascii=False, indent=1) + "\n")
+    ki("  megtartott kezi sor: %d" % len(regi.get("allitasok") or []))
     ki("")
     ki("  kiirva: %s" % os.path.basename(ut))
     return 0
