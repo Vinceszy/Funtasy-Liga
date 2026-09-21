@@ -8,9 +8,15 @@ the first of the three layers a summary is built from (see round-pipeline.md).
 
 What a Draft round turns on is not what an NB1 round turns on. There is no
 captain and no shared player: a footballer belongs to exactly one squad, and
-the bench scores nothing. So the levers are the line-up (a big score left on
-the bench is lost outright, not halved) and the week's waiver and free-agent
-moves, which is what `guard` measures.
+the bench scores nothing by itself. So the levers are the line-up and the
+week's waiver and free-agent moves, which is what `guard` measures.
+
+AND THE AUTOMATIC SUBSTITUTION, which is why a bench score is not simply
+lost: at the close of the round the FPL replaces every starter who did not
+play with the first bench player who did, keeping the formation valid (a
+goalkeeper only for a goalkeeper). A big number on the bench therefore
+counts whenever a starter stayed in the stands - and until the round is
+final, the line-up printed here is the one before those swaps.
 
 Usage: python3 naplo/draft-round-harvest.py [round]
 """
@@ -68,17 +74,32 @@ def main():
             ossz = sum(p.get("pts") or 0 for p in kezdo)
             padon = sum(p.get("pts") or 0 for p in pad)
             nullak = [p for p in kezdo if not (p.get("pts") or 0)]
+            # A PALYARA NEM LEPETT kezdo az, akit az automatikus csere lecserel -
+            # nem a nulla pontos. Nulla pontot ugyanis kilencven perc alatt is
+            # lehet szerezni, es azert nem jar csere.
+            percek = lambda e: (pontok.get(str(e)) or [None, None])[1]
+            nemjatszott = [p for p in kezdo if (percek(p["e"]) or 0) == 0]
+            padjatszott = [p for p in pad if (percek(p["e"]) or 0) > 0]
             legjobb = max(kezdo, key=lambda p: p.get("pts") or 0) if kezdo else None
             padlegjobb = max(pad, key=lambda p: p.get("pts") or 0) if pad else None
             vz = valtozas.get(str(csapat)) or {}
-            print("    %-24s kezdok %s pont | padon maradt %s pont | nulla: %d"
+            print("    %-24s kezdok %s pont | padon %s pont | nullan zart kezdo: %d"
                   % (nev.get(csapat, csapat), ossz, padon, len(nullak)))
             if legjobb:
                 print("        legjobb kezdo: %s (%s) %s" % (
                     jnev(legjobb["e"]), jklub(legjobb["e"]), legjobb.get("pts")))
             if padlegjobb and (padlegjobb.get("pts") or 0) > 0:
-                print("        legjobb pados: %s (%s) %s  <- ez a pont ELVESZETT"
-                      % (jnev(padlegjobb["e"]), jklub(padlegjobb["e"]), padlegjobb.get("pts")))
+                print("        legjobb pados: %s (%s) %s" % (
+                    jnev(padlegjobb["e"]), jklub(padlegjobb["e"]), padlegjobb.get("pts")))
+            if nemjatszott:
+                print("        AUTOMATIKUS CSERE VARHATO - nem lepett palyara: %s"
+                      % ", ".join("%s (%s, %s pont)" % (jnev(p["e"]), jklub(p["e"]), p.get("pts"))
+                                  for p in nemjatszott))
+                print("        beallhat a padrol (sorrendben, aki jatszott): %s"
+                      % ", ".join("%s (%s pont)" % (jnev(p["e"]), p.get("pts"))
+                                  for p in padjatszott) or "senki")
+            elif padlegjobb and (padlegjobb.get("pts") or 0) > 0:
+                print("        (minden kezdo palyara lepett, tehat a pad pontja itt marad)")
             if vz:
                 print("        heti merleg (guard): %s" % vz.get("guard"))
                 for x in vz.get("ki") or []:

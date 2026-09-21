@@ -20,10 +20,15 @@ including the checksum against the stored score;
 not published.
 
 The two leagues turn on different things, and the harvests say so. The NB1
-has a captain, shared players and a bench that scores half; the Draft has
-none of those - a footballer belongs to one squad only, and a point left on
-the bench is lost outright rather than halved. So a Draft piece is about the
-line-up and the week's waiver moves, and never about a shared man.
+has a captain, shared players and a bench that scores half. The Draft has
+none of those: a footballer belongs to one squad only, and the bench scores
+nothing by itself - but it is **not** dead weight, because of the automatic
+substitution. At the close of the round the FPL replaces every starter who
+did not play (nought minutes, not nought points - those are different) with
+the first bench player who did, keeping the formation legal and swapping a
+goalkeeper only for a goalkeeper. A Draft piece is therefore about the
+line-up, the week's waiver moves and, often, which bench man the auto-sub
+brought in - and never about a shared player.
 
 ## 2. The match record - the report's structured block
 
