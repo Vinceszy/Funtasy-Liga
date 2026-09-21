@@ -30,6 +30,22 @@ goalkeeper only for a goalkeeper. A Draft piece is therefore about the
 line-up, the week's waiver moves and, often, which bench man the auto-sub
 brought in - and never about a shared player.
 
+### Where the automatic substitutions are actually written down
+
+`zarasok.json`, and nowhere else. The stored line-up for a finished round is
+the state **after** the close, so a starter who never took the field is no
+longer visible in it - reading the swap out of the squad, or out of
+`draft_keretvaltozasok.json`, gives the wrong answer, and gave it three
+times in a row. The `szerep` rows of that file compare this round's line-up
+to the PREVIOUS round's, which mixes a manager's decision together with the
+machine's substitution; `zarasok.json` holds only what the close did:
+who came off with nought minutes, who came on, and what each scored.
+
+A starter who does not play and is not in `zarasok.json` was not replaced -
+the bench had nobody left who both played and fitted the formation, so the
+place stayed empty. That is a different story from a bench that scored and
+did not count, and the two must not be told as one.
+
 ## 2. The match record - the report's structured block
 
 The Nemzeti Sport report of every NB1 match carries a formal block: line-ups
