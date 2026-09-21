@@ -285,9 +285,26 @@ allit(not _baj, "D11: cikk csak lezart adatbol keszult"
 # ---- D12: a beharangozo es az osszefoglalo nem ismetli egymast ----
 # Ket kezi atiras utan gepre bizzuk: a szem atsiklik egy visszakoszono
 # mondaton, kulonosen a sajat mondatan.
-def _szavak(cikk):
+def _szavak(cikk, nevek=()):
     szoveg = " ".join(cikk.get("text") or []) + " " + (cikk.get("short") or "")
-    return _re.findall(r"\w+", szoveg.lower(), _re.UNICODE)
+    t = _re.findall(r"\w+", szoveg.lower(), _re.UNICODE)
+    # A CSAPATNEV nem szoismetles: a "One More Last Ride" negy szo, es barmelyik
+    # emlitese hatos atfedesnek latszott a nevelovel meg a ragjaval egyutt. A nev
+    # helyere egyetlen jelzo kerul, igy csak az korulotte levo szoveg szamit.
+    for nev in sorted(nevek, key=len, reverse=True):
+        n = _re.findall(r"\w+", nev.lower(), _re.UNICODE)
+        if not n:
+            continue
+        ki, i = [], 0
+        while i < len(t):
+            if t[i:i + len(n)] == n:
+                ki.append("\u00abcsapat\u00bb")
+                i += len(n)
+            else:
+                ki.append(t[i])
+                i += 1
+        t = ki
+    return t
 
 
 _atfedes = []
@@ -297,7 +314,8 @@ for _fajl in ("articles.json", "articles-draft.json"):
         for _r, _fajtak in _fordulok.items():
             _be, _ossz = _fajtak.get("preview") or {}, _fajtak.get("summary") or {}
             for _par in set(_be) & set(_ossz):
-                _a, _b = _szavak(_be[_par]), _szavak(_ossz[_par])
+                _nevek = tuple(_par.split("|"))
+                _a, _b = _szavak(_be[_par], _nevek), _szavak(_ossz[_par], _nevek)
                 _hatos = {tuple(_a[i:i + 6]) for i in range(len(_a) - 5)}
                 _kozos = [" ".join(t) for i in range(len(_b) - 5)
                           for t in [tuple(_b[i:i + 6])] if t in _hatos]
