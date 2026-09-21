@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=102">
+<link rel="stylesheet" href="../funtasy.css?v=103">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -106,7 +106,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=102"></script>
+<script src="../funtasy.js?v=103"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // A két liga résztvevőinek összekötése a KÖZÖS rétegben áll
@@ -456,24 +456,36 @@ function valtoztatasokHTML(id){
       const gep = +(v.gepU - v.gepE).toFixed(2);
       const ember = +(v.guard - gep).toFixed(2);
       const db = reszek.reduce((n, r) => n + r.sorok.length, 0);
+      // A gep-sor SZOVEGE az elojeltol fugg, mert a ket eset mast jelent: a
+      // mutato a MOSTANI keretet a MULT HETIVEL veti ossze, es mindkettore
+      // lefut a zaraskori csere. Negativ ertek azt mondja, hogy amit a
+      // szakvezeto kezzel megszerzett, azt a regi kereten a gep is megtette
+      // volna; pozitiv azt, hogy a mostani keret kimarado kezdojet a gep
+      // potolta. A regi "8 -> 0" alak egy meg nem tortent cseret mutatott.
+      const gepNev = gep < 0 ? 'Ebből a gép a régi kereteden is megcsinálta volna'
+                   : gep > 0 ? 'Ebből a gép tette helyre a kimaradt kezdődet'
+                   : 'Az automatikus csere ezen nem változtatott';
       if (db || gep) zaro = [
-        { nev: 'A te döntéseid', dl: ember, oszt: 'vareszossz' },
-        { nev: 'Automatikus csere a záráskor', cimke: 'nem a te döntésed',
-          elott: v.gepE, utan: v.gepU, dl: gep, oszt: 'vagep' },
+        { nev: 'Amit a változtatásaid értek', dl: ember, oszt: 'vareszossz' },
+        { nev: gepNev, dl: gep, oszt: 'vagep' },
       ];
     }
     csoportok.push({ nev: gw + '. forduló', guard: pontos ? v.guard : null,
                      megj: pontos ? '' : 'még nincs pontszám',
+                     osszCim: 'Marad a te érdemed',
                      reszek: reszek, zaro: zaro });
   }
   if (!csoportok.length)
     return '<div class="loading">Ehhez a csapathoz még nincs elmentett változtatás.</div>';
-  return '<div class="note" style="padding:0 0 10px">A jobb szélső szám a forduló mérlegére '
-    + 'gyakorolt hatás; mellette a játékos fordulópontja. A padon ülő <b>0</b>-val számít, akkor '
-    + 'is, ha végül beállt: amit az FPL a záráskor <b>automatikus cserével</b> tett hozzá, külön '
-    + 'sorban áll — az nem a te döntésed. A blokk alján az összeg: ez a forduló <b>GUARD</b> '
-    + 'értéke, ugyanaz, ami a Fordulók fülön és a tabellában áll. A <b>folyamatban lévő</b> '
-    + 'fordulónál a változtatás már látszik, pontszám még nincs hozzá.</div>'
+  return '<div class="note" style="padding:0 0 10px">A jobb szélső szám nem azt mutatja, '
+    + 'mennyit hozott a kereted, hanem hogy <b>mennyivel hozott többet a múlt hetinél</b>. '
+    + 'Mindkét keretet ugyanezzel a fordulóval számoljuk végig, és mindkettőn lefut a záráskori '
+    + '<b>automatikus csere</b>: a pályára nem lépett kezdő helyére a gép beállítja az első olyan '
+    + 'padost, akivel a felállás még érvényes. Ezért áll külön sorban, amit a gép magától is '
+    + 'elintézett volna — az sem nem érdem, sem nem hiba. A padon ülő <b>0</b>-val számít. '
+    + 'A blokk alján maradó szám a forduló <b>GUARD</b> értéke, ugyanaz, ami a Fordulók fülön és '
+    + 'a tabellában áll. A <b>folyamatban lévő</b> fordulónál a változtatás már látszik, '
+    + 'pontszám még nincs hozzá.</div>'
     + FunTasy.valtoztatasLista(csoportok, 'Nincs adat.');
 }
 

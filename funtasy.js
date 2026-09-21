@@ -2224,7 +2224,8 @@
         + (cs.zaro || []).map(vaSorHTML).join('')
         + (db && cs.guard != null
            ? '<div class="vasor vaossz"><span class="ppos ures"></span>'
-             + '<span class="vanev">Összesen</span><span class="vacimke"></span>'
+             + '<span class="vanev">' + esc(cs.osszCim || 'Összesen') + '</span>'
+             + '<span class="vacimke"></span>'
              + '<span class="vaert"></span><span class="zdiff '
              + (cs.guard > 0 ? 'pos' : cs.guard < 0 ? 'neg' : '') + '">'
              + guardJelol(cs.guard) + '</span></div>'
