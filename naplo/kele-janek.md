@@ -22,8 +22,19 @@ reaches - deliberately, and that is the joke.
 
 What may be exaggerated is the DENSITY. What may not be invented is the
 DEVICE: everything in the next section was counted in his own writing, and
-anything that was not stays out, however good it sounds. The failure mode is
-not "too much"; it is "too much of something he never does".
+anything that was not stays out, however good it sounds.
+
+**Several of them in a piece, never all of them.** Concentrated does not mean
+complete. A piece that opens with the verbless three-item line, rescales a
+number, holds the evidence in dashes under a first-person feeling AND closes
+on a number-verdict has used the whole kit, and the week's other column then
+has nothing left that is its own. Two columns go out the same week: if they
+open the same way and close the same way, the reader is not reading a voice,
+they are reading a template. So each piece takes a different handful, and the
+two of a week deliberately differ at the opening and at the close.
+
+The failure mode is not "too much"; it is "too much of something he never
+does" - or the same combination twice in one week.
 
 ## The devices, counted
 
