@@ -567,6 +567,16 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
    sorvegre tolva (margin-left:auto), hogy a nevek es a szazalekok ne
    folyjanak ossze; ha nem fer ki, a flexbox amugy is uj sorba teszi. */
 .pelval{color:var(--dim);opacity:.6;margin:0 2px}
+/* A fordulo ara a profil soraban: a pontszam elott all, monoban, hogy a
+   fordulok egymas alatt osszehasonlithatok legyenek. A valtozas csak akkor
+   jelenik meg, ha volt - az allando ar mellett a "+0" csak zaj. */
+.plr .par{font-family:var(--mono);font-size:11.5px;color:var(--dim);
+          min-width:56px;text-align:right;white-space:nowrap}
+.plr .par .pardl{margin-left:4px;font-size:10px;font-weight:700}
+.plr .par .pardl.pos{color:var(--win)}
+.plr .par .pardl.neg{color:var(--lose)}
+@media(max-width:420px){.plr .par{min-width:44px}.plr .par .pardl{display:none}}
+
 .parany{margin-left:auto;white-space:nowrap;font-size:11px;color:var(--dim)}
 .parany b{font-family:var(--mono);color:var(--fg);font-weight:700}
 

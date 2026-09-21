@@ -924,7 +924,20 @@
     };
   }
 
-  function profilSorHTML(s, senkinel, salaryCap) {
+  /* A fordulo ara, es mellette az elozohoz kepesti valtozas. Csak salary
+     cap ligaban van ertelme, es csak ott all ki, ahol tudjuk: az arnaplo a
+     szezon kozben indult, az azelotti fordulokrol nincs megfigyelesunk, es
+     a legkozelebbi kesobbi ar NEM azoke. Ures hely helyett ezert semmi. */
+  function arHTML(s, elozoAr, salaryCap) {
+    if (!salaryCap || s.ar == null) return '';
+    var d = elozoAr == null ? null : Math.round((s.ar - elozoAr) * 10) / 10;
+    return '<span class="par">' + fmt(s.ar)
+      + (d ? '<span class="pardl ' + (d > 0 ? 'pos' : 'neg') + '">'
+             + (d > 0 ? '+' : '\u2212') + fmt(Math.abs(d)) + '</span>' : '')
+      + '</span>';
+  }
+
+  function profilSorHTML(s, senkinel, salaryCap, elozoAr) {
     var mk = s.meccsek || [];
     var m = profilMeccsekHTML(mk);
     // JOVOBELI fordulonal a tulajdonos-sor URES marad: azt, hogy kinel lesz,
@@ -942,6 +955,7 @@
       '<span class="ppos">' + s.r + '.</span>' +
       '<span class="nm">' + m.nev + '<span class="accarr">▼</span></span>' +
       m.allas +
+      arHTML(s, elozoAr, salaryCap) +
       '<span class="pts">' + pont + '</span>' +
       '<span class="ptulajok">' + tulaj + arany + '</span>' +
     '</div>';
@@ -953,9 +967,12 @@
       return profilFejHTML(adat) +
         '<div class="loading">Ehhez a játékoshoz még nincs fordulónkénti adat.</div>';
     var l = liga(adat.liga), salaryCap = !!l && l.tipus === 'salary-cap';
+    var elozoAr = null;
     return profilFejHTML(adat) +
       '<div class="proflista">' + sorok.map(function (s) {
-        return profilSorHTML(s, adat.senkinel, salaryCap);
+        var ki = profilSorHTML(s, adat.senkinel, salaryCap, elozoAr);
+        if (s.ar != null) elozoAr = s.ar;
+        return ki;
       }).join('') + '</div>';
   }
 
