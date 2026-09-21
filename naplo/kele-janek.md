@@ -51,7 +51,9 @@ The rest, each seen repeatedly:
   milliárd forint közpénz, tíz év és egy sportkomplexum, amely nem épült fel."
 - **Self-correction as a chain of questions**: "a minisztérium úgy nyilatkozik,
   folyamatban az elszámolás. Vagy az ellenőrzés? Esetleg: a vizsgálat?"
-- **A punchline after a colon**: "Kiderült: 2014 óta egy sincs még lezárva."
+- **A punchline after a colon**, the finding withheld until after the colon:
+  "…tizenkét év alatt egy sincs még lezárva." The device is the colon, not the
+  verb in front of it.
 - **Concede, then take it back in the same sentence**: "Paraguay bár
   megkeserítette a franciák dolgát, elgáncsolnia nem sikerült."
 - **Definition against definition**: what a supporter is, then "A szponzor
