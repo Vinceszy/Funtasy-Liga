@@ -204,3 +204,20 @@ that check catches and that are easy to mis-file by hand: a scorer sold
 before the round, whom no squad holds, so he is `record` rather than
 `event`; and a substitute's minute count, which is time played and not the
 minute he came on.
+
+## A megjelenes ideje a lap SORRENDJE
+
+Minden kiadott irasnak van `kozzetett` mezoje, es a magazin eszerint rendez,
+a legfrissebb elol; azonos belyegnel a frissebb fordulo all elol, azon belul
+rovat, osszefoglalo, beharangozo.
+
+Ez a mezo nem konyveles, hanem a lap sorrendje. Ha egy iras a commit-ideje
+szerint rossz helyre kerul - mert peldaul egy fordulo beharangozoja utolag
+keszult el, es igy a kesobbi fordulo beharangozoja ala csuszott -, akkor a
+belyeget a SZERKESZTOI sorrendhez kell igazitani, nem az iras alatt hagyni.
+A helyes sorrend fordulon belul mindig: beharangozo, majd osszefoglalo; a
+fordulok pedig novekvo sorrendben kovetik egymast.
+
+Uj iras kiadasakor a `kozzetett` a kiadas pillanata, egy tizedmasodpercig
+sem kell gondolkodni rajta - ez a szabaly csak akkor lep be, ha valamit
+utolag potolunk.
