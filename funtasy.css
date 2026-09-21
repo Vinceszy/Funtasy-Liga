@@ -391,7 +391,12 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 /* A PL-en kulon sor az, amit a ZARASI AUTOMATIKUS CSERE hozott: az nem a
    szakvezeto dontese, tehat nem is allhat a sajat tetelei kozott. */
 .vasor.vagep .vanev,.vasor.vareszossz .vanev{font-family:var(--cim);font-size:11px;
-  letter-spacing:1px;color:var(--dim)}
+  letter-spacing:1px;color:var(--dim);
+  /* Ezek a sorok nem jatekosnevet visznek, hanem mondatot: harom pontra
+     vagva ertelmetlenek ("Amit a gep a regi kereteden me..."). Toressel
+     kifernek, a szam pedig a sor tetejehez igazodik. */
+  white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
+.vasor.vagep,.vasor.vareszossz{align-items:flex-start}
 .vasor.vareszossz{border-top:1px dashed var(--line);margin-top:6px;padding-top:6px}
 @media(max-width:640px){
   /* Telefonon KET SOR, racsban: fent a poszt + nev + a lenyeg (a

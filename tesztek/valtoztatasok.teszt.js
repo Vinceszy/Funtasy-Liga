@@ -346,7 +346,7 @@ async function plLezartan(br){
     // sugallna, hogy a szakvezeto tette, amit a zarasi automatikus csere.
     const jo_ = Math.round(b.jatekos.reduce((s2, x) => s2 + sz(x), 0) * 100) / 100;
     if (b.reszossz == null || Math.abs(sz(b.reszossz) - jo_) > 0.005)
-      bajok.push(id + ': "A te döntéseid" ' + b.reszossz + ', a játékos-sorok összege ' + jo_);
+      bajok.push(id + ': a kezdő átalakításának sora ' + b.reszossz + ', a játékos-sorok összege ' + jo_);
     if (b.gep == null)
       bajok.push(id + ': hiányzik az automatikus csere sora');
     else if (Math.abs(jo_ + sz(b.gep) - fej) > 0.005)
@@ -435,6 +435,19 @@ async function plPontNelkul(br){
   jo(!t.gep, 'PL: a gépi csere sora sincs — az automatikus csere még meg sem történt');
   jo(t.sorok > 0 && t.uresDiff,
      'PL: a változtatás látszik (' + t.sorok + ' sor), szám nélkül');
+  // A FUL NEM A NEZOROL SZOL. Ugyanez a ful barmelyik szakvezeto lapjan
+  // megnyithato, tehat egy "a kezdod atalakitasa" felirat mas emberre
+  // mutat, mint akit a nezo epp olvas. A hiba csendes: minden szam stimmel,
+  // csak a mondat hazudik.
+  // A FELIRATOKAT nezzuk, nem a sorok egesz szoveget: egy sorban a poszt
+  // jelolese es a nev osszeer ("kezdo" + "DEF"), es abbol hamis talalat lesz.
+  const e2 = await p.$$eval('#mBody .vakor .vanev, #mBody .vakor .vacimke, #mBody .note',
+    n => n.map(x => x.textContent.trim())
+          .join(' | ')
+          .match(/(kereted|kezdőd|csapatod|neked|nálad|döntésed|általad)\w{0,8}/gi) || []);
+  jo(e2.length === 0,
+     'a fül nem szólítja meg a nézőt (egyes szám második személy)'
+     + (e2.length ? ' — ' + [...new Set(e2)].join(', ') : ''));
   jo(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
   await p.close();
 }
