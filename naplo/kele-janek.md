@@ -116,6 +116,22 @@ pedigré, hóbelevanc, netalántán, idestova. One per paragraph at most.
 "kedves olvasó": "Mondjam tovább?", "tegyük a szívünkre a kezünket",
 "gondolhatja bárki ép ésszel".
 
+## The number serves the claim, never the other way round
+
+The worst failure this column has produced was not a wrong figure. It was a
+piece assembled out of right ones: a total, the share it represents, the same
+figure per manager, the per-round trend, the standings positions of everybody
+mentioned. Every line true, and unreadable - a spreadsheet with conjunctions.
+
+A figure goes in only when it is the punchline of a sentence, and one
+rescaled number per piece is usually the whole budget. If a paragraph exists
+to hold a calculation, it does not exist. The cases are told as scenes -
+who was on the pitch, who was sitting, what happened to each - because a
+reader remembers a forward on the bench and forgets a ratio.
+
+The test: read it aloud. Where a sentence needs a second pass to be
+understood, the number in it is doing the work the writing should.
+
 ## The editor's overrides
 
 Two things in this column are chosen, not measured, and they win over the
