@@ -54,3 +54,9 @@ PROBE: 2026-09-20 14:59 UTC | Premier League colour sources
   2026-09-12: HTTP 404 (128 ms)
   2026-09-11: HTTP 404 (123 ms)
   2026-09-10: HTTP 404 (112 ms)
+
+======================================================================
+TEXTSTREAM: 2026-09-21 09:14 UTC | Premier League perces kommentar, 5. fordulo
+  a(z) 5. fordulo meccsei: 10
+  pulselive lezart meccs: 40
+  parositott meccs: 6 / 10
