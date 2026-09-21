@@ -844,9 +844,10 @@
   }
  ],
  "event": "5",
- "keszult": "2026-09-21T08:46:44Z",
+ "keszult": "2026-09-21T09:36:29Z",
  "meccsek": {
   "Brentford - Chelsea": {
+   "kezdes": "2026-09-18T19:00:00Z",
    "fotmob": "5795456",
    "golok": [
     {
@@ -898,6 +899,7 @@
    "loves_db": 25
   },
   "Spurs - Aston Villa": {
+   "kezdes": "2026-09-19T11:30:00Z",
    "fotmob": "5795464",
    "golok": [
     {
@@ -966,6 +968,7 @@
    "loves_db": 35
   },
   "Brighton - Arsenal": {
+   "kezdes": "2026-09-19T14:00:00Z",
    "fotmob": "5795457",
    "golok": [
     {
@@ -1017,6 +1020,7 @@
    "loves_db": 28
   },
   "Everton - Ipswich Town": {
+   "kezdes": "2026-09-19T14:00:00Z",
    "fotmob": "5795458",
    "golok": [
     {
@@ -1062,6 +1066,7 @@
    "loves_db": 34
   },
   "Newcastle - Hull City": {
+   "kezdes": "2026-09-19T14:00:00Z",
    "fotmob": "5795462",
    "golok": [
     {
@@ -1113,6 +1118,7 @@
    "loves_db": 34
   },
   "Nott'm Forest - Coventry City": {
+   "kezdes": "2026-09-19T16:30:00Z",
    "fotmob": "5795463",
    "golok": [
     {
@@ -1142,6 +1148,7 @@
    "loves_db": 34
   },
   "Bournemouth - Liverpool": {
+   "kezdes": "2026-09-20T13:00:00Z",
    "fotmob": "5795455",
    "golok": [
     {
@@ -1173,6 +1180,7 @@
    "loves_db": 21
   },
   "Leeds - Crystal Palace": {
+   "kezdes": "2026-09-20T13:00:00Z",
    "fotmob": "5795460",
    "golok": [],
    "var": [
@@ -1207,6 +1215,7 @@
    "loves_db": 25
   },
   "Man City - Sunderland": {
+   "kezdes": "2026-09-20T13:00:00Z",
    "fotmob": "5795461",
    "golok": [
     {
@@ -1317,6 +1326,7 @@
    "loves_db": 33
   },
   "Fulham - Man Utd": {
+   "kezdes": "2026-09-20T15:30:00Z",
    "fotmob": "5795459",
    "golok": [
     {
