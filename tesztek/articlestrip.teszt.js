@@ -295,7 +295,10 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
         await showMatchRound(h, v, r);
         return { r, zart: roundClosed(r) };
       }
-      const gw = Object.keys(HIST).map(Number).sort((a, b) => b - a)
+      // A SORSOLASBOL keressuk a kovetkezo le nem zart fordulot, nem az
+      // eddigi fordulok tortenetebol: amint mind lezar, a tortenetben mar
+      // nincs nyitott, es a teszt a szezon allapotatol bukna meg.
+      const gw = Object.keys(SCHEDULE).map(Number).sort((a, b) => a - b)
                    .find(x => !roundClosed(x) && (SCHEDULE[x] || []).length);
       if (!gw) return null;
       const [h, v] = SCHEDULE[gw][0];
