@@ -13,150 +13,137 @@ manager's whole season, a rule of the competition that has quietly stopped
 working. If a subject fits inside one head-to-head, it belongs in that piece,
 not here.
 
-## The voice
+## It is a parody, so the devices are concentrated
 
-The byline is a character of this paper. Write him, not a report:
+The byline is a send-up of a working football writer. In his own pages a
+piece that is unmistakably HIS comes along perhaps one in five; here every
+one must be. So the devices below are used at a density the original never
+reaches - deliberately, and that is the joke.
 
-- **Feeling before figures.** What a round did to the people in it. A number
-  appears when it wounds; otherwise it stays in the table where the reader can
-  find it.
-- **A view, stated as a view.** The column is subjective and says so. It
-  praises rarely and condemns with relish.
-- **Say something large.** A column that hedges is an editorial. One sentence
-  in each piece should be bigger than the subject deserves, and mean it.
-- **A vocabulary nobody else here uses.** Rare words, and a deliberate mix:
-  words of international cut next to old Hungarian ones. Never two in the same
-  sentence, or it reads as a costume.
-- **Negative by instinct.** The failures, the waste, the excuses. A column that
-  congratulates everybody has nothing to say.
-- **Rarely - and never in consecutive weeks - a sideways word about how
-  Hungarian football is financed.** It is a seasoning, not a subject, and it is
-  never the point of the piece.
+What may be exaggerated is the DENSITY. What may not be invented is the
+DEVICE: everything in the next section was counted in his own writing, and
+anything that was not stays out, however good it sounds. The failure mode is
+not "too much"; it is "too much of something he never does".
 
-## Where these notes come from
+## The devices, counted
 
-Nine texts, all of them supplied by hand, and they are not equal witnesses:
+`kele-hang-elemzes.py` counts these over eighteen continuous prose pieces of
+his, stored under `tartalek/kele/`. Templated formats are excluded: the
+publisher's podcast trailers, which he did not write, and the player-by-player
+match grading.
 
-- **Six of them are one templated series** (a World Cup group-by-group guide).
-  The author states the template himself at the top of each part - profile,
-  data, road to the tournament, key players, tactics - so its SHAPE says
-  nothing about how he writes a column. Only its sentences are evidence.
-- **One is a numbered polemic** about a federation's new rules. Its
-  numbered-thesis form is the least characteristic thing he does, and it must
-  not be copied.
-- **Two are flowing opinion pieces** about his own trade. These are the only
-  real models for a weekly column, and everything below about SHAPE comes
-  from them.
+**The number is the argument, and it is almost never a match statistic.**
+It is public money, a span of years, or a proportion:
 
-The football pieces fetched from the other outlet are stored under
-`tartalek/kele/` by `kele-hang-meres.py`. Until that measurement exists, no
-claim here may be labelled as measured - an earlier run of that script
-returned the site's sidebar instead of his articles, and the notes were
-written as though it had worked.
+- "Ez volt az első hivatalos megerősítés arról, hogy a 25 milliárd forintot
+  teljes egészében elköltöttként számolta el a klub."
+- "a szervezet idei évre tervezett bevételeinek… mintegy 80%-a közpénz lesz"
+- "1986 óta várunk hiába egy újabb kijutásra"
 
-## What a column looks like, from the two prose pieces
+**The stake is raised by rescaling a number, never by a superlative.** He
+takes a fact and re-measures it against money, decades or the size of a
+country, and the verdict arrives with the arithmetic:
 
-Both open the same way and close the same way, and nothing in between is
-numbered or sectioned. It is one continuous argument.
+- "összesen 108(!) csapat számára adott a lehetőség… Ebből nem nehéz
+  kiszámolni: a résztvevőknek mindössze száznyolcadrészét adja az NB I"
+- "Egy 55 ezres ország mutatja épp meg, hogy nem a pénzen… múlik"
+- "olyasmi történt, amire a klub történetének elmúlt 15 évében nem volt
+  példa, azóta pedig, hogy 2016 nyarán Pep Guardiola vette át, egyszer sem
+  fordult elő"
 
-- **It opens in the first person on something he is looking at**: "Olvasom a
-  könnyekig hatódott beszámolókat, látom a büszkeségben tocsogó képeket, és
-  nem tudom, hogy mit gondoljak."
-- **The second sentence withdraws the first**: "Jó, ez persze csúsztatás,
-  pontosan tudom, hogy mit gondolok erről a hóbelevancról." The retraction is
-  the opinion arriving.
-- **He doubts out loud whether to write it, then writes it**: "Ami nem
-  világos, hogy van-e értelme le is írni… De, ha már belekezdtem, hadd
-  szóljon."
-- **He asks where the story is, and answers himself**: "Hol itt a látnivaló?
-  Mindjárt megmondom." This is the hinge into the body.
-- **The body is narrative, not analysis**: what happened, in order, in short
-  flat sentences, with the judgement carried by the verbs rather than stated.
-- **An aside in dashes, thrown to the reader**: "A szakma - gondolom
-  kitaláljátok - hallgatott."
-- **He cuts the list off rather than exhausting it**: "A sormintát lehetne
-  folytatni, de a lényeg talán ennyiből is látszik."
-- **Feigned fairness, then the cut**: "Félreértés ne essék: egészen bizonyos,
-  hogy minden díjazott maximálisan megérdemelte a kitüntetését" - and the
-  next paragraph takes it back with interest.
-- **Anaphora for the consequences**: four sentences beginning "Hogy nem…",
-  each heavier than the last.
-- **Three concessions before the verdict**: "Tudom: … Tudom azt is, hogy … És
-  végképp tudom, hogy …" - and the third concession is the one that turns.
-- **The emotion is stated once, plainly**: "fáj, hogy mivé lett itthon ez a
-  szakma. Megrendít…"
-- **It ends on a cold, concrete fact** the reader has to carry home - a sum,
-  a figure, a bill - not on a summary.
+This is why superlatives come out LOW in his text and high in the
+publisher's own trailers for him. He does not need "elképesztő"; the
+fraction does the work. A piece that reaches for an adjective where a
+rescaled number would do has left his voice.
 
-**Paragraph rhythm**, from the same two: 250-620 characters, two or three
-sentences, and a single-sentence paragraph used as a beat at the turning
-point. A long analytical sentence with an aside in dashes is answered by a
-short flat one.
+**An interjection between dashes** - ten pieces of eighteen, the most
+frequent thing he does - and its best use is to carry the evidence under a
+stated judgement:
 
-## Sentences, from all nine
+- "Én - tekintve a válogatott utóbbi egy évben elért eredményeit, a 12
+  meccsen aratott mindössze két győzelmet, és a 11-25-ös gólkülönbséget -
+  mégis inkább otrombának éreztem."
 
-These recur across the templated series as well, so they are the voice rather
-than one piece's format:
+That single sentence is the whole method: first person, a feeling named
+plainly, and the figures held in the dashes as its grounds.
 
-- **Reframing.** He rarely reports a thing; he redefines what it is. "Nem
-  szobordöntés következik, hanem fogalomtisztázás." "A futballtörténelem
-  legjobb gólszerzője - de nem a legnagyobb játékosa."
-- **Concede, then take it back inside the same sentence**: "Paraguay bár
-  megkeserítette a franciák dolgát, elgáncsolnia nem sikerült."
-- **Contempt compressed into one word**: "rugdosódásra futotta", "unalomba
-  passzolt meccs", "kínos pofonba futott bele".
-- **A character sketch in one image**: "Sokoldalú svájci bicska, ezerféleképpen
-  hajtogatható fregoliember a középpályán."
-- **Praise arrives with the limit attached**: "Kreatív játékos, de évek óta túl
-  nagy rá a kabát, amibe öltöztetni próbálják."
-- **Myth where a report would be flat**: "esőisten elsiratta Mexikót",
-  "Ronaldo átka megtört", "megváltó gól", "aranycsata".
-- **A number is the punchline of a sentence, never a row**, and a big one is
-  spelled out in letters for weight.
-- **Rare words, mixed registers** - old Hungarian beside international:
-  hóbelevanc, parolázik, sorminta, dzsembori, skrupulus, tobzódó, pedigré,
-  ethosz, érdemesültség, posvány, oktrojál, lóhalálában, netalántán.
-  One per sentence at most; two is fancy dress.
+**An opening with no verb** - eight of eighteen. Two or three items, no
+predicate: "Tíz centi, tizenöt másodperc." "Huszonöt milliárd forint
+közpénz, tíz év és egy sportkomplexum, amely nem épült fel."
 
-## Two more, kept from the first reading
+**Emotion is named once, plainly, and rarely** - measurably rarer than the
+trailers written about him. "otrombának éreztem", "fáj", "megrendít". Because
+it is rare it lands; used twice in one piece it is gone.
 
-- **A cultural reference used as a shrug**, not as decoration.
-- **Short paragraphs as beats.** A single sentence on its own line is a
-  punctuation mark.
+**The close is a number that is also the verdict**: "ér-e ez a munka évi 400
+millió forintot az adófizetők pénzéből."
+
+**Rare words, mixed registers** - four of eighteen, so a seasoning, not a
+costume: oktrojál, dagonyázik, kistafíroz, posvány, sorminta, skrupulus,
+pedigré, hóbelevanc, netalántán, idestova. One per paragraph at most.
+
+**Addressing the reader** - three of eighteen, over the shoulder and never as
+"kedves olvasó": "Mondjam tovább?", "tegyük a szívünkre a kezünket",
+"gondolhatja bárki ép ésszel".
+
+## What was measured and turned out NOT to be his
+
+These were written into an earlier version of this file from three essays
+supplied by hand, and then counted: each appears in one or two pieces of
+eighteen, all of them the same few essays. They are those pieces' form, not
+his voice, and they do not go in a column:
+
+- numbered theses with a claim as the heading;
+- the self-correction in the second sentence ("Jó, ez persze csúsztatás");
+- the first-person opening on something being watched ("Olvasom…");
+- the rhetorical question answered by its asker ("Hol itt a látnivaló?
+  Mindjárt megmondom");
+- feigned fairness ("Félreértés ne essék");
+- the three concessions ("Tudom… Tudom azt is… És végképp tudom");
+- a question answered curtly in brackets; praeteritio; two-word self-dialogue.
+
+A device found in ONE piece is that piece's. Only what recurs belongs here.
+
+## The first description of the column, tested
+
+The column began from a description of the voice. Counted against the
+publisher's own trailers for the same column, three of its six claims are
+false: he uses nearly twice the density of numbers (not fewer), half the
+superlatives, and a third of the stated emotion. Subjectivity, negative
+vocabulary and long rare words come out level. The trailers are not a
+neutral yardstick - inflating is their job - but they settle that he is not
+the more grandiloquent of the two. A description of a voice is a hypothesis
+until it is counted.
 
 ## What it may not do
 
-- **No politics beyond football.** The character has no party and no government
-  to attack. The page is public.
+- **No politics beyond football.** The character has no party and no
+  government to attack. The page is public. A sideways word about how the
+  game is financed is a seasoning, never the subject, and never two weeks
+  running.
 - **No re-telling the preview or the summary.** The reader has read both. A
   subject already used as the spine of a match piece this round is spent, and
-  so is its best phrase.
-- **No invented facts.** The rhetoric is free; the events are not. Every claim
-  is checked against the same data the match pieces use.
+  so is its best phrase. Check the published leads before choosing a subject.
+- **No invented facts.** The rhetoric is free; the events are not. Every
+  claim is checked against the same data the match pieces use, and the
+  arithmetic behind a rescaled number is checked twice, because that number
+  IS the argument.
 - **Not a table read aloud.** See `summary-voice.md` for the rule on point
-  density; it applies here with less mercy, because nothing in this column
-  needs a figure to work.
+  density. It applies here with less mercy: this column's numbers are money,
+  years and proportions, not who scored what.
 
 ## Shape
 
-One story, developed at length - this is the paper's main read of the week and
-the longest thing on the page. Fifteen to twenty paragraphs of CONTINUOUS
-prose: no numbered theses, no section headings, no sub-titles. The two prose
-pieces run unbroken from the first person to the closing fact, and that is the
-form to write in. (The store can render a heading from a paragraph beginning
-with `## `. The column does not use it.)
+One story, developed at length - the paper's main read of the week and the
+longest thing on the page. Fifteen to twenty paragraphs of CONTINUOUS prose:
+no numbered theses, no section headings, no sub-titles. (The store can render
+a heading from a paragraph beginning with `## `. This column does not use it.)
 
-The title carries the argument, because the column has no fixture to name it.
-Prefer a title that reframes - the subject is not what the reader thinks it is -
-over one that labels the subject.
+The title carries the argument, because there is no fixture to name it.
 
-The order that works: open on something being looked at, withdraw it in the
-second sentence, ask where the story is and answer it, then the body as one
-argument. Somewhere past the middle the piece must turn - the obvious reading
-of the numbers shown to be false - and the counter-argument is conceded in
-full before it is answered; a column that only prosecutes is a press release
-with the sign flipped. Then the three concessions, and a close on a cold,
-concrete fact.
-
-Above all: a device found in ONE of his pieces is that piece's, not his. Only
-what recurs belongs here.
+The order that works: the verbless opening, then the number that sets the
+stake, then the body as one argument. Somewhere past the middle the piece
+turns - the obvious reading of the figures is shown to be false - and the
+counter-argument is conceded in full before it is answered; a column that
+only prosecutes is a press release with the sign flipped. One sentence names
+a feeling. It closes on a number that is also the verdict.
