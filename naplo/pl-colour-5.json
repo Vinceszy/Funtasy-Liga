@@ -14,5 +14,520 @@
    "meccs": "Maduekinho - Hol van a pénz?",
    "cel": "Hol van a pénz?"
   }
- ]
+ ],
+ "event": "5",
+ "keszult": "2026-09-21T08:46:44Z",
+ "meccsek": {
+  "Brentford - Chelsea": {
+   "fotmob": "5795456",
+   "golok": [
+    {
+     "perc": 61,
+     "jatekos": "Jaidon Anthony",
+     "gólpassz": "assist by Jannik Schuster",
+     "leiras": "Header",
+     "mód": "Header",
+     "helyzet": "FromCorner",
+     "öngól": false,
+     "xG": 0.963
+    },
+    {
+     "perc": 83,
+     "jatekos": "Igor Thiago",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "FastBreak",
+     "öngól": false,
+     "xG": 0.604
+    },
+    {
+     "perc": "90 + 4",
+     "jatekos": "Fábio Carvalho",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "ThrowInSetPiece",
+     "öngól": false,
+     "xG": 0.429
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 82,
+     "jatekos": "Kevin Schade",
+     "xG": 0.417,
+     "mód": "RightFoot",
+     "helyzet": "FastBreak",
+     "kapura": true
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "776689": 2,
+    "268375": 3
+   },
+   "loves_db": 25
+  },
+  "Spurs - Aston Villa": {
+   "fotmob": "5795464",
+   "golok": [
+    {
+     "perc": "45 + 4",
+     "jatekos": "Johan Manzambi",
+     "gólpassz": "assist by Boubacar Kamara",
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.316
+    },
+    {
+     "perc": 67,
+     "jatekos": "Nicolas Jackson",
+     "gólpassz": "assist by Johan Manzambi",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.06
+    },
+    {
+     "perc": 79,
+     "jatekos": "Emiliano Buendía",
+     "gólpassz": "assist by John McGinn",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.024
+    },
+    {
+     "perc": 86,
+     "jatekos": "Conor Gallagher",
+     "gólpassz": "assist by Mohammed Kudus",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.352
+    },
+    {
+     "perc": "90 + 8",
+     "jatekos": "Jan Paul van Hecke",
+     "gólpassz": "assist by Andrew Robertson",
+     "leiras": "Header",
+     "mód": "Header",
+     "helyzet": "SetPiece",
+     "öngól": false,
+     "xG": 0.353
+    }
+   ],
+   "var": [
+    {
+     "perc": 60,
+     "jatekos": "Mohammed Kudus",
+     "mit": "Mohammed Kudus"
+    }
+   ],
+   "kihagyott_nagy_helyzet": [],
+   "vedesek_kapusonkent": {
+    "1053679": 5,
+    "1341475": 3
+   },
+   "loves_db": 35
+  },
+  "Brighton - Arsenal": {
+   "fotmob": "5795457",
+   "golok": [
+    {
+     "perc": 31,
+     "jatekos": "Pascal Groß",
+     "gólpassz": "assist by Charalampos Kostoulas",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.047
+    },
+    {
+     "perc": 45,
+     "jatekos": "Charalampos Kostoulas",
+     "gólpassz": "assist by Diego Gómez",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "FastBreak",
+     "öngól": false,
+     "xG": 0.06
+    },
+    {
+     "perc": 57,
+     "jatekos": "Chema Andrés",
+     "gólpassz": "assist by Pascal Groß",
+     "leiras": "Header",
+     "mód": "Header",
+     "helyzet": "FromCorner",
+     "öngól": false,
+     "xG": 0.225
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 78,
+     "jatekos": "Kai Havertz",
+     "xG": 0.593,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "kapura": true
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "562727": 2,
+    "1131987": 2
+   },
+   "loves_db": 28
+  },
+  "Everton - Ipswich Town": {
+   "fotmob": "5795458",
+   "golok": [
+    {
+     "perc": 11,
+     "jatekos": "Thierno Barry",
+     "gólpassz": "assist by James Tarkowski",
+     "leiras": null,
+     "mód": "OtherBodyParts",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.165
+    }
+   ],
+   "var": [
+    {
+     "perc": 58,
+     "jatekos": "Thierno Barry",
+     "mit": "Thierno Barry"
+    }
+   ],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 5,
+     "jatekos": "Brennan Johnson",
+     "xG": 0.604,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "kapura": false
+    },
+    {
+     "perc": 38,
+     "jatekos": "Leif Davis",
+     "xG": 0.421,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "kapura": false
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "303919": 4,
+    "512013": 1
+   },
+   "loves_db": 34
+  },
+  "Newcastle - Hull City": {
+   "fotmob": "5795462",
+   "golok": [
+    {
+     "perc": 3,
+     "jatekos": "Joseph Willock",
+     "gólpassz": "assist by Harvey Barnes",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.029
+    },
+    {
+     "perc": 7,
+     "jatekos": "Lewis Hall",
+     "gólpassz": "assist by Harvey Barnes",
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "FastBreak",
+     "öngól": false,
+     "xG": 0.06
+    },
+    {
+     "perc": 67,
+     "jatekos": "Mohamed-Ali Cho",
+     "gólpassz": "assist by Mohamed Belloumi",
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.275
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 45,
+     "jatekos": "Yoane Wissa",
+     "xG": 0.788,
+     "mód": "RightFoot",
+     "helyzet": "Penalty",
+     "kapura": true
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "1186978": 3,
+    "1072068": 3
+   },
+   "loves_db": 34
+  },
+  "Nott'm Forest - Coventry City": {
+   "fotmob": "5795463",
+   "golok": [
+    {
+     "perc": 55,
+     "jatekos": "Jay Dasilva",
+     "gólpassz": "assist by Carl Rushworth",
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.288
+    }
+   ],
+   "var": [
+    {
+     "perc": 86,
+     "jatekos": "Igor Jesus",
+     "mit": "Igor Jesus"
+    }
+   ],
+   "kihagyott_nagy_helyzet": [],
+   "vedesek_kapusonkent": {
+    "1187236": 2,
+    "181069": 2,
+    "None": 1
+   },
+   "loves_db": 34
+  },
+  "Bournemouth - Liverpool": {
+   "fotmob": "5795455",
+   "golok": [
+    {
+     "perc": 57,
+     "jatekos": "Alexander Isak",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.557
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 53,
+     "jatekos": "Ryan Christie",
+     "xG": 0.426,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "kapura": false
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "319784": 2,
+    "1067256": 2
+   },
+   "loves_db": 21
+  },
+  "Leeds - Crystal Palace": {
+   "fotmob": "5795460",
+   "golok": [],
+   "var": [
+    {
+     "perc": 52,
+     "jatekos": "Tyrick Mitchell",
+     "mit": "Tyrick Mitchell"
+    }
+   ],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 56,
+     "jatekos": "Dominic Calvert-Lewin",
+     "xG": 0.523,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "kapura": true
+    },
+    {
+     "perc": 85,
+     "jatekos": "Daichi Kamada",
+     "xG": 0.339,
+     "mód": "Header",
+     "helyzet": "ThrowInSetPiece",
+     "kapura": false
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "1187213": 4,
+    "448897": 2
+   },
+   "loves_db": 25
+  },
+  "Man City - Sunderland": {
+   "fotmob": "5795461",
+   "golok": [
+    {
+     "perc": 9,
+     "jatekos": "Enzo Fernández",
+     "gólpassz": null,
+     "leiras": "Direct freekick",
+     "mód": "RightFoot",
+     "helyzet": "FreeKick",
+     "öngól": false,
+     "xG": 0.045
+    },
+    {
+     "perc": 12,
+     "jatekos": "Brian Brobbey",
+     "gólpassz": "assist by Enzo Le Fée",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.206
+    },
+    {
+     "perc": 29,
+     "jatekos": "Rayan Cherki",
+     "gólpassz": "assist by Antoine Semenyo",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.082
+    },
+    {
+     "perc": 33,
+     "jatekos": "Brian Brobbey",
+     "gólpassz": "assist by Thomas Meunier",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.924
+    },
+    {
+     "perc": 43,
+     "jatekos": "Antoine Semenyo",
+     "gólpassz": "assist by Marc Guéhi",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "FromCorner",
+     "öngól": false,
+     "xG": 0.085
+    },
+    {
+     "perc": 57,
+     "jatekos": "Antoine Semenyo",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.076
+    },
+    {
+     "perc": 59,
+     "jatekos": "Brian Brobbey",
+     "gólpassz": "assist by Nilson Angulo",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "SetPiece",
+     "öngól": false,
+     "xG": 0.974
+    },
+    {
+     "perc": 81,
+     "jatekos": "Erling Haaland",
+     "gólpassz": "assist by Joško Gvardiol",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.672
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 45,
+     "jatekos": "Erling Haaland",
+     "xG": 0.315,
+     "mód": "RightFoot",
+     "helyzet": "FastBreak",
+     "kapura": false
+    },
+    {
+     "perc": 86,
+     "jatekos": "Nico O'Reilly",
+     "xG": 0.783,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "kapura": true
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "618878": 4,
+    "None": 2,
+    "1125720": 1
+   },
+   "loves_db": 33
+  },
+  "Fulham - Man Utd": {
+   "fotmob": "5795459",
+   "golok": [
+    {
+     "perc": 63,
+     "jatekos": "Lisandro Martínez",
+     "gólpassz": null,
+     "leiras": "Own goal",
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": true,
+     "xG": null
+    },
+    {
+     "perc": 89,
+     "jatekos": "Matheus Cunha",
+     "gólpassz": "assist by Patrick Dorgu",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.023
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 18,
+     "jatekos": "Gonzalo García",
+     "xG": 0.494,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "kapura": false
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "215168": 5,
+    "1178602": 6
+   },
+   "loves_db": 42
+  }
+ }
 }
