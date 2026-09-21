@@ -722,10 +722,37 @@ async function profilBontasHTML(r){
     + FunTasy.accTable(sorok, 'Ebben a fordulóban nem szerzett pontot érő eseményt.');
 }
 
-// A jatekos ara EGY forduloban. Az arnaplo csak a valtozasokat orzi, tehat
-// az adott fordulora az utolso olyan feljegyzes ervenyes, ami a fordulo elso
-// meccse ELOTT (vagy aznap) kelt. Amig a naplo nem kezdodott el, nincs ar -
-// azt uresen hagyjuk, mert a legkozelebbi kesobbi ar nem az adott fordulo.
+// A fordulonkenti ar ELSODLEGES forrasa a jatekos-adatlap vegpontja: annak a
+// `rounds` tomble fordulonkent adja a `market_price`-t, tehat a szezon elejere
+// is - az arnaplonk viszont csak a sajat inditasa ota gyul. Egy profilhoz egy
+// keres, es csapdaja van: nincs `data` burok, a mezok a gyokerben allnak.
+const ARLAP = new Map();          // cp -> {fordulo: ar}
+async function arlapBetolt(cp){
+  if(!cp) return null;
+  if(ARLAP.has(cp)) return ARLAP.get(cp);
+  let terkep = null;
+  try{
+    const j = await apiGet('https://fantasy-api.mlsz.hu/competitions/3/players/' + cp);
+    const sorok = (j && j.rounds) || [];
+    terkep = {};
+    for(const x of sorok){
+      // A sor a FORDULO azonositojat adja (round_id = 75 + 2 x fordulo),
+      // nem a fordulo szamat - a sajat `id` mezoje mas, azzal nem tevesztheto.
+      const rid = (x.round && x.round.id != null) ? x.round.id : x.round_id;
+      const r = (typeof rid === 'number') ? (rid - 75) / 2 : null;
+      const ar = x.market_price;
+      if(Number.isInteger(r) && r > 0 && typeof ar === 'number' && ar > 0) terkep[r] = ar;
+    }
+    if(!Object.keys(terkep).length) terkep = null;
+  }catch(e){ terkep = null; }
+  ARLAP.set(cp, terkep);
+  return terkep;
+}
+
+// Tartalek, ha az adatlap nem jott meg: a sajat arnaplonk csak a valtozasokat
+// orzi, tehat az adott fordulora az utolso olyan feljegyzes ervenyes, ami a
+// fordulo elso meccse ELOTT (vagy aznap) kelt. A naplo kezdete elotti
+// fordulokra nincs ar - a legkozelebbi kesobbi ar nem azoke.
 function arForduloban(cp, r){
   const sor = (ARAK||{})[String(cp)];
   if(!sor || !sor.length) return null;
@@ -775,6 +802,8 @@ async function profilAdat(jat){
     }
     if(kesz) break;
   }
+  // Egy keres az egesz profilra; ha nem jon meg, a sajat arnaplonkbol dolgozunk.
+  const arlap = await arlapBetolt(jat.cp);
   const sorok=[], klubok={};
   for(const r of rks){
     const per = rounds[r] || {};
@@ -791,7 +820,7 @@ async function profilAdat(jat){
     // a fordulo TENYLEGES keretszama - a kozos reteg ebbol szamol aranyt
     // (es csak salary cap ligaban; draftban nem lenne ertelme)
     sorok.push({r, tulajok, pont:alap, klub: klub||jat.klub,
-                ar: arForduloban(jat.cp, r),
+                ar: (arlap && arlap[r] != null) ? arlap[r] : arForduloban(jat.cp, r),
                 keretszam: Object.keys(per).length});
   }
   jat.klubok=klubok;
