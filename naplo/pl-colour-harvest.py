@@ -192,6 +192,9 @@ def main():
                 vedes[str(x.get("keeperId"))] = vedes.get(str(x.get("keeperId")), 0) + 1
 
         eredmeny["%s - %s" % (h, v)] = {
+            # A kezdes nelkul a golpercek csak diszitesek: kozos idovonalra
+            # csak ugy tehetok, es fordulat is csak ugy szamolhato belolük.
+            "kezdes": f.get("kickoff_time"),
             "fotmob": mid, "golok": golok, "var": var,
             "kihagyott_nagy_helyzet": kihagyott,
             "vedesek_kapusonkent": vedes,

@@ -82,6 +82,15 @@ was meant to say.
 sentences around it. Every match has a report; the goal's minute, the save, the sent-off
 man belong in the piece - see round-pipeline.md for where they come from.
 
+**A minute is a turning point or it is nothing.** The goal times are not
+known so that every goal can be dated like a papagáj; they are known so the
+round can be read as one clock. Use a minute when it marks where a fixture
+changed hands, or when it shows two things happening at the same time across
+two grounds - a swing that took eleven minutes while three matches ran at
+once is worth a sentence. "A tizenkettedikben, a harmincharmadikban és az
+ötvenkilencedikben" is not a sentence, it is a fixture list with commas. Most
+goals in a piece need no minute at all.
+
 **The lead is not the first sentence again.** On the card the lead sits directly above
 the body; the two are read together, so they may not say the same thing twice.
 
