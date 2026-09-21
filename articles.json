@@ -1,5 +1,5 @@
 {
- "updated": "2026-09-21T10:21:45Z",
+ "updated": "2026-09-21T10:49:26Z",
  "leagues": {
   "nb1": {
    "7": {
@@ -347,6 +347,60 @@
        "Hat perc egy beugrótól, és egy kivédett büntető. Ennyin múlt, hogy most nem valaki más mondja ezt a mondatot."
       ],
       "short": "A forduló legszorosabb meccsét egy döntés nyerte meg, amit senki nem hozott.",
+      "source": "manual"
+     }
+    }
+   },
+   "6": {
+    "preview": {
+     "Első Legitim Bajnok|Maduekinho": {
+      "text": [
+       "Brobbey egy hete hármat rúgott a Manchester Citynek, és a gazdája nem kapott érte semmit. Most megint ő dönt róla.",
+       "Nem először: az Első Legitim Bajnok ötvenkettőt hagyott kint idén a padon, a mezőnyben a második legtöbbet, és mégis ő vezet. Vagyis a győzelmeit úgy szerezte, hogy közben rendszeresen eldobott egy fél hétvégét. Ha most beteszi Brobbey-t, ez a párharc másképp néz ki. Ha nem, akkor azt mondja, hogy eddig is elég volt.",
+       "A Maduekinho ennél kevésbé izgalmas kérdésekkel néz szembe, és ez nála erény. Nála a legritkább az a kezdő, aki kettővel vagy kevesebbel zár — a tizenegye a mezőny legfeszesebbje. A múlt héten egyetlen beugró hozta neki a különbséget, de ilyenre tervezni nem lehet, és ő nem is szokott: öt forduló alatt egyszer került olyan helyzetbe, hogy egyáltalán szükség legyen rá.",
+       "Két hely és két győzelem választja el őket. Az élen állónak nem az ellenfelét kell megvernie, hanem a saját szokását."
+      ],
+      "short": "Az élen álló szakvezetőnek egyetlen kérdést kell megválaszolnia a hétvégéig.",
+      "source": "manual"
+     },
+     "Hol van a pénz?|Kiderül": {
+      "text": [
+       "A Kiderül kétszáztizenhatot gyűjtött, és egyetlen döntetlennel áll a kilencedik helyen. Nem a keret rossz, és nem is a szerencse: tizennégyszer mozdított a szezonban, a mezőnyben a legtöbbször, csak épp akit megszerez, az nem mindig jut el a kezdőig. Khalailit egy hete igazolta, és a padon kezdte vele a hétvégét; Vuskovic ugyanazon a hétvégén a padról nézte végig, ahogy a Brighton kapott gól nélkül hozza le a meccsét.",
+       "A kérdés tehát nem az, lesz-e ezen a héten újabb igazolása — szinte biztosan lesz. Hanem hogy be is állítja-e.",
+       "A Hol van a pénz?-nek fordított a gondja: nála a névsorral nincs baj, a névsor nem jön el játszani. Nyolcszor kellett kisegíteni öt forduló alatt, ötször pedig nem volt kivel. Neki nem a kezdőn kell gondolkodnia a héten, hanem azon, hogy legyen kit beállítani, ha vasárnap reggel megjön egy rossz hír.",
+       "A tabella alján ez a párharc arról szól, melyik hiba javítható hamarabb: a rossz kezdő, vagy a rossz keret."
+      ],
+      "short": "Öt forduló, egyetlen győzelem nélkül — és közben négy fölötte álló csapatnál is többet termelt.",
+      "source": "manual"
+     },
+     "HolVanSalah?!|Fixtop4": {
+      "text": [
+       "A HolVanSalah?! kétszáznegyvenegyet gyűjtött, többet mindenkinél, és ötödik. A Fixtop4 kevesebbet szerzett, mint amennyit kapott, és harmadik. Ebben az egy meccsben benne van az egész tabella igazságtalansága.",
+       "Előre nézve viszont a Fixtop4-nek van több dolga. A múlt hétvégén három embere sem került be a klubja keretébe, és a tartaléka is három Chelsea-játékosból meg egy kapusból állt — egyetlen klub egyetlen rossz hétvégéje az egészet elviszi. A héten ezen lehet változtatni, és van rá oka: a szezon legjobbja, João Pedro is kiszorult a kezdőből. A következő napok döntése, hogy visszahozza-e, vagy megvárja, amíg magától rendeződik.",
+       "A HolVanSalah?!-nak ilyen gondja nincs. Öt fordulóban nem volt olyan embere, aki ne lépett volna pályára. Cserébe ötvenötöt hagyott kint a padon, a mezőnyben a legtöbbet — nála viszont ez abból jön, hogy a tartalékai is jók.",
+       "A Fixtop4 két hete negyvenötöt, egy hete harmincat hozott. Ha ez a sor folytatódik, a harmadik hely nem sokáig marad meg."
+      ],
+      "short": "A mezőny legtermékenyebb csapata az ötödik, a legszerencsésebb a harmadik.",
+      "source": "manual"
+     },
+     "Not arsenal|One More Last Ride": {
+      "text": [
+       "A One More Last Ride tizennégyszer mozdított a szezonban, és ez hozta a mezőny legjobb mérlegét: amit igazolt, tizennyolccal többet termelt annál, amit elengedett. A Not arsenal négyszer nyúlt a kerethez, mínuszos mérleggel, és a második helyen áll. Az egyikük hetente dolgozik, a másikuk a draft óta nézi.",
+       "A héten is ez lesz: az egyik szakvezető szinte biztosan igazol, a másik szinte biztosan nem. Ez a párharc pontosan arról szól, melyik éri meg jobban.",
+       "A heti hozamukon látszik a különbség. A Not arsenal a nyitóhétvégéje után minden alkalommal negyvenöt és ötvenöt között termelt, azóta egyszer sem rontott. A One More Last Ride ugyanezen idő alatt tizenhéttől ötvenegyig mindent produkált, és soha nem kétszer ugyanazt.",
+       "A kiszámíthatóbb csapat az esélyes, mert a másiknak a jó napját kell kifognia — viszont épp neki van rá a legtöbb esélye, hogy csinál magának egyet."
+      ],
+      "short": "Tizennégy keretmozgás az egyik oldalon, négy a másikon — és a négy áll feljebb.",
+      "source": "manual"
+     },
+     "Egyperegy|LastYear’sProblem🏆": {
+      "text": [
+       "Az Egyperegy termelte a mezőny legkevesebbjét öt forduló alatt, és ennek majdnem a negyedét egyetlen ember, Semenyo hozta. A kezdői hetvenegy százaléka zár kettővel vagy annál kevesebbel — tíz ember tölti a helyet, egy meg dolgozik. Aki ilyen kerettel megy neki egy fordulónak, annak nem kezdőt kell választania, hanem embert kell szereznie.",
+       "A LastYear'sProblem ennél is rosszabbul áll, csak másképp. Öt forduló, öt vereség, és egy heti hozam, ami soha nem lépte át a negyvenet: harmincnégy, negyven, huszonnyolc, harmincegy, harminchárom. Ilyen egyenletességhez az kell, hogy a kerettel egész egyszerűen ne történjen semmi — és öt hét alatt kétszer történt vele valami. A múlt heti igazolása az első volt a szezonban.",
+       "Az egyiküknek nincs kiből válogatnia, a másik nem szeret válogatni.",
+       "Itt az nyer, aki a harmincas éveiben kevesebbet hibázik. Aki pedig veszít, az a hatodik forduló után is győzelem nélkül áll."
+      ],
+      "short": "A tabella két utolsó csapata játszik, és a vesztes marad a sereghajtó.",
       "source": "manual"
      }
     }
