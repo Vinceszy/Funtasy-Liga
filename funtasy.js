@@ -1584,7 +1584,7 @@
         '<span class="magrovat">' + esc(be.cimke) + '</span>' +
         '<span class="magfordulo">' + be.fordulo + '. forduló</span>' +
         '<button class="magmaso" data-maso="' + esc(azon) + '" ' +
-          'data-rovid="' + esc(be.cikk.short || (be.cikk.text || [])[0] || '') +
+          'data-szoveg="' + esc((be.cikk.text || []).join('\n\n')) +
           '">Másolom</button>' +
       '</div>' +
       '<h3 class="magpar">' + esc(be.hazai) +
@@ -1594,10 +1594,11 @@
       rateBar(be.kulcs) + '</article>';
   }
 
-  /* A "Masolom" a ROVID valtozatot es a cikkre mutato hivatkozast teszi a
-     vagolapra: a csoportba beilleszteni ezt akarja az ember, nem harom
-     bekezdest. A regi execCommand-os utat is meghagyjuk - a navigator API
-     nem biztonsagos kontextusban (http://) nem letezik. */
+  /* A "Masolom" A CIKKET es a ra mutato hivatkozast teszi a vagolapra.
+     Korabban a rovid valtozat ment - az viszont a felutes, nem az iras: aki
+     a gombot megnyomja, a szoveget akarja beilleszteni valahova, nem az egy
+     mondatos ajanlot. A regi execCommand-os utat is meghagyjuk - a navigator
+     API nem biztonsagos kontextusban (http://) nem letezik. */
   var magWatched = false;
   function watchMagazine() {
     if (magWatched) return;
@@ -1605,7 +1606,7 @@
     document.addEventListener('click', function (e) {
       var g = e.target.closest && e.target.closest('.magmaso');
       if (!g) return;
-      var szoveg = (g.getAttribute('data-rovid') || '') + '\n' +
+      var szoveg = (g.getAttribute('data-szoveg') || '') + '\n\n' +
                    location.href.split('#')[0] + '#' + g.getAttribute('data-maso');
       var kesz = function (ok) {
         g.textContent = ok ? 'Kimásolva' : 'Nem sikerült';

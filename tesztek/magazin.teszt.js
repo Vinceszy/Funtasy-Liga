@@ -21,7 +21,7 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
 //  - a szakvezetok EMBERENKENT allnak a listaban: aki mindket ligaban
 //    jatszik, egy sor a ket nevevel, es rea szurve mindkettobol jon iras;
 //  - minden cikk alatt ott az ertekelo sav;
-//  - a "Masolom" a ROVID valtozatot es a cikkre mutato hivatkozast adja;
+//  - a "Masolom" A CIKKET es a ra mutato hivatkozast adja;
 //  - a lablecbol elerheto az oldal.
 (async () => {
   const br = await inditas();
@@ -199,12 +199,15 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
   jo(await p.locator('.magcikk .artrate').count() === mind,
      'minden írás alatt ott az értékelő sáv');
   const elso = p.locator('.magcikk').first();
-  const rovid = await elso.locator('.magmaso').getAttribute('data-rovid');
+  const teljes = await elso.locator('.magmaso').getAttribute('data-szoveg');
   await elso.locator('.magmaso').click();
   await p.waitForFunction(() => window.__masolt && window.__masolt.length, null, { timeout: 5000 });
   const masolt = (await p.evaluate(() => window.__masolt[0])) || '';
-  jo(masolt.startsWith(rovid), 'a rövid változat került a vágólapra');
-  jo(/\/nemzethy\/#c-/.test(masolt), 'és egy a cikkre mutató hivatkozás — ' + masolt.split('\n')[1]);
+  // A CIKK kerul a vagolapra, nem a felutes: aki masol, a szoveget viszi.
+  jo(masolt.startsWith(teljes) && teljes.indexOf('\n\n') > 0,
+     `a teljes cikk került a vágólapra (${teljes.split('\n\n').length} bekezdés)`);
+  jo(/\/nemzethy\/#c-/.test(masolt),
+     'és a végén a cikkre mutató hivatkozás — ' + masolt.split('\n').pop());
   jo(/Kimásolva/.test(await elso.locator('.magmaso').textContent()), 'a gomb vissza is jelez');
 
   // ---- elerheto a lablecbol ----
