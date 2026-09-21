@@ -124,6 +124,15 @@ that was meant. Mégis, viszont, csak, pedig, mégsem - one of them belongs
 wherever the clause reverses the one before it. Once per piece, though: a
 second "mégis" three sentences later cancels the first.
 
+**The reader plays in this league. Never explain the rules to them.** They
+know what the closing substitution is, when the squad locks, and that the
+bench scores nothing - so a sentence teaching them any of it is a footnote
+where the writing should be. "A pontjai a padon maradtak, mert a gép csak
+akkor nyúl a kerethez, ha valaki pályára sem lép" is a manual; "Brobbey
+hármat rúgott a Manchester Citynek, és a gazdája egy pontot sem kapott érte"
+is the same fact with the reader's own knowledge doing the work. Write the
+consequence, never the mechanism.
+
 **Do not ride one device through the whole round.** If the round taught us
 about the automatic substitution, that is the spine of the one fixture it
 decided - not the opening of all five. The same goes for kick-off times,
