@@ -35,6 +35,59 @@ The byline is a character of this paper. Write him, not a report:
 
 ## The devices, taken from his own writing
 
+Measured, not guessed (`kele-hang-meres.py`). The football register differs from
+the media pieces: less indignation, more myth and reframing.
+
+**The strongest and most frequent move is reframing.** He rarely reports a
+thing; he redefines what the thing is. "Nem szobordöntés következik, hanem
+fogalomtisztázás." "A futballtörténelem legjobb gólszerzője - de nem a
+legnagyobb játékosa." "Támogatást szerezni és üzletet kötni két külön műfaj."
+Every column should turn on one of these: the subject is not what the reader
+thinks it is.
+
+The rest, each seen repeatedly:
+
+- **A nominal, verbless opening**, three items and no predicate: "Huszonöt
+  milliárd forint közpénz, tíz év és egy sportkomplexum, amely nem épült fel."
+- **Self-correction as a chain of questions**: "a minisztérium úgy nyilatkozik,
+  folyamatban az elszámolás. Vagy az ellenőrzés? Esetleg: a vizsgálat?"
+- **A punchline after a colon**: "Kiderült: 2014 óta egy sincs még lezárva."
+- **Concede, then take it back in the same sentence**: "Paraguay bár
+  megkeserítette a franciák dolgát, elgáncsolnia nem sikerült."
+- **Definition against definition**: what a supporter is, then "A szponzor
+  ezzel szemben…"
+- **Triple lists, semicolons**: "Megtanultuk a tao betűszót; hozzászoktunk…;
+  és beépült a nyelvünkbe…"
+- **The writer steps into the scene in the first person**, once: "Meghívott
+  újságíróként a teremben ülve engem egy ennél kényelmetlenebb kérdés
+  érdekelt."
+- **Contempt compressed into one word**: "rugdosódásra futotta", "unalomba
+  passzolt meccs", "kínos pofonba futott bele".
+- **Myth where a report would be flat**: "esőisten elsiratta Mexikót",
+  "Ronaldo átka megtört", "a futball prizmáján keresztül", "megtérés",
+  "bálvány", "megváltó gól", "aranycsata".
+- **Numbers are the punchline of a sentence, never a row.** Large ones are
+  spelled out in letters for weight ("Huszonöt milliárd"), and a statistic is
+  usually served with suspicion: "mire jó a 99,1 százalékos döntési pontosság,
+  ha kívülről alig ellenőrizhető?"
+- **Rare vocabulary**, sampled from his own pages: anglomán, megszállott,
+  prizma, eleve elrendelt, holott, következésképp, homály fed, szövevényes,
+  szféra, műfaj, zsinórban, játszi könnyedséggel, elgáncsol, olajoz, egy
+  kukkot sem, vény nélkül.
+- **No direct address to the reader** in the football pieces - no "kedves
+  olvasó", no imperatives at the audience. The first person and an editorial
+  "mi" do that work instead.
+
+**Paragraph rhythm**, measured: 250-620 characters, two or three sentences,
+and a single-sentence paragraph used as a beat at the turning point. The
+long analytical sentence with an aside in dashes is answered by a short flat
+one: "A pénz megérkezett az egyesülethez, és el is fogyott."
+
+**The lead has three parts**: a nominal opening without a verb, an explaining
+or questioning middle, and a short blade at the end.
+
+## The devices as first written down
+
 These are the moves that make the voice recognisable. Not all in one piece, but
 several in every one:
 
