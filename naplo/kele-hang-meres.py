@@ -26,11 +26,12 @@ FEJ = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
 # A HTML-oldalt a Substack elott allo vedelem 403-mal utasitja el egy
 # adatkozponti IP-rol; a FEED es az archivum JSON-ja viszont gepi utak, azokat
 # atengedi. Ezert a feed az elsodleges: abban a bejegyzesek TELJES szovege all.
-ALAP = ["https://kelejanek.substack.com/feed",
-        "https://kelejanek.substack.com/api/v1/archive?sort=new&limit=50",
-        "https://kelejanek.substack.com/p/itt-mindenki-hulye",
-        "https://24.hu/szerzo/kele-janos",
-        "https://24.hu/author/kelejanos/"]
+# MERVE: a Substack elott allo vedelem adatkozponti cimrol MINDENT 403-mal
+# utasit el - a feedet es az archivum-API-t is -, a masik kiado szerzoi
+# oldala viszont atmegy. Onnan jon a lista, es onnan a cikkek torzse is.
+SZERZO = "https://24.hu/author/kelejanos/"
+ALAP = [SZERZO]
+CIKK_DB = int(os.environ.get("KELE_CIKK", "5"))
 
 
 def hoz(url):
@@ -76,8 +77,22 @@ def main():
         for x in sorok[:200]:
             print("  %s" % x)
         # Az archivumnal a POSZT-CIMEK a hasznosak, azokat kulon is kiirjuk.
-        for m in sorted(set(re.findall(r'href="(https://kelejanek\.substack\.com/p/[^"#?]+)"', h))):
-            print("  -> %s" % m)
+        if u == SZERZO:
+            # A szerzoi oldalrol a CIKKEK is kellenek, nem csak a cimek: a hang
+            # a bekezdesekben van, nem a felutesekben.
+            cikkek = [x for x in dict.fromkeys(
+                re.findall(r'href="(https://24\.hu/[a-z-]+/20\d\d/\d\d/\d\d/[^"#?]+)"', h))]
+            print("  talalt cikk: %d" % len(cikkek))
+            for c in cikkek[:CIKK_DB]:
+                print("")
+                print("  " + "-" * 66)
+                print("  ### %s" % c)
+                ch = hoz(c)
+                if ch.startswith("__HIBA__"):
+                    print("    %s" % ch)
+                    continue
+                for x in szoveg(ch)[:60]:
+                    print("    %s" % x)
     return 0
 
 
