@@ -108,9 +108,29 @@ it is rare it lands; used twice in one piece it is gone.
 **The close is a number that is also the verdict**: "ér-e ez a munka évi 400
 millió forintot az adófizetők pénzéből."
 
-**Rare words, mixed registers** - four of eighteen, so a seasoning, not a
-costume: oktrojál, dagonyázik, kistafíroz, posvány, sorminta, skrupulus,
-pedigré, hóbelevanc, netalántán, idestova. One per paragraph at most.
+**Rare words, mixed registers.** He does use them, and he mixes the two
+registers inside one sentence: "az immáron idestova 10+ éve adófizetői
+pénzben dagonyázó magyar futballklubok, és minden földi jóval kistafírozott
+ún. kiemelt akadémiáik", closing the same passage with "fizetheti maga után
+a cechet".
+
+Old Hungarian and folksy, from his own pages: hóbelevanc, dzsembori,
+skrupulus, tobzódó, posvány, dagonyázó, kistafírozott, eltapsikolás, cech,
+apportál, bicskanyitogató, akarnok, lóhalálában, netalántán, idestova,
+voltaképpen, huncut, megveszekedett, fittyet hány, kisvártatva, olybá tűnik,
+speciel, immáron, mihelyst. International: oktrojál, pedigré, ethosz,
+volumen, szimbiotikus, dehumanizál, legitimál, érdemesültség.
+
+**Three to five per piece**, and the heavier the word the fewer - one
+"kistafírozott" costs more than two "idestova". His own rate is about one
+and a third per three thousand characters, so this is the parody
+concentration, roughly three times his. A word in every paragraph would be
+ten times, and reads as fancy dress.
+
+THE SAME RANGE FOR EVERY PIECE. There is no separate setting for one league
+or the other, nor for the two columns of a week. When a rule here is stated
+once, it holds for every piece; inventing a per-piece variation of it is a
+recurring failure of mine and produces differences no reader asked for.
 
 **Addressing the reader** - three of eighteen, over the shoulder and never as
 "kedves olvasó": "Mondjam tovább?", "tegyük a szívünkre a kezünket",
