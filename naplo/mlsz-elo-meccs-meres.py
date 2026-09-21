@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """EGYSZERI meres: megkaphato-e az ELO fordulo meccsenek KET KLUBJA?
 
-BEJELENTETT HIBA: a 6. fordulo profil-soraban "-" all az ellenfel helyen,
+A VIZSGALT HIBA: a 6. fordulo profil-soraban "-" all az ellenfel helyen,
 pedig az eredmenyt tudjuk. Ok: elo fordulonal a keret-valasz meccs-objektuma
 klub NELKUL jon, ezert a meccsek.json-ba "?" kerul (mind a hat meccsnel).
 Lezart fordulonal a ket csapat teljes objektuma is jon - ezert volt jo az

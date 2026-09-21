@@ -15,7 +15,7 @@ Mit naplozunk (naplo/fpl-allapot.txt), es CSAK VALTOZASKOR egy sort:
 A "points" jelenteset a Draft frontendjenek forrasabol olvastuk ki:
   {"": ures, l: Live, p: Provisional, r: Confirmed}
 
-Ez ideiglenes megfigyeles. Ha kiderult, amit tudni akartunk, torolheto:
+Ez ideiglenes megfigyeles. Ha a valasz megvan, torolheto:
 ez a fajl es a naplo/ konyvtar; a futtato workflow kozos, az marad.
 """
 import datetime, json, os, sys, urllib.request

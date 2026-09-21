@@ -47,11 +47,11 @@ def main():
     pontok = (load("draft_pontok.json").get("rounds", {}) or {}).get(rnd, {})
     keretek = (hist.get("rounds", {}) or {}).get(rnd, {})
     valtozas = (load("draft_keretvaltozasok.json").get("rounds", {}) or {}).get(rnd, {})
-    # A MEGTORTENT zarasi automatikus cserek. A tarolt keret a csere UTANI
-    # allapot, tehat belole nem latszik, ki nem lepett palyara - ezt haromszor
-    # olvastam felre, es haromszor irtam le rosszul, kinek a dontese volt.
-    # A `szerep` sorok az ELOZO fordulohoz kepesti valtozast mondjak, ami mas
-    # kerdes: azok kozott kezi dontes es zarasi csere is lehet.
+    # A zaraskor VEGREHAJTOTT automatikus cserek. A tarolt keret a csere UTANI
+    # allapot, tehat belole nem latszik, ki nem lepett palyara - a cseret
+    # visszafejteni belole nem lehet. A `draft_keretvaltozasok.json` `szerep`
+    # sorai sem mondjak meg: azok az ELOZO fordulohoz kepesti valtozast
+    # jelzik, amiben a kezi dontes es a zarasi csere egyforman latszik.
     zaras = (load("zarasok.json").get("rounds", {}) or {}).get(rnd, {})
     menetrend = (draft.get("schedule", {}) or {}).get(rnd, [])
     vegleges = int(rnd) in [int(x) for x in (hist.get("veglegesek") or [])]

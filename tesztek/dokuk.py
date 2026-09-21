@@ -482,7 +482,13 @@ TILTOTT = [
     (re.compile(r"BEJELENTETT|BEJELENTVE|MEGTORTENT|MEGTÖRTÉNT"), "naplo-jelzo"),
     (re.compile(r"kiderült|kiderult", re.I), "naplo-jelzo"),
 ]
-KIVETEL_MAPPA = ("naplo/", "tartalek/")
+KIVETEL_MAPPA = ("tartalek/",)
+# A naplo/ alatt a MERESEK kimenete all, azoknak van idejuk - de a modszer es
+# a hang leirasa ugyanaz a dokumentacio, mint barmi mas: a szabalyt mondja el
+# es az okat, nem azt, hanyadik nekifutasra lett ilyen.
+# A meresnek IDEJE van: mikor kerdeztuk meg a forrast, az maga az adat. Ezert
+# a naplo/ alatt a datum megengedett - a fejlesztes tortenete viszont nem.
+NAPLO_MENTES = ("datum",)
 
 
 def _c_megjegyzesek(szoveg):
@@ -570,10 +576,13 @@ for _minta, _bonto in _D9_MINTAK:
         _rel = os.path.relpath(_ut, GYOKER).replace(os.sep, "/")
         if _rel.startswith(".git/") or _rel.startswith(KIVETEL_MAPPA):
             continue
+        _naploban = _rel.startswith("naplo/")
         with open(_ut, encoding="utf-8") as _f:
             _szoveg = _f.read()
         for _sor, _reszlet in _bonto(_szoveg):
             for _re, _mi in TILTOTT:
+                if _naploban and _mi in NAPLO_MENTES:
+                    continue
                 _t = _re.search(_reszlet)
                 if _t:
                     _d9.append("%s:%d (%s) %s" % (_rel, _sor, _mi, _t.group(0)))

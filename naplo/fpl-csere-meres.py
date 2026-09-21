@@ -54,7 +54,7 @@ live = hoz(B + "event/%d/live" % GW)
 allapot = hoz(KLASSZIKUS + "event-status/")
 
 # ---- fordulo-allapot: MINDEN mezot kiirunk a game-bol, mert epp azt
-# keressuk, melyik jelzi a vegleges zarast. Tippelni mar ketszer draga volt.
+# keressuk, melyik jelzi a vegleges zarast. Tippelni nem lehet rola.
 gsor = " ".join("%s=%s" % (k, json.dumps(v, ensure_ascii=False))
                 for k, v in sorted(game.items()) if not isinstance(v, (dict, list)))
 
