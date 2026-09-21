@@ -75,6 +75,41 @@ ALLITASOK = [
 ]
 
 
+
+# MIRE VALO NALA A SZAM. A puszta szam-suruseg felrevezet: attol, hogy sok
+# adat van egy szovegben, meg lehet szaraz beszamolo is. A kerdes az, hogy a
+# szam ONALLOAN all-e (beszamolo), vagy egy ITELETET tamaszt ala. Ezt ugy
+# merjuk, hogy mondatra bontunk, es megnezzuk, a szamot tartalmazo mondatban
+# gyakrabban all-e ertekeles, mint a szam nelkuliben - es hogy ez az elteres
+# nagyobb-e nala, mint a kontrollban.
+ITELET = re.compile(
+    r"\b(leg\w{4,}|soha|sosem|egyetlen|mindössze|csupán|alig|már|még mindig|"
+    r"óta először|éve először|példátlan|elképesztő|döbbenetes|felfoghatatlan|"
+    r"gigantikus|katasztrofális|szégyen\w*|kudarc\w*|botrány\w*|hazug\w*|"
+    r"rossz\w*|gyenge\w*|kiváló|remek|nagyszerű|fáj|megrendít|szomorú\w*|"
+    r"nem véletlen|éppen ezért|vagyis|tehát|pedig|mégis|holott|csakhogy)\b",
+    re.IGNORECASE)
+SZAM = re.compile(r"\b\d+([.,]\d+)?\b")
+
+
+def mondatok(sz):
+    return [x.strip() for x in re.split(r"(?<=[.!?])\s+", sz) if len(x.strip()) > 25]
+
+
+def itelet_arany(sz):
+    """Hany szazalekaban all itelet - szammal es szam nelkul kulon."""
+    van = nincs = van_it = nincs_it = 0
+    for m in mondatok(sz):
+        if SZAM.search(m):
+            van += 1
+            van_it += 1 if ITELET.search(m) else 0
+        else:
+            nincs += 1
+            nincs_it += 1 if ITELET.search(m) else 0
+    return (100.0 * van_it / max(1, van), van,
+            100.0 * nincs_it / max(1, nincs), nincs)
+
+
 def torzs(ut):
     with open(ut, encoding="utf-8") as f:
         sorok = [x.rstrip("\n") for x in f]
@@ -164,6 +199,15 @@ def main():
         else:
             jel = "NEM IGAZ  "
         print("    %s %-36s %8.2f %8.2f" % (jel, nev, a, b))
+    print("\n  MIRE VALO NALA A SZAM")
+    for cimke, sz in (("Kele", kele), ("kontroll", kontroll)):
+        a, an, b, bn = itelet_arany(sz)
+        print("    %-9s szamot tartalmazo mondat: %5.1f%% hordoz iteletet "
+              "(%d mondat)" % (cimke, a, an))
+        print("    %-9s szam nelkuli mondat:      %5.1f%% hordoz iteletet "
+              "(%d mondat)" % ("", b, bn))
+        print("    %-9s kulonbseg: %+.1f szazalekpont" % ("", a - b))
+
     print("\n    A kontroll a lap SAJAT podcast-ajanloi ugyanerrol a rovatrol.")
     print("    Ez nem semleges merce: egy ajanlo dolga a felfokozas, tehat a")
     print("    felsofokban es az erzelemszoban eleve gazdag. Amit a szam biztosan")
