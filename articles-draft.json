@@ -1,5 +1,5 @@
 {
- "updated": null,
+ "updated": "2026-09-21T14:55:51Z",
  "leagues": {
   "nb1": {
    "8": {
@@ -47,6 +47,24 @@
       ],
       "short": "Ádám karszalagja öt pontot hozott, a mezőny többségéé 14,5-öt. Két embere nyolc forduló óta nullázik."
      }
+    },
+    "elemzes": {
+     "A karszalag, amit már senki nem választ": {
+      "text": [
+       "Nézem csütörtökönként a nyolc keretet, és azon kapom magam, hogy meg sem kell néznem őket.",
+       "Jó, ez persze csúsztatás. Dehogynem nézem meg. Csak épp pontosan tudom előre, mit fogok találni, és ez a szomorú a dologban.",
+       "Az ötödik forduló óta Szalai Józsefre kerül a karszalag ebben a ligában. Nem egy embernél: ötnél, négynél, háromnál, majd megint ötnél. Aki pedig nem őt választja, az sem választ — csak ragaszkodik. Csendinél Amenyido Etienne viseli a szalagot négy hete megszakítás nélkül. Ádámnál Kerezsi Zalán Márk, ugyancsak négy hete. Ez már nem taktika. Ez berendezkedés.",
+       "Hol itt a látnivaló? Mindjárt megmondom. Az ötödiktől a nyolcadik fordulóig huszonnégyszer volt alkalma a mezőnynek arra, hogy egy héttel korábbi döntését felülbírálja. Élt vele — gondolom kitaláljátok — ötször. Három szakvezető négy héten át egyetlen betűt nem változtatott a kapitányán, kettő pedig azzal az emberrel megy hétről hétre, akit rajta kívül senki nem tart duplázásra méltónak.",
+       "És most jön az, amitől fáj.",
+       "A négy forduló legnagyobb kapitányi fogása nem a nyájé volt. A hetedik hétvégén Vince Štefulj Danielre tette a szalagot, aki tizenhárom fölött zárt — miközben Szalai József, akit ugyanazon a hétvégén hárman dupláztak, alig ötig jutott. Egyetlen ember gondolkodott, és egyetlen ember nyert vele. A többi hat a sormintát követte, és megkapta, ami a sormintáért jár.",
+       "Félreértés ne essék: Szalai kiváló futballista, és az ötödik fordulóban, amikor öt keretben viselte a szalagot, tíz és felet hozott mindenkinek. A nyáj nem téved folyamatosan. A nyáj a bajnál is rosszabbat csinál: kioltja önmagát. Mert ha öten ugyanazt a karszalagot teszik fel, akkor ugyanaz a hozam öt helyen duplázódik meg, és a tabellán pontosan semmit nem mozdít. A karszalag az egyetlen kar, amit ez a liga a szakvezető kezébe ad — a Draftban még ez sincs —, és mi közösen tettük használhatatlanná.",
+       "Tudom: nyolc ember ugyanazt a bajnokságot nézi, tehát ugyanazokat a neveket látja. Tudom azt is, hogy egy olyan mezőnyben, ahol a klubok fele abból él, amit a tulajdonosa évente átutal, nem tolonganak a megdupláznivaló futballisták — három név van, és mindenki ismeri mind a hármat. És végképp tudom, hogy a kockázat kerülése is döntés, sőt, hogy a tabella tetején épp az az ember áll, aki a legkevesebbet kockáztatja.",
+       "Ettől még ez nem menedzselés. Ez előfizetés.",
+       "Huszonnégy alkalom, öt meggondolás. Ennyi maradt abból, amit ebben a játékban szakvezetésnek hívunk."
+      ],
+      "short": "Nyolc szakvezető, huszonnégy alkalom a meggondolásra, és összesen öt meggondolás.",
+      "source": "manual"
+     }
     }
    },
    "9": {
@@ -86,6 +104,26 @@
        "Ádám legutóbb 51,50-et hozott, a forduló legkevesebbjét, és a keretében nyolc forduló óta ott van két ember, aki még egyetlen pontot sem szerzett. Ha ez így marad, ez a párharc vasárnap délutánra lefut."
       ],
       "short": "Vince négy meccset nyert sorban, Ádám négyből hármat elvesztett. Egyetlen közös játékosuk van."
+     }
+    }
+   }
+  },
+  "pl": {
+   "5": {
+    "elemzes": {
+     "Kétszázhetvenkét pont fekszik temetetlenül": {
+      "text": [
+       "Van ennek a ligának egy sírkertje, és senki nem jár ki oda.",
+       "Öt forduló alatt kétszázhetvenkettő gyűlt össze a kispadokon. Nem elveszett, nem meg nem szerzett: megszerzett, lejátszott, a hálóba tett hozam, amit egy szakvezető keretében ülő ember hozott össze egy vasárnap délután, aztán nem számított bele semmibe.",
+       "Jó, tudom, mit felelnek erre. Hogy a pad nem tartalék, hanem biztosítás; hogy a gép úgyis beállítja a hiányzó helyére azt, aki játszott; hogy tizenöt emberből tizenegyet kell választani, és négy mindig kimarad. Mind igaz. Egészen addig, amíg elő nem veszem az öt esetet.",
+       "Az első fordulóban a LastYear'sProblem hárommal kapott ki, és öt ült a padján. A harmadikban a HolVanSalah?! kilenccel veszített, miközben tizenegy hevert kint. A negyedikben a One More Last Ride öttel maradt alul — tizenhárom nézte a lelátóról. Az ötödikben a Kiderül tizenhattal kapott ki, tizenkilenccel a padján. És ugyanabban a fordulóban a Hol van a pénz? egyetlennel veszített, miközben öt várt a sorára.",
+       "Öt mérkőzés, amit nem az ellenfél nyert meg. A saját kispad.",
+       "Félreértés ne essék: a Draft kegyetlen műfaj, és nem is titkolja. Nincs benne karszalag, nincs benne közös játékos, nincs benne az a nagy nyári vásár, amiben egy szakvezető megmutathatná, mit tud. Egyetlen kar van a kezében, a kezdő tizenegy — és ebben a ligában épp ezt az egyet kezelik a legnagyobb közönnyel. Nem azért maradt kint annyi, mert nehéz eltalálni, ki fog jól játszani. Azért, mert csütörtökön ránéznek a keretre, bólintanak, és elmennek.",
+       "Azt gondolnánk, a tabella majd megbünteti ezt. Nem bünteti meg. Ez a rész a legmegrendítőbb: a mezőny két legnagyobb pazarlója az első és az ötödik helyen áll, a legtakarékosabb pedig a harmadikon úgy, hogy kevesebbet termelt, mint amennyit kapott. A hanyagságnak ebben a bajnokságban egyelőre nincs ára. Ami nem azt jelenti, hogy nem lesz — csak azt, hogy még nem jött el a fizetés napja.",
+       "Harminchárom forduló van hátra. Kétszázhetvenkettő fekszik odakint temetetlenül, és aki ezen a héten sem megy ki érte, annak áprilisban nem lesz joga panaszkodni."
+      ],
+      "short": "Öt forduló alatt ennyit hagytak a padjukon, és öt meccset ez döntött el.",
+      "source": "manual"
      }
     }
    }
