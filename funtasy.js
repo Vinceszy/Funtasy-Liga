@@ -1584,7 +1584,8 @@
         '<span class="magrovat">' + esc(be.cimke) + '</span>' +
         '<span class="magfordulo">' + be.fordulo + '. forduló</span>' +
         '<button class="magmaso" data-maso="' + esc(azon) + '" ' +
-          'data-rovid="' + esc(be.cikk.short || '') + '">Másolom</button>' +
+          'data-rovid="' + esc(be.cikk.short || (be.cikk.text || [])[0] || '') +
+          '">Másolom</button>' +
       '</div>' +
       '<h3 class="magpar">' + esc(be.hazai) +
         (be.vendeg ? '<span class="magvs">–</span>' + esc(be.vendeg) : '') + '</h3>' +

@@ -50,7 +50,6 @@
     },
     "elemzes": {
      "A karszalag, amit már senki nem választ": {
-      "short": "Nyolc szakvezető, huszonnégy alkalom a meggondolásra, és összesen öt meggondolás.",
       "source": "manual",
       "text": [
        "Nézem csütörtökönként a nyolc keretet, és azon kapom magam, hogy meg sem kell néznem őket.",
@@ -115,7 +114,6 @@
    "5": {
     "elemzes": {
      "Kétszázhetvenkét pont fekszik temetetlenül": {
-      "short": "Öt forduló alatt ennyit hagytak a padjukon. Aztán kiderül, hogy a takarékosaknak nem is volt mit kihagyniuk.",
       "source": "manual",
       "text": [
        "Van ennek a ligának egy sírkertje, és senki nem jár ki oda.",
