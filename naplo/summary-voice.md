@@ -138,6 +138,15 @@ the same man, a habit that costs points every week (four starters on a four-man 
 dead weight in a starting eleven, a three-week break to fix it. What happened last
 weekend belongs in it only as the cause of one of those.
 
+**A line-up before the round is not a fact, it is a decision still open.**
+When a preview is written the waiver window is open and the eleven can be
+rearranged until the round's first kick-off, so "X is on the bench" says
+nothing about what will happen - the manager may start him, sell him or
+leave him there. A preview names the choice, not the snapshot: who he has
+to decide about, what each way costs, and what his record says he will
+probably do. Everything taken from the stored squad is written as the state
+he is deciding from, never as the team that will play.
+
 **Do the squad arithmetic out loud, then check it.** Fifteen a side: eight shared leaves
 SEVEN different each, not two. And verify who actually owns whom before calling a player
 shared - a captain that belongs to one side only is the opposite of a captain they both
