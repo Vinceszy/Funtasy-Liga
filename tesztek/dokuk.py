@@ -41,6 +41,13 @@ Amit ellenoriz:
       KOZBEN irt szoveg a meg mozgo szamokbol dolgozik, es a fordulo vegere
       valotlant allit (egy beharangozo azt irta, hogy valaki megnyerte azt a
       meccset, amit a vegen elvesztett).
+  D13: osszefoglalo csak ROGZITETT szinestablabol keszulhet. A prozai
+      forrasok (magyar beszamolok, a PL sajat perces kozvetitese) csak a
+      futasi naploba kerulnek, tehat egy meres eredmenye addig letezik, amig
+      az azt lekero munkamenet - az 5. Draft-fordulot ezert kellett ketszer
+      begyujteni. Ha egy fordulohoz osszefoglalo all a lapon, akkor a
+      naplo/<liga>-colour-<fordulo>.json is all mellette, tele sorral, es
+      atmegy a naplo/colour-check.py ellenorzesen.
   D10: minden munkafolyamat es minden meres dokumentalva van. A D2 csak a
       gyokerbeli adatfajlokat nezte, es a naplo/ ala tizenharom meres kerult
       be ugy, hogy a naplo README tablazata nem tudott roluk - a nyers adat
@@ -294,6 +301,42 @@ for _fajl in ("articles.json", "articles-draft.json"):
                     _atfedes.append("%s %s. %s: \"%s\"" % (_liga, _r, _par, _kozos[0]))
 allit(not _atfedes, "D12: a beharangozo es az osszefoglalo nem ismetli egymast"
       + ("" if not _atfedes else " - ATFEDES: " + "; ".join(_atfedes[:3])))
+
+# ---- D13: osszefoglalo csak rogzitett szinestablabol ----
+# A prozai forras a futasi naploban el es sehol masutt. Ha a sorok nem
+# kerulnek be a tablaba, a kovetkezo munkamenet ujra begyujti ugyanazt -
+# vagy ami rosszabb, emlekezetbol ir.
+import subprocess as _sp
+
+# A szabaly elott irt fordulok: a prozajuk akkor csak a futasi naploban volt,
+# es ujra begyujteni oket eppen az a masodik futas lenne, amit a szabaly tilt.
+# Nem datum alol mentesulnek, hanem nevre - igy a lista latszik es fogy.
+_D13_KIVETEL = {("nb1", "7"), ("pl", "4")}
+
+_szin = []
+for _fajl in ("articles.json", "articles-draft.json"):
+    _cikkek = json.loads(olvas(_fajl))
+    for _liga, _fordulok in (_cikkek.get("leagues") or {}).items():
+        for _r, _fajtak in _fordulok.items():
+            if not (_fajtak.get("summary") or {}) or (_liga, _r) in _D13_KIVETEL:
+                continue
+            _ut = os.path.join(GYOKER, "naplo", "%s-colour-%s.json" % (_liga, _r))
+            if not os.path.exists(_ut):
+                _szin.append("%s %s.: nincs szinestabla" % (_liga, _r))
+                continue
+            _t = json.loads(open(_ut, encoding="utf-8").read())
+            _sorok = [x for x in (_t.get("allitasok") or [])
+                      if x.get("horgony") != "nyilatkozat"]
+            if not _sorok:
+                _szin.append("%s %s.: ures szinestabla" % (_liga, _r))
+                continue
+            _f = _sp.run([sys.executable, os.path.join(GYOKER, "naplo", "colour-check.py"),
+                          _liga, _r], capture_output=True, text=True)
+            if _f.returncode:
+                _szin.append("%s %s.: %s" % (_liga, _r,
+                                             (_f.stdout or _f.stderr).strip().splitlines()[-1]))
+allit(not _szin, "D13: osszefoglalo csak rogzitett szinestablabol keszult"
+      + ("" if not _szin else " - " + "; ".join(_szin[:3])))
 
 # ---- D10: minden munkafolyamat es minden meres dokumentalva ----
 # Ket helyen szokott elmaradni: egy uj workflow a fo README fajl-tablazatabol,

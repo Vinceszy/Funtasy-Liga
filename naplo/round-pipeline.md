@@ -50,6 +50,24 @@ Run it from Actions (`.github/workflows/naplo-meres.yml`) - the development
 network blocks every external host. **The article text goes to the run log
 only, never into the repository.**
 
+## 2b. The Draft's own prose: the league's minute-by-minute commentary
+
+The Premier League publishes its own text stream for every fixture - about a
+hundred entries a match, two dozen of which describe how a goal was scored,
+which penalty was saved, which goal the VAR took away:
+
+    footballapi.pulselive.com/football/fixtures/<id>/textstream/EN
+
+`naplo/pl-textstream.py <gameweek>` pulls it for a whole round and matches
+the fixtures to ours by club name (the ALIAS table - "Man City" is not a
+substring of "Manchester City", and four fixtures went missing the first
+time for exactly that). FotMob supplies the structured side through
+`naplo/pl-colour-harvest.py`: the shotmap with shot type, situation and xG,
+the VAR events, the saves per goalkeeper, and the kick-off time.
+
+**The text goes to the run log only** - as with the Hungarian reports. Which
+is precisely why the next section is not optional.
+
 ## 3. Colour - the filled table
 
 The prose of the report is the only source for how a goal was scored, what
@@ -83,6 +101,44 @@ the answer: that one was a different team entirely. The referent is asked
 for and written into the row (`cel`), because a piece built on a guessed
 target says something about a manager who was never mentioned.
 
+## A measurement that is not written down did not happen
+
+The prose sources print to the run log and nowhere else, so a round's colour
+exists only for as long as the session that fetched it. Round 5 of the Draft
+was collected twice for that reason: the first run's text was read, used in
+conversation and never turned into rows, so when the writing actually
+started there was nothing to write from.
+
+**The run and the rows are one step, not two.** The moment a fetch comes
+back, its claims go into `naplo/<liga>-colour-<round>.json` - player, club,
+minute, tag, sentence, anchor, match - and only then is anything else done
+with them. A second run of the same measurement over the same round is a
+defect, not a retry: it costs an Actions run, it risks a different snapshot,
+and it means the first one produced nothing durable.
+
+`naplo/colour-check.py <liga> <round>` verifies the table afterwards: every
+`event` row must find its goal, assist, VAR decision or big chance in the
+structured block of the same file, and every player must be in somebody's
+squad that round (a player nobody owns is `record`). Round 5 had three rows
+moved by that check - a stoppage-time penalty the two sources minute
+differently, and a save that only the prose knows about.
+
+## What the minutes are for
+
+Not for reciting. A minute in a piece has to do one of two jobs:
+
+- **Mark a turn.** The round is one clock: with the kick-off times stored
+  next to the goals, the head-to-head can be laid on a single timeline, and
+  the interesting question is when a fixture changed hands and what changed
+  it - not what time each goal happened to be scored.
+- **Show two things happening at once.** Several matches run in parallel; a
+  swing that took eleven minutes across three grounds is a fact worth
+  writing, and it is only visible if the minutes are added to the kick-off
+  times.
+
+Everything else is decoration. Three minutes in one sentence is a fixture
+list with commas.
+
 ## The order
 
 1. `round-colour-harvest.py <round>` - the fantasy layer.
@@ -90,6 +146,17 @@ target says something about a manager who was never mentioned.
 3. Fill `nb1-colour-<round>.json` from the reports: structured block first
    (anchor `event` where our own data agrees), then the prose claims.
 4. Write the pieces from the two files, in the voice of `summary-voice.md`.
+5. Nothing is published before the text has been approved.
+
+For the Draft the same five steps, with its own scripts:
+
+1. `draft-round-harvest.py <round>` - the fantasy layer, and it must say the
+   round is final.
+2. `pl-colour-harvest.py` and `pl-textstream.py` from Actions - the
+   structured block with the kick-off times, and the prose.
+3. Fill `pl-colour-<round>.json` **in the same step**, then run
+   `colour-check.py pl <round>`.
+4. Write the pieces.
 5. Nothing is published before the text has been approved.
 
 ## What each layer may say
