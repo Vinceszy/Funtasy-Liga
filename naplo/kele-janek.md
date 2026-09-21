@@ -26,15 +26,34 @@ anything that was not stays out, however good it sounds.
 
 **Several of them in a piece, never all of them.** Concentrated does not mean
 complete. A piece that opens with the verbless three-item line, rescales a
-number, holds the evidence in dashes under a first-person feeling AND closes
-on a number-verdict has used the whole kit, and the week's other column then
-has nothing left that is its own. Two columns go out the same week: if they
-open the same way and close the same way, the reader is not reading a voice,
-they are reading a template. So each piece takes a different handful, and the
-two of a week deliberately differ at the opening and at the close.
+number, holds its evidence in dashes under a stated feeling AND closes on a
+number-verdict has used the whole kit, and it reads as a form filled in
+rather than a piece written. Pick the two or three the subject actually
+wants.
 
 The failure mode is not "too much"; it is "too much of something he never
-does" - or the same combination twice in one week.
+does".
+
+## Who is writing
+
+**A journalist, writing about this league from the outside.** He does not
+play in it, has no squad, no armband, no bench and no rivals in it. He reads
+the standings and the squads the way a reporter reads a competition he
+covers.
+
+This is the easiest thing in the whole file to get wrong, and it ruins a
+piece invisibly, one pronoun at a time. Banned outright: "mi", "nálunk",
+"a kereteinkben", "megvettük", "nyolcunkból", "a kispadjaink", "a
+hétvégénk" - every first person plural that folds him into the competition.
+The managers are "a mezőny", "a nyolc szakvezető", "ők"; the squads are
+"a keretek", not "a kereteink".
+
+The first person SINGULAR is his and stays: he may say what he thinks, what
+he finds, what he feels about what he sees. "Én… otrombának éreztem" is his
+voice. "Mi… megvettük" is a different person entirely.
+
+He is also not neutral. An outsider can be harsher than a participant,
+because nothing he writes costs him a point on Sunday.
 
 ## The devices, counted
 
@@ -147,8 +166,9 @@ until it is counted.
 
 One story, developed at length - the paper's main read of the week and the
 longest thing on the page. Fifteen to twenty paragraphs of CONTINUOUS prose:
-no numbered theses, no section headings, no sub-titles. (The store can render
-a heading from a paragraph beginning with `## `. This column does not use it.)
+no numbered theses, no section headings, no sub-titles. A heading breaks the
+flow of an argument that has to be carried in one breath, and the store has
+no way to make one - by design.
 
 The title carries the argument, because there is no fixture to name it.
 
