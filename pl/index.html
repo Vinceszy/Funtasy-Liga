@@ -429,9 +429,15 @@ function valtoztatasokHTML(id){
     // keret a hatarido utan rogzitett -, ezert azt kiirjuk, pont nelkul.
     const g = T.guardErtek(id, gw);
     const pontos = !!g && v.pontok !== false;
-    // A kozepso oszlop a jatekos fordulopontja; a padoson ez 0-t er, ezert
-    // ott "pont -> 0" alakban all - kulonben a 0 melle nem lenne magyarazat.
-    const ertek = x => x.pont === x.ert ? { ert: x.pont } : { elott: x.pont, utan: x.ert };
+    // A kozepso oszlop a jatekos fordulopontja. NYIL NINCS rajta: a
+    // szerepvaltas soraiban a nyil azt jelenti, hogy mennyit ert a REGI
+    // keretben es mennyit a MOSTANIBAN, itt viszont azt jelentette volna,
+    // hogy mennyit szerzett es mennyit ert - ket kulonbozo dolog ugyanabban
+    // a tablazatban. Az elengedett padosnal a "12 -> 0" ugy nezett ki,
+    // mintha most vesztett volna rajta tizenkettot, holott a hatas nulla, es
+    // a jobb szelen a nulla ott is allt. A szerep-cimke ("elengedve · pad")
+    // amugy is megmondja, miert nulla a hatas.
+    const ertek = x => ({ ert: x.pont });
     const sor = (x, cimke) => ({ ...alap(x), cimke: cimke });
     const reszek = [
       { cim: 'Elengedve', sorok: v.ki.map(x => pontos
@@ -462,17 +468,21 @@ function valtoztatasokHTML(id){
       // szakvezeto kezzel megszerzett, azt a regi kereten a gep is megtette
       // volna; pozitiv azt, hogy a mostani keret kimarado kezdojet a gep
       // potolta. A regi "8 -> 0" alak egy meg nem tortent cseret mutatott.
-      const gepNev = gep < 0 ? 'Ebből a gép a régi kereteden is megcsinálta volna'
-                   : gep > 0 ? 'Ebből a gép tette helyre a kimaradt kezdődet'
+      // A ket sor OSSZEADODIK, nem egymast utik ki - ezert nem "ebbol". A
+      // masodik elojele mas-mas esetet ir le: ha negativ, a REGI kereten
+      // tett volna hozza a gep annyit, amit a valtoztatassal elvettel tole;
+      // ha pozitiv, a MOSTANI kereted kimarado kezdojet potolta.
+      const gepNev = gep < 0 ? 'Amit a gép a régi kereteden még hozzátett volna'
+                   : gep > 0 ? 'Amit a gép a mostani kereteden tett hozzá'
                    : 'Az automatikus csere ezen nem változtatott';
       if (db || gep) zaro = [
-        { nev: 'Amit a változtatásaid értek', dl: ember, oszt: 'vareszossz' },
+        { nev: 'Amit a kezdőd átalakítása ért', dl: ember, oszt: 'vareszossz' },
         { nev: gepNev, dl: gep, oszt: 'vagep' },
       ];
     }
     csoportok.push({ nev: gw + '. forduló', guard: pontos ? v.guard : null,
                      megj: pontos ? '' : 'még nincs pontszám',
-                     osszCim: 'Marad a te érdemed',
+                     osszCim: 'A forduló mérlege',
                      reszek: reszek, zaro: zaro });
   }
   if (!csoportok.length)
@@ -482,8 +492,9 @@ function valtoztatasokHTML(id){
     + 'Mindkét keretet ugyanezzel a fordulóval számoljuk végig, és mindkettőn lefut a záráskori '
     + '<b>automatikus csere</b>: a pályára nem lépett kezdő helyére a gép beállítja az első olyan '
     + 'padost, akivel a felállás még érvényes. Ezért áll külön sorban, amit a gép magától is '
-    + 'elintézett volna — az sem nem érdem, sem nem hiba. A padon ülő <b>0</b>-val számít. '
-    + 'A blokk alján maradó szám a forduló <b>GUARD</b> értéke, ugyanaz, ami a Fordulók fülön és '
+    + 'elintézett volna — az sem nem érdem, sem nem hiba. A padon ülő <b>0</b>-val számít, '
+    + 'ezért egy padosnál a saját fordulópontja mellett nulla hatás áll. '
+    + 'A blokk alján az összeg a forduló <b>GUARD</b> értéke, ugyanaz, ami a Fordulók fülön és '
     + 'a tabellában áll. A <b>folyamatban lévő</b> fordulónál a változtatás már látszik, '
     + 'pontszám még nincs hozzá.</div>'
     + FunTasy.valtoztatasLista(csoportok, 'Nincs adat.');
