@@ -1572,9 +1572,13 @@
     var rang = { elemzes: 0, summary: 1, preview: 2 };
     ki.sort(function (a, b) {
       var ai = a.cikk && a.cikk.kozzetett, bi = b.cikk && b.cikk.kozzetett;
-      if (ai && bi) return ai < bi ? 1 : (ai > bi ? -1 : 0);
-      if (ai) return -1;
-      if (bi) return 1;
+      if (ai && !bi) return -1;
+      if (bi && !ai) return 1;
+      // Egy commitban tobb iras is kimegy, tehat az AZONOS idobelyeg gyakori.
+      // Ilyenkor a rendezes nem bizhato a beillesztes sorrendjere: a csoporton
+      // belul a frissebb fordulo all elol, azon belul rovat, osszefoglalo,
+      // beharangozo - kulonben egy egyutt kikerult adag sorrendje esetleges.
+      if (ai && bi && ai !== bi) return ai < bi ? 1 : -1;
       return (b.fordulo - a.fordulo) || (rang[a.fajta] - rang[b.fajta]);
     });
     return ki;
