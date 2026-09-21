@@ -1564,6 +1564,19 @@
         }
       }
     }
+    // MEGJELENESI SORRENDBEN, a legfrissebb elol. Az ujsag nem a forduloval
+    // halad, hanem az idovel: ami ma keszult el, az van felul, akkor is, ha
+    // egy regebbi fordulorol szol. A `kozzetett` az elesbe kerules ideje; ami
+    // meg vazlat, annak nincs ilyen, es a lista aljara kerul a korabbi rend
+    // szerint (fordulo csokkenoen, azon belul rovat, osszefoglalo, beharangozo).
+    var rang = { elemzes: 0, summary: 1, preview: 2 };
+    ki.sort(function (a, b) {
+      var ai = a.cikk && a.cikk.kozzetett, bi = b.cikk && b.cikk.kozzetett;
+      if (ai && bi) return ai < bi ? 1 : (ai > bi ? -1 : 0);
+      if (ai) return -1;
+      if (bi) return 1;
+      return (b.fordulo - a.fordulo) || (rang[a.fajta] - rang[b.fajta]);
+    });
     return ki;
   }
 
@@ -1582,7 +1595,8 @@
     return '<article class="magcikk" id="' + esc(azon) + '">' +
       '<div class="magkicker">' +
         '<span class="magrovat">' + esc(be.cimke) + '</span>' +
-        '<span class="magfordulo">' + be.fordulo + '. forduló</span>' +
+        '<span class="magfordulo">' + esc(liga(be.liga).nev) + ' · ' +
+          be.fordulo + '. forduló</span>' +
         '<button class="magmaso" data-maso="' + esc(azon) + '" ' +
           'data-szoveg="' + esc((be.cikk.text || []).join('\n\n')) +
           '">Másolom</button>' +

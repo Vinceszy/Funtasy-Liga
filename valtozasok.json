@@ -4,6 +4,16 @@
    "datum": "2026-09-21",
    "tipus": "funkcio",
    "ligak": [
+    "nb1",
+    "pl"
+   ],
+   "cim": "Új rovat: Kele Janek elemez",
+   "leiras": "Felkértük Kele Janeket, hogy hetente elemezze a két bajnokságunkat. Mostantól minden héten két írása jelenik meg: egy az NB1-ről, egy a Draftról.\n\nEz nem beharangozó és nem összefoglaló. Nem egy párharcról szól, hanem arról, amit egyetlen meccsen nem lehet meglátni — egy szokásról, ami az egész mezőnyt jellemzi, egy szakvezető egész szezonjáról, vagy a játék egy szabályáról, ami csendben abbahagyta a működést. Előre is nézhet, vissza is.\n\nAz első kettő már kint van: a karszalagról, amit négy forduló alatt huszonnégy alkalomból ötször gondolt meg valaki, és a Draft kispadjairól, ahol öt forduló alatt kétszázhetvenkét pont maradt.\n\nA rovat véleménycikk. Aki benne olvassa a saját nevét, az ne vegye a szívére — vagy vegye, ez is a játék része.\n\nA magazin emiatt megjelenési sorrendbe került: ami legutóbb készült el, az van legfelül, akkor is, ha egy korábbi fordulóról szól. A liga neve átkerült a cikk fejlécébe, a rovat és a forduló mellé; a szűrők változatlanul megvannak. A „Másolom” gomb pedig végre a cikket másolja, nem a felütését."
+  },
+  {
+   "datum": "2026-09-21",
+   "tipus": "funkcio",
+   "ligak": [
     "nb1"
    ],
    "cim": "Játékos adatlap: ott a fordulónkénti ár",

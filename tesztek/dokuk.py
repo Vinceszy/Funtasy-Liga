@@ -20,7 +20,12 @@ Amit ellenoriz:
       tobb naplo-bejegyzesre; amit a nezo egy dolognak lat, az egy
       bejegyzes, akar tobb resze is van. A hatart ott huzzuk meg, ahol a
       szetdarabolas mar felreismerhetetlen: harom vagy tobb bejegyzes
-      ugyanarra a napra. Ket kulon dolog egy napon eloforduhat.
+      ugyanarra a napra ES ugyanabbol a TIPUSBOL. A napra szamolas
+      tevesen jelzett: egy nap kikerult ket kulon uj funkcio meg egy
+      javitas - harom valodi, kulonbozo dolog -, es a szabaly ezt
+      darabolasnak latta. Ami darabolasra vall, az harom EGYNEMU
+      bejegyzes: harom funkcio-sor egy napon szinte biztosan ugyanannak
+      az egy dolognak a reszei.
   D4/c: a funtasy.css kapcsos zarojelei kiegyensulyozottak. Egy tobblet
       zaro jel a bongeszot ELDOBATJA a tobbi szabalyt - a lap nem hibazik,
       csak szetesik tole valahol lentebb, es ez semmilyen viselkedes-
@@ -150,11 +155,12 @@ naponta = {}
 for b in (naplo.get("bejegyzesek") or []):
     if (b.get("datum") or "") < NAPLO_EGYBEN_TOL:
         continue
-    naponta[b.get("datum")] = naponta.get(b.get("datum"), 0) + 1
-sok = sorted(d for d, n in naponta.items() if n >= 3)
+    kulcs = (b.get("datum"), b.get("tipus"))
+    naponta[kulcs] = naponta.get(kulcs, 0) + 1
+sok = sorted(k for k, n in naponta.items() if n >= 3)
 allit(not sok, "D4/b: egy funkcio egy bejegyzes, nincs szetdarabolva"
-      + ("" if not sok else " - egy napra eso bejegyzesek: %s"
-         % ", ".join("%s (%d)" % (d, naponta[d]) for d in sok)))
+      + ("" if not sok else " - egy napra eso azonos tipusu bejegyzesek: %s"
+         % ", ".join("%s %s (%d)" % (d, t, naponta[(d, t)]) for d, t in sok)))
 
 # ---- D4/c: a stiluslap kapcsos zarojelei stimmelnek ----
 # Egy tobblet zaro jel utan a bongeszo a KOVETKEZO szabalyokat dobja el, es

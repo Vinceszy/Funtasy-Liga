@@ -115,7 +115,11 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
   await valaszt('liga', 'nb1');
   const nb1db = await p.locator('.magcikk').count();
   jo(nb1db > 0 && nb1db < mind, `ligára szűrve kevesebb (${nb1db}/${mind})`);
-  jo(await p.$$eval('.magliga', n => n.length) === 1, 'egyetlen liga-cím maradt');
+  // A lista MEGJELENESI sorrendben all, tehat a ligak keverednek: nincs
+  // liga-cimsor, a liga neve minden cikk fejleceben ott van.
+  jo(await p.$$eval('.magcikk .magfordulo',
+                    n => n.length > 0 && n.every(x => /^NB1 ·/.test(x.textContent))),
+     'minden kinti cikk fejlécében ott a liga neve');
   await valaszt('liga', 'pl');
   const pldb = await p.locator('.magcikk').count();
   jo(nb1db + pldb === mind, `a két liga kiadja az egészet (${nb1db} + ${pldb} = ${mind})`);
@@ -167,8 +171,10 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
   // a tobbi szuro MAR CSAK a hozza tartozo ertekeket kinalja
   const fordulok = await p.$$eval('.magszuro[data-szuro="fordulo"] option',
                                   n => n.map(x => x.value));
+  // A fejlec "NB1 · 8. forduló" alaku, tehat a szamot a liganev UTAN kell
+  // keresni - az elejerol olvasva NaN jonne, es a lista uresnek latszana.
   const vartFordulok = await p.$$eval('.magcikk .magfordulo',
-                                      n => [...new Set(n.map(x => parseInt(x.textContent)))]);
+    n => [...new Set(n.map(x => Number((x.textContent.match(/(\d+)\.\s*forduló/) || [])[1])))]);
   jo(fordulok.filter(x => x !== 'mind').length === vartFordulok.length,
      `a fordulók listája vele szűkült (${fordulok.filter(x => x !== 'mind').join(',')})`);
 
