@@ -47,6 +47,12 @@ def main():
     pontok = (load("draft_pontok.json").get("rounds", {}) or {}).get(rnd, {})
     keretek = (hist.get("rounds", {}) or {}).get(rnd, {})
     valtozas = (load("draft_keretvaltozasok.json").get("rounds", {}) or {}).get(rnd, {})
+    # A MEGTORTENT zarasi automatikus cserek. A tarolt keret a csere UTANI
+    # allapot, tehat belole nem latszik, ki nem lepett palyara - ezt haromszor
+    # olvastam felre, es haromszor irtam le rosszul, kinek a dontese volt.
+    # A `szerep` sorok az ELOZO fordulohoz kepesti valtozast mondjak, ami mas
+    # kerdes: azok kozott kezi dontes es zarasi csere is lehet.
+    zaras = (load("zarasok.json").get("rounds", {}) or {}).get(rnd, {})
     menetrend = (draft.get("schedule", {}) or {}).get(rnd, [])
     vegleges = int(rnd) in [int(x) for x in (hist.get("veglegesek") or [])]
 
@@ -91,15 +97,26 @@ def main():
             if padlegjobb and (padlegjobb.get("pts") or 0) > 0:
                 print("        legjobb pados: %s (%s) %s" % (
                     jnev(padlegjobb["e"]), jklub(padlegjobb["e"]), padlegjobb.get("pts")))
+            zx = zaras.get(str(csapat)) or {}
+            if zx.get("ki") or zx.get("be"):
+                print("        ZARASI AUTOMATIKUS CSERE (megtortent):")
+                for x in zx.get("ki") or []:
+                    print("          KI  %-22s %-5s palyara sem lepett, %s pont" % (
+                        jnev(x["e"]), jklub(x["e"]), x.get("pts")))
+                for x in zx.get("be") or []:
+                    print("          BE  %-22s %-5s %s perc, %s pont" % (
+                        jnev(x["e"]), jklub(x["e"]), percek(x["e"]), x.get("pts")))
             if nemjatszott:
-                print("        AUTOMATIKUS CSERE VARHATO - nem lepett palyara: %s"
-                      % ", ".join("%s (%s, %s pont)" % (jnev(p["e"]), jklub(p["e"]), p.get("pts"))
+                # Aki a csere UTAN is bent maradt nulla perccel: nem volt kivel
+                # potolni ugy, hogy a formacio ervenyes maradjon.
+                print("        POTOLATLAN HELY - a csere utan is bent, palyara nem lepett: %s"
+                      % ", ".join("%s (%s)" % (jnev(p["e"]), jklub(p["e"]))
                                   for p in nemjatszott))
-                print("        beallhat a padrol (sorrendben, aki jatszott): %s"
-                      % ", ".join("%s (%s pont)" % (jnev(p["e"]), p.get("pts"))
-                                  for p in padjatszott) or "senki")
-            elif padlegjobb and (padlegjobb.get("pts") or 0) > 0:
-                print("        (minden kezdo palyara lepett, tehat a pad pontja itt marad)")
+                print("        a padon jatszott meg: %s"
+                      % (", ".join("%s (%s pont)" % (jnev(p["e"]), p.get("pts"))
+                                   for p in padjatszott) or "senki"))
+            elif not (zx.get("be") or []) and padlegjobb and (padlegjobb.get("pts") or 0) > 0:
+                print("        (nem volt zarasi csere, tehat a pad pontja itt marad)")
             if vz:
                 print("        heti merleg (guard): %s" % vz.get("guard"))
                 for x in vz.get("ki") or []:
@@ -109,7 +126,8 @@ def main():
                     print("          BE  %-22s %-5s pont: %s" % (
                         jnev(x["e"]), x.get("sz"), x.get("pont")))
                 for x in vz.get("szerep") or []:
-                    print("          SZ  %-22s %s -> %s  pont: %s" % (
+                    # Az elozo fordulohoz kepest - NEM feltetlenul kezi dontes.
+                    print("          SZ  %-22s %s -> %s (elozo fordulohoz kepest)  pont: %s" % (
                         jnev(x["e"]), x.get("szE"), x.get("szU"), x.get("pont")))
             if nullak:
                 print("        nullan zart kezdo: %s" % ", ".join(
