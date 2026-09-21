@@ -57,8 +57,21 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
                        start: '2026-08-15T19:00:00+02:00' }];
     return j;
   });
-  // Arnaplo: csak a VALTOZAS all benne. Ket feljegyzes harom fordulora - a
-  // masodik fordulora tehat az elso ar ervenyes, a harmadikra a masodik.
+  // Az ELSODLEGES arforras a jatekos-adatlap: fordulonkent ad arat, a szezon
+  // elejere is. A sor a FORDULO azonositojat viszi (75 + 2 x fordulo), nem a
+  // sajat id-jet - ha a ketto felcserelodne, minden ar rossz fordulohoz
+  // kerulne, es a lap attol meg hihetonek latszana.
+  // A keres a sajat proxynkon at megy, ott a cel URL KODOLVA all a
+  // lekerdezesben - egy sima mintaillesztes ezert nem talalna el. Ezert
+  // fuggveny donti el, hogy ez-e az adatlap kerese.
+  await p.route(u => /players(\/|%2F)424242/.test(u.href), route => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ id: CP, rounds: [
+      { id: 32499, round_id: 77, market_price: 7.5, is_played: true },
+      { id: 33435, round_id: 79, market_price: 7.5, is_played: true },
+      { id: 34365, round_id: 81, market_price: 8.4, is_played: true }] }) }));
+  // Tartalek: a sajat arnaplonk, ha az adatlap nem jon meg. Csak a VALTOZAS
+  // all benne, tehat a masodik fordulora meg az elso feljegyzes ervenyes.
   await jsonAtir(p, '**/arak.json*', j => {
     j.arak = j.arak || {};
     j.arak[String(CP)] = [['2026-07-20', 8], ['2026-08-12', 8.4]];
@@ -131,16 +144,19 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
 
   // ---- fordulonkenti ar ----
   cim('Fordulónkénti ár');
-  jo(f('1') && f('1').arSor.replace(/\s/g, '') === '8',
-     '1. forduló: a fordulóra érvényes ár áll ott, változás nélkül'
+  // Az adatlap 7,5-et ad az 1-2. fordulora, az arnaplo 8-at: a kiirt szam
+  // mondja meg, melyik forras nyert. Ha a round_id helyett a sor sajat
+  // id-jebol szamolnank fordulot, itt egyaltalan nem allna ar.
+  jo(f('1') && f('1').arSor.replace(/\s/g, '') === '7,5',
+     '1. forduló: az ADATLAP fordulónkénti ára áll ott, nem az árnaplóé'
      + (f('1') ? ' — kapott: ' + JSON.stringify(f('1').arSor) : ''));
-  jo(f('2') && f('2').arSor.replace(/\s/g, '') === '8',
-     '2. forduló: a korábbi feljegyzés marad érvényben, amíg nincs újabb');
+  jo(f('2') && f('2').arSor.replace(/\s/g, '') === '7,5',
+     '2. forduló: változatlan ár mellett nincs kiírt különbség');
   jo(f('3') && /^8,4/.test(f('3').arSor.replace(/\s/g, '')),
-     '3. forduló: az újabb feljegyzés ára látszik'
+     '3. forduló: az emelt ár látszik'
      + (f('3') ? ' — kapott: ' + JSON.stringify(f('3').arSor) : ''));
-  jo(f('3') && /\+0,4/.test(f('3').arSor.replace(/\s/g, '')),
-     '3. forduló: az előző fordulóhoz képesti változás is ki van írva (+0,4)');
+  jo(f('3') && /\+0,9/.test(f('3').arSor.replace(/\s/g, '')),
+     '3. forduló: az előző fordulóhoz képesti változás is ki van írva (+0,9)');
 
   jo(f('3') && f('3').pts === '9,5',
      'KAPITÁNY: a 19-es heti értékből 9,5 alappont lesz (a duplázás nélkül)');

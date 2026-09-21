@@ -7,7 +7,7 @@
     "nb1"
    ],
    "cim": "Játékos adatlap: ott a fordulónkénti ár",
-   "leiras": "A játékos adatlapján minden forduló sorában ott áll, mennyibe került akkor — és ha változott az előző fordulóhoz képest, a különbség is, zölddel vagy pirossal.\n\nAz ár a forduló első meccsének napján érvényes érték. Az MLSZ csak a mindenkori árat adja meg, a múltat nem, ezért az oldal a saját árnaplójából dolgozik: az a szezon közben indult, tehát az azelőtti fordulóknál nem áll ott semmi. Találgatni nem találgatunk — egy későbbi ár nem az adott fordulóé."
+   "leiras": "A játékos adatlapján minden forduló sorában ott áll, mennyibe került akkor — és ha változott az előző fordulóhoz képest, a különbség is, zölddel vagy pirossal.\n\nAz MLSZ a játékos adatlapján fordulónként megadja az akkori árat, tehát a szezon elejére visszamenőleg is megvan. Az oldal ezt kéri le, amikor megnyitod a profilt; ha valamiért nem érkezik meg, a saját árnaplónkból dolgozik, ami a nyár vége óta gyűlik."
   },
   {
    "datum": "2026-09-21",

@@ -232,6 +232,15 @@ const apiGet = FunTasy.lekero({
   jelez: cimke => { const st=$('status'); if(st) st.textContent=FunTasy.statusz.keres(cimke); }
 });
 
+// A jatekos-adatlap vegpontja NEM `data` burokban valaszol - a mezok a
+// gyokerben allnak -, tehat a fenti ervenyesseg-feltetel elutasitana. Sajat
+// lekero jar hozza, sajat feltetellel; statuszsavot nem ir, mert ez csak
+// kiegeszito adat a profilhoz, nem az, amire a nezo var.
+const apiGetLap = FunTasy.lekero({
+  ervenyes: j => j && Array.isArray(j.rounds),
+  hiba: 'dob'
+});
+
 // ---------- élő frissítés ----------
 const USER_IDS={};
 // Hiba eseten a statuszsavban jelezunk. Ha epp fordulo van folyamatban
@@ -732,7 +741,7 @@ async function arlapBetolt(cp){
   if(ARLAP.has(cp)) return ARLAP.get(cp);
   let terkep = null;
   try{
-    const j = await apiGet('https://fantasy-api.mlsz.hu/competitions/3/players/' + cp);
+    const j = await apiGetLap('https://fantasy-api.mlsz.hu/competitions/3/players/' + cp);
     const sorok = (j && j.rounds) || [];
     terkep = {};
     for(const x of sorok){
