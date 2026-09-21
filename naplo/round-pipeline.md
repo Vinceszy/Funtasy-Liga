@@ -51,6 +51,19 @@ written from the table, not from the article text - so every sentence can be
 traced back to a row, and a row carries the anchor that decides how it may
 be phrased (fact / attributed / dropped).
 
+## A fourth source: what a manager says
+
+The three layers are what happened. A manager's own words are a fourth, and
+they arrive by hand rather than by script: somebody tells us what he said
+after the match. Such a line goes into the round's colour table as a row with
+the anchor `nyilatkozat`, the speaker and the context, and it is written into
+the piece as a quotation - the only place in a summary where a sentence is
+attributed, because there the attribution IS the fact.
+
+A quote may name another team, which the rest of a match piece may not. The
+rule it must still obey: it belongs in the piece of the manager who said it,
+not in the piece of the one it is about.
+
 ## The order
 
 1. `round-colour-harvest.py <round>` - the fantasy layer.
@@ -67,6 +80,7 @@ be phrased (fact / attributed / dropped).
 | `event` | the structured block AND our own data agree | stated as fact |
 | `record` | the structured block only - a player nobody owns, or one sold before the round, so we hold no data on him | stated as fact |
 | `article_only` | the prose alone (a save, a big miss, the pattern of play) | stated as fact, in our own words - never sourced in the text |
+| `nyilatkozat` | a manager said it to us | quoted verbatim, named as his words - a quote is attribution by nature, not hedging |
 | `none` | contradicts our data, or names a player who did not play | dropped |
 
 The anchors are checked by machine, not by memory: every `event` row must
