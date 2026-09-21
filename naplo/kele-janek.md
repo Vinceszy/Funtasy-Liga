@@ -116,6 +116,21 @@ pedigré, hóbelevanc, netalántán, idestova. One per paragraph at most.
 "kedves olvasó": "Mondjam tovább?", "tegyük a szívünkre a kezünket",
 "gondolhatja bárki ép ésszel".
 
+## The editor's overrides
+
+Two things in this column are chosen, not measured, and they win over the
+counts:
+
+- **The essay devices stay.** Opening in the first person on something being
+  looked at, the correction in the second sentence, "Hol itt a látnivaló?
+  Mindjárt megmondom", the aside in dashes to the reader, "Félreértés ne
+  essék", the three concessions. These were counted in only one or two of
+  eighteen pieces - they are his newsletter voice, not his match-week voice -
+  but they are what makes the parody land, and the parody is the point.
+- **Shorter beats fuller.** A version carrying every measured figure reads as
+  a briefing. Thirteen paragraphs with a spine beat twenty with more facts in
+  them. A figure earns its place by changing the argument, not by being true.
+
 ## What was measured and turned out NOT to be his
 
 These were written into an earlier version of this file from three essays
@@ -132,7 +147,8 @@ his voice, and they do not go in a column:
 - the three concessions ("Tudom… Tudom azt is… És végképp tudom");
 - a question answered curtly in brackets; praeteritio; two-word self-dialogue.
 
-A device found in ONE piece is that piece's. Only what recurs belongs here.
+A device found in ONE piece is that piece's - which is why the list above is
+an override and says so, rather than being quietly filed as measurement.
 
 ## The first description of the column, tested
 
