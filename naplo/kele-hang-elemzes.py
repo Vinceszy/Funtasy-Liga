@@ -6,8 +6,12 @@ barmikor ujra kell futtatni, mas kerdessel. Ezert a `tartalek/kele/` alatti
 szoveg a bemenet, es minden szam onnan jon.
 
 MIT DONT EL: egy fogas akkor kerul be a hang leirasaba, ha TOBB cikkben all
-ott. Egyetlen cikk formaja az adott cikke - a szamozott tezisek, a sablonos
-csoportkorkep -, nem a szerzoe. A kimenet ezert cikkszamot ad, nem talalatot.
+ott. A kimenet ezert cikkszamot ad, nem talalatot.
+
+MI MARAD KI: csak a SABLONFORMATUMOK - a lap sajat podcast-ajanloi (azokat
+nem o irta), es az osztalynaplo, ami jatekosonkenti osztalyzat, nem folyo
+szoveg. Tema szerint nem valogatunk: hogy a sajtorol ir-e vagy a valogatottrol,
+az a targy, nem a hang. Ami mindkettoben ott van, az ove.
 
 A LAP KERETEIT LEVAGJA: a letoltott oldal aljan a kiado sajat "legfrissebb"
 savja all, tele idegen cimmel. Ha az bent marad, a bekezdeshossz es a
@@ -46,6 +50,31 @@ FOGASOK = [
 ]
 
 
+# A ROVAT ELSO LEIRASA (egy korabbi customgpt-utasitas) hat allitast tesz a
+# hangrol. Mindegyik ELLENORIZHETO a korpuszon, es a jegyzetbe csak az
+# kerulhet be, ami kiallja: egy utasitas nem forras, hanem hipotezis.
+ALLITASOK = [
+    ("statisztika HATTERBEN marad",
+     r"\b\d+([.,]\d+)?\b", "szam / 1000 leutes", False),
+    ("szubjektiv, elso szemelyu velemeny",
+     r"\b(én|nekem|szerintem|úgy vélem|meggyőződésem|azt gondolom|"
+     r"engem|számomra|bevallom)\b", "elsoszemelyu jel / 1000 leutes", True),
+    ("nagyot mondas (felsofok, vegletes szo)",
+     r"\b(leg\w{4,}|soha|minden idők|gigantikus|elképesztő|példátlan|"
+     r"felfoghatatlan|döbbenetes|katasztrofális|totális|abszurd)\b",
+     "veglet / 1000 leutes", True),
+    ("kritikai el, negativ szokincs",
+     r"\b(hazug\w*|botrány\w*|szégyen\w*|kudarc\w*|felelős\w*|"
+     r"bukás|csőd|hiba|rossz\w*|gyenge\w*|baj\w*|probléma)\b",
+     "negativ szo / 1000 leutes", True),
+    ("fellengzos, ritkan hasznalt szo (12+ betu)",
+     r"\b[a-záéíóöőúüű]{13,}\b", "hosszu szo / 1000 leutes", True),
+    ("erzelem kimondva",
+     r"\b(fáj|megrendít|szomorú\w*|düh\w*|szégyellem|utál\w*|szeret\w*|"
+     r"öröm\w*|csalódás)\b", "erzelemszo / 1000 leutes", True),
+]
+
+
 def torzs(ut):
     with open(ut, encoding="utf-8") as f:
         sorok = [x.rstrip("\n") for x in f]
@@ -72,13 +101,16 @@ def main():
         # A sajat irasait a lap a nevevel cimzi - de nem mindet: az
         # osztalynaplo es a velemenycikk is ove, csak maskepp cimezve.
         neve = ut.rsplit("/", 1)[-1]
-        ove = (fej.startswith("# Kele János:")
-               or "osztalynaplo" in neve or "velemenycikk" in neve
-               or "kele-janos" in neve)
+        sablon = neve.startswith("podcast-") or "osztalynaplo" in neve
+        ove = (not sablon) and (fej.startswith("# Kele János:")
+                                or neve.startswith("substack-")
+                                or "velemenycikk" in neve
+                                or "kele-janos" in neve
+                                or "gegenpressing" in neve)
         (sajat if ove else tobbi).append(ut)
 
     print("=" * 70)
-    print("KELE-KORPUSZ: %d cikk, ebbol sajat cimzesu iras %d"
+    print("KELE-KORPUSZ: %d letoltott lap, ebbol sajat folyo szoveg %d"
           % (len(fajlok), len(sajat)))
     print("=" * 70)
 
@@ -111,6 +143,31 @@ def main():
         jel = "ALTALANOS" if db >= max(3, len(sajat) // 3) else "egyedi   "
         print("    %s %2d/%2d  %-38s %s"
               % (jel, db, len(sajat), nev, pelda[:70]))
+
+    # A rovat elso leirasanak allitasai: surusegben merve, mert ezek nem
+    # fogasok, hanem aranyok. Viszonyitasi alap nelkul egy szam semmit nem
+    # mond, ezert a KIHAGYOTT lapok (a lap sajat podcast-ajanloi) ugyanezt
+    # megkapjak - az a semleges ujsagiroi atlag.
+    print("\n  AZ ELSO LEIRAS ALLITASAI - SURUSEG (jel / 1000 leutes)")
+    print("    %-42s %8s %8s" % ("", "Kele", "kontroll"))
+    kele = " ".join(" ".join(torzs(u)) for u in sajat)
+    kontroll = " ".join(" ".join(torzs(u)) for u in tobbi)
+    for nev, minta, egyseg, tobb_az_igaz in ALLITASOK:
+        re_ = re.compile(minta, re.IGNORECASE)
+        a = 1000.0 * len(re_.findall(kele)) / max(1, len(kele))
+        b = 1000.0 * len(re_.findall(kontroll)) / max(1, len(kontroll))
+        arany = a / b if b else 0
+        if 0.8 <= arany <= 1.25:
+            jel = "nem dol el"
+        elif (arany > 1.25) == tobb_az_igaz:
+            jel = "IGAZ      "
+        else:
+            jel = "NEM IGAZ  "
+        print("    %s %-36s %8.2f %8.2f" % (jel, nev, a, b))
+    print("\n    A kontroll a lap SAJAT podcast-ajanloi ugyanerrol a rovatrol.")
+    print("    Ez nem semleges merce: egy ajanlo dolga a felfokozas, tehat a")
+    print("    felsofokban es az erzelemszoban eleve gazdag. Amit a szam biztosan")
+    print("    mutat: a szerzo NEM a fellengzosebb a kettobol.")
     return 0
 
 
