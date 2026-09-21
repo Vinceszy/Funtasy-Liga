@@ -134,11 +134,17 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
   // ismetli meg a csatolotablat, csak azt allitja, hogy ossze VAN vonva.
   const szam = await p.evaluate(() => {
     const nevek = new Set();
-    document.querySelectorAll('.magcikk .magpar').forEach(h =>
+    // Csak a PARHARCOK cimsorabol jonnek nevek. A heti rovatnak nincs
+    // ellenfele, tehat a cime all a cimsorban - az nem szakvezeto, es a
+    // szuroben sem szerepel; ha itt beleszamitana, a teszt tobb nevet varna,
+    // mint ahany ember van.
+    document.querySelectorAll('.magcikk .magpar').forEach(h => {
+      if (!h.querySelector('.magvs')) return;
       [...h.childNodes].forEach(c => {
         const t = c.nodeType === 3 ? c.textContent.trim() : '';
         if (t) nevek.add(t);
-      }));
+      });
+    });
     return { nevek: nevek.size,
              emberek: new Set([...nevek].map(n => SZEMELY(n).kulcs)).size };
   });
