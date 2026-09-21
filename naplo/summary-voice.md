@@ -1,8 +1,8 @@
 # The voice of a round summary
 
-Written down because it drifted twice while we were finding it. Both times the same
-way: more facts, arranged more neatly, with less and less said about them. A summary
-that lists what happened is a table with sentences around it.
+The failure this voice guards against is always the same one: more facts, arranged
+more neatly, with less and less said about them. A summary that lists what happened is
+a table with sentences around it.
 
 ## What the voice is
 
@@ -48,9 +48,7 @@ nyeri a szoros meccseket, legutóbb 53,38-49-re" says everything "Vince ellen 53
 said. League-wide standing is fine the same way - "only three managers have scored more"
 names nobody.
 
-## What was learned writing round 8
-
-Each of these cost a rewrite, so they are rules now.
+## The rules a piece is checked against
 
 **A round is one continuous story, so the summary must not re-tell the preview.** The
 preview posed a question; the summary answers it with what happened, in different words.
@@ -94,7 +92,7 @@ goals in a piece need no minute at all.
 **The lead is not the first sentence again.** On the card the lead sits directly above
 the body; the two are read together, so they may not say the same thing twice.
 
-## What was learned writing the Draft's round 5
+## Shape
 
 **One piece, one spine.** A summary is an argument about a fixture, not an
 inventory of it. Before writing, say in one sentence what the piece claims -

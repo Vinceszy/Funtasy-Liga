@@ -2,7 +2,7 @@
 """EGYSZERI meres: mit kuld az MLSZ, ha egy klubnak KET meccse van egy
 fantasy forduloban?
 
-BEJELENTETT HIBA (2026-09-03): az MLSZ fantasy 7. forduloja NEM csak a 7.
+A VIZSGALT HIBA: az MLSZ fantasy 7. forduloja NEM csak a 7.
 jateknap - benne van egy ELMARADT, potolt meccs is (Fradi-Gyor, szept. 3.).
 A gyujto ezt nem tudja: a meccsek.json 7. forduloja hat meccset ismer
 (szept. 4-6.), a szept. 3-it egyaltalan nem, es MIND A KILENC ETO-jatekos

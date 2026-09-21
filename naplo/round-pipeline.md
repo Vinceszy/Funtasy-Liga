@@ -1,7 +1,22 @@
 # How a round summary is built: three layers, one table
 
-Written down because it lived only in the flow of one session, and the next
-run started inventing a new source instead of using the one we have.
+## Before a piece is written
+
+A round piece is written from files, not from recollection. Two are read in
+full first, every time, because the faults they prevent are invisible from
+inside a draft:
+
+- `summary-voice.md` - the voice, and what may not appear in a piece.
+- this file - the layers, the sources, the order, and which file holds what.
+
+Then the round's own data: `draft-round-harvest.py` or
+`round-colour-harvest.py` for a summary, `draft-preview-harvest.py` for a
+preview, plus the round's colour table. Every number in a piece comes from
+one of those, checked, not remembered.
+
+The order of a round is fixed: the summary of the round that closed, then
+the preview of the one coming. Neither is published before the text has
+been approved.
 
 A summary is assembled from **three layers**. Each has a different source, a
 different reliability, and a different licence for what may be written.
@@ -34,12 +49,11 @@ brought in - and never about a shared player.
 
 `zarasok.json`, and nowhere else. The stored line-up for a finished round is
 the state **after** the close, so a starter who never took the field is no
-longer visible in it - reading the swap out of the squad, or out of
-`draft_keretvaltozasok.json`, gives the wrong answer, and gave it three
-times in a row. The `szerep` rows of that file compare this round's line-up
-to the PREVIOUS round's, which mixes a manager's decision together with the
-machine's substitution; `zarasok.json` holds only what the close did:
-who came off with nought minutes, who came on, and what each scored.
+longer visible in it: the swap cannot be read back out of the squad. Nor out
+of `draft_keretvaltozasok.json`, whose `szerep` rows compare this round's
+line-up to the PREVIOUS round's and so mix a manager's decision together
+with the machine's substitution. `zarasok.json` holds only what the close
+did: who came off with nought minutes, who came on, and what each scored.
 
 A starter who does not play and is not in `zarasok.json` was not replaced -
 the bench had nobody left who both played and fitted the formation, so the
@@ -120,10 +134,8 @@ target says something about a manager who was never mentioned.
 ## A measurement that is not written down did not happen
 
 The prose sources print to the run log and nowhere else, so a round's colour
-exists only for as long as the session that fetched it. Round 5 of the Draft
-was collected twice for that reason: the first run's text was read, used in
-conversation and never turned into rows, so when the writing actually
-started there was nothing to write from.
+exists only as long as the run that fetched it. Nothing else holds it: not
+the squad files, not the article, not anybody's recollection.
 
 **The run and the rows are one step, not two.** The moment a fetch comes
 back, its claims go into `naplo/<liga>-colour-<round>.json` - player, club,
@@ -135,9 +147,10 @@ and it means the first one produced nothing durable.
 `naplo/colour-check.py <liga> <round>` verifies the table afterwards: every
 `event` row must find its goal, assist, VAR decision or big chance in the
 structured block of the same file, and every player must be in somebody's
-squad that round (a player nobody owns is `record`). Round 5 had three rows
-moved by that check - a stoppage-time penalty the two sources minute
-differently, and a save that only the prose knows about.
+squad that round (a player nobody owns is `record`). Two kinds of row fail
+it regularly and both are worth knowing: a stoppage-time incident the two
+sources minute differently, and a save that only the prose knows about -
+that one is `article_only`, not `event`.
 
 ## What the minutes are for
 
@@ -186,7 +199,8 @@ For the Draft the same five steps, with its own scripts:
 | `none` | contradicts our data, or names a player who did not play | dropped |
 
 The anchors are checked by machine, not by memory: every `event` row must
-find its goal, card, assist or minute in `bontasok/<round>.json`. Writing the
-round 8 table, that check moved two rows - a scorer who had been sold before
-the round (no squad holds him, so `record`) and a substitution minute that
-looked wrong until it was read as "came on in the 56th, played 34".
+find its goal, card, assist or minute in `bontasok/<round>.json`. Two cases
+that check catches and that are easy to mis-file by hand: a scorer sold
+before the round, whom no squad holds, so he is `record` rather than
+`event`; and a substitute's minute count, which is time played and not the
+minute he came on.
