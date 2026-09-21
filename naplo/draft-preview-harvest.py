@@ -134,8 +134,10 @@ def main():
             print("        a padja most: %s" % ", ".join(
                 "%s (%s)" % (jnev(x["e"]), jklub(x["e"])) for x in pad) or "ures")
     print("")
-    print("  A keret a legutobb lezart fordulo allapota; a heti igazolasok")
-    print("  ezutan meg valtoztathatnak rajta.")
+    print("  FIGYELEM: ez a legutobb lezart fordulo kerete, NEM a kovetkezoe.")
+    print("  A heti igazolasok meg hatra vannak, a kezdo tizenegy pedig a")
+    print("  fordulo elso kezdorugasaig atirhato. Aki most a padon ul, arrol")
+    print("  csak annyit tudunk, hogy a szakvezetonek dontenie kell rola.")
     return 0
 
 
