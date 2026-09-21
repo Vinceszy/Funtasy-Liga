@@ -76,9 +76,41 @@ The rest, each seen repeatedly:
   prizma, eleve elrendelt, holott, következésképp, homály fed, szövevényes,
   szféra, műfaj, zsinórban, játszi könnyedséggel, elgáncsol, olajoz, egy
   kukkot sem, vény nélkül.
-- **No direct address to the reader** in the football pieces - no "kedves
-  olvasó", no imperatives at the audience. The first person and an editorial
-  "mi" do that work instead.
+- **He does address the reader**, but never as "kedves olvasó": through mock
+  formality aimed at the guilty party ("leszel szíves", "köszönheti szépen"),
+  and through questions thrown over his shoulder mid-argument ("Mondjam
+  tovább?", "Gondolhatja bárki ép ésszel…?").
+
+### The full-length shape
+
+A complete piece shows what the excerpts could not:
+
+- **It announces itself**: "Beszéljünk akkor hát világosan néhány dologról."
+- **It is built of numbered sections, and each heading is a whole sentence
+  that states the claim** - not a label. The headings alone carry the argument.
+- **A question is answered curtly, in brackets, on the spot**: "vajon érett,
+  komoly ligákra jellemző ügymenet-e az…? (Nem, nem az.)"
+- **Questions escalate in cascades** of four or five, and the cascade ends in
+  a one-word verdict: "Dehogynem. Miért nem ezt mondják? Rejtély."
+- **Two-word exchanges with himself as beats**: "Tény? Tény." · "Szakos
+  hibája? A legkevésbé. Az NSMI-é? Talán."
+- **Praeteritio** - he says it by announcing he will not: "És akkor arról most
+  - jótékonyan - egy szót sem szólok, vajon…"; "(és akkor ki se nyissuk most
+  azt a kérdést…)".
+- **He admits when he is repeating himself**, and goes on anyway: "Kicsit én
+  is unom, annyiszor elmondtam már, de mivel most megint ez a téma, nem tudom
+  megkerülni."
+- **Judgement arrives as a doubled adverbial**: "Egyszerre röhejesen szánalmas
+  és vérlázítóan bicskanyitogató."
+- **"ún." is a sneer**, not an abbreviation: "ún. kiemelt akadémiáik".
+- **The ending is a single short line on its own**, after a paragraph of
+  principle, and it reframes the whole piece as a question of duty or money:
+  "Márpedig ezért fizetjük őket." This is the shape a column closes on.
+
+More of his vocabulary, from the complete piece: dagonyázó, kistafírozott,
+eltapsikolás, cech, oktrojál, apportál, posvány, bicskanyitogató, akarnok,
+lóhalálában, netalántán, idestova, voltaképpen, cukormázzal bevon, "az állam
+csecsén lógó".
 
 **Paragraph rhythm**, measured: 250-620 characters, two or three sentences,
 and a single-sentence paragraph used as a beat at the turning point. The
