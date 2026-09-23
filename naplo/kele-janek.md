@@ -28,6 +28,12 @@ he writes costs him a point on Sunday.
 
 ## Before a word is written
 
+0. **Look outside the league when the subject has an outside.** The
+   competition copies real football's rules, so the real rule is a source:
+   search for it, read what it actually requires, what it produced and how it
+   was gamed. The container reaches no Hungarian news site directly, but the
+   search tool returns enough to quote, and a figure from there is checked the
+   same way as one of ours.
 1. **Pick a subject no single fixture can hold.** A habit across the league,
    one manager's whole season, a rule that has quietly stopped working. If it
    fits inside one head-to-head it belongs in that piece instead.
@@ -43,7 +49,27 @@ he writes costs him a point on Sunday.
    intuition. The bench claim was wrong by a third until formation limits
    were applied: a goalkeeper cannot be fielded for a forward.
 
-## The skeleton both published pieces share
+## The devices are spent like the anecdotes are
+
+The rule that already covers subjects and phrases from the match pieces
+covers this column's OWN devices too, week to week. A piece that opens the
+way last week's opened, hinges the way it hinged, concedes with the same
+three sentences and closes on the same shape is not a voice. It is the same
+article with new numbers in it.
+
+So before writing, read the previous piece FOR THAT LEAGUE and take its
+moves off the table. The list below is a list of FUNCTIONS; the sentences
+quoted beside them are what one piece did once, not a phrasebook to refill.
+"Hol itt a látnivaló? Mindjárt megmondom", "Félreértés ne essék", the three
+"Tudom" concessions and the counted closing pair were used in the first NB1
+column and are spent there.
+
+What may repeat every week: the outsider's voice, the two-part reframe, a
+figure as the punchline of a sentence, the rare-word rate, and the single
+line of travel from the first sentence to the last. Those are the style.
+Everything below is one solution to a problem, not the solution.
+
+## The skeleton: what each beat has to DO
 
 Thirteen paragraphs, 220-270 characters on average, continuous prose. In
 order:
