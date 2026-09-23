@@ -131,6 +131,16 @@ doing the work the writing should.
 Large numbers are spelled out in letters. Match statistics belong in the
 match pieces: "pont" and its forms appear at most four times (D14).
 
+## Football words mean football things
+
+"Kiállít" is a red card. It is not a word for naming somebody in the eleven -
+"hétről hétre kiállítják" reads as "he is sent off every week". Use "pályára
+küld", "szerepeltet", "a kezdőbe tesz". ("Kiáll" for a whole side lining up
+is fine: "három védőnél kevesebbel nem lehet kiállni.")
+
+A piece that already went out is not edited for this or for anything else.
+Published is published; the correction belongs in the next one.
+
 ## Rare words: three to five per piece
 
 He does use them, and he mixes the registers inside one sentence: "az immáron
