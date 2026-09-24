@@ -109,6 +109,12 @@ or they borrow a proverb ("Szegény ember vízzel főz").
 Carry the argument by naming what is at stake, not by stating the verdict.
 The verdict is the last line's job, and it cannot do that job twice.
 
+The stake is the question the WHOLE piece turns on, not the cleverest
+observation inside it. Two titles were thrown out here for that: one stated
+the finding, and one asked a sharp question the piece only half answers. The
+test: if both halves of the piece are answers to the title, it is the right
+title.
+
 ## The signature move: the two-part reframe
 
 The thing both pieces are actually built out of. A short sentence denies what
