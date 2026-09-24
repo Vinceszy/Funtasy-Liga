@@ -99,6 +99,16 @@ order:
 11. **Close on a number that is also the verdict**, standing alone.
     "Huszonnégy alkalom, öt meggondolás."
 
+## The title poses, it does not answer
+
+A title that hands over the finding leaves the piece with nothing to give.
+His own do the opposite: they ask ("Itt mindenki hülye?"), or they name the
+tension without resolving it ("Feröeren a hogyan számít - nálunk a mennyi"),
+or they borrow a proverb ("Szegény ember vízzel főz").
+
+Carry the argument by naming what is at stake, not by stating the verdict.
+The verdict is the last line's job, and it cannot do that job twice.
+
 ## The signature move: the two-part reframe
 
 The thing both pieces are actually built out of. A short sentence denies what
