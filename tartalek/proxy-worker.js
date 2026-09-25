@@ -55,7 +55,14 @@ const CEL_HOSZTOK = ['fantasy-api.mlsz.hu', 'draft.premierleague.com'];
 // Az ertekeles kulcsa a cikk azonositoja: liga|fordulo|fajta|hazai|vendeg.
 // Szigoru minta, mert ebbol KV-kulcs lesz: amit nem ismerunk fel, azt nem
 // irjuk be.
-export const CIKK_MINTA = /^(nb1|pl)\|\d{1,3}\|(summary|preview)\|[^\n\r/]{1,120}$/;
+//
+// A HETI ROVAT (`elemzes`) is ertekelheto, es nala az utolso mezo nem egy
+// parharc, hanem a cikk cime. A mintabol sokaig hianyzott a fajta, igy a
+// Worker minden rovat-ertekelest 400-zal utasitott el - a nezo ebbol semmit
+// nem latott, a naplo pedig nulla ertekelest mutatott, mintha senki nem irt
+// volna. Uj cikkfajta felvetelekor EZT a sort is bovitani kell.
+export const CIKK_MINTA =
+  /^(nb1|pl)\|\d{1,3}\|(summary|preview|elemzes)\|[^\n\r/]{1,120}$/;
 export const ESZKOZ_MINTA = /^[a-z0-9]{8,32}$/;
 export const MAX_INDOK = 600;
 const EREDETEK = ['https://vinceszy.github.io',

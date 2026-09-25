@@ -22,6 +22,9 @@ const { jo, cim, vege } = require('./kozos');
 const PROXY = 'https://funtasy-liga.swick00.workers.dev';
 const EREDET = 'https://vinceszy.github.io';
 const CIKK = 'nb1|7|summary|Bence|Csendi';
+// A heti rovatnak nincs parharca: az utolso mezo a cikk cime. Ez a fajta
+// kimaradt a Worker mintajabol, es minden rovat-ertekeles elveszett tole.
+const ROVAT = 'nb1|9|elemzes|Szegény ember percekkel főz';
 const ESZKOZ = 'k7x2m9q1abcd';
 
 function ujKV(){
@@ -72,6 +75,31 @@ function ujKV(){
   jo(!('okok' in mentett),
      'készre választható okokat nem tárolunk — a mi kategóriáink nem tanítanak semmire');
   jo(!!mentett.ido, 'időbélyeggel');
+
+  // ---- 1/b) a HETI ROVAT ertekelese ----
+  // Ennek nincs parharca, az utolso mezo a cim. A Worker mintajabol a fajta
+  // sokaig hianyzott, igy minden rovat-ertekeles 400-zal esett el, es a
+  // naplo ugy mutatta, mintha senki nem ertekelt volna.
+  cim('Értékelés: a heti rovat is értékelhető');
+  const kvR = ujKV();
+  const rR = await kuld({ cikk: ROVAT, eszkoz: ESZKOZ, pont: 4 }, { TAROLT: kvR });
+  jo(rR.status === 200, 'a rovatra adott értékelés átmegy — HTTP ' + rR.status);
+  jo([...kvR.tar.keys()][0] === 'ert/' + ROVAT + '/' + ESZKOZ,
+     'és a cím a kulcsba kerül — ' + [...kvR.tar.keys()][0]);
+
+  // A Worker mintaja es a lap cikkfajtai EGYUTT valtoznak. Ha a lapra uj
+  // fajta kerul, es ide nem, az ertekelesei csendben elvesznek.
+  const fajtak = (require('fs').readFileSync(
+    require('path').join(__dirname, '..', 'funtasy.js'), 'utf8')
+      .match(/var ARTICLE_LABEL = \{([^}]*)\}/) || [])[1] || '';
+  const lapFajtak = [...fajtak.matchAll(/(\w+):/g)].map(m => m[1]).sort();
+  const minta = (require('fs').readFileSync(
+    require('path').join(__dirname, '..', 'tartalek', 'proxy-worker.js'), 'utf8')
+      .match(/CIKK_MINTA\s*=\s*\n?\s*\/\^\(nb1\|pl\)[^;]*?\(([a-z|]+)\)/) || [])[1] || '';
+  const workerFajtak = minta.split('|').sort();
+  jo(JSON.stringify(lapFajtak) === JSON.stringify(workerFajtak),
+     'a Worker minden lapon létező cikkfajtát elfogad — lap: ['
+     + lapFajtak + '] worker: [' + workerFajtak + ']');
 
   // ---- 2) ugyanaz az eszkoz nem halmoz ----
   cim('Értékelés: ugyanaz az eszköz felülír, nem halmoz');
