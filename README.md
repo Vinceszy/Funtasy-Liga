@@ -93,8 +93,11 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [Az élő pont a tételes bontásból áll össze (PL)](#az-élő-pont-a-tételes-bontásból-áll-össze-pl)
   - [Élő forduló alatt a lap magától frissül](#élő-forduló-alatt-a-lap-magától-frissül)
   - [Írás csak akkor, ha tényleg változott](#írás-csak-akkor-ha-tényleg-változott)
+  - [A félbeszakadt írás nem olvasható „nincs előzmény"-ként](#a-félbeszakadt-írás-nem-olvasható-nincs-előzmény-ként)
 - [5/a2. Változásnapló („Mi újult meg?")](#5a2-változásnapló-mi-újult-meg)
   - [A két oldal váza kézzel van kétszer leírva](#a-két-oldal-váza-kézzel-van-kétszer-leírva)
+- [5/a7. A magazin publikációs sorrendben áll](#5a7-a-magazin-publikációs-sorrendben-áll)
+  - [A heti rovat nem párharchoz tartozik](#a-heti-rovat-nem-párharchoz-tartozik)
 - [5/b. Tesztek](#5b-tesztek)
 - [6. Ha módosítani kell](#6-ha-módosítani-kell)
   - [Új liga felvétele](#új-liga-felvétele)
@@ -505,12 +508,12 @@ teljes képernyős, ragadós × gombbal.
 | `bontasok/<forduló>.json` | A forduló **tételes pont-bontása** minden játékosra (`{round, bontasok:{cp-azonosító:[{n,v,p}]}}`): mi adta ki a heti pontot — gól, gólpassz, játszott perc… A gyűjtő a forduló lezárásakor **egyszer** kéri le mind a 385 játékosra, és MLSZ-korrekció után újra. Az `updated` mező szándékosan nincs benne (lásd `keretek/`). |
 | `zarasok_nb1.json` | Fordulónként azok a **meccs utáni pontigazítások**, amiket az MLSZ a forduló véglegesítése előtt vezetett át. Alakja a PL `zarasok.json`-jáét követi, hogy ugyanaz a megjelenítés szolgálhassa ki: `{rounds:{forduló:{szakvezető:{pont:[{n,cp,pos,tm,elott,utan,d}]}}}}`. Az `nk:1` jelzőt viselő sor azt jelenti, hogy a játékos nem ismert: ott név helyett „Ismeretlen játékos" áll, és `elott`/`utan` helyett `dl` (a változás mértéke). Élesben ritka esemény: a fájl üres vázként létezik, és csak akkor bővül, ha tényleg történt igazítás — a panel is csak akkor jelenik meg. |
 | `arak.json` | Az árak **változásai** (`{arak:{id:[[dátum, ár], …]}}`). Csak akkor bővül, ha egy ár tényleg megváltozott. |
-| `articles.json` | A meccsek **kint lévő** beharangozói és összefoglalói (`{updated, leagues:{liga:{forduló:{summary|preview:{"Hazai|Vendég":{text:[bekezdés,…], short, source}}}}}}`). A `text` a teljes szöveg bekezdésenként, a `short` a becsukott sávban látszó egy mondat. A meccs adatlapján egy **becsukott** sáv olvassa (`FunTasy.matchArticle`): a szöveg egyszeri szórakozás, az alatta lévő számok a lényeg, ezért nem tolhatja le őket. **Az összefoglaló csak lezárt fordulón jelenik meg** — addig a pontok még elmozdulhatnak (NB1: meccs utáni igazítások, Draft: külön véglegesítés), és egy „X nyert ennyivel" szöveg hazudna. A beharangozóra ez nem áll. A kapu **alapból zár**: aki nem mondja meg, hogy a forduló lezárult, nem tud korai összefoglalót kiengedni. Jelenleg **kézzel írjuk** (`source: "manual"`); a mező azért van benne, hogy a később generált szöveg megkülönböztethető legyen. **Cikk csak LEZÁRT adatból készülhet**: összefoglaló csak végleges fordulóról, beharangozó csak a soron következőről. Egy forduló KÖZBEN írt szöveg a még mozgó számokból dolgozik — egy beharangozó így állította azt, hogy valaki megnyerte azt a meccset, amit a végén elvesztett. Gépi őrzés: `tesztek/dokuk.py` **D11**. |
+| `articles.json` | A liga **kint lévő** írásai (`{updated, leagues:{liga:{forduló:{summary|preview|elemzes:{kulcs:{text:[bekezdés,…], short, source, kozzetett}}}}}}`). **Három rovat van.** A `summary` és a `preview` egy-egy párharchoz tartozik, a kulcsuk `"Hazai|Vendég"`. Az `elemzes` — *Kele Janek elemez* — a fordulóhoz tartozik, nem párharchoz: a kulcsa a **saját címe**, `|` nélkül, és épp ebből tudni, hogy nincs ellenfele (`FunTasy.articleList`). A `text` a teljes szöveg bekezdésenként. A `short` a becsukott sávban látszó egy mondat — a rovatnak **nincs**: ott a felütés maga az alcím lenne, és megtöri a szöveg ívét; ilyenkor az első bekezdés lép a helyére. A `kozzetett` az élesbe kerülés ISO-időbélyege, és **ez a lap sorrendje**: az újság nem a fordulóval halad, hanem az idővel (lásd *A magazin publikációs sorrendben áll*). Gépi őrzés: **D15** — kint lévő írás nem lehet nélküle. A meccs adatlapján egy **becsukott** sáv olvassa (`FunTasy.matchArticle`): a szöveg egyszeri szórakozás, az alatta lévő számok a lényeg, ezért nem tolhatja le őket. **Az összefoglaló csak lezárt fordulón jelenik meg** — addig a pontok még elmozdulhatnak (NB1: meccs utáni igazítások, Draft: külön véglegesítés), és egy „X nyert ennyivel" szöveg hazudna. A beharangozóra ez nem áll. A kapu **alapból zár**: aki nem mondja meg, hogy a forduló lezárult, nem tud korai összefoglalót kiengedni. Jelenleg **kézzel írjuk** (`source: "manual"`); a mező azért van benne, hogy a később generált szöveg megkülönböztethető legyen. **Cikk csak LEZÁRT adatból készülhet**: összefoglaló csak végleges fordulóról, beharangozó csak a soron következőről. Egy forduló KÖZBEN írt szöveg a még mozgó számokból dolgozik — egy beharangozó így állította azt, hogy valaki megnyerte azt a meccset, amit a végén elvesztett. Gépi őrzés: `tesztek/dokuk.py` **D11**. |
 | — | **Az írások értékelése.** A kinyitott cikk alján egytől négyig lehet pontozni. A két felső fokozat egyetlen koppintás — aki elégedett, ne dolgozzon érte. A két alsó **indokot kér, a néző saját szavaival**: helyben nyílik egy szövegdoboz. Készre választható okokat szándékosan nem kínálunk — azok a mi kategóriáinkat adnák vissza, és épp az a mondat maradna ki, amire nem gondoltunk. Az „Elküldöm” addig nem kínálja magát, amíg nincs mit elküldeni; mellette halkabban a kiút („Kötekszem, de indokolni már nem fogok”), ami a pontot elviszi, az indokot nem. A panel a sávon **belül** nyílik, nem új rétegben: épp arról kérünk véleményt, ami alatta áll, azt nem szabad eltakarni. Az értékelés a Workerhez megy (`POST /ertekeles`), és a KV-ben `ert/<cikk>/<eszköz>` kulcson áll — egy eszköz egy írást egyszer értékel, az átértékelés a sajátját írja felül. Visszaolvasni: `GET /ertekelesek`. |
 | `articles-draft.json` | **Még nem publikált** cikkek, ugyanabban a formában. A lap ezt alapból **le sem kéri** — csak `?draft=1` paraméterrel, és akkor a kint lévők fölé olvassa (`FunTasy.mergeArticles`). Így egy félkész szöveg elfelejtett jelzőtől nem kerülhet a néző elé. Ami elkészült, az innen kerül át az `articles.json`-ba. |
 | `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. **Egy funkció = egy bejegyzés**: amit a néző egy dolognak lát, az egy bejegyzés, akkor is, ha több részből áll és több lépésben készült el — nem daraboljuk szét annyi posztra, ahány részét megcsináltuk. A `leiras` ezért lehet **több bekezdés** (üres sorral elválasztva), a napló oldala így is jeleníti meg. Amíg a funkció nincs kész, a bejegyzés a `valtozasok-vazlat.json`-ban vár. A szétdarabolást a `tesztek/dokuk.py` **D4/b** esete nézi. |
 | `valtozasok-vazlat.json` | **Még nem publikált** naplóbejegyzések, ugyanabban a formában. A napló oldala ezt nem olvassa; a kész bejegyzés innen kerül át a `valtozasok.json`-ba. |
-| `nemzethy/index.html` | A **Nemzethy Sport** — *Heti Funtasy Magazin*. **Két üzemmódja van.** `?liga=nb1` (vagy `pl`) az **adott liga újságja**: a liga saját színeivel, a nevével a fejlécben, és csak az ő írásaival — innen nyílik a liga-oldal felső sávjából, tehát az olvasó nem esik ki a liga világából. Paraméter nélkül a **közös kiadás**, liga-szűrővel; erre a kezdőlap mutat kiemelt soron. Mindkettőben minden írás teljes szöveggel, fordulónként visszafelé, újságszerű sorrendben: rovat, a párharc címként, a rövid változat felütésként, aztán a törzs. Szűrők egyetlen sávban: **liga, szakvezető, forduló, típus — négy külön vezérlő**, szabadon kombinálva (egy ember egy ligában is kérdezhető), mellettük a találatszám és egy törlés; mindegyik csak azokat az értékeket kínálja, amik a többi szűrő mellett tényleg léteznek, tehát üres találatra nem lehet állítani. A liga-szűrő a liga saját újságjában magától elmarad (egy érték mellett a legördülő üres marad). A szakvezetők **emberenként** állnak a listában, nem nevenként: a két liga más néven ismeri ugyanazt az embert (NB1-ben becenév, PL-ben csapatnév), és aki mindkettőben játszik, egyetlen sorban áll a két nevével — rá szűrve mindkét liga írásai előjönnek. Az összekötés a közös rétegben van (`FunTasy.SZEMELYEK` + `FunTasy.szemelyTar`), a PL-csapatnevet a közös kiadás a `draft.json`-ból olvassa hozzá; a liga saját újságjában nincs mit összekötni, ott ez a kérés el is marad. **Ugyanaz a kapu**, mint a meccs adatlapján: le nem zárt forduló összefoglalója itt sem látszik — a válogatást a `FunTasy.articleList` végzi, hogy a két nézet ne csúszhasson el abban, mit szabad mutatni. Minden írás alatt ott az értékelő sáv, és egy „Másolom” gomb, ami a rövid változatot meg a cikkre mutató hivatkozást teszi a vágólapra. A szövegoszlop szélessége pixelben áll (a `ch` a betűkészlettől függ, tehát a webfont beérkezésekor az egész lap újratördelné magát). **`content-visibility` nincs rajta, és szándékosan nincs**: a becsült magasság helyére görgetés közben lép be a valódi, és ettől a lap magassága változik meg az ujjad alatt — megmérve egyetlen végiggörgetés alatt nyolcszor, egyszerre akár 361 pixelt. A felső sáv **két szintet** mutat: a ligák egymás alternatívái, az újság viszont az adott liga része — ezért mindig pontosan egy elem világít (ahol vagy), az újság gombja nem tűnik el, ha rajta állsz, és onnan a liga pöttye visz vissza a liga oldalára. |
+| `nemzethy/index.html` | A **Nemzethy Sport** — *Heti Funtasy Magazin*. **Két üzemmódja van.** `?liga=nb1` (vagy `pl`) az **adott liga újságja**: a liga saját színeivel, a nevével a fejlécben, és csak az ő írásaival — innen nyílik a liga-oldal felső sávjából, tehát az olvasó nem esik ki a liga világából. Paraméter nélkül a **közös kiadás**, liga-szűrővel; erre a kezdőlap mutat kiemelt soron. Mindkettőben minden írás teljes szöveggel, **publikációs sorrendben** — a legutóbb kiadott elöl, ligától és fordulótól függetlenül; ezért nincs liga-címsor, a liga neve a cikk fejlécében áll. Egy íráson belül: rovat, a párharc (a rovatnál a saját címe), a rövid változat felütésként, aztán a törzs. Szűrők egyetlen sávban: **liga, szakvezető, forduló, típus — négy külön vezérlő**, szabadon kombinálva (egy ember egy ligában is kérdezhető), mellettük a találatszám és egy törlés; mindegyik csak azokat az értékeket kínálja, amik a többi szűrő mellett tényleg léteznek, tehát üres találatra nem lehet állítani. A liga-szűrő a liga saját újságjában magától elmarad (egy érték mellett a legördülő üres marad). A szakvezetők **emberenként** állnak a listában, nem nevenként: a két liga más néven ismeri ugyanazt az embert (NB1-ben becenév, PL-ben csapatnév), és aki mindkettőben játszik, egyetlen sorban áll a két nevével — rá szűrve mindkét liga írásai előjönnek. Az összekötés a közös rétegben van (`FunTasy.SZEMELYEK` + `FunTasy.szemelyTar`), a PL-csapatnevet a közös kiadás a `draft.json`-ból olvassa hozzá; a liga saját újságjában nincs mit összekötni, ott ez a kérés el is marad. **Ugyanaz a kapu**, mint a meccs adatlapján: le nem zárt forduló összefoglalója itt sem látszik — a válogatást a `FunTasy.articleList` végzi, hogy a két nézet ne csúszhasson el abban, mit szabad mutatni. Minden írás alatt ott az értékelő sáv, és egy „Másolom” gomb, ami a **teljes cikket** meg a rá mutató hivatkozást teszi a vágólapra (korábban a felütést adta — aki másol, a szöveget viszi). A szövegoszlop szélessége pixelben áll (a `ch` a betűkészlettől függ, tehát a webfont beérkezésekor az egész lap újratördelné magát). **`content-visibility` nincs rajta, és szándékosan nincs**: a becsült magasság helyére görgetés közben lép be a valódi, és ettől a lap magassága változik meg az ujjad alatt — megmérve egyetlen végiggörgetés alatt nyolcszor, egyszerre akár 361 pixelt. A felső sáv **két szintet** mutat: a ligák egymás alternatívái, az újság viszont az adott liga része — ezért mindig pontosan egy elem világít (ahol vagy), az újság gombja nem tűnik el, ha rajta állsz, és onnan a liga pöttye visz vissza a liga oldalára. |
 | `valtozasok/index.html` | A változásnapló oldala („Mi újult meg?"). |
 | `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
 | `collect_draft.py` | GitHub Actions: az FPL Draft liga adatai. A résztvevők valódi nevét és az `entry_id`-t kiszűri (a repó publikus). |
@@ -2104,6 +2107,36 @@ futtatja változatlan adaton, és **egyetlen** kimeneti fájl sem változhat —
 `results.json`, hanem minden, amit a futás után talál. A `stamp` helyére számláló kerül,
 különben a másodperc-pontosságú időbélyeg elrejtené a fölösleges írást.
 
+### A félbeszakadt írás nem olvasható „nincs előzmény"-ként
+
+A **halmozódó** fájlokban — árnapló, keret-előzmény, eredmények, meccsek, zárási
+igazítások — olyasmi áll, amit a futás nem tud újraszámolni: a múlt. A gyűjtő minden
+körben beolvassa, hozzáteszi a mait, és visszaírja.
+
+Ez a kör két ponton volt elvágható, és a kettő **együtt** adott adatvesztést:
+
+- az írás `open(path, "w")`-vel ment, ami az első bájt előtt kiüríti a fájlt — egy ott
+  megszakadt futás (a workflow hatórás korlátja, újraindítás, betelt lemez) csonka
+  JSON-t hagyott a lemezen;
+- az olvasás `except Exception` alatt **üres alapértelmezésre** esett vissza. A csonka
+  fájlból így „nincs előzmény" lett, a futás a semmihez adta hozzá a mai fordulót, és azt
+  írta vissza.
+
+Egy megszakadt futás plusz egy tiszta futás tehát **minden korábbi fordulót eltörölt** — a
+kimenet érvényes JSON, csak a múltja hiányzik, tehát semmi nem jelzett volna. Az árnapló a
+legsúlyosabb eset: kimértük, hogy az MLSZ **semmilyen ár-előzményt nem szolgáltat**
+(`naplo/mlsz-arelozmeny.txt`), amit a napló elveszít, az visszamenőleg pótolhatatlan.
+
+Azóta az írás `<path>.uj`-ba megy `flush` + `fsync` után, és `os.replace` teszi a helyére:
+ez atomi, tehát az olvasó vagy a régi fájlt látja, vagy az újat, félkészet soha. Az
+olvasás pedig a `tarolt_olvas`-on át megy, ami **csak** `FileNotFoundError`-ra adja az
+alapértelmezést (első futás); sérült fájlnál a kivétel felszáll, a futás megáll, és a
+fájlhoz hozzá sem nyúlunk — a következő körben megvan az esély, hogy épen olvassuk.
+
+Teszt: `tesztek/gyujto_tarolas.py`, tíz állítással mindkét gyűjtőre. Köztük egy
+**forráskód-szintű**: minden `open(..., "w")` ideiglenes nevet kell hogy kapjon. Enélkül a
+következő új kimenet csendben visszahozná a régi utat.
+
 ## 5/a2. Változásnapló („Mi újult meg?")
 
 Felhasználói napló, nem technikai: **csak az kerül bele, amit a használó lát vagy
@@ -2174,6 +2207,47 @@ résztvevő oszlopa fut más néven (Szakvezető / Csapat).
 
 Ha új panel kerül az egyik oldalra, a teszt addig bukik, amíg a másikra is oda nem kerül.
 Ez a szándék: **ami mindkét ligában van, az nézzen ki ugyanúgy.**
+
+## 5/a7. A magazin publikációs sorrendben áll
+
+Az újság **nem a fordulóval halad, hanem az idővel**. Ami ma került ki, az van felül,
+akkor is, ha egy régebbi fordulóról szól — és akkor is, ha közben a másik ligában
+lezárult egy újabb forduló. Ez a lapszám logikája: az olvasó azt látja elöl, amit még
+nem olvasott.
+
+Korábban a lista fordulónként, ligánként blokkokban állt. Ettől egy frissen kiadott
+beharangozó a lap közepén bukkant fel — a 8. forduló alatt, mert a 9. összefoglalója
+már kint volt —, és a legfrissebb írás olyan helyre került, ahova senki nem néz.
+
+A rendezés kulcsa a cikkenkénti `kozzetett` ISO-időbélyeg (`FunTasy.articleList`). A
+korábbi írásokét a `articles.json` **git-történetéből** töltöttük vissza: nem tippeltük,
+hanem megnéztük, melyik commit tette ki őket.
+
+Két dolgot érdemes tudni róla:
+
+- **Az azonos időbélyeg gyakori**, mert egy commitban több írás is kimegy. A csoporton
+  belül ezért nem a beillesztés sorrendje dönt (az esetleges), hanem: frissebb forduló
+  elöl, azon belül rovat → összefoglaló → beharangozó.
+- **Vázlatnak nincs időbélyege**, és a lista aljára kerül a korábbi rend szerint. A
+  `?draft=1` nézetben tehát a vázlatok külön blokkban, a kint lévők alatt állnak.
+
+Gépi őrzés: **D15** (`tesztek/dokuk.py`) — kint lévő írás nem lehet `kozzetett` nélkül,
+különben csendben a lap aljára esne.
+
+### A heti rovat nem párharchoz tartozik
+
+A harmadik rovat — *Kele Janek elemez* — a **fordulóhoz** szól, nem egy meccshez: egy
+külsős újságíró ír a bajnokságunkról. Ezért:
+
+- a kulcsa a **saját címe**, `|` nélkül — az `articleList` ebből tudja, hogy nincs
+  ellenfele, és nem próbál párharcot bontani belőle;
+- **nincs rajta a lezárás-kapu**. Az összefoglaló azért vár a végleges fordulóra, mert
+  eredményt állít; a rovat nem eredményt állít, tehát előre is nézhet, vissza is;
+- **nincs `short`-ja**. A felütés nála az alcím szerepét venné fel, és megtöri a szöveg
+  ívét; a becsukott sávba és a másolásba az első bekezdés lép a helyére.
+
+A rovat a meccsek adatlapján nem jelenik meg (nincs hova), csak az újságban — ott viszont
+a fordulón belül a lista elején áll.
 
 ## 5/b. Tesztek
 
