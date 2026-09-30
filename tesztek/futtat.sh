@@ -53,6 +53,7 @@ mutat() {                       # egy hatterben futott teszt eredmenye
 
 # ---- 1) gyors python-tesztek, sorban ----
 futtat "dokuk.py" python3 "$GYOKER/tesztek/dokuk.py"
+futtat "adatok.py" python3 "$GYOKER/tesztek/adatok.py"
 for t in "$GYOKER"/tesztek/gyujto_*.py; do
   [ -e "$t" ] || continue
   futtat "$(basename "$t")" python3 "$t"
