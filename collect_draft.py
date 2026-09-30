@@ -36,6 +36,12 @@ A liga azonositoja a DRAFT_LEAGUE_ID kornyezeti valtozobol felulirhato.
 """
 import json, os, sys, time, urllib.error, urllib.request
 
+# A tesztek a fajl UTJA szerint toltik be ezt a modult, tehat a sys.path-on a
+# tesztek konyvtara all, nem a repo gyokere. A sajat konyvtarunkat ezert mi
+# tesszuk fel, kulonben a kozos modul csak eles futasban lenne megtalalhato.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from gyujto_kozos import stamp, kompakt_iras, tarolt_olvas
+
 LEAGUE_ID = os.environ.get("DRAFT_LEAGUE_ID", "48093")
 B = "https://draft.premierleague.com/api/"
 HDRS = {
@@ -110,27 +116,6 @@ def nevszures(payload):
             raise SystemExit("HIBA: '%s' a kimenetben - a mentes megszakitva." % tiltott)
 
 
-def stamp():
-    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-
-
-def tarolt_olvas(path, alap):
-    """Egy GYULO fajl beolvasasa: a hianyzo es a serult NEM ugyanaz.
-
-    Hianyzik (FileNotFoundError): ez az elso futas, az alapertelmezes a
-    helyes valasz. MINDEN MAS kivetel - elsosorban a nem ertelmezheto JSON -
-    tovabbmegy.
-    Letezik, de nem olvashato: ilyenkor tovabbmenni a legrosszabb, amit
-    tehetunk - a hivo osszefesulne az ures alappal es kiirna, a korabbi
-    fordulok adata pedig eltunne. Inkabb megallunk.
-    """
-    try:
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return alap
-
-
 def kiir_ha_valtozott(path, tartalom, regi_nelkul_kulcs="updated"):
     """Kompakt iras, csak ha a tartalom (updated nelkul) valtozott."""
     try:
@@ -149,16 +134,7 @@ def kiir_ha_valtozott(path, tartalom, regi_nelkul_kulcs="updated"):
         return False
     tartalom["updated"] = stamp()
     nevszures(tartalom)
-    # ATOMIKUSAN: az `open(path, "w")` azonnal nullara vagja a fajlt, es ha a
-    # futas kozben all le, felbevagott JSON marad a helyen. A kovetkezo futas
-    # azt nem tudna beolvasni, es a gyulo elozmeny elveszne. Ideiglenesbe
-    # irunk, es a helyere mozgatjuk - a mozgatas atomi.
-    ideiglenes = path + ".uj"
-    with open(ideiglenes, "w", encoding="utf-8") as f:
-        json.dump(tartalom, f, ensure_ascii=False, separators=(",", ":"))
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(ideiglenes, path)
+    kompakt_iras(path, tartalom)
     print("  + %s kiirva (%d byte)" % (path, os.path.getsize(path)))
     return True
 

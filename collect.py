@@ -80,6 +80,12 @@ TOVABBI MERESSEL IGAZOLT TENYEK :
 import datetime
 import itertools, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 
+# A tesztek a fajl UTJA szerint toltik be ezt a modult, tehat a sys.path-on a
+# tesztek konyvtara all, nem a repo gyokere. A sajat konyvtarunkat ezert mi
+# tesszuk fel, kulonben a kozos modul csak eles futasban lenne megtalalhato.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from gyujto_kozos import stamp, kompakt_iras, tarolt_olvas
+
 COMPETITION = 3
 MEMBERS = {
     "Katyul": "peterkmrs", "Bence": "Dill Dough", "Sámsi": "samsonp",
@@ -966,45 +972,6 @@ def arnaplo_frissit(torzs, mai):
         sor.append([mai, ar])
         valtozott += 1
     return naplo, valtozott
-
-
-def kompakt_iras(path, obj):
-    """A konyvjelzoevel azonos, kompakt JSON-formatum - ATOMIKUSAN.
-
-    Az `open(path, "w")` azonnal nullara vagja a fajlt, es csak utana ir. Ha
-    a futas kozben all le (idokorlat, leallitott munkafolyamat), a helyen egy
-    FELBEVAGOTT JSON marad. A kovetkezo futas azt nem tudja beolvasni, es -
-    a regi hibakezeles szerint - uresnek veszi: a gyulo elozmeny ezzel
-    elveszne. Ideiglenes fajlba irunk, es a helyere MOZGATJUK; a mozgatas
-    atomi, tehat a celfajl vagy a regi, vagy a teljes uj tartalom.
-    """
-    ideiglenes = path + ".uj"
-    with open(ideiglenes, "w", encoding="utf-8") as f:
-        json.dump(obj, f, ensure_ascii=False, separators=(",", ":"))
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(ideiglenes, path)
-
-
-def tarolt_olvas(path, alap):
-    """Egy GYULO fajl beolvasasa: a hianyzo es a serult NEM ugyanaz.
-
-    Hianyzik (FileNotFoundError): ez az elso futas, az alapertelmezes a
-    helyes valasz. MINDEN MAS kivetel - elsosorban a nem ertelmezheto JSON -
-    tovabbmegy.
-    Letezik, de nem olvashato: valami elromlott. Ilyenkor tovabbmenni a
-    legrosszabb, amit tehetunk - a hivo osszefesulne az ures alappal, es
-    kiirna; a korabbi fordulok adata ezzel eltunne. Inkabb megallunk.
-    """
-    try:
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return alap
-
-
-def stamp():
-    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
 def main():

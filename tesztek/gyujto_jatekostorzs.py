@@ -60,24 +60,25 @@ c.api_get = lambda url, retries=3: (500, None)
 allit(c.jatekostorzs() is None, "hibas valasznal None jon (a fajl valtozatlan marad)")
 
 # ---------------- 2) az arnaplo ----------------
-os.chdir(os.path.dirname(FORRAS))                # a naplo a repo gyokerebol olvas
+# A naplo a MUNKAKONYVTARBOL olvassa az arak.json-t. Ideiglenes konyvtarban
+# futtatjuk, sajat elozmennyel: igy a teszt nem fugg a repo aktualis adatatol,
+# es nem kell a modul `open`-jet arnyekolni sem (az a kozos modulba kerult
+# olvasast ugysem fogna el - egy ilyen trukk csendben mast mert volna).
+import tempfile
+
+MUNKA = tempfile.mkdtemp()
+os.chdir(MUNKA)
+
 
 def naplo(torzs, mai, elozo=None):
-    """Az arnaplo egy lepese - a lemezen levo arak.json HELYETT a megadott
-    elozmennyel, hogy a teszt ne fuggjon a repo aktualis adatatol."""
-    import builtins, io
-    eredeti = builtins.open           # a modul a beepitett open-t hasznalja
-    def nyit(nev, *a, **k):
-        if nev == "arak.json":
-            if elozo is None:
-                raise FileNotFoundError(nev)
-            return io.StringIO(json.dumps({"arak": elozo}))
-        return eredeti(nev, *a, **k)
-    c.open = nyit                     # a modul globalisa arnyekolja a beepitettet
-    try:
-        return c.arnaplo_frissit(torzs, mai)
-    finally:
-        del c.open
+    """Az arnaplo egy lepese a megadott elozmennyel (None = meg nincs fajl)."""
+    if elozo is None:
+        if os.path.exists("arak.json"):
+            os.remove("arak.json")
+    else:
+        with open("arak.json", "w", encoding="utf-8") as f:
+            json.dump({"arak": elozo}, f)
+    return c.arnaplo_frissit(torzs, mai)
 
 
 T1 = {"1": {"ar": 5.0}, "2": {"ar": 8.0}}
