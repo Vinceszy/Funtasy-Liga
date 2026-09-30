@@ -55,8 +55,6 @@ header{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px 20px;border-bot
 h1{font-family:var(--cim);font-size:clamp(26px,5vw,40px);letter-spacing:.5px}
 h1 .fun{color:var(--amber)}h1 .tag{color:var(--magenta)}
 .sub{color:var(--dim);font-size:13px}
-.btn{margin-left:auto;background:var(--amber);color:#1A1200;border:0;font:700 14px var(--fo);padding:10px 18px;border-radius:6px;cursor:pointer}
-.btn:hover{filter:brightness(1.08)}.btn:disabled{opacity:.5;cursor:wait}
 #status{font:500 12px var(--mono);color:var(--dim);width:100%;min-height:16px}
 #status.err{color:var(--lose)}#status.ok{color:var(--win)}
 /* Nem hiba, de nem is naprakesz: a fordulo lezarult, a tarolt adatban meg
@@ -441,7 +439,6 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .ppos{display:inline-block;min-width:26px;text-align:center;background:var(--panel2);border:1px solid var(--line);
   border-radius:3px;font:700 9px var(--mono);color:var(--dim);padding:2px 4px;margin-right:6px}
 .mult{font:600 10px var(--fo);color:var(--dim);margin-left:4px}
-.eff{font-family:var(--mono);font-weight:700;min-width:52px;text-align:right}
 .raw{font-family:var(--mono);color:var(--dim);font-size:11px;min-width:42px;text-align:right}
 .sumline{display:flex;justify-content:space-between;padding:6px 4px;border-top:1px solid var(--line);margin-top:6px;font-size:12px;color:var(--dim)}
 .u21{background:#2E6BE5;color:#fff;font:700 9px var(--fo);border-radius:3px;padding:1px 4px}
@@ -815,7 +812,6 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   header{gap:8px 12px;padding-bottom:10px;margin-bottom:14px}
   h1{font-size:26px;width:100%}
   .sub{font-size:11px;order:3;width:100%}
-  .btn{margin-left:0;order:2;padding:8px 14px;font-size:13px}
   #status{font-size:11px;order:4}
   .grid{gap:14px}
   .panel{margin-bottom:14px;border-radius:8px}
@@ -830,7 +826,7 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   /* semmi ne kényszerítsen szélességet */
   .panel{overflow:visible}
   .score{min-width:0}
-  .pts,.eff,.raw{min-width:0}
+  .pts,.raw{min-width:0}
   .ppos{min-width:0;padding:2px 3px}
   .match{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);padding:11px 8px;gap:6px}
   .match .h,.match .v{min-width:0}
