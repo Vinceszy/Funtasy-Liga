@@ -954,11 +954,7 @@ def arnaplo_frissit(torzs, mai):
     ir be hamis "0-ra esett" bejegyzest (ugyanaz a logika, mint a 0-0
     vedelem a results.json-nal).
     """
-    try:
-        with open("arak.json", encoding="utf-8") as f:
-            naplo = json.load(f).get("arak") or {}
-    except Exception:
-        naplo = {}
+    naplo = tarolt_olvas("arak.json", {}).get("arak") or {}
     valtozott = 0
     for cp, rec in torzs.items():
         ar = rec.get("ar")
@@ -973,9 +969,38 @@ def arnaplo_frissit(torzs, mai):
 
 
 def kompakt_iras(path, obj):
-    """A konyvjelzoevel azonos, kompakt JSON-formatum."""
-    with open(path, "w", encoding="utf-8") as f:
+    """A konyvjelzoevel azonos, kompakt JSON-formatum - ATOMIKUSAN.
+
+    Az `open(path, "w")` azonnal nullara vagja a fajlt, es csak utana ir. Ha
+    a futas kozben all le (idokorlat, leallitott munkafolyamat), a helyen egy
+    FELBEVAGOTT JSON marad. A kovetkezo futas azt nem tudja beolvasni, es -
+    a regi hibakezeles szerint - uresnek veszi: a gyulo elozmeny ezzel
+    elveszne. Ideiglenes fajlba irunk, es a helyere MOZGATJUK; a mozgatas
+    atomi, tehat a celfajl vagy a regi, vagy a teljes uj tartalom.
+    """
+    ideiglenes = path + ".uj"
+    with open(ideiglenes, "w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, separators=(",", ":"))
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(ideiglenes, path)
+
+
+def tarolt_olvas(path, alap):
+    """Egy GYULO fajl beolvasasa: a hianyzo es a serult NEM ugyanaz.
+
+    Hianyzik (FileNotFoundError): ez az elso futas, az alapertelmezes a
+    helyes valasz. MINDEN MAS kivetel - elsosorban a nem ertelmezheto JSON -
+    tovabbmegy.
+    Letezik, de nem olvashato: valami elromlott. Ilyenkor tovabbmenni a
+    legrosszabb, amit tehetunk - a hivo osszefesulne az ures alappal, es
+    kiirna; a korabbi fordulok adata ezzel eltunne. Inkabb megallunk.
+    """
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return alap
 
 
 def stamp():
@@ -992,17 +1017,9 @@ def main():
     volt_vegleges = {int(r) for r, ms in schedule.items()
                      if ms and all(m[2] is not None and m[3] is not None for m in ms)
                      and int(r) not in {int(x) for x in (data.get("provisional") or [])}}
-    try:
-        with open("squad_history.json", encoding="utf-8") as f:
-            hist = json.load(f)
-    except Exception:
-        hist = {"updated": None, "rounds": {}}
+    hist = tarolt_olvas("squad_history.json", {"updated": None, "rounds": {}})
     hist.setdefault("rounds", {})
-    try:
-        with open("zarasok_nb1.json", encoding="utf-8") as f:
-            zarasok_nb1 = json.load(f)
-    except Exception:
-        zarasok_nb1 = {}
+    zarasok_nb1 = tarolt_olvas("zarasok_nb1.json", {})
     zarasok_nb1.setdefault("rounds", {})
     zarasok_nb1_valtozott = False
     # A legelso valtozat CSAPATSZINTU sorokat tarolt (listaban, {"mgr":...}),
@@ -1014,11 +1031,7 @@ def main():
         del zarasok_nb1["rounds"][_r]
         zarasok_nb1_valtozott = True
     hist_elotte = json.dumps(hist.get("rounds"), ensure_ascii=False, sort_keys=True)
-    try:
-        with open("meccsek.json", encoding="utf-8") as f:
-            meccsek = json.load(f)
-    except Exception:
-        meccsek = {"updated": None, "rounds": {}}
+    meccsek = tarolt_olvas("meccsek.json", {"updated": None, "rounds": {}})
     meccsek.setdefault("rounds", {})
     meccsek_elotte = json.dumps(meccsek["rounds"], ensure_ascii=False, sort_keys=True)
 
@@ -1308,8 +1321,13 @@ def main():
     if beirt or javitott or set(provisional) != regi_prov:
         data["provisional"] = provisional
         data["updated"] = stamp()
-        with open("results.json", "w", encoding="utf-8") as f:
+        # Ugyanaz az ok, mint a kompakt_iras-nal: felbevagott results.json
+        # eseten a kovetkezo futas mar el sem indulna.
+        with open("results.json.uj", "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=0)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace("results.json.uj", "results.json")
         print("  results.json frissitve")
 
     # ---- Kezdoallitasi hatekonysag: minden tarolt fordulora ujraszamolva.

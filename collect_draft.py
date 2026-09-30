@@ -114,6 +114,23 @@ def stamp():
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
+def tarolt_olvas(path, alap):
+    """Egy GYULO fajl beolvasasa: a hianyzo es a serult NEM ugyanaz.
+
+    Hianyzik (FileNotFoundError): ez az elso futas, az alapertelmezes a
+    helyes valasz. MINDEN MAS kivetel - elsosorban a nem ertelmezheto JSON -
+    tovabbmegy.
+    Letezik, de nem olvashato: ilyenkor tovabbmenni a legrosszabb, amit
+    tehetunk - a hivo osszefesulne az ures alappal es kiirna, a korabbi
+    fordulok adata pedig eltunne. Inkabb megallunk.
+    """
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return alap
+
+
 def kiir_ha_valtozott(path, tartalom, regi_nelkul_kulcs="updated"):
     """Kompakt iras, csak ha a tartalom (updated nelkul) valtozott."""
     try:
@@ -132,8 +149,16 @@ def kiir_ha_valtozott(path, tartalom, regi_nelkul_kulcs="updated"):
         return False
     tartalom["updated"] = stamp()
     nevszures(tartalom)
-    with open(path, "w", encoding="utf-8") as f:
+    # ATOMIKUSAN: az `open(path, "w")` azonnal nullara vagja a fajlt, es ha a
+    # futas kozben all le, felbevagott JSON marad a helyen. A kovetkezo futas
+    # azt nem tudna beolvasni, es a gyulo elozmeny elveszne. Ideiglenesbe
+    # irunk, es a helyere mozgatjuk - a mozgatas atomi.
+    ideiglenes = path + ".uj"
+    with open(ideiglenes, "w", encoding="utf-8") as f:
         json.dump(tartalom, f, ensure_ascii=False, separators=(",", ":"))
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(ideiglenes, path)
     print("  + %s kiirva (%d byte)" % (path, os.path.getsize(path)))
     return True
 
@@ -494,17 +519,9 @@ def main():
         print("Kesz.")
         return 0
 
-    try:
-        with open("draft_history.json", encoding="utf-8") as f:
-            hist = json.load(f)
-    except Exception:
-        hist = {"updated": None, "rounds": {}}
+    hist = tarolt_olvas("draft_history.json", {"updated": None, "rounds": {}})
     hist.setdefault("rounds", {})
-    try:
-        with open("zarasok.json", encoding="utf-8") as f:
-            zarasok = json.load(f)
-    except Exception:
-        zarasok = {"updated": None, "rounds": {}}
+    zarasok = tarolt_olvas("zarasok.json", {"updated": None, "rounds": {}})
     zarasok.setdefault("rounds", {})
     zarasok_elotte = json.dumps(zarasok["rounds"], ensure_ascii=False, sort_keys=True)
 
@@ -652,11 +669,7 @@ def main():
     # ---- A TELJES mezony fordulonkenti pontja+perce (draft_pontok.json).
     # Osszefesuljuk a tarolttal: ebben a futasban csak a `celok` fordulait
     # kertuk le, a tobbi adatat nem szabad eldobni.
-    try:
-        with open("draft_pontok.json", encoding="utf-8") as f:
-            pontok = json.load(f).get("rounds") or {}
-    except Exception:
-        pontok = {}
+    pontok = tarolt_olvas("draft_pontok.json", {}).get("rounds") or {}
     pontok.update(pontok_tar)
     kiir_ha_valtozott("draft_pontok.json", {"updated": None, "rounds": pontok})
 
