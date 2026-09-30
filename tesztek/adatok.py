@@ -119,6 +119,32 @@ for liga, fordulok in (art.get("leagues") or {}).items():
 allit(not gond, "A4: minden iras valodi, abban a forduloban lejatszott parharcra mutat"
       + ("" if not gond else " - " + "; ".join(gond[:3])))
 
+# ---- A5: a ket keret-forras ugyanazt mondja ----
+# UGYANAZ AZ ADAT KET HELYEN. A meccs adatlapja a fordulonkenti
+# keretek/<r>.json-t toltiv le (a teljes elozmeny a szezon vegere ~630 KB, es
+# egy meccshez egyetlen fordulo kell), a Szezon jatekosai ful es a
+# jatekosprofil viszont a squad_history.json-bol dolgozik. Mindketto ugyanabbol
+# a futasbol keszul, de KULON agon irodik ki - ha az egyik ag kimarad, a ket
+# nezet ugyanarrol a forduloról mast allit, es egyik sem hibas kepernyot mutat.
+_hist = (J("squad_history.json") or {}).get("rounds") or {}
+_kmappa = os.path.join(GYOKER, "keretek")
+_fajlok = sorted(f for f in os.listdir(_kmappa) if f.endswith(".json")) \
+    if os.path.isdir(_kmappa) else []
+gond = []
+for _f in _fajlok:
+    _r = _f[:-5]
+    _sq = (J(os.path.join("keretek", _f)) or {}).get("squads") or {}
+    _h = _hist.get(_r) or {}
+    if set(_sq) != set(_h):
+        gond.append("%s.: mas szakvezetok (%d vs %d)" % (_r, len(_sq), len(_h)))
+        continue
+    for _n in sorted(_sq):
+        if json.dumps(_sq[_n], sort_keys=True) != json.dumps(_h[_n], sort_keys=True):
+            gond.append("%s. %s kerete eltér" % (_r, _n))
+allit(_fajlok and not gond,
+      "A5: a fordulonkenti keret-fajl ugyanazt mondja, mint a teljes elozmeny (%d fordulo)"
+      % len(_fajlok) + ("" if not gond else " - ELTER: " + "; ".join(gond[:3])))
+
 print("\n" + ("Mind a %d allitas rendben." % len(allitasok) if not hibak
               else "%d allitas bukott a %d-bol." % (len(hibak), len(allitasok))))
 sys.exit(1 if hibak else 0)
