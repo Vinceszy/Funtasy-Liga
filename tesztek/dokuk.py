@@ -57,6 +57,8 @@ Amit ellenoriz:
       kattintassal megnezi; a szoveg arrol szol, amit a tabla nem mutat.
       A "pont" szo es alakjai cikkenkent legfeljebb negyszer szerepelhetnek
       - efolott a szoveg a tablazatot irja ujra vesszokkel.
+  D17: minden cikk-kulcs atmegy a Worker ertekelo-mintajan - kulonben a
+       cikk kint van, de ertekelni nem lehet, es ez sehol nem latszik.
   D15: minden MEGJELENT irasnak van `kozzetett` idobelyege. A magazin
       eszerint rendez; belyeg nelkul egy friss cikk a lista aljara kerul,
       a legregebbiek koze - vagyis a kiadas napjan lathatatlan marad.
@@ -426,6 +428,30 @@ for _liga, _fordulok in (json.loads(olvas("articles.json")).get("leagues") or {}
                     _belyegtelen.append("%s %s. %s %s" % (_liga, _r, _fajta, _par))
 allit(not _belyegtelen, "D15: minden megjelent irasnak van kozzetetel-ideje"
       + ("" if not _belyegtelen else " - HIANYZIK: " + "; ".join(_belyegtelen[:3])))
+
+# ---- D17: minden cikk-kulcs atmegy a Worker ertekelo-szuroin ----
+# Az ertekeles kulcsa PONTOSAN az a sztring, amit a FunTasy.articleList ad
+# (liga|fordulo|fajta|par), es a Worker sajat mintaja donti el, elfogadja-e.
+# Ha egy cim nem illeszkedik, az ertekeles 400-zal elszall - a cikk kint van,
+# a velemenyt viszont nem lehet leadni ra, es ez sehol nem latszik.
+# Egyszer mar megtortent: az `elemzes` hianyzott a mintabol, es a rovat
+# minden ertekelese elveszett. A minta a worker forrasabol jon, nem ide
+# masolva - kulonben ez az allitas csuszna el csendben.
+_wsrc = olvas(os.path.join("tartalek", "proxy-worker.js"))
+_m = re.search(r"export const CIKK_MINTA\s*=\s*/(.+?)/;", _wsrc, re.S)
+allit(bool(_m), "D17: a Worker cikk-mintaja megtalalhato a forrasban")
+if _m:
+    _minta = re.compile(_m.group(1).strip())
+    _rossz = []
+    for _liga, _fordulok in (json.loads(olvas("articles.json")).get("leagues") or {}).items():
+        for _r, _fajtak in _fordulok.items():
+            for _fajta, _parok in _fajtak.items():
+                for _par in (_parok or {}):
+                    _kulcs = "%s|%s|%s|%s" % (_liga, _r, _fajta, _par)
+                    if not _minta.match(_kulcs):
+                        _rossz.append(_kulcs)
+    allit(not _rossz, "D17: minden cikk-kulcs ertekelheto (a Worker mintaja szerint)"
+          + ("" if not _rossz else " - ELUTASITVA: " + "; ".join(_rossz[:3])))
 
 # ---- D16: minden lap ugyanazt a betukeszletet tolti ----
 # Ot kulon HTML tartalmazza ugyanazt a Google-utat. Ha az egyiken valtozik a
