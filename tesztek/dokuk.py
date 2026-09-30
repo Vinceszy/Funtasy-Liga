@@ -57,6 +57,13 @@ Amit ellenoriz:
       kattintassal megnezi; a szoveg arrol szol, amit a tabla nem mutat.
       A "pont" szo es alakjai cikkenkent legfeljebb negyszer szerepelhetnek
       - efolott a szoveg a tablazatot irja ujra vesszokkel.
+  D15: minden MEGJELENT irasnak van `kozzetett` idobelyege. A magazin
+      eszerint rendez; belyeg nelkul egy friss cikk a lista aljara kerul,
+      a legregebbiek koze - vagyis a kiadas napjan lathatatlan marad.
+  D16: minden lap UGYANAZT a betukeszlet-ivet tolti. Ot HTML-fajl hivja
+      ugyanazt a Google-utat; ha az egyiken modosul a csalad-lista, az
+      oldalak eltero betuvel jelennek meg, es ez semmilyen viselkedes-
+      tesztben nem latszik.
   D10: minden munkafolyamat es minden meres dokumentalva van. A D2 csak a
       gyokerbeli adatfajlokat nezte, es a naplo/ ala tizenharom meres kerult
       be ugy, hogy a naplo README tablazata nem tudott roluk - a nyers adat
@@ -406,6 +413,36 @@ for _fajl in ("articles.json", "articles-draft.json"):
                         _suru.append("%s %s. %s (%s): %dx" % (_liga, _r, _par, _fajta, _db))
 allit(not _suru, "D14: a cikkek nem pontfelsorolasok"
       + ("" if not _suru else " - TULSURU: " + "; ".join(_suru[:3])))
+
+# ---- D15: minden megjelent irasnak van kozzeteteli idobelyege ----
+# A magazin ido szerint rendez. Ami belyeg nelkul kerul ki, az a lista
+# aljara esik - eppen aznap lathatatlan, amikor megjelent.
+_belyegtelen = []
+for _liga, _fordulok in (json.loads(olvas("articles.json")).get("leagues") or {}).items():
+    for _r, _fajtak in _fordulok.items():
+        for _fajta, _parok in _fajtak.items():
+            for _par, _cikk in (_parok or {}).items():
+                if not (_cikk.get("kozzetett") or "").strip():
+                    _belyegtelen.append("%s %s. %s %s" % (_liga, _r, _fajta, _par))
+allit(not _belyegtelen, "D15: minden megjelent irasnak van kozzetetel-ideje"
+      + ("" if not _belyegtelen else " - HIANYZIK: " + "; ".join(_belyegtelen[:3])))
+
+# ---- D16: minden lap ugyanazt a betukeszletet tolti ----
+# Ot kulon HTML tartalmazza ugyanazt a Google-utat. Ha az egyiken valtozik a
+# csalad-lista, az a lap mas betuvel jon - es ezt semmi nem venne eszre.
+_font = _re.compile(r'''fonts\.googleapis\.com/css2\?([^"']+)''')
+_ivek = {}
+for _ut in sorted(glob.glob(os.path.join(GYOKER, "**", "*.html"), recursive=True)):
+    _rel = os.path.relpath(_ut, GYOKER).replace(os.sep, "/")
+    if _rel.startswith((".git/", "tartalek/")):
+        continue
+    _t = {m.group(1) for m in _font.finditer(open(_ut, encoding="utf-8").read())}
+    if _t:
+        _ivek[_rel] = _t
+_elteres = sorted(f for f, t in _ivek.items() if t != next(iter(_ivek.values())))
+allit(len(_ivek) > 1 and not _elteres,
+      "D16: minden lap ugyanazt a betukeszlet-ivet tolti (%d lap)" % len(_ivek)
+      + ("" if not _elteres else " - ELTER: " + ", ".join(_elteres)))
 
 # ---- D10: minden munkafolyamat es minden meres dokumentalva ----
 # Ket helyen szokott elmaradni: egy uj workflow a fo README fajl-tablazatabol,
