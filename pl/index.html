@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=112">
+<link rel="stylesheet" href="../funtasy.css?v=113">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -106,7 +106,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=112"></script>
+<script src="../funtasy.js?v=113"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 // A két liga résztvevőinek összekötése a KÖZÖS rétegben áll
@@ -1143,8 +1143,10 @@ function percUtantoltes(gw, ujrarajzol){
   if (p) p.then(ok => { if (ok && $('ov').classList.contains('open')) ujrarajzol(); });
 }
 
-const idoFmt = s => new Date(s).toLocaleString('hu-HU',
-  { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+// A kozos retegbol: egy formazo, ket liga. A korabbi sajat valtozat
+// ures vagy hibas ertekre "Invalid Date"-et, null-ra pedig kitalalt
+// datumot irt ki.
+const idoFmt = s => FunTasy.idoFmt(s, 'pl');
 // Ha egyetlen pontot ero esemeny sincs, a 0-nak negy oka lehet. A meccs
 // allapotat az elo fordulonal a fixtures adja (indult / kesz), a lezart
 // fordulokra minden meccs kesz; hogy palyara lepett-e, a live 'minutes'

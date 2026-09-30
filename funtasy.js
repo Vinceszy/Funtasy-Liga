@@ -53,12 +53,41 @@
     { id: 'nb1', nev: 'NB1', mappa: 'nb1/', cim: 'NB1 salary cap fantasy',
       leiras: 'privát head-to-head · 8 csapat · 33 forduló',
       tipus: 'salary-cap', tipusNev: 'Salary cap', tema: 'liga-nb1',
-      eloPontok: false },
+      eloPontok: false,
+      /* Az MLSZ EJFELT ir, ha a pontos kezdes meg nincs kituzve. Ez nem
+         valodi idopont: oraval kiirni hamis lenne. Az FPL ilyenkor nem ad
+         idopontot egyaltalan, tehat ott az ejfel valodi ora volna - ezert
+         liga-jellemzo, nem altalanos szabaly. */
+      ejfelHelyorzo: true },
     { id: 'pl', nev: 'PL', mappa: 'pl/', cim: 'PL draft fantasy',
       leiras: 'privát head-to-head · 10 csapat · 38 forduló',
       tipus: 'draft', tipusNev: 'Draft', tema: 'liga-pl',
-      eloPontok: true }
+      eloPontok: true, ejfelHelyorzo: false }
   ];
+  /* Kezdesi idopont emberi alakban. MINDKET liga ezt hasznalja: ket kulon
+     valtozat volt ra, es a masodik hibasan viselkedett a szelen - ures vagy
+     hibas ertekre "Invalid Date"-et, null-ra pedig egy kitalalt datumot
+     ("jan. 1. 00:00") irt ki. Amit nem ertunk, azt valtozatlanul adjuk
+     vissza: egy nyers idobelyeg a lapon kellemetlen, egy kitalalt datum
+     hazugsag.
+
+     Az ejfel-kezelest a liga donti el (`ejfelHelyorzo`), mert az az MLSZ
+     jelolese a ki nem tuzott meccsre. A datumot a SZOVEGBOL olvassuk ki,
+     nem a Date-bol: az ejfel mas idozonaban elozo napra csuszna at. */
+  function idoFmt(s, ligaId) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s || '');
+    if (!m) return s == null ? '' : String(s);
+    var l = liga(ligaId);
+    if (l && l.ejfelHelyorzo && m[4] === '00' && m[5] === '00')
+      return new Date(+m[1], +m[2] - 1, +m[3])
+               .toLocaleDateString('hu-HU', { month: 'short', day: 'numeric' })
+             + ' (időpont még nincs kitűzve)';
+    var d = new Date(s);
+    if (isNaN(d.getTime())) return String(s);
+    return d.toLocaleDateString('hu-HU', { month: 'short', day: 'numeric' }) + ' '
+         + d.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
+  }
+
   function liga(id) {
     for (var i = 0; i < LIGAK.length; i++) if (LIGAK[i].id === id) return LIGAK[i];
     return null;
@@ -2361,31 +2390,30 @@
      ekezet-fuggetlen kereses) - ha ott ujra megirodnanak, megint ket
      igazsag lenne belole. A kolstseg ~100 byte, a haszon az, hogy nem kell
      majd kettozni. */
-  global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played,
-                     accToggle: accToggle, accTable: accTable, accOrzo: accOrzo,
-                     LIGAK: LIGAK, liga: liga, navHTML: navHTML, renderNav: renderNav,
-                     UZENET: UZENET,
+    global.FunTasy = { create: create, esc: esc, fmt: fmt, played: played,
+                     idoFmt: idoFmt, accToggle: accToggle,
+                     accTable: accTable, accOrzo: accOrzo, LIGAK: LIGAK,
+                     liga: liga, renderNav: renderNav, UZENET: UZENET,
                      SZEMELYEK: SZEMELYEK, szemelyTar: szemelyTar,
-                     lablecHTML: lablecHTML, renderLablec: renderLablec,
-                     bontasMeccsSor: bontasMeccsSor,
-                     zarasLista: zarasLista, forduloLapozo: forduloLapozo,
-                     verzioOr: verzioOr,
+                     renderLablec: renderLablec,
+                     bontasMeccsSor: bontasMeccsSor, zarasLista: zarasLista,
+                     forduloLapozo: forduloLapozo, verzioOr: verzioOr,
                      valtoztatasLista: valtoztatasLista,
-                     profilHTML: profilHTML, profilFejHTML: profilFejHTML,
-                     jatekosKereso: jatekosKereso, ekezetlen: ekezetlen,
-                     profilNyitoHTML: profilNyitoHTML, profilNezo: profilNezo,
-                     kezdSzazalek: kezdSzazalek, KEZD_CIM: KEZD_CIM,
-                     kezdParHTML: kezdParHTML,
+                     profilHTML: profilHTML, jatekosKereso: jatekosKereso,
+                     profilNyitoHTML: profilNyitoHTML,
+                     profilNezo: profilNezo, kezdParHTML: kezdParHTML,
                      matchArticle: matchArticle,
                      articleDraftMode: articleDraftMode,
                      mergeArticles: mergeArticles, rovatNev: rovatNev,
-                     articleList: articleList, articleCardHTML: articleCardHTML,
-                     watchMagazine: watchMagazine,
-                     UJSAG_NEV: UJSAG_NEV, UJSAG_MOTTO: UJSAG_MOTTO,
-                     statusz: statusz, ujraLathatokor: ujraLathatokor,
+                     articleList: articleList,
+                     articleCardHTML: articleCardHTML,
+                     watchMagazine: watchMagazine, UJSAG_NEV: UJSAG_NEV,
+                     UJSAG_MOTTO: UJSAG_MOTTO, statusz: statusz,
+                     ujraLathatokor: ujraLathatokor,
                      eloFrissito: eloFrissito, taroltak: taroltak,
                      potKeretek: potKeretek, potKeretekUrit: potKeretekUrit,
                      lassuJelzo: lassuJelzo, allasHTML: allasHTML,
                      nezetVerem: nezetVerem, lekero: lekero,
-                     eloKereso: eloKereso, hibajelzo: hibajelzo, h2hNezo: h2hNezo };
+                     eloKereso: eloKereso, hibajelzo: hibajelzo,
+                     h2hNezo: h2hNezo };
 })(window);

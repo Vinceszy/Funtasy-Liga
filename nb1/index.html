@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=112">
+<link rel="stylesheet" href="../funtasy.css?v=113">
 </head>
 <body class="liga-nb1">
 <div class="wrap">
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=112"></script>
+<script src="../funtasy.js?v=113"></script>
 <script>
 // ======= KONFIGURÁCIÓ =======
 const MEMBERS = {
@@ -1110,16 +1110,9 @@ const lejartHelyorzo=s=>{
   const m=/^(\d{4})-(\d{2})-(\d{2})T00:00/.exec(s||'');
   return !!m && Date.now() > new Date(+m[1],+m[2]-1,+m[3],23,59,59).getTime();
 };
-const idoFmt=s=>{
-  const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s||'');
-  if(!m) return s;
-  if(m[4]==='00'&&m[5]==='00')
-    return new Date(+m[1],+m[2]-1,+m[3]).toLocaleDateString('hu-HU',{month:'short',day:'numeric'})
-           +' (időpont még nincs kitűzve)';
-  const d=new Date(s);
-  return d.toLocaleDateString('hu-HU',{month:'short',day:'numeric'})+' '
-         +d.toLocaleTimeString('hu-HU',{hour:'2-digit',minute:'2-digit'});
-};
+// A kozos retegbol: egy formazo, ket liga. Az ejfel-kezelest a liga
+// jellemzoje donti el (lasd funtasy.js LIGAK).
+const idoFmt=s=>FunTasy.idoFmt(s,'nb1');
 // Ugyanaz a mondat, mint a PL-oldalon: a kozos retegbol jon, es a liga
 // eloPontok tulajdonsaga dont rola. Az MLSZ a pontokat csak a meccs UTAN
 // rogziti, ezert itt nem szabad ugy fogalmazni, mintha a 0 azt jelentene,
