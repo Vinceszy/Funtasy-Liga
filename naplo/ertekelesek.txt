@@ -15,3 +15,8 @@ LEKERES: 2026-09-21 11:52 UTC | cikk-ertekelesek
 LEKERES: 2026-09-25 06:55 UTC | cikk-ertekelesek
   ertekeles osszesen: 0
   meg nem ertekelt senki
+
+======================================================================
+LEKERES: 2026-10-01 00:00 UTC | cikk-ertekelesek
+  ertekeles osszesen: 0
+  meg nem ertekelt senki
