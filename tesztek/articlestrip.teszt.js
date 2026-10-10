@@ -161,6 +161,14 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   // fordulo keretei meg nem erkeztek meg, ez a fajl a 8. fordulot tartotta,
   // es a teszt veletlenul zold volt.
   await jsonAtir(p, '**/squads.json*', j => ({ ...j, squads: {} }));
+  // ES az EREDMENYT is: beharangozot csak olyan fordulohoz mutatunk, aminek
+  // meg nincs allasa. Amint a fordulo elindult, a menetrendben megjelent az
+  // ideiglenes pontszam, a lap - helyesen - a lejatszott agra ment, ahol
+  // nincs sav. Ugyanaz a fogas, amit a forduloelott-teszt is hasznal.
+  await jsonAtir(p, '**/results.json*', j => {
+    (j.schedule[String(BEHARANGOZO_R)] || []).forEach(m => { m[2] = null; m[3] = null; });
+    return j;
+  });
   await p.goto(BASE + 'nb1/');
   await p.waitForSelector('#table tr');
   await p.waitForFunction(() => typeof ARTICLES !== 'undefined' && ARTICLES !== null,
