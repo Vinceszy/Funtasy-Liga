@@ -1,0 +1,49 @@
+======================================================================
+MERES: a 9. NB1 fordulo allapota az MLSZ szerint
+ido: 2026-10-10T15:10:24Z
+======================================================================
+
+1) VERSENY + FORDULOK (competitions?include=rounds,current_round)
+   HTTP 200
+   current_round: szam=9 id=93
+   current_round nyersen: {"id": 93, "round_number": 9, "start_at": "2026-09-21T10:00:00+02:00", "end_at": "2026-10-12T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-10-10T12:45:00+02:00"}
+   a fordulo-objektumok mezoi: ['closed_transfers_at', 'end_at', 'id', 'is_transfers_closed', 'round_number', 'start_at']
+    7. fordulo: {"id": 89, "round_number": 7, "start_at": "2026-08-31T10:00:00+02:00", "end_at": "2026-09-07T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-09-03T17:30:00+02:00"}
+    8. fordulo: {"id": 91, "round_number": 8, "start_at": "2026-09-07T10:00:00+02:00", "end_at": "2026-09-21T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-09-18T17:30:00+02:00"}
+    9. fordulo: {"id": 93, "round_number": 9, "start_at": "2026-09-21T10:00:00+02:00", "end_at": "2026-10-12T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-10-10T12:45:00+02:00"}
+
+2) KERET-VEGPONT a 8. es a 9. fordulora, MINDEN szakvezetore
+   (a gyujto csak az ELSO szakvezetot kerdezi meg, es a 403-bol
+    'piaczaras elott'-ra kovetkeztet - itt latszik, egysegesek-e)
+   8. fordulo | Katyul     -> HTTP 200, 15 jatekos
+   8. fordulo | Bence      -> HTTP 200, 15 jatekos
+   8. fordulo | Sámsi      -> HTTP 200, 15 jatekos
+   8. fordulo | Vince      -> HTTP 200, 15 jatekos
+   8. fordulo | Bazsa      -> HTTP 200, 15 jatekos
+   8. fordulo | Csongi     -> HTTP 200, 15 jatekos
+   8. fordulo | Csendi     -> HTTP 200, 15 jatekos
+   8. fordulo | Ádám       -> HTTP 200, 15 jatekos
+   9. fordulo | Katyul     -> HTTP 200, 15 jatekos
+   9. fordulo | Bence      -> HTTP 200, 15 jatekos
+   9. fordulo | Sámsi      -> HTTP 200, 15 jatekos
+   9. fordulo | Vince      -> HTTP 200, 15 jatekos
+   9. fordulo | Bazsa      -> HTTP 200, 15 jatekos
+   9. fordulo | Csongi     -> HTTP 200, 15 jatekos
+   9. fordulo | Csendi     -> HTTP 200, 15 jatekos
+   9. fordulo | Ádám       -> HTTP 200, 15 jatekos
+
+3) RANGLISTA round_statistics (van-e egyaltalan 9. fordulos sor)
+   Katyul     fordulok: {"9": 0, "8": 86.63}
+   Bence      fordulok: {"9": 0, "8": 73.25}
+   Sámsi      fordulok: {"9": 0, "8": 67.75}
+   Vince      fordulok: {"9": 0, "8": 76.88}
+   Bazsa      fordulok: {"9": 0, "8": 72.63}
+   Csongi     fordulok: {"9": 0, "8": 77.39}
+   Csendi     fordulok: {"9": 0, "8": 71.63}
+   Ádám       fordulok: {"9": 0, "8": 51.5}
+
+4) A 9. FORDULO MECCSEI (a keret-vegpont games-agan keresztul)
+   HTTP 200
+   kulonbozo meccs: 0
+
+======================================================================
