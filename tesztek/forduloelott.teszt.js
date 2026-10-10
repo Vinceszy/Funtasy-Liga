@@ -96,7 +96,22 @@ const JOVOBELI = 20;     // ehhez nincs mentett keret
   await p2.waitForSelector('#mNext .match', { timeout: 20000 });
   await p2.waitForFunction(() => typeof SQUAD_FILE !== 'undefined' && SQUAD_FILE !== null,
                            null, { timeout: 20000 }).catch(() => {});
-  await p2.waitForTimeout(600);
+  // ALLAPOTRA varunk, nem fix idore. A keret-fajl beerkezese utan meg hatra
+  // van az `eloKeretbol()` szamolasa es a lista ujrarajzolasa; parhuzamos
+  // terheles alatt ez tobb, mint 600 ms, es a teszt a kotojeles KOZTES
+  // allapotot merte - nem termekhiba, hanem fix varakozas. Ha a merheto
+  // allapot nem all fenn (a kovetkezo fordulohoz meg nincs keret), nincs
+  // mire varni, es a lenti ag ugyis kihagyja a merest.
+  await p2.waitForFunction(() => {
+    const r = T.rNext;
+    const merheto = !!(r && SQUAD_ROUND === r && SQUAD_FILE
+                       && Object.keys(SQUAD_FILE).length
+                       && (SCHEDULE[r] || []).length
+                       && (SCHEDULE[r] || []).every(m => m[2] == null));
+    if (!merheto) return true;
+    return [...document.querySelectorAll('#mNext .match .score')]
+      .some(x => /\d/.test(x.textContent));
+  }, null, { timeout: 20000 }).catch(() => {});
   const w = await p2.evaluate(() => {
     const r = T.rNext;
     return {

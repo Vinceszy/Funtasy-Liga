@@ -1,4 +1,8 @@
-const { BASE, jo, cim, inditas, vege } = require('./kozos');
+const { BASE, jo, cim, inditas, vege, jsonAtir, apiKi } = require('./kozos');
+
+// Az a fordulo, amelyikre van beharangozonk - itt mondjuk ki egyszer, hogy
+// az elofeltetel (nincs hozza keret) es a megnyitott meccs ne csuszhasson szet.
+const BEHARANGOZO_R = 9;
 // The round preview / round summary strip on the match page.
 //
 // The one thing this strip must never do is get in the way of the numbers.
@@ -126,20 +130,47 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   // ---- beharangozó olyan fordulón, ahol még nincs keret ----
   const p = await br.newPage({ viewport: { width: 1000, height: 900 } });
   p.on('pageerror', e => hibak.push('BEHARANGOZÓ: ' + e.message));
-  for (const m of ['**mlsz.hu/**', '**corsproxy.io/**', '**allorigins**'])
-    await p.route(m, r => r.abort());
-  // a round the collector has not archived: there is no squad file for it
+  // A KOZOS apiKi-t hasznaljuk, nem sajat listat: a sajat harom hosztot
+  // sorolt fel, a lekero ut-listaja viszont kilencet - a sajat Worker
+  // (/tarolt) kimaradt belole, es azon keresztul mar a 9. fordulo ELO
+  // allasa is bejott. Attol a lap - helyesen - az elo nezetre valtott, ahol
+  // nincs sav, es a teszt ugy bukott, hogy a termekben semmi nem valtozott.
+  await apiKi(p);
+  // AZ ELOFELTETELT KIMONDJUK, nem a repo pillanatnyi allapotabol orokoljuk:
+  // ebben a fordulóban NINCS keret. A fordulonkenti fajlt elvagjuk, de az
+  // onmagaban keves - a lap onnan a TELJES elozmenyre esik vissza
+  // (loadHistory). Amig a 9. fordulo keretei meg nem erkeztek meg, a teszt
+  // veletlenul zold volt; a piaczaraskor beerkeztek, es ez az allitas bukott,
+  // holott a termekben semmi nem valtozott.
   await p.route('**/keretek/*.json*', r => r.fulfill({ status: 404, body: '' }));
+  await jsonAtir(p, '**/squad_history.json*', j => {
+    delete (j.rounds || {})[String(BEHARANGOZO_R)];
+    return j;
+  });
+  // A MECCSEKET IS kivesszuk: beharangozo = a fordulo meg nem kezdodott el.
+  // Amint a gyujto beirta a 9. fordulo meccseit, az egyik epp ment, es a lap
+  // - helyesen - a "meccs meg tart" uzenetre valtott, ahol nincs sav. A
+  // teszt ettol bukott, holott a termekben semmi nem valtozott: csak a
+  // kimondatlan elofeltetel (nincs meg meccs ehhez a fordulohoz) szunt meg.
+  await jsonAtir(p, '**/meccsek.json*', j => {
+    delete (j.rounds || {})[String(BEHARANGOZO_R)];
+    return j;
+  });
+  // ES a squads.json-t is: ez a fordulo keret-adatanak HARMADIK forrasa (az
+  // `eloKeretbol` ebbol szamol elo allast, halozat nelkul). Amig a 9.
+  // fordulo keretei meg nem erkeztek meg, ez a fajl a 8. fordulot tartotta,
+  // es a teszt veletlenul zold volt.
+  await jsonAtir(p, '**/squads.json*', j => ({ ...j, squads: {} }));
   await p.goto(BASE + 'nb1/');
   await p.waitForSelector('#table tr');
   await p.waitForFunction(() => typeof ARTICLES !== 'undefined' && ARTICLES !== null,
                           null, { timeout: 20000 });
-  const [bh, bv] = await p.evaluate(async () => {
+  const [bh, bv] = await p.evaluate(async r => {
     const j = await (await fetch('../articles.json')).json();
-    return Object.keys(j.leagues.nb1['9'].preview)[0].split('|');
-  });
+    return Object.keys(j.leagues.nb1[r].preview)[0].split('|');
+  }, String(BEHARANGOZO_R));
   cim('BEHARANGOZÓ (nincs még keret)');
-  await p.evaluate(([a, b]) => showMatchRound(a, b, 9), [bh, bv]);
+  await p.evaluate(([a, b, r]) => showMatchRound(a, b, +r), [bh, bv, String(BEHARANGOZO_R)]);
   await p.waitForSelector('#mBody .artstrip');
   jo(await p.evaluate(() => document.querySelector('#mBody .artstrip').open),
      'keret nélküli fordulón a beharangozó NYITVA jön (nincs mit eltakarnia)');

@@ -16,7 +16,12 @@ const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
 // Az idozito a tesztben 400 ms, hogy a sor ne varjon perceket: a keszlet a
 // FunTasy.eloFrissito masodik parametere.
 const KOZ = 400;
-const allas = p => p.evaluate(() => [...document.querySelectorAll('.match .score')]
+// CSAK AZ ELO SOROK. A `.match .score` az ARCHIV eredmenyeket is visszaadja,
+// azokban pedig ott all barmilyen szam - a 9. fordulo beerkezesevel az egyik
+// lezart meccs "44 : 33"-ra valtozott, es a "mar nincs 44" allitas ettol
+// bukott, holott az elo sor rendesen atvaltott. Ugyanaz a csapda, amit a
+// taroltallas-teszt mar megtanult: a szoveges illesztes mast talal.
+const allas = p => p.evaluate(() => [...document.querySelectorAll('.match.elo .score')]
   .map(x => x.textContent.trim()).join(' '));
 
 (async () => {

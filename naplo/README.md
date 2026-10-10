@@ -22,6 +22,7 @@ vonatkoznak. A harmadik a `kele-janek.md`: a heti rovat hangja, és az, mit nem 
 
 | fájl | mit mért | fő tanulság |
 |---|---|---|
+| `nb1-fordulo-allas.txt` + `nb1-fordulo-allas-meres.py` | mi tortenik a 9. forduloval, amirol a gyujto hetekig csak annyit irt, hogy „a keretek meg nem elerhetok (piaczaras elott)” | a kovetkeztetes IGAZ volt: a fordulo haromhetes (a valogatott szunet miatt), es a piaca csak a vegen zart. A fordulo-objektumban ott all a `closed_transfers_at` es az `is_transfers_closed` — ezekbol **elore tudhato**, mikor lesz eloszor lekerheto a keret, a gyujto viszont nem nezi oket, csak a 403-at. A meres azt is kimutatta, hogy a gyujto egyetlen szakvezetobol altalanosit: a probat az elso emberre futtatja, es a valaszat ervenyesnek veszi mind a nyolcra (itt egysegesek voltak) |
 | `fpl-allapot.txt` + `fpl-figyelo.py` | az FPL forduló-jelzői negyedóránként | nincs napi zárás; a bónusz a forduló lockdownjakor véglegesedik (2026-08-25, 08:03–08:23 UTC, két lépésben) |
 | `fpl-percek.txt` + `fpl-perc-meres.py` | játékos-percek élő meccs alatt, 2 percenként | a fixtures `minutes` mindig 0; a meccsóra a játékosok perceinek maximuma; a lecserélt játékos perce befagy; ~3 perc adatkésés |
 | `fpl-cserek.txt` + `fpl-csere-meres.py` | a forduló végi automatikus cserék | az FPL átírja a pick `position`-jét és külön `subs` listát is ad; a zárás jelzője a `current_event_finished` |

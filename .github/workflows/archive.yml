@@ -2,7 +2,25 @@ name: Adatok frissítése
 
 on:
   schedule:
-    - cron: '17 */3 * * *'
+    # MECCSNAPON ORANKENT, egyebkent haromoránként.
+    #
+    # Mert megmertuk (1-8. fordulo, 47 meccs): az NB1 csutortoktol hetfoig
+    # jatszik - vasarnap 43%, szombat 32%, pentek 17%, hetfo 6%, csutortok 2%
+    # -, keddre es szerdara EGYETLEN meccs sem esett. A kezdesek 14:00 es
+    # 20:00 helyi ido koze esnek, a piaczaras pedig nagyjabol ket oraval az
+    # adott fordulo elso meccse ele.
+    #
+    # Miert szamit: a gyujto a piaczaras pillanataban tud eloszor keretet
+    # kerni (addig a vegpont 403-at ad). A 9. fordulo piaca szombat 12:45-kor
+    # zart, es a kovetkezo utemezett futas nem jott meg - a 9. fordulo keretei
+    # negy es fel oran at nem kerultek ki.
+    #
+    # Es mert ezt is megmertuk: a GitHub az utemezett inditasok tobb mint
+    # felet ELDOBJA. A '17 */3' napi nyolcat igert, a valosag napi 3-4 volt,
+    # rendszeres 7-9 oras lyukakkal. Az orankenti utemezes sem ad 24 futast -
+    # azt adja, hogy egy eldobott inditas egy orat keruljon, ne harmat.
+    - cron: '17 * * * 4,5,6,0,1'
+    - cron: '17 */3 * * 2,3'
   workflow_dispatch:
 
 permissions:

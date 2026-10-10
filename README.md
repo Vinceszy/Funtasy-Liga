@@ -2,7 +2,7 @@
 
 Privát head-to-head liga követő oldalak baráti ligákhoz: a **fantasy.mlsz.hu** (MLSZ NB I
 Fantasy) és az **FPL Draft** adataira építve. Statikus oldal GitHub Pages-en: nincs build,
-nincs függőség. Az adatgyűjtés **teljesen automatikus** (GitHub Actions, 3 óránként) — a
+nincs függőség. Az adatgyűjtés **teljesen automatikus** (GitHub Actions: meccsnapon óránként, egyébként 3 óránként) — a
 böngészős könyvjelző már csak tartalék.
 
 | Oldal | Cím |
@@ -35,7 +35,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
   - [Mobil](#mobil)
 - [2. Fájlok](#2-fájlok)
 - [3. Hogyan frissül az adat](#3-hogyan-frissül-az-adat)
-  - [Minden automatikusan megy (GitHub Actions, 3 óránként)](#minden-automatikusan-megy-github-actions-3-óránként)
+  - [Minden automatikusan megy (GitHub Actions, meccsnapon óránként)](#minden-automatikusan-megy-github-actions-meccsnapon-óránként)
   - [Az FPL Draft adatai (3 óránként, draft.yml)](#az-fpl-draft-adatai-3-óránként-draftyml)
   - [Élő frissítés a böngészőből (mindkét oldal)](#élő-frissítés-a-böngészőből-mindkét-oldal)
   - [Az utolsó ismert állás — „ha valaki már lekérdezte, lássam azt"](#az-utolsó-ismert-állás--ha-valaki-már-lekérdezte-lássam-azt)
@@ -524,7 +524,7 @@ teljes képernyős, ragadós × gombbal.
 | `draft_squads.json` | A jelenlegi FPL-keretek (tulajdonlás): `{liga_id: [játékos_id,...]}`. |
 | `draft_history.json` | Fordulónkénti FPL-keretek pontokkal (`{rounds:{gw:{liga_id:[{e,b,pts},...]}}, kesz:[...]}`) — a GW1 indulásától gyűlik. A **`veglegesek`** lista mondja meg, mely RÉGI fordulók véglegesek: azokat a gyűjtő nem kéri le többé. Az aktuális fordulót minden körben lekéri, a zárás után is (lásd „3/b. A lezárás”). |
 | `keretek/<forduló>.json` | Egy forduló keretei külön fájlban (`{round, squads}`). A meccs-nézet **ezt** tölti le, nem a teljes előzményt. |
-| `.github/workflows/archive.yml` | 3 óránként futó munkafolyamat: `collect.py` + commit. |
+| `.github/workflows/archive.yml` | A gyűjtő munkafolyamata: `collect.py` + commit. **Meccsnapon (csütörtök–hétfő) óránként, kedden-szerdán 3 óránként** — lásd *Miért óránként a meccsnapokon*. |
 | `.github/workflows/draft.yml` | 3 óránként futó (és kézzel is indítható) munkafolyamat: `collect_draft.py` + commit. |
 | `.github/workflows/naplo-meres.yml` | **Kézi mérésfuttató**: egy `naplo/*.py`-t futtat Actionsből (a fejlesztői környezet hálózata minden külső forrást blokkol), és amit a mérés kiírt, azt a megadott ágra commitolja. Bemenetei: `szkript`, `branch`, `kornyezet` (soronként egy `NÉV=érték`, pl. `HARVEST_EVENT=5`). **Minden méréshez ez az egy munkafolyamat van** — mérésenként külön fájl nem készül: abból tizennégy majdnem azonos példány lett, bennük három elgépelt `git add` úttal, amitől a mérés eredménye némán elveszett. |
 | `tartalek/` | Minden, ami nem kell a napi működéshez: a tartalék könyvjelző (`GOMB-bookmarklet.txt`, forrása és építője), az útmutatója (`KERET-MENTES.md`) és az elavult kézi pótlás leírása (`BACKFILL.md`). A weboldal és a gyűjtők semmit nem olvasnak innen. |
@@ -533,7 +533,7 @@ teljes képernyős, ragadós × gombbal.
 
 ## 3. Hogyan frissül az adat
 
-### Minden automatikusan megy (GitHub Actions, 3 óránként)
+### Minden automatikusan megy (GitHub Actions, meccsnapon óránként)
 
 Az `archive.yml` a `collect.py`-t futtatja, ami **mindent** frissít, teendő nélkül:
 
@@ -570,6 +570,32 @@ Az `archive.yml` a `collect.py`-t futtatja, ami **mindent** frissít, teendő n�
 5. **Keresztellenőrzés**: a keretekből számolt pontszámot összeveti a hivatalossal. Ha
    eltér, **nem jelzést ír, hanem javít**: újra lekéri a hivatalos értéket az adott
    fordulóra, és azt vezeti át.
+
+#### Miért óránként a meccsnapokon (mérve)
+
+A `collect.py` **a piaczárás pillanatában tud először keretet kérni** — addig a
+keret-végpont 403-at ad, és a gyűjtő jogosan hagyja ki a fordulót. A piac nagyjából két
+órával a forduló első meccse elé zár. Ha az ezt követő futás kimarad, a forduló keretei
+addig nem kerülnek ki, amíg a következő meg nem jön.
+
+Elő is állt: a 9. forduló piaca szombat délben zárt, a következő ütemezett futás nem
+jött meg, és a nyolc keret **négy és fél órán át** nem került ki — a lapon közben az
+állt, hogy „Naprakész". A mérés nyersen: `naplo/nb1-fordulo-allas.txt`.
+
+Két mérés döntötte el az új ütemezést:
+
+| mit | mi jött ki |
+|---|---|
+| az NB1 kezdései az 1–8. fordulóból (47 meccs) | vasárnap 43%, szombat 32%, péntek 17%, hétfő 6%, csütörtök 2% — **keddre és szerdára egyetlen meccs sem esett**; a kezdések 14:00 és 20:00 helyi idő közé esnek |
+| a `17 */3` ütemezés tényleges teljesülése | a napi nyolc ígért futásból **3–4** lett, rendszeres **7–9 órás** lyukakkal — a GitHub az ütemezett indítások több mint felét eldobja |
+
+Ezért **csütörtöktől hétfőig óránként**, kedden-szerdán marad a három óra. Az óránkénti
+ütemezés nem ad 24 futást — azt adja, hogy **egy eldobott indítás egy órát kerüljön, ne
+hármat**. A kedd-szerda azért marad ritka, mert ott nincs mit elkapni.
+
+A `draft.yml` (PL) egyelőre marad három óránként: az FPL-nél a forduló **határideje** a
+kapu, nem a nap, és a tárolt menetrendben nincs kezdési idő, tehát ugyanez a mérés ott
+nem elvégezhető.
 
 ### Az FPL Draft adatai (3 óránként, draft.yml)
 
@@ -1196,9 +1222,11 @@ Három egymást kiegészítő fogása van:
 
 1. **Körbeforgó újraellenőrzés.** A ranglista-végpont alapból csak a két legfrissebb
    fordulót adja vissza, ezért minden futás **négy régi fordulót** kér le újra
-   (`ellenorzendo`), a három óránkénti ciklushoz igazított kezdőponttal. Napi nyolc futás
-   × négy forduló = 32 ellenőrzés, a lista pedig legfeljebb 31 elemű (az utolsó két
-   fordulót amúgy is minden futás lekéri), tehát **egy napon belül** körbeér. A lekért
+   (`ellenorzendo`), és az ablak **három óránként lép egyet** — nem futásonként. Napi nyolc
+   ablak × négy forduló = 32 ellenőrzés, a lista pedig legfeljebb 31 elemű (az utolsó két
+   fordulót amúgy is minden futás lekéri), tehát **egy napon belül** körbeér. Az óránkénti
+   futás ezen nem ront: ugyanaz a négy forduló jön háromszor, viszont nő az esélye, hogy
+   minden ablakra jusson legalább egy futás — eldobott indításnál különben kimaradna. A lekért
    érték felülírja a tároltat (`setdefault` helyett értékadás): a végpont az igazság.
 2. **A javított forduló keretei is frissülnek.** Ha egy régi forduló pontszáma változott,
    a hozzá tartozó keret-pillanatkép is elavult, ezért a gyűjtő azt is újra lekéri
