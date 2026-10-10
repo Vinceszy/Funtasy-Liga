@@ -1,5 +1,5 @@
 {
-"updated": "2026-09-20T20:54:48Z",
+"updated": "2026-10-10T20:05:56Z",
 "schedule": {
 "1": [
 [
@@ -213,26 +213,26 @@
 [
 "Bazsa",
 "Csongi",
-null,
-null
+20,
+40.25
 ],
 [
 "Katyul",
 "Bence",
-null,
-null
+21.5,
+24.75
 ],
 [
 "Csendi",
 "Sámsi",
-null,
-null
+26.88,
+23.75
 ],
 [
 "Vince",
 "Ádám",
-null,
-null
+21.5,
+25.63
 ]
 ],
 "10": [
@@ -860,5 +860,7 @@ null
 ]
 ]
 },
-"provisional": []
+"provisional": [
+9
+]
 }
