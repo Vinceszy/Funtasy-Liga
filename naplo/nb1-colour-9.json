@@ -52,6 +52,51 @@
      "csapat": "ÚJPEST"
     }
    ]
+  },
+  "ETO 0-1 PAFC": {
+   "helyszin": "Győr, ETO Stadion",
+   "nezo": 4745,
+   "jatekvezeto": "Káprály Mihály",
+   "golok": [
+    {
+     "perc": 11,
+     "ki": "Lukács Dániel",
+     "csapat": "PAFC"
+    }
+   ]
+  },
+  "ZTE 5-1 NYÍREGY": {
+   "helyszin": "Zalaegerszeg, ZTE Aréna",
+   "jatekvezeto": "Zimmermann",
+   "golok": [
+    {
+     "perc": 10,
+     "ki": "Katona Mátyás",
+     "csapat": "NYÍREGY"
+    },
+    {
+     "perc": 49,
+     "ki": "Machado"
+    },
+    {
+     "perc": 54,
+     "ki": "Amato",
+     "mod": "11-es"
+    },
+    {
+     "perc": 80,
+     "ki": "Krevszun",
+     "mod": "11-es"
+    },
+    {
+     "perc": "90+1",
+     "ki": "Arthur Henrique"
+    },
+    {
+     "perc": "90+5",
+     "ki": "Arthur Henrique"
+    }
+   ]
   }
  },
  "allitasok": [
@@ -222,6 +267,126 @@
    "mondat": "a 2022–2023-as idény végén esett ki a Honvéddal, most a Bozsik Arénában állt kapuba újpestiként",
    "horgony": "article_only",
    "meccs": "HONVÉD 1-1 ÚJPEST"
+  },
+  {
+   "jatekos": "Lukács Dániel",
+   "perc": 11,
+   "tag": "goal",
+   "mondat": "a tizenegyedik percben szerzett vezetést, miután a győri védelem elcsúszott",
+   "horgony": "record",
+   "meccs": "ETO 0-1 PAFC"
+  },
+  {
+   "jatekos": "Dárdai Palkó",
+   "perc": null,
+   "tag": "big_miss",
+   "mondat": "kapufát lőtt a gól előtt, majd a harminckettedikben középről, tizenhat méterről célzott rosszul",
+   "horgony": "article_only",
+   "meccs": "ETO 0-1 PAFC"
+  },
+  {
+   "jatekos": "Lukács Dániel",
+   "perc": 15,
+   "tag": "big_miss",
+   "mondat": "nagy ziccerben gurította kapu mellé a labdát",
+   "horgony": "article_only",
+   "meccs": "ETO 0-1 PAFC"
+  },
+  {
+   "jatekos": "Németh András",
+   "perc": 34,
+   "tag": "big_miss",
+   "mondat": "két perccel később szintén kihagyott egy ziccert",
+   "horgony": "article_only",
+   "meccs": "ETO 0-1 PAFC"
+  },
+  {
+   "jatekos": "Harutyunyan Georgi",
+   "perc": 45,
+   "tag": "card",
+   "mondat": "sárga lapot kapott a félidő végén",
+   "horgony": "event",
+   "meccs": "ETO 0-1 PAFC"
+  },
+  {
+   "jatekos": "Orján Roland",
+   "perc": 89,
+   "tag": "card",
+   "mondat": "a nyolcvankilencedikben kapott sárgát",
+   "horgony": "event",
+   "meccs": "ETO 0-1 PAFC"
+  },
+  {
+   "jatekos": null,
+   "perc": null,
+   "tag": "match_picture",
+   "mondat": "a felcsútiak 4–4–2-es védekező hadrendben zárták a területeket, az öreguras győri támadások nem jutottak el sehova",
+   "horgony": "article_only",
+   "meccs": "ETO 0-1 PAFC"
+  },
+  {
+   "jatekos": null,
+   "perc": null,
+   "tag": "history",
+   "mondat": "a Puskás Akadémia a győzelemmel három pont előnnyel állt a tabella élére",
+   "horgony": "article_only",
+   "meccs": "ETO 0-1 PAFC"
+  },
+  {
+   "jatekos": "Katona Mátyás",
+   "perc": 10,
+   "tag": "goal_manner",
+   "mondat": "húsz méterről, a jobbösszekötő helyéről látványosan csavarta a bal felső sarokba a szabadrúgást",
+   "horgony": "record",
+   "meccs": "ZTE 5-1 NYÍREGY"
+  },
+  {
+   "jatekos": "Arthur Henrique",
+   "perc": 89,
+   "tag": "sub",
+   "mondat": "a nyolcvankilencedik percben állt be Babos helyére",
+   "horgony": "record",
+   "meccs": "ZTE 5-1 NYÍREGY"
+  },
+  {
+   "jatekos": "Arthur Henrique",
+   "perc": "90+5",
+   "tag": "goal",
+   "mondat": "a hosszabbításban kétszer is betalált",
+   "horgony": "record",
+   "meccs": "ZTE 5-1 NYÍREGY"
+  },
+  {
+   "jatekos": "Benczenleitner Barna",
+   "perc": 57,
+   "tag": "sub",
+   "mondat": "az ötvenhetedik percben lecserélték",
+   "horgony": "event",
+   "meccs": "ZTE 5-1 NYÍREGY"
+  },
+  {
+   "jatekos": "Hős Zsombor",
+   "perc": 57,
+   "tag": "sub",
+   "mondat": "ugyanabban a percben őt is lehozták",
+   "horgony": "event",
+   "meccs": "ZTE 5-1 NYÍREGY"
+  },
+  {
+   "jatekos": null,
+   "perc": null,
+   "tag": "match_picture",
+   "mondat": "a térfélcsere után a hazaiak öt perc alatt fordítottak, a második félidőben öt gól esett",
+   "horgony": "article_only",
+   "meccs": "ZTE 5-1 NYÍREGY"
+  },
+  {
+   "jatekos": null,
+   "perc": null,
+   "tag": "history",
+   "mondat": "a kezdő sípszó előtt ez a két csapat mutatta a bajnokság két leggyengébb gólszerzését",
+   "horgony": "article_only",
+   "meccs": "ZTE 5-1 NYÍREGY"
   }
  ]
 }
