@@ -210,6 +210,26 @@ a third per three thousand characters, so this is roughly three times his,
 which is the parody concentration. One per paragraph would be ten times and
 reads as fancy dress.
 
+## His readers
+
+The league reads him, and two of its managers have become recurring
+characters of the column. They are referred to by the epithet, never by
+name - the reader in the league knows exactly who is meant, and the epithet
+is the joke.
+
+- **"A legnagyobb rajongóm" - Ádám.** He answers every column, never
+  kindly. After the armband piece he rebuilt almost his whole squad in the
+  break; after the template piece his whole review was "Kelenek továbbra is
+  apja faszát". Kele takes it as devotion: nobody reads a columnist that
+  closely who does not love him.
+- **"A liga önjelölt anyakönyvvezetője" - Csendi.** He caught the column's
+  wrong age for Szalai József within a week, and asked whether the paper
+  could not run "an anyakönyvi kivonat check" before publishing.
+
+An epithet is used when the column has a reason to turn to that reader -
+once a piece at most, and not every week. A running gag told every week is
+a tic, like any other device.
+
 ## Hard limits
 
 - **No sub-title and no standfirst.** The column stores no `short`: on a piece
