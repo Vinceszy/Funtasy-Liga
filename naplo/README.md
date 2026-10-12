@@ -10,19 +10,26 @@ a fejlesztői környezet hálózata minden külső forrást blokkol, ezért Acti
 futnak. Paramétert a `kornyezet` bemenet ad át (`NÉV=érték` soronként).
 
 A fordulónkénti **kitöltött szín-táblázat** is itt áll (`nb1-colour-<forduló>.json`):
-soronként egy állítás `{játékos, perc, tag, mondat, horgony, meccs}` alakban. Az
+soronként egy állítás `{jatekos, perc, tag, mondat, horgony, meccs}` alakban. Az
 írások ebből készülnek, nem a cikkek szövegéből — így minden mondat visszakereshető,
-és a horgony dönti el, hogy tényként, hivatkozva vagy sehogy nem mondható ki. A
-módszer egy helyen: `round-pipeline.md`.
+és a horgony dönti el, hogy kimondható-e (tényként) vagy kimarad; forrásra a cikk
+soha nem hivatkozik, csak egy szakvezető saját szavai állnak idézetként.
 
-Itt van három **szabály-dokumentum** is, nem mérés: a `summary-voice.md` (hogyan
-szólhat egy meccsről szóló szöveg) és a `colour-taxonomy.md` (milyen tényt
-nevezünk színnek, és melyik forrásból jöhet). Ezek a Nemzethy Sport írásaira
-vonatkoznak. A harmadik a `kele-janek.md`: a heti rovat hangja, és az, mit nem csinálhat — nem párharchoz tartozik, hanem a fordulóhoz.
+Minden cikk egy paranccsal kezdődik: `python3 naplo/cikk-elott.py <nb1|pl>
+<forduló> <summary|preview|column>` — kiírja a szabályokat, az elhasznált anyagot és
+a forduló adatait. A módszer egy helyen: `round-pipeline.md`.
+
+Itt vannak a Nemzethy Sport **szabály-dokumentumai** is, nem mérések: a
+`round-pipeline.md` (a módszer: mi fut először, honnan jön az adat, mi a sorrend), a
+`summary-voice.md` (hogyan szól az összefoglaló és a beharangozó), a
+`colour-taxonomy.md` (milyen tényt nevezünk színnek, és melyik forrásból jöhet), és a
+`kele-janek.md` (a heti rovat hangja, és mit nem csinálhat — nem párharchoz tartozik,
+hanem a fordulóhoz).
 
 | fájl | mit mért | fő tanulság |
 |---|---|---|
 | `nb1-fordulo-allas.txt` + `nb1-fordulo-allas-meres.py` | mi tortenik a 9. forduloval, amirol a gyujto hetekig csak annyit irt, hogy „a keretek meg nem elerhetok (piaczaras elott)” | a kovetkeztetes IGAZ volt: a fordulo haromhetes (a valogatott szunet miatt), es a piaca csak a vegen zart. A fordulo-objektumban ott all a `closed_transfers_at` es az `is_transfers_closed` — ezekbol **elore tudhato**, mikor lesz eloszor lekerheto a keret, a gyujto viszont nem nezi oket, csak a 403-at. A meres azt is kimutatta, hogy a gyujto egyetlen szakvezetobol altalanosit: a probat az elso emberre futtatja, es a valaszat ervenyesnek veszi mind a nyolcra (itt egysegesek voltak) |
+| `cikk-elott.py` | nem mérés: minden cikk első lépése | kiírja a cikkfajtához tartozó szabályfájlokat teljes terjedelemben, a kiadott írásokat, amiket az új nem ismételhet, és az adatot — beharangozóhoz a két szakvezető szezontükrét (különbségek, fordulós helyezés, forma, tabella, előző egymás elleni meccs; NB1-ben a legutóbbi keretek közös emberei és a valódi párosítások megléte), összefoglalóhoz a forduló harvestjét. Lezáratlan fordulóról összefoglalót, nem soron következőről beharangozót nem enged |
 | `nb1-parositas-10.txt` | kik játszanak egymással az NB I 10. fordulójában (a beharangozókhoz) | a fantasy API előre nem adja a jövőbeli meccseket (minden meccs-végpont 404, a keret-válasz zárásig 403), ezért a valódi programot két független webes forrásból vettük; mind a hat párosítás egyezik, az időpontok nem, ezért azokat nem használjuk |
 | `fpl-allapot.txt` + `fpl-figyelo.py` | az FPL forduló-jelzői negyedóránként | nincs napi zárás; a bónusz a forduló lockdownjakor véglegesedik (2026-08-25, 08:03–08:23 UTC, két lépésben) |
 | `fpl-percek.txt` + `fpl-perc-meres.py` | játékos-percek élő meccs alatt, 2 percenként | a fixtures `minutes` mindig 0; a meccsóra a játékosok perceinek maximuma; a lecserélt játékos perce befagy; ~3 perc adatkésés |

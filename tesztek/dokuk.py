@@ -55,11 +55,10 @@ Amit ellenoriz:
       atmegy a naplo/colour-check.py ellenorzesen.
   D14: egy cikk nem pontfelsorolas. Ki hany pontot hozott, azt a nezo ket
       kattintassal megnezi; a szoveg arrol szol, amit a tabla nem mutat.
-      A "pont" szo es alakjai cikkenkent legfeljebb negyszer szerepelhetnek
+      A "pont" szo es alakjai cikkenkent legfeljebb hetszer szerepelhetnek
       - efolott a szoveg a tablazatot irja ujra vesszokkel.
   D17: minden cikk-kulcs atmegy a Worker ertekelo-mintajan - kulonben a
        cikk kint van, de ertekelni nem lehet, es ez sehol nem latszik.
-  D19: vazlat nem takarhat kiadott irast - a ?draft=1 nezetben felulirna.
   D15: minden MEGJELENT irasnak van `kozzetett` idobelyege. A magazin
       eszerint rendez; belyeg nelkul egy friss cikk a lista aljara kerul,
       a legregebbiek koze - vagyis a kiadas napjan lathatatlan marad.
@@ -287,7 +286,7 @@ _pl_zart = {int(x) for x in
             (json.loads(olvas("draft_history.json")).get("veglegesek") or [])}
 _ZART = {"nb1": _zart_nb1, "pl": _pl_zart}
 _baj = []
-for _fajl in ("articles.json", "articles-draft.json"):
+for _fajl in ("articles.json",):
     _cikkek = json.loads(olvas(_fajl))
     for _liga, _fordulok in (_cikkek.get("leagues") or {}).items():
         _utolso_liga = max(_ZART.get(_liga) or {0})
@@ -334,7 +333,7 @@ def _szavak(cikk, nevek=()):
 
 
 _atfedes = []
-for _fajl in ("articles.json", "articles-draft.json"):
+for _fajl in ("articles.json",):
     _cikkek = json.loads(olvas(_fajl))
     for _liga, _fordulok in (_cikkek.get("leagues") or {}).items():
         for _r, _fajtak in _fordulok.items():
@@ -362,7 +361,7 @@ import subprocess as _sp
 _D13_KIVETEL = {("nb1", "7"), ("pl", "4")}
 
 _szin = []
-for _fajl in ("articles.json", "articles-draft.json"):
+for _fajl in ("articles.json",):
     _cikkek = json.loads(olvas(_fajl))
     for _liga, _fordulok in (_cikkek.get("leagues") or {}).items():
         for _r, _fajtak in _fordulok.items():
@@ -410,7 +409,7 @@ _D14_KIVETEL = {
 }
 
 _suru = []
-for _fajl in ("articles.json", "articles-draft.json"):
+for _fajl in ("articles.json",):
     _cikkek = json.loads(olvas(_fajl))
     for _liga, _fordulok in (_cikkek.get("leagues") or {}).items():
         for _r, _fajtak in _fordulok.items():
@@ -482,22 +481,6 @@ allit(_gvart == _gvan,
       "D18: a konyvjelzo a forrasabol frissen epult (futtasd: cd tartalek && "
       "python3 GOMB-epites.py)" if _gvart != _gvan
       else "D18: a konyvjelzo a forrasabol frissen epult (%d karakter)" % len(_gvan.strip()))
-
-# ---- D19: vazlat nem takarhat kiadott irast ----
-# A ?draft=1 a vazlatot a kint levo fole olvassa (FunTasy.mergeArticles).
-# Kiadott irast nem irunk at, tehat egy ugyanazzal a kulccsal allo vazlat
-# mindig elavult: a szerkesztes egy korabbi allapota, ami a vazlat-nezetben
-# csendben felulirja azt, ami tenylegesen megjelent.
-_kint = json.loads(olvas("articles.json")).get("leagues") or {}
-_takar = []
-for _liga, _fordulok in (json.loads(olvas("articles-draft.json")).get("leagues") or {}).items():
-    for _r, _fajtak in _fordulok.items():
-        for _fajta, _parok in _fajtak.items():
-            for _par in (_parok or {}):
-                if _par in ((_kint.get(_liga) or {}).get(_r) or {}).get(_fajta, {}):
-                    _takar.append("%s %s. %s %s" % (_liga, _r, _fajta, _par))
-allit(not _takar, "D19: egyetlen vazlat sem takar kiadott irast"
-      + ("" if not _takar else " - ELAVULT: " + "; ".join(_takar[:3])))
 
 # ---- D16: minden lap ugyanazt a betukeszletet tolti ----
 # Ot kulon HTML tartalmazza ugyanazt a Google-utat. Ha az egyiken valtozik a

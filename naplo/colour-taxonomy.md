@@ -25,9 +25,11 @@ report, not invented - and the contract under which such a claim may be publishe
 Input per match: the report's structured block (parsed with a regular expression, not a
 model), the report's prose, and our own event data from the collector.
 
-Output per claim: `{player, minute, tag, phrase, anchor}`.
+Output per claim: one row of the round's colour table, `{jatekos, perc, tag, mondat,
+horgony, meccs}` - player, minute, tag, the report's phrase, anchor, match.
 
-The anchor decides what may be done with the claim:
+The anchor decides what may be done with the claim (the full table, with `record` and
+`nyilatkozat`, is in `round-pipeline.md`, *What each layer may say*):
 
 - **`event`** - the (player, minute) pair matches an entry in the structured block *and*
   our own data. The claim may be stated as fact.

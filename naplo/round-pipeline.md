@@ -1,27 +1,65 @@
-# How a round summary is built: three layers, one table
+# How a Nemzethy Sport piece is made
 
-## Before a piece is written
+This file is the method for every piece the paper runs: the summary and the
+preview of a fixture, in both leagues, and Kele Janek's weekly column. The
+voice is in `summary-voice.md` (fixture pieces) and `kele-janek.md` (the
+column); what counts as colour, and how it may be stated, is in
+`colour-taxonomy.md`.
 
-A round piece is written from files, not from recollection. Two are read in
-full first, every time, because the faults they prevent are invisible from
-inside a draft:
+## The first step, every time
 
-- `summary-voice.md` - the voice, and what may not appear in a piece.
-- this file - the layers, the sources, the order, and which file holds what.
+    python3 naplo/cikk-elott.py <nb1|pl> <round> <summary|preview|column>
 
-Then the round's own data: `draft-round-harvest.py` or
-`round-colour-harvest.py` for a summary, `draft-preview-harvest.py` for a
-preview, plus the round's colour table. Every number in a piece comes from
-one of those, checked, not remembered.
+It refuses a summary of a round that is not final and a preview of a round
+that is not the coming one, then prints, in this order:
 
-The order of a round is fixed: the summary of the round that closed, then
-the preview of the one coming. Neither is published before the text has
-been approved.
+- the rule files **in full** - this file, the voice, and the colour taxonomy
+  for a summary. Printed rather than remembered: the faults they prevent are
+  invisible from inside a draft, and a rule read once in an earlier session
+  is a rule not applied;
+- the **spent** material - the published pieces the new one may not repeat:
+  the round's previews for a summary, the last round's summaries for a
+  preview, the league's last column for a column;
+- the **data** - the round harvest for a summary, the season mirror (and for
+  the NB1 the last-round squads) for a preview.
+
+Nothing is written before that output has been read, and every number in a
+piece comes from it or from the files it names - checked, not remembered.
+
+## The text goes to the conversation, then live
+
+A piece is shown in the conversation, whole, and changed there until it is
+approved. Only the approved text is written to `articles.json`, with its
+`kozzetett` stamp, and published. There is no draft file: half-finished
+text never enters the repository.
+
+## The preview: a season, not a snapshot
+
+The spine of a preview comes from the two managers' season, which the
+season mirror prints: the margin of every match, where each finished in
+every round's score order, the form (streaks, season best), the table, and
+the previous meeting. Look for the contrast or the crossing of the two
+lines - the man of the tight games against the man of the blowouts, the most
+consistent against the luckiest, two curves that crossed since the last
+meeting.
+
+The squads are middle material: what the two shared last round, who wore the
+armband, who sat. They are the state a manager decides from - the window is
+open until the first kick-off - so they are written as choices, never as the
+coming line-up (`summary-voice.md`).
+
+The real fixtures of the round are part of the data. For the NB1 the
+fantasy API does not serve future matches, so they are looked up - two
+independent sources, pairings only, kick-off times are not needed - and
+recorded in `naplo/nb1-parositas-<round>.txt` before writing. The Draft's
+own preview layer is `draft-preview-harvest.py`, which the first step runs.
+
+## The summary: three layers, one table
 
 A summary is assembled from **three layers**. Each has a different source, a
 different reliability, and a different licence for what may be written.
 
-## 1. Fantasy data - ours, exact
+### 1. Fantasy data - ours, exact
 
 Everything the collector stores: squads by round with role (captain, bench),
 weekly points per player, transfers with what they cost or gained (`guard`),
@@ -45,7 +83,7 @@ goalkeeper only for a goalkeeper. A Draft piece is therefore about the
 line-up, the week's waiver moves and, often, which bench man the auto-sub
 brought in - and never about a shared player.
 
-### Where the automatic substitutions are actually written down
+#### Where the automatic substitutions are actually written down
 
 `zarasok.json`, and nowhere else. The stored line-up for a finished round is
 the state **after** the close, so a starter who never took the field is no
@@ -60,7 +98,7 @@ the bench had nobody left who both played and fitted the formation, so the
 place stayed empty. That is a different story from a bench that scored and
 did not count, and the two must not be told as one.
 
-## 2. The match record - the report's structured block
+### 2. The match record - the report's structured block
 
 The Nemzeti Sport report of every NB1 match carries a formal block: line-ups
 with substitution minutes, scorers with minutes, cards, attendance, referee,
@@ -80,7 +118,7 @@ Run it from Actions (`.github/workflows/naplo-meres.yml`) - the development
 network blocks every external host. **The article text goes to the run log
 only, never into the repository.**
 
-## 2b. The Draft's own prose: the league's minute-by-minute commentary
+### 2b. The Draft's own prose: the league's minute-by-minute commentary
 
 The Premier League publishes its own text stream for every fixture - about a
 hundred entries a match, two dozen of which describe how a goal was scored,
@@ -98,7 +136,7 @@ the VAR events, the saves per goalkeeper, and the kick-off time.
 **The text goes to the run log only** - as with the Hungarian reports. Which
 is precisely why the next section is not optional.
 
-## 3. Colour - the filled table
+### 3. Colour - the filled table
 
 The prose of the report is the only source for how a goal was scored, what
 was disputed, which big chance was missed. The categories and the contract
@@ -107,12 +145,13 @@ and remembered, it is **written into a table**, one row per claim:
 
     {player, minute, tag, phrase, anchor}
 
-and the table is a file: `naplo/nb1-colour-<round>.json`. The article is
-written from the table, not from the article text - so every sentence can be
-traced back to a row, and a row carries the anchor that decides how it may
-be phrased (fact / attributed / dropped).
+and the table is a file: `naplo/<league>-colour-<round>.json`, its rows under
+`allitasok` with the keys `jatekos, perc, tag, mondat, horgony, meccs`. The
+article is written from the table, not from the article text - so every
+sentence can be traced back to a row, and the row's anchor decides whether
+it may be stated at all (see *What each layer may say*).
 
-## A fourth source: what a manager says
+### A fourth source: what a manager says
 
 The three layers are what happened. A manager's own words are a fourth, and
 they arrive by hand rather than by script: somebody tells us what he said
@@ -138,8 +177,8 @@ exists only as long as the run that fetched it. Nothing else holds it: not
 the squad files, not the article, not anybody's recollection.
 
 **The run and the rows are one step, not two.** The moment a fetch comes
-back, its claims go into `naplo/<liga>-colour-<round>.json` - player, club,
-minute, tag, sentence, anchor, match - and only then is anything else done
+back, its claims go into `naplo/<league>-colour-<round>.json` - one row per
+claim, keys as above - and only then is anything else done
 with them. A second run of the same measurement over the same round is a
 defect, not a retry: it costs an Actions run, it risks a different snapshot,
 and it means the first one produced nothing durable.
@@ -168,9 +207,10 @@ Not for reciting. A minute in a piece has to do one of two jobs:
 Everything else is decoration. Three minutes in one sentence is a fixture
 list with commas.
 
-## The order
+## The order of the work
 
-1. `round-colour-harvest.py <round>` - the fantasy layer.
+1. `cikk-elott.py nb1 <round> summary` - the rules, the spent previews, and
+   `round-colour-harvest.py <round>`, the fantasy layer.
 2. `nso-content-probe.py` from Actions - the reports of that round.
 3. Fill `nb1-colour-<round>.json` from the reports: structured block first
    (anchor `event` where our own data agrees), then the prose claims.
@@ -179,8 +219,8 @@ list with commas.
 
 For the Draft the same five steps, with its own scripts:
 
-1. `draft-round-harvest.py <round>` - the fantasy layer, and it must say the
-   round is final.
+1. `cikk-elott.py pl <round> summary` - which runs `draft-round-harvest.py
+   <round>`, the fantasy layer; it must say the round is final.
 2. `pl-colour-harvest.py` and `pl-textstream.py` from Actions - the
    structured block with the kick-off times, and the prose.
 3. Fill `pl-colour-<round>.json` **in the same step**, then run
@@ -205,19 +245,19 @@ before the round, whom no squad holds, so he is `record` rather than
 `event`; and a substitute's minute count, which is time played and not the
 minute he came on.
 
-## A megjelenes ideje a lap SORRENDJE
+## Three orders, kept apart
 
-Minden kiadott irasnak van `kozzetett` mezoje, es a magazin eszerint rendez,
-a legfrissebb elol; azonos belyegnel a frissebb fordulo all elol, azon belul
-rovat, osszefoglalo, beharangozo.
+- **Writing:** the summary of the round that closed comes first, then the
+  preview of the coming one.
+- **Publication:** every published piece carries `kozzetett`, the moment it
+  went live, and the magazine lists newest first. Pieces published in one
+  commit share a stamp; among them the newer round comes first, and within
+  a round the column, then the summary, then the preview.
+- **Back-filling:** a piece published late gets the stamp of where it
+  belongs editorially, not of the commit. Within a round the preview was
+  published before the summary, and rounds follow each other in ascending
+  order - a late preview stamped "now" would land above the summary that
+  answered it.
 
-Ez a mezo nem konyveles, hanem a lap sorrendje. Ha egy iras a commit-ideje
-szerint rossz helyre kerul - mert peldaul egy fordulo beharangozoja utolag
-keszult el, es igy a kesobbi fordulo beharangozoja ala csuszott -, akkor a
-belyeget a SZERKESZTOI sorrendhez kell igazitani, nem az iras alatt hagyni.
-A helyes sorrend fordulon belul mindig: beharangozo, majd osszefoglalo; a
-fordulok pedig novekvo sorrendben kovetik egymast.
-
-Uj iras kiadasakor a `kozzetett` a kiadas pillanata, egy tizedmasodpercig
-sem kell gondolkodni rajta - ez a szabaly csak akkor lep be, ha valamit
-utolag potolunk.
+A piece published on time is stamped with the moment it goes out, and needs
+no further thought.

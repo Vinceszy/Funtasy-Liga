@@ -1519,19 +1519,15 @@
 
       'defaultOpen' opens it up front. That is for the one case where it
       is all there is - a round with no squads yet, where the text cannot
-      be in the way of anything. The reader's own click always wins.
-
-      'draft' marks a text that is only visible because the gate was
-      lifted for testing - it must look different from a published one. */
-  function articleStrip(article, key, label, defaultOpen, draft) {
+      be in the way of anything. The reader's own click always wins. */
+  function articleStrip(article, key, label, defaultOpen) {
     if (!article || !article.text || !article.text.length) return '';
     watchArticles();
     watchRating();
     var isOpen = OPEN_ARTICLES.hasOwnProperty(key) ? OPEN_ARTICLES[key] : !!defaultOpen;
     var lead = article.short || article.text[0];
     var body = article.text.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('');
-    return '<details class="artstrip' + (draft ? ' draft' : '') +
-      '" data-art="' + esc(key) + '"' +
+    return '<details class="artstrip" data-art="' + esc(key) + '"' +
       (isOpen ? ' open' : '') + '>' +
       '<summary class="artstriphead">' +
         '<span class="artstriptag">' + esc(label) + '</span>' +
@@ -1552,10 +1548,6 @@
 
      The gate defaults to CLOSED-NO: a caller that does not say cannot leak
      an early summary by forgetting. */
-  function articleDraftMode() {
-    return /(^|[?&])draft=1(&|$)/.test(location.search);
-  }
-
   /* ===== The magazine: every article in one list =====
      The strip on a match page answers "what happened in THIS match". On a
      Monday someone wants the other thing: read the lot in one sitting,
@@ -1595,9 +1587,9 @@
     }
     // MEGJELENESI SORRENDBEN, a legfrissebb elol. Az ujsag nem a forduloval
     // halad, hanem az idovel: ami ma keszult el, az van felul, akkor is, ha
-    // egy regebbi fordulorol szol. A `kozzetett` az elesbe kerules ideje; ami
-    // meg vazlat, annak nincs ilyen, es a lista aljara kerul a korabbi rend
-    // szerint (fordulo csokkenoen, azon belul rovat, osszefoglalo, beharangozo).
+    // egy regebbi fordulorol szol. A `kozzetett` az elesbe kerules ideje
+    // (D15: kint levo iras nem lehet nelkule); ami megis belyeg nelkul jonne,
+    // az a lista aljara kerul fordulo szerint csokkenoen.
     var rang = { elemzes: 0, summary: 1, preview: 2 };
     ki.sort(function (a, b) {
       var ai = a.cikk && a.cikk.kozzetett, bi = b.cikk && b.cikk.kozzetett;
@@ -1815,34 +1807,6 @@
     }, false);
   }
 
-  /** The published store with the draft one laid over it.
-
-      Unpublished text lives in its own file, which the pages fetch only in
-      draft mode - so nothing half-finished can reach a visitor by a
-      forgotten flag. This merges the two down to the fixture, rather than
-      letting the draft file replace the published one wholesale: in draft
-      mode we want to see everything that exists, not only the new part. */
-  function mergeArticles(published, draft) {
-    if (!draft || !draft.leagues) return published;
-    var ki = { updated: draft.updated || (published && published.updated) || null,
-               leagues: {} };
-    var be = [published, draft];
-    for (var i = 0; i < be.length; i++) {
-      var L = (be[i] && be[i].leagues) || {};
-      for (var lg in L) {
-        ki.leagues[lg] = ki.leagues[lg] || {};
-        for (var r in L[lg]) {
-          ki.leagues[lg][r] = ki.leagues[lg][r] || {};
-          for (var k in L[lg][r]) {
-            ki.leagues[lg][r][k] = ki.leagues[lg][r][k] || {};
-            for (var par in L[lg][r][k]) ki.leagues[lg][r][k][par] = L[lg][r][k][par];
-          }
-        }
-      }
-    }
-    return ki;
-  }
-
   /** The strip for one fixture, straight from a loaded articles.json.
 
       A round can hold both kinds at once - the preview is written before it
@@ -1854,9 +1818,7 @@
       pair must not silently drop the text.
 
       opts.closed     - is this round final? (see the gate above)
-      opts.defaultOpen - open the strip up front
-      ?draft=1 in the URL lifts the gate, and then the held-back summary is
-      labelled as a draft so it can never be mistaken for a published one. */
+      opts.defaultOpen - open the strip up front */
   /* A rovat neve EGY helyen all: a meccs adatlapjan, a magazin kartyajan es
      a magazin tipus-szurojeben ugyanaz a szo kell hogy alljon. */
   var ARTICLE_LABEL = { summary: 'Összefoglaló', preview: 'Beharangozó',
@@ -1867,8 +1829,7 @@
     var r = store && store.leagues && store.leagues[league] &&
             store.leagues[league][round];
     if (!r) return '';
-    var lifted = !opts.closed && articleDraftMode();
-    var kinds = (opts.closed || lifted) ? ['summary', 'preview'] : ['preview'];
+    var kinds = opts.closed ? ['summary', 'preview'] : ['preview'];
     // MINDKETTO kint marad a lezart fordulon, az osszefoglalo elol. A
     // beharangozo nem avul el a lefujassal: az mondja meg, mi volt a kerdes,
     // az osszefoglalo meg azt, mi lett a valasz - egymas mellett a ketto
@@ -1879,10 +1840,8 @@
       if (!m) continue;
       var k = m[a + '|' + b] ? a + '|' + b : (m[b + '|' + a] ? b + '|' + a : null);
       if (!k) continue;
-      var held = lifted && kinds[i] === 'summary';
       ki += articleStrip(m[k], league + '|' + round + '|' + kinds[i] + '|' + k,
-                         ARTICLE_LABEL[kinds[i]] + (held ? ' · vázlat' : ''),
-                         opts.defaultOpen && !ki, held);
+                         ARTICLE_LABEL[kinds[i]], opts.defaultOpen && !ki);
     }
     return ki;
   }
@@ -2403,8 +2362,7 @@
                      profilNyitoHTML: profilNyitoHTML,
                      profilNezo: profilNezo, kezdParHTML: kezdParHTML,
                      matchArticle: matchArticle,
-                     articleDraftMode: articleDraftMode,
-                     mergeArticles: mergeArticles, rovatNev: rovatNev,
+                     rovatNev: rovatNev,
                      articleList: articleList,
                      articleCardHTML: articleCardHTML,
                      watchMagazine: watchMagazine, UJSAG_NEV: UJSAG_NEV,

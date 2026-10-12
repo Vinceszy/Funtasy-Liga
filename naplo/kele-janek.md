@@ -145,7 +145,8 @@ exist.** Read it aloud; where a sentence needs a second pass, the number is
 doing the work the writing should.
 
 Large numbers are spelled out in letters. Match statistics belong in the
-match pieces: "pont" and its forms appear at most four times (D14).
+match pieces; "pont" and its forms are capped at seven per piece for every
+article (D14), and the column should stay well under it.
 
 ## A fact that is not in our data is looked up, or it is not written
 
@@ -226,14 +227,13 @@ reads as fancy dress.
   both leagues, both pieces of a week. Inventing a per-piece variation is a
   recurring failure of mine and produces differences nobody asked for.
 
-## Still to improve
+## One line of travel
 
-The arc. Both published pieces hold together, but they move in steps rather
-than in one direction: a claim, its evidence, the next claim, its evidence.
-The next one should read as a single line of travel from the first sentence
-to the last, where every paragraph pushes the same central assertion further
-instead of opening a new one beside it. Deliberately not attempted in the
-first week; the pieces went out as they were.
+A column that moves in steps - a claim, its evidence, the next claim, its
+evidence - holds together and still reads as a list. It should read as a
+single line from the first sentence to the last: every paragraph pushes the
+same central assertion one step further instead of opening a new one beside
+it.
 
 ## Where the corpus is, and what in here is measured
 

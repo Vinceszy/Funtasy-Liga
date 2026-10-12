@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=114">
+<link rel="stylesheet" href="../funtasy.css?v=115">
 </head>
 <body class="kezdolap">
 <div class="wrap">
@@ -40,7 +40,7 @@
 </div>
 <div class="lablec" id="lablec"></div>
 
-<script src="../funtasy.js?v=114"></script>
+<script src="../funtasy.js?v=115"></script>
 <script>
 // ======= NEMZETHY SPORT =======
 // Egy helyen az osszes iras, fordulonkent visszafele. A meccs adatlapjan a
@@ -244,17 +244,16 @@ document.addEventListener('click', e => {
 });
 
 Promise.all([opcional('../articles.json'),
-             FunTasy.articleDraftMode() ? opcional('../articles-draft.json') : null,
              opcional('../results.json'), opcional('../draft_history.json'),
              // Csak a kozos kiadasnak kell: ebbol derul ki, melyik csapatnev
              // melyik azonositohoz tartozik, vagyis kit kell egy emberkent
              // mutatni a ket ligabol. A liga sajat ujsagjaban nincs mit
              // osszekotni, ott ez a keres el is marad.
              LIGAOBJ ? null : opcional('../draft.json')])
-  .then(([kint, vazlat, res, hist, draft]) => {
+  .then(([kint, res, hist, draft]) => {
     zarasBetolt(res, hist);
     SZEMELY = FunTasy.szemelyTar(draft && draft.entries);
-    CIKKEK = FunTasy.mergeArticles(kint, vazlat) || { leagues: {} };
+    CIKKEK = kint || { leagues: {} };
     rajzol();
   })
   .catch(() => { $('lista').innerHTML =

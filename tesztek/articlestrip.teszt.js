@@ -288,10 +288,13 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   // ennyivel" szoveg hazudhat. A beharangozora ez nem all: az arrol szol,
   // ami jon. A szoveget a lapon allitjuk be, hogy a repoban ne kelljen
   // hozza le nem zart fordulos cikket tartani.
-  for (const [ut, cimke, vazlat] of [['nb1/', 'KAPU — NB1', false],
-                                     ['nb1/?draft=1', 'KAPU — NB1, ?draft=1', true],
-                                     ['pl/', 'KAPU — PL', false],
-                                     ['pl/?draft=1', 'KAPU — PL, ?draft=1', true]]) {
+  //
+  // A kaput semmilyen URL-parameter nem nyitja ki: egy regi `?draft=1`-es
+  // konyvjelzo sem hozhat elo korai osszefoglalot.
+  for (const [ut, cimke] of [['nb1/', 'KAPU — NB1'],
+                             ['nb1/?draft=1', 'KAPU — NB1, ?draft=1'],
+                             ['pl/', 'KAPU — PL'],
+                             ['pl/?draft=1', 'KAPU — PL, ?draft=1']]) {
     const g = await br.newPage({ viewport: { width: 1000, height: 900 } });
     g.on('pageerror', e => hibak.push(cimke + ': ' + e.message));
     // A kozos apiKi, nem sajat lista: a sajat Worker (/tarolt) kimaradt a
@@ -359,59 +362,12 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     const allapot = await g.evaluate(() => {
       const s = document.querySelector('#mBody .artstrip');
       return { cimke: s.querySelector('.artstriptag').textContent,
-               vazlat: s.classList.contains('draft'),
+               db: document.querySelectorAll('#mBody .artstrip').length,
                szoveg: s.querySelector('.artstripbody p').textContent };
     });
-    if (!vazlat) {
-      jo(allapot.cimke === 'Beharangozó' && allapot.szoveg === 'Beharangozo bekezdes.',
-         `le nem zárt fordulón CSAK a beharangozó látszik (${allapot.cimke})`);
-      jo(allapot.vazlat === false, 'publikált szövegen nincs vázlat-jelzés');
-    } else {
-      jo(allapot.cimke === 'Összefoglaló · vázlat' && allapot.szoveg === 'Osszefoglalo bekezdes.',
-         `?draft=1 felengedi a kaput, és vázlatnak jelöli (${allapot.cimke})`);
-      jo(allapot.vazlat === true, 'a vázlat kap saját jelzést (szaggatott keret)');
-    }
-    await g.close();
-  }
-
-  // ---- A vazlat-fajl: ?draft=1 NELKUL a lap le sem keri ----
-  // A meg nem publikalt szoveg kulon fajlban all. Az allitas nem fugghet
-  // attol, hogy epp van-e benne valami: a merest sajat, HAMIS vazlat-fajllal
-  // vegezzuk, olyan meccsre, amirol a kint levo fajlban nincs szo.
-  const VR = 6, VH = 'Bazsa', VV = 'Sámsi';        // lezart fordulo, nincs rola cikk
-  for (const [mod, cimke, varunk] of [['nb1/', 'VÁZLAT-FÁJL — zárva', false],
-                                      ['nb1/?draft=1', 'VÁZLAT-FÁJL — ?draft=1', true]]) {
-    const g = await br.newPage({ viewport: { width: 1000, height: 900 } });
-    g.on('pageerror', e => hibak.push(cimke + ': ' + e.message));
-    for (const m of ['**mlsz.hu/**', '**corsproxy.io/**', '**allorigins**'])
-      await g.route(m, r => r.abort());
-    let kertek = 0;
-    await g.route('**/articles-draft.json*', r => {
-      kertek++;
-      return r.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ updated: null, leagues: { nb1: { [VR]: { summary: {
-          [VH + '|' + VV]: { text: ['Vazlat bekezdes.'], short: 'Vazlat.',
-                             source: 'manual' } } } } } }) });
-    });
-    await g.goto(BASE + mod);
-    await g.waitForSelector('#table tr');
-    await g.waitForFunction(() => typeof ARTICLES !== 'undefined' && ARTICLES !== null,
-                            null, { timeout: 20000 });
-    cim(cimke);
-    jo(kertek === (varunk ? 1 : 0),
-       `a lap ${varunk ? 'lekéri' : 'LE SEM KÉRI'} a vázlat-fájlt (${kertek} kérés)`);
-    await g.evaluate(([a, b, r]) => showMatchRound(a, b, r), [VH, VV, VR]);
-    await g.waitForSelector('#mBody .plr', { timeout: 20000 });
-    const van = await g.locator('#mBody .artstrip').count() > 0;
-    jo(van === varunk, `a vázlatos meccsen ${varunk ? 'ott a sáv' : 'NINCS sáv'}`);
-    if (varunk)
-      jo(await g.evaluate(() => document.querySelector('#mBody .artstripbody p').textContent)
-           === 'Vazlat bekezdes.', 'a vázlat szövege jön elő');
-    // a kint lévő cikk ettől függetlenül látszik: a vázlat ráolvad, nem kicseréli
-    await g.evaluate(() => showMatchRound('Bence', 'Csendi', 7));
-    await g.waitForSelector('#mBody .plr', { timeout: 20000 });
-    jo(await g.locator('#mBody .artstrip').count() === 1,
-       'a publikált cikk mindkét módban ott van');
+    jo(allapot.db === 1 && allapot.cimke === 'Beharangozó'
+         && allapot.szoveg === 'Beharangozo bekezdes.',
+       `le nem zárt fordulón CSAK a beharangozó látszik (${allapot.cimke}, ${allapot.db} sáv)`);
     await g.close();
   }
 

@@ -1,4 +1,8 @@
-# The voice of a round summary
+# The voice of a fixture piece
+
+How the summaries and the previews of the Nemzethy Sport sound. The method -
+what is run first, where the data comes from, the order - is in
+`round-pipeline.md`; Kele Janek's column has its own voice in `kele-janek.md`.
 
 The failure this voice guards against is always the same one: more facts, arranged
 more neatly, with less and less said about them. A summary that lists what happened is
@@ -43,13 +47,12 @@ two roles; the Bazsa-Adam piece opens on a list of names who did nothing.
 **Not a match report.** The league is the subject, the football is the setting. A goal in
 the 67th minute matters here because of whose captain scored it.
 
-**Not about anyone else.** The piece belongs to the two managers in the fixture, and no
-third manager's name appears in it - not as a comparison, not as the opponent of a
-result being cited. A reader opening this match has no reason to care what someone in
-another match did. Form and context still belong there, stated without the name: "sorban
-nyeri a szoros meccseket, legutóbb 53,38-49-re" says everything "Vince ellen 53,38-49-re"
-said. League-wide standing is fine the same way - "only three managers have scored more"
-names nobody.
+**About the two, not about anyone else.** The piece belongs to the two managers in the
+fixture. A third manager is named only when the name carries part of the argument - the
+narrowest defeat was against the leader, the only loss came in the week
+somebody else outscored him - and never as idle comparison or to tell that other
+manager's story. Where the name adds nothing, the form says it without one: "sorban
+nyeri a szoros meccseket, legutóbb 53,38-49-re"; "only three managers have scored more".
 
 ## The rules a piece is checked against
 
@@ -171,18 +174,12 @@ in one round is a tic.
 
 ## A preview is not a summary pointed forwards
 
-**The spine comes from the season, not from last week's line-up.** Before a
-word is written, pull both managers' whole season from results.json: the
-margin of every match (who plays tight ones, who wins and loses big), where
-each finished in every round's score order (never in the bottom half? only
-once in the top half?), the form curve (streaks, season bests, a slide), and
-what each was doing when they last met. The story is the contrast or the
-crossing of those two lines - the man of the tight games against the man of
-the blowouts, the most consistent against the luckiest, two curves that
-crossed since the last meeting. Shared players, armbands and benches are
-middle material: where that story can be won or lost, written as choices.
-A spine built from the stored squad ("six shared, five used the other way
-round") is a detail promoted to a story.
+**The spine comes from the season, not from last week's line-up.** The story
+is the contrast or the crossing of the two managers' seasons - where it is
+found is in `round-pipeline.md` (*The preview*). Shared players, armbands and
+benches are middle material: where that story can be won or lost, written
+as choices. A spine built from the stored squad ("six shared, five used the
+other way round") is a detail promoted to a story.
 
 **What the summary already told is spent.** The fault the last summary
 dissected (a missed bonus, a wasted armband) is not the next preview's
@@ -240,10 +237,6 @@ sentence. Rewriting the whole piece to accommodate it throws away the parts that
 working, and they are rarely rebuilt as well the second time - a full restore then brings
 back the bad half along with the good. Change what was named, leave the rest, and keep
 the closing line: that is usually the part that was earned.
-
-**A draft under discussion lives in the conversation.** Only the approved
-text goes into a file and a commit; writing every round of notes into the
-repo is work nobody needs.
 
 **Show the whole piece after a fix, never just the changed sentences.** The
 reader judges a text, not a diff; a list of replaced lines leaves him to
