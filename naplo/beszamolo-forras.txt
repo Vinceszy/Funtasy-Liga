@@ -385,3 +385,27 @@ PROBE: 2026-10-12 10:19 UTC | nemzetisport report content
     /labdarugo-nb-i/2026/10/az-ujpest-elonye-nem-sokaig-tartott-ki-a-honved-ellen-dontetlen-lett-a-vege
     /labdarugo-nb-i/2026/10/lukacs-goljaval-rangadot-nyert-gyorben-a-puskas-akademia-es-harom-pont-elonn
     /labdarugo-nb-i/2026/10/nb-i-egyenlites-forditas-ket-tizenegyes-es-ot-gol-a-zte-szpari-masodik-felid
+
+======================================================================
+PROBE: 2026-10-12 10:21 UTC | nemzetisport report content
+  sitemapindex: HTTP 200, 304 maps
+  maps matching 202610: 10
+    https://www.nemzetisport.hu/202605_sitemap.xml
+    https://www.nemzetisport.hu/202606_sitemap.xml
+    https://www.nemzetisport.hu/202607_sitemap.xml
+    https://www.nemzetisport.hu/202608_sitemap.xml
+    https://www.nemzetisport.hu/202609_sitemap.xml
+    https://www.nemzetisport.hu/202610_sitemap.xml
+  2026-10-10 ota: 24 cim (74-bol)
+  of these, report-like: 10
+  labdarugo-nb-i articles in 2026/10: 10
+    /labdarugo-nb-i/2026/10/az-ujpest-elonye-nem-sokaig-tartott-ki-a-honved-ellen-dontetlen-lett-a-vege
+    /labdarugo-nb-i/2026/10/borbely-a-gol-utan-amikor-megnyiltak-a-teruletek-nem-mutattunk-megfelelo-min
+    /labdarugo-nb-i/2026/10/borbely-balazzsal-elso-hazai-bajnoki-gyozelmere-keszul-a-fradi-a-lokit-fogad
+    /labdarugo-nb-i/2026/10/dzsudzsak-orom-es-debreceni-pontmentes-a-groupamaban
+    /labdarugo-nb-i/2026/10/egy-95-perces-dzsudzsak-tizenegyessel-harcolt-ki-dontetlent-a-dvsc-a-ferencv
+    /labdarugo-nb-i/2026/10/hiaba-toth-milan-golja-a-vasas-nem-birt-a-kisvardaval
+    /labdarugo-nb-i/2026/10/krajcsovics-abelt-nem-csak-a-golszerzes-elteti
+    /labdarugo-nb-i/2026/10/lukacs-goljaval-rangadot-nyert-gyorben-a-puskas-akademia-es-harom-pont-elonn
+    /labdarugo-nb-i/2026/10/nb-i-egyenlites-forditas-ket-tizenegyes-es-ot-gol-a-zte-szpari-masodik-felid
+    /labdarugo-nb-i/2026/10/nem-volt-kerdes-a-paks-harom-gollal-legyozte-a-merkozest-emberhatranyban-bef
