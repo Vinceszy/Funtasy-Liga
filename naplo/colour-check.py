@@ -41,6 +41,27 @@ def alap(p):
     return str(p).replace(" ", "").split("+")[0]
 
 
+# A MI ADATUNK a golokrol: bontasok/<fordulo>.json tetelesen felsorolja,
+# ki mibol szerzett pontot. Egy `event` horgonyu golsornak ezt is ki kell
+# allnia, nem csak a tabla sajat golistajat.
+def _bontas_golosok(fordulo):
+    ut = os.path.join(HERE, "..", "bontasok", "%s.json" % fordulo)
+    if not os.path.exists(ut):
+        return None                      # nincs mihez merni (meg nem zart le)
+    with open(ut, encoding="utf-8") as fh:
+        b = json.load(fh).get("bontasok") or {}
+    ut2 = os.path.join(HERE, "..", "jatekosok.json")
+    with open(ut2, encoding="utf-8") as fh:
+        torzs = json.load(fh).get("players") or {}
+    ki = set()
+    for cp, sorok in b.items():
+        if any((x.get("n") or "").startswith("Gól") and x.get("p") for x in sorok):
+            n = (torzs.get(cp) or {}).get("n")
+            if n:
+                ki.add(sima(n))
+    return ki
+
+
 def meccskulcs(nev, meccsek):
     """'Man City 5-3 Sunderland' -> 'Man City - Sunderland'."""
     if nev in meccsek:
@@ -74,6 +95,12 @@ def main():
     meccsek = d.get("meccsek") or {}
     sorok = d.get("allitasok") or []
     keret = keretek(rnd) if liga == "pl" else set()
+    # A SAJAT adatunk golszerzoi; None, ha nincs tarolt bontas (le nem zart
+    # fordulo) - olyankor nincs mihez merni, es a sor atmegy.
+    golosok = _bontas_golosok(rnd)
+
+    def golt_szerzett(nev):
+        return golosok is None or sima(nev or "") in golosok
 
     baj = []
     for s in sorok:
@@ -104,6 +131,15 @@ def main():
 
         if tag in ("goal", "goal_manner", "luck"):
             talalt = golban()
+            # ES A SAJAT ADAT IS: a fenti csak a tablat meri onmagahoz, tehat
+            # egy rossz nevvel beirt golszerzo atmegy rajta. A 9. fordulo paksi
+            # golszerzoje "Horvath K." volt - Horvath Kevin (PAKS) -, es
+            # Horvath Krisztofer Gyorgy (UJPEST) neven kerult a tablaba, aki
+            # ketten is birtokolnak. A tabla onmagaval egyezett, a bontas
+            # viszont tudta, hogy annak az embernek nincs golja.
+            if talalt and horgony == "event" and not golt_szerzett(s.get("jatekos")):
+                baj.append("%s: a tabla golt ir ra, a bontasban nincs golja"
+                           % s.get("jatekos"))
         elif tag == "assist":
             # Golpasszt csak az a blokk tart szamon, amelyikben van ilyen mezo:
             # a magyar beszamolo formalis resze a golszerzot irja, mast nem.

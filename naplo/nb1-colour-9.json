@@ -109,7 +109,7 @@
     },
     {
      "perc": 74,
-     "ki": "Horváth Krisztofer György"
+     "ki": "Horváth Kevin"
     },
     {
      "perc": "90+1",
@@ -431,19 +431,19 @@
    "meccs": "PAKS 3-0 MTK"
   },
   {
-   "jatekos": "Horváth Krisztofer György",
+   "jatekos": "Horváth Kevin",
    "perc": 67,
    "tag": "sub",
    "mondat": "a hatvanhetedik percben állt be Balogh helyére",
-   "horgony": "event",
+   "horgony": "record",
    "meccs": "PAKS 3-0 MTK"
   },
   {
-   "jatekos": "Horváth Krisztofer György",
+   "jatekos": "Horváth Kevin",
    "perc": 74,
    "tag": "goal",
    "mondat": "hét perccel a beállása után megszerezte a második gólt",
-   "horgony": "event",
+   "horgony": "record",
    "meccs": "PAKS 3-0 MTK"
   },
   {
