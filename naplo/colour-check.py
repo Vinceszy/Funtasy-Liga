@@ -45,6 +45,7 @@ def alap(p):
 # ki mibol szerzett pontot. Egy `event` horgonyu golsornak ezt is ki kell
 # allnia, nem csak a tabla sajat golistajat.
 def _bontas_golosok(fordulo):
+    """Az NB1 sajat golszerzoi a tarolt bontasbol. None, ha nincs mihez merni."""
     ut = os.path.join(HERE, "..", "bontasok", "%s.json" % fordulo)
     if not os.path.exists(ut):
         return None                      # nincs mihez merni (meg nem zart le)
@@ -97,7 +98,10 @@ def main():
     keret = keretek(rnd) if liga == "pl" else set()
     # A SAJAT adatunk golszerzoi; None, ha nincs tarolt bontas (le nem zart
     # fordulo) - olyankor nincs mihez merni, es a sor atmegy.
-    golosok = _bontas_golosok(rnd)
+    # CSAK NB1: a bontasok/ es a jatekosok.json az NB1 adata. A PL-t ehhez
+    # merni azt jelentene, hogy egy angol golszerzot a magyar bajnoksag
+    # bontasaban keresunk - ott minden sor bukna.
+    golosok = _bontas_golosok(rnd) if liga == "nb1" else None
 
     def golt_szerzett(nev):
         return golosok is None or sima(nev or "") in golosok
