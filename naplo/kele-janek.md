@@ -147,6 +147,38 @@ doing the work the writing should.
 Large numbers are spelled out in letters. Match statistics belong in the
 match pieces: "pont" and its forms appear at most four times (D14).
 
+## A fact that is not in our data is looked up, or it is not written
+
+The column holds exactly four kinds of fact about a footballer: what he
+scored, what he cost, which club he plays for, and whether he is under 21.
+That is the whole of `jatekosok.json` and the stored squads - there is no
+birth date, no age, no transfer history, no caps. Everything else about the
+man is outside our data.
+
+**Outside our data is not the same as unknowable.** If the piece needs it,
+look it up before the sentence is written, and write the sentence from what
+came back. What is forbidden is the third option: inferring it from the one
+neighbouring bit we happen to hold.
+
+A piece stated that a forward was twenty-eight when he got his first senior
+call-up. He was twenty-three. The number was not misread from anywhere - the
+only age-shaped thing in our data is the `u21` boolean, which says *not under
+21*, and the draft turned that single bit into a specific year. A reader in
+the league spotted it the week it went out.
+
+Why it is worse than a wrong digit: the paragraph argued that a player does
+not need youth as a recommendation to break through, and the whole weight of
+it rested on the age. At twenty-eight a first call-up is a late bloom worth a
+paragraph; at twenty-three it is an ordinary Tuesday. The invented number was
+not decoration, it was the argument. **A figure the piece leans on is the
+first thing to verify, not the last.**
+
+The same goes for anything the column asserts about the real league: a
+manager's history, when a club last won something, what a coach said. Look it
+up and write it plainly - the anchor governs what may be said, not how it is
+hedged (`colour-taxonomy.md`). If there is no time or no source to check it,
+the sentence is cut. A piece is never weaker for the claim it left out.
+
 ## Football words mean football things
 
 "Kiállít" is a red card. It is not a word for naming somebody in the eleven -
