@@ -186,6 +186,21 @@ to decide about, what each way costs, and what his record says he will
 probably do. Everything taken from the stored squad is written as the state
 he is deciding from, never as the team that will play.
 
+**Tagging a sentence "last round" does not make a forward claim honest.**
+"Last round X started for him" is a fact; "X will be on the pitch for him in
+the coming match" is a guess, even with "last round" somewhere else in the
+paragraph. Read every sentence that names the coming round or one of its
+matches, and ask: does it say who will start, who will captain, or whose
+player will be on the pitch? Then it is the snapshot posing as the future.
+Only three kinds of thing are written flat in the present: the real
+fixtures (who plays whom - they are fixed), the table and past results.
+Squads are not fixed at all: even ownership can change, three transfers a
+week (unlimited in a break). So the forward half of a squad sentence is a
+condition or a choice - "if he keeps the armband on him", "if he starts
+them as well", "he has three transfers for it" - and the ending in
+particular closes on the decision, never on a prediction drawn from the
+snapshot.
+
 **Do the squad arithmetic out loud, then check it.** Fifteen a side: eight shared leaves
 SEVEN different each, not two. And verify who actually owns whom before calling a player
 shared - a captain that belongs to one side only is the opposite of a captain they both
