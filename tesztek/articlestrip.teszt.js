@@ -294,9 +294,10 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
                                      ['pl/?draft=1', 'KAPU — PL, ?draft=1', true]]) {
     const g = await br.newPage({ viewport: { width: 1000, height: 900 } });
     g.on('pageerror', e => hibak.push(cimke + ': ' + e.message));
-    for (const m of ['**mlsz.hu/**', '**premierleague.com/**',
-                     '**corsproxy.io/**', '**allorigins**'])
-      await g.route(m, r => r.abort());
+    // A kozos apiKi, nem sajat lista: a sajat Worker (/tarolt) kimaradt a
+    // kezzel irt negybol, es azon at a tarolt allas a LIVE-ba is beirt - egy
+    // regi fordulo igy "nyitottnak" latszott a kereseskor, aztan lezartnak.
+    await apiKi(g);
     await g.goto(BASE + ut);
     await g.waitForSelector('#table tr');
     cim(cimke);
