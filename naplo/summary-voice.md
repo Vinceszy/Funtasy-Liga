@@ -74,6 +74,16 @@ Write "a kezdő, amit szombat délig összeállított", not "a leadás".
 decided lower down" - a fantasy squad has no top or bottom. Say what is meant: the bench,
 the players they did not share, the substitutes.
 
+**A squad is eleven places, not a list of men.** "Had he started X" is only
+half a sentence: somebody then has to sit down, and the formation has to stay
+legal. A difference between two managers over one shared player is therefore
+never one decision - it is the whole line-up either side of it. Work out the
+best legal eleven each of them could have set from the fifteen they had, and
+the sentence becomes either a real finding or nothing: in round 9 one of them
+had set the strongest eleven his squad allowed, with nothing left over, and
+lost; the other left three and a bit on his bench, and won by a quarter of a
+point. Written as "he benched the wrong man" it would have been backwards.
+
 **An apposition must carry something worth knowing.** "Popovics, a húszéves hazai kapus"
 spends a clause on nothing; "Popovics, aki egy héttel korábban nyolc lövést hárított"
 spends it on a fact. If nothing interesting is known about the man, leave the apposition
