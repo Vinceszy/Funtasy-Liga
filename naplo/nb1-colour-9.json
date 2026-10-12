@@ -97,6 +97,32 @@
      "ki": "Arthur Henrique"
     }
    ]
+  },
+  "PAKS 3-0 MTK": {
+   "helyszin": "Paks, Fehérvári úti Stadion",
+   "nezo": 2502,
+   "jatekvezeto": "Buzás Balázs",
+   "golok": [
+    {
+     "perc": 19,
+     "ki": "Kinyik Ákos"
+    },
+    {
+     "perc": 74,
+     "ki": "Horváth Krisztofer György"
+    },
+    {
+     "perc": "90+1",
+     "ki": "Pető Milán"
+    }
+   ],
+   "kiallitas": [
+    {
+     "perc": 87,
+     "ki": "Szuhodovszki",
+     "csapat": "MTK"
+    }
+   ]
   }
  },
  "allitasok": [
@@ -387,6 +413,78 @@
    "mondat": "a kezdő sípszó előtt ez a két csapat mutatta a bajnokság két leggyengébb gólszerzését",
    "horgony": "article_only",
    "meccs": "ZTE 5-1 NYÍREGY"
+  },
+  {
+   "jatekos": "Kinyik Ákos",
+   "perc": 19,
+   "tag": "goal",
+   "mondat": "a tizenkilencedik percben betalált",
+   "horgony": "record",
+   "meccs": "PAKS 3-0 MTK"
+  },
+  {
+   "jatekos": "Kinyik Ákos",
+   "perc": null,
+   "tag": "milestone",
+   "mondat": "januárban szakadt el az elülső keresztszalagja, ez volt a kétszázadik NB I-es mérkőzése, és gólt szerzett rajta",
+   "horgony": "article_only",
+   "meccs": "PAKS 3-0 MTK"
+  },
+  {
+   "jatekos": "Horváth Krisztofer György",
+   "perc": 67,
+   "tag": "sub",
+   "mondat": "a hatvanhetedik percben állt be Balogh helyére",
+   "horgony": "event",
+   "meccs": "PAKS 3-0 MTK"
+  },
+  {
+   "jatekos": "Horváth Krisztofer György",
+   "perc": 74,
+   "tag": "goal",
+   "mondat": "hét perccel a beállása után megszerezte a második gólt",
+   "horgony": "event",
+   "meccs": "PAKS 3-0 MTK"
+  },
+  {
+   "jatekos": "Pető Milán",
+   "perc": 71,
+   "tag": "sub",
+   "mondat": "a hetvenegyedik percben állt be Haraszti helyére",
+   "horgony": "event",
+   "meccs": "PAKS 3-0 MTK"
+  },
+  {
+   "jatekos": "Pető Milán",
+   "perc": "90+1",
+   "tag": "goal",
+   "mondat": "a hosszabbítás első percében lezárta a meccset",
+   "horgony": "event",
+   "meccs": "PAKS 3-0 MTK"
+  },
+  {
+   "jatekos": "Szalai József",
+   "perc": 71,
+   "tag": "sub",
+   "mondat": "a hetvenegyedik percben lehozták",
+   "horgony": "event",
+   "meccs": "PAKS 3-0 MTK"
+  },
+  {
+   "jatekos": "Szuhodovszki",
+   "perc": 87,
+   "tag": "card",
+   "mondat": "a nyolcvanhetedikben kiállították, az MTK emberhátrányban fejezte be",
+   "horgony": "record",
+   "meccs": "PAKS 3-0 MTK"
+  },
+  {
+   "jatekos": null,
+   "perc": null,
+   "tag": "match_picture",
+   "mondat": "a végig fölényben játszó hazaiak a félidei vezetés után a hajrában kétszer is betaláltak, a fővárosiak helyzetig is alig jutottak",
+   "horgony": "article_only",
+   "meccs": "PAKS 3-0 MTK"
   }
  ]
 }
