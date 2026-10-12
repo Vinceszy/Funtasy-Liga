@@ -63,6 +63,13 @@ name is more concrete than any noun standing in for it.
 on both sides; writing that down as a finding wastes a paragraph. The shared column is
 worth a sentence only when it DIFFERS - one side captained him, the other benched him.
 
+**The game's own words, used the way the league uses them.** Nobody hands a
+team in here: the squad is picked, the eleven is set, the armband goes on
+somebody, and the market shuts before the first kick-off. "Leadás" is a word
+for a school assignment, and a reader who plays every week hears it as one -
+the same way "kiállít" is a red card and never a word for naming the eleven.
+Write "a kezdő, amit szombat délig összeállított", not "a leadás".
+
 **No spatial metaphor that means nothing in the game.** "The bottom of the squad", "it was
 decided lower down" - a fantasy squad has no top or bottom. Say what is meant: the bench,
 the players they did not share, the substitutes.
@@ -109,8 +116,16 @@ hozott, Y négyet, Z hármat" is that table retyped with commas. Name a
 number when it is the argument - a one-point margin, a bench that would have
 flipped the result - and otherwise write what happened: who was not in the
 matchday squad, whose penalty was saved, who was on the pitch for six
-minutes. Machine-checked: `pont` and its forms may appear at most four times
-in a piece (D14).
+minutes. Machine-checked: `pont` and its forms may appear at most seven times in a
+piece (D14) - the most any approved summary used.
+
+**A naked number is worse than the word it is hiding.** The limit asks for
+fewer figures, not for the unit to be dropped off the ones that stay. Written
+against it, a piece comes out as "a tíz, amit nem kapott meg", "feleáron öt
+jött be belőle", "negyed egység" - every number still there, nothing saying
+what any of them is, and the check satisfied. If a sentence needs the figure,
+it needs the word; if neither is needed, cut the figure and the sentence gets
+shorter, which is what the rule was for.
 
 **When a sentence turns, put the hinge in.** Half of what this paper says is
 a contradiction - they got it wrong and won, he played ninety minutes and

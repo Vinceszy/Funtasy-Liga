@@ -388,10 +388,18 @@ allit(not _szin, "D13: osszefoglalo csak rogzitett szinestablabol keszult"
 # ---- D14: a cikk nem pontfelsorolas ----
 # Nem a szamokkal van baj, hanem azzal, amikor a szoveg helyett allnak ott.
 # A "pontos", "pontosan", "pontjan" nem ide tartozik: azok mast jelentenek.
+#
+# A KORLAT NEM A SZO ELHAGYASAT KERI. Negyre huzva ez volt a kovetkezmenye:
+# a szamok ottmaradtak, a mertekegyseg eltunt mellolük - "a tiz, amit nem
+# kapott meg", "feleron ot jott be belole", "negyed egyseg". A cikk atment a
+# vizsgan, es olvashatatlan lett. Egy mezitlabas szam rosszabb, mint a szo.
+# A hatar ezert annyi, amennyit a JOVAHAGYOTT irasok tenylegesen hasznaltak
+# (a 7-8. fordulo osszefoglaloiban 3-7, a leghosszabban 7); ami e folott van,
+# az tenyleg tablazat. A kevesebb SZAM a cel, nem a kevesebb SZO.
 _PONT = _re.compile(
     r"\bpont(ok|ot|okat|ja|jai|jat|jaik|tal|ttal|nyi|ig|ba|ban|ra|rol|hoz|szam\w*)?\b",
     _re.IGNORECASE | _re.UNICODE)
-_PONT_MAX = 4
+_PONT_MAX = 7
 
 # A szabaly elott irt fordulok. Ezek a szovegek atmentek a jovahagyason, es
 # nem irjuk at oket utolag a hatunk mogott: a lista nevre szol es fogy.
