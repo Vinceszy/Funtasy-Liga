@@ -223,6 +223,10 @@ working, and they are rarely rebuilt as well the second time - a full restore th
 back the bad half along with the good. Change what was named, leave the rest, and keep
 the closing line: that is usually the part that was earned.
 
+**Show the whole piece after a fix, never just the changed sentences.** The
+reader judges a text, not a diff; a list of replaced lines leaves him to
+assemble the current version in his head.
+
 **Say when a change was not asked for.** If applying one note to the other pieces seems
 right, do it and say so - silently reworking an approved text is how a good one
 disappears.
