@@ -171,6 +171,24 @@ in one round is a tic.
 
 ## A preview is not a summary pointed forwards
 
+**The spine comes from the season, not from last week's line-up.** Before a
+word is written, pull both managers' whole season from results.json: the
+margin of every match (who plays tight ones, who wins and loses big), where
+each finished in every round's score order (never in the bottom half? only
+once in the top half?), the form curve (streaks, season bests, a slide), and
+what each was doing when they last met. The story is the contrast or the
+crossing of those two lines - the man of the tight games against the man of
+the blowouts, the most consistent against the luckiest, two curves that
+crossed since the last meeting. Shared players, armbands and benches are
+middle material: where that story can be won or lost, written as choices.
+A spine built from the stored squad ("six shared, five used the other way
+round") is a detail promoted to a story.
+
+**What the summary already told is spent.** The fault the last summary
+dissected (a missed bonus, a wasted armband) is not the next preview's
+spine, and the preview does not assume it will happen again. Half a sentence
+of a wink is enough.
+
 **Put in what can change the result.** A preview may only spend space on something that
 bears on the coming round: who is shared and who is not, whether the two armbands land on
 the same man, a habit that costs points every week (four starters on a four-man bench),
@@ -222,6 +240,10 @@ sentence. Rewriting the whole piece to accommodate it throws away the parts that
 working, and they are rarely rebuilt as well the second time - a full restore then brings
 back the bad half along with the good. Change what was named, leave the rest, and keep
 the closing line: that is usually the part that was earned.
+
+**A draft under discussion lives in the conversation.** Only the approved
+text goes into a file and a commit; writing every round of notes into the
+repo is work nobody needs.
 
 **Show the whole piece after a fix, never just the changed sentences.** The
 reader judges a text, not a diff; a list of replaced lines leaves him to

@@ -312,8 +312,15 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     // le nem zart fordulon vizsgalhato, es ELO FORDULO NINCS MINDIG. Amikor a
     // bajnokseg szunetel, a LIVE ures marad, es a teszt ettol allt meg -
     // holott a vizsgalt viselkedessel semmi baj nem volt.
+    //
+    // A SCHEDULE onmagaban keves: a lapba egy regi menetrend van beegetve,
+    // es a results.json csak utana irja felul. Ha a kereses kozte fut, egy
+    // reg lezart fordulo nyitottnak latszik. A TAROLT_IDO-t a lap a
+    // results.json megerkezesekor allitja, ugyanabban a lepesben, amelyben
+    // a menetrendet felulirja.
     await g.waitForFunction(nb1 => nb1 ? (typeof SCHEDULE !== 'undefined'
-                                          && Object.keys(SCHEDULE).length > 0)
+                                          && Object.keys(SCHEDULE).length > 0
+                                          && window.TAROLT_IDO !== undefined)
                                        : (typeof HIST !== 'undefined'
                                           && Object.keys(HIST).length > 0),
                             nb1, { timeout: 20000 });
