@@ -22,6 +22,9 @@ vezetett. Ez most pont annyit ért, mint a második hely."*
 disappear. When the running score is mentioned it should be because something caused it,
 not because it is the next row.
 
+**Kele Janek's pieces are referred to as his summary of the round** -
+"Kele múlt heti összefoglalója" -, never by a topic we have given them.
+
 **No sourcing in the text, and no hedging either.** Where a claim comes from is an
 internal matter - see colour-taxonomy.md. We write a newspaper: what we publish, we
 state. "A beszámoló szerint", "az adatok szerint" and every other cushion is out; if a
@@ -131,6 +134,15 @@ jött be belőle", "negyed egység" - every number still there, nothing saying
 what any of them is, and the check satisfied. If a sentence needs the figure,
 it needs the word; if neither is needed, cut the figure and the sentence gets
 shorter, which is what the rule was for.
+
+**Tie each paragraph to the one before it.** A summary is one line of
+thought, and the reader has to feel it being carried. A paragraph opens by
+picking up what the previous one left open - its consequence, its
+contradiction, the cost of it - and moves it one step further; the turn sits
+at the start of the paragraph, where it happens, not buried in the middle of
+a sentence. The test: if the paragraphs could be shuffled without anyone
+noticing, it is a list of facts, however good each one is. The close answers
+the opening, so the piece ends on the thing it set out to say.
 
 **When a sentence turns, put the hinge in.** Half of what this paper says is
 a contradiction - they got it wrong and won, he played ninety minutes and
