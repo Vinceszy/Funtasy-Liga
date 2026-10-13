@@ -66,3 +66,9 @@ TEXTSTREAM: 2026-09-21 09:15 UTC | Premier League perces kommentar, 5. fordulo
   a(z) 5. fordulo meccsei: 10
   pulselive lezart meccs: 40
   parositott meccs: 10 / 10
+
+======================================================================
+TEXTSTREAM: 2026-10-13 17:18 UTC | Premier League perces kommentar, 6. fordulo
+  a(z) 6. fordulo meccsei: 10
+  pulselive lezart meccs: 40
+  parositott meccs: 10 / 10
