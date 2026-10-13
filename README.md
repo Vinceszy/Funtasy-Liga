@@ -2,7 +2,7 @@
 
 Privát head-to-head liga követő oldalak baráti ligákhoz: a **fantasy.mlsz.hu** (MLSZ NB I
 Fantasy) és az **FPL Draft** adataira építve. Statikus oldal GitHub Pages-en: nincs build,
-nincs függőség. Az adatgyűjtés **teljesen automatikus** (GitHub Actions: az NB1 meccsnapon óránként, egyébként 3 óránként; a PL minden nap óránként) — a
+nincs függőség. Az adatgyűjtés **teljesen automatikus** (GitHub Actions: az NB1 meccsnapon óránként, egyébként 3 óránként; a PL 3 óránként, a zárás délelőtti ablakában óránként) — a
 böngészős könyvjelző már csak tartalék.
 
 | Oldal | Cím |
@@ -36,7 +36,7 @@ azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 - [2. Fájlok](#2-fájlok)
 - [3. Hogyan frissül az adat](#3-hogyan-frissül-az-adat)
   - [Minden automatikusan megy (GitHub Actions, meccsnapon óránként)](#minden-automatikusan-megy-github-actions-meccsnapon-óránként)
-  - [Az FPL Draft adatai (óránként, draft.yml)](#az-fpl-draft-adatai-óránként-draftyml)
+  - [Az FPL Draft adatai (draft.yml)](#az-fpl-draft-adatai-draftyml)
   - [Élő frissítés a böngészőből (mindkét oldal)](#élő-frissítés-a-böngészőből-mindkét-oldal)
   - [Az utolsó ismert állás — „ha valaki már lekérdezte, lássam azt"](#az-utolsó-ismert-állás--ha-valaki-már-lekérdezte-lássam-azt)
   - [Az NB1 élő lekérése két körben megy, nem nyolcban (mérve)](#az-nb1-élő-lekérése-két-körben-megy-nem-nyolcban-mérve)
@@ -524,7 +524,7 @@ teljes képernyős, ragadós × gombbal.
 | `draft_history.json` | Fordulónkénti FPL-keretek pontokkal (`{rounds:{gw:{liga_id:[{e,b,pts},...]}}, kesz:[...]}`) — a GW1 indulásától gyűlik. A **`veglegesek`** lista mondja meg, mely RÉGI fordulók véglegesek: azokat a gyűjtő nem kéri le többé. Az aktuális fordulót minden körben lekéri, a zárás után is (lásd „3/b. A lezárás”). |
 | `keretek/<forduló>.json` | Egy forduló keretei külön fájlban (`{round, squads}`). A meccs-nézet **ezt** tölti le, nem a teljes előzményt. |
 | `.github/workflows/archive.yml` | A gyűjtő munkafolyamata: `collect.py` + commit. **Meccsnapon (csütörtök–hétfő) óránként, kedden-szerdán 3 óránként** — lásd *Miért óránként a meccsnapokon*. |
-| `.github/workflows/draft.yml` | Óránként futó (és kézzel is indítható) munkafolyamat: `collect_draft.py` + commit — lásd *Az FPL Draft adatai*. |
+| `.github/workflows/draft.yml` | 3 óránként, délelőtt óránként futó (és kézzel is indítható) munkafolyamat: `collect_draft.py` + commit — lásd *Az FPL Draft adatai*. |
 | `.github/workflows/naplo-meres.yml` | **Kézi mérésfuttató**: egy `naplo/*.py`-t futtat Actionsből (a fejlesztői környezet hálózata minden külső forrást blokkol), és amit a mérés kiírt, azt a megadott ágra commitolja. Bemenetei: `szkript`, `branch`, `kornyezet` (soronként egy `NÉV=érték`, pl. `HARVEST_EVENT=5`). **Minden méréshez ez az egy munkafolyamat van** — mérésenként külön fájl nem készül: abból tizennégy majdnem azonos példány lett, bennük három elgépelt `git add` úttal, amitől a mérés eredménye némán elveszett. |
 | `tartalek/` | Minden, ami nem kell a napi működéshez: a tartalék könyvjelző (`GOMB-bookmarklet.txt`, forrása és építője), az útmutatója (`KERET-MENTES.md`) és az elavult kézi pótlás leírása (`BACKFILL.md`). A weboldal és a gyűjtők semmit nem olvasnak innen. |
 
@@ -592,13 +592,15 @@ Ezért **csütörtöktől hétfőig óránként**, kedden-szerdán marad a háro
 ütemezés nem ad 24 futást — azt adja, hogy **egy eldobott indítás egy órát kerüljön, ne
 hármat**. A kedd-szerda azért marad ritka, mert ott nincs mit elkapni.
 
-### Az FPL Draft adatai (óránként, draft.yml)
+### Az FPL Draft adatai (draft.yml)
 
-A `draft.yml` **minden nap óránként** fut. A PL-forduló lezárását (`current_event_finished`)
-csak egy futás veheti észre, és háromórás ütemmel — a kihagyott indítások miatt — a zárás
-napokig érvényesítetlen maradt: a forduló a lapon élőként állt, a zárási cserék és az
-összefoglaló vártak rá. A PL-ben hétközi forduló is van, tehát nincs olyan nap, amelyen a
-zárás biztosan nem esik; egy futás mintegy tizenöt másodperc, és csak változáskor commitol.
+A `draft.yml` **3 óránként** fut, **07:00 és 13:00 UTC között pedig óránként**. A PL-forduló
+lezárását (`current_event_finished`) csak egy futás veheti észre, és az FPL a fordulót az
+utolsó meccs utáni napon, **délelőtt** zárja: mérve 08:03–08:23 UTC között billent át, és a
+gyűjtő minden eddigi zárást 08:52 és 13:01 UTC között rögzített. Háromórás ütemmel — a
+GitHub által kihagyott indításokkal együtt — a zárás órákig érvényesítetlen maradt, a forduló
+a lapon élőként állt. A nap többi részében nincs mit sűrűn elkapni: az élő állást a böngésző
+maga kéri le.
 
 A `collect_draft.py` a liga-adatokon túl a játékos-törzset, a jelenlegi kereteket
 (tulajdonlás) és — a GW1 indulásától — a fordulónkénti kereteket gyűjti, pontokkal.
@@ -608,7 +610,7 @@ A résztvevők valódi neve és `entry_id`-ja soha nem kerülhet a repóba (ment
 
 Betöltéskor mindkét oldal percre friss adatot kér CORS-proxykon át: az NB1 a
 ranglista-végpontról az eredményeket (és kattintásra a kereteket), a PL a játékosonkénti
-élő pontokat, amikből a meccsállásokat összegzi. Hiba esetén a tárolt (óránként
+élő pontokat, amikből a meccsállásokat összegzi. Hiba esetén a tárolt (néhány óránként
 frissülő) állapot marad.
 
 **Visszatéréskor újra lekér** (`FunTasy.ujraLathatokor`). Ez sokáig hiányzott: az élő
@@ -631,7 +633,7 @@ lekérdezés."* Megnyitod a telefonon, szépen befrissül; egy órával később
 ugyanazt a frissítést végig kell várni, és közben egy régebbi állást bámulsz.
 
 **Miért állt elő.** A közös állapotunk egyetlen dolog: a repóban fekvő JSON-ok, amiket
-a gyűjtő óránként ír. Az élő számot viszont minden eszköz a saját böngészőjében
+a gyűjtő néhány óránként ír. Az élő számot viszont minden eszköz a saját böngészőjében
 számolja ki, és az eredmény ott is marad. A telefon munkája nem írt vissza sehova.
 
 **Amivel NEM oldható meg: gyorsítótár.** A lejáratos gyorsítótár csak akkor segít, ha a
@@ -1452,7 +1454,7 @@ Egyszer ez **csak azon múlt**, hogy a futás hat perccel a zárás után esett.
 Az FPL a fordulót a **lockdownkor** zárja le egyszerre — mérve 08:03 és
 08:23 UTC között billent át minden: a H2H meccsek `finished`-re, a `points` `p`-ről
 `r`-re, a `bonus_added` igazra, a `current_event_finished` igazra. A gyűjtőnk viszont
-óránként fut (és a GitHub az indítások egy részét kihagyja), tehát van egy rés, amikor a `game` végpont már lezártat mond, de a
+nem folyamatosan fut (a zárás délelőtti ablakában óránként), tehát van egy rés, amikor a `game` végpont már lezártat mond, de a
 tárolt `draft.json`-ban még a zárás előtti állás van.
 
 Ebben a résben a státuszsor korábban **„Naprakész · ellenőrizve <most>"**-ot írt: a
@@ -1755,7 +1757,7 @@ játékost kell találnia.
   általánosabbra esik vissza — hibát nem okoz, de a szövegek pontatlanabbak lesznek.
 - **Élő lekérés a böngészőből:** az oldal betöltéskor közvetlenül is lekéri a friss
   eredményeket (CORS-proxykon át). Ha ez elromlik, a státuszsávban jelzi (a szövegeket
-  lásd a 3. fejezetben), és a tárolt (óránként frissülő) adat marad látható.
+  lásd a 3. fejezetben), és a tárolt (néhány óránként frissülő) adat marad látható.
 
 ---
 

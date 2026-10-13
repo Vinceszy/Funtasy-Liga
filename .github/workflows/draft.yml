@@ -1,17 +1,19 @@
 ---
 name: FPL Draft frissitese
 
-# Orankent fut (az archive.yml-tol eltolt percben), es kezzel is
-# inditható. A vegpontok bizonyitottan mukodnek szerverrol.
+# 3 orankent fut (az archive.yml-tol eltolt percben), delelott pedig
+# orankent; kezzel is inditható. A vegpontok bizonyitottan mukodnek szerverrol.
 #
-# Miert orankent, minden nap: a fordulo zarasat (current_event_finished)
-# csak egy futas veheti eszre, es a GitHub az utemezett futasok jo reszet
-# kihagyja - harom oras utemmel a zaras napokig is ervenyesitetlen maradt.
-# A PL-ben hetkozi fordulo is van, tehat barmelyik nap lehet zarasnap.
-# Egy futas mintegy tizenot masodperc, es csak valtozaskor commitol.
+# Miert a delelott suru: a fordulo zarasat (current_event_finished) csak egy
+# futas veheti eszre, es az FPL a fordulot az utolso meccs utani napon,
+# delelott zarja (merve 08:03-08:23 UTC; a gyujto minden eddigi zarast 08:52
+# es 13:01 UTC kozott rogzitett). Harom oras utemmel, a GitHub altal kihagyott
+# inditasokkal egyutt, a zaras orakig ervenyesitetlen maradt. A nap tobbi
+# reszeben nincs mit elkapni: az elo allast a bongeszo maga keri le.
 on:
   schedule:
-    - cron: '47 * * * *'
+    - cron: '47 */3 * * *'
+    - cron: '17 7-13 * * *'
   workflow_dispatch:
     inputs:
       league_id:
