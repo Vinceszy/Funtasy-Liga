@@ -169,8 +169,9 @@ consequence, never the mechanism.
 **Do not ride one device through the whole round.** If the round taught us
 about the automatic substitution, that is the spine of the one fixture it
 decided - not the opening of all five. The same goes for kick-off times,
-transfers, benches and anything else newly learned. A device used five times
-in one round is a tic.
+transfers, benches, team names and anything else newly learned. A device
+used in three pieces of one round is already a tic: before writing the next
+piece, look at what the ones before it in the same round were built on.
 
 ## A preview is not a summary pointed forwards
 
