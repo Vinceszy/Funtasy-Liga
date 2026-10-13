@@ -209,8 +209,10 @@ matches, and ask: does it say who will start, who will captain, or whose
 player will be on the pitch? Then it is the snapshot posing as the future.
 Only three kinds of thing are written flat in the present: the real
 fixtures (who plays whom - they are fixed), the table and past results.
-Squads are not fixed at all: even ownership can change, three transfers a
-week (unlimited in a break). So the forward half of a squad sentence is a
+Squads are not fixed at all: even ownership can change until the deadline -
+in the NB1 three transfers a week (unlimited in a break), in the Draft the
+waivers and free agency, open all week. A player "he has" in a preview is a
+player he had last round. So the forward half of a squad sentence is a
 condition or a choice - "if he keeps the armband on him", "if he starts
 them as well", "he has three transfers for it" - and the ending in
 particular closes on the decision, never on a prediction drawn from the

@@ -298,6 +298,11 @@ def main():
     print_spent(league, rnd, kind)
 
     if kind == "preview":
+        heading("OWNERSHIP IS OPEN UNTIL THE DEADLINE")
+        print("Every squad below is last round's. " + (
+            "NB1: three transfers a week, unlimited in a break." if league == "nb1" else
+            "Draft: the waivers and free agency stay open until the deadline.")
+            + " A player is written as one he HAD, and what happens to him as a choice.")
         mirror(season, pairs)
         if league == "nb1":
             nb1_squads(rnd, pairs)
