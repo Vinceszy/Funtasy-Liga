@@ -37,27 +37,27 @@ One piece at a time, in fixture order: the next one is shown when the one
 before it is approved. Five pieces at once are five pieces nobody reads
 closely.
 
-## The summary: look for the story before choosing it
+## The summary: a story, found in the material
 
-A line-up decision is one possible story, and the easiest to fall back on.
-Before choosing a spine, the first step's STORY MATERIAL is read whole:
+A piece needs a story with colour, and there is no single place it comes
+from: a match that turned the fixture, a player's week, one manager's habit,
+a shared match where both had men, a keeper on one bench, a quote, the
+season behind the two of them. The running score match by match, which the
+first step prints for the Draft, is one way of finding it, not the way.
 
-- **the line-up each manager chose**, with the machine's closing
-  substitutions undone, and what changed since the last round. The stored
-  line-up is what played, not what he decided - a claim about his decision
-  is checked here;
-- **the running score match by match**, in kick-off order: who led when,
-  which real match turned it, which match had men of both on the pitch. A
-  goal by one manager's forward against the other's goalkeeper, a keeper on
-  one bench saving the clean sheet of the other side's defender - these are
-  found here, not in the totals.
+One thing to watch whatever the story: the stored line-up is the state
+after the close, so it may already contain the machine's substitutions. A
+sentence about what a manager decided is checked against the line-up he
+chose, which the first step also prints.
 
 ## The preview: a season, not a snapshot
 
-The spine of a preview comes from the two managers' season, which the
-season mirror prints: the margin of every match, where each finished in
+A preview's spine often comes from the two managers' season, which the
+season mirror prints - or from what the coming weekend holds: a derby, a
+club one side leans on, a star who did not play last time. The season
+mirror shows the margin of every match, where each finished in
 every round's score order, the form (streaks, season best), the table, and
-the previous meeting. Look for the contrast or the crossing of the two
+the previous meeting. In it, look for the contrast or the crossing of the two
 lines - the man of the tight games against the man of the blowouts, the most
 consistent against the luckiest, two curves that crossed since the last
 meeting.

@@ -212,13 +212,12 @@ PL_CLUB = {"Arsenal": "ARS", "Leeds": "LEE", "Aston Villa": "AVL", "Brentford": 
 
 
 def pl_story_material(rnd):
-    """Two things a Draft summary is easy to get wrong without.
+    """Material for a Draft summary.
 
-    The line-up each manager CHOSE - the stored one is the state after the
-    close, with the machine's substitutions already in, so it says what
-    played, not what he decided. And the running score match by match in
-    kick-off order, which is where most stories are: who led when, which real
-    match turned it, which match had men of both on the pitch."""
+    The line-up each manager chose: the stored one is the state after the
+    close and may already contain the machine's substitutions, so a sentence
+    about what he decided is checked here. And the running score match by
+    match in kick-off order - one possible way into a story, among others."""
     draft = load("draft.json")
     name = {e["id"]: e["name"] for e in draft.get("entries") or []}
     players = load("draft_players.json").get("players") or {}
