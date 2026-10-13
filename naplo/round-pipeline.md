@@ -33,6 +33,25 @@ approved. Only the approved text is written to `articles.json`, with its
 `kozzetett` stamp, and published. There is no draft file: half-finished
 text never enters the repository.
 
+One piece at a time, in fixture order: the next one is shown when the one
+before it is approved. Five pieces at once are five pieces nobody reads
+closely.
+
+## The summary: look for the story before choosing it
+
+A line-up decision is one possible story, and the easiest to fall back on.
+Before choosing a spine, the first step's STORY MATERIAL is read whole:
+
+- **the line-up each manager chose**, with the machine's closing
+  substitutions undone, and what changed since the last round. The stored
+  line-up is what played, not what he decided - a claim about his decision
+  is checked here;
+- **the running score match by match**, in kick-off order: who led when,
+  which real match turned it, which match had men of both on the pitch. A
+  goal by one manager's forward against the other's goalkeeper, a keeper on
+  one bench saving the clean sheet of the other side's defender - these are
+  found here, not in the totals.
+
 ## The preview: a season, not a snapshot
 
 The spine of a preview comes from the two managers' season, which the

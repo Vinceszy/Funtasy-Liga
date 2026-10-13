@@ -202,6 +202,78 @@ def nb1_squads(rnd, pairs):
         "naplo/nb1-fixtures-%d.txt before writing" % rnd))
 
 
+PL_CLUB = {"Arsenal": "ARS", "Leeds": "LEE", "Aston Villa": "AVL", "Brentford": "BRE",
+           "Chelsea": "CHE", "Bournemouth": "BOU", "Ipswich Town": "IPS", "Fulham": "FUL",
+           "Sunderland": "SUN", "Brighton": "BHA", "Man Utd": "MUN", "Spurs": "TOT",
+           "Crystal Palace": "CRY", "Nott'm Forest": "NFO", "Hull City": "HUL",
+           "Everton": "EVE", "Liverpool": "LIV", "Man City": "MCI",
+           "Coventry City": "COV", "Newcastle": "NEW", "Wolves": "WOL",
+           "West Ham": "WHU", "Burnley": "BUR", "Leicester": "LEI", "Southampton": "SOU"}
+
+
+def pl_story_material(rnd):
+    """Two things a Draft summary is easy to get wrong without.
+
+    The line-up each manager CHOSE - the stored one is the state after the
+    close, with the machine's substitutions already in, so it says what
+    played, not what he decided. And the running score match by match in
+    kick-off order, which is where most stories are: who led when, which real
+    match turned it, which match had men of both on the pitch."""
+    draft = load("draft.json")
+    name = {e["id"]: e["name"] for e in draft.get("entries") or []}
+    players = load("draft_players.json").get("players") or {}
+    hist = (load("draft_history.json").get("rounds") or {})
+    closes = (load("zarasok.json").get("rounds") or {})
+    colour = os.path.join(HERE, "pl-colour-%d.json" % rnd)
+    games = []
+    if os.path.exists(colour):
+        with open(colour, encoding="utf-8") as f:
+            games = sorted((m.get("kezdes") or "", k)
+                           for k, m in (json.load(f).get("meccsek") or {}).items())
+    pname = lambda e: (players.get(str(e)) or {}).get("n", str(e))
+    pclub = lambda e: (players.get(str(e)) or {}).get("t", "")
+
+    def chosen(team, r):
+        rows = (hist.get(str(r)) or {}).get(str(team)) or []
+        close = (closes.get(str(r)) or {}).get(str(team)) or {}
+        out = {x["e"] for x in close.get("ki") or []}
+        came = {x["e"] for x in close.get("be") or []}
+        xi = [p["e"] for p in rows if not p["b"] and p["e"] not in came] + sorted(out)
+        bench = [p["e"] for p in rows if p["b"] and p["e"] not in out] + sorted(came)
+        return xi, bench, out, came
+
+    heading("STORY MATERIAL - chosen line-ups and the running score")
+    for a, b, _, _ in (draft.get("schedule") or {}).get(str(rnd)) or []:
+        print("\n### %s - %s" % (name.get(a, a), name.get(b, b)))
+        for t in (a, b):
+            xi, bench, out, came = chosen(t, rnd)
+            pxi, _, _, _ = chosen(t, rnd - 1)
+            print("  %s chose: %s" % (name.get(t, t), ", ".join(pname(e) for e in xi)))
+            print("     bench: %s" % ", ".join(pname(e) for e in bench))
+            print("     in / out of the XI since last round: +%s / -%s" % (
+                ", ".join(pname(e) for e in xi if e not in pxi) or "-",
+                ", ".join(pname(e) for e in pxi if e not in xi) or "-"))
+            if out:
+                print("     machine at the close: %s -> %s" % (
+                    ", ".join(pname(e) for e in out), ", ".join(pname(e) for e in came)))
+        if not games:
+            print("  (no colour table yet - the running score needs its kick-off times)")
+            continue
+        score = {a: 0, b: 0}
+        rows = {t: [p for p in (hist.get(str(rnd)) or {}).get(str(t)) or [] if not p["b"]]
+                for t in (a, b)}
+        for ko, match in games:
+            clubs = {PL_CLUB.get(x.strip(), x.strip()) for x in match.split(" - ")}
+            got = {t: [(pname(p["e"]), p["pts"]) for p in rows[t] if pclub(p["e"]) in clubs]
+                   for t in (a, b)}
+            if not got[a] and not got[b]:
+                continue
+            for t in (a, b):
+                score[t] += sum(x for _, x in got[t])
+            print("  %s %-34s %s | %s | %d-%d" % (ko[5:16], match, got[a], got[b],
+                                                   score[a], score[b]))
+
+
 def run(script, *args):
     heading("DATA: naplo/%s %s" % (script, " ".join(args)))
     sys.stdout.flush()
@@ -235,6 +307,8 @@ def main():
     elif kind == "summary":
         run("round-colour-harvest.py" if league == "nb1" else "draft-round-harvest.py",
             str(rnd))
+        if league == "pl":
+            pl_story_material(rnd)
         table = os.path.join(HERE, "%s-colour-%d.json" % (league, rnd))
         print("\ncolour table naplo/%s-colour-%d.json: %s" % (
             league, rnd, "present" if os.path.exists(table) else
