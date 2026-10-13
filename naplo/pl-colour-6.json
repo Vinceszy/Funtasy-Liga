@@ -1,0 +1,645 @@
+{
+ "event": "6",
+ "fordulo": 6,
+ "liga": "pl",
+ "keszult": "2026-10-13T17:18:15Z",
+ "meccsek": {
+  "Arsenal - Leeds": {
+   "kezdes": "2026-10-10T11:30:00Z",
+   "fotmob": "5795465",
+   "golok": [
+    {
+     "perc": 55,
+     "jatekos": "James Justin",
+     "gólpassz": "assist by Gabriel Gudmundsson",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.131
+    },
+    {
+     "perc": 62,
+     "jatekos": "Riccardo Calafiori",
+     "gólpassz": "assist by Ben White",
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.506
+    },
+    {
+     "perc": 70,
+     "jatekos": "Bruno Guimarães",
+     "gólpassz": "assist by Declan Rice",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.1
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 83,
+     "jatekos": "Martin Ødegaard",
+     "xG": 0.706,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "kapura": true
+    },
+    {
+     "perc": 90,
+     "jatekos": "Bukayo Saka",
+     "xG": 0.333,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "kapura": true
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "1187213": 4,
+    "562727": 4
+   },
+   "loves_db": 24
+  },
+  "Aston Villa - Brentford": {
+   "kezdes": "2026-10-10T14:00:00Z",
+   "fotmob": "5795466",
+   "golok": [
+    {
+     "perc": 10,
+     "jatekos": "Yehor Yarmoliuk",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.092
+    },
+    {
+     "perc": 12,
+     "jatekos": "Nicolas Jackson",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.223
+    },
+    {
+     "perc": 77,
+     "jatekos": "John McGinn",
+     "gólpassz": "assist by Johan Manzambi",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.06
+    },
+    {
+     "perc": 79,
+     "jatekos": "Kristoffer Ajer",
+     "gólpassz": "assist by Jaidon Anthony",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "ThrowInSetPiece",
+     "öngól": false,
+     "xG": 0.038
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 45,
+     "jatekos": "John McGinn",
+     "xG": 0.684,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "kapura": true
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "776689": 5,
+    "1053679": 2
+   },
+   "loves_db": 34
+  },
+  "Chelsea - Bournemouth": {
+   "kezdes": "2026-10-10T14:00:00Z",
+   "fotmob": "5795467",
+   "golok": [
+    {
+     "perc": 2,
+     "jatekos": "Jordan Henderson",
+     "gólpassz": "assist by Cole Palmer",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.046
+    },
+    {
+     "perc": 3,
+     "jatekos": "Morgan Rogers",
+     "gólpassz": "assist by Jordan Henderson",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.046
+    },
+    {
+     "perc": 46,
+     "jatekos": "João Pedro",
+     "gólpassz": "assist by Pedro Neto",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.134
+    },
+    {
+     "perc": 51,
+     "jatekos": "Evanilson",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "FromCorner",
+     "öngól": false,
+     "xG": 0.555
+    },
+    {
+     "perc": 67,
+     "jatekos": "João Pedro",
+     "gólpassz": "assist by Pep Chavarría",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.462
+    },
+    {
+     "perc": 70,
+     "jatekos": "Jordan Henderson",
+     "gólpassz": null,
+     "leiras": "Direct freekick",
+     "mód": "RightFoot",
+     "helyzet": "FreeKick",
+     "öngól": false,
+     "xG": 0.066
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 51,
+     "jatekos": "António Silva",
+     "xG": 0.394,
+     "mód": "Header",
+     "helyzet": "FromCorner",
+     "kapura": true
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "1067256": 1,
+    "268375": 3
+   },
+   "loves_db": 19
+  },
+  "Ipswich Town - Fulham": {
+   "kezdes": "2026-10-10T14:00:00Z",
+   "fotmob": "5795471",
+   "golok": [
+    {
+     "perc": 55,
+     "jatekos": "Ryan Sessegnon",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "FromCorner",
+     "öngól": false,
+     "xG": 0.034
+    },
+    {
+     "perc": 88,
+     "jatekos": "Abdoul Ouattara",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.022
+    },
+    {
+     "perc": "90 + 2",
+     "jatekos": "Dara O'Shea",
+     "gólpassz": "assist by Jack Clarke",
+     "leiras": "Header",
+     "mód": "Header",
+     "helyzet": "SetPiece",
+     "öngól": false,
+     "xG": 0.232
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 53,
+     "jatekos": "Gonzalo García",
+     "xG": 0.578,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "kapura": true
+    },
+    {
+     "perc": 58,
+     "jatekos": "Emersonn",
+     "xG": 0.371,
+     "mód": "Header",
+     "helyzet": "RegularPlay",
+     "kapura": false
+    },
+    {
+     "perc": 58,
+     "jatekos": "Oscar Bobb",
+     "xG": 0.491,
+     "mód": "LeftFoot",
+     "helyzet": "FastBreak",
+     "kapura": false
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "215168": 3,
+    "512013": 3,
+    "None": 1
+   },
+   "loves_db": 24
+  },
+  "Sunderland - Brighton": {
+   "kezdes": "2026-10-10T14:00:00Z",
+   "fotmob": "5795474",
+   "golok": [
+    {
+     "perc": 53,
+     "jatekos": "Maxim De Cuyper",
+     "gólpassz": "assist by Pascal Groß",
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "ThrowInSetPiece",
+     "öngól": false,
+     "xG": 0.249
+    },
+    {
+     "perc": "90 + 3",
+     "jatekos": "Jaouen Hadjam",
+     "gólpassz": "assist by Georginio Rutter",
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "FastBreak",
+     "öngól": false,
+     "xG": 0.146
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [],
+   "vedesek_kapusonkent": {
+    "1125720": 2,
+    "1131987": 3
+   },
+   "loves_db": 25
+  },
+  "Man Utd - Spurs": {
+   "kezdes": "2026-10-10T16:30:00Z",
+   "fotmob": "5795473",
+   "golok": [
+    {
+     "perc": 73,
+     "jatekos": "Bryan Mbeumo",
+     "gólpassz": "assist by Matheus Cunha",
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.098
+    },
+    {
+     "perc": "90 + 2",
+     "jatekos": "Dominic Solanke",
+     "gólpassz": "assist by Sandro Tonali",
+     "leiras": "Header",
+     "mód": "Header",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.228
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 42,
+     "jatekos": "Conor Gallagher",
+     "xG": 0.444,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "kapura": true
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "1178602": 2,
+    "1341475": 3
+   },
+   "loves_db": 24
+  },
+  "Crystal Palace - Nott'm Forest": {
+   "kezdes": "2026-10-11T13:00:00Z",
+   "fotmob": "5795469",
+   "golok": [
+    {
+     "perc": 3,
+     "jatekos": "Dan Ndoye",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.067
+    },
+    {
+     "perc": 41,
+     "jatekos": "Daichi Kamada",
+     "gólpassz": "assist by Quinten Timber",
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.34
+    },
+    {
+     "perc": "45 + 4",
+     "jatekos": "Jefferson Lerma",
+     "gólpassz": "assist by Adam Wharton",
+     "leiras": "Header",
+     "mód": "Header",
+     "helyzet": "FromCorner",
+     "öngól": false,
+     "xG": 0.347
+    },
+    {
+     "perc": 59,
+     "jatekos": "Yéremi Pino",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.349
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 8,
+     "jatekos": "Jørgen Strand Larsen",
+     "xG": 0.466,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "kapura": true
+    },
+    {
+     "perc": 35,
+     "jatekos": "Liam Delap",
+     "xG": 0.682,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "kapura": true
+    },
+    {
+     "perc": 40,
+     "jatekos": "Liam Delap",
+     "xG": 0.331,
+     "mód": "Header",
+     "helyzet": "RegularPlay",
+     "kapura": false
+    },
+    {
+     "perc": 59,
+     "jatekos": "Jørgen Strand Larsen",
+     "xG": 0.486,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "kapura": true
+    },
+    {
+     "perc": 80,
+     "jatekos": "Chris Wood",
+     "xG": 0.431,
+     "mód": "Header",
+     "helyzet": "RegularPlay",
+     "kapura": true
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "448897": 5,
+    "181069": 4
+   },
+   "loves_db": 37
+  },
+  "Hull City - Everton": {
+   "kezdes": "2026-10-11T13:00:00Z",
+   "fotmob": "5795470",
+   "golok": [
+    {
+     "perc": 48,
+     "jatekos": "Joe Gelhardt",
+     "gólpassz": "assist by Sorba Thomas",
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "FastBreak",
+     "öngól": false,
+     "xG": 0.536
+    },
+    {
+     "perc": 55,
+     "jatekos": "Kiernan Dewsbury-Hall",
+     "gólpassz": "assist by Ainsley Maitland-Niles",
+     "leiras": "Header",
+     "mód": "Header",
+     "helyzet": "FromCorner",
+     "öngól": false,
+     "xG": 0.4
+    },
+    {
+     "perc": 68,
+     "jatekos": "Thierno Barry",
+     "gólpassz": "assist by Kiernan Dewsbury-Hall",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.276
+    },
+    {
+     "perc": 74,
+     "jatekos": "Mohamed Belloumi",
+     "gólpassz": "assist by Elliot Stroud",
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.079
+    }
+   ],
+   "var": [
+    {
+     "perc": 34,
+     "jatekos": "Brennan Johnson",
+     "mit": "Brennan Johnson"
+    }
+   ],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 27,
+     "jatekos": "Thierno Barry",
+     "xG": 0.318,
+     "mód": "Header",
+     "helyzet": "FromCorner",
+     "kapura": true
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "1072068": 4,
+    "303919": 2,
+    "None": 2
+   },
+   "loves_db": 24
+  },
+  "Liverpool - Man City": {
+   "kezdes": "2026-10-11T15:30:00Z",
+   "fotmob": "5795472",
+   "golok": [
+    {
+     "perc": 65,
+     "jatekos": "Erling Haaland",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.059
+    },
+    {
+     "perc": 68,
+     "jatekos": "Jérémy Doku",
+     "gólpassz": "assist by Elliot Anderson",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.023
+    },
+    {
+     "perc": 78,
+     "jatekos": "Rayan Cherki",
+     "gólpassz": "assist by Joško Gvardiol",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.374
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 60,
+     "jatekos": "Erling Haaland",
+     "xG": 0.34,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "kapura": false
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "618878": 6,
+    "319784": 1
+   },
+   "loves_db": 28
+  },
+  "Coventry City - Newcastle": {
+   "kezdes": "2026-10-12T19:00:00Z",
+   "fotmob": "5795468",
+   "golok": [
+    {
+     "perc": 6,
+     "jatekos": "Jack Rudoni",
+     "gólpassz": null,
+     "leiras": "Penalty",
+     "mód": "LeftFoot",
+     "helyzet": "Penalty",
+     "öngól": false,
+     "xG": 0.788
+    },
+    {
+     "perc": 48,
+     "jatekos": "Sidiki Cherif",
+     "gólpassz": null,
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "ThrowInSetPiece",
+     "öngól": false,
+     "xG": 0.04
+    },
+    {
+     "perc": 70,
+     "jatekos": "Sven Botman",
+     "gólpassz": "assist by Nico González",
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.035
+    },
+    {
+     "perc": 81,
+     "jatekos": "Ellis Simms",
+     "gólpassz": "assist by Brandon Thomas-Asante",
+     "leiras": null,
+     "mód": "RightFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.099
+    },
+    {
+     "perc": 86,
+     "jatekos": "Stephen Mfuni",
+     "gólpassz": "assist by Jay Dasilva",
+     "leiras": null,
+     "mód": "LeftFoot",
+     "helyzet": "RegularPlay",
+     "öngól": false,
+     "xG": 0.052
+    }
+   ],
+   "var": [],
+   "kihagyott_nagy_helyzet": [
+    {
+     "perc": 43,
+     "jatekos": "Matias Fernandez-Pardo",
+     "xG": 0.491,
+     "mód": "RightFoot",
+     "helyzet": "FastBreak",
+     "kapura": true
+    }
+   ],
+   "vedesek_kapusonkent": {
+    "1187236": 4,
+    "1186978": 2,
+    "None": 1
+   },
+   "loves_db": 28
+  }
+ },
+ "allitasok": []
+}
