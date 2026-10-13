@@ -240,6 +240,11 @@ working, and they are rarely rebuilt as well the second time - a full restore th
 back the bad half along with the good. Change what was named, leave the rest, and keep
 the closing line: that is usually the part that was earned.
 
+**A note is for the writer, not for the reader.** A correction changes the
+sentence it is about; it does not become a new sentence. "Nobody drops a
+star", "the waivers are open until then" - things said to the writer so
+the piece gets the game right - never appear in the piece as an explanation.
+
 **Show the whole piece after a fix, never just the changed sentences.** The
 reader judges a text, not a diff; a list of replaced lines leaves him to
 assemble the current version in his head.
