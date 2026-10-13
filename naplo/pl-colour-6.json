@@ -641,5 +641,196 @@
    "loves_db": 28
   }
  },
- "allitasok": []
+ "allitasok": [
+  {
+   "jatekos": "Donnarumma",
+   "klub": "MCI",
+   "perc": null,
+   "tag": "keeper_save",
+   "mondat": "hat lövést védett az Anfielden, és nem kapott gólt",
+   "horgony": "article_only",
+   "meccs": "Liverpool 0-3 Man City"
+  },
+  {
+   "jatekos": "Haaland",
+   "klub": "MCI",
+   "perc": 65,
+   "tag": "goal_manner",
+   "mondat": "bal lábbal a tizenhatos közepéről",
+   "horgony": "event",
+   "meccs": "Liverpool 0-3 Man City"
+  },
+  {
+   "jatekos": "Doku",
+   "klub": "MCI",
+   "perc": 68,
+   "tag": "goal_manner",
+   "mondat": "jobb lábbal a bal oldalról a jobb felső sarokba, Anderson passzából",
+   "horgony": "event",
+   "meccs": "Liverpool 0-3 Man City"
+  },
+  {
+   "jatekos": "Cherki",
+   "klub": "MCI",
+   "perc": 78,
+   "tag": "goal_manner",
+   "mondat": "az ötösről, Gvardiol fejes passzából",
+   "horgony": "event",
+   "meccs": "Liverpool 0-3 Man City"
+  },
+  {
+   "jatekos": "João Pedro",
+   "klub": "CHE",
+   "perc": 46,
+   "tag": "goal_manner",
+   "mondat": "a tizenhatos közepéről a jobb felső sarokba, Neto passzából, rögtön a második félidő elején",
+   "horgony": "event",
+   "meccs": "Chelsea 5-1 Bournemouth"
+  },
+  {
+   "jatekos": "João Pedro",
+   "klub": "CHE",
+   "perc": 67,
+   "tag": "goal_manner",
+   "mondat": "a tizenhatos közepéről a bal felső sarokba, Chavarría beadásából",
+   "horgony": "event",
+   "meccs": "Chelsea 5-1 Bournemouth"
+  },
+  {
+   "jatekos": "Evanilson",
+   "klub": "BOU",
+   "perc": 51,
+   "tag": "goal_manner",
+   "mondat": "szöglet után, közvetlen közelről",
+   "horgony": "event",
+   "meccs": "Chelsea 5-1 Bournemouth"
+  },
+  {
+   "jatekos": "De Cuyper",
+   "klub": "BHA",
+   "perc": 53,
+   "tag": "goal_manner",
+   "mondat": "bal lábbal a tizenhatos közepéről a bal alsó sarokba, Groß passzából",
+   "horgony": "event",
+   "meccs": "Sunderland 0-2 Brighton"
+  },
+  {
+   "jatekos": "Dewsbury-Hall",
+   "klub": "EVE",
+   "perc": 55,
+   "tag": "goal_manner",
+   "mondat": "szöglet után fejjel, közvetlen közelről, Maitland-Niles passzából",
+   "horgony": "event",
+   "meccs": "Hull City 2-2 Everton"
+  },
+  {
+   "jatekos": "Barry",
+   "klub": "EVE",
+   "perc": 68,
+   "tag": "goal_manner",
+   "mondat": "a tizenhatos közepéről a jobb felső sarokba, Dewsbury-Hall passzából",
+   "horgony": "event",
+   "meccs": "Hull City 2-2 Everton"
+  },
+  {
+   "jatekos": "Botman",
+   "klub": "NEW",
+   "perc": 70,
+   "tag": "goal_manner",
+   "mondat": "a tizenhatoson kívülről a bal felső sarokba, Newcastle egyetlen gólja a négyből egyre végződő vereségben",
+   "horgony": "event",
+   "meccs": "Coventry City 4-1 Newcastle"
+  },
+  {
+   "jatekos": "Strand Larsen",
+   "klub": "CRY",
+   "perc": 8,
+   "tag": "big_miss",
+   "mondat": "a tizenhatos közepéről lőtt, Sels védte",
+   "horgony": "event",
+   "meccs": "Crystal Palace 3-1 Nott'm Forest"
+  },
+  {
+   "jatekos": "Strand Larsen",
+   "klub": "CRY",
+   "perc": 59,
+   "tag": "big_miss",
+   "mondat": "a tizenhatos közepéről lőtt, Sels megint védte",
+   "horgony": "event",
+   "meccs": "Crystal Palace 3-1 Nott'm Forest"
+  },
+  {
+   "jatekos": "Yeremy",
+   "klub": "CRY",
+   "perc": 59,
+   "tag": "goal_manner",
+   "mondat": "jobb lábbal a tizenhatos közepéről a jobb alsó sarokba",
+   "horgony": "event",
+   "meccs": "Crystal Palace 3-1 Nott'm Forest",
+   "forrasnev": "Yéremi Pino"
+  },
+  {
+   "jatekos": "Solanke",
+   "klub": "TOT",
+   "perc": "90+2",
+   "tag": "goal_manner",
+   "mondat": "a hosszabbításban fejjel, Tonali beadásából, egyenlítő gól",
+   "horgony": "event",
+   "meccs": "Man Utd 1-1 Spurs"
+  },
+  {
+   "jatekos": "Mbeumo",
+   "klub": "MUN",
+   "perc": 73,
+   "tag": "goal_manner",
+   "mondat": "bal lábbal a bal oldalról, Cunha passzából",
+   "horgony": "event",
+   "meccs": "Man Utd 1-1 Spurs"
+  },
+  {
+   "jatekos": "McGinn",
+   "klub": "AVL",
+   "perc": 77,
+   "tag": "goal_manner",
+   "mondat": "a tizenhatos bal oldaláról, Manzambi passzából",
+   "horgony": "event",
+   "meccs": "Aston Villa 2-2 Brentford"
+  },
+  {
+   "jatekos": "N.Jackson",
+   "klub": "AVL",
+   "perc": 12,
+   "tag": "goal_manner",
+   "mondat": "a tizenhatos közepéről a jobb alsó sarokba, két perccel a Brentford vezető gólja után",
+   "horgony": "event",
+   "meccs": "Aston Villa 2-2 Brentford"
+  },
+  {
+   "jatekos": "Suzuki",
+   "klub": "AVL",
+   "perc": null,
+   "tag": "keeper_save",
+   "mondat": "két gólt kapott a 2-2-es döntetlenben",
+   "horgony": "article_only",
+   "meccs": "Aston Villa 2-2 Brentford"
+  },
+  {
+   "jatekos": "Rogers",
+   "klub": "CHE",
+   "perc": 3,
+   "tag": "goal_manner",
+   "mondat": "a harmadik percben a bal oldalról a jobb felső sarokba",
+   "horgony": "event",
+   "meccs": "Chelsea 5-1 Bournemouth"
+  },
+  {
+   "jatekos": "Calafiori",
+   "klub": "ARS",
+   "perc": 62,
+   "tag": "goal_manner",
+   "mondat": "bal lábbal a tizenhatos közepéről, White fejes passzából, az egyenlítő gól",
+   "horgony": "event",
+   "meccs": "Arsenal 2-1 Leeds"
+  }
+ ]
 }

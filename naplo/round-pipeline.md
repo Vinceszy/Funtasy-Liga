@@ -146,7 +146,9 @@ and remembered, it is **written into a table**, one row per claim:
     {player, minute, tag, phrase, anchor}
 
 and the table is a file: `naplo/<league>-colour-<round>.json`, its rows under
-`allitasok` with the keys `jatekos, perc, tag, mondat, horgony, meccs`. The
+`allitasok` with the keys `jatekos, perc, tag, mondat, horgony, meccs` (plus
+`forrasnev` when the squad's name for the player differs from the report's -
+the Draft's "Yeremy" is the FotMob's "Yéremi Pino"). The
 article is written from the table, not from the article text - so every
 sentence can be traced back to a row, and the row's anchor decides whether
 it may be stated at all (see *What each layer may say*).

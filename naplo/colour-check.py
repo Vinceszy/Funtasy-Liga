@@ -127,7 +127,11 @@ def main():
         if not k:
             baj.append("ismeretlen meccs: %s" % s.get("meccs"))
             continue
-        m, p, nev = meccsek[k], alap(s.get("perc")), sima(s.get("jatekos"))
+        # A keret neve es a jegyzokonyv neve elterhet: a Draft beceneven
+        # tartja a jatekost ("Yeremy"), a FotMob teljes neven ("Yeremi Pino").
+        # Ilyenkor a sor `forrasnev` mezoje mondja meg, kit keresunk a blokkban.
+        m, p = meccsek[k], alap(s.get("perc"))
+        nev = sima(s.get("forrasnev") or s.get("jatekos"))
 
         def golban(mezo="jatekos"):
             return any(alap(g.get("perc")) == p and nev in sima(g.get(mezo) or g.get("ki"))
