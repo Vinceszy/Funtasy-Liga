@@ -163,7 +163,7 @@ try:
           % sorted(b))
 
     # G9: mar letezo fajl, amibol csak a 99-es hianyzik
-    c.kompakt_iras("bontasok/2.json", {"round": 2, "bontasok": {"1": [], "2": []}})
+    c.write_compact("bontasok/2.json", {"round": 2, "bontasok": {"1": [], "2": []}})
     del _kert[:]
     c.bontasok_gyujtes([2], set(), TORZS, {"99"})
     with open("bontasok/2.json", encoding="utf-8") as f:

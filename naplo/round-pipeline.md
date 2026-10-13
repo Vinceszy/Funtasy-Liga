@@ -8,7 +8,7 @@ column); what counts as colour, and how it may be stated, is in
 
 ## The first step, every time
 
-    python3 naplo/cikk-elott.py <nb1|pl> <round> <summary|preview|column>
+    python3 naplo/article-prep.py <nb1|pl> <round> <summary|preview|column>
 
 It refuses a summary of a round that is not final and a preview of a round
 that is not the coming one, then prints, in this order:
@@ -51,7 +51,7 @@ coming line-up (`summary-voice.md`).
 The real fixtures of the round are part of the data. For the NB1 the
 fantasy API does not serve future matches, so they are looked up - two
 independent sources, pairings only, kick-off times are not needed - and
-recorded in `naplo/nb1-parositas-<round>.txt` before writing. The Draft's
+recorded in `naplo/nb1-fixtures-<round>.txt` before writing. The Draft's
 own preview layer is `draft-preview-harvest.py`, which the first step runs.
 
 ## The summary: three layers, one table
@@ -211,7 +211,7 @@ list with commas.
 
 ## The order of the work
 
-1. `cikk-elott.py nb1 <round> summary` - the rules, the spent previews, and
+1. `article-prep.py nb1 <round> summary` - the rules, the spent previews, and
    `round-colour-harvest.py <round>`, the fantasy layer.
 2. `nso-content-probe.py` from Actions - the reports of that round.
 3. Fill `nb1-colour-<round>.json` from the reports: structured block first
@@ -221,7 +221,7 @@ list with commas.
 
 For the Draft the same five steps, with its own scripts:
 
-1. `cikk-elott.py pl <round> summary` - which runs `draft-round-harvest.py
+1. `article-prep.py pl <round> summary` - which runs `draft-round-harvest.py
    <round>`, the fantasy layer; it must say the round is final.
 2. `pl-colour-harvest.py` and `pl-textstream.py` from Actions - the
    structured block with the kick-off times, and the prose.

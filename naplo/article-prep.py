@@ -19,7 +19,7 @@ piece has to be written from:
        summary - the round harvest (the fantasy layer), and whether the
                  round's colour table exists.
 
-Usage: python3 naplo/cikk-elott.py <nb1|pl> <round> <summary|preview|column>
+Usage: python3 naplo/article-prep.py <nb1|pl> <round> <summary|preview|column>
 """
 import json
 import os
@@ -195,11 +195,11 @@ def nb1_squads(rnd, pairs):
             pa, pb = A[i], B[i]
             role = lambda p: "C" if p.get("cap") else "bench" if p.get("sub") else "XI"
             print("  %-28s %-8s %s / %s" % (pa["name"], pa.get("team", ""), role(pa), role(pb)))
-    fixtures = os.path.join(HERE, "nb1-parositas-%d.txt" % rnd)
+    fixtures = os.path.join(HERE, "nb1-fixtures-%d.txt" % rnd)
     print("\nreal NB I fixtures of round %d: %s" % (rnd, (
-        "naplo/nb1-parositas-%d.txt" % rnd) if os.path.exists(fixtures) else
+        "naplo/nb1-fixtures-%d.txt" % rnd) if os.path.exists(fixtures) else
         "NOT RECORDED - look them up (two independent sources) and write "
-        "naplo/nb1-parositas-%d.txt before writing" % rnd))
+        "naplo/nb1-fixtures-%d.txt before writing" % rnd))
 
 
 def run(script, *args):

@@ -1,0 +1,21 @@
+NB I, round 10 (16-18 October 2026) - the real pairings
+Pairings only; kick-off times are not needed.
+
+Source 1 (Nemzeti Sport programme, nb1.hu and alon.hu "round 9 and 10 schedule"):
+  MTK - Vasas
+  Nyíregyháza - Honvéd
+  Paks - ETO
+  Újpest - Puskás Akadémia
+  DVSC - ZTE
+  Kisvárda - Ferencváros
+  (The same article lists round 9, and it matches round 9 of meccsek.json
+  in every pairing - which is why its round 10 is accepted.)
+
+Source 2, match by match, from independent sites (magyarfutball.hu, betting
+and results match pages): DVSC-ZTE, Kisvárda-FTC, MTK-Vasas, Újpest-PAFC,
+Paks-ETO, Nyíregyháza-Honvéd - all six agree.
+The kick-off times differ between the sources; they are not used.
+
+The fantasy API cannot be asked for this in advance: no endpoint serves
+future matches (naplo/mlsz-jatekoslista.txt: ten forms, all 404), and the
+round's squad response is 403 until the market closes.

@@ -256,7 +256,7 @@ _hianyzo = []
 for _coll, _wf in _MUNKAK:
     _add = _re.search(r"git add -A(?: --)? ([^\n]*?)(?: 2>/dev/null)?\n", olvas(_wf))
     _lista = [x.strip("'\"") for x in _add.group(1).split()] if _add else []
-    for _f in sorted(set(_re.findall(r'(?:kompakt_iras|kiir_ha_valtozott)\(\s*"([^"]+)"',
+    for _f in sorted(set(_re.findall(r'(?:write_compact|kiir_ha_valtozott)\(\s*"([^"]+)"',
                                      olvas(_coll)))):
         _mappa = _f.split("/")[0]
         _fed = any(_f == x or _mappa == x or (x.endswith("*.json") and _f.startswith(x[:-6]))
@@ -699,6 +699,28 @@ allit(not _d9, "D9: a megjegyzesek es a doksi nem naplozzak a fejlesztest"
       + ("" if not _d9 else " - %d talalat" % len(_d9)))
 if _d9 and "--d9" in sys.argv:
     print("\n".join("  . " + x for x in _d9))
+
+# ---- D20: new code is named in English ----
+# Code - identifiers, file names, comments - is written in English. Files
+# named in Hungarian before that are listed in tesztek/legacy-hungarian-names.txt;
+# the list may only shrink. A new file whose name carries a Hungarian word
+# fails here, and so does a listed path that is gone (renamed or deleted)
+# but still on the list. The check looks at names only: it is the cheapest
+# place where the slip shows, and the one that kept recurring.
+_HU_WORDS = ['gyujt', 'kozos', 'tarol', 'meres', 'fordulo', 'parosit', 'atigazol', 'elott', 'cikk', 'keret', 'zaras', 'teszt', 'adat', 'naplo', 'valtoz', 'szin', 'beszamolo', 'ertekel', 'esemeny', 'forras', 'hang', 'kispad', 'karszalag', 'jatekos', 'merkozes', 'dupla', 'arelozmeny', 'perc', 'csere', 'figyelo', 'allapot', 'eloora', 'frissjelzo', 'visszateres', 'betukeszlet', 'kezdo', 'tabla', 'eredmeny', 'meccs', 'hatekonysag', 'ujdonsag', 'csapat', 'kozvetit', 'epites', 'kulonbseg', 'lekeres', 'mentes', 'uzenet', 'ellenor', 'lezar', 'osszeg', 'pont']
+_legacy = {l.strip() for l in olvas("tesztek/legacy-hungarian-names.txt").splitlines()
+           if l.strip() and not l.startswith("#")}
+import subprocess as _sp
+_tracked = _sp.run(["git", "-C", GYOKER, "ls-files"], capture_output=True,
+                   text=True).stdout.split()
+_named = [f for f in _tracked if not f.startswith("tartalek/")
+          and re.search(r"\.(py|js|sh|yml|md|txt)$", f)
+          and any(w in os.path.basename(f).lower() for w in _HU_WORDS)]
+_new_hu = sorted(set(_named) - _legacy)
+_gone = sorted(p for p in _legacy if p not in _tracked)
+allit(not _new_hu and not _gone, "D20: new code files are named in English"
+      + ("" if not _new_hu else " - HUNGARIAN NAME: " + ", ".join(_new_hu[:5]))
+      + ("" if not _gone else " - NO LONGER EXISTS, remove from the list: " + ", ".join(_gone[:5])))
 
 if hibak:
     print("\n%d allitas bukott." % len(hibak))

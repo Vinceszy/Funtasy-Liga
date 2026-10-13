@@ -84,7 +84,7 @@ import itertools, json, os, re, sys, time, urllib.error, urllib.parse, urllib.re
 # tesztek konyvtara all, nem a repo gyokere. A sajat konyvtarunkat ezert mi
 # tesszuk fel, kulonben a kozos modul csak eles futasban lenne megtalalhato.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from gyujto_kozos import stamp, kompakt_iras, tarolt_olvas
+from collector_common import stamp, write_compact, read_stored
 
 COMPETITION = 3
 MEMBERS = {
@@ -922,7 +922,7 @@ def bontasok_gyujtes(zartak, valtozott, torzs, extra=()):
                       " a kovetkezo futas ujraprobalja" % (r, hiba), file=sys.stderr)
                 continue
             meglevo.update(sorok)
-            kompakt_iras(ut, {"round": r, "bontasok": meglevo})
+            write_compact(ut, {"round": r, "bontasok": meglevo})
             kiirt += 1
             print("  bontasok/%d.json kiegeszitve (+%d jatekos%s)"
                   % (r, len(sorok), ", %d sikertelen" % hiba if hiba else ""))
@@ -937,7 +937,7 @@ def bontasok_gyujtes(zartak, valtozott, torzs, extra=()):
         # Az `updated` mezo SZANDEKOSAN nincs benne - ugyanaz az ok, mint a
         # keretek/ fajloknal: a lezart fordulo bontasa nem valtozik, es egy
         # idobelyeg minden futasnal ujrairna a fajlt.
-        kompakt_iras(ut, {"round": r, "bontasok": sorok})
+        write_compact(ut, {"round": r, "bontasok": sorok})
         kiirt += 1
         print("  bontasok/%d.json kiirva (%d jatekos%s)"
               % (r, len(sorok), ", %d sikertelen" % hiba if hiba else ""))
@@ -960,7 +960,7 @@ def arnaplo_frissit(torzs, mai):
     ir be hamis "0-ra esett" bejegyzest (ugyanaz a logika, mint a 0-0
     vedelem a results.json-nal).
     """
-    naplo = tarolt_olvas("arak.json", {}).get("arak") or {}
+    naplo = read_stored("arak.json", {}).get("arak") or {}
     valtozott = 0
     for cp, rec in torzs.items():
         ar = rec.get("ar")
@@ -984,9 +984,9 @@ def main():
     volt_vegleges = {int(r) for r, ms in schedule.items()
                      if ms and all(m[2] is not None and m[3] is not None for m in ms)
                      and int(r) not in {int(x) for x in (data.get("provisional") or [])}}
-    hist = tarolt_olvas("squad_history.json", {"updated": None, "rounds": {}})
+    hist = read_stored("squad_history.json", {"updated": None, "rounds": {}})
     hist.setdefault("rounds", {})
-    zarasok_nb1 = tarolt_olvas("zarasok_nb1.json", {})
+    zarasok_nb1 = read_stored("zarasok_nb1.json", {})
     zarasok_nb1.setdefault("rounds", {})
     zarasok_nb1_valtozott = False
     # A legelso valtozat CSAPATSZINTU sorokat tarolt (listaban, {"mgr":...}),
@@ -998,7 +998,7 @@ def main():
         del zarasok_nb1["rounds"][_r]
         zarasok_nb1_valtozott = True
     hist_elotte = json.dumps(hist.get("rounds"), ensure_ascii=False, sort_keys=True)
-    meccsek = tarolt_olvas("meccsek.json", {"updated": None, "rounds": {}})
+    meccsek = read_stored("meccsek.json", {"updated": None, "rounds": {}})
     meccsek.setdefault("rounds", {})
     meccsek_elotte = json.dumps(meccsek["rounds"], ensure_ascii=False, sort_keys=True)
 
@@ -1288,7 +1288,7 @@ def main():
     if beirt or javitott or set(provisional) != regi_prov:
         data["provisional"] = provisional
         data["updated"] = stamp()
-        # Ugyanaz az ok, mint a kompakt_iras-nal: felbevagott results.json
+        # Ugyanaz az ok, mint a write_compact-nal: felbevagott results.json
         # eseten a kovetkezo futas mar el sem indulna.
         with open("results.json.uj", "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=0)
@@ -1316,7 +1316,7 @@ def main():
     except Exception:
         hat_regi = None
     if json.dumps(hat, ensure_ascii=False, sort_keys=True) !=             json.dumps(hat_regi, ensure_ascii=False, sort_keys=True):
-        kompakt_iras("hatekonysag.json", {"updated": stamp(), "rounds": hat})
+        write_compact("hatekonysag.json", {"updated": stamp(), "rounds": hat})
         print("  hatekonysag.json frissitve")
 
     # A torzs a nev-atirashoz is kell, ezert MEG a kiiras elott lekerjuk.
@@ -1372,7 +1372,7 @@ def main():
         gua_regi = None
     if json.dumps(gua, ensure_ascii=False, sort_keys=True) != \
        json.dumps(gua_regi, ensure_ascii=False, sort_keys=True):
-        kompakt_iras("guardiola.json", {"updated": stamp(), "rounds": gua})
+        write_compact("guardiola.json", {"updated": stamp(), "rounds": gua})
         print("  guardiola.json frissitve (%d fordulo)" % len(gua))
 
     # ---- Keretvaltozasok ("Valtoztatasok" ful). Ugyanabbol a korbol es
@@ -1390,17 +1390,17 @@ def main():
         kvalt_regi = None
     if json.dumps(kvalt, ensure_ascii=False, sort_keys=True) != \
        json.dumps(kvalt_regi, ensure_ascii=False, sort_keys=True):
-        kompakt_iras("keretvaltozasok.json", {"updated": stamp(), "rounds": kvalt})
+        write_compact("keretvaltozasok.json", {"updated": stamp(), "rounds": kvalt})
         print("  keretvaltozasok.json frissitve (%d fordulo)" % len(kvalt))
 
     if json.dumps(meccsek["rounds"], ensure_ascii=False, sort_keys=True) != meccsek_elotte:
         meccsek["updated"] = stamp()
-        kompakt_iras("meccsek.json", meccsek)
+        write_compact("meccsek.json", meccsek)
         print("  meccsek.json frissitve")
 
     if json.dumps(hist.get("rounds"), ensure_ascii=False, sort_keys=True) != hist_elotte:
         hist["updated"] = stamp()
-        kompakt_iras("squad_history.json", {"updated": hist["updated"],
+        write_compact("squad_history.json", {"updated": hist["updated"],
                                             "rounds": hist["rounds"]})
         utolso = max((int(r) for r in hist["rounds"]), default=0)
         # A squads.json CSAK az utolso fordulot tartalmazza, a fenti feltetel
@@ -1419,7 +1419,7 @@ def main():
            json.dumps(uj_squads, ensure_ascii=False, sort_keys=True):
             # a mezosorrend marad (updated, round, squads) - kulonben a
             # kovetkezo iras az egesz fajlt "megvaltoztatna" a sorrend miatt
-            kompakt_iras("squads.json", {"updated": hist["updated"],
+            write_compact("squads.json", {"updated": hist["updated"],
                                          "round": uj_squads["round"],
                                          "squads": uj_squads["squads"]})
         # Fordulonkenti keret-fajlok. A teljes elozmeny fordulonkent ~19 KB-tal
@@ -1430,7 +1430,7 @@ def main():
         # csak akkor valtozik, ha a keretek tenylegesen valtoztak.
         os.makedirs("keretek", exist_ok=True)
         for r, keret in hist["rounds"].items():
-            kompakt_iras(os.path.join("keretek", "%s.json" % r),
+            write_compact(os.path.join("keretek", "%s.json" % r),
                          {"round": int(r), "squads": keret})
         print("  squad_history.json + squads.json + keretek/ frissitve"
               " (utolso fordulo: %d)" % utolso)
@@ -1446,19 +1446,19 @@ def main():
             torzs_regi = None
         if json.dumps(torzs, ensure_ascii=False, sort_keys=True) != \
            json.dumps(torzs_regi, ensure_ascii=False, sort_keys=True):
-            kompakt_iras("jatekosok.json", {"updated": stamp(), "players": torzs})
+            write_compact("jatekosok.json", {"updated": stamp(), "players": torzs})
             print("  jatekosok.json frissitve (%d jatekos)" % len(torzs))
 
     if zarasok_nb1_valtozott:
         zarasok_nb1["updated"] = stamp()
-        kompakt_iras("zarasok_nb1.json", zarasok_nb1)
+        write_compact("zarasok_nb1.json", zarasok_nb1)
         print("  zarasok_nb1.json frissitve")
 
     # ---- Arnaplo: csak a valtozasok, mert a multat nem lehet potolni ----
     if torzs is not None:
         arak, valtozott = arnaplo_frissit(torzs, time.strftime("%Y-%m-%d", time.gmtime()))
         if valtozott:
-            kompakt_iras("arak.json", {"updated": stamp(), "arak": arak})
+            write_compact("arak.json", {"updated": stamp(), "arak": arak})
             print("  arak.json frissitve (%d arvaltozas)" % valtozott)
 
     if provisional:

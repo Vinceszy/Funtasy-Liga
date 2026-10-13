@@ -40,7 +40,7 @@ import json, os, sys, time, urllib.error, urllib.request
 # tesztek konyvtara all, nem a repo gyokere. A sajat konyvtarunkat ezert mi
 # tesszuk fel, kulonben a kozos modul csak eles futasban lenne megtalalhato.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from gyujto_kozos import stamp, kompakt_iras, tarolt_olvas
+from collector_common import stamp, write_compact, read_stored
 
 LEAGUE_ID = os.environ.get("DRAFT_LEAGUE_ID", "48093")
 B = "https://draft.premierleague.com/api/"
@@ -134,7 +134,7 @@ def kiir_ha_valtozott(path, tartalom, regi_nelkul_kulcs="updated"):
         return False
     tartalom["updated"] = stamp()
     nevszures(tartalom)
-    kompakt_iras(path, tartalom)
+    write_compact(path, tartalom)
     print("  + %s kiirva (%d byte)" % (path, os.path.getsize(path)))
     return True
 
@@ -495,9 +495,9 @@ def main():
         print("Kesz.")
         return 0
 
-    hist = tarolt_olvas("draft_history.json", {"updated": None, "rounds": {}})
+    hist = read_stored("draft_history.json", {"updated": None, "rounds": {}})
     hist.setdefault("rounds", {})
-    zarasok = tarolt_olvas("zarasok.json", {"updated": None, "rounds": {}})
+    zarasok = read_stored("zarasok.json", {"updated": None, "rounds": {}})
     zarasok.setdefault("rounds", {})
     zarasok_elotte = json.dumps(zarasok["rounds"], ensure_ascii=False, sort_keys=True)
 
@@ -645,7 +645,7 @@ def main():
     # ---- A TELJES mezony fordulonkenti pontja+perce (draft_pontok.json).
     # Osszefesuljuk a tarolttal: ebben a futasban csak a `celok` fordulait
     # kertuk le, a tobbi adatat nem szabad eldobni.
-    pontok = tarolt_olvas("draft_pontok.json", {}).get("rounds") or {}
+    pontok = read_stored("draft_pontok.json", {}).get("rounds") or {}
     pontok.update(pontok_tar)
     kiir_ha_valtozott("draft_pontok.json", {"updated": None, "rounds": pontok})
 

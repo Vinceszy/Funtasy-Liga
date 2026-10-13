@@ -127,9 +127,9 @@ def main():
         if not k:
             baj.append("ismeretlen meccs: %s" % s.get("meccs"))
             continue
-        # A keret neve es a jegyzokonyv neve elterhet: a Draft beceneven
-        # tartja a jatekost ("Yeremy"), a FotMob teljes neven ("Yeremi Pino").
-        # Ilyenkor a sor `forrasnev` mezoje mondja meg, kit keresunk a blokkban.
+        # The squad's name and the report's name can differ: the Draft keeps
+        # the player under a short name ("Yeremy"), FotMob under his full one
+        # ("Yeremi Pino"). The row's `forrasnev` then says whom to look for.
         m, p = meccsek[k], alap(s.get("perc"))
         nev = sima(s.get("forrasnev") or s.get("jatekos"))
 

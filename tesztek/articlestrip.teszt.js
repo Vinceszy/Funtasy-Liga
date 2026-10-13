@@ -289,8 +289,8 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   // ami jon. A szoveget a lapon allitjuk be, hogy a repoban ne kelljen
   // hozza le nem zart fordulos cikket tartani.
   //
-  // A kaput semmilyen URL-parameter nem nyitja ki: egy regi `?draft=1`-es
-  // konyvjelzo sem hozhat elo korai osszefoglalot.
+  // No URL parameter opens the gate: not even an old `?draft=1` bookmark
+  // can bring up an early summary.
   for (const [ut, cimke] of [['nb1/', 'KAPU — NB1'],
                              ['nb1/?draft=1', 'KAPU — NB1, ?draft=1'],
                              ['pl/', 'KAPU — PL'],
@@ -316,11 +316,11 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     // bajnokseg szunetel, a LIVE ures marad, es a teszt ettol allt meg -
     // holott a vizsgalt viselkedessel semmi baj nem volt.
     //
-    // A SCHEDULE onmagaban keves: a lapba egy regi menetrend van beegetve,
-    // es a results.json csak utana irja felul. Ha a kereses kozte fut, egy
-    // reg lezart fordulo nyitottnak latszik. A TAROLT_IDO-t a lap a
-    // results.json megerkezesekor allitja, ugyanabban a lepesben, amelyben
-    // a menetrendet felulirja.
+    // SCHEDULE on its own is not enough: an old schedule is baked into the
+    // page, and results.json overwrites it only afterwards. A search that
+    // runs in between sees a long-closed round as open. The page sets
+    // TAROLT_IDO when results.json arrives, in the same step in which it
+    // overwrites the schedule.
     await g.waitForFunction(nb1 => nb1 ? (typeof SCHEDULE !== 'undefined'
                                           && Object.keys(SCHEDULE).length > 0
                                           && window.TAROLT_IDO !== undefined)

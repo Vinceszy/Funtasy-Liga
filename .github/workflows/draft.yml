@@ -1,15 +1,15 @@
 ---
 name: FPL Draft frissitese
 
-# 3 orankent fut (az archive.yml-tol eltolt percben), delelott pedig
-# orankent; kezzel is inditható. A vegpontok bizonyitottan mukodnek szerverrol.
+# Runs every 3 hours (at a minute offset from archive.yml), hourly in the
+# morning, and can be started by hand. The endpoints work from a server.
 #
-# Miert a delelott suru: a fordulo zarasat (current_event_finished) csak egy
-# futas veheti eszre, es az FPL a fordulot az utolso meccs utani napon,
-# delelott zarja (merve 08:03-08:23 UTC; a gyujto minden eddigi zarast 08:52
-# es 13:01 UTC kozott rogzitett). Harom oras utemmel, a GitHub altal kihagyott
-# inditasokkal egyutt, a zaras orakig ervenyesitetlen maradt. A nap tobbi
-# reszeben nincs mit elkapni: az elo allast a bongeszo maga keri le.
+# Why the morning is dense: a round's close (current_event_finished) is only
+# seen by a run, and the FPL closes a round the morning after its last match
+# (flipped at 08:03-08:23 UTC; every close so far was recorded by the
+# collector between 08:52 and 13:01 UTC). With a 3-hour schedule, thinned out
+# further by the runs GitHub skips, the close went unrecorded for hours. The
+# rest of the day has nothing to catch: the browser fetches the live score.
 on:
   schedule:
     - cron: '47 */3 * * *'

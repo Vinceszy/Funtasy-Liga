@@ -516,7 +516,7 @@ teljes képernyős, ragadós × gombbal.
 | `valtozasok/index.html` | A változásnapló oldala („Mi újult meg?"). |
 | `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
 | `collect_draft.py` | GitHub Actions: az FPL Draft liga adatai. A résztvevők valódi nevét és az `entry_id`-t kiszűri (a repó publikus). |
-| `gyujto_kozos.py` | Amit **mindkét** gyűjtő egyformán csinál, egy másolatban: `stamp`, `kompakt_iras` (atomi írás) és `tarolt_olvas` (a hiányzó és a sérült fájl nem ugyanaz). Nem gyűjtőhely a közös dolgoknak — pontosan ez a három áll itt, és mindhárom ugyanarról szól: hogy a **halmozódó** fájlok túléljenek egy félbeszakadt futást. Amíg két külön másolat volt, az egyik elfelejthette a garanciát, és az csak egy félbeszakadt futás **után** látszott volna. Lásd *A félbeszakadt írás nem olvasható „nincs előzmény"-ként*. |
+| `collector_common.py` | What **both** collectors do identically, in one copy: `stamp`, `write_compact` (atomic write) and `read_stored` (a missing file and a damaged one are not the same). Not a drawer for shared things - exactly these three live here, and all three are about one thing: that the **accumulating** files survive an interrupted run. While there were two copies, one could forget the guarantee, and it would only have shown **after** an interrupted run. See *A félbeszakadt írás nem olvasható „nincs előzmény"-ként*. |
 | `draft.json` | Az FPL Draft liga adatai (résztvevők, menetrend, eredmények) — a `pl/index.html` forrása. |
 | `draft_picks.json` | **A draft maga**: ki kit választott, hányadik körben és hányadik helyen (`{updated, league, rounds, picks:[{r, p, i, e, t, auto, sec}]}`). Az `i` az összesített sorszám (1–150), a `t` a mi csapat-azonosítónk, az `auto` azt jelzi, hogy a **gép választott** a szakvezető helyett. A draft egyszer történt és soha nem változik, ezért nem a gyűjtő írja, hanem kézzel készül (`naplo/draft-picks-harvest.py`). Két azonosító van: a válaszban a csapat a valódi FPL entry-azonosítóján szerepel, nálunk pedig a league-entry az azonosító — a leképezés a liga-adatból jön, és a valódi azonosító **nem kerül a fájlba**, ahogy a nevek sem. Színezésre való: az első körös választás, amit eladtak, vagy a draft utolsó emberének a gólja. |
 | `draft_players.json` | FPL játékos-törzs: `{players: {id: {n: név, t: klub, p: poszt}}, teams: {csapat_id: rövidnév}}`. A `teams` a fixtures-válasz csapat-azonosítóinak feloldásához kell (kinek kezdődött el a meccse). |
@@ -579,7 +579,7 @@ addig nem kerülnek ki, amíg a következő meg nem jön.
 
 Elő is állt: a 9. forduló piaca szombat délben zárt, a következő ütemezett futás nem
 jött meg, és a nyolc keret **négy és fél órán át** nem került ki — a lapon közben az
-állt, hogy „Naprakész". A mérés nyersen: `naplo/nb1-fordulo-allas.txt`.
+állt, hogy „Naprakész". A mérés nyersen: `naplo/nb1-round-state.txt`.
 
 Két mérés döntötte el az új ütemezést:
 
@@ -1681,7 +1681,7 @@ minden körben helyesen kiszámolta, és a repóba **soha nem került be**. A �
 ezért állt a már lezárt 7. fordulónál is, hogy *„még nincs pontszám"* — a fájlban a lezárás
 előtti, pont nélküli állapot maradt. Semmi nem jelezte.
 
-Ezt gép nézi: a `tesztek/dokuk.py` **D8** összeveti a gyűjtők `kompakt_iras` / `kiir_ha_valtozott`
+Ezt gép nézi: a `tesztek/dokuk.py` **D8** összeveti a gyűjtők `write_compact` / `kiir_ha_valtozott`
 hívásait a workflow `git add` listájával (a mappa-előtag és a `draft*.json`-szerű glob is
 számít). Ha egy új kimeneti fájl kimarad, a teszt megnevezi.
 
@@ -2161,11 +2161,11 @@ legsúlyosabb eset: kimértük, hogy az MLSZ **semmilyen ár-előzményt nem szo
 
 Azóta az írás `<path>.uj`-ba megy `flush` + `fsync` után, és `os.replace` teszi a helyére:
 ez atomi, tehát az olvasó vagy a régi fájlt látja, vagy az újat, félkészet soha. Az
-olvasás pedig a `tarolt_olvas`-on át megy, ami **csak** `FileNotFoundError`-ra adja az
+olvasás pedig a `read_stored`-on át megy, ami **csak** `FileNotFoundError`-ra adja az
 alapértelmezést (első futás); sérült fájlnál a kivétel felszáll, a futás megáll, és a
 fájlhoz hozzá sem nyúlunk — a következő körben megvan az esély, hogy épen olvassuk.
 
-Teszt: `tesztek/gyujto_tarolas.py`, tíz állítással mindkét gyűjtőre. Köztük egy
+Teszt: `tesztek/collector_storage.py`, tíz állítással mindkét gyűjtőre. Köztük egy
 **forráskód-szintű**: minden `open(..., "w")` ideiglenes nevet kell hogy kapjon. Enélkül a
 következő új kimenet csendben visszahozná a régi utat.
 

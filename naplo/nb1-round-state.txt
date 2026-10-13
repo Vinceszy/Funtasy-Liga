@@ -1,0 +1,49 @@
+======================================================================
+PROBE: the state of NB1 round 9 according to the MLSZ
+time: 2026-10-10T15:10:24Z
+======================================================================
+
+1) COMPETITION + ROUNDS (competitions?include=rounds,current_round)
+   HTTP 200
+   current_round: number=9 id=93
+   current_round raw: {"id": 93, "round_number": 9, "start_at": "2026-09-21T10:00:00+02:00", "end_at": "2026-10-12T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-10-10T12:45:00+02:00"}
+   fields of the round objects: ['closed_transfers_at', 'end_at', 'id', 'is_transfers_closed', 'round_number', 'start_at']
+    round 7: {"id": 89, "round_number": 7, "start_at": "2026-08-31T10:00:00+02:00", "end_at": "2026-09-07T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-09-03T17:30:00+02:00"}
+    round 8: {"id": 91, "round_number": 8, "start_at": "2026-09-07T10:00:00+02:00", "end_at": "2026-09-21T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-09-18T17:30:00+02:00"}
+    round 9: {"id": 93, "round_number": 9, "start_at": "2026-09-21T10:00:00+02:00", "end_at": "2026-10-12T10:00:00+02:00", "is_transfers_closed": true, "closed_transfers_at": "2026-10-10T12:45:00+02:00"}
+
+2) SQUAD ENDPOINT for the previous and this round, EVERY manager
+   (the collector asks only the FIRST manager and infers 'before the
+    market closes' from a 403 - this shows whether they agree)
+   round 8 | Katyul     -> HTTP 200, 15 players
+   round 8 | Bence      -> HTTP 200, 15 players
+   round 8 | Sámsi      -> HTTP 200, 15 players
+   round 8 | Vince      -> HTTP 200, 15 players
+   round 8 | Bazsa      -> HTTP 200, 15 players
+   round 8 | Csongi     -> HTTP 200, 15 players
+   round 8 | Csendi     -> HTTP 200, 15 players
+   round 8 | Ádám       -> HTTP 200, 15 players
+   round 9 | Katyul     -> HTTP 200, 15 players
+   round 9 | Bence      -> HTTP 200, 15 players
+   round 9 | Sámsi      -> HTTP 200, 15 players
+   round 9 | Vince      -> HTTP 200, 15 players
+   round 9 | Bazsa      -> HTTP 200, 15 players
+   round 9 | Csongi     -> HTTP 200, 15 players
+   round 9 | Csendi     -> HTTP 200, 15 players
+   round 9 | Ádám       -> HTTP 200, 15 players
+
+3) RANKING round_statistics (is there a row for the round at all)
+   Katyul     rounds: {"9": 0, "8": 86.63}
+   Bence      rounds: {"9": 0, "8": 73.25}
+   Sámsi      rounds: {"9": 0, "8": 67.75}
+   Vince      rounds: {"9": 0, "8": 76.88}
+   Bazsa      rounds: {"9": 0, "8": 72.63}
+   Csongi     rounds: {"9": 0, "8": 77.39}
+   Csendi     rounds: {"9": 0, "8": 71.63}
+   Ádám       rounds: {"9": 0, "8": 51.5}
+
+4) THE MATCHES OF ROUND 9 (through the squad endpoint's games branch)
+   HTTP 200
+   distinct matches: 0
+
+======================================================================
