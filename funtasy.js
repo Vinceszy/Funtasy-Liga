@@ -308,9 +308,11 @@
       /* Amig az adat nem jott meg, a tabla annyi ures sorral all, ahany
          csapat van: kulonben a sorok beerkezesekor az egesz lap lejjebb
          ugrik (telefonon jol lathatoan, betolteskor). */
-      // NB1 knows its managers before any data, so its rows would read as
-      // a real table of zeros: no loaded schedule counts as no data too.
-      var noData = !rows.length || !Object.keys(opts.schedule || {}).length;
+      // NB1 knows its managers and pairings before any result, so its rows
+      // would read as a real table of zeros: a page tells through `ready`
+      // whether its data has arrived.
+      var noData = !rows.length || (opts.ready ? !opts.ready()
+                                               : !Object.keys(opts.schedule || {}).length);
       if (noData && opts.placeholderRows) {
         var empty = '<tr><th></th><th>' + esc(opts.nameHeader || 'Szakvezető') + '</th>' +
           '<th>M</th><th>GY</th><th>D</th><th>V</th><th>SP</th><th>KP</th>' +
@@ -1676,6 +1678,9 @@
      API nem biztonsagos kontextusban (http://) nem letezik. */
   var magWatched = false;
   function watchMagazine() {
+    // The magazine's cards carry the same rating bar as the match page's
+    // strip, and need the same listener - without it the buttons did nothing.
+    watchRating();
     if (magWatched) return;
     magWatched = true;
     document.addEventListener('click', function (e) {
@@ -1822,7 +1827,8 @@
         sav.innerHTML = '<span class="artratedone">Küldjük…</span>';
         rateSend(key, pont, '').then(function (ok) {
           if (ok) rateThanks(sav, key, pont, false);
-          else sav.innerHTML = '<span class="artratedone">Nem sikerült elküldeni.</span>';
+          // a failed send must leave a way to try again, not a dead end
+          else sav.outerHTML = rateBar(key, 'Nem sikerült elküldeni. Próbáld meg még egyszer.');
         });
         return;
       }
@@ -2358,9 +2364,12 @@
     var sc = document.querySelector('script[src*="funtasy.js?v="]');
     var sajat = sc && +((sc.getAttribute('src').split('v=')[1] || '').split('&')[0]);
     if (!sajat) return;
-    fetch('verzio.json?t=' + Date.now()).catch(function(){
-      return fetch('../verzio.json?t=' + Date.now());
-    }).then(function (r){ return r && r.ok ? r.json() : null; }).then(function (j){
+    // verzio.json sits next to funtasy.js: its path is the script's own.
+    // (A 404 resolves, it does not reject - a fallback chained on the
+    // rejection never ran, and no subpage ever saw the version.)
+    var hely = sc.getAttribute('src').split('funtasy.js')[0];
+    fetch(hely + 'verzio.json?t=' + Date.now())
+    .then(function (r){ return r && r.ok ? r.json() : null; }).then(function (j){
       if (!j || !j.v || +j.v <= sajat) return;
       var k = 'funtasy-ujratoltes';
       try { if (sessionStorage.getItem(k) === String(j.v)) return;

@@ -7,6 +7,16 @@
     "nb1",
     "pl"
    ],
+   "cim": "Értékelés a magazinban, régi állás betöltéskor, kilógó tabella",
+   "leiras": "A Nemzethy Sport magazinjában a cikkek alatti értékelő gombok nem csináltak semmit — a meccs adatlapján működtek, a magazinban nem. Mostantól ott is. Ha egy értékelés nem megy el, a sáv nem akad el: újra lehet próbálni.\n\nAz NB1 oldalán betöltéskor egy pillanatra egy régi, négyfordulós tabella villant fel, mintha az lenne az aktuális. Ez megszűnt: amíg az eredmények meg nem jönnek, a tabella üres sorokkal áll.\n\nGépen a tabella utolsó oszlopai (GUA, Forma) kilógtak a dobozból; most kiférnek. A PL-játékos adatlapján a „Fordulók” a lejátszott fordulókat számolja, nem a szezon mind a 38-at. A kezdőlapon telefonon a ligák kártyacíme újra rendes méretű."
+  },
+  {
+   "datum": "2026-10-15",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
    "cim": "Betöltéskor nem ugrál a lap",
    "leiras": "Telefonon a lap betöltés közben többször is lejjebb ugrott: előbb megjelent a felső sáv, aztán az állapotsor egy, majd két sorban, végül a táblázat sorai — és minden lépés eltolta, amit épp néztél.\n\nMostantól a felső sávnak és az állapotsornak az első pillanattól megvan a helye, a táblázat pedig, amíg az adat meg nem jön, annyi üres sorral áll, ahány csapat van. Ami a képernyőn van, betöltés közben a helyén marad."
   },

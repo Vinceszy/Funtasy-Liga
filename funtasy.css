@@ -201,6 +201,11 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .score .na{color:var(--dim);font-weight:500}
 .matrix{padding:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+/* The standings have thirteen columns: with the default 10px side padding
+   the table is wider than its panel on a desktop, and the last columns sat
+   behind a sideways scroll. Narrower padding lets it fit; a phone still
+   scrolls, as before. */
+@media(min-width:641px){#table th,#table td{padding-left:5px;padding-right:5px}}
 .tablewrap table{min-width:100%}
 /* A RAGADO CELLAKHOZ `separate` KELL. A WebKit (tehat iPhone-on MINDEN
    bongeszo, a Chrome is) `border-collapse:collapse` mellett nem ragasztja
@@ -271,7 +276,8 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
   padding:20px 22px;transition:transform .12s,border-color .12s,background .12s}
 .ligakartya:hover{transform:translateY(-2px);background:var(--panel2)}
 .ligakartya .fejsor{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
-.ligakartya h2{font-family:var(--cim);font-size:22px;letter-spacing:1px;border:0;padding:0}
+/* a.ligakartya: a narrow-screen .panel h2 rule comes later and would win */
+a.ligakartya h2{font-family:var(--cim);font-size:22px;letter-spacing:1px;border:0;padding:0}
 /* A ligatipus (salary cap / draft) nem dísz: ez mondja meg, milyen szabalyok
    szerint megy a liga. Ezert a kartyan is ott a helye, nem csak az alcimben. */
 .tipuscimke{font:700 9px var(--fo);letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
