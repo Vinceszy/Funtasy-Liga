@@ -33,6 +33,8 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
+    # A hanging API must not hold the shared concurrency group for hours.
+    timeout-minutes: 30
     steps:
       - name: Repó letöltése
         uses: actions/checkout@v4
@@ -47,7 +49,12 @@ jobs:
           git config user.name  "funtasy-archiver"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git add -A results.json squads.json squad_history.json meccsek.json hatekonysag.json guardiola.json keretvaltozasok.json jatekosok.json arak.json zarasok_nb1.json keretek bontasok 2>/dev/null || true
+          # Only the paths that exist: with an explicit list, one missing file
+          # made the whole `git add` fail, and the error was swallowed - every
+          # run would then report "no change" while nothing reached main.
+          for f in results.json squads.json squad_history.json meccsek.json hatekonysag.json guardiola.json keretvaltozasok.json jatekosok.json arak.json zarasok_nb1.json keretek bontasok; do
+            if [ -e "$f" ]; then git add -A -- "$f"; else echo "::warning::hianyzik: $f"; fi
+          done
           if git diff --cached --quiet; then
             echo "Nincs változás."
           else

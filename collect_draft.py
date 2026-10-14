@@ -419,6 +419,11 @@ def main():
         print("    allitsd a DRAFT_LEAGUE_ID valtozot.)")
         return 0
     payload, lejatszott = atalakit(data)
+    # A 200 with no entries is not a league: writing it would empty the page
+    # until the next good run.
+    if not payload.get("entries"):
+        print("  ! details: ures resztvevo-lista - a fajlok valtozatlanok.", file=sys.stderr)
+        return 0
     liga_idk = {e["id"] for e in payload["entries"]}
     # entry_id -> liga-id lekepezes, CSAK memoriaban
     entry2liga = {e.get("entry_id"): e.get("id")
@@ -448,10 +453,15 @@ def main():
         # a "teams" (csapat-id -> rovidnev) az elo fixtures-valasz
         # csapat-azonositoinak feloldasahoz kell a bongeszoben
         # (jatszott mar? jelzes: a meccse elkezdodott-e)
-        kiir_ha_valtozott("draft_players.json",
-                          {"updated": None, "players": players,
-                           "teams": {str(k): v for k, v in klub.items()}})
-        print("  jatekos-torzs: %d jatekos, %d csapat" % (len(players), len(klub)))
+        if players:
+            kiir_ha_valtozott("draft_players.json",
+                              {"updated": None, "players": players,
+                               "teams": {str(k): v for k, v in klub.items()}})
+            print("  jatekos-torzs: %d jatekos, %d csapat" % (len(players), len(klub)))
+        else:
+            # an empty 200 must not overwrite the stored player list
+            print("  ! bootstrap-static: ures jatekoslista - a torzsadat valtozatlan",
+                  file=sys.stderr)
     else:
         print("  ! bootstrap-static: HTTP %s - a torzsadat valtozatlan" % st,
               file=sys.stderr)
@@ -479,16 +489,28 @@ def main():
         if ismeretlen:
             print("  ! element-status: %d ismeretlen tulajdonos-azonosito: %s"
                   % (len(ismeretlen), sorted(ismeretlen)[:5]), file=sys.stderr)
-        kiir_ha_valtozott("draft_squads.json",
-                          {"updated": None, "squads": squads})
-        print("  jelenlegi keretek: %d csapat, %d birtokolt jatekos"
-              % (len(squads), sum(len(v) for v in squads.values())))
+        if squads:
+            kiir_ha_valtozott("draft_squads.json",
+                              {"updated": None, "squads": squads})
+            print("  jelenlegi keretek: %d csapat, %d birtokolt jatekos"
+                  % (len(squads), sum(len(v) for v in squads.values())))
+        else:
+            # after the draft every team owns players: an empty answer is an
+            # API fault, not an empty league
+            print("  ! element-status: ures tulajdonlas - a keretek valtozatlanok",
+                  file=sys.stderr)
     else:
         print("  ! element-status: HTTP %s" % st, file=sys.stderr)
 
     # ---- 4. Fordulonkenti keretek + pontok (a GW1 indulasatol) ----
     st, game = fetch("game")
-    aktualis = (game or {}).get("current_event") if st == 200 else None
+    if st != 200:
+        # an outage must not read like the close season in the run log
+        print("  ! game: HTTP %s - a fordulonkenti adat most nem frissul" % st,
+              file=sys.stderr)
+        print("Kesz.")
+        return 0
+    aktualis = (game or {}).get("current_event")
     if not aktualis:
         print("  . a szezon meg nem kezdodott el (current_event=%s) - "
               "fordulonkenti keret meg nincs" % aktualis)

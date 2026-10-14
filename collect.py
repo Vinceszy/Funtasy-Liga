@@ -122,11 +122,17 @@ def versenyfordulok():
         return None, {}
     comp = next((c for c in (j.get("data") or [])
                  if c.get("id") == COMPETITION), None) or {}
-    akt = ((comp.get("current_round") or {}).get("round_number"))
+    def number(x):
+        # "9", 9 and "3F" all name a round; anything else is not one, and
+        # must not stop the run
+        m = re.match(r"\s*(\d+)", str(x if x is not None else ""))
+        return int(m.group(1)) if m else None
+    akt = number((comp.get("current_round") or {}).get("round_number"))
     vegek = {}
     for r in comp.get("rounds") or []:
-        if r.get("round_number") and r.get("end_at"):
-            vegek[int(r["round_number"])] = r["end_at"]
+        n = number(r.get("round_number"))
+        if n is not None and r.get("end_at"):
+            vegek[n] = r["end_at"]
     return akt, vegek
 
 
@@ -181,11 +187,17 @@ def rankings(uname, round_id=None):
     if st != 200 or not j:
         return None
     rows = j.get("data") or []
-    pontos = next((d for d in rows
-                   if ((d.get("user_team") or {}).get("user") or {}).get("username") == uname),
-                  None)
+    nevek = [((d.get("user_team") or {}).get("user") or {}).get("username") for d in rows]
+    pontos = next((d for d, n in zip(rows, nevek)
+                   if n and n.lower() == uname.lower()), None)
     if pontos or not rows:
         return pontos
+    if any(nevek):
+        # The answer names its users, and none of them is ours: the search
+        # matched somebody else. Their points must not be recorded as ours.
+        print("  ! %s: a keresesi talalatok mas felhasznalok (%s) - nincs adat"
+              % (uname, ", ".join(n for n in nevek if n)[:120]), file=sys.stderr)
+        return None
     # Nincs pontos felhasznalonev-egyezes. A talalat listat NEM dobjuk el (a
     # valasz nem mindig hozza a username mezot), de kiirjuk: enelkul egy
     # elteveszett kereses MASIK szakvezeto pontjait irna be csendben - pont az
@@ -196,6 +208,23 @@ def rankings(uname, round_id=None):
 
 
 GAMES = "competition_player.current_round.games"
+
+
+def round_points(row):
+    """{round: points} from a rankings row; malformed entries are skipped.
+
+    One bad entry used to raise and stop the whole run - on every run, until
+    the API changed - so nothing at all was written."""
+    out = {}
+    for s in ((row or {}).get("user_team") or {}).get("round_statistics") or []:
+        try:
+            r, pts = int(s["round_number"]), s["points"]
+        except (KeyError, TypeError, ValueError):
+            print("  ! hibas round_statistics sor: %r" % (s,), file=sys.stderr)
+            continue
+        if isinstance(pts, (int, float)):
+            out[r] = pts
+    return out
 
 
 def squad(user_id, round_no, jatek=False):
@@ -1009,9 +1038,13 @@ def main():
         if not row:
             print("  ! nincs ranglista-adat: %s" % nev, file=sys.stderr)
             continue
-        ids[nev] = ((row.get("user_team") or {}).get("user") or {}).get("id")
-        for s in (row.get("user_team") or {}).get("round_statistics") or []:
-            pontok[nev][int(s["round_number"])] = s["points"]
+        uid = ((row.get("user_team") or {}).get("user") or {}).get("id")
+        if uid is None:
+            # without an id every later request would go out as user_id=None
+            print("  ! nincs felhasznalo-azonosito: %s" % nev, file=sys.stderr)
+            continue
+        ids[nev] = uid
+        pontok[nev].update(round_points(row))
     if not ids:
         print("Nincs elerheto adat - a fajlok valtozatlanok.")
         return 0
@@ -1035,9 +1068,8 @@ def main():
             row = rankings(uname, round_id=rid(r))
             if not row:
                 continue
-            for s in (row.get("user_team") or {}).get("round_statistics") or []:
-                # a vegpont az igazsag: felulirjuk, nem csak potoljuk
-                pontok[nev][int(s["round_number"])] = s["points"]
+            # a vegpont az igazsag: felulirjuk, nem csak potoljuk
+            pontok[nev].update(round_points(row))
 
     # ---- 3. Eredmenyek szinkronja (a vegpont az igazsag) ----
     beirt, javitott = 0, 0
@@ -1223,13 +1255,15 @@ def main():
             # ertek elavult: kerjuk le ujra erre a fordulora, es ha valtozott,
             # vezessuk at. Nem jelzunk, hanem javitunk.
             row = rankings(MEMBERS[nev], round_id=rid(r))
-            friss = None
-            for st2 in ((row or {}).get("user_team") or {}).get("round_statistics") or []:
-                if int(st2["round_number"]) == r:
-                    friss = st2["points"]
-            if friss is not None and abs(friss - hiv) >= 0.005:
+            friss = round_points(row).get(r)
+            # A 0 of a closed round is a transient answer, never a correction:
+            # writing it would record a zero for that manager.
+            if friss not in (None, 0) and abs(friss - hiv) >= 0.005:
                 pontok[nev][r] = friss
                 javitott += beir_eredmeny(schedule, r, nev, friss)
+                # the round's breakdown and everything computed from it is
+                # stale now, exactly as after a correction found in step 3
+                valtozott.add(r)
                 print("  ~ %d. fordulo / %s: hivatalos pont frissitve %.2f -> %.2f"
                       % (r, nev, hiv, friss))
                 hiv = friss

@@ -1,8 +1,9 @@
 ---
 name: FPL Draft frissitese
 
-# Runs every 3 hours (at a minute offset from archive.yml), hourly in the
-# morning, and can be started by hand. The endpoints work from a server.
+# Runs every 3 hours and hourly in the morning, always at a minute offset from
+# archive.yml (two collectors pushing at once race on main), and can be
+# started by hand. The endpoints work from a server.
 #
 # Why the morning is dense: a round's close (current_event_finished) is only
 # seen by a run, and the FPL closes a round the morning after its last match
@@ -13,7 +14,7 @@ name: FPL Draft frissitese
 on:
   schedule:
     - cron: '47 */3 * * *'
-    - cron: '17 7-13 * * *'
+    - cron: '37 7-13 * * *'
   workflow_dispatch:
     inputs:
       league_id:
@@ -31,6 +32,8 @@ concurrency:
 jobs:
   draft:
     runs-on: ubuntu-latest
+    # A hanging API must not hold the concurrency group for hours.
+    timeout-minutes: 30
     steps:
       - name: Repo letoltese
         uses: actions/checkout@v4

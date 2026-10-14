@@ -256,7 +256,11 @@ _MUNKAK = (("collect.py", ".github/workflows/archive.yml"),
            ("collect_draft.py", ".github/workflows/draft.yml"))
 _hianyzo = []
 for _coll, _wf in _MUNKAK:
-    _add = _re.search(r"git add -A(?: --)? ([^\n]*?)(?: 2>/dev/null)?\n", olvas(_wf))
+    # Either one `git add -A <files>` line, or a loop over the files that
+    # adds only the ones that exist (`for f in <files>; do ... git add`).
+    _wft = olvas(_wf)
+    _add = (_re.search(r"for f in ([^\n;]*); do\n[^\n]*git add", _wft)
+            or _re.search(r"git add -A(?: --)? ([^\n]*?)(?: 2>/dev/null)?\n", _wft))
     _lista = [x.strip("'\"") for x in _add.group(1).split()] if _add else []
     for _f in sorted(set(_re.findall(r'(?:write_compact|kiir_ha_valtozott)\(\s*"([^"]+)"',
                                      olvas(_coll)))):
