@@ -38,104 +38,107 @@ def main():
     draft = load("draft.json")
     hist = load("draft_history.json")
     if rnd is None:
-        kesz = [int(r) for r in hist.get("rounds", {})]
-        rnd = str(max(kesz)) if kesz else "1"
+        done = [int(r) for r in hist.get("rounds", {})]
+        rnd = str(max(done)) if done else "1"
     rnd = str(int(rnd))
 
-    nev = {e["id"]: e["name"] for e in draft.get("entries", [])}
-    jatekos = load("draft_players.json").get("players", {})
-    pontok = (load("draft_pontok.json").get("rounds", {}) or {}).get(rnd, {})
-    keretek = (hist.get("rounds", {}) or {}).get(rnd, {})
-    valtozas = (load("draft_keretvaltozasok.json").get("rounds", {}) or {}).get(rnd, {})
-    # A zaraskor VEGREHAJTOTT automatikus cserek. A tarolt keret a csere UTANI
-    # allapot, tehat belole nem latszik, ki nem lepett palyara - a cseret
-    # visszafejteni belole nem lehet. A `draft_keretvaltozasok.json` `szerep`
-    # sorai sem mondjak meg: azok az ELOZO fordulohoz kepesti valtozast
-    # jelzik, amiben a kezi dontes es a zarasi csere egyforman latszik.
-    zaras = (load("zarasok.json").get("rounds", {}) or {}).get(rnd, {})
-    menetrend = (draft.get("schedule", {}) or {}).get(rnd, [])
-    vegleges = int(rnd) in [int(x) for x in (hist.get("veglegesek") or [])]
+    name = {e["id"]: e["name"] for e in draft.get("entries", [])}
+    players = load("draft_players.json").get("players", {})
+    points = (load("draft_pontok.json").get("rounds", {}) or {}).get(rnd, {})
+    squads = (hist.get("rounds", {}) or {}).get(rnd, {})
+    changes = (load("draft_keretvaltozasok.json").get("rounds", {}) or {}).get(rnd, {})
+    # The automatic substitutions CARRIED OUT at the close. The stored squad is
+    # the state AFTER the substitution, so it does not show who did not take
+    # the field - the substitution cannot be reconstructed from it. Nor do
+    # the `szerep` rows of `draft_keretvaltozasok.json` say it: they mark the
+    # change against the PREVIOUS round, in which a manager's decision and
+    # the substitution at the close look the same.
+    close = (load("zarasok.json").get("rounds", {}) or {}).get(rnd, {})
+    fixtures = (draft.get("schedule", {}) or {}).get(rnd, [])
+    final = int(rnd) in [int(x) for x in (hist.get("veglegesek") or [])]
 
-    def jnev(e):
-        j = jatekos.get(str(e)) or {}
+    def pname(e):
+        j = players.get(str(e)) or {}
         return j.get("n") or j.get("name") or ("#%s" % e)
 
-    def jklub(e):
-        j = jatekos.get(str(e)) or {}
+    def pclub(e):
+        j = players.get(str(e)) or {}
         return j.get("t") or j.get("team") or "?"
 
     print("=" * 70)
-    print("DRAFT %s. FORDULO - a sajat adatunkbol%s" % (
-        rnd, "" if vegleges else "   [MEG NEM VEGLEGES: a bonusz mozoghat]"))
+    print("DRAFT ROUND %s - from our own data%s" % (
+        rnd, "" if final else "   [NOT FINAL YET: the bonus may still move]"))
     print("=" * 70)
 
-    for m in menetrend:
+    for m in fixtures:
         h, v, hp, vp = m[0], m[1], m[2], m[3]
         print("")
-        print("  %s %s : %s %s" % (nev.get(h, h), hp, vp, nev.get(v, v)))
-        for csapat in (h, v):
-            keret = keretek.get(str(csapat)) or []
-            kezdo = [p for p in keret if not p.get("b")]
-            pad = [p for p in keret if p.get("b")]
-            ossz = sum(p.get("pts") or 0 for p in kezdo)
-            padon = sum(p.get("pts") or 0 for p in pad)
-            nullak = [p for p in kezdo if not (p.get("pts") or 0)]
-            # A PALYARA NEM LEPETT kezdo az, akit az automatikus csere lecserel -
-            # nem a nulla pontos. Nulla pontot ugyanis kilencven perc alatt is
-            # lehet szerezni, es azert nem jar csere.
-            percek = lambda e: (pontok.get(str(e)) or [None, None])[1]
-            nemjatszott = [p for p in kezdo if (percek(p["e"]) or 0) == 0]
-            padjatszott = [p for p in pad if (percek(p["e"]) or 0) > 0]
-            legjobb = max(kezdo, key=lambda p: p.get("pts") or 0) if kezdo else None
-            padlegjobb = max(pad, key=lambda p: p.get("pts") or 0) if pad else None
-            vz = valtozas.get(str(csapat)) or {}
-            print("    %-24s kezdok %s pont | padon %s pont | nullan zart kezdo: %d"
-                  % (nev.get(csapat, csapat), ossz, padon, len(nullak)))
-            if legjobb:
-                print("        legjobb kezdo: %s (%s) %s" % (
-                    jnev(legjobb["e"]), jklub(legjobb["e"]), legjobb.get("pts")))
-            if padlegjobb and (padlegjobb.get("pts") or 0) > 0:
-                print("        legjobb pados: %s (%s) %s" % (
-                    jnev(padlegjobb["e"]), jklub(padlegjobb["e"]), padlegjobb.get("pts")))
-            zx = zaras.get(str(csapat)) or {}
+        print("  %s %s : %s %s" % (name.get(h, h), hp, vp, name.get(v, v)))
+        for team in (h, v):
+            squad = squads.get(str(team)) or []
+            starters = [p for p in squad if not p.get("b")]
+            bench = [p for p in squad if p.get("b")]
+            total = sum(p.get("pts") or 0 for p in starters)
+            on_bench = sum(p.get("pts") or 0 for p in bench)
+            zeros = [p for p in starters if not (p.get("pts") or 0)]
+            # The starter the automatic substitution replaces is the one who
+            # DID NOT TAKE THE FIELD - not the one on nought points. Nought
+            # points can be scored in ninety minutes too, and that earns no
+            # substitution.
+            minutes = lambda e: (points.get(str(e)) or [None, None])[1]
+            not_played = [p for p in starters if (minutes(p["e"]) or 0) == 0]
+            bench_played = [p for p in bench if (minutes(p["e"]) or 0) > 0]
+            best = max(starters, key=lambda p: p.get("pts") or 0) if starters else None
+            best_bench = max(bench, key=lambda p: p.get("pts") or 0) if bench else None
+            ch = changes.get(str(team)) or {}
+            print("    %-24s starters %s pts | bench %s pts | starters on nought: %d"
+                  % (name.get(team, team), total, on_bench, len(zeros)))
+            if best:
+                print("        best starter: %s (%s) %s" % (
+                    pname(best["e"]), pclub(best["e"]), best.get("pts")))
+            if best_bench and (best_bench.get("pts") or 0) > 0:
+                print("        best on the bench: %s (%s) %s" % (
+                    pname(best_bench["e"]), pclub(best_bench["e"]), best_bench.get("pts")))
+            zx = close.get(str(team)) or {}
             if zx.get("ki") or zx.get("be"):
-                print("        ZARASI AUTOMATIKUS CSERE (megtortent):")
+                print("        AUTOMATIC SUBSTITUTION AT THE CLOSE (carried out):")
                 for x in zx.get("ki") or []:
-                    print("          KI  %-22s %-5s palyara sem lepett, %s pont" % (
-                        jnev(x["e"]), jklub(x["e"]), x.get("pts")))
+                    print("          OUT %-22s %-5s did not take the field, %s pts" % (
+                        pname(x["e"]), pclub(x["e"]), x.get("pts")))
                 for x in zx.get("be") or []:
-                    print("          BE  %-22s %-5s %s perc, %s pont" % (
-                        jnev(x["e"]), jklub(x["e"]), percek(x["e"]), x.get("pts")))
-            if nemjatszott:
-                # Aki a csere UTAN is bent maradt nulla perccel: nem volt kivel
-                # potolni ugy, hogy a formacio ervenyes maradjon.
-                print("        POTOLATLAN HELY - a csere utan is bent, palyara nem lepett: %s"
-                      % ", ".join("%s (%s)" % (jnev(p["e"]), jklub(p["e"]))
-                                  for p in nemjatszott))
-                print("        a padon jatszott meg: %s"
-                      % (", ".join("%s (%s pont)" % (jnev(p["e"]), p.get("pts"))
-                                   for p in padjatszott) or "senki"))
-            elif not (zx.get("be") or []) and padlegjobb and (padlegjobb.get("pts") or 0) > 0:
-                print("        (nem volt zarasi csere, tehat a pad pontja itt marad)")
-            if vz:
-                print("        heti merleg (guard): %s" % vz.get("guard"))
-                for x in vz.get("ki") or []:
-                    print("          KI  %-22s %-5s pont: %s" % (
-                        jnev(x["e"]), x.get("sz"), x.get("pont")))
-                for x in vz.get("be") or []:
-                    print("          BE  %-22s %-5s pont: %s" % (
-                        jnev(x["e"]), x.get("sz"), x.get("pont")))
-                for x in vz.get("szerep") or []:
-                    # Az elozo fordulohoz kepest - NEM feltetlenul kezi dontes.
-                    print("          SZ  %-22s %s -> %s (elozo fordulohoz kepest)  pont: %s" % (
-                        jnev(x["e"]), x.get("szE"), x.get("szU"), x.get("pont")))
-            if nullak:
-                print("        nullan zart kezdo: %s" % ", ".join(
-                    "%s (%s)" % (jnev(p["e"]), jklub(p["e"])) for p in nullak))
-        # A ket keret kozott a Draftban NINCS atfedes - a kerdes az, ki mennyit
-        # hagyott a padon, es mit hozott a heti mozgas.
+                    print("          IN  %-22s %-5s %s min, %s pts" % (
+                        pname(x["e"]), pclub(x["e"]), minutes(x["e"]), x.get("pts")))
+            if not_played:
+                # Whoever stayed in after the substitution with nought minutes:
+                # there was nobody to replace him with while keeping the
+                # formation valid.
+                print("        UNFILLED PLACE - still in after the substitution, did not play: %s"
+                      % ", ".join("%s (%s)" % (pname(p["e"]), pclub(p["e"]))
+                                  for p in not_played))
+                print("        who played on the bench: %s"
+                      % (", ".join("%s (%s pts)" % (pname(p["e"]), p.get("pts"))
+                                   for p in bench_played) or "nobody"))
+            elif not (zx.get("be") or []) and best_bench and (best_bench.get("pts") or 0) > 0:
+                print("        (no substitution at the close, so the bench points stay there)")
+            if ch:
+                print("        weekly balance (guard): %s" % ch.get("guard"))
+                for x in ch.get("ki") or []:
+                    print("          OUT %-22s %-5s pts: %s" % (
+                        pname(x["e"]), x.get("sz"), x.get("pont")))
+                for x in ch.get("be") or []:
+                    print("          IN  %-22s %-5s pts: %s" % (
+                        pname(x["e"]), x.get("sz"), x.get("pont")))
+                for x in ch.get("szerep") or []:
+                    # Against the previous round - NOT necessarily a manager's decision.
+                    print("          ROLE %-21s %s -> %s (against the previous round)  pts: %s" % (
+                        pname(x["e"]), x.get("szE"), x.get("szU"), x.get("pont")))
+            if zeros:
+                print("        starters on nought: %s" % ", ".join(
+                    "%s (%s)" % (pname(p["e"]), pclub(p["e"])) for p in zeros))
+        # In the Draft the two squads have NO overlap - the question is who
+        # left how much on the bench, and what the weekly moves brought.
     print("")
-    print("  A jatekosok PERCEI es golszerzese: draft_pontok.json (%d jatekos)" % len(pontok))
+    print("  The players' MINUTES and goals: draft_pontok.json (%d players)" % len(points))
     return 0
 
 

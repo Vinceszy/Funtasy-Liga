@@ -101,7 +101,7 @@ out("")
 out("4) THE MATCHES OF ROUND %d (through the squad endpoint's games branch)" % ROUND)
 if ids:
     uid = next(iter(ids.values()))
-    st4, j4 = c.squad(uid, ROUND, jatek=True)
+    st4, j4 = c.squad(uid, ROUND, with_games=True)
     out("   HTTP %s" % st4)
     if st4 == 200 and isinstance(j4, dict):
         games = {}

@@ -9,6 +9,19 @@ a given round so the categories can be listed.
 
 The extracted text goes to STANDARD OUTPUT ONLY, so it stays in the run log
 and never enters the repository. The log file gets the urls and the sizes.
+
+Environment (all optional, from Actions through the workflow's `environment`
+input, one NAME=value per line):
+
+  PROBE_MONTH    yyyy/mm of the article urls (default 2026/09). Required in
+                 practice: an article is kept only if its url carries this
+                 month, so a round in October returns nothing without
+                 PROBE_MONTH=2026/10.
+  PROBE_SINCE    yyyy-mm-dd; keeps only articles whose sitemap `lastmod` is
+                 on or after it - the first day of the round.
+  PROBE_LIMIT    how many articles to print (default 6) - the number of
+                 matches in the round.
+  PROBE_SECTION  the url section (default labdarugo-nb-i).
 """
 import os
 import re
@@ -19,12 +32,13 @@ import urllib.request
 
 AGENT = "FunTasy-survey (github.com/Vinceszy/Funtasy-Liga)"
 HOST = "https://www.nemzetisport.hu"
-LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "beszamolo-forras.txt")
+LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "report-source.txt")
 MONTH = os.environ.get("PROBE_MONTH") or "2026/09"
 SECTION = os.environ.get("PROBE_SECTION") or "labdarugo-nb-i"
-# Egy FORDULO beszamoloi kellenek, nem a honap eleje. A terkep `lastmod`
-# datuma szerint szurunk, es annyit hozunk, ahany meccs van - kulonben a
-# betűrendes lista elejerol jon hat cikk, kozottuk regi fordulokkal.
+# The reports of one ROUND are needed, not the start of the month. The
+# sitemap's `lastmod` date is the filter, and as many are fetched as there are
+# matches - otherwise six articles come from the top of the alphabetical
+# list, old rounds among them.
 SINCE = os.environ.get("PROBE_SINCE") or ""
 LIMIT = int(os.environ.get("PROBE_LIMIT") or "6")
 
@@ -55,28 +69,29 @@ def main():
     out.append("  sitemapindex: HTTP %s, %d maps" % (code, len(maps)))
     want = MONTH.replace("/", "")
     # the child maps are named by period; try the ones whose name carries the year
-    kesok = [m for m in maps if want[:4] in m or want[2:] in m]
-    out.append("  maps matching %s: %d" % (want, len(kesok)))
-    for m in kesok[-6:]:
+    candidates = [m for m in maps if want[:4] in m or want[2:] in m]
+    out.append("  maps matching %s: %d" % (want, len(candidates)))
+    for m in candidates[-6:]:
         out.append("    %s" % m)
     urls = []
-    for m in kesok[-6:] + [x for x in maps if x.endswith("news_sitemap.xml")]:
+    for m in candidates[-6:] + [x for x in maps if x.endswith("news_sitemap.xml")]:
         c, b = fetch(m)
         if c != 200:
             continue
-        # A <url> blokkbol a cim ES a datum is kell: igy tudunk egy fordulora
-        # szukiteni. Ahol nincs lastmod, ott a cim datum nelkul marad, es csak
-        # akkor esik ki, ha kifejezetten datumra szurunk.
-        for blokk in re.findall(r"<url>(.*?)</url>", b, re.S):
-            cim = re.search(r"<loc>\s*([^<\s]+)\s*</loc>", blokk)
-            mod = re.search(r"<lastmod>\s*([0-9-]{10})", blokk)
-            if not cim or "/%s/%s/" % (SECTION, MONTH) not in cim.group(1):
+        # Both the address AND the date are needed from the <url> block: that
+        # is how the list narrows to one round. Where there is no lastmod the
+        # address stays without a date, and drops out only when filtering by
+        # date explicitly.
+        for block in re.findall(r"<url>(.*?)</url>", b, re.S):
+            loc = re.search(r"<loc>\s*([^<\s]+)\s*</loc>", block)
+            mod = re.search(r"<lastmod>\s*([0-9-]{10})", block)
+            if not loc or "/%s/%s/" % (SECTION, MONTH) not in loc.group(1):
                 continue
-            urls.append((cim.group(1), mod.group(1) if mod else ""))
+            urls.append((loc.group(1), mod.group(1) if mod else ""))
     if SINCE:
-        elotte = len(urls)
+        before = len(urls)
         urls = [(u, d) for u, d in urls if d >= SINCE]
-        out.append("  %s ota: %d cim (%d-bol)" % (SINCE, len(urls), elotte))
+        out.append("  since %s: %d urls (of %d)" % (SINCE, len(urls), before))
     urls = sorted({u for u, _ in urls})
     # Match REPORTS, not transfer news or photo galleries: the earlier run
     # pulled a gallery and a transfer piece, which say nothing about how a

@@ -1,78 +1,82 @@
 #!/usr/bin/env python3
-"""EGYSZERI meres: mit kuld az MLSZ, ha egy klubnak KET meccse van egy
-fantasy forduloban?
+"""ONE-OFF probe: what does the MLSZ send when a club has TWO matches in one
+fantasy round?
 
-A VIZSGALT HIBA: az MLSZ fantasy 7. forduloja NEM csak a 7.
-jateknap - benne van egy ELMARADT, potolt meccs is (Fradi-Gyor, szept. 3.).
-A gyujto ezt nem tudja: a meccsek.json 7. forduloja hat meccset ismer
-(szept. 4-6.), a szept. 3-it egyaltalan nem, es MIND A KILENC ETO-jatekos
-`nogame: True` jelolest kapott - vagyis a gyujto szerint az ETO-nak NINCS
-meccse a forduloban, holott KETTO van.
+THE ERROR UNDER EXAMINATION: the MLSZ fantasy's round 7 is NOT only match day
+7 - it also holds a POSTPONED, rescheduled match (Fradi-Gyor, 3 Sept). The
+collector does not know this: round 7 of meccsek.json knows six matches
+(4-6 Sept), not the one on 3 Sept at all, and ALL NINE ETO players were
+marked `nogame: True` - so according to the collector ETO has NO match in
+the round, when it has TWO.
 
-A GYANU a kodban (collect.py jatek_mezok): a fuggveny csak a `games[0]`-t
-nezi, es ha annak a round_number-e nem a kert fordulo, azonnal "nincs
-meccse"-t mond. Ha a potolt meccs az EREDETI fordulo szamat viszi (pl.
-"2F"), es az all a lista elejen, akkor a klub OSSZES tobbi meccse elveszik.
+THE SUSPICION in the code (collect.py, the per-round game fields function):
+the function looks only at `games[0]`, and if its round_number is not the
+round asked for, it says "no match" at once. If the rescheduled match carries
+the number of its ORIGINAL round (e.g. "2F") and stands at the head of the
+list, ALL the club's other matches are lost.
 
-DE NEM ALLITUNK SEMMIT, AMIG NEM MERTUK. Kerdesek:
+BUT NOTHING IS CLAIMED UNTIL IT IS MEASURED. Questions:
 
-  A) Hany elem van egy ETO-jatekos current_round.games listajaban, es
-     mi az egyes elemek round_number / start_at / status erteke?
-  B) Ugyanez egy FTC-jatekosra (a masik erintett klub).
-  C) Ugyanez egy NEM erintett klub jatekosara (kontroll: ott egy elem van-e).
-  D) Mit mond a MOSTANI jatek_mezok() ezekre a valaszokra?
-  E) A potolt meccsen szerepel-e a ket klub (home_team/away_team), es
-     egyaltalan ott van-e a listaban?
+  A) How many items are in an ETO player's current_round.games list, and
+     what are each item's round_number / start_at / status values?
+  B) The same for an FTC player (the other club concerned).
+  C) The same for a player of a club NOT concerned (control: is there one
+     item there).
+  D) What does the CURRENT game-fields function say for these responses?
+  E) Does the rescheduled match carry the two clubs (home_team/away_team),
+     and is it in the list at all?
 
-Csak olvas; a naplot a workflow commitolja.
+Reads only; the workflow commits the log.
 
-ADATVEDELEM: a repo publikus. MLSZ user_id nem kerul a naploba; a base64
-kepadatot levagjuk.
+PRIVACY: the repository is public. No MLSZ user_id goes into the log;
+base64 image data is cut.
+
+Environment: PROBE_ROUND (default: the MLSZ's current round, else 7).
 """
 import json, os, sys, urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import collect
 
-NAPLO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mlsz-dupla-meccs.txt")
-sorok = []
-ki = sorok.append
+LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mlsz-double-match.txt")
+lines = []
+out = lines.append
 
 
-def rovidit(v, hossz=80):
+def shorten(v, limit=80):
     if isinstance(v, dict):
-        return {k: rovidit(x, hossz) for k, x in v.items()}
+        return {k: shorten(x, limit) for k, x in v.items()}
     if isinstance(v, list):
-        return [rovidit(x, hossz) for x in v]
-    if isinstance(v, str) and len(v) > hossz:
-        return "<%d karakteres szoveg>" % len(v)
+        return [shorten(x, limit) for x in v]
+    if isinstance(v, str) and len(v) > limit:
+        return "<text of %d characters>" % len(v)
     return v
 
 
-akt, _ = collect.versenyfordulok()
-R = int(os.environ.get("MERES_FORDULO") or akt or 7)
-ki("=== MERES: klub KET meccsel egy forduloban - %s. fordulo ===" % R)
-ki("(MLSZ szerinti aktualis fordulo: %s)" % akt)
+current, _ = collect.competition_rounds()
+R = int(os.environ.get("PROBE_ROUND") or current or 7)
+out("=== PROBE: club with TWO matches in one round - round %s ===" % R)
+out("(current round according to the MLSZ: %s)" % current)
 
 ids = {}
-for nev, uname in collect.MEMBERS.items():
+for name, uname in collect.MEMBERS.items():
     row = collect.rankings(uname)
     uid = (((row or {}).get("user_team") or {}).get("user") or {}).get("id")
     if uid:
-        ids[nev] = uid
-ki("elert resztvevok: %d / %d" % (len(ids), len(collect.MEMBERS)))
+        ids[name] = uid
+out("participants reached: %d / %d" % (len(ids), len(collect.MEMBERS)))
 if not ids:
-    ki("! a ranglista nem valaszolt - a meres nem futtathato")
-    open(NAPLO, "w", encoding="utf-8").write("\n".join(sorok) + "\n")
+    out("! the rankings did not answer - the probe cannot run")
+    open(LOG, "w", encoding="utf-8").write("\n".join(lines) + "\n")
     raise SystemExit(0)
 
 GAMES = collect.GAMES
 inc = (collect.INCLUDE + "," + GAMES + "," + GAMES + ".home_team,"
        + GAMES + ".away_team")
 
-# Minden resztvevo keretet vegignezzuk, es klubonkent egy jatekost valasztunk.
-klub_minta = {}          # rovid klubnev -> (jatekosnev, games lista)
-for nev, uid in ids.items():
+# Every participant's squad is gone through, and one player is chosen per club.
+club_sample = {}         # short club name -> (player name, games list)
+for name, uid in ids.items():
     st, j = collect.api_get(
         collect.BASE + "user-team-players-history?include=" + urllib.parse.quote(inc)
         + "&filter%5Buser_id%5D=" + str(uid)
@@ -83,48 +87,48 @@ for nev, uid in ids.items():
         cp = d.get("competition_player") or {}
         team = (cp.get("team") or {}).get("short_name") or ""
         cr = cp.get("current_round") or {}
-        if team and team not in klub_minta:
-            klub_minta[team] = (cp.get("last_name") or "?", cr.get("games"))
+        if team and team not in club_sample:
+            club_sample[team] = (cp.get("last_name") or "?", cr.get("games"))
 
-ki("")
-ki("=== A-C) klubonkent a current_round.games lista ===")
-for team in sorted(klub_minta):
-    nev_, games = klub_minta[team]
+out("")
+out("=== A-C) the current_round.games list per club ===")
+for team in sorted(club_sample):
+    pname, games = club_sample[team]
     if games is None:
-        ki("%-8s %-22s games: NINCS (nem jott vissza a mezo)" % (team, nev_))
+        out("%-8s %-22s games: NONE (the field did not come back)" % (team, pname))
         continue
-    ki("%-8s %-22s games: %d elem" % (team, nev_, len(games)))
+    out("%-8s %-22s games: %d items" % (team, pname, len(games)))
     for g in games:
         g = g or {}
         h = (g.get("home_team") or {}).get("short_name") or "?"
         v = (g.get("away_team") or {}).get("short_name") or "?"
-        ki("           round_number=%-6s start=%-26s status=%-12s %s - %s"
-           % (g.get("round_number"), g.get("start_at"), g.get("status"), h, v))
-    # D) mit mond a mostani logika
-    ki("           MOSTANI jatek_mezok(fordulo=%s) -> %s"
-       % (R, collect.jatek_mezok({"games": games}, R)))
+        out("           round_number=%-6s start=%-26s status=%-12s %s - %s"
+            % (g.get("round_number"), g.get("start_at"), g.get("status"), h, v))
+    # D) what the current logic says
+    out("           CURRENT game_fields(round=%s) -> %s"
+        % (R, collect.game_fields({"games": games}, R)))
 
-ki("")
-ki("=== E) van-e szept. 3-i meccs BARMELYIK klub listajaban? ===")
-talalt = []
-for team, (nev_, games) in klub_minta.items():
+out("")
+out("=== E) is there a match on 3 Sept in ANY club's list? ===")
+found = []
+for team, (pname, games) in club_sample.items():
     for g in (games or []):
         s = (g or {}).get("start_at") or ""
         if s[:10] == "2026-09-03":
-            talalt.append((team, rovidit(g)))
-if talalt:
-    for team, g in talalt:
-        ki("%s: %s" % (team, json.dumps(g, ensure_ascii=False)))
+            found.append((team, shorten(g)))
+if found:
+    for team, g in found:
+        out("%s: %s" % (team, json.dumps(g, ensure_ascii=False)))
 else:
-    ki("NINCS szept. 3-i meccs egyetlen klub listajaban sem.")
+    out("NO match on 3 Sept in any club's list.")
 
-ki("")
-ki("=== KOVETKEZTETES ===")
-tobb = [t for t, (_, g) in klub_minta.items() if g and len(g) > 1]
-ki("tobb meccses klub a listaban: %s" % (", ".join(sorted(tobb)) or "nincs"))
-nogame = [t for t, (_, g) in klub_minta.items()
-          if g is not None and collect.jatek_mezok({"games": g}, R).get("nogame")]
-ki("a mostani logika szerint 'nincs meccse': %s" % (", ".join(sorted(nogame)) or "nincs"))
+out("")
+out("=== CONCLUSION ===")
+several = [t for t, (_, g) in club_sample.items() if g and len(g) > 1]
+out("clubs with several matches in the list: %s" % (", ".join(sorted(several)) or "none"))
+nogame = [t for t, (_, g) in club_sample.items()
+          if g is not None and collect.game_fields({"games": g}, R).get("nogame")]
+out("'no match' according to the current logic: %s" % (", ".join(sorted(nogame)) or "none"))
 
-open(NAPLO, "w", encoding="utf-8").write("\n".join(sorok) + "\n")
-print("\n".join(sorok))
+open(LOG, "w", encoding="utf-8").write("\n".join(lines) + "\n")
+print("\n".join(lines))

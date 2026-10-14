@@ -1,82 +1,82 @@
 name: Napló-mérés (kézi)
-# EGY workflow minden naplo-mereshez, a szkript nevevel parameterezve -
-# kulonben minden uj kerdes egy uj, majdnem azonos workflow-fajlt szulne.
-# A fejlesztoi kornyezet halozata minden kulso forrast blokkol, ezert megy
-# Actionsbol. A meresek csak olvasnak es a naplot irjak.
+# ONE workflow for every probe under naplo/, parameterised by the script
+# name - otherwise every new question would breed a new, nearly identical
+# workflow file. The development environment's network blocks every external
+# source, so it runs from Actions. The probes only read and write the log.
 #
-# Alapbol a main-re ir: a meresek eredmenye ott kell, ahonnan a cikkek
-# keszulnek.
+# By default it writes to main: the probe results are needed where the
+# articles are made from.
 on:
   workflow_dispatch:
     inputs:
-      szkript:
-        description: 'A futtatando meres (naplo/... .py)'
+      script:
+        description: 'The probe to run (naplo/... .py)'
         required: true
       branch:
-        description: 'Melyik agra irja az eredmenyt'
+        description: 'The branch the result is written to'
         required: false
         default: 'main'
-      kornyezet:
-        description: 'Soronkent egy NEV=ertek a meresnek (pl. HARVEST_EVENT=5)'
+      environment:
+        description: 'One NAME=value per line for the probe (e.g. HARVEST_EVENT=5)'
         required: false
         default: ''
 permissions: { contents: write }
 jobs:
-  meres:
+  probe:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with: { ref: '${{ github.event.inputs.branch }}' }
       - env:
-          SZKRIPT: ${{ github.event.inputs.szkript }}
-          AG: ${{ github.event.inputs.branch }}
-          KORNYEZET: ${{ github.event.inputs.kornyezet }}
+          SCRIPT: ${{ github.event.inputs.script }}
+          BRANCH: ${{ github.event.inputs.branch }}
+          PROBE_ENV: ${{ github.event.inputs.environment }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # A meresek egy resze kulcsot kap; a titok itt all, nem a
-          # szkriptben. Ami nincs beallitva, az ures - a meres maga dont
-          # arrol, mit kezd vele.
+          # Some probes get a key; the secret lives here, not in the
+          # script. What is not set is empty - the probe itself decides
+          # what to do with that.
           APIFOOTBALL_KEY: ${{ secrets.APIFOOTBALL_KEY }}
         run: |
-          # Csak a naplo alol futtatunk, es csak .py-t: a workflow bemenete
-          # nem valhat tetszoleges parancs futtatasava.
-          case "$SZKRIPT" in
+          # Only scripts under naplo/ run, and only .py: the workflow input
+          # must not turn into running an arbitrary command.
+          case "$SCRIPT" in
             naplo/*.py) ;;
-            *) echo "csak naplo/*.py futtathato: $SZKRIPT"; exit 1;;
+            *) echo "only naplo/*.py can be run: $SCRIPT"; exit 1;;
           esac
-          case "$SZKRIPT" in
-            *..*) echo "nem tartalmazhat '..'-t"; exit 1;;
+          case "$SCRIPT" in
+            *..*) echo "must not contain '..'"; exit 1;;
           esac
-          [ -f "$SZKRIPT" ] || { echo "nincs ilyen fajl: $SZKRIPT"; exit 1; }
-          # A meresek egy resze parametert var (melyik fordulo, hany nap).
-          # Soronkent EGY "NEV=ertek"; szigoru minta, es `export`-tal adjuk
-          # at, nem `eval`-lal - a bemenet igy nem valhat parancsca.
-          while IFS= read -r sor; do
-            [ -z "$sor" ] && continue
-            case "$sor" in
+          [ -f "$SCRIPT" ] || { echo "no such file: $SCRIPT"; exit 1; }
+          # Some probes expect a parameter (which round, how many days).
+          # ONE "NAME=value" per line; a strict pattern, passed on with
+          # `export`, not `eval` - so the input cannot become a command.
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            case "$line" in
               [A-Z_]*=*) ;;
-              *) echo "rossz alaku kornyezeti valtozo: $sor"; exit 1;;
+              *) echo "malformed environment variable: $line"; exit 1;;
             esac
-            case "$sor" in
+            case "$line" in
               *[\`\$\;\|\&\<\>\(\)]*)
-                echo "tiltott karakter: $sor"; exit 1;;
+                echo "forbidden character: $line"; exit 1;;
             esac
-            export "${sor%%=*}=${sor#*=}"
+            export "${line%%=*}=${line#*=}"
           done <<EOF
-          $KORNYEZET
+          $PROBE_ENV
           EOF
           git config user.name  "funtasy-figyelo"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          python3 "$SZKRIPT"
-          # Amit a meres irt, azt commitoljuk - nem csak a naplo alatt. Egy
-          # gyujtes a gyokerbe is tehet adatfajlt, es a naplora szukitett
-          # valtozat azt csendben eldobta volna.
+          python3 "$SCRIPT"
+          # Whatever the probe wrote is committed - not only under naplo/. A
+          # harvest may put a data file in the root as well, and a version
+          # narrowed to naplo/ would silently drop it.
           [ -z "$(git status --porcelain)" ] && exit 0
           git add -A
-          git commit -q -m "Meres eredmenye: $(basename "$SZKRIPT")"
+          git commit -q -m "Meres eredmenye: $(basename "$SCRIPT")"
           for i in 1 2 3; do
-            git pull -q --rebase origin "$AG" && git push -q origin "HEAD:$AG" && exit 0
+            git pull -q --rebase origin "$BRANCH" && git push -q origin "HEAD:$BRANCH" && exit 0
             sleep $((i * 5))
           done
           exit 1

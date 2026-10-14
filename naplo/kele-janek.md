@@ -4,9 +4,10 @@ A column, not a match report. One a week for each league, belonging to the
 round rather than to a fixture: it may look back at what closed or forward at
 what is coming, whichever holds the better story.
 
-This file is a recipe. Two columns were published from it, and it is written
-so that a third comes out like them rather than like the four drafts that
-had to be thrown away first.
+This file is a recipe. The published columns (the `elemzes` pieces in
+`articles.json`) were written from it, and it is written so that the next one
+comes out like them rather than like the four drafts that had to be thrown
+away first.
 
 ## Who is writing
 
@@ -39,10 +40,10 @@ he writes costs him a point on Sunday.
    fits inside one head-to-head it belongs in that piece instead.
 2. **Check what is spent.** Read every published lead of that round in
    `articles.json`. A subject or an anecdote already used as the spine of a
-   match piece is gone, and so is its best phrase. Both published columns had
+   match piece is gone, and so is its best phrase. Every published column had
    to route around material the summaries had already told.
 3. **Get the numbers from a harvest, never from memory** -
-   `karszalag-harvest.py` for the armband, `kispad-harvest.py` for the Draft
+   `armband-harvest.py` for the armband, `bench-harvest.py` for the Draft
    bench, the round harvests for everything else. Then check the arithmetic
    twice, because one rescaled figure usually IS the argument.
 4. **Check the rules of the competition against the data**, not against
@@ -258,13 +259,13 @@ it.
 ## Where the corpus is, and what in here is measured
 
 Twenty-one texts of his own under `tartalek/kele/`: eighteen fetched by
-`kele-hang-meres.py` (the byline decides which pages are kept - the author
+`kele-voice-probe.py` (the byline decides which pages are kept - the author
 page also lists the publisher's latest news, and an earlier run came back
 full of weather forecasts while reporting success) plus three supplied by
 hand. Templates are excluded: the publisher's podcast trailers, which he did
 not write, and the player-by-player match grading.
 
-`kele-hang-elemzes.py` counts a device across those pieces. Two things recur:
+`kele-voice-analysis.py` counts a device across those pieces. Two things recur:
 an interjection between dashes, ten of eighteen, and an opening with no verb,
 eight of eighteen. The rare-word rate above is measured. The register is
 measured: against the publisher's own trailers for him he uses nearly twice

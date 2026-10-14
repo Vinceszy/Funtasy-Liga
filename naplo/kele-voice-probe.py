@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
-"""Az utanzott hang FORRASA: a szerzo sajat futballos szovegei.
+"""The SOURCE of the imitated voice: the author's own football writing.
 
-MIERT: a rovat egy letezo publicista hangjat imitalja. A hangot nem talalgatni
-kell, hanem elolvasni - a jellegzetes fogasok csak a valodi szovegbol latszanak.
+WHY: the column imitates the voice of an existing columnist. The voice is not
+to be guessed but read - the characteristic devices show only in the real
+text.
 
-A LEKERT SZOVEG A `tartalek/kele/` ALA KERUL. A meres eredmenye addig letezik,
-amig le van irva: egy futasi naplo par nap mulva elerhetetlen, es akkor vagy
-ujra le kell kerni ugyanazt, vagy - ami rosszabb - emlekezetbol ir az ember.
-A `tartalek/` a repo azon resze, amit a lap nem szolgal ki es a D9 sem nez.
+THE FETCHED TEXT GOES UNDER `tartalek/kele/`. A measurement exists only as
+long as it is written down: a run log is out of reach after a few days, and
+then either the same thing has to be fetched again or - worse - one writes
+from memory. `tartalek/` is the part of the repository the site does not
+serve and D9 does not look at.
 
-BYLINE-ELLENORZES. A szerzoi oldalon a lap sajat "legfrissebb hirek" savja is
-ott all, tele idegen cikkel. Egy puszta "datumos cikk-link" minta ezeket is
-osszeszedi, es a meres ugy jon vissza tele idojaras-elorejelzessel, hogy
-kozben sikeresnek latszik. Ezert minden letoltott lapnal megnezzuk, ott
-all-e rajta a SZERZO sajat hivatkozasa; ami nem allja ki, azt eldobjuk, es a
-vegen kiirjuk, hany ilyen volt.
+BYLINE CHECK. The author page also carries the publisher's own "latest news"
+strip, full of other people's articles. A bare "dated article link" pattern
+collects those too, and the probe comes back full of weather forecasts while
+looking successful. So every downloaded page is checked for the AUTHOR's own
+link; a page that fails is dropped, and the count of those is printed at
+the end.
 
-Kornyezet: KELE_OLDAL (hany archivum-oldal, alap 6), KELE_CIKK (legfeljebb
-hany cikket toltsunk le, alap 40).
+Environment: KELE_PAGES (how many archive pages, default 6), KELE_ARTICLES
+(at most how many articles to download, default 40).
 """
 import html
 import os
@@ -26,95 +28,96 @@ import sys
 import time
 import urllib.request
 
-FEJ = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                     "(KHTML, like Gecko) Chrome/124 Safari/537.36",
-       "Accept": "text/html,application/xhtml+xml"}
-# MERVE: a Substack elott allo vedelem adatkozponti cimrol MINDENT 403-mal
-# utasit el - a feedet es az archivum-API-t is -, a masik kiado szerzoi
-# oldala viszont atmegy. Onnan jon a lista, es onnan a cikkek torzse is.
-SZERZO = "https://24.hu/author/kelejanos/"
+HEADERS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                         "(KHTML, like Gecko) Chrome/124 Safari/537.36",
+           "Accept": "text/html,application/xhtml+xml"}
+# MEASURED: the protection in front of Substack refuses EVERYTHING from a
+# data-centre address with 403 - the feed and the archive API too - while the
+# other publisher's author page lets it through. The list comes from there,
+# and so do the article bodies.
+AUTHOR = "https://24.hu/author/kelejanos/"
 BYLINE = "/author/kelejanos"
-GYOKER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CEL = os.path.join(GYOKER, "tartalek", "kele")
-OLDAL_DB = int(os.environ.get("KELE_OLDAL", "6"))
-CIKK_DB = int(os.environ.get("KELE_CIKK", "40"))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TARGET = os.path.join(ROOT, "tartalek", "kele")
+PAGE_COUNT = int(os.environ.get("KELE_PAGES", "6"))
+ARTICLE_COUNT = int(os.environ.get("KELE_ARTICLES", "40"))
 
 
-def hoz(url):
+def get(url):
     try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers=FEJ),
+        with urllib.request.urlopen(urllib.request.Request(url, headers=HEADERS),
                                     timeout=45) as r:
             return r.read().decode("utf-8", "replace")
     except Exception as e:                                    # noqa: BLE001
-        return "__HIBA__ %s: %s" % (type(e).__name__, e)
+        return "__ERROR__ %s: %s" % (type(e).__name__, e)
 
 
-def szoveg(h):
-    """A torzsszoveg, jelolok nelkul. Nem tokeletes - olvasasra eleg."""
+def paragraphs(h):
+    """The body text without markup. Not perfect - good enough to read."""
     h = re.sub(r"(?is)<(script|style|nav|footer|svg|aside)[^>]*>.*?</\1>", " ", h)
     h = re.sub(r"(?is)<br\s*/?>", "\n", h)
     h = re.sub(r"(?is)</(p|h1|h2|h3|li|div)>", "\n", h)
     h = re.sub(r"(?s)<[^>]+>", " ", h)
     h = html.unescape(h)
-    sorok = [re.sub(r"[ \t ]+", " ", x).strip() for x in h.split("\n")]
-    return [x for x in sorok if len(x) > 40]
+    lines = [re.sub(r"[ \t ]+", " ", x).strip() for x in h.split("\n")]
+    return [x for x in lines if len(x) > 40]
 
 
-def cim(h):
+def title(h):
     m = re.search(r"(?is)<title>(.*?)</title>", h)
     return html.unescape(m.group(1)).strip() if m else ""
 
 
-def szelet(nev):
-    return re.sub(r"[^a-z0-9]+", "-", nev.lower()).strip("-")[:70]
+def slug(name):
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:70]
 
 
 def main():
-    os.makedirs(CEL, exist_ok=True)
-    jeloltek = []
-    for lap in range(1, OLDAL_DB + 1):
-        u = SZERZO if lap == 1 else "%spage/%d/" % (SZERZO, lap)
-        h = hoz(u)
-        if h.startswith("__HIBA__"):
-            print("archivum %d.: %s" % (lap, h))
+    os.makedirs(TARGET, exist_ok=True)
+    candidates = []
+    for page in range(1, PAGE_COUNT + 1):
+        u = AUTHOR if page == 1 else "%spage/%d/" % (AUTHOR, page)
+        h = get(u)
+        if h.startswith("__ERROR__"):
+            print("archive %d.: %s" % (page, h))
             continue
-        uj = [x for x in dict.fromkeys(re.findall(
+        new = [x for x in dict.fromkeys(re.findall(
             r'href="(https://24\.hu/[a-z-]+/20\d\d/\d\d/\d\d/[^"#?]+)"', h))]
-        print("archivum %d. oldal: %d hivatkozas" % (lap, len(uj)))
-        jeloltek += [x for x in uj if x not in jeloltek]
-    print("\nosszes jelolt: %d" % len(jeloltek))
+        print("archive page %d: %d links" % (page, len(new)))
+        candidates += [x for x in new if x not in candidates]
+    print("\nall candidates: %d" % len(candidates))
 
-    ove = idegen = hibas = 0
-    for c in jeloltek:
-        if ove >= CIKK_DB:
+    own = foreign = failed = 0
+    for c in candidates:
+        if own >= ARTICLE_COUNT:
             break
-        ch = hoz(c)
+        ch = get(c)
         time.sleep(0.4)
-        if ch.startswith("__HIBA__"):
-            hibas += 1
-            print("  HIBA   %s  %s" % (c, ch))
+        if ch.startswith("__ERROR__"):
+            failed += 1
+            print("  ERROR  %s  %s" % (c, ch))
             continue
-        # A byline dont, nem az, hogy a szerzoi oldalrol jott a hivatkozas.
+        # The byline decides, not the fact that the link came from the author page.
         if BYLINE not in ch:
-            idegen += 1
+            foreign += 1
             continue
-        sorok = szoveg(ch)
-        if len(sorok) < 5:
-            hibas += 1
-            print("  URES   %s" % c)
+        rows = paragraphs(ch)
+        if len(rows) < 5:
+            failed += 1
+            print("  EMPTY  %s" % c)
             continue
-        ove += 1
-        nev = szelet(c.rstrip("/").split("/")[-1]) or ("cikk-%02d" % ove)
-        ut = os.path.join(CEL, "%s.txt" % nev)
-        with open(ut, "w", encoding="utf-8") as f:
-            f.write("# %s\n# %s\n\n%s\n" % (cim(ch), c, "\n\n".join(sorok)))
-        print("  MENTVE %s  (%d bekezdes)  -> tartalek/kele/%s.txt"
-              % (c, len(sorok), nev))
+        own += 1
+        name = slug(c.rstrip("/").split("/")[-1]) or ("article-%02d" % own)
+        path = os.path.join(TARGET, "%s.txt" % name)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("# %s\n# %s\n\n%s\n" % (title(ch), c, "\n\n".join(rows)))
+        print("  SAVED  %s  (%d paragraphs)  -> tartalek/kele/%s.txt"
+              % (c, len(rows), name))
 
-    print("\n%d sajat cikk mentve, %d idegen eldobva (byline nem egyezett), "
-          "%d hibas" % (ove, idegen, hibas))
-    if not ove:
-        print("EGYETLEN sajat cikk sem jott meg - a meres NEM sikerult.")
+    print("\n%d own articles saved, %d foreign dropped (byline did not match), "
+          "%d failed" % (own, foreign, failed))
+    if not own:
+        print("NOT A SINGLE own article arrived - the probe did NOT succeed.")
         return 1
     return 0
 

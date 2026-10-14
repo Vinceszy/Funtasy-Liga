@@ -144,7 +144,7 @@ const JOVOBELI = 20;     // ehhez nincs mentett keret
   // "a klubnak nincs meccse". Az ELO keret-lekeres ugyanis a BONGESZOBEN
   // epiti ujra a rekordokat (keretRekord), sajat logikaval - es az kimaradt
   // a javitasbol. A tarolt adat jo volt, a friss lekeres irta felul.
-  // A bemenet a VALODI meres alakja (naplo/mlsz-dupla-meccs.txt).
+  // A bemenet a VALODI meres alakja (naplo/mlsz-double-match.txt).
   const kr = await p.evaluate(() => {
     const ETO = [{ start_at: '2026-09-03T19:30:00+02:00', status: 'scheduled', round_number: '3F' },
                  { start_at: '2026-09-06T20:00:00+02:00', status: 'scheduled', round_number: '7F' }];

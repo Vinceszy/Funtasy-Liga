@@ -24,9 +24,9 @@ B = "https://draft.premierleague.com/api/"
 HDRS = {"Accept": "application/json", "Accept-Language": "en-GB,en;q=0.9",
         "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")}
-GYOKER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-KI = os.path.join(GYOKER, "draft_picks.json")
-TILTOTT = ("player_first_name", "player_last_name", "entry_name", "short_name")
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(ROOT, "draft_picks.json")
+FORBIDDEN = ("player_first_name", "player_last_name", "entry_name", "short_name")
 
 
 def js(path):
@@ -42,77 +42,77 @@ def js(path):
 
 
 def main():
-    liga = os.environ.get("LEAGUE_ID") or str(
-        json.load(open(os.path.join(GYOKER, "draft.json"), encoding="utf-8"))
+    league = os.environ.get("LEAGUE_ID") or str(
+        json.load(open(os.path.join(ROOT, "draft.json"), encoding="utf-8"))
         .get("league", {}).get("id") or "")
-    if not liga:
-        print("nincs liga-azonosito"); return 1
-    print("liga: %s" % liga)
+    if not league:
+        print("no league id"); return 1
+    print("league: %s" % league)
 
-    st, det = js("league/%s/details" % liga)
+    st, det = js("league/%s/details" % league)
     if st != 200 or not det:
-        print("league details: HTTP %s - megallunk" % st); return 1
-    # entry_id (valodi csapat-azonosito) -> id (league_entry, amit mi tarolunk).
-    # A mezo neve entry_id, nem entry - az elso valtozat 'entry'-t keresett, es
-    # ures leképezéssel allt meg. Tobb nevet is elfogadunk, es KIIRJUK, melyik
-    # talalt: egy nema atnevezes igy nem tunik el.
-    terkep, mezo = {}, None
-    for jelolt in ("entry_id", "entry"):
+        print("league details: HTTP %s - stopping" % st); return 1
+    # entry_id (the real team id) -> id (the league_entry we store).
+    # The field is called entry_id, not entry - looking for 'entry' ends with
+    # an empty mapping. Several names are accepted, and the one that matched
+    # is PRINTED: a silent rename then cannot go unnoticed.
+    mapping, field = {}, None
+    for candidate in ("entry_id", "entry"):
         t = {}
         for e in det.get("league_entries") or []:
-            if e.get(jelolt) is not None and e.get("id") is not None:
-                t[str(e[jelolt])] = str(e["id"])
+            if e.get(candidate) is not None and e.get("id") is not None:
+                t[str(e[candidate])] = str(e["id"])
         if t:
-            terkep, mezo = t, jelolt
+            mapping, field = t, candidate
             break
-    print("csapat-leképezés: %d (mezo: %s)" % (len(terkep), mezo))
-    if not terkep:
-        print("  ! a liga-adatban egyik mezo sincs meg; ami van: %s"
+    print("team mapping: %d (field: %s)" % (len(mapping), field))
+    if not mapping:
+        print("  ! neither field is in the league data; present: %s"
               % ", ".join(sorted((det.get("league_entries") or [{}])[0].keys())))
         return 1
 
-    st, ch = js("draft/%s/choices" % liga)
+    st, ch = js("draft/%s/choices" % league)
     if st != 200 or not ch:
-        print("choices: HTTP %s - megallunk" % st); return 1
-    valasztasok = ch.get("choices") or []
-    print("valasztas: %d" % len(valasztasok))
+        print("choices: HTTP %s - stopping" % st); return 1
+    choices = ch.get("choices") or []
+    print("choices: %d" % len(choices))
 
-    ki, parositatlan = [], 0
-    for c in valasztasok:
-        t = terkep.get(str(c.get("entry")))
+    picks, unmatched = [], 0
+    for c in choices:
+        t = mapping.get(str(c.get("entry")))
         if not t:
-            parositatlan += 1
+            unmatched += 1
             continue
-        ki.append({"r": c.get("round"), "p": c.get("pick"), "i": c.get("index"),
-                   "e": c.get("element"), "t": t,
-                   "auto": bool(c.get("was_auto")),
-                   "sec": c.get("seconds_to_pick")})
-    ki.sort(key=lambda x: (x["i"] if x["i"] is not None else 0))
-    # A parositatlan valasztast KIIRJUK: csendben eldobva egy csapat draftja
-    # tunne el, es azt a szovegen mar nem lehetne eszrevenni.
-    print("parositatlan valasztas: %d" % parositatlan)
-    if parositatlan:
-        print("  ! a csapat-leképezés hiányos - a fájl NEM készül el")
+        picks.append({"r": c.get("round"), "p": c.get("pick"), "i": c.get("index"),
+                      "e": c.get("element"), "t": t,
+                      "auto": bool(c.get("was_auto")),
+                      "sec": c.get("seconds_to_pick")})
+    picks.sort(key=lambda x: (x["i"] if x["i"] is not None else 0))
+    # An unmatched choice is PRINTED: dropped silently, a team's whole draft
+    # would vanish, and that could no longer be noticed in the text.
+    print("unmatched choices: %d" % unmatched)
+    if unmatched:
+        print("  ! the team mapping is incomplete - the file is NOT written")
         return 1
 
-    korok = max([x["r"] for x in ki] or [0])
-    csapatok = len({x["t"] for x in ki})
-    print("korok: %d | csapatok: %d" % (korok, csapatok))
-    for t in sorted({x["t"] for x in ki}):
-        sajat = [x for x in ki if x["t"] == t]
-        auto = sum(1 for x in sajat if x["auto"])
-        print("   %s: %d valasztas, ebbol gepi: %d, elso kore: %d. osszesitett hely"
-              % (t, len(sajat), auto, min(x["i"] for x in sajat)))
+    rounds = max([x["r"] for x in picks] or [0])
+    teams = len({x["t"] for x in picks})
+    print("rounds: %d | teams: %d" % (rounds, teams))
+    for t in sorted({x["t"] for x in picks}):
+        own = [x for x in picks if x["t"] == t]
+        auto = sum(1 for x in own if x["auto"])
+        print("   %s: %d choices, by the machine: %d, first pick: overall %d."
+              % (t, len(own), auto, min(x["i"] for x in own)))
 
-    tartalom = {"updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                "league": int(liga), "rounds": korok, "picks": ki}
-    szoveg = json.dumps(tartalom, ensure_ascii=False, separators=(",", ":"))
-    for tilt in TILTOTT:
-        if tilt in szoveg:
-            print("HIBA: '%s' a kimenetben - a mentes megszakitva." % tilt)
+    content = {"updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+               "league": int(league), "rounds": rounds, "picks": picks}
+    text = json.dumps(content, ensure_ascii=False, separators=(",", ":"))
+    for word in FORBIDDEN:
+        if word in text:
+            print("ERROR: '%s' in the output - save aborted." % word)
             return 1
-    open(KI, "w", encoding="utf-8").write(szoveg)
-    print("kiirva: draft_picks.json (%d bajt)" % len(szoveg))
+    open(OUT, "w", encoding="utf-8").write(text)
+    print("written: draft_picks.json (%d bytes)" % len(text))
     return 0
 
 

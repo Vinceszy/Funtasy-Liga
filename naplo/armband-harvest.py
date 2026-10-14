@@ -1,114 +1,115 @@
 #!/usr/bin/env python3
-"""A karszalag retege: ki kire tette, mikor gondolta meg magat, mennyit ert.
+"""The armband layer: who put it on whom, when they changed their mind, what it was worth.
 
-MIERT KELL: az NB1-ben a kapitany az egyetlen kar, amit a jatek a szakvezeto
-kezebe ad - egy jatekos heti termese duplan szamit. Hogy ez a kar mukodik-e,
-csak tobb fordulon at latszik: egy fordulo kapitanyi listaja onmagaban semmit
-nem mond, a negy egymas utani fordulo viszont megmutatja, valaki dont-e vagy
-csak ragaszkodik.
+WHY IT IS NEEDED: in the NB1 the captain is the only lever the game puts in
+the manager's hands - one player's weekly score counts double. Whether that
+lever works shows only across several rounds: one round's list of captains
+says nothing by itself, but four rounds in a row show whether somebody
+decides or merely holds on.
 
-MIBOL: squad_history.json, sajat adat, kulso keres nelkul. A tarolt `week` a
-kapitanynal MAR duplazva van (lasd nb1/index.html alapPont), a padon ulonel
-pedig mar felezve - az alapertekhez tehat vissza kell osztani.
+FROM WHAT: squad_history.json, our own data, no external request. The stored
+`week` is ALREADY doubled for the captain (see the base-point calculation in
+nb1/index.html) and already halved for a bench player - so it has to be
+divided back to the base value.
 
-HASZNALAT: python3 naplo/karszalag-harvest.py [elso_fordulo] [utolso_fordulo]
+USAGE: python3 naplo/armband-harvest.py [first_round] [last_round]
 """
 import json
 import os
 import sys
 
-GYOKER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def alap(p):
-    """A jatekos heti termese duplazas es felezes nelkul."""
+def base(p):
+    """The player's weekly score without doubling and halving."""
     return (p.get("week") or 0) / (2 if p.get("cap") else 1) * (2 if p.get("sub") else 1)
 
 
-def kapitany(keret):
-    for p in keret:
+def captain(squad):
+    for p in squad:
         if p.get("cap"):
             return p
     return None
 
 
 def main():
-    with open(os.path.join(GYOKER, "squad_history.json"), encoding="utf-8") as fh:
-        tortenet = json.load(fh)["rounds"]
-    meglevo = sorted((int(r) for r in tortenet), reverse=False)
-    elso = int(sys.argv[1]) if len(sys.argv) > 1 else meglevo[0]
-    utolso = int(sys.argv[2]) if len(sys.argv) > 2 else meglevo[-1]
-    fordulok = [r for r in meglevo if elso <= r <= utolso]
+    with open(os.path.join(ROOT, "squad_history.json"), encoding="utf-8") as fh:
+        history = json.load(fh)["rounds"]
+    available = sorted((int(r) for r in history), reverse=False)
+    first = int(sys.argv[1]) if len(sys.argv) > 1 else available[0]
+    last = int(sys.argv[2]) if len(sys.argv) > 2 else available[-1]
+    rounds = [r for r in available if first <= r <= last]
 
     print("=" * 70)
-    print("NB1 KARSZALAG-RETEG - %d-%d. fordulo" % (elso, utolso))
+    print("NB1 ARMBAND LAYER - rounds %d-%d" % (first, last))
     print("=" * 70)
 
-    szakvezetok = sorted(tortenet[str(fordulok[0])])
-    valtas_ossz = alkalom_ossz = 0
+    managers = sorted(history[str(rounds[0])])
+    total_changes = total_chances = 0
 
-    for mgr in szakvezetok:
+    for mgr in managers:
         print("\n  %s" % mgr)
-        elozo = None
-        for r in fordulok:
-            keret = tortenet.get(str(r), {}).get(mgr) or []
-            k = kapitany(keret)
+        previous = None
+        for r in rounds:
+            squad = history.get(str(r), {}).get(mgr) or []
+            k = captain(squad)
             if not k:
-                print("    %2d. nincs kapitany a tarolt keretben" % r)
-                elozo = None
+                print("    %2d. no captain in the stored squad" % r)
+                previous = None
                 continue
-            # A legjobb valasztas ugyanabbol a keretbol, utolag nezve.
-            mezony = sorted(keret, key=lambda p: -alap(p))
-            legjobb = mezony[0] if mezony else None
-            jel = ""
-            if elozo is not None:
-                alkalom_ossz += 1
-                if k["name"] != elozo:
-                    jel = "  << VALTOTT (%s helyett)" % elozo
-                    valtas_ossz += 1
+            # The best choice from the same squad, in hindsight.
+            field = sorted(squad, key=lambda p: -base(p))
+            best = field[0] if field else None
+            mark = ""
+            if previous is not None:
+                total_chances += 1
+                if k["name"] != previous:
+                    mark = "  << CHANGED (instead of %s)" % previous
+                    total_changes += 1
                 else:
-                    jel = "  (marad)"
-            print("    %2d. %-26s %5.2f -> duplan %5.2f   legjobb lett volna: "
+                    mark = "  (kept)"
+            print("    %2d. %-26s %5.2f -> doubled %5.2f   best would have been: "
                   "%-24s %5.2f%s"
-                  % (r, k["name"], alap(k), alap(k) * 2,
-                     legjobb["name"] if legjobb else "-",
-                     alap(legjobb) if legjobb else 0, jel))
-            elozo = k["name"]
+                  % (r, k["name"], base(k), base(k) * 2,
+                     best["name"] if best else "-",
+                     base(best) if best else 0, mark))
+            previous = k["name"]
 
     print("\n" + "-" * 70)
-    print("  ujragondolasi alkalom: %d, ebbol valtas: %d"
-          % (alkalom_ossz, valtas_ossz))
+    print("  chances to reconsider: %d, of which changes: %d"
+          % (total_chances, total_changes))
 
-    # Kire kerult a szalag fordulonkent - a nyaj merete.
-    print("\n  A SZALAG VISELOI FORDULONKENT")
-    for r in fordulok:
-        szamlalo = {}
-        for mgr, keret in (tortenet.get(str(r)) or {}).items():
-            k = kapitany(keret)
+    # Whom the armband went to per round - the size of the herd.
+    print("\n  ARMBAND WEARERS PER ROUND")
+    for r in rounds:
+        counter = {}
+        for mgr, squad in (history.get(str(r)) or {}).items():
+            k = captain(squad)
             if k:
-                szamlalo.setdefault(k["name"], []).append((mgr, alap(k)))
-        sorok = sorted(szamlalo.items(), key=lambda kv: -len(kv[1]))
-        print("    %2d. fordulo:" % r)
-        for nev, lista in sorok:
+                counter.setdefault(k["name"], []).append((mgr, base(k)))
+        rows = sorted(counter.items(), key=lambda kv: -len(kv[1]))
+        print("    round %2d:" % r)
+        for name, entries in rows:
             print("        %-26s %dx  %5.2f  (%s)"
-                  % (nev, len(lista), lista[0][1],
-                     ", ".join(m for m, _ in lista)))
+                  % (name, len(entries), entries[0][1],
+                     ", ".join(m for m, _ in entries)))
 
-    # A kar hozama: mennyit adott a duplazas, es mennyit adhatott volna.
-    print("\n  A DUPLAZAS HOZAMA SZAKVEZETONKENT (%d-%d.)" % (elso, utolso))
-    for mgr in szakvezetok:
-        nyert = elszalasztott = 0.0
-        for r in fordulok:
-            keret = tortenet.get(str(r), {}).get(mgr) or []
-            k = kapitany(keret)
+    # The lever's yield: what the doubling gave, and what it could have given.
+    print("\n  YIELD OF THE DOUBLING PER MANAGER (%d-%d.)" % (first, last))
+    for mgr in managers:
+        gained = missed = 0.0
+        for r in rounds:
+            squad = history.get(str(r), {}).get(mgr) or []
+            k = captain(squad)
             if not k:
                 continue
-            legjobb = max((alap(p) for p in keret), default=0)
-            nyert += alap(k)
-            elszalasztott += legjobb - alap(k)
-        print("    %-14s a szalag hozott +%.2f-t; a keret legjobbjaval "
-              "+%.2f lett volna (elszalasztva %.2f)"
-              % (mgr, nyert, nyert + elszalasztott, elszalasztott))
+            best = max((base(p) for p in squad), default=0)
+            gained += base(k)
+            missed += best - base(k)
+        print("    %-14s the armband brought +%.2f; with the squad's best it "
+              "would have been +%.2f (missed %.2f)"
+              % (mgr, gained, gained + missed, missed))
     return 0
 
 

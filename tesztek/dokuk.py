@@ -378,8 +378,8 @@ for _fajl in ("articles.json",):
                 _szin.append("%s %s.: nincs szinestabla" % (_liga, _r))
                 continue
             _t = json.loads(open(_ut, encoding="utf-8").read())
-            _sorok = [x for x in (_t.get("allitasok") or [])
-                      if x.get("horgony") != "nyilatkozat"]
+            _sorok = [x for x in (_t.get("claims") or [])
+                      if x.get("anchor") != "statement"]
             if not _sorok:
                 _szin.append("%s %s.: ures szinestabla" % (_liga, _r))
                 continue

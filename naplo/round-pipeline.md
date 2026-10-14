@@ -127,15 +127,23 @@ from.
 
 The site allows it: `robots.txt` disallows only `/hirdetesek`,
 `/cikk-elonezet` and `/publicapi`, and `sitemapindex.xml` is the machine
-index of the articles (measured - `naplo/beszamolo-forras.txt`).
+index of the articles (measured - `naplo/report-source.txt`).
 
-`naplo/nso-content-probe.py` fetches the reports of one round:
+`naplo/nso-content-probe.py` fetches the reports of one round. It takes no
+arguments; it reads its settings from the environment:
 
-    PROBE_SINCE=<a forduló első napja> PROBE_LIMIT=<meccsek száma>
+    PROBE_MONTH=<yyyy/mm>  PROBE_SINCE=<the round's first day, yyyy-mm-dd>  PROBE_LIMIT=<number of matches>
+
+`PROBE_MONTH` is not optional in practice: an article is kept only if its url
+carries that month, and the default is `2026/09` - an October round returns
+nothing without `PROBE_MONTH=2026/10`. A round that spans two months needs a
+run per month.
 
 Run it from Actions (`.github/workflows/naplo-meres.yml`) - the development
-network blocks every external host. **The article text goes to the run log
-only, never into the repository.**
+network blocks every external host. The workflow's `script` input names the
+probe, and its `environment` input takes the settings, one `NAME=value` per
+line. **The article text goes to the run log only, never into the
+repository.**
 
 ### 2b. The Draft's own prose: the league's minute-by-minute commentary
 
@@ -145,12 +153,22 @@ which penalty was saved, which goal the VAR took away:
 
     footballapi.pulselive.com/football/fixtures/<id>/textstream/EN
 
-`naplo/pl-textstream.py <gameweek>` pulls it for a whole round and matches
+`naplo/pl-textstream.py` pulls it for a whole round and matches
 the fixtures to ours by club name (the ALIAS table - "Man City" is not a
 substring of "Manchester City", and four fixtures went missing the first
 time for exactly that). FotMob supplies the structured side through
 `naplo/pl-colour-harvest.py`: the shotmap with shot type, situation and xG,
 the VAR events, the saves per goalkeeper, and the kick-off time.
+
+Neither script takes an argument - both ignore any. The gameweek comes from
+the environment variable `HARVEST_EVENT`:
+
+    HARVEST_EVENT=<gameweek> python3 naplo/pl-textstream.py
+    HARVEST_EVENT=<gameweek> python3 naplo/pl-colour-harvest.py
+
+From Actions it is the line `HARVEST_EVENT=<gameweek>` in the workflow's
+`environment` input. Without it the scripts fall back to a fixed old
+gameweek, not to the current one.
 
 **The text goes to the run log only** - as with the Hungarian reports. Which
 is precisely why the next section is not optional.
@@ -165,9 +183,10 @@ and remembered, it is **written into a table**, one row per claim:
     {player, minute, tag, phrase, anchor}
 
 and the table is a file: `naplo/<league>-colour-<round>.json`, its rows under
-`allitasok` with the keys `jatekos, perc, tag, mondat, horgony, meccs` (plus
-`forrasnev` when the squad's name for the player differs from the report's -
-the Draft's "Yeremy" is the FotMob's "Yéremi Pino"). The
+`claims`. Every key a row or a match block can carry - `player`, `minute`,
+`tag`, `sentence`, `anchor`, `match`, and `club`, `source_name`, `speaker`,
+`context`, `target` where they apply - and every tag in use are listed in one
+place: *The table schema* in `colour-taxonomy.md`. The
 article is written from the table, not from the article text - so every
 sentence can be traced back to a row, and the row's anchor decides whether
 it may be stated at all (see *What each layer may say*).
@@ -177,7 +196,7 @@ it may be stated at all (see *What each layer may say*).
 The three layers are what happened. A manager's own words are a fourth, and
 they arrive by hand rather than by script: somebody tells us what he said
 after the match. Such a line goes into the round's colour table as a row with
-the anchor `nyilatkozat`, the speaker and the context, and it is written into
+the anchor `statement`, the tag `quote`, the `speaker` and the `context`, and it is written into
 the piece as a quotation - the only place in a summary where a sentence is
 attributed, because there the attribution IS the fact.
 
@@ -188,7 +207,7 @@ not in the piece of the one it is about.
 **Record who a nickname refers to, do not infer it.** A quote calls a rival
 something - "az illegitim bajnok" - and the nearest-looking club name is not
 the answer: that one was a different team entirely. The referent is asked
-for and written into the row (`cel`), because a piece built on a guessed
+for and written into the row (`target`), because a piece built on a guessed
 target says something about a manager who was never mentioned.
 
 ### A fifth source: what the editor tells about a manager
@@ -215,10 +234,14 @@ with them. A second run of the same measurement over the same round is a
 defect, not a retry: it costs an Actions run, it risks a different snapshot,
 and it means the first one produced nothing durable.
 
-`naplo/colour-check.py <liga> <round>` verifies the table afterwards: every
-`event` row must find its goal, assist, VAR decision or big chance in the
-structured block of the same file, and every player must be in somebody's
-squad that round (a player nobody owns is `record`). Two kinds of row fail
+`naplo/colour-check.py <league> <round>` verifies the table afterwards: every
+`event` and `record` row about a goal, an assist, a VAR decision or a big
+chance must find it in the structured block of the same file (as far as the
+block holds such entries); for the NB1 an `event` goal must also be in our
+stored breakdown; for the PL a row that carries a `club` must be in somebody's
+squad that round exactly when it is not `record` (a player nobody owns is
+`record`). What it does and does not check, in full: `colour-taxonomy.md`,
+*What `colour-check.py` checks*. Two kinds of row fail
 it regularly and both are worth knowing: a stoppage-time incident the two
 sources minute differently, and a save that only the prose knows about -
 that one is `article_only`, not `event`.
@@ -243,7 +266,8 @@ list with commas.
 
 1. `article-prep.py nb1 <round> summary` - the rules, the spent previews, and
    `round-colour-harvest.py <round>`, the fantasy layer.
-2. `nso-content-probe.py` from Actions - the reports of that round.
+2. `nso-content-probe.py` from Actions, with `PROBE_MONTH`, `PROBE_SINCE`
+   and `PROBE_LIMIT` in the `environment` input - the reports of that round.
 3. Fill `nb1-colour-<round>.json` from the reports: structured block first
    (anchor `event` where our own data agrees), then the prose claims.
 4. Write the pieces from the two files, in the voice of `summary-voice.md`.
@@ -253,7 +277,8 @@ For the Draft the same five steps, with its own scripts:
 
 1. `article-prep.py pl <round> summary` - which runs `draft-round-harvest.py
    <round>`, the fantasy layer; it must say the round is final.
-2. `pl-colour-harvest.py` and `pl-textstream.py` from Actions - the
+2. `pl-colour-harvest.py` and `pl-textstream.py` from Actions, each with
+   `HARVEST_EVENT=<round>` in the `environment` input - the
    structured block with the kick-off times, and the prose.
 3. Fill `pl-colour-<round>.json` **in the same step**, then run
    `colour-check.py pl <round>`.
@@ -267,12 +292,15 @@ For the Draft the same five steps, with its own scripts:
 | `event` | the structured block AND our own data agree | stated as fact |
 | `record` | the structured block only - a player nobody owns, or one sold before the round, so we hold no data on him | stated as fact |
 | `article_only` | the prose alone (a save, a big miss, the pattern of play) | stated as fact, in our own words - never sourced in the text |
-| `nyilatkozat` | a manager said it to us | quoted verbatim, named as his words - a quote is attribution by nature, not hedging |
+| `statement` | a manager said it to us | quoted verbatim, named as his words - a quote is attribution by nature, not hedging |
 | `none` | contradicts our data, or names a player who did not play | dropped |
 
-The anchors are checked by machine, not by memory: every `event` row must
-find its goal, card, assist or minute in `bontasok/<round>.json`. Two cases
-that check catches and that are easy to mis-file by hand: a scorer sold
+The anchors are checked by machine where the data allows it
+(`colour-check.py`): a goal, assist, VAR decision or big chance against the
+structured block; for the NB1 an `event` goal against `bontasok/<round>.json`;
+for the PL squad membership against `record`. Cards, substitutions and
+minutes are not checked against our own data - those rows are checked by
+hand. Two cases that are easy to mis-file by hand: a scorer sold
 before the round, whom no squad holds, so he is `record` rather than
 `event`; and a substitute's minute count, which is time played and not the
 minute he came on.

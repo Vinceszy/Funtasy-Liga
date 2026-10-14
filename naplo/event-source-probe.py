@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
-"""Meccs-esemenyek kulso forrasanak merese: van-e GOLPERC es milyen reszletesseg.
+"""Probe of an external source of match events: is there a GOAL MINUTE, and how detailed.
 
-MIERT: a sajat adatunk (MLSZ/FPL) eseményenkenti OSSZEGET ad, idopontot nem -
-a gol perce es a gol MODJA csak kulso forrasbol johet. A fejlesztoi kornyezet
-halozata minden kulso forrast blokkol, ezert a meres a GitHub futojarol megy.
+WHY: our own data (MLSZ/FPL) gives a SUM per event, no time - the minute of a
+goal and the MANNER of a goal can only come from an external source. The
+development environment's network blocks every external source, so the
+probe runs on the GitHub runner.
 
-Amit mer, ket ligara (angol elso osztaly es magyar elso osztaly):
-  1. elerheto-e a forras egyaltalan az adott ligara
-  2. ad-e PERCET az esemenyekhez
-  3. milyen RESZLETESSEG: csak "Goal", vagy "Penalty" / "Own Goal" / fejes stb.
-  4. milyen nevalakban adja a jatekost (a sajat kereteinkhez kell parositani)
+What it measures, for two leagues (English top flight and Hungarian top
+flight):
+  1. whether the source is reachable at all for that league
+  2. whether it gives a MINUTE for the events
+  3. how DETAILED: only "Goal", or "Penalty" / "Own Goal" / header etc.
+  4. in what name form it gives the player (it has to be matched to our
+     own squads)
 
-Kulcs nem kell hozza. Az eredmeny a naplo/esemeny-forras.txt-be kerul.
+No key needed (the api-football part runs only when APIFOOTBALL_KEY is set).
+The result goes into naplo/event-source.txt.
 """
 import json
 import os
@@ -20,248 +24,249 @@ import time
 import urllib.error
 import urllib.request
 
-ALAP = "https://site.api.espn.com/apis/site/v2/sports/soccer"
-LIGAK = [("angol elso osztaly", "eng.1"), ("magyar elso osztaly", "hun.1")]
-NAPLO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "esemeny-forras.txt")
-FEJ = {"Accept": "application/json", "User-Agent": "FunTasy-meres"}
+BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer"
+LEAGUES = [("english top flight", "eng.1"), ("hungarian top flight", "hun.1")]
+LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "event-source.txt")
+HEADERS = {"Accept": "application/json", "User-Agent": "FunTasy-probe"}
 
 
-def kerd(url):
-    k = urllib.request.Request(url, headers=FEJ)
+def fetch(url):
+    req = urllib.request.Request(url, headers=HEADERS)
     t0 = time.time()
     try:
-        with urllib.request.urlopen(k, timeout=25) as v:
-            return v.status, v.read().decode("utf-8", "replace"), int((time.time() - t0) * 1000)
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            return resp.status, resp.read().decode("utf-8", "replace"), int((time.time() - t0) * 1000)
     except urllib.error.HTTPError as e:
         return e.code, "", int((time.time() - t0) * 1000)
     except Exception as e:                                   # noqa: BLE001
         return 0, "%s: %s" % (type(e).__name__, e), int((time.time() - t0) * 1000)
 
 
-def json_kerd(url):
-    kod, torzs, ms = kerd(url)
-    if kod != 200:
-        return None, kod, ms
+def fetch_json(url):
+    code, body, ms = fetch(url)
+    if code != 200:
+        return None, code, ms
     try:
-        return json.loads(torzs), kod, ms
+        return json.loads(body), code, ms
     except ValueError:
-        return None, kod, ms
+        return None, code, ms
 
 
-def liga_meres(nev, slug, sorok):
-    sorok.append("")
-    sorok.append("--- %s (%s) ---" % (nev, slug))
-    # egy LEZAJLOTT nap menetrendje: visszafele keresunk, amig talalunk kesz meccset
-    esemeny_id = nap = None
-    kodok = set()
-    for nap_vissza in range(1, 15):
-        d = time.strftime("%Y%m%d", time.gmtime(time.time() - nap_vissza * 86400))
-        j, kod, ms = json_kerd("%s/%s/scoreboard?dates=%s" % (ALAP, slug, d))
-        kodok.add(kod)
+def probe_league(name, slug, lines):
+    lines.append("")
+    lines.append("--- %s (%s) ---" % (name, slug))
+    # the schedule of a PAST day: search backwards until a finished match turns up
+    event_id = day = None
+    codes = set()
+    for days_back in range(1, 15):
+        d = time.strftime("%Y%m%d", time.gmtime(time.time() - days_back * 86400))
+        j, code, ms = fetch_json("%s/%s/scoreboard?dates=%s" % (BASE, slug, d))
+        codes.add(code)
         if j is None:
-            sorok.append("  scoreboard %s: HTTP %s (%d ms)" % (d, kod, ms))
-            if kod in (0, 404):
+            lines.append("  scoreboard %s: HTTP %s (%d ms)" % (d, code, ms))
+            if code in (0, 404):
                 return
             continue
         for e in j.get("events") or []:
-            allapot = (((e.get("status") or {}).get("type") or {}).get("state"))
-            if allapot == "post":
-                esemeny_id, nap = e.get("id"), d
-                sorok.append("  talalt lezajlott meccs: %s (%s), id=%s"
-                             % (e.get("name"), d, esemeny_id))
+            state = (((e.get("status") or {}).get("type") or {}).get("state"))
+            if state == "post":
+                event_id, day = e.get("id"), d
+                lines.append("  found a finished match: %s (%s), id=%s"
+                             % (e.get("name"), d, event_id))
                 break
-        if esemeny_id:
+        if event_id:
             break
-    if not esemeny_id:
-        # A 403 ELUTASITAS, nem hiany: a forras nem enged be minket (tipikusan
-        # adatkozponti IP-rol). Ezt kulon kell mondani a "nincs ilyen liga"
-        # esettol, kulonben a meres rossz kovetkeztetest rogzit.
-        if 403 in kodok:
-            sorok.append("  A FORRAS ELUTASIT (HTTP 403) - ez hozzaferes, nem"
-                         " adathiany; errol a ligarol semmit nem allitottunk meg")
+    if not event_id:
+        # A 403 is a REFUSAL, not an absence: the source does not let us in
+        # (typically from a data-centre IP). That has to be said apart from
+        # the "no such league" case, otherwise the probe records a wrong
+        # conclusion.
+        if 403 in codes:
+            lines.append("  THE SOURCE REFUSES (HTTP 403) - this is access, not"
+                         " missing data; nothing has been established about this league")
         else:
-            sorok.append("  nem talaltam lezajlott meccset 14 napra visszamenoleg"
-                         " (kapott valaszkodok: %s)"
-                         % ", ".join(str(k) for k in sorted(kodok)))
+            lines.append("  no finished match found going back 14 days"
+                         " (response codes received: %s)"
+                         % ", ".join(str(k) for k in sorted(codes)))
         return
 
-    j, kod, ms = json_kerd("%s/%s/summary?event=%s" % (ALAP, slug, esemeny_id))
+    j, code, ms = fetch_json("%s/%s/summary?event=%s" % (BASE, slug, event_id))
     if j is None:
-        sorok.append("  summary: HTTP %s (%d ms) - nincs esemeny-adat" % (kod, ms))
+        lines.append("  summary: HTTP %s (%d ms) - no event data" % (code, ms))
         return
-    sorok.append("  summary: HTTP 200 (%d ms), felso kulcsok: %s"
+    lines.append("  summary: HTTP 200 (%d ms), top-level keys: %s"
                  % (ms, ", ".join(sorted(j.keys()))))
-    kulcs = j.get("keyEvents") or []
-    sorok.append("  keyEvents: %d elem" % len(kulcs))
-    if not kulcs:
-        sorok.append("  ! nincs esemenylista - ez a forras igy nem ad golpercet")
+    key_events = j.get("keyEvents") or []
+    lines.append("  keyEvents: %d items" % len(key_events))
+    if not key_events:
+        lines.append("  ! no event list - this source gives no goal minute this way")
         return
-    sorok.append("  egy elem mezoi: %s" % ", ".join(sorted(kulcs[0].keys())))
-    for e in kulcs[:8]:
-        ora = (e.get("clock") or {}).get("displayValue")
-        tip = (e.get("type") or {}).get("text")
-        jat = ", ".join((x.get("athlete") or {}).get("displayName", "?")
+    lines.append("  fields of one item: %s" % ", ".join(sorted(key_events[0].keys())))
+    for e in key_events[:8]:
+        clock = (e.get("clock") or {}).get("displayValue")
+        kind = (e.get("type") or {}).get("text")
+        who = ", ".join((x.get("athlete") or {}).get("displayName", "?")
                         for x in (e.get("participants") or [])) or "-"
-        sorok.append("    %-7s | %-22s | %s | %s"
-                     % (ora, tip, jat, (e.get("text") or "")[:70]))
-    tipusok = sorted({(e.get("type") or {}).get("text") or "?" for e in kulcs})
-    sorok.append("  elofordulo tipusok: %s" % ", ".join(tipusok))
+        lines.append("    %-7s | %-22s | %s | %s"
+                     % (clock, kind, who, (e.get("text") or "")[:70]))
+    kinds = sorted({(e.get("type") or {}).get("text") or "?" for e in key_events})
+    lines.append("  types occurring: %s" % ", ".join(kinds))
 
 
-# --- masodik kulcs nelkuli forras (thesportsdb, nyilvanos teszt-kulccsal) ---
+# --- second keyless source (thesportsdb, with its public test key) ---
 TSDB = "https://www.thesportsdb.com/api/v1/json/123"
 
 
-def tsdb_meres(sorok):
-    for orszag, nev in (("England", "angol elso osztaly"),
-                        ("Hungary", "magyar elso osztaly")):
-        sorok.append("")
-        sorok.append("--- %s (thesportsdb, %s) ---" % (nev, orszag))
-        j, kod, ms = json_kerd("%s/search_all_leagues.php?c=%s&s=Soccer" % (TSDB, orszag))
+def probe_tsdb(lines):
+    for country, name in (("England", "english top flight"),
+                          ("Hungary", "hungarian top flight")):
+        lines.append("")
+        lines.append("--- %s (thesportsdb, %s) ---" % (name, country))
+        j, code, ms = fetch_json("%s/search_all_leagues.php?c=%s&s=Soccer" % (TSDB, country))
         if j is None:
-            sorok.append("  liga-kereses: HTTP %s (%d ms)" % (kod, ms))
+            lines.append("  league search: HTTP %s (%d ms)" % (code, ms))
             continue
-        ligak = [x for x in (j.get("countries") or []) if x.get("idLeague")]
-        if not ligak:
-            sorok.append("  nincs liga ehhez az orszaghoz")
+        leagues = [x for x in (j.get("countries") or []) if x.get("idLeague")]
+        if not leagues:
+            lines.append("  no league for this country")
             continue
-        # A ligat PONTOS nevvel valasztjuk. Reszlet-egyezessel nem lehet: a
-        # "Premier" szora az angol ötödosztalyu Isthmian League Premier
-        # Division is illeszkedik, es a meres akkor mas ligat mer, mint amit
-        # a fejlecebe ir.
-        VART = {"England": "English Premier League", "Hungary": "Hungarian NB I"}
-        elso = next((x for x in ligak if (x.get("strLeague") or "") == VART[orszag]), None)
-        if elso is None:
-            sorok.append("  nincs meg a vart liga (%s); talalatok: %s"
-                         % (VART[orszag],
-                            ", ".join((x.get("strLeague") or "?") for x in ligak)))
+        # The league is chosen by its EXACT name. A partial match will not do:
+        # the word "Premier" also matches the English fifth-tier Isthmian
+        # League Premier Division, and the probe then measures a different
+        # league from the one in its header.
+        EXPECTED = {"England": "English Premier League", "Hungary": "Hungarian NB I"}
+        first = next((x for x in leagues if (x.get("strLeague") or "") == EXPECTED[country]), None)
+        if first is None:
+            lines.append("  the expected league (%s) is missing; hits: %s"
+                         % (EXPECTED[country],
+                            ", ".join((x.get("strLeague") or "?") for x in leagues)))
             continue
-        lid, lnev = elso["idLeague"], elso.get("strLeague")
-        sorok.append("  liga: %s (id=%s) | osszes talalat: %d" % (lnev, lid, len(ligak)))
-        j2, kod2, _ = json_kerd("%s/eventspastleague.php?id=%s" % (TSDB, lid))
-        ese = (j2 or {}).get("events") or []
-        if not ese:
-            sorok.append("  eventspastleague: HTTP %s, nincs lezajlott meccs" % kod2)
+        lid, lname = first["idLeague"], first.get("strLeague")
+        lines.append("  league: %s (id=%s) | all hits: %d" % (lname, lid, len(leagues)))
+        j2, code2, _ = fetch_json("%s/eventspastleague.php?id=%s" % (TSDB, lid))
+        past = (j2 or {}).get("events") or []
+        if not past:
+            lines.append("  eventspastleague: HTTP %s, no finished match" % code2)
             continue
-        e = ese[0]
-        sorok.append("  utolso meccs: %s (%s), id=%s"
+        e = past[0]
+        lines.append("  last match: %s (%s), id=%s"
                      % (e.get("strEvent"), e.get("dateEvent"), e.get("idEvent")))
-        j3, kod3, _ = json_kerd("%s/lookuptimeline.php?id=%s" % (TSDB, e.get("idEvent")))
+        j3, code3, _ = fetch_json("%s/lookuptimeline.php?id=%s" % (TSDB, e.get("idEvent")))
         tl = (j3 or {}).get("timeline")
         if not tl:
-            sorok.append("  lookuptimeline: HTTP %s, ures idovonal"
-                         " - ez a forras erre a ligara nem ad golpercet" % kod3)
+            lines.append("  lookuptimeline: HTTP %s, empty timeline"
+                         " - this source gives no goal minute for this league" % code3)
             continue
-        sorok.append("  idovonal: %d elem | mezok: %s"
+        lines.append("  timeline: %d items | fields: %s"
                      % (len(tl), ", ".join(sorted(tl[0].keys()))))
         for x in tl[:10]:
-            sorok.append("    %3s' | %-14s | %-16s | %s"
+            lines.append("    %3s' | %-14s | %-16s | %s"
                          % (x.get("intTime"), x.get("strTimeline"),
                             x.get("strTimelineDetail"), x.get("strPlayer")))
-        sorok.append("  elofordulo tipusok: %s"
+        lines.append("  types occurring: %s"
                      % ", ".join(sorted({str(x.get("strTimeline")) for x in tl})))
-        sorok.append("  elofordulo reszletessegek: %s"
+        lines.append("  details occurring: %s"
                      % ", ".join(sorted({str(x.get("strTimelineDetail")) for x in tl})))
 
 
-# --- kulcsos forras (api-football): csak ha a titok be van allitva ---
-AF_ALAP = "https://v3.football.api-sports.io"
-AF_LIGAK = [("angol elso osztaly", 39), ("magyar elso osztaly", 271)]
-# Az ingyenes csomag a folyo szezont nem adja, csak 2022-2024-et.
-TARTALEK_EVAD = 2024
+# --- keyed source (api-football): only if the secret is set ---
+AF_BASE = "https://v3.football.api-sports.io"
+AF_LEAGUES = [("english top flight", 39), ("hungarian top flight", 271)]
+# The free plan does not serve the current season, only 2022-2024.
+FALLBACK_SEASON = 2024
 
 
-def af_meres(sorok):
-    kulcs = os.environ.get("APIFOOTBALL_KEY") or ""
-    if not kulcs:
-        sorok.append("")
-        sorok.append("--- kulcsos forras: KIHAGYVA (nincs APIFOOTBALL_KEY titok) ---")
+def probe_af(lines):
+    key = os.environ.get("APIFOOTBALL_KEY") or ""
+    if not key:
+        lines.append("")
+        lines.append("--- keyed source: SKIPPED (no APIFOOTBALL_KEY secret) ---")
         return
-    fej = {"x-apisports-key": kulcs, "Accept": "application/json"}
-    evad = time.gmtime().tm_year - (1 if time.gmtime().tm_mon < 7 else 0)
-    for nev, lid in AF_LIGAK:
-        sorok.append("")
-        sorok.append("--- %s (api-football liga=%d, evad=%d) ---" % (nev, lid, evad))
-        k = urllib.request.Request(
-            "%s/fixtures?league=%d&season=%d" % (AF_ALAP, lid, evad), headers=fej)
+    headers = {"x-apisports-key": key, "Accept": "application/json"}
+    season = time.gmtime().tm_year - (1 if time.gmtime().tm_mon < 7 else 0)
+    for name, lid in AF_LEAGUES:
+        lines.append("")
+        lines.append("--- %s (api-football league=%d, season=%d) ---" % (name, lid, season))
+        req = urllib.request.Request(
+            "%s/fixtures?league=%d&season=%d" % (AF_BASE, lid, season), headers=headers)
         try:
-            with urllib.request.urlopen(k, timeout=25) as v:
-                j = json.loads(v.read().decode("utf-8", "replace"))
+            with urllib.request.urlopen(req, timeout=25) as resp:
+                j = json.loads(resp.read().decode("utf-8", "replace"))
         except Exception as e:                               # noqa: BLE001
-            sorok.append("  fixtures: %s: %s" % (type(e).__name__, e))
+            lines.append("  fixtures: %s: %s" % (type(e).__name__, e))
             continue
-        hibak = j.get("errors")
-        if hibak:
-            sorok.append("  fixtures hiba: %s" % json.dumps(hibak, ensure_ascii=False))
-            # A csomag a FOLYO szezont zarhatja ki, a szerkezetet viszont egy
-            # regebbi szezonon is meg lehet nezni - abbol derul ki, mit erne
-            # a fizetos valtozat. A hibat is es a potlast is rogzitjuk.
-            if not any("plan" in h for h in hibak):
+        errors = j.get("errors")
+        if errors:
+            lines.append("  fixtures error: %s" % json.dumps(errors, ensure_ascii=False))
+            # The plan may exclude the CURRENT season, but the structure can be
+            # inspected on an older one - that shows what the paid version
+            # would be worth. Both the error and the fallback are recorded.
+            if not any("plan" in h for h in errors):
                 continue
-            evad = TARTALEK_EVAD
-            sorok.append("  -> ujraprobalas engedett szezonnal: %d" % evad)
-            k = urllib.request.Request(
-                "%s/fixtures?league=%d&season=%d" % (AF_ALAP, lid, evad),
-                headers=fej)
+            season = FALLBACK_SEASON
+            lines.append("  -> retrying with an allowed season: %d" % season)
+            req = urllib.request.Request(
+                "%s/fixtures?league=%d&season=%d" % (AF_BASE, lid, season),
+                headers=headers)
             try:
-                with urllib.request.urlopen(k, timeout=25) as v:
-                    j = json.loads(v.read().decode("utf-8", "replace"))
+                with urllib.request.urlopen(req, timeout=25) as resp:
+                    j = json.loads(resp.read().decode("utf-8", "replace"))
             except Exception as e:                           # noqa: BLE001
-                sorok.append("  fixtures: %s: %s" % (type(e).__name__, e))
+                lines.append("  fixtures: %s: %s" % (type(e).__name__, e))
                 continue
             if j.get("errors"):
-                sorok.append("  fixtures hiba (%d): %s"
-                             % (evad, json.dumps(j["errors"], ensure_ascii=False)))
+                lines.append("  fixtures error (%d): %s"
+                             % (season, json.dumps(j["errors"], ensure_ascii=False)))
                 continue
-        val = j.get("response") or []
-        if not val:
-            sorok.append("  nincs lejatszott meccs a valaszban - a liga nem elerheto"
-                         " ezen a csomagon")
+        resp_list = j.get("response") or []
+        if not resp_list:
+            lines.append("  no played match in the response - the league is not available"
+                         " on this plan")
             continue
-        kesz = [x for x in val
-                if (((x.get("fixture") or {}).get("status") or {}).get("short")) == "FT"]
-        sorok.append("  a szezonban %d meccs, ebbol lejatszott: %d" % (len(val), len(kesz)))
-        if not kesz:
-            sorok.append("  nincs lejatszott meccs a valaszban")
+        finished = [x for x in resp_list
+                    if (((x.get("fixture") or {}).get("status") or {}).get("short")) == "FT"]
+        lines.append("  %d matches in the season, played: %d" % (len(resp_list), len(finished)))
+        if not finished:
+            lines.append("  no played match in the response")
             continue
-        fx = kesz[0]["fixture"]
-        csap = kesz[0]["teams"]
-        sorok.append("  utolso meccs: %s - %s (id=%s)"
-                     % (csap["home"]["name"], csap["away"]["name"], fx["id"]))
-        k2 = urllib.request.Request("%s/fixtures/events?fixture=%s" % (AF_ALAP, fx["id"]),
-                                    headers=fej)
+        fx = finished[0]["fixture"]
+        teams = finished[0]["teams"]
+        lines.append("  last match: %s - %s (id=%s)"
+                     % (teams["home"]["name"], teams["away"]["name"], fx["id"]))
+        req2 = urllib.request.Request("%s/fixtures/events?fixture=%s" % (AF_BASE, fx["id"]),
+                                      headers=headers)
         try:
-            with urllib.request.urlopen(k2, timeout=25) as v:
-                j2 = json.loads(v.read().decode("utf-8", "replace"))
+            with urllib.request.urlopen(req2, timeout=25) as resp:
+                j2 = json.loads(resp.read().decode("utf-8", "replace"))
         except Exception as e:                               # noqa: BLE001
-            sorok.append("  events: %s: %s" % (type(e).__name__, e))
+            lines.append("  events: %s: %s" % (type(e).__name__, e))
             continue
         ev = j2.get("response") or []
-        sorok.append("  events: %d elem" % len(ev))
+        lines.append("  events: %d items" % len(ev))
         for e in ev[:10]:
-            sorok.append("    %3s' | %-12s | %-14s | %s"
+            lines.append("    %3s' | %-12s | %-14s | %s"
                          % ((e.get("time") or {}).get("elapsed"), e.get("type"),
                             e.get("detail"), ((e.get("player") or {}).get("name"))))
-        sorok.append("  elofordulo reszletessegek: %s"
+        lines.append("  details occurring: %s"
                      % ", ".join(sorted({str(e.get("detail")) for e in ev})))
 
 
 def main():
-    sorok = ["", "=" * 70,
-             "MERES: %s UTC" % time.strftime("%Y-%m-%d %H:%M")]
-    sorok.append("")
-    sorok.append("### kulcs nelkuli forras (ESPN)")
-    for nev, slug in LIGAK:
-        liga_meres(nev, slug, sorok)
-    sorok.append("")
-    sorok.append("### masodik kulcs nelkuli forras (thesportsdb)")
-    tsdb_meres(sorok)
-    sorok.append("")
-    sorok.append("### kulcsos forras (api-football)")
-    af_meres(sorok)
-    with open(NAPLO, "a", encoding="utf-8") as f:
-        f.write("\n".join(sorok) + "\n")
-    print("\n".join(sorok))
+    lines = ["", "=" * 70,
+             "PROBE: %s UTC" % time.strftime("%Y-%m-%d %H:%M")]
+    lines.append("")
+    lines.append("### keyless source (ESPN)")
+    for name, slug in LEAGUES:
+        probe_league(name, slug, lines)
+    lines.append("")
+    lines.append("### second keyless source (thesportsdb)")
+    probe_tsdb(lines)
+    lines.append("")
+    lines.append("### keyed source (api-football)")
+    probe_af(lines)
+    with open(LOG, "a", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+    print("\n".join(lines))
     return 0
 
 

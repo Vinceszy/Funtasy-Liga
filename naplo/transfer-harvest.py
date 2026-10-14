@@ -23,7 +23,7 @@ so we work from the match days.
 
 SOURCES: squad_history.json and meccsek.json - our own data, no requests.
 The stored `week` is the player's FINAL contribution to the round (captain
-doubling and bench halving already in; see collect.py keret_osszeg), so the
+doubling and bench halving already in; see collect.py squad_total), so the
 contributions of the players sold add up directly.
 
 Usage: python3 naplo/transfer-harvest.py [first_round] [last_round]

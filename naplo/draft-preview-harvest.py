@@ -1,25 +1,26 @@
 #!/usr/bin/env python3
-"""A kovetkezo Draft-fordulo beharangozojanak sajat retege.
+"""The own layer of the preview of the next Draft round.
 
-MIERT KULON A BEHARANGOZONAK: az osszefoglalo azt nezi, mi tortent; a
-beharangozoba viszont csak az kerulhet, ami a KOVETKEZO fordulo eredmenyet
-befolyasolja. A ketto nem ugyanaz az adat. Ami elore szol, az a keret alakja
-es a szakvezeto szokasai - nem a mult heti pontszam.
+WHY A SEPARATE ONE FOR THE PREVIEW: the summary looks at what happened; a
+preview may only carry what influences the result of the NEXT round. The two
+are not the same data. What speaks forward is the shape of the squad and the
+manager's habits - not last week's score.
 
-A Draftban nincs kapitany es nincs kozos jatekos, tehat a karok, amiket egy
-szakvezeto huzhat: a kezdo tizenegy, a heti igazolas, es a pad - amelyik nem
-tartalek, hanem biztositas. A fordulo vegen ugyanis a gep az elso olyan
-padost allitja be a palyara sem lepett kezdo helyere, aki jatszott. Akinek
-ures a padja, annak egy kimarado kezdo egy ures hely.
+The Draft has no captain and no shared player, so the levers a manager can
+pull are: the starting eleven, the weekly transfers, and the bench - which is
+not a reserve but insurance. At the end of the round the machine puts the
+first bench player who played in place of a starter who never took the
+field. With an empty bench, a starter who misses out is an empty place.
 
-Ezert amit kiir: hanyszor kellett eddig a gepnek beugrania es mit mentett,
-hanyszor nem tudott (mert a padon sem jatszott senki), mennyi pont ragadt a
-padon, mennyit hoztak a heti mozgasok, mennyi ballaszt van a kezdoben, es
-mennyire fugg a csapat egyetlen embertol.
+So it prints: how often the machine had to step in so far and what it saved,
+how often it could not (because nobody on the bench played either), how many
+points were stuck on the bench, what the weekly moves brought, how much
+ballast is in the starting eleven, and how much the team depends on a single
+man.
 
-Minden a sajat adatunkbol jon, halozat nelkul.
+Everything comes from our own data, offline.
 
-Hasznalat: python3 naplo/draft-preview-harvest.py [fordulo]
+Usage: python3 naplo/draft-preview-harvest.py [round]
 """
 import json
 import os
@@ -29,115 +30,115 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..")
 
 
-def load(nev):
-    with open(os.path.join(ROOT, nev), encoding="utf-8") as f:
+def load(name):
+    with open(os.path.join(ROOT, name), encoding="utf-8") as f:
         return json.load(f)
 
 
 def main():
     draft = load("draft.json")
     hist = load("draft_history.json")
-    keszek = sorted(int(r) for r in (hist.get("rounds") or {}))
-    rnd = int(sys.argv[1]) if len(sys.argv) > 1 else (max(keszek) + 1 if keszek else 1)
+    done = sorted(int(r) for r in (hist.get("rounds") or {}))
+    rnd = int(sys.argv[1]) if len(sys.argv) > 1 else (max(done) + 1 if done else 1)
 
-    nev = {e["id"]: e["name"] for e in draft.get("entries", [])}
-    rang = {s["id"]: s for s in draft.get("standings", [])}
-    jatekos = load("draft_players.json").get("players", {})
-    pontok = load("draft_pontok.json").get("rounds", {})
-    zaras = load("zarasok.json").get("rounds", {})
-    valtozas = load("draft_keretvaltozasok.json").get("rounds", {})
-    menetrend = (draft.get("schedule") or {}).get(str(rnd)) or []
-    mult = [r for r in keszek if r < rnd]
-    # A percadat nem minden fordulora all rendelkezesre (az elso fordulot a
-    # gyujto meg nem ugy mentette). Ahol nincs, ott nem szamolunk palyara sem
-    # lepett kezdot - kulonben az egesz kezdo tizenegy annak latszana.
-    percesek = [r for r in mult if str(r) in pontok]
+    name = {e["id"]: e["name"] for e in draft.get("entries", [])}
+    standing = {s["id"]: s for s in draft.get("standings", [])}
+    players = load("draft_players.json").get("players", {})
+    points = load("draft_pontok.json").get("rounds", {})
+    closes = load("zarasok.json").get("rounds", {})
+    changes = load("draft_keretvaltozasok.json").get("rounds", {})
+    fixtures = (draft.get("schedule") or {}).get(str(rnd)) or []
+    past = [r for r in done if r < rnd]
+    # Minute data is not available for every round (the collector did not
+    # save the first round that way). Where it is missing, no starter is
+    # counted as not having played - otherwise the whole eleven would look so.
+    with_minutes = [r for r in past if str(r) in points]
 
-    def jnev(e):
-        return (jatekos.get(str(e)) or {}).get("n") or ("#%s" % e)
+    def pname(e):
+        return (players.get(str(e)) or {}).get("n") or ("#%s" % e)
 
-    def jklub(e):
-        return (jatekos.get(str(e)) or {}).get("t") or "?"
+    def pclub(e):
+        return (players.get(str(e)) or {}).get("t") or "?"
 
-    def perc(r, e):
-        return ((pontok.get(str(r)) or {}).get(str(e)) or [None, None])[1]
+    def minutes(r, e):
+        return ((points.get(str(r)) or {}).get(str(e)) or [None, None])[1]
 
-    def profil(cs):
-        p = {"csere": 0, "cserepont": 0, "potolatlan": 0, "padon_ragadt": 0,
-             "mozgas": 0, "guard": 0, "ballaszt": 0, "kezdo_db": 0,
-             "legjobb": None, "fuggoseg": 0.0, "hetek": []}
-        for r in mult:
-            keret = ((hist.get("rounds") or {}).get(str(r)) or {}).get(str(cs)) or []
-            kezdo = [x for x in keret if not x.get("b")]
-            pad = [x for x in keret if x.get("b")]
-            ossz = sum(x.get("pts") or 0 for x in kezdo)
-            p["hetek"].append(ossz)
-            p["kezdo_db"] += len(kezdo)
-            p["ballaszt"] += sum(1 for x in kezdo if (x.get("pts") or 0) <= 2)
-            z = (zaras.get(str(r)) or {}).get(str(cs)) or {}
-            p["csere"] += len(z.get("be") or [])
-            p["cserepont"] += sum(x.get("pts") or 0 for x in (z.get("be") or []))
-            if r in percesek:
-                p["potolatlan"] += sum(1 for x in kezdo if not (perc(r, x["e"]) or 0))
-            # A tarolt pad a ZARAS UTANI allapot, tehat amit itt latunk, az
-            # mar tenyleg kint maradt - a csereben beallt embert a kezdok
-            # kozott talaljuk. Ezert minden fordulo padja beleszamit.
-            p["padon_ragadt"] += sum(x.get("pts") or 0 for x in pad)
-            v = valtozas.get(str(r), {}).get(str(cs)) or {}
-            p["mozgas"] += len(v.get("ki") or []) + len(v.get("be") or [])
+    def profile(team):
+        p = {"subs": 0, "sub_points": 0, "unfilled": 0, "stuck_on_bench": 0,
+             "moves": 0, "guard": 0, "ballast": 0, "starter_count": 0,
+             "best": None, "dependence": 0.0, "weeks": []}
+        for r in past:
+            squad = ((hist.get("rounds") or {}).get(str(r)) or {}).get(str(team)) or []
+            starters = [x for x in squad if not x.get("b")]
+            bench = [x for x in squad if x.get("b")]
+            total = sum(x.get("pts") or 0 for x in starters)
+            p["weeks"].append(total)
+            p["starter_count"] += len(starters)
+            p["ballast"] += sum(1 for x in starters if (x.get("pts") or 0) <= 2)
+            z = (closes.get(str(r)) or {}).get(str(team)) or {}
+            p["subs"] += len(z.get("be") or [])
+            p["sub_points"] += sum(x.get("pts") or 0 for x in (z.get("be") or []))
+            if r in with_minutes:
+                p["unfilled"] += sum(1 for x in starters if not (minutes(r, x["e"]) or 0))
+            # The stored bench is the state AFTER THE CLOSE, so what is seen
+            # here really stayed out - a man brought on by a substitution is
+            # found among the starters. So every round's bench counts.
+            p["stuck_on_bench"] += sum(x.get("pts") or 0 for x in bench)
+            v = changes.get(str(r), {}).get(str(team)) or {}
+            p["moves"] += len(v.get("ki") or []) + len(v.get("be") or [])
             p["guard"] += v.get("guard") or 0
-        # kitol fugg: az idei legtobb pontot hozo embere, es az aranya
-        egyen = {}
-        for r in mult:
-            for x in ((hist.get("rounds") or {}).get(str(r)) or {}).get(str(cs)) or []:
+        # whom it depends on: the man with the most points this season, and his share
+        per_player = {}
+        for r in past:
+            for x in ((hist.get("rounds") or {}).get(str(r)) or {}).get(str(team)) or []:
                 if not x.get("b"):
-                    egyen[x["e"]] = egyen.get(x["e"], 0) + (x.get("pts") or 0)
-        if egyen:
-            e = max(egyen, key=lambda k: egyen[k])
-            p["legjobb"] = (jnev(e), jklub(e), egyen[e])
-            osszes = sum(p["hetek"]) or 1
-            p["fuggoseg"] = 100.0 * egyen[e] / osszes
+                    per_player[x["e"]] = per_player.get(x["e"], 0) + (x.get("pts") or 0)
+        if per_player:
+            e = max(per_player, key=lambda k: per_player[k])
+            p["best"] = (pname(e), pclub(e), per_player[e])
+            overall = sum(p["weeks"]) or 1
+            p["dependence"] = 100.0 * per_player[e] / overall
         return p
 
-    def maiKeret(cs):
-        """A LEGUTOBBI zart fordulo kerete - ezzel varja a kovetkezot."""
-        if not mult:
+    def current_squad(team):
+        """The squad of the LAST closed round - the one it goes into the next with."""
+        if not past:
             return [], []
-        keret = ((hist.get("rounds") or {}).get(str(mult[-1])) or {}).get(str(cs)) or []
-        return ([x for x in keret if not x.get("b")], [x for x in keret if x.get("b")])
+        squad = ((hist.get("rounds") or {}).get(str(past[-1])) or {}).get(str(team)) or []
+        return ([x for x in squad if not x.get("b")], [x for x in squad if x.get("b")])
 
     print("=" * 70)
-    print("DRAFT %d. FORDULO - BEHARANGOZO-RETEG (%d lezart fordulo alapjan)"
-          % (rnd, len(mult)))
+    print("DRAFT ROUND %d - PREVIEW LAYER (from %d closed rounds)"
+          % (rnd, len(past)))
     print("=" * 70)
-    for m in menetrend:
+    for m in fixtures:
         print("")
-        print("  %s  -  %s" % (nev.get(m[0], m[0]), nev.get(m[1], m[1])))
-        for cs in (m[0], m[1]):
-            p, s = profil(cs), rang.get(cs) or {}
-            kezdo, pad = maiKeret(cs)
-            print("    %-24s %d. hely, %d pont, %d:%d"
-                  % (nev.get(cs, cs), s.get("rank", 0), s.get("total", 0),
+        print("  %s  -  %s" % (name.get(m[0], m[0]), name.get(m[1], m[1])))
+        for team in (m[0], m[1]):
+            p, s = profile(team), standing.get(team) or {}
+            starters, bench = current_squad(team)
+            print("    %-24s place %d, %d pts, %d:%d"
+                  % (name.get(team, team), s.get("rank", 0), s.get("total", 0),
                      s.get("for", 0), s.get("against", 0)))
-            print("        heti termes: %s" % " ".join(str(x) for x in p["hetek"]))
-            print("        gep beugrott %dx (%d pontot mentett); potolatlan hely: %d (%d fordulobol)"
-                  % (p["csere"], p["cserepont"], p["potolatlan"], len(percesek)))
-            print("        a padon kint maradt osszesen: %d pont" % p["padon_ragadt"])
-            print("        keretmozgas: %d lepes, merleg %+d" % (p["mozgas"], p["guard"]))
-            if p["kezdo_db"]:
-                print("        ballaszt: a kezdok %d%%-a zart ket pont alatt vagy azon"
-                      % round(100.0 * p["ballaszt"] / p["kezdo_db"]))
-            if p["legjobb"]:
-                print("        legjobb embere: %s (%s) %d pont - a termes %d%%-a"
-                      % (p["legjobb"][0], p["legjobb"][1], p["legjobb"][2],
-                         round(p["fuggoseg"])))
-            print("        a padja most: %s" % ", ".join(
-                "%s (%s)" % (jnev(x["e"]), jklub(x["e"])) for x in pad) or "ures")
+            print("        weekly scores: %s" % " ".join(str(x) for x in p["weeks"]))
+            print("        machine stepped in %dx (saved %d pts); unfilled places: %d (of %d rounds)"
+                  % (p["subs"], p["sub_points"], p["unfilled"], len(with_minutes)))
+            print("        left out on the bench in total: %d pts" % p["stuck_on_bench"])
+            print("        squad moves: %d steps, balance %+d" % (p["moves"], p["guard"]))
+            if p["starter_count"]:
+                print("        ballast: %d%% of the starters finished on two points or fewer"
+                      % round(100.0 * p["ballast"] / p["starter_count"]))
+            if p["best"]:
+                print("        best man: %s (%s) %d pts - %d%% of the total"
+                      % (p["best"][0], p["best"][1], p["best"][2],
+                         round(p["dependence"])))
+            print("        bench now: %s" % ", ".join(
+                "%s (%s)" % (pname(x["e"]), pclub(x["e"])) for x in bench) or "empty")
     print("")
-    print("  FIGYELEM: ez a legutobb lezart fordulo kerete, NEM a kovetkezoe.")
-    print("  A heti igazolasok meg hatra vannak, a kezdo tizenegy pedig a")
-    print("  fordulo elso kezdorugasaig atirhato. Aki most a padon ul, arrol")
-    print("  csak annyit tudunk, hogy a szakvezetonek dontenie kell rola.")
+    print("  NOTE: this is the squad of the last closed round, NOT of the next one.")
+    print("  The weekly transfers are still to come, and the starting eleven can")
+    print("  be changed until the round's first kick-off. Of a man on the bench now")
+    print("  we know only that his manager has to decide about him.")
     return 0
 
 

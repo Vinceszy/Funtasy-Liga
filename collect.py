@@ -248,7 +248,7 @@ def squad(user_id, round_no, with_games=False):
     there. (The API returns a closed round with its teams even without
     this.)
 
-    MEASURED (live round 6, naplo/mlsz-elo-meccs.txt):
+    MEASURED (live round 6, naplo/mlsz-live-match.txt):
       - games.home_team + games.away_team  -> HTTP 200, the club arrives
       - games.homeTeam / games.teams       -> the field does not appear
       - the answer grows 22.3 KB -> 24.8 KB, i.e. +2.5 KB: the team object
@@ -770,7 +770,7 @@ def player_roster():
 
     One single request: `per_page=500` works on this endpoint (by default it
     would be 15 per page, 26 pages) - measured, see
-    naplo/mlsz-jatekoslista.txt. It CANNOT be filtered by round, so it gives
+    naplo/mlsz-player-list.txt. It CANNOT be filtered by round, so it gives
     only the current state; the profile collects the per-round points
     differently, only the season total is needed here.
 

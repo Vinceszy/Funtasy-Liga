@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
-"""A forduló egyetlen órán: mikor mi történt, és melyik párharcban.
+"""A Draft round on a single clock: what happened when, and in which head-to-head.
 
-MIERT: a golperceket nem azert gyujtjuk, hogy minden golnal odairjuk, mikor
-esett. Azert gyujtjuk, hogy a fordulo egy idovonalra kerulhessen - egyszerre
-futo meccsek mellett csak igy latszik, hol fordult meg egy parharc, es mi
-tortent kozben egy masik palyan.
+WHY: the goal minutes are not collected so that every goal can be written up
+with the minute it was scored. They are collected so that the round can go
+on one timeline - with matches running in parallel, only then is it visible
+where a head-to-head turned, and what was happening meanwhile on another
+ground.
 
-A kezdesi ido a szinestablabol jon (`meccsek[...]["kezdes"]`, a
-pl-colour-harvest.py irja oda), a perc az allitasok soraibol. A ketto
-osszege az esemeny valos ideje; a felido tizenot perce hozzaadodik a
-masodik felido perceihez, a hosszabbitas percei pedig a sajat percukhoz.
+The kick-off time comes from the colour table (`matches[...]["kickoff"]`,
+written there by pl-colour-harvest.py), the minute from the rows under
+`claims`. Their sum is the real time of the event; the fifteen minutes of
+half-time are added to the second-half minutes, and stoppage-time minutes to
+their own minute.
 
-Ez kozelites: nem a masodpercet keressuk, hanem azt, hogy ket esemeny
-ugyanabban a percben tortent-e ket kulon palyan.
+This is an approximation: it does not look for the second, only for whether
+two events happened in the same minute on two different grounds.
 
-Hasznalat: python3 naplo/idovonal.py <fordulo>
+Usage: python3 naplo/timeline.py <round>
 """
 import collections
 import datetime
@@ -24,81 +26,81 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..")
-FELIDO = 15
-ERDEKES = ("goal_manner", "goal", "luck", "assist", "disputed", "big_miss")
+HALF_TIME = 15
+INTERESTING = ("goal_manner", "goal", "luck", "assist", "disputed", "big_miss")
 
 
-def betolt(nev):
-    with open(os.path.join(ROOT, nev), encoding="utf-8") as f:
+def load(name):
+    with open(os.path.join(ROOT, name), encoding="utf-8") as f:
         return json.load(f)
 
 
-def valos_ido(kezdes, perc):
-    t = datetime.datetime.strptime(kezdes, "%Y-%m-%dT%H:%M:%SZ")
-    p = str(perc).replace(" ", "")
-    alap = int(p.split("+")[0])
-    rada = int(p.split("+")[1]) if "+" in p else 0
-    return t + datetime.timedelta(minutes=alap + rada + (FELIDO if alap > 45 else 0))
+def real_time(kickoff, minute):
+    t = datetime.datetime.strptime(kickoff, "%Y-%m-%dT%H:%M:%SZ")
+    p = str(minute).replace(" ", "")
+    base = int(p.split("+")[0])
+    added = int(p.split("+")[1]) if "+" in p else 0
+    return t + datetime.timedelta(minutes=base + added + (HALF_TIME if base > 45 else 0))
 
 
 def main():
     rnd = sys.argv[1] if len(sys.argv) > 1 else "5"
-    szin = json.load(open(os.path.join(HERE, "pl-colour-%s.json" % rnd), encoding="utf-8"))
-    meccsek = szin.get("meccsek") or {}
-    draft = betolt("draft.json")
-    nev = {e["id"]: e["name"] for e in draft["entries"]}
-    keretek = betolt("draft_history.json")["rounds"][rnd]
-    jatekosok = betolt("draft_players.json")["players"]
+    colour = json.load(open(os.path.join(HERE, "pl-colour-%s.json" % rnd), encoding="utf-8"))
+    matches = colour.get("matches") or {}
+    draft = load("draft.json")
+    name = {e["id"]: e["name"] for e in draft["entries"]}
+    squads = load("draft_history.json")["rounds"][rnd]
+    players = load("draft_players.json")["players"]
 
-    gazda = {}
-    for csapat, keret in keretek.items():
-        for x in keret:
-            j = jatekosok.get(str(x["e"])) or {}
-            gazda[(j.get("n"), j.get("t"))] = (nev[int(csapat)], "pad" if x.get("b") else "kezdo")
+    owner = {}
+    for team, squad in squads.items():
+        for x in squad:
+            j = players.get(str(x["e"])) or {}
+            owner[(j.get("n"), j.get("t"))] = (name[int(team)], "bench" if x.get("b") else "XI")
 
-    ellenfel = {}
+    opponent = {}
     for m in draft["schedule"][rnd]:
-        ellenfel[nev[m[0]]], ellenfel[nev[m[1]]] = nev[m[1]], nev[m[0]]
+        opponent[name[m[0]]], opponent[name[m[1]]] = name[m[1]], name[m[0]]
 
-    def kulcs(meccsnev):
-        if meccsnev in meccsek:
-            return meccsnev
-        for k in meccsek:
+    def match_key(match_name):
+        if match_name in matches:
+            return match_name
+        for k in matches:
             h, _, v = k.partition(" - ")
-            if meccsnev.startswith(h) and meccsnev.endswith(v):
+            if match_name.startswith(h) and match_name.endswith(v):
                 return k
         return None
 
-    esemenyek = []
-    for s in szin.get("allitasok") or []:
-        if s.get("tag") not in ERDEKES or not s.get("perc"):
+    events = []
+    for s in colour.get("claims") or []:
+        if s.get("tag") not in INTERESTING or not s.get("minute"):
             continue
-        k = kulcs(s.get("meccs"))
-        ki = gazda.get((s.get("jatekos"), s.get("klub")))
-        if not k or not ki or not meccsek[k].get("kezdes"):
+        k = match_key(s.get("match"))
+        who = owner.get((s.get("player"), s.get("club")))
+        if not k or not who or not matches[k].get("kickoff"):
             continue
-        esemenyek.append((valos_ido(meccsek[k]["kezdes"], s["perc"]), ki[0], ki[1],
-                          s["jatekos"], s["perc"], s["tag"], s["mondat"], k))
-    esemenyek.sort()
+        events.append((real_time(matches[k]["kickoff"], s["minute"]), who[0], who[1],
+                       s["player"], s["minute"], s["tag"], s["sentence"], k))
+    events.sort()
 
-    parharc = collections.defaultdict(list)
-    for e in esemenyek:
-        parharc[tuple(sorted((e[1], ellenfel[e[1]])))].append(e)
+    head_to_head = collections.defaultdict(list)
+    for e in events:
+        head_to_head[tuple(sorted((e[1], opponent[e[1]])))].append(e)
 
     print("=" * 70)
-    print("A %s. FORDULO IDOVONALA - %d esemeny, %d meccs" % (rnd, len(esemenyek), len(meccsek)))
+    print("ROUND %s TIMELINE - %d events, %d matches" % (rnd, len(events), len(matches)))
     print("=" * 70)
-    for (a, b), sorok in parharc.items():
+    for (a, b), rows in head_to_head.items():
         print("")
         print("  %s - %s" % (a, b))
-        elozo = None
-        for t, csapat, hely, jatekos, perc, tag, mondat, meccs in sorok:
-            egyutt = " <<< egyszerre" if elozo and t == elozo else ""
+        previous = None
+        for t, team, role, player, minute, tag, sentence, match in rows:
+            together = " <<< same time" if previous and t == previous else ""
             print("    %s  %-22s %-5s %-15s %4s'  %-12s %s%s" % (
-                t.strftime("%a %H:%M"), csapat, hely, jatekos, perc, tag, meccs, egyutt))
-            elozo = t
+                t.strftime("%a %H:%M"), team, role, player, minute, tag, match, together))
+            previous = t
     print("")
-    print("  Az ido UTC. Ket azonos idobelyeg ket kulon palyan egyidejuseg.")
+    print("  Times are UTC. Two identical timestamps on two different grounds are simultaneous.")
     return 0
 
 

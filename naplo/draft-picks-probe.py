@@ -43,7 +43,7 @@ LOG = os.path.join(HERE, "draft-picks.txt")
 LEAGUE = os.environ.get("LEAGUE_ID") or "48093"
 
 
-def keres(path):
+def fetch(path):
     t = time.time()
     try:
         req = urllib.request.Request(B + path, headers=HDRS)
@@ -55,104 +55,104 @@ def keres(path):
         return 0, ("%s: %s" % (type(e).__name__, e)).encode(), int((time.time() - t) * 1000)
 
 
-def sajat():
-    """A mar tarolt azonositok: ezekhez kell illeszkednie a valasznak."""
-    gyoker = os.path.dirname(HERE)
-    be = lambda n: json.load(open(os.path.join(gyoker, n), encoding="utf-8"))
-    d = be("draft.json")
-    hist = be("draft_history.json")
-    entryk = {str(e["id"]) for e in d.get("entries", [])}
-    elemek = set()
+def our_ids():
+    """The ids already stored: the response has to join to these."""
+    root = os.path.dirname(HERE)
+    load = lambda n: json.load(open(os.path.join(root, n), encoding="utf-8"))
+    d = load("draft.json")
+    hist = load("draft_history.json")
+    entries = {str(e["id"]) for e in d.get("entries", [])}
+    elements = set()
     for sq in hist.get("rounds", {}).values():
-        for lista in sq.values():
-            for x in lista:
-                elemek.add(str(x["e"]))
-    return entryk, elemek
+        for squad in sq.values():
+            for x in squad:
+                elements.add(str(x["e"]))
+    return entries, elements
 
 
 def main():
-    entryk, elemek = sajat()
-    ki = ["", "=" * 70,
-          "PROBE: %s UTC | draft choices / transactions (liga %s)"
-          % (time.strftime("%Y-%m-%d %H:%M"), LEAGUE),
-          "  sajat azonositoink: %d csapat, %d jatekos" % (len(entryk), len(elemek))]
+    entries, elements = our_ids()
+    out = ["", "=" * 70,
+           "PROBE: %s UTC | draft choices / transactions (league %s)"
+           % (time.strftime("%Y-%m-%d %H:%M"), LEAGUE),
+           "  our own ids: %d teams, %d players" % (len(entries), len(elements))]
 
-    # Egy valodi csapat-azonosito a csapat-szintu vegponthoz. A repoban nem
-    # taroljuk (publikus), ezert futasidoben kerjuk el a liga-adatbol.
-    egy_entry = None
-    code, torzs, _ = keres("league/%s/details" % LEAGUE)
+    # A real team id for the team-level endpoint. It is not stored in the
+    # repository (public), so it is requested from the league data at run time.
+    one_entry = None
+    code, body, _ = fetch("league/%s/details" % LEAGUE)
     if code == 200:
         try:
-            for e in (json.loads(torzs).get("league_entries") or []):
+            for e in (json.loads(body).get("league_entries") or []):
                 if e.get("entry_id") is not None:
-                    egy_entry = str(e["entry_id"])
+                    one_entry = str(e["entry_id"])
                     break
         except Exception:                                    # noqa: BLE001
             pass
-    ki.append("  csapat-szintu vegponthoz van azonosito: %s" % bool(egy_entry))
+    out.append("  id available for the team-level endpoint: %s" % bool(one_entry))
 
-    utak = [("choices", "draft/%s/choices" % LEAGUE),
-            ("transactions (liga)", "draft/%s/transactions" % LEAGUE),
-            ("trades", "draft/%s/trades" % LEAGUE),
-            ("league details (mar hasznaljuk)", "league/%s/details" % LEAGUE)]
-    if egy_entry:
-        utak += [("transactions (csapat)", "draft/entry/%s/transactions" % egy_entry),
-                 ("transactions (entry alatt)", "entry/%s/transactions" % egy_entry),
-                 ("watchlist", "watchlist/%s" % egy_entry)]
-    for nev, path in utak:
-        code, torzs, ms = keres(path)
-        ki.append("")
-        ki.append("--- %s ---" % nev)
-        ki.append("  %s: HTTP %s, %d kb, %d ms" % (path, code, len(torzs) // 1024, ms))
+    paths = [("choices", "draft/%s/choices" % LEAGUE),
+             ("transactions (league)", "draft/%s/transactions" % LEAGUE),
+             ("trades", "draft/%s/trades" % LEAGUE),
+             ("league details (already used)", "league/%s/details" % LEAGUE)]
+    if one_entry:
+        paths += [("transactions (team)", "draft/entry/%s/transactions" % one_entry),
+                  ("transactions (under entry)", "entry/%s/transactions" % one_entry),
+                  ("watchlist", "watchlist/%s" % one_entry)]
+    for name, path in paths:
+        code, body, ms = fetch(path)
+        out.append("")
+        out.append("--- %s ---" % name)
+        out.append("  %s: HTTP %s, %d kb, %d ms" % (path, code, len(body) // 1024, ms))
         if code != 200:
-            ki.append("  valasz: %s" % torzs[:160].decode("utf-8", "replace"))
+            out.append("  response: %s" % body[:160].decode("utf-8", "replace"))
             continue
         try:
-            j = json.loads(torzs)
+            j = json.loads(body)
         except Exception:                                    # noqa: BLE001
-            ki.append("  nem json")
+            out.append("  not json")
             continue
         if isinstance(j, dict):
-            ki.append("  felso kulcsok: %s" % ", ".join(sorted(j.keys())))
-            lista = None
+            out.append("  top-level keys: %s" % ", ".join(sorted(j.keys())))
+            items = None
             for k in ("choices", "transactions", "trades"):
                 if isinstance(j.get(k), list):
-                    lista = j[k]
-                    ki.append("  '%s' lista: %d elem" % (k, len(lista)))
+                    items = j[k]
+                    out.append("  '%s' list: %d items" % (k, len(items)))
                     break
         else:
-            lista = j if isinstance(j, list) else None
-            ki.append("  lista: %d elem" % (len(lista) if lista else 0))
-        if not lista:
+            items = j if isinstance(j, list) else None
+            out.append("  list: %d items" % (len(items) if items else 0))
+        if not items:
             continue
-        ki.append("  elem-kulcsok: %s" % ", ".join(sorted(lista[0].keys())))
-        # A LENYEG: illeszkednek-e az azonositok ahhoz, amink mar van?
-        for mezo, halmaz, cimke in (("element", elemek, "jatekos"),
-                                    ("entry", entryk, "csapat")):
-            ertekek = [str(x.get(mezo)) for x in lista if x.get(mezo) is not None]
-            if not ertekek:
-                ki.append("  %-8s mezo: nincs a valaszban" % mezo)
+        out.append("  item keys: %s" % ", ".join(sorted(items[0].keys())))
+        # THE POINT: do the ids join to what we already have?
+        for field, known, label in (("element", elements, "player"),
+                                    ("entry", entries, "team")):
+            values = [str(x.get(field)) for x in items if x.get(field) is not None]
+            if not values:
+                out.append("  %-8s field: not in the response" % field)
                 continue
-            talalt = sum(1 for v in ertekek if v in halmaz)
-            ki.append("  %-8s mezo: %d ertek, ebbol a sajat %s-azonositoinkkal egyezik: %d"
-                      % (mezo, len(ertekek), cimke, talalt))
-        # mintasorok: CSAK azonositok es szamok, nev nelkul
-        biztos = ("element", "entry", "round", "pick", "index", "event", "kind",
-                  "result", "added", "removed", "entry_in", "entry_out",
-                  "element_in", "element_out", "offered_entry", "received_entry")
-        print("\n  == %s mintasorok (nev nelkul) ==" % nev)
-        for x in lista[:5]:
-            print("     | %s" % json.dumps({k: x.get(k) for k in biztos if k in x},
+            matched = sum(1 for v in values if v in known)
+            out.append("  %-8s field: %d values, matching our own %s ids: %d"
+                       % (field, len(values), label, matched))
+        # sample rows: ONLY ids and numbers, no names
+        safe = ("element", "entry", "round", "pick", "index", "event", "kind",
+                "result", "added", "removed", "entry_in", "entry_out",
+                "element_in", "element_out", "offered_entry", "received_entry")
+        print("\n  == %s sample rows (no names) ==" % name)
+        for x in items[:5]:
+            print("     | %s" % json.dumps({k: x.get(k) for k in safe if k in x},
                                            ensure_ascii=False))
-        print("     (osszes mezo: %s)" % ", ".join(sorted(lista[0].keys())))
+        print("     (all fields: %s)" % ", ".join(sorted(items[0].keys())))
 
-    szoveg = "\n".join(ki) + "\n"
-    print(szoveg)
-    fej = ("A Draft-liga sajat draftjarol es tranzakcioirol szolo meres.\n"
-           "A fajlt a naplo/draft-picks-probe.py irja. Nevet NEM tarol:\n"
-           "csak alakot, darabszamot es azonosito-illeszkedest.\n")
-    regi = open(LOG, encoding="utf-8").read() if os.path.exists(LOG) else fej
-    open(LOG, "w", encoding="utf-8").write(regi.rstrip("\n") + "\n" + szoveg)
+    text = "\n".join(out) + "\n"
+    print(text)
+    header = ("Probe of the Draft league's own draft and transactions.\n"
+              "Written by naplo/draft-picks-probe.py. It stores NO names:\n"
+              "only shapes, counts and whether the ids join.\n")
+    old = open(LOG, encoding="utf-8").read() if os.path.exists(LOG) else header
+    open(LOG, "w", encoding="utf-8").write(old.rstrip("\n") + "\n" + text)
     return 0
 
 

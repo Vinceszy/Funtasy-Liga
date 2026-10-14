@@ -1,5 +1,5 @@
 Meccsbeszamolo-forrasok elerhetosegenek meresei.
-A fajlt a naplo/beszamolo-forras-meres.py irja. Cikkszoveget nem tarol.
+A fajlt a naplo/report-source-probe.py irja. Cikkszoveget nem tarol.
 Meg nem futott meres.
 
 ======================================================================

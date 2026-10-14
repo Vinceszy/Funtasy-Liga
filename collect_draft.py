@@ -548,7 +548,7 @@ def main():
     # WHY: at the end of a round the FPL performs AUTOMATIC SUBSTITUTIONS -
     # in place of a starter who did not play it puts in the first bench
     # player who fits -, and then it REWRITES the pick's "position" field.
-    # Measured (naplo/fpl-cserek.txt): this happens at "lockdown", together
+    # Measured (naplo/fpl-subs.txt): this happens at "lockdown", together
     # with the rest, between 08:03 and 08:23 UTC; its signal is the game
     # endpoint's "current_event_finished" field.
     # The collector runs every 3 hours, so if current_event moved on before

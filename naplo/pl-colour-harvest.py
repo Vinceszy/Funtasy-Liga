@@ -12,7 +12,10 @@ FPL fixture list, then those to FotMob's day list by club name. Every
 unmatched fixture is reported loudly: a silent gap here would become a
 summary that talks about a match that is not there.
 
-Writes naplo/pl-colour-<event>.json and prints a readable digest.
+Writes naplo/pl-colour-<event>.json and prints a readable digest. The
+gameweek comes from the environment, not from an argument:
+
+    HARVEST_EVENT=5 python3 naplo/pl-colour-harvest.py
 """
 import json
 import os
@@ -26,10 +29,10 @@ import urllib.request
 AGENT = "FunTasy-harvest (github.com/Vinceszy/Funtasy-Liga)"
 HERE = os.path.dirname(os.path.abspath(__file__))
 EVENT = os.environ.get("HARVEST_EVENT") or "4"
-NAGY_XG = 0.3
+BIG_XG = 0.3
 
 
-def keres(url):
+def fetch(url):
     req = urllib.request.Request(url, headers={"User-Agent": AGENT, "Accept": "*/*"})
     try:
         with urllib.request.urlopen(req, timeout=40) as r:
@@ -41,7 +44,7 @@ def keres(url):
 
 
 def js(url):
-    c, b = keres(url)
+    c, b = fetch(url)
     if c != 200:
         return c, None
     try:
@@ -50,10 +53,10 @@ def js(url):
         return c, None
 
 
-# Az FPL sajat roviditeseit a FotMob teljes nevere kotjuk. Az elso valtozat
-# ellenkezoleg csinalta - kivagta a "united"/"city"/"hotspur" szavakat -, es
-# pont a negy legismertebb klubot vesztette el ("Man Utd" vs "Manchester
-# United"). Rovidites-tablat kell hasznalni, nem szo-irtast.
+# FPL's own abbreviations are mapped to FotMob's full names. Doing it the other
+# way round - cutting the words "united"/"city"/"hotspur" out - loses exactly
+# the four best-known clubs ("Man Utd" vs "Manchester United"). An
+# abbreviation table is needed, not word stripping.
 ALIAS = {
     "manutd": "manchesterunited", "manunited": "manchesterunited",
     "mancity": "manchestercity",
@@ -64,190 +67,192 @@ ALIAS = {
 }
 
 
-def kulcs(nev):
-    """Klubnev osszehasonlitashoz: ekezet es irasjel nelkul, kisbetuvel.
-       Szot NEM vagunk ki belole - az vesztette el a meccseket."""
-    n = unicodedata.normalize("NFKD", nev or "")
+def club_key(name):
+    """A club name for comparison: no accents, no punctuation, lower case.
+       No word is cut out of it - that is what lost the matches."""
+    n = unicodedata.normalize("NFKD", name or "")
     n = "".join(c for c in n if not unicodedata.combining(c)).lower()
     n = re.sub(r"[^a-z]", "", n)
     return ALIAS.get(n, n)
 
 
-def egyezik(a, b):
-    """Ket klubnev ugyanaz-e. A ket forras kulonbozo hosszan irja ugyanazt, es
-       a toldalek nem mindig a VEGERE kerul: "Brighton" / "Brighton & Hove
-       Albion", de "Bournemouth" / "AFC Bournemouth". Ezert a rovidebbnek
-       BARHOL benne kell lennie a hosszabban - legalabb ot betun, kulonben a
-       "man" mindenre illeszkedne."""
+def same_club(a, b):
+    """Whether two club names are the same. The two sources write the same
+       club at different lengths, and the extra part is not always at the END:
+       "Brighton" / "Brighton & Hove Albion", but "Bournemouth" / "AFC
+       Bournemouth". So the shorter one has to occur ANYWHERE in the longer
+       one - with at least five letters, otherwise "man" would match anything."""
     if not a or not b:
         return False
     if a == b:
         return True
-    rovid, hosszu = (a, b) if len(a) <= len(b) else (b, a)
-    return len(rovid) >= 5 and rovid in hosszu
+    short, long_ = (a, b) if len(a) <= len(b) else (b, a)
+    return len(short) >= 5 and short in long_
 
 
 def main():
-    sor = []
-    def ki(s=""):
-        sor.append(s)
+    lines = []
+    def out(s=""):
+        lines.append(s)
         print(s)
 
-    ki("=" * 70)
-    ki("HARVEST: %s UTC | Premier League colour, gameweek %s" % (
+    out("=" * 70)
+    out("HARVEST: %s UTC | Premier League colour, gameweek %s" % (
         time.strftime("%Y-%m-%d %H:%M"), EVENT))
 
     c, boot = js("https://fantasy.premierleague.com/api/bootstrap-static/")
     if not boot:
-        ki("  bootstrap-static: HTTP %s - megallunk" % c)
+        out("  bootstrap-static: HTTP %s - stopping" % c)
         return 1
-    klub = {t["id"]: t["name"] for t in boot.get("teams", [])}
-    ki("  klubok: %d" % len(klub))
+    clubs = {t["id"]: t["name"] for t in boot.get("teams", [])}
+    out("  clubs: %d" % len(clubs))
 
     c, fx = js("https://fantasy.premierleague.com/api/fixtures/?event=" + EVENT)
     if not fx:
-        ki("  fixtures: HTTP %s - megallunk" % c)
+        out("  fixtures: HTTP %s - stopping" % c)
         return 1
-    ki("  a(z) %s. fordulo meccsei: %d" % (EVENT, len(fx)))
-    napok = sorted({(f.get("kickoff_time") or "")[:10] for f in fx if f.get("kickoff_time")})
-    ki("  jatszonapok: %s" % ", ".join(napok))
+    out("  matches of gameweek %s: %d" % (EVENT, len(fx)))
+    days = sorted({(f.get("kickoff_time") or "")[:10] for f in fx if f.get("kickoff_time")})
+    out("  match days: %s" % ", ".join(days))
 
-    # FotMob napi listak, csak a szukseges napokra
+    # FotMob day lists, only for the days needed
     fm = {}
-    for d in napok:
+    for d in days:
         c, j = js("https://www.fotmob.com/api/data/matches?date=" + d.replace("-", ""))
         if not j:
-            ki("  fotmob %s: HTTP %s" % (d, c))
+            out("  fotmob %s: HTTP %s" % (d, c))
             continue
         pl = [lg for lg in j.get("leagues", [])
               if lg.get("ccode") == "ENG" and lg.get("name") == "Premier League"]
-        db = 0
+        count = 0
         for lg in pl:
             for m in lg.get("matches", []):
                 h = (m.get("home") or {}).get("name")
                 v = (m.get("away") or {}).get("name")
-                fm[str(m.get("id"))] = (kulcs(h), kulcs(v), h, v)
-                db += 1
-        ki("  fotmob %s: %d PL-meccs" % (d, db))
+                fm[str(m.get("id"))] = (club_key(h), club_key(v), h, v)
+                count += 1
+        out("  fotmob %s: %d PL matches" % (d, count))
 
-    eredmeny = {}
-    hianyzo = []
+    result = {}
+    missing = []
     for f in fx:
-        h, v = klub.get(f.get("team_h")), klub.get(f.get("team_a"))
+        h, v = clubs.get(f.get("team_h")), clubs.get(f.get("team_a"))
         mid = None
-        for azon, (fh, fv, nh, nv) in fm.items():
-            if egyezik(kulcs(h), fh) and egyezik(kulcs(v), fv):
-                mid = azon
+        for fm_id, (fh, fv, nh, nv) in fm.items():
+            if same_club(club_key(h), fh) and same_club(club_key(v), fv):
+                mid = fm_id
                 break
         if not mid:
-            # A hianyt KIIRJUK a szemkozti nevekkel egyutt: enelkul egy elavult
-            # rovidites-tabla csendben tuntetne el egy meccset.
-            hianyzo.append("%s - %s (kulcs: %s / %s)" % (h, v, kulcs(h), kulcs(v)))
+            # The gap is PRINTED together with the names on the other side:
+            # without it an outdated abbreviation table would silently drop
+            # a match.
+            missing.append("%s - %s (key: %s / %s)" % (h, v, club_key(h), club_key(v)))
             continue
         c, j = js("https://www.fotmob.com/api/data/matchDetails?matchId=" + mid)
         if not j:
-            hianyzo.append("%s - %s (matchDetails HTTP %s)" % (h, v, c))
+            missing.append("%s - %s (matchDetails HTTP %s)" % (h, v, c))
             continue
-        tart = j.get("content") or {}
-        ev = ((tart.get("matchFacts") or {}).get("events") or {}).get("events") or []
-        sm = tart.get("shotmap") or {}
-        lov = sm.get("shots") if isinstance(sm, dict) else []
-        lov = lov if isinstance(lov, list) else []
+        content = j.get("content") or {}
+        ev = ((content.get("matchFacts") or {}).get("events") or {}).get("events") or []
+        sm = content.get("shotmap") or {}
+        shot_list = sm.get("shots") if isinstance(sm, dict) else []
+        shot_list = shot_list if isinstance(shot_list, list) else []
 
-        # a golhoz a lovest a perc + jatekos parral kotjuk ossze
-        lovesek = {}
-        for x in lov:
-            lovesek.setdefault((x.get("min"), x.get("playerName")), x)
+        # a goal is tied to its shot through the minute + player pair
+        shots = {}
+        for x in shot_list:
+            shots.setdefault((x.get("min"), x.get("playerName")), x)
 
-        golok, var = [], []
+        goals, var = [], []
         for e in ev:
             if e.get("type") == "Goal":
                 p = (e.get("player") or {}).get("name")
-                l = lovesek.get((e.get("time"), p)) or {}
-                golok.append({
-                    "perc": e.get("timeStr") if isinstance(e.get("timeStr"), str) else e.get("time"),
-                    "jatekos": p,
-                    "gólpassz": e.get("assistStr"),
-                    "leiras": e.get("goalDescription"),
-                    "mód": l.get("shotType"),
-                    "helyzet": l.get("situation"),
-                    "öngól": bool(l.get("isOwnGoal")),
+                l = shots.get((e.get("time"), p)) or {}
+                goals.append({
+                    "minute": e.get("timeStr") if isinstance(e.get("timeStr"), str) else e.get("time"),
+                    "player": p,
+                    "assist": e.get("assistStr"),
+                    "description": e.get("goalDescription"),
+                    "manner": l.get("shotType"),
+                    "situation": l.get("situation"),
+                    "own_goal": bool(l.get("isOwnGoal")),
                     "xG": round(l["expectedGoals"], 3) if l.get("expectedGoals") else None,
                 })
             elif e.get("type") == "VAR":
-                var.append({"perc": e.get("time"),
-                            "jatekos": (e.get("player") or {}).get("name"),
-                            "mit": e.get("nameStr") or e.get("reactKey")})
+                var.append({"minute": e.get("time"),
+                            "player": (e.get("player") or {}).get("name"),
+                            "decision": e.get("nameStr") or e.get("reactKey")})
 
-        kihagyott = [{"perc": x.get("min"), "jatekos": x.get("playerName"),
-                      "xG": round(x.get("expectedGoals") or 0, 3),
-                      "mód": x.get("shotType"), "helyzet": x.get("situation"),
-                      "kapura": bool(x.get("isOnTarget"))}
-                     for x in lov
-                     if (x.get("expectedGoals") or 0) >= NAGY_XG
-                     and str(x.get("eventType")) != "Goal"]
-        vedes = {}
-        for x in lov:
+        missed = [{"minute": x.get("min"), "player": x.get("playerName"),
+                   "xG": round(x.get("expectedGoals") or 0, 3),
+                   "manner": x.get("shotType"), "situation": x.get("situation"),
+                   "on_target": bool(x.get("isOnTarget"))}
+                  for x in shot_list
+                  if (x.get("expectedGoals") or 0) >= BIG_XG
+                  and str(x.get("eventType")) != "Goal"]
+        saves = {}
+        for x in shot_list:
             if str(x.get("eventType")) == "AttemptSaved" and not x.get("isBlocked"):
-                vedes[str(x.get("keeperId"))] = vedes.get(str(x.get("keeperId")), 0) + 1
+                saves[str(x.get("keeperId"))] = saves.get(str(x.get("keeperId")), 0) + 1
 
-        eredmeny["%s - %s" % (h, v)] = {
-            # A kezdes nelkul a golpercek csak diszitesek: kozos idovonalra
-            # csak ugy tehetok, es fordulat is csak ugy szamolhato belolük.
-            "kezdes": f.get("kickoff_time"),
-            "fotmob": mid, "golok": golok, "var": var,
-            "kihagyott_nagy_helyzet": kihagyott,
-            "vedesek_kapusonkent": vedes,
-            "loves_db": len(lov),
+        result["%s - %s" % (h, v)] = {
+            # Without the kick-off the goal minutes are mere decoration: only
+            # with it can they go on a common timeline, and only with it can
+            # a turn in the score be computed from them.
+            "kickoff": f.get("kickoff_time"),
+            "fotmob": mid, "goals": goals, "var": var,
+            "big_chances_missed": missed,
+            "saves_by_keeper": saves,
+            "shots": len(shot_list),
         }
 
-    ki("")
-    ki("  feldolgozott meccs: %d / %d" % (len(eredmeny), len(fx)))
-    if hianyzo:
-        ki("  NEM SIKERULT PAROSITANI (%d):" % len(hianyzo))
-        for x in hianyzo:
-            ki("    %s" % x)
-        ki("    a fotmob oldalan latott nevek: %s" % "; ".join(
+    out("")
+    out("  matches processed: %d / %d" % (len(result), len(fx)))
+    if missing:
+        out("  COULD NOT BE MATCHED (%d):" % len(missing))
+        for x in missing:
+            out("    %s" % x)
+        out("    names seen on the fotmob side: %s" % "; ".join(
             sorted({"%s - %s" % (a[2], a[3]) for a in fm.values()})))
     else:
-        ki("  minden meccs parositva")
+        out("  every match matched")
 
-    for nev, a in eredmeny.items():
-        ki("")
-        ki("--- %s (%d loves) ---" % (nev, a["loves_db"]))
-        for g in a["golok"]:
-            ki("   %s' %s | %s / %s%s%s" % (
-                g["perc"], g["jatekos"], g["mód"] or "?", g["helyzet"] or "?",
-                " | öngól" if g["öngól"] else "",
-                (" | gólpassz: %s" % g["gólpassz"]) if g["gólpassz"] else ""))
-        for x in a["kihagyott_nagy_helyzet"]:
-            ki("   %s' KIHAGYTA %s (xG %.2f, %s / %s, kapura: %s)" % (
-                x["perc"], x["jatekos"], x["xG"], x["mód"], x["helyzet"], x["kapura"]))
+    for name, a in result.items():
+        out("")
+        out("--- %s (%d shots) ---" % (name, a["shots"]))
+        for g in a["goals"]:
+            out("   %s' %s | %s / %s%s%s" % (
+                g["minute"], g["player"], g["manner"] or "?", g["situation"] or "?",
+                " | own goal" if g["own_goal"] else "",
+                (" | assist: %s" % g["assist"]) if g["assist"] else ""))
+        for x in a["big_chances_missed"]:
+            out("   %s' MISSED %s (xG %.2f, %s / %s, on target: %s)" % (
+                x["minute"], x["player"], x["xG"], x["manner"], x["situation"], x["on_target"]))
         for x in a["var"]:
-            ki("   %s' VAR: %s %s" % (x["perc"], x["jatekos"] or "", x["mit"] or ""))
-        if a["vedesek_kapusonkent"]:
-            ki("   vedesek kapusonkent: %s" % a["vedesek_kapusonkent"])
+            out("   %s' VAR: %s %s" % (x["minute"], x["player"] or "", x["decision"] or ""))
+        if a["saves_by_keeper"]:
+            out("   saves by keeper: %s" % a["saves_by_keeper"])
 
-    # A fordulo tablajaban KEZZEL felvitt sorok is allnak (szakvezetoi
-    # nyilatkozat, amit nekunk mondtak el) - azokat a gyujtes nem irhatja
-    # felul. Amit a gep tud, azt frissitjuk; a tobbi marad.
-    ut = os.path.join(HERE, "pl-colour-%s.json" % EVENT)
-    regi = {}
-    if os.path.exists(ut):
+    # The round's table also holds rows entered BY HAND (a manager's statement
+    # told to us) - the harvest must not overwrite them. What the machine
+    # knows is refreshed; the rest stays.
+    path = os.path.join(HERE, "pl-colour-%s.json" % EVENT)
+    old = {}
+    if os.path.exists(path):
         try:
-            with open(ut, encoding="utf-8") as f:
-                regi = json.load(f)
+            with open(path, encoding="utf-8") as f:
+                old = json.load(f)
         except Exception:                                    # noqa: BLE001
-            regi = {}
-    regi.update({"event": EVENT, "fordulo": int(EVENT), "liga": "pl",
-                 "keszult": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                 "meccsek": eredmeny})
-    regi.setdefault("allitasok", [])
-    open(ut, "w", encoding="utf-8").write(
-        json.dumps(regi, ensure_ascii=False, indent=1) + "\n")
-    ki("  megtartott kezi sor: %d" % len(regi.get("allitasok") or []))
-    ki("")
-    ki("  kiirva: %s" % os.path.basename(ut))
+            old = {}
+    old.update({"event": EVENT, "round": int(EVENT), "league": "pl",
+                "created": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "matches": result})
+    old.setdefault("claims", [])
+    open(path, "w", encoding="utf-8").write(
+        json.dumps(old, ensure_ascii=False, indent=1) + "\n")
+    out("  hand-entered rows kept: %d" % len(old.get("claims") or []))
+    out("")
+    out("  written: %s" % os.path.basename(path))
     return 0
 
 

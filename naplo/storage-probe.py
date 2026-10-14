@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
-"""A Worker "utolso ismert allas" tarolojanak vegpontrol-vegpontig merese.
+"""End-to-end probe of the Worker's "last known standing" store.
 
-MIERT ITT: a fejlesztoi kornyezet halozata nem enged ki a workers.dev-re
-(merve: azonnali kapcsolathiba), a Worker logikajat tehat csak hamis KV-vel
-lehet ott tesztelni (tesztek/workertarolo.teszt.js). Az ELES viselkedest -
-hogy a masodik latogato tenyleg a tarolt allast kapja-e - csak kintrol lehet
-megmerni; a GitHub Actions futtatoja kimegy a netre, tehat innen megy.
+WHY HERE: the development environment's network does not reach workers.dev
+(measured: immediate connection failure), so there the Worker's logic can
+only be tested with a fake KV (tesztek/workertarolo.teszt.js). The LIVE
+behaviour - whether the second visitor really gets the stored standing - can
+only be measured from outside; the GitHub Actions runner reaches the
+internet, so it runs from there.
 
-Amit mer:
-  1. /tarolt a lekeres ELOTT  - van-e mar tarolt allas, es mikori
-  2. rendes proxy-keres       - ez az, ami eltarolja a valaszt
-  3. /tarolt a lekeres UTAN   - megvan-e, es MENNYI IDO alatt jon
-  4. ugyanez megismetelve     - valtozatlan adatnal nem valt-e az idobelyeg
-                                (vagyis tenyleg csak valtozaskor irunk)
+What it measures:
+  1. /tarolt BEFORE the request  - whether a standing is stored yet, and from when
+  2. an ordinary proxy request   - this is what stores the response
+  3. /tarolt AFTER the request   - whether it is there, and HOW FAST it comes
+  4. the same repeated           - with unchanged data the timestamp must not
+                                   change (i.e. it really writes only on a change)
 
-Az eredmenyt a naplo/tarolo-meres.txt-be irja, hozzafuzve.
+It appends the result to naplo/storage-probe.txt.
+
+Environment: PROXY_URL (the Worker), PROBE_UNAME (the manager to request).
 """
 import json
 import os
@@ -25,91 +28,92 @@ import urllib.parse
 import urllib.request
 
 PROXY = os.environ.get("PROXY_URL") or "https://funtasy-liga.swick00.workers.dev"
-EREDET = "https://vinceszy.github.io"
-VERSENY = 3
-# Egy valodi szakvezeto - a lap is pontosan ezt az URL-t keri le.
-# A `or` (nem a get() alapertelmezese) azert kell, mert a workflow URES
-# sztringet ad at, ha a bemenetet nem toltik ki - a get() olyankor nem lep
-# alapertelmezesre, es a meres mas URL-t mert volna, mint amit a lap ker.
-UNAME = os.environ.get("MERES_UNAME") or "HolVanSalah"
-CEL = (f"https://fantasy-api.mlsz.hu/competitions/{VERSENY}/rankings"
-       "?include=user_team.user.id,summary_statistics,ranking,rounds,"
-       "competition_rank&page=1&per_page=5"
-       f"&filter%5Bsearch%5D={urllib.parse.quote(UNAME)}")
-NAPLO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tarolo-meres.txt")
+ORIGIN = "https://vinceszy.github.io"
+COMPETITION = 3
+# A real manager - the site requests exactly this URL too.
+# `or` (not get()'s default) is needed because the workflow passes an EMPTY
+# string when the input is left blank - get() does not fall back to the
+# default then, and the probe would have measured a different URL from the
+# one the site requests.
+UNAME = os.environ.get("PROBE_UNAME") or "HolVanSalah"
+TARGET = (f"https://fantasy-api.mlsz.hu/competitions/{COMPETITION}/rankings"
+          "?include=user_team.user.id,summary_statistics,ranking,rounds,"
+          "competition_rank&page=1&per_page=5"
+          f"&filter%5Bsearch%5D={urllib.parse.quote(UNAME)}")
+LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "storage-probe.txt")
 
 
-def kerd(url):
-    """(HTTP-kod, torzs, eltelt ms). Halozati hiba: (0, hibauzenet, ms)."""
-    keres = urllib.request.Request(url, headers={
-        "Accept": "application/json", "Origin": EREDET,
-        "User-Agent": "FunTasy-meres (github.com/Vinceszy/Funtasy-Liga)"})
+def fetch(url):
+    """(HTTP code, body, elapsed ms). Network error: (0, error message, ms)."""
+    req = urllib.request.Request(url, headers={
+        "Accept": "application/json", "Origin": ORIGIN,
+        "User-Agent": "FunTasy-probe (github.com/Vinceszy/Funtasy-Liga)"})
     t0 = time.time()
     try:
-        with urllib.request.urlopen(keres, timeout=25) as v:
-            return v.status, v.read().decode("utf-8", "replace"), int((time.time() - t0) * 1000)
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            return resp.status, resp.read().decode("utf-8", "replace"), int((time.time() - t0) * 1000)
     except urllib.error.HTTPError as e:
         return e.code, e.read().decode("utf-8", "replace"), int((time.time() - t0) * 1000)
     except Exception as e:                                   # noqa: BLE001
         return 0, "%s: %s" % (type(e).__name__, e), int((time.time() - t0) * 1000)
 
 
-def tarolt():
-    kod, torzs, ms = kerd(PROXY + "/tarolt?url=" + urllib.parse.quote(CEL, safe=""))
-    if kod != 200:
-        return None, ms, "HTTP %s" % kod
+def stored():
+    code, body, ms = fetch(PROXY + "/tarolt?url=" + urllib.parse.quote(TARGET, safe=""))
+    if code != 200:
+        return None, ms, "HTTP %s" % code
     try:
-        j = json.loads(torzs)
+        j = json.loads(body)
     except ValueError:
-        return None, ms, "nem JSON"
-    return j.get(CEL), ms, None
+        return None, ms, "not JSON"
+    return j.get(TARGET), ms, None
 
 
 def main():
-    sorok = ["", "=" * 62,
-             "MERES: %s UTC | szakvezeto: %s" % (time.strftime("%Y-%m-%d %H:%M"), UNAME)]
+    lines = ["", "=" * 62,
+             "PROBE: %s UTC | manager: %s" % (time.strftime("%Y-%m-%d %H:%M"), UNAME)]
 
-    elotte, ms, hiba = tarolt()
-    sorok.append("1. /tarolt a lekeres ELOTT: %s (%d ms)%s" % (
-        ("van, ido=%s, %d bajt" % (elotte.get("ido"), len(elotte.get("adat") or ""))
-         if elotte else "meg nincs tarolva"), ms, " [%s]" % hiba if hiba else ""))
+    before, ms, error = stored()
+    lines.append("1. /tarolt BEFORE the request: %s (%d ms)%s" % (
+        ("present, ido=%s, %d bytes" % (before.get("ido"), len(before.get("adat") or ""))
+         if before else "not stored yet"), ms, " [%s]" % error if error else ""))
 
-    kod, torzs, ms2 = kerd(PROXY + "/?url=" + urllib.parse.quote(CEL, safe=""))
-    sorok.append("2. rendes proxy-keres: HTTP %d, %d bajt, %d ms" % (kod, len(torzs), ms2))
-    if kod != 200:
-        sorok.append("   ! a lekeres nem sikerult, a tobbi lepes ertelmetlen")
-        ir(sorok)
+    code, body, ms2 = fetch(PROXY + "/?url=" + urllib.parse.quote(TARGET, safe=""))
+    lines.append("2. ordinary proxy request: HTTP %d, %d bytes, %d ms" % (code, len(body), ms2))
+    if code != 200:
+        lines.append("   ! the request failed, the remaining steps are meaningless")
+        write(lines)
         return 1
 
-    time.sleep(3)                       # a waitUntil-os iras befejezodesere
-    utana, ms3, hiba3 = tarolt()
-    sorok.append("3. /tarolt a lekeres UTAN: %s (%d ms)%s" % (
-        ("van, ido=%s, %d bajt" % (utana.get("ido"), len(utana.get("adat") or ""))
-         if utana else "NINCS - a tarolas nem mukodik"), ms3, " [%s]" % hiba3 if hiba3 else ""))
-    if utana:
-        sorok.append("   egyezik a proxy valaszaval: %s"
-                     % ("IGEN" if utana.get("adat") == torzs else "NEM"))
+    time.sleep(3)                       # for the waitUntil write to finish
+    after, ms3, error3 = stored()
+    lines.append("3. /tarolt AFTER the request: %s (%d ms)%s" % (
+        ("present, ido=%s, %d bytes" % (after.get("ido"), len(after.get("adat") or ""))
+         if after else "MISSING - storing does not work"), ms3, " [%s]" % error3 if error3 else ""))
+    if after:
+        lines.append("   matches the proxy response: %s"
+                     % ("YES" if after.get("adat") == body else "NO"))
         if ms3:
-            sorok.append("   a tarolt valasz %.1fx gyorsabban jott, mint a friss lekeres"
+            lines.append("   the stored response came %.1fx faster than the fresh request"
                          % (ms2 / ms3))
 
-    # 4. ugyanaz megegyszer: VALTOZATLAN adatnal nem szabad ujra irni
-    kerd(PROXY + "/?url=" + urllib.parse.quote(CEL, safe=""))
+    # 4. the same once more: with UNCHANGED data nothing may be written again
+    fetch(PROXY + "/?url=" + urllib.parse.quote(TARGET, safe=""))
     time.sleep(3)
-    megegyszer, _, _ = tarolt()
-    if utana and megegyszer:
-        azonos = utana.get("ido") == megegyszer.get("ido")
-        sorok.append("4. valtozatlan adat utan az idobelyeg: %s"
-                     % ("VALTOZATLAN - csak valtozaskor irunk, ahogy kell" if azonos
-                        else "MEGVALTOZOTT - minden keres ir, ez a napi kvotat enne"))
-    ir(sorok)
+    again, _, _ = stored()
+    if after and again:
+        same = after.get("ido") == again.get("ido")
+        lines.append("4. the timestamp after unchanged data: %s"
+                     % ("UNCHANGED - written only on a change, as it should be" if same
+                        else "CHANGED - every request writes, this would eat the daily quota"))
+    write(lines)
     return 0
 
 
-def ir(sorok):
-    with open(NAPLO, "a", encoding="utf-8") as f:
-        f.write("\n".join(s for s in sorok if s is not None) + "\n")
-    print("\n".join(s for s in sorok if s is not None))
+def write(lines):
+    with open(LOG, "a", encoding="utf-8") as f:
+        f.write("\n".join(s for s in lines if s is not None) + "\n")
+    print("\n".join(s for s in lines if s is not None))
 
 
 if __name__ == "__main__":

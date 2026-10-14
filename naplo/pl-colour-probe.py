@@ -36,11 +36,11 @@ import urllib.request
 
 AGENT = "FunTasy-survey (github.com/Vinceszy/Funtasy-Liga)"
 LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "pl-colour.txt")
-NAPOK = int(os.environ.get("PROBE_DAYS") or "10")
+DAYS = int(os.environ.get("PROBE_DAYS") or "10")
 
-# A taxonomia cimkei angol kulcsszavakkal. Szandekosan bo: a meres arra megy,
-# hogy VAN-E anyag, nem arra, hogy pontosan osztalyozzon.
-CIMKEK = {
+# The taxonomy's tags as English keywords. Deliberately broad: the probe asks
+# whether there IS material, not for an exact classification.
+TAGS = {
     "goal_manner": r"\b(header|headed|volley|bicycle kick|overhead kick|free[- ]kick|"
                    r"penalty|tap[- ]in|curled|curling|chipped|lobbed|drilled|thumped|"
                    r"side[- ]foot|back[- ]heel)\b",
@@ -63,12 +63,12 @@ CIMKEK = {
 }
 
 
-def keres(url, fejlec=None):
-    fej = {"User-Agent": AGENT, "Accept": "*/*"}
-    if fejlec:
-        fej.update(fejlec)
+def fetch(url, extra_headers=None):
+    headers = {"User-Agent": AGENT, "Accept": "*/*"}
+    if extra_headers:
+        headers.update(extra_headers)
     t = time.time()
-    req = urllib.request.Request(url, headers=fej)
+    req = urllib.request.Request(url, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             return r.status, r.read(), int((time.time() - t) * 1000)
@@ -78,30 +78,30 @@ def keres(url, fejlec=None):
         return 0, ("%s: %s" % (type(e).__name__, e)).encode(), int((time.time() - t) * 1000)
 
 
-def robots_engedi(gyoker, ut):
-    """A sajat ugynokunkre vonatkozo dontes. A konyvtar-szabalyt kulon irjuk ki,
-       mert a RobotFileParser sajat 403-at mar egyszer a site szabalyakent
-       jelentettuk - ezert itt a nyers szoveget ertelmezzuk."""
-    code, body, _ = keres(gyoker + "/robots.txt")
+def robots_allows(root, path):
+    """The decision that applies to our own agent. The library rule is not
+       used, because RobotFileParser's own 403 was once reported as the site's
+       rule - so the raw text is interpreted here."""
+    code, body, _ = fetch(root + "/robots.txt")
     if code != 200:
         return None, "robots.txt HTTP %s" % code
-    szoveg = body.decode("utf-8", "replace")
-    tilt, aktiv = [], False
-    for sor in szoveg.splitlines():
-        s = sor.split("#")[0].strip()
+    text = body.decode("utf-8", "replace")
+    disallowed, active = [], False
+    for line in text.splitlines():
+        s = line.split("#")[0].strip()
         if not s:
             continue
         k, _, v = s.partition(":")
         k, v = k.strip().lower(), v.strip()
         if k == "user-agent":
-            aktiv = v == "*"
-        elif k == "disallow" and aktiv and v:
-            tilt.append(v)
-    rossz = [t for t in tilt if ut.startswith(t)]
-    return (not rossz), ("tiltja: %s" % rossz[0] if rossz else "nincs ra tilto szabaly")
+            active = v == "*"
+        elif k == "disallow" and active and v:
+            disallowed.append(v)
+    blocking = [t for t in disallowed if path.startswith(t)]
+    return (not blocking), ("disallowed by: %s" % blocking[0] if blocking else "no rule disallows it")
 
 
-def szoveg(html):
+def plain_text(html):
     b = re.sub(r"(?is)<(script|style|nav|header|footer|aside)[^>]*>.*?</\1>", " ", html)
     b = re.sub(r"(?s)<[^>]+>", " ", b)
     for a, c in (("&nbsp;", " "), ("&amp;", "&"), ("&quot;", '"'), ("&#x27;", "'"),
@@ -110,259 +110,263 @@ def szoveg(html):
     return re.sub(r"\s+", " ", b).strip()
 
 
-def mondatok(t):
+def sentences(t):
     return [m.strip() for m in re.split(r"(?<=[.!?])\s+", t) if 25 < len(m.strip()) < 400]
 
 
-def cimkez(t, cimke):
-    """Cimkenkent hany mondat talal, es melyek. A talalatok a STDOUT-ra mennek."""
-    ms = mondatok(t)
-    talalt = {}
-    for tag, minta in CIMKEK.items():
-        hit = [m for m in ms if re.search(minta, m, re.I)]
+def tag_text(t, label):
+    """How many sentences match per tag, and which. The matches go to STDOUT."""
+    ms = sentences(t)
+    found = {}
+    for tag, pattern in TAGS.items():
+        hit = [m for m in ms if re.search(pattern, m, re.I)]
         if hit:
-            talalt[tag] = hit
-    print("\n  == %s: %d mondat, %d cimke talalt ==" % (cimke, len(ms), len(talalt)))
+            found[tag] = hit
+    print("\n  == %s: %d sentences, %d tags matched ==" % (label, len(ms), len(found)))
     if not ms:
-        print("     NINCS MONDAT - a kinyeres nem mukodott ezen az oldalon")
-    for tag in CIMKEK:
-        hit = talalt.get(tag, [])
+        print("     NO SENTENCES - extraction did not work on this page")
+    for tag in TAGS:
+        hit = found.get(tag, [])
         print("     %-14s %d" % (tag, len(hit)))
         for m in hit[:2]:
             print("        | %s" % m[:230])
     if ms:
-        print("     -- szuretlen minta (elso 3 mondat) --")
+        print("     -- unfiltered sample (first 3 sentences) --")
         for m in ms[:3]:
             print("        | %s" % m[:230])
-    return {t: len(v) for t, v in talalt.items()}, len(ms)
+    return {t: len(v) for t, v in found.items()}, len(ms)
+
+
+def robots_word(allowed):
+    return "ALLOWS" if allowed else "DISALLOWS" if allowed is False else "?"
 
 
 # ---------------------------------------------------------------- fotmob
 def fotmob(out):
     out.append("")
-    out.append("--- fotmob: strukturalt szin prozai forras nelkul ---")
-    eng, mier = robots_engedi("https://www.fotmob.com", "/api/data/matchDetails")
-    out.append("  robots: %s (%s)" % ("ENGEDI" if eng else "TILTJA" if eng is False else "?", mier))
-    if eng is False:
+    out.append("--- fotmob: structured colour without a prose source ---")
+    allowed, why = robots_allows("https://www.fotmob.com", "/api/data/matchDetails")
+    out.append("  robots: %s (%s)" % (robots_word(allowed), why))
+    if allowed is False:
         return
-    meccs = None
-    for nap in range(1, NAPOK + 1):
-        d = time.strftime("%Y%m%d", time.gmtime(time.time() - nap * 86400))
-        code, body, ms = keres("https://www.fotmob.com/api/data/matches?date=" + d)
+    match = None
+    for day in range(1, DAYS + 1):
+        d = time.strftime("%Y%m%d", time.gmtime(time.time() - day * 86400))
+        code, body, ms = fetch("https://www.fotmob.com/api/data/matches?date=" + d)
         if code != 200:
             out.append("  %s: HTTP %s (%d ms)" % (d, code, ms))
             continue
         try:
             j = json.loads(body)
         except Exception:                                    # noqa: BLE001
-            out.append("  %s: nem json" % d)
+            out.append("  %s: not json" % d)
             continue
-        ligak = []
+        leagues = []
         for lg in j.get("leagues", []):
-            ligak.append("%s / %s" % (lg.get("ccode"), lg.get("name")))
+            leagues.append("%s / %s" % (lg.get("ccode"), lg.get("name")))
             if lg.get("ccode") == "ENG" and lg.get("name") == "Premier League":
                 for m in lg.get("matches", []):
                     if (m.get("status") or {}).get("finished"):
-                        meccs = (str(m.get("id")), m.get("home", {}).get("name"),
+                        match = (str(m.get("id")), m.get("home", {}).get("name"),
                                  m.get("away", {}).get("name"), d)
                         break
-        out.append("  %s: %d liga, PL-lezart meccs: %s" % (d, len(ligak), bool(meccs)))
-        if not meccs and nap == 1:
-            out.append("    a napon latott ligak (elso 8): %s" % "; ".join(ligak[:8]))
-        if meccs:
+        out.append("  %s: %d leagues, finished PL match: %s" % (d, len(leagues), bool(match)))
+        if not match and day == 1:
+            out.append("    leagues seen that day (first 8): %s" % "; ".join(leagues[:8]))
+        if match:
             break
-    if not meccs:
-        out.append("  NINCS lezart PL-meccs az utolso %d napban" % NAPOK)
+    if not match:
+        out.append("  NO finished PL match in the last %d days" % DAYS)
         return
-    mid, h, v, d = meccs
-    out.append("  meccs: %s - %s (%s, id=%s)" % (h, v, d, mid))
-    code, body, ms = keres("https://www.fotmob.com/api/data/matchDetails?matchId=" + mid)
+    mid, h, v, d = match
+    out.append("  match: %s - %s (%s, id=%s)" % (h, v, d, mid))
+    code, body, ms = fetch("https://www.fotmob.com/api/data/matchDetails?matchId=" + mid)
     out.append("  matchDetails: HTTP %s, %d kb, %d ms" % (code, len(body) // 1024, ms))
     if code != 200:
         return
     j = json.loads(body)
-    tart = j.get("content") or {}
-    out.append("  content kulcsai: %s" % ", ".join(sorted(tart.keys())))
-    # 1) esemenyek
-    ev = ((tart.get("matchFacts") or {}).get("events") or {}).get("events") or []
-    tipusok = sorted({str(e.get("type")) for e in ev})
-    out.append("  esemenyek: %d db, tipusok: %s" % (len(ev), ", ".join(tipusok)))
-    golkulcs = set()
+    content = j.get("content") or {}
+    out.append("  content keys: %s" % ", ".join(sorted(content.keys())))
+    # 1) events
+    ev = ((content.get("matchFacts") or {}).get("events") or {}).get("events") or []
+    types = sorted({str(e.get("type")) for e in ev})
+    out.append("  events: %d, types: %s" % (len(ev), ", ".join(types)))
+    goal_keys = set()
     for e in ev:
         if e.get("type") == "Goal":
-            golkulcs |= {k for k, x in e.items() if x not in (None, "", [], {})}
-    out.append("  GOL-esemeny kulcsai: %s" % ", ".join(sorted(golkulcs)))
-    print("\n  == fotmob golok (nyers) ==")
+            goal_keys |= {k for k, x in e.items() if x not in (None, "", [], {})}
+    out.append("  GOAL event keys: %s" % ", ".join(sorted(goal_keys)))
+    print("\n  == fotmob goals (raw) ==")
     for e in ev:
         if e.get("type") == "Goal":
             print("     | %s" % json.dumps(e, ensure_ascii=False)[:400])
-    # 2) shotmap: a gol MODJA, a kihagyott nagy helyzet, a vedes
-    sm = tart.get("shotmap") or {}
-    lovesek = sm.get("shots") if isinstance(sm, dict) else None
-    if not isinstance(lovesek, list):
-        lovesek = []
-    out.append("  shotmap: %d loves" % len(lovesek))
-    if lovesek:
-        out.append("  loves-kulcsok: %s" % ", ".join(sorted(lovesek[0].keys())))
-        for mezo in ("situation", "shotType", "eventType"):
-            ertekek = sorted({str(x.get(mezo)) for x in lovesek if x.get(mezo) is not None})
-            out.append("    %-10s: %s" % (mezo, ", ".join(ertekek) or "(nincs)"))
-        nagy = [x for x in lovesek
-                if (x.get("expectedGoals") or 0) >= 0.3 and str(x.get("eventType")) != "Goal"]
-        out.append("    xG>=0.3 de nem gol (kihagyott nagy helyzet): %d" % len(nagy))
-        vedes = [x for x in lovesek if "save" in str(x.get("eventType")).lower()]
-        out.append("    kapusvedes-jellegu esemeny: %d" % len(vedes))
-        print("\n  == fotmob shotmap (elso 5 loves, nyersen) ==")
-        for x in lovesek[:5]:
+    # 2) shotmap: the MANNER of a goal, the missed big chance, the save
+    sm = content.get("shotmap") or {}
+    shots = sm.get("shots") if isinstance(sm, dict) else None
+    if not isinstance(shots, list):
+        shots = []
+    out.append("  shotmap: %d shots" % len(shots))
+    if shots:
+        out.append("  shot keys: %s" % ", ".join(sorted(shots[0].keys())))
+        for field in ("situation", "shotType", "eventType"):
+            values = sorted({str(x.get(field)) for x in shots if x.get(field) is not None})
+            out.append("    %-10s: %s" % (field, ", ".join(values) or "(none)"))
+        big = [x for x in shots
+               if (x.get("expectedGoals") or 0) >= 0.3 and str(x.get("eventType")) != "Goal"]
+        out.append("    xG>=0.3 but no goal (missed big chance): %d" % len(big))
+        saves = [x for x in shots if "save" in str(x.get("eventType")).lower()]
+        out.append("    save-like events: %d" % len(saves))
+        print("\n  == fotmob shotmap (first 5 shots, raw) ==")
+        for x in shots[:5]:
             print("     | %s" % json.dumps({k: x.get(k) for k in
                   ("min", "playerName", "situation", "shotType", "eventType",
                    "expectedGoals", "isBlocked", "isOnTarget")}, ensure_ascii=False))
-    # 3) van-e prozai kommentar is
-    for kulcs in ("liveticker", "commentary", "matchFacts"):
-        r = tart.get(kulcs)
+    # 3) whether there is prose commentary as well
+    for key in ("liveticker", "commentary", "matchFacts"):
+        r = content.get(key)
         if isinstance(r, dict):
-            out.append("  %s alkulcsai: %s" % (kulcs, ", ".join(sorted(r.keys()))[:200]))
-    return meccs
+            out.append("  %s subkeys: %s" % (key, ", ".join(sorted(r.keys()))[:200]))
+    return match
 
 
 # ---------------------------------------------------------------- pulselive
 def pulselive(out):
     out.append("")
-    out.append("--- premierleague (pulselive): sajat perces kommentar ---")
-    fej = {"Origin": "https://www.premierleague.com",
-           "Referer": "https://www.premierleague.com/"}
-    code, body, ms = keres(
-        "https://footballapi.pulselive.com/football/competitions/1/compseasons", fej)
+    out.append("--- premierleague (pulselive): the league's own minute-by-minute commentary ---")
+    headers = {"Origin": "https://www.premierleague.com",
+               "Referer": "https://www.premierleague.com/"}
+    code, body, ms = fetch(
+        "https://footballapi.pulselive.com/football/competitions/1/compseasons", headers)
     out.append("  compseasons: HTTP %s (%d ms)" % (code, ms))
     if code != 200:
         return
     j = json.loads(body)
-    idk = [(str(c.get("id")).split(".")[0], c.get("label")) for c in j.get("content", [])]
-    out.append("  legujabb szezonok: %s" % "; ".join("%s=%s" % (b, a) for a, b in idk[:3]))
-    if not idk:
+    ids = [(str(c.get("id")).split(".")[0], c.get("label")) for c in j.get("content", [])]
+    out.append("  latest seasons: %s" % "; ".join("%s=%s" % (b, a) for a, b in ids[:3]))
+    if not ids:
         return
-    sid = idk[0][0]
+    sid = ids[0][0]
     url = ("https://footballapi.pulselive.com/football/fixtures?comps=1&compSeasons=%s"
            "&statuses=C&page=0&pageSize=5&sort=desc" % sid)
-    code, body, ms = keres(url, fej)
-    out.append("  lezart meccsek: HTTP %s (%d ms)" % (code, ms))
+    code, body, ms = fetch(url, headers)
+    out.append("  completed matches: HTTP %s (%d ms)" % (code, ms))
     if code != 200:
-        out.append("  valasz: %s" % body[:160].decode("utf-8", "replace"))
+        out.append("  response: %s" % body[:160].decode("utf-8", "replace"))
         return
     fx = json.loads(body).get("content", [])
-    out.append("  kapott meccs: %d" % len(fx))
+    out.append("  matches received: %d" % len(fx))
     if not fx:
         return
     f = fx[0]
     fid = str(f.get("id")).split(".")[0]
-    csapatok = " - ".join((t.get("team") or {}).get("name", "?") for t in f.get("teams", []))
-    out.append("  meccs: %s (id=%s)" % (csapatok, fid))
-    for ut in ("/football/fixtures/%s/textstream/EN?pageSize=200" % fid,
-               "/football/fixtures/%s/textstream/EN" % fid):
-        code, body, ms = keres("https://footballapi.pulselive.com" + ut, fej)
-        out.append("  textstream %s: HTTP %s, %d kb (%d ms)" % (ut.split("?")[0][-30:], code,
+    teams = " - ".join((t.get("team") or {}).get("name", "?") for t in f.get("teams", []))
+    out.append("  match: %s (id=%s)" % (teams, fid))
+    for path in ("/football/fixtures/%s/textstream/EN?pageSize=200" % fid,
+                 "/football/fixtures/%s/textstream/EN" % fid):
+        code, body, ms = fetch("https://footballapi.pulselive.com" + path, headers)
+        out.append("  textstream %s: HTTP %s, %d kb (%d ms)" % (path.split("?")[0][-30:], code,
                                                                 len(body) // 1024, ms))
         if code == 200:
             try:
                 e = json.loads(body).get("events", {}).get("content", [])
             except Exception:                                # noqa: BLE001
                 e = []
-            out.append("    bejegyzes: %d" % len(e))
+            out.append("    entries: %d" % len(e))
             t = " ".join(x.get("text") or "" for x in e)
             if t.strip():
-                szam, db = cimkez(t, "pulselive textstream")
-                out.append("    cimkek: %s" % (json.dumps(szam) if szam else "NINCS TALALAT"))
-                out.append("    mondat: %d" % db)
+                counts, n = tag_text(t, "pulselive textstream")
+                out.append("    tags: %s" % (json.dumps(counts) if counts else "NO MATCH"))
+                out.append("    sentences: %d" % n)
             else:
-                out.append("    NINCS szoveg a valaszban")
+                out.append("    NO text in the response")
             break
 
 
 # ---------------------------------------------------------------- guardian
-def guardian(out, meccs):
+def guardian(out, match):
     out.append("")
-    out.append("--- guardian content api (fejlesztoi kulcs: test) ---")
-    eng, mier = robots_engedi("https://content.guardianapis.com", "/search")
-    out.append("  robots: %s (%s)" % ("ENGEDI" if eng else "TILTJA" if eng is False else "?", mier))
-    if eng is False:
+    out.append("--- guardian content api (developer key: test) ---")
+    allowed, why = robots_allows("https://content.guardianapis.com", "/search")
+    out.append("  robots: %s (%s)" % (robots_word(allowed), why))
+    if allowed is False:
         return
     q = "premier league match report"
-    if meccs:
-        q = "%s %s" % (meccs[1], meccs[2])
+    if match:
+        q = "%s %s" % (match[1], match[2])
     url = ("https://content.guardianapis.com/search?q=%s&section=football"
            "&show-fields=bodyText&page-size=3&api-key=test"
            % urllib.parse.quote(q))
-    code, body, ms = keres(url)
-    out.append("  kereses (%s): HTTP %s, %d kb (%d ms)" % (q, code, len(body) // 1024, ms))
+    code, body, ms = fetch(url)
+    out.append("  search (%s): HTTP %s, %d kb (%d ms)" % (q, code, len(body) // 1024, ms))
     if code != 200:
-        out.append("  valasz: %s" % body[:200].decode("utf-8", "replace"))
+        out.append("  response: %s" % body[:200].decode("utf-8", "replace"))
         return
     r = json.loads(body).get("response", {})
-    cikkek = r.get("results", [])
-    out.append("  talalat: %s, visszaadva: %d" % (r.get("total"), len(cikkek)))
-    for c in cikkek[:2]:
+    articles = r.get("results", [])
+    out.append("  hits: %s, returned: %d" % (r.get("total"), len(articles)))
+    for c in articles[:2]:
         t = (c.get("fields") or {}).get("bodyText") or ""
-        out.append("    %s | %d karakter" % (c.get("webTitle", "?")[:70], len(t)))
+        out.append("    %s | %d characters" % (c.get("webTitle", "?")[:70], len(t)))
         if t:
-            szam, db = cimkez(t, "guardian: " + c.get("webTitle", "?")[:50])
-            out.append("      cimkek: %s" % (json.dumps(szam) if szam else "NINCS TALALAT"))
+            counts, n = tag_text(t, "guardian: " + c.get("webTitle", "?")[:50])
+            out.append("      tags: %s" % (json.dumps(counts) if counts else "NO MATCH"))
 
 
 # ---------------------------------------------------------------- bbc
 def bbc(out):
     out.append("")
     out.append("--- bbc sport ---")
-    eng, mier = robots_engedi("https://www.bbc.com", "/sport/football")
-    out.append("  robots: %s (%s)" % ("ENGEDI" if eng else "TILTJA" if eng is False else "?", mier))
-    if eng is False:
+    allowed, why = robots_allows("https://www.bbc.com", "/sport/football")
+    out.append("  robots: %s (%s)" % (robots_word(allowed), why))
+    if allowed is False:
         return
-    for nap in range(1, NAPOK + 1):
-        d = time.strftime("%Y-%m-%d", time.gmtime(time.time() - nap * 86400))
+    for day in range(1, DAYS + 1):
+        d = time.strftime("%Y-%m-%d", time.gmtime(time.time() - day * 86400))
         url = "https://www.bbc.com/sport/football/premier-league/scores-fixtures/" + d
-        code, body, ms = keres(url)
+        code, body, ms = fetch(url)
         if code != 200:
             out.append("  %s: HTTP %s (%d ms)" % (d, code, ms))
             continue
         html = body.decode("utf-8", "replace")
-        linkek = sorted(set(re.findall(r'"(/sport/football/(?:articles|live)/[a-z0-9]+)"', html)))
-        out.append("  %s: HTTP 200, %d kb, cikk-link: %d" % (d, len(body) // 1024, len(linkek)))
-        if not linkek:
+        links = sorted(set(re.findall(r'"(/sport/football/(?:articles|live)/[a-z0-9]+)"', html)))
+        out.append("  %s: HTTP 200, %d kb, article links: %d" % (d, len(body) // 1024, len(links)))
+        if not links:
             continue
-        for l in linkek[:1]:
-            code2, body2, ms2 = keres("https://www.bbc.com" + l)
+        for l in links[:1]:
+            code2, body2, ms2 = fetch("https://www.bbc.com" + l)
             out.append("    %s: HTTP %s, %d kb (%d ms)" % (l, code2, len(body2) // 1024, ms2))
             if code2 == 200:
-                t = szoveg(body2.decode("utf-8", "replace"))
-                szam, db = cimkez(t, "bbc " + l)
-                out.append("      cimkek: %s" % (json.dumps(szam) if szam else "NINCS TALALAT"))
+                t = plain_text(body2.decode("utf-8", "replace"))
+                counts, n = tag_text(t, "bbc " + l)
+                out.append("      tags: %s" % (json.dumps(counts) if counts else "NO MATCH"))
         break
 
 
 def main():
     out = ["", "=" * 70,
            "PROBE: %s UTC | Premier League colour sources" % time.strftime("%Y-%m-%d %H:%M")]
-    meccs = None
+    match = None
     for f in (lambda: fotmob(out),):
         try:
-            meccs = f()
+            match = f()
         except Exception as e:                               # noqa: BLE001
-            out.append("  HIBA: %s: %s" % (type(e).__name__, e))
-    for f in (lambda: pulselive(out), lambda: guardian(out, meccs), lambda: bbc(out)):
+            out.append("  ERROR: %s: %s" % (type(e).__name__, e))
+    for f in (lambda: pulselive(out), lambda: guardian(out, match), lambda: bbc(out)):
         try:
             f()
         except Exception as e:                               # noqa: BLE001
-            out.append("  HIBA: %s: %s" % (type(e).__name__, e))
-    szoveg_ki = "\n".join(out) + "\n"
-    print(szoveg_ki)
-    fej = ("Premier League szin-forrasok merese.\n"
-           "A fajlt a naplo/pl-colour-probe.py irja. Cikkszoveget NEM tarol:\n"
-           "a talalt mondatok csak a futas naplojaban (stdout) latszanak.\n")
-    regi = ""
+            out.append("  ERROR: %s: %s" % (type(e).__name__, e))
+    text_out = "\n".join(out) + "\n"
+    print(text_out)
+    header = ("Premier League colour sources probe.\n"
+              "Written by naplo/pl-colour-probe.py. It stores NO article text:\n"
+              "the matching sentences are visible only in the run log (stdout).\n")
+    old = ""
     if os.path.exists(LOG):
-        regi = open(LOG, encoding="utf-8").read()
+        old = open(LOG, encoding="utf-8").read()
     else:
-        regi = fej
-    open(LOG, "w", encoding="utf-8").write(regi.rstrip("\n") + "\n" + szoveg_ki)
+        old = header
+    open(LOG, "w", encoding="utf-8").write(old.rstrip("\n") + "\n" + text_out)
     return 0
 
 

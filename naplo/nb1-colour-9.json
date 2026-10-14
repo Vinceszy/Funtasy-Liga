@@ -1,490 +1,490 @@
 {
- "fordulo": 9,
- "liga": "nb1",
- "forras": "nemzetisport.hu meccsbeszamolok (naplo/nso-content-probe.py, futasi naplo)",
- "meccsek": {
+ "round": 9,
+ "league": "nb1",
+ "source": "nemzetisport.hu meccsbeszamolok (naplo/nso-content-probe.py, futasi naplo)",
+ "matches": {
   "VASAS 1-1 VÁRDA": {
-   "helyszin": "Budapest, Illovszky Rudolf Stadion",
-   "nezo": 0,
-   "megjegyzes": "zart kapuk mogott",
-   "jatekvezeto": "Rúsz Márton",
-   "golok": [
+   "venue": "Budapest, Illovszky Rudolf Stadion",
+   "attendance": 0,
+   "note": "zart kapuk mogott",
+   "referee": "Rúsz Márton",
+   "goals": [
     {
-     "perc": 61,
-     "ki": "Tóth Milán László"
+     "minute": 61,
+     "player": "Tóth Milán László"
     },
     {
-     "perc": 86,
-     "ki": "Bíró Bence",
-     "csapat": "VÁRDA"
+     "minute": 86,
+     "player": "Bíró Bence",
+     "team": "VÁRDA"
     }
    ]
   },
   "FTC 1-1 DVSC": {
-   "helyszin": "Budapest, Groupama Aréna",
-   "nezo": 11593,
-   "jatekvezeto": "Berke Balázs",
-   "golok": [
+   "venue": "Budapest, Groupama Aréna",
+   "attendance": 11593,
+   "referee": "Berke Balázs",
+   "goals": [
     {
-     "perc": 65,
-     "ki": "Corbu"
+     "minute": 65,
+     "player": "Corbu"
     },
     {
-     "perc": "90+5",
-     "ki": "Dzsudzsák Balázs",
-     "csapat": "DVSC",
-     "mod": "11-es"
+     "minute": "90+5",
+     "player": "Dzsudzsák Balázs",
+     "team": "DVSC",
+     "manner": "11-es"
     }
    ]
   },
   "HONVÉD 1-1 ÚJPEST": {
-   "helyszin": "Budapest, Bozsik Aréna",
-   "nezo": 5078,
-   "jatekvezeto": "Bogár Gergő",
-   "golok": [
+   "venue": "Budapest, Bozsik Aréna",
+   "attendance": 5078,
+   "referee": "Bogár Gergő",
+   "goals": [
     {
-     "perc": 73,
-     "ki": "Pinte Patrik"
+     "minute": 73,
+     "player": "Pinte Patrik"
     },
     {
-     "perc": 70,
-     "ki": "Gleofilo Vlijter",
-     "csapat": "ÚJPEST"
+     "minute": 70,
+     "player": "Gleofilo Vlijter",
+     "team": "ÚJPEST"
     }
    ]
   },
   "ETO 0-1 PAFC": {
-   "helyszin": "Győr, ETO Stadion",
-   "nezo": 4745,
-   "jatekvezeto": "Káprály Mihály",
-   "golok": [
+   "venue": "Győr, ETO Stadion",
+   "attendance": 4745,
+   "referee": "Káprály Mihály",
+   "goals": [
     {
-     "perc": 11,
-     "ki": "Lukács Dániel",
-     "csapat": "PAFC"
+     "minute": 11,
+     "player": "Lukács Dániel",
+     "team": "PAFC"
     }
    ]
   },
   "ZTE 5-1 NYÍREGY": {
-   "helyszin": "Zalaegerszeg, ZTE Aréna",
-   "jatekvezeto": "Zimmermann",
-   "golok": [
+   "venue": "Zalaegerszeg, ZTE Aréna",
+   "referee": "Zimmermann",
+   "goals": [
     {
-     "perc": 10,
-     "ki": "Katona Mátyás",
-     "csapat": "NYÍREGY"
+     "minute": 10,
+     "player": "Katona Mátyás",
+     "team": "NYÍREGY"
     },
     {
-     "perc": 49,
-     "ki": "Machado"
+     "minute": 49,
+     "player": "Machado"
     },
     {
-     "perc": 54,
-     "ki": "Amato",
-     "mod": "11-es"
+     "minute": 54,
+     "player": "Amato",
+     "manner": "11-es"
     },
     {
-     "perc": 80,
-     "ki": "Krevszun",
-     "mod": "11-es"
+     "minute": 80,
+     "player": "Krevszun",
+     "manner": "11-es"
     },
     {
-     "perc": "90+1",
-     "ki": "Arthur Henrique"
+     "minute": "90+1",
+     "player": "Arthur Henrique"
     },
     {
-     "perc": "90+5",
-     "ki": "Arthur Henrique"
+     "minute": "90+5",
+     "player": "Arthur Henrique"
     }
    ]
   },
   "PAKS 3-0 MTK": {
-   "helyszin": "Paks, Fehérvári úti Stadion",
-   "nezo": 2502,
-   "jatekvezeto": "Buzás Balázs",
-   "golok": [
+   "venue": "Paks, Fehérvári úti Stadion",
+   "attendance": 2502,
+   "referee": "Buzás Balázs",
+   "goals": [
     {
-     "perc": 19,
-     "ki": "Kinyik Ákos"
+     "minute": 19,
+     "player": "Kinyik Ákos"
     },
     {
-     "perc": 74,
-     "ki": "Horváth Kevin"
+     "minute": 74,
+     "player": "Horváth Kevin"
     },
     {
-     "perc": "90+1",
-     "ki": "Pető Milán"
+     "minute": "90+1",
+     "player": "Pető Milán"
     }
    ],
-   "kiallitas": [
+   "sent_off": [
     {
-     "perc": 87,
-     "ki": "Szuhodovszki",
-     "csapat": "MTK"
+     "minute": 87,
+     "player": "Szuhodovszki",
+     "team": "MTK"
     }
    ]
   }
  },
- "allitasok": [
+ "claims": [
   {
-   "jatekos": "Tóth Milán László",
-   "perc": 61,
+   "player": "Tóth Milán László",
+   "minute": 61,
    "tag": "goal",
-   "mondat": "szerzett vezetést az angyalföldieknek",
-   "horgony": "event",
-   "meccs": "VASAS 1-1 VÁRDA"
+   "sentence": "szerzett vezetést az angyalföldieknek",
+   "anchor": "event",
+   "match": "VASAS 1-1 VÁRDA"
   },
   {
-   "jatekos": "Bíró Bence",
-   "perc": 86,
+   "player": "Bíró Bence",
+   "minute": 86,
    "tag": "goal",
-   "mondat": "csereként beállva egyenlített a hajrában",
-   "horgony": "record",
-   "meccs": "VASAS 1-1 VÁRDA"
+   "sentence": "csereként beállva egyenlített a hajrában",
+   "anchor": "record",
+   "match": "VASAS 1-1 VÁRDA"
   },
   {
-   "jatekos": "Bíró Bence",
-   "perc": 64,
+   "player": "Bíró Bence",
+   "minute": 64,
    "tag": "sub",
-   "mondat": "a 64. percben állt be Szikszai helyére",
-   "horgony": "record",
-   "meccs": "VASAS 1-1 VÁRDA"
+   "sentence": "a 64. percben állt be Szikszai helyére",
+   "anchor": "record",
+   "match": "VASAS 1-1 VÁRDA"
   },
   {
-   "jatekos": "Tóth Milán László",
-   "perc": null,
+   "player": "Tóth Milán László",
+   "minute": null,
    "tag": "milestone",
-   "mondat": "az ukránok ellen fontos gólt szerző szélső, akit Erős Gábor munkája a válogatottig repített",
-   "horgony": "article_only",
-   "meccs": "VASAS 1-1 VÁRDA"
+   "sentence": "az ukránok ellen fontos gólt szerző szélső, akit Erős Gábor munkája a válogatottig repített",
+   "anchor": "article_only",
+   "match": "VASAS 1-1 VÁRDA"
   },
   {
-   "jatekos": null,
-   "perc": null,
+   "player": null,
+   "minute": null,
    "tag": "match_picture",
-   "mondat": "zárt kapuk mögött játszották, a lelátón csak néhány vendégdrukker és tizennégy év alatti kerületi iskolások ültek",
-   "horgony": "article_only",
-   "meccs": "VASAS 1-1 VÁRDA"
+   "sentence": "zárt kapuk mögött játszották, a lelátón csak néhány vendégdrukker és tizennégy év alatti kerületi iskolások ültek",
+   "anchor": "article_only",
+   "match": "VASAS 1-1 VÁRDA"
   },
   {
-   "jatekos": "Kovácsréti Márk",
-   "perc": null,
+   "player": "Kovácsréti Márk",
+   "minute": null,
    "tag": "big_miss",
-   "mondat": "éles szögből jobbal csúnyán a kapu fölé vágta",
-   "horgony": "article_only",
-   "meccs": "VASAS 1-1 VÁRDA"
+   "sentence": "éles szögből jobbal csúnyán a kapu fölé vágta",
+   "anchor": "article_only",
+   "match": "VASAS 1-1 VÁRDA"
   },
   {
-   "jatekos": "Corbu",
-   "perc": 65,
+   "player": "Corbu",
+   "minute": 65,
    "tag": "goal",
-   "mondat": "a 65. percben szerzett vezetést a Ferencvárosnak",
-   "horgony": "record",
-   "meccs": "FTC 1-1 DVSC"
+   "sentence": "a 65. percben szerzett vezetést a Ferencvárosnak",
+   "anchor": "record",
+   "match": "FTC 1-1 DVSC"
   },
   {
-   "jatekos": "Dzsudzsák Balázs",
-   "perc": "90+5",
+   "player": "Dzsudzsák Balázs",
+   "minute": "90+5",
    "tag": "goal",
-   "mondat": "a 95. percben értékesített büntetővel mentett pontot",
-   "horgony": "record",
-   "meccs": "FTC 1-1 DVSC"
+   "sentence": "a 95. percben értékesített büntetővel mentett pontot",
+   "anchor": "record",
+   "match": "FTC 1-1 DVSC"
   },
   {
-   "jatekos": "Dzsudzsák Balázs",
-   "perc": null,
+   "player": "Dzsudzsák Balázs",
+   "minute": null,
    "tag": "milestone",
-   "mondat": "harminckilenc évesen csapatkapitány, és egyértelmű volt, hogy ő vállalja a tizenegyest",
-   "horgony": "article_only",
-   "meccs": "FTC 1-1 DVSC"
+   "sentence": "harminckilenc évesen csapatkapitány, és egyértelmű volt, hogy ő vállalja a tizenegyest",
+   "anchor": "article_only",
+   "match": "FTC 1-1 DVSC"
   },
   {
-   "jatekos": "Nagy Olivér",
-   "perc": null,
+   "player": "Nagy Olivér",
+   "minute": null,
    "tag": "assist",
-   "mondat": "Osváth helyén játszott, és gólpasszt adott",
-   "horgony": "record",
-   "meccs": "FTC 1-1 DVSC"
+   "sentence": "Osváth helyén játszott, és gólpasszt adott",
+   "anchor": "record",
+   "match": "FTC 1-1 DVSC"
   },
   {
-   "jatekos": "Gómez",
-   "perc": 88,
+   "player": "Gómez",
+   "minute": 88,
    "tag": "card",
-   "mondat": "sárga lapot kapott, mert lerántotta Adinanyt",
-   "horgony": "record",
-   "meccs": "FTC 1-1 DVSC"
+   "sentence": "sárga lapot kapott, mert lerántotta Adinanyt",
+   "anchor": "record",
+   "match": "FTC 1-1 DVSC"
   },
   {
-   "jatekos": null,
-   "perc": 89,
+   "player": null,
+   "minute": 89,
    "tag": "card",
-   "mondat": "Borbély Balázs a kispadon kapott sárgát reklamálásért",
-   "horgony": "article_only",
-   "meccs": "FTC 1-1 DVSC"
+   "sentence": "Borbély Balázs a kispadon kapott sárgát reklamálásért",
+   "anchor": "article_only",
+   "match": "FTC 1-1 DVSC"
   },
   {
-   "jatekos": "Gleofilo Vlijter",
-   "perc": 70,
+   "player": "Gleofilo Vlijter",
+   "minute": 70,
    "tag": "goal",
-   "mondat": "a 70. percben egyenlített, tizennégy perccel azután, hogy beállt",
-   "horgony": "record",
-   "meccs": "HONVÉD 1-1 ÚJPEST"
+   "sentence": "a 70. percben egyenlített, tizennégy perccel azután, hogy beállt",
+   "anchor": "record",
+   "match": "HONVÉD 1-1 ÚJPEST"
   },
   {
-   "jatekos": "Pinte Patrik",
-   "perc": 73,
+   "player": "Pinte Patrik",
+   "minute": 73,
    "tag": "goal",
-   "mondat": "három perccel később válaszolt rá, ugyancsak csereként",
-   "horgony": "record",
-   "meccs": "HONVÉD 1-1 ÚJPEST"
+   "sentence": "három perccel később válaszolt rá, ugyancsak csereként",
+   "anchor": "record",
+   "match": "HONVÉD 1-1 ÚJPEST"
   },
   {
-   "jatekos": "Gleofilo Vlijter",
-   "perc": 56,
+   "player": "Gleofilo Vlijter",
+   "minute": 56,
    "tag": "sub",
-   "mondat": "az 56. percben állt be Tijani helyére",
-   "horgony": "record",
-   "meccs": "HONVÉD 1-1 ÚJPEST"
+   "sentence": "az 56. percben állt be Tijani helyére",
+   "anchor": "record",
+   "match": "HONVÉD 1-1 ÚJPEST"
   },
   {
-   "jatekos": "Pinte Patrik",
-   "perc": 66,
+   "player": "Pinte Patrik",
+   "minute": 66,
    "tag": "sub",
-   "mondat": "a 66. percben állt be Marí helyére",
-   "horgony": "record",
-   "meccs": "HONVÉD 1-1 ÚJPEST"
+   "sentence": "a 66. percben állt be Marí helyére",
+   "anchor": "record",
+   "match": "HONVÉD 1-1 ÚJPEST"
   },
   {
-   "jatekos": "Krajcsovics Ábel György",
-   "perc": 56,
+   "player": "Krajcsovics Ábel György",
+   "minute": 56,
    "tag": "sub",
-   "mondat": "az 56. percben állt be Horváth K. helyére",
-   "horgony": "event",
-   "meccs": "HONVÉD 1-1 ÚJPEST"
+   "sentence": "az 56. percben állt be Horváth K. helyére",
+   "anchor": "event",
+   "match": "HONVÉD 1-1 ÚJPEST"
   },
   {
-   "jatekos": "Scharmer Tizian-Valentino",
-   "perc": "90+2",
+   "player": "Scharmer Tizian-Valentino",
+   "minute": "90+2",
    "tag": "sub",
-   "mondat": "a 90+2. percben állt be Amenyido helyére",
-   "horgony": "event",
-   "meccs": "HONVÉD 1-1 ÚJPEST"
+   "sentence": "a 90+2. percben állt be Amenyido helyére",
+   "anchor": "event",
+   "match": "HONVÉD 1-1 ÚJPEST"
   },
   {
-   "jatekos": "Pekár István",
-   "perc": 5,
+   "player": "Pekár István",
+   "minute": 5,
    "tag": "big_miss",
-   "mondat": "középről, húsz méterről a tetőszerkezet felett lőtte ki a labdát a stadionból",
-   "horgony": "article_only",
-   "meccs": "HONVÉD 1-1 ÚJPEST"
+   "sentence": "középről, húsz méterről a tetőszerkezet felett lőtte ki a labdát a stadionból",
+   "anchor": "article_only",
+   "match": "HONVÉD 1-1 ÚJPEST"
   },
   {
-   "jatekos": null,
-   "perc": null,
+   "player": null,
+   "minute": null,
    "tag": "match_picture",
-   "mondat": "a kispestiek továbbra is sereghajtók, az újpestiek sorozatban negyedik bajnokijukon maradtak veretlenek",
-   "horgony": "article_only",
-   "meccs": "HONVÉD 1-1 ÚJPEST"
+   "sentence": "a kispestiek továbbra is sereghajtók, az újpestiek sorozatban negyedik bajnokijukon maradtak veretlenek",
+   "anchor": "article_only",
+   "match": "HONVÉD 1-1 ÚJPEST"
   },
   {
-   "jatekos": "Szappanos Péter",
-   "perc": null,
+   "player": "Szappanos Péter",
+   "minute": null,
    "tag": "history",
-   "mondat": "a 2022–2023-as idény végén esett ki a Honvéddal, most a Bozsik Arénában állt kapuba újpestiként",
-   "horgony": "article_only",
-   "meccs": "HONVÉD 1-1 ÚJPEST"
+   "sentence": "a 2022–2023-as idény végén esett ki a Honvéddal, most a Bozsik Arénában állt kapuba újpestiként",
+   "anchor": "article_only",
+   "match": "HONVÉD 1-1 ÚJPEST"
   },
   {
-   "jatekos": "Lukács Dániel",
-   "perc": 11,
+   "player": "Lukács Dániel",
+   "minute": 11,
    "tag": "goal",
-   "mondat": "a tizenegyedik percben szerzett vezetést, miután a győri védelem elcsúszott",
-   "horgony": "record",
-   "meccs": "ETO 0-1 PAFC"
+   "sentence": "a tizenegyedik percben szerzett vezetést, miután a győri védelem elcsúszott",
+   "anchor": "record",
+   "match": "ETO 0-1 PAFC"
   },
   {
-   "jatekos": "Dárdai Palkó",
-   "perc": null,
+   "player": "Dárdai Palkó",
+   "minute": null,
    "tag": "big_miss",
-   "mondat": "kapufát lőtt a gól előtt, majd a harminckettedikben középről, tizenhat méterről célzott rosszul",
-   "horgony": "article_only",
-   "meccs": "ETO 0-1 PAFC"
+   "sentence": "kapufát lőtt a gól előtt, majd a harminckettedikben középről, tizenhat méterről célzott rosszul",
+   "anchor": "article_only",
+   "match": "ETO 0-1 PAFC"
   },
   {
-   "jatekos": "Lukács Dániel",
-   "perc": 15,
+   "player": "Lukács Dániel",
+   "minute": 15,
    "tag": "big_miss",
-   "mondat": "nagy ziccerben gurította kapu mellé a labdát",
-   "horgony": "article_only",
-   "meccs": "ETO 0-1 PAFC"
+   "sentence": "nagy ziccerben gurította kapu mellé a labdát",
+   "anchor": "article_only",
+   "match": "ETO 0-1 PAFC"
   },
   {
-   "jatekos": "Németh András",
-   "perc": 34,
+   "player": "Németh András",
+   "minute": 34,
    "tag": "big_miss",
-   "mondat": "két perccel később szintén kihagyott egy ziccert",
-   "horgony": "article_only",
-   "meccs": "ETO 0-1 PAFC"
+   "sentence": "két perccel később szintén kihagyott egy ziccert",
+   "anchor": "article_only",
+   "match": "ETO 0-1 PAFC"
   },
   {
-   "jatekos": "Harutyunyan Georgi",
-   "perc": 45,
+   "player": "Harutyunyan Georgi",
+   "minute": 45,
    "tag": "card",
-   "mondat": "sárga lapot kapott a félidő végén",
-   "horgony": "event",
-   "meccs": "ETO 0-1 PAFC"
+   "sentence": "sárga lapot kapott a félidő végén",
+   "anchor": "event",
+   "match": "ETO 0-1 PAFC"
   },
   {
-   "jatekos": "Orján Roland",
-   "perc": 89,
+   "player": "Orján Roland",
+   "minute": 89,
    "tag": "card",
-   "mondat": "a nyolcvankilencedikben kapott sárgát",
-   "horgony": "event",
-   "meccs": "ETO 0-1 PAFC"
+   "sentence": "a nyolcvankilencedikben kapott sárgát",
+   "anchor": "event",
+   "match": "ETO 0-1 PAFC"
   },
   {
-   "jatekos": null,
-   "perc": null,
+   "player": null,
+   "minute": null,
    "tag": "match_picture",
-   "mondat": "a felcsútiak 4–4–2-es védekező hadrendben zárták a területeket, az öreguras győri támadások nem jutottak el sehova",
-   "horgony": "article_only",
-   "meccs": "ETO 0-1 PAFC"
+   "sentence": "a felcsútiak 4–4–2-es védekező hadrendben zárták a területeket, az öreguras győri támadások nem jutottak el sehova",
+   "anchor": "article_only",
+   "match": "ETO 0-1 PAFC"
   },
   {
-   "jatekos": null,
-   "perc": null,
+   "player": null,
+   "minute": null,
    "tag": "history",
-   "mondat": "a Puskás Akadémia a győzelemmel három pont előnnyel állt a tabella élére",
-   "horgony": "article_only",
-   "meccs": "ETO 0-1 PAFC"
+   "sentence": "a Puskás Akadémia a győzelemmel három pont előnnyel állt a tabella élére",
+   "anchor": "article_only",
+   "match": "ETO 0-1 PAFC"
   },
   {
-   "jatekos": "Katona Mátyás",
-   "perc": 10,
+   "player": "Katona Mátyás",
+   "minute": 10,
    "tag": "goal_manner",
-   "mondat": "húsz méterről, a jobbösszekötő helyéről látványosan csavarta a bal felső sarokba a szabadrúgást",
-   "horgony": "record",
-   "meccs": "ZTE 5-1 NYÍREGY"
+   "sentence": "húsz méterről, a jobbösszekötő helyéről látványosan csavarta a bal felső sarokba a szabadrúgást",
+   "anchor": "record",
+   "match": "ZTE 5-1 NYÍREGY"
   },
   {
-   "jatekos": "Arthur Henrique",
-   "perc": 89,
+   "player": "Arthur Henrique",
+   "minute": 89,
    "tag": "sub",
-   "mondat": "a nyolcvankilencedik percben állt be Babos helyére",
-   "horgony": "record",
-   "meccs": "ZTE 5-1 NYÍREGY"
+   "sentence": "a nyolcvankilencedik percben állt be Babos helyére",
+   "anchor": "record",
+   "match": "ZTE 5-1 NYÍREGY"
   },
   {
-   "jatekos": "Arthur Henrique",
-   "perc": "90+5",
+   "player": "Arthur Henrique",
+   "minute": "90+5",
    "tag": "goal",
-   "mondat": "a hosszabbításban kétszer is betalált",
-   "horgony": "record",
-   "meccs": "ZTE 5-1 NYÍREGY"
+   "sentence": "a hosszabbításban kétszer is betalált",
+   "anchor": "record",
+   "match": "ZTE 5-1 NYÍREGY"
   },
   {
-   "jatekos": "Benczenleitner Barna",
-   "perc": 57,
+   "player": "Benczenleitner Barna",
+   "minute": 57,
    "tag": "sub",
-   "mondat": "az ötvenhetedik percben lecserélték",
-   "horgony": "event",
-   "meccs": "ZTE 5-1 NYÍREGY"
+   "sentence": "az ötvenhetedik percben lecserélték",
+   "anchor": "event",
+   "match": "ZTE 5-1 NYÍREGY"
   },
   {
-   "jatekos": "Hős Zsombor",
-   "perc": 57,
+   "player": "Hős Zsombor",
+   "minute": 57,
    "tag": "sub",
-   "mondat": "ugyanabban a percben őt is lehozták",
-   "horgony": "event",
-   "meccs": "ZTE 5-1 NYÍREGY"
+   "sentence": "ugyanabban a percben őt is lehozták",
+   "anchor": "event",
+   "match": "ZTE 5-1 NYÍREGY"
   },
   {
-   "jatekos": null,
-   "perc": null,
+   "player": null,
+   "minute": null,
    "tag": "match_picture",
-   "mondat": "a térfélcsere után a hazaiak öt perc alatt fordítottak, a második félidőben öt gól esett",
-   "horgony": "article_only",
-   "meccs": "ZTE 5-1 NYÍREGY"
+   "sentence": "a térfélcsere után a hazaiak öt perc alatt fordítottak, a második félidőben öt gól esett",
+   "anchor": "article_only",
+   "match": "ZTE 5-1 NYÍREGY"
   },
   {
-   "jatekos": null,
-   "perc": null,
+   "player": null,
+   "minute": null,
    "tag": "history",
-   "mondat": "a kezdő sípszó előtt ez a két csapat mutatta a bajnokság két leggyengébb gólszerzését",
-   "horgony": "article_only",
-   "meccs": "ZTE 5-1 NYÍREGY"
+   "sentence": "a kezdő sípszó előtt ez a két csapat mutatta a bajnokság két leggyengébb gólszerzését",
+   "anchor": "article_only",
+   "match": "ZTE 5-1 NYÍREGY"
   },
   {
-   "jatekos": "Kinyik Ákos",
-   "perc": 19,
+   "player": "Kinyik Ákos",
+   "minute": 19,
    "tag": "goal",
-   "mondat": "a tizenkilencedik percben betalált",
-   "horgony": "record",
-   "meccs": "PAKS 3-0 MTK"
+   "sentence": "a tizenkilencedik percben betalált",
+   "anchor": "record",
+   "match": "PAKS 3-0 MTK"
   },
   {
-   "jatekos": "Kinyik Ákos",
-   "perc": null,
+   "player": "Kinyik Ákos",
+   "minute": null,
    "tag": "milestone",
-   "mondat": "januárban szakadt el az elülső keresztszalagja, ez volt a kétszázadik NB I-es mérkőzése, és gólt szerzett rajta",
-   "horgony": "article_only",
-   "meccs": "PAKS 3-0 MTK"
+   "sentence": "januárban szakadt el az elülső keresztszalagja, ez volt a kétszázadik NB I-es mérkőzése, és gólt szerzett rajta",
+   "anchor": "article_only",
+   "match": "PAKS 3-0 MTK"
   },
   {
-   "jatekos": "Horváth Kevin",
-   "perc": 67,
+   "player": "Horváth Kevin",
+   "minute": 67,
    "tag": "sub",
-   "mondat": "a hatvanhetedik percben állt be Balogh helyére",
-   "horgony": "record",
-   "meccs": "PAKS 3-0 MTK"
+   "sentence": "a hatvanhetedik percben állt be Balogh helyére",
+   "anchor": "record",
+   "match": "PAKS 3-0 MTK"
   },
   {
-   "jatekos": "Horváth Kevin",
-   "perc": 74,
+   "player": "Horváth Kevin",
+   "minute": 74,
    "tag": "goal",
-   "mondat": "hét perccel a beállása után megszerezte a második gólt",
-   "horgony": "record",
-   "meccs": "PAKS 3-0 MTK"
+   "sentence": "hét perccel a beállása után megszerezte a második gólt",
+   "anchor": "record",
+   "match": "PAKS 3-0 MTK"
   },
   {
-   "jatekos": "Pető Milán",
-   "perc": 71,
+   "player": "Pető Milán",
+   "minute": 71,
    "tag": "sub",
-   "mondat": "a hetvenegyedik percben állt be Haraszti helyére",
-   "horgony": "event",
-   "meccs": "PAKS 3-0 MTK"
+   "sentence": "a hetvenegyedik percben állt be Haraszti helyére",
+   "anchor": "event",
+   "match": "PAKS 3-0 MTK"
   },
   {
-   "jatekos": "Pető Milán",
-   "perc": "90+1",
+   "player": "Pető Milán",
+   "minute": "90+1",
    "tag": "goal",
-   "mondat": "a hosszabbítás első percében lezárta a meccset",
-   "horgony": "event",
-   "meccs": "PAKS 3-0 MTK"
+   "sentence": "a hosszabbítás első percében lezárta a meccset",
+   "anchor": "event",
+   "match": "PAKS 3-0 MTK"
   },
   {
-   "jatekos": "Szalai József",
-   "perc": 71,
+   "player": "Szalai József",
+   "minute": 71,
    "tag": "sub",
-   "mondat": "a hetvenegyedik percben lehozták",
-   "horgony": "event",
-   "meccs": "PAKS 3-0 MTK"
+   "sentence": "a hetvenegyedik percben lehozták",
+   "anchor": "event",
+   "match": "PAKS 3-0 MTK"
   },
   {
-   "jatekos": "Szuhodovszki",
-   "perc": 87,
+   "player": "Szuhodovszki",
+   "minute": 87,
    "tag": "card",
-   "mondat": "a nyolcvanhetedikben kiállították, az MTK emberhátrányban fejezte be",
-   "horgony": "record",
-   "meccs": "PAKS 3-0 MTK"
+   "sentence": "a nyolcvanhetedikben kiállították, az MTK emberhátrányban fejezte be",
+   "anchor": "record",
+   "match": "PAKS 3-0 MTK"
   },
   {
-   "jatekos": null,
-   "perc": null,
+   "player": null,
+   "minute": null,
    "tag": "match_picture",
-   "mondat": "a végig fölényben játszó hazaiak a félidei vezetés után a hajrában kétszer is betaláltak, a fővárosiak helyzetig is alig jutottak",
-   "horgony": "article_only",
-   "meccs": "PAKS 3-0 MTK"
+   "sentence": "a végig fölényben játszó hazaiak a félidei vezetés után a hajrában kétszer is betaláltak, a fővárosiak helyzetig is alig jutottak",
+   "anchor": "article_only",
+   "match": "PAKS 3-0 MTK"
   }
  ]
 }

@@ -473,7 +473,7 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   const g = n => psorok.find(x => x.r === n + '.');
 
   cim('PL: az eredmény sorrendje');
-  // A `detail` allasa HAZAI-VENDEG sorrendben all (kimerve: naplo/fpl-profil.txt,
+  // A `detail` allasa HAZAI-VENDEG sorrendben all (kimerve: naplo/fpl-profile.txt,
   // 25 idegenbeli meccsbol 25). Idegenbeli meccsen valik el a ket olvasat:
   // "FUL (A) 2-3" annyit tesz, hogy a HAZAI FUL 2, a jatekos csapata 3 -
   // ha megforditva ertelmeznenk, itt 3-2 allna.

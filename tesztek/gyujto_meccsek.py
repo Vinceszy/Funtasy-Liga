@@ -166,7 +166,7 @@ allit(any(x["id"] == 13 for x in m["rounds"].get("1") or []),
       "M6: a potolt meccs bekerult: " + repr([x["id"] for x in m["rounds"]["1"]]))
 
 print("\n--- M7: a meccslistas lekeres EXPLICIT keri a ket klubot ---")
-# MERVE (naplo/mlsz-elo-meccs.txt): elo fordulonal a meccs-
+# MERVE (naplo/mlsz-live-match.txt): elo fordulonal a meccs-
 # objektum klub NELKUL jon, hacsak a ket csapatot kulon nem kerjuk. Enelkul
 # a meccsek.json "?"-et tarol, es a profilban kotojel all az ellenfel helyen.
 allit(csapat_keresek and all(k for _, k in csapat_keresek),

@@ -228,8 +228,8 @@ def pl_story_material(rnd):
     games = []
     if os.path.exists(colour):
         with open(colour, encoding="utf-8") as f:
-            games = sorted((m.get("kezdes") or "", k)
-                           for k, m in (json.load(f).get("meccsek") or {}).items())
+            games = sorted((m.get("kickoff") or "", k)
+                           for k, m in (json.load(f).get("matches") or {}).items())
     pname = lambda e: (players.get(str(e)) or {}).get("n", str(e))
     pclub = lambda e: (players.get(str(e)) or {}).get("t", "")
 
@@ -308,9 +308,11 @@ def main():
 
     season, upcoming = nb1_season() if league == "nb1" else pl_season()
     pairs = upcoming.get(rnd) or []
-    if kind == "preview" and not pairs:
-        sys.exit("round %d has no open pairing - a preview is written for "
-                 "the coming round only" % rnd)
+    # `upcoming` holds every round without a final result: the coming one is
+    # the lowest of them, and only that one gets a preview.
+    if kind == "preview" and (not pairs or rnd != min(upcoming)):
+        sys.exit("round %d is not the coming round (%s) - a preview is written "
+                 "for the coming round only" % (rnd, min(upcoming) if upcoming else "none"))
     if kind == "summary" and not any(g[0] == rnd for g in season):
         sys.exit("round %d is not closed - a summary is written from a "
                  "final round only" % rnd)

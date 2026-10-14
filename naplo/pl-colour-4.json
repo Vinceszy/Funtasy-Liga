@@ -1,518 +1,518 @@
 {
  "event": "4",
- "keszult": "2026-09-20T15:09:02Z",
- "meccsek": {
+ "created": "2026-09-20T15:09:02Z",
+ "matches": {
   "Aston Villa - Nott'm Forest": {
    "fotmob": "5795446",
-   "golok": [
+   "goals": [
     {
-     "perc": 46,
-     "jatekos": "Liam Delap",
-     "gólpassz": "assist by Murillo",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 46,
+     "player": "Liam Delap",
+     "assist": "assist by Murillo",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.032
     },
     {
-     "perc": 74,
-     "jatekos": "Alysson Edward",
-     "gólpassz": "assist by John McGinn",
-     "leiras": "Header",
-     "mód": "Header",
-     "helyzet": "FromCorner",
-     "öngól": false,
+     "minute": 74,
+     "player": "Alysson Edward",
+     "assist": "assist by John McGinn",
+     "description": "Header",
+     "manner": "Header",
+     "situation": "FromCorner",
+     "own_goal": false,
      "xG": 0.064
     },
     {
-     "perc": 88,
-     "jatekos": "Igor Jesus",
-     "gólpassz": "assist by Morgan Gibbs-White",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 88,
+     "player": "Igor Jesus",
+     "assist": "assist by Morgan Gibbs-White",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.132
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 7,
-     "jatekos": "Victor Nilsson Lindelöf",
+     "minute": 7,
+     "player": "Victor Nilsson Lindelöf",
      "xG": 0.463,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "kapura": true
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": true
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "181069": 4,
     "1053679": 5
    },
-   "loves_db": 29
+   "shots": 29
   },
   "Bournemouth - Brentford": {
    "fotmob": "5795445",
-   "golok": [
+   "goals": [
     {
-     "perc": 34,
-     "jatekos": "Kevin Schade",
-     "gólpassz": "assist by Yehor Yarmoliuk",
-     "leiras": "Header",
-     "mód": "Header",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 34,
+     "player": "Kevin Schade",
+     "assist": "assist by Yehor Yarmoliuk",
+     "description": "Header",
+     "manner": "Header",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.174
     },
     {
-     "perc": 38,
-     "jatekos": "Justin Kluivert",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 38,
+     "player": "Justin Kluivert",
+     "assist": null,
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.114
     },
     {
-     "perc": 52,
-     "jatekos": "Marcus Tavernier",
-     "gólpassz": "assist by Evanilson",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 52,
+     "player": "Marcus Tavernier",
+     "assist": "assist by Evanilson",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.048
     },
     {
-     "perc": 56,
-     "jatekos": "Kevin Schade",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 56,
+     "player": "Kevin Schade",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.033
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 7,
-     "jatekos": "António Silva",
+     "minute": 7,
+     "player": "António Silva",
      "xG": 0.328,
-     "mód": "Header",
-     "helyzet": "SetPiece",
-     "kapura": false
+     "manner": "Header",
+     "situation": "SetPiece",
+     "on_target": false
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "776689": 8
    },
-   "loves_db": 28
+   "shots": 28
   },
   "Chelsea - Hull City": {
    "fotmob": "5795447",
-   "golok": [
+   "goals": [
     {
-     "perc": 7,
-     "jatekos": "Morgan Rogers",
-     "gólpassz": "assist by João Pedro",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "FastBreak",
-     "öngól": false,
+     "minute": 7,
+     "player": "Morgan Rogers",
+     "assist": "assist by João Pedro",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "FastBreak",
+     "own_goal": false,
      "xG": 0.094
     },
     {
-     "perc": 28,
-     "jatekos": "Mohamed Belloumi",
-     "gólpassz": "assist by Ryan Giles",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 28,
+     "player": "Mohamed Belloumi",
+     "assist": "assist by Ryan Giles",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.087
     },
     {
-     "perc": 34,
-     "jatekos": "Mohamed Belloumi",
-     "gólpassz": "assist by Oli McBurnie",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "FromCorner",
-     "öngól": false,
+     "minute": 34,
+     "player": "Mohamed Belloumi",
+     "assist": "assist by Oli McBurnie",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "FromCorner",
+     "own_goal": false,
      "xG": 0.064
     },
     {
-     "perc": 66,
-     "jatekos": "João Pedro",
-     "gólpassz": "assist by Cole Palmer",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 66,
+     "player": "João Pedro",
+     "assist": "assist by Cole Palmer",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.287
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 61,
-     "jatekos": "Oli McBurnie",
+     "minute": 61,
+     "player": "Oli McBurnie",
      "xG": 0.33,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "kapura": true
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": true
     },
     {
-     "perc": 87,
-     "jatekos": "Mohamed-Ali Cho",
+     "minute": 87,
+     "player": "Mohamed-Ali Cho",
      "xG": 0.439,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "kapura": true
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": true
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "1072068": 5,
     "268375": 3
    },
-   "loves_db": 26
+   "shots": 26
   },
   "Crystal Palace - Ipswich Town": {
    "fotmob": "5795449",
-   "golok": [
+   "goals": [
     {
-     "perc": 14,
-     "jatekos": "Anan Khalaili",
-     "gólpassz": "assist by Daichi Kamada",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 14,
+     "player": "Anan Khalaili",
+     "assist": "assist by Daichi Kamada",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.038
     },
     {
-     "perc": 23,
-     "jatekos": "Emersonn",
-     "gólpassz": "assist by Leif Davis",
-     "leiras": "Header",
-     "mód": "Header",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 23,
+     "player": "Emersonn",
+     "assist": "assist by Leif Davis",
+     "description": "Header",
+     "manner": "Header",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.36
     },
     {
-     "perc": 45,
-     "jatekos": "Leif Davis",
-     "gólpassz": "assist by Emersonn",
-     "leiras": "Header",
-     "mód": "Header",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 45,
+     "player": "Leif Davis",
+     "assist": "assist by Emersonn",
+     "description": "Header",
+     "manner": "Header",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.488
     },
     {
-     "perc": 75,
-     "jatekos": "Jørgen Strand Larsen",
-     "gólpassz": "assist by Daichi Kamada",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 75,
+     "player": "Jørgen Strand Larsen",
+     "assist": "assist by Daichi Kamada",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.038
     },
     {
-     "perc": 90,
-     "jatekos": "Zian Flemming",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 90,
+     "player": "Zian Flemming",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.402
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [],
-   "vedesek_kapusonkent": {
+   "big_chances_missed": [],
+   "saves_by_keeper": {
     "796398": 2,
     "448897": 3
    },
-   "loves_db": 23
+   "shots": 23
   },
   "Liverpool - Fulham": {
    "fotmob": "5795451",
-   "golok": [],
+   "goals": [],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 90,
-     "jatekos": "Alexander Isak",
+     "minute": 90,
+     "player": "Alexander Isak",
      "xG": 0.307,
-     "mód": "Header",
-     "helyzet": "FromCorner",
-     "kapura": false
+     "manner": "Header",
+     "situation": "FromCorner",
+     "on_target": false
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "None": 1,
     "215168": 3,
     "319784": 3
    },
-   "loves_db": 24
+   "shots": 24
   },
   "Spurs - Everton": {
    "fotmob": "5795454",
-   "golok": [],
+   "goals": [],
    "var": [],
-   "kihagyott_nagy_helyzet": [],
-   "vedesek_kapusonkent": {
+   "big_chances_missed": [],
+   "saves_by_keeper": {
     "1341475": 3,
     "303919": 2
    },
-   "loves_db": 26
+   "shots": 26
   },
   "Sunderland - Arsenal": {
    "fotmob": "5795453",
-   "golok": [
+   "goals": [
     {
-     "perc": 58,
-     "jatekos": "Bruno Guimarães",
-     "gólpassz": "assist by Declan Rice",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 58,
+     "player": "Bruno Guimarães",
+     "assist": "assist by Declan Rice",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.037
     },
     {
-     "perc": "90 + 7",
-     "jatekos": "Bukayo Saka",
-     "gólpassz": null,
-     "leiras": "Penalty",
-     "mód": "LeftFoot",
-     "helyzet": "Penalty",
-     "öngól": false,
+     "minute": "90 + 7",
+     "player": "Bukayo Saka",
+     "assist": null,
+     "description": "Penalty",
+     "manner": "LeftFoot",
+     "situation": "Penalty",
+     "own_goal": false,
      "xG": 0.788
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 13,
-     "jatekos": "Bukayo Saka",
+     "minute": 13,
+     "player": "Bukayo Saka",
      "xG": 0.435,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "kapura": true
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "on_target": true
     },
     {
-     "perc": 56,
-     "jatekos": "Enzo Le Fée",
+     "minute": 56,
+     "player": "Enzo Le Fée",
      "xG": 0.788,
-     "mód": "RightFoot",
-     "helyzet": "Penalty",
-     "kapura": true
+     "manner": "RightFoot",
+     "situation": "Penalty",
+     "on_target": true
     },
     {
-     "perc": 84,
-     "jatekos": "Nordi Mukiele",
+     "minute": 84,
+     "player": "Nordi Mukiele",
      "xG": 0.341,
-     "mód": "RightFoot",
-     "helyzet": "FromCorner",
-     "kapura": true
+     "manner": "RightFoot",
+     "situation": "FromCorner",
+     "on_target": true
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "1125720": 3,
     "None": 1,
     "562727": 2
    },
-   "loves_db": 23
+   "shots": 23
   },
   "Coventry City - Brighton": {
    "fotmob": "5795448",
-   "golok": [
+   "goals": [
     {
-     "perc": 35,
-     "jatekos": "Charalampos Kostoulas",
-     "gólpassz": "assist by Pascal Groß",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 35,
+     "player": "Charalampos Kostoulas",
+     "assist": "assist by Pascal Groß",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.15
     },
     {
-     "perc": 51,
-     "jatekos": "Malick Junior Yalcouyé",
-     "gólpassz": "assist by Maxim De Cuyper",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 51,
+     "player": "Malick Junior Yalcouyé",
+     "assist": "assist by Maxim De Cuyper",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.399
     },
     {
-     "perc": 70,
-     "jatekos": "Pascal Groß",
-     "gólpassz": null,
-     "leiras": "Penalty",
-     "mód": "RightFoot",
-     "helyzet": "Penalty",
-     "öngól": false,
+     "minute": 70,
+     "player": "Pascal Groß",
+     "assist": null,
+     "description": "Penalty",
+     "manner": "RightFoot",
+     "situation": "Penalty",
+     "own_goal": false,
      "xG": 0.788
     },
     {
-     "perc": 83,
-     "jatekos": "Lewis Dunk",
-     "gólpassz": "assist by Chema Andrés",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 83,
+     "player": "Lewis Dunk",
+     "assist": "assist by Chema Andrés",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.027
     },
     {
-     "perc": "90 + 4",
-     "jatekos": "Yasin Ayari",
-     "gólpassz": "assist by Pascal Groß",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": "90 + 4",
+     "player": "Yasin Ayari",
+     "assist": "assist by Pascal Groß",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.053
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [],
-   "vedesek_kapusonkent": {
+   "big_chances_missed": [],
+   "saves_by_keeper": {
     "1187236": 2,
     "1131987": 6
    },
-   "loves_db": 36
+   "shots": 36
   },
   "Man Utd - Man City": {
    "fotmob": "5795452",
-   "golok": [
+   "goals": [
     {
-     "perc": 60,
-     "jatekos": "Erling Haaland",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 60,
+     "player": "Erling Haaland",
+     "assist": null,
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.442
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 76,
-     "jatekos": "Erling Haaland",
+     "minute": 76,
+     "player": "Erling Haaland",
      "xG": 0.425,
-     "mód": "LeftFoot",
-     "helyzet": "SetPiece",
-     "kapura": false
+     "manner": "LeftFoot",
+     "situation": "SetPiece",
+     "on_target": false
     },
     {
-     "perc": 90,
-     "jatekos": "Bryan Mbeumo",
+     "minute": 90,
+     "player": "Bryan Mbeumo",
      "xG": 0.412,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "kapura": true
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": true
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "618878": 3,
     "1178602": 1
    },
-   "loves_db": 22
+   "shots": 22
   },
   "Leeds - Newcastle": {
    "fotmob": "5795450",
-   "golok": [
+   "goals": [
     {
-     "perc": 32,
-     "jatekos": "Lewis Miley",
-     "gólpassz": null,
-     "leiras": "Own goal",
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": true,
+     "minute": 32,
+     "player": "Lewis Miley",
+     "assist": null,
+     "description": "Own goal",
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": true,
      "xG": null
     },
     {
-     "perc": 34,
-     "jatekos": "Dominic Calvert-Lewin",
-     "gólpassz": "assist by James Justin",
-     "leiras": "Header",
-     "mód": "Header",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 34,
+     "player": "Dominic Calvert-Lewin",
+     "assist": "assist by James Justin",
+     "description": "Header",
+     "manner": "Header",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.203
     },
     {
-     "perc": "45 + 1",
-     "jatekos": "Dominic Calvert-Lewin",
-     "gólpassz": "assist by Tarik Muharemović",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": "45 + 1",
+     "player": "Dominic Calvert-Lewin",
+     "assist": "assist by Tarik Muharemović",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.199
     },
     {
-     "perc": 59,
-     "jatekos": "Noah Okafor",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "ThrowInSetPiece",
-     "öngól": false,
+     "minute": 59,
+     "player": "Noah Okafor",
+     "assist": null,
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "ThrowInSetPiece",
+     "own_goal": false,
      "xG": 0.053
     },
     {
-     "perc": 90,
-     "jatekos": "Bazoumana Touré",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 90,
+     "player": "Bazoumana Touré",
+     "assist": null,
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.285
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 38,
-     "jatekos": "Dominic Calvert-Lewin",
+     "minute": 38,
+     "player": "Dominic Calvert-Lewin",
      "xG": 0.567,
-     "mód": "RightFoot",
-     "helyzet": "FastBreak",
-     "kapura": true
+     "manner": "RightFoot",
+     "situation": "FastBreak",
+     "on_target": true
     },
     {
-     "perc": 55,
-     "jatekos": "Anton Stach",
+     "minute": 55,
+     "player": "Anton Stach",
      "xG": 0.428,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "kapura": false
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "on_target": false
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "1186978": 3,
     "1187213": 4
    },
-   "loves_db": 22
+   "shots": 22
   }
  }
 }

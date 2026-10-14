@@ -1,836 +1,836 @@
 {
  "event": "6",
- "fordulo": 6,
- "liga": "pl",
- "keszult": "2026-10-13T17:18:15Z",
- "meccsek": {
+ "round": 6,
+ "league": "pl",
+ "created": "2026-10-13T17:18:15Z",
+ "matches": {
   "Arsenal - Leeds": {
-   "kezdes": "2026-10-10T11:30:00Z",
+   "kickoff": "2026-10-10T11:30:00Z",
    "fotmob": "5795465",
-   "golok": [
+   "goals": [
     {
-     "perc": 55,
-     "jatekos": "James Justin",
-     "gólpassz": "assist by Gabriel Gudmundsson",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 55,
+     "player": "James Justin",
+     "assist": "assist by Gabriel Gudmundsson",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.131
     },
     {
-     "perc": 62,
-     "jatekos": "Riccardo Calafiori",
-     "gólpassz": "assist by Ben White",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 62,
+     "player": "Riccardo Calafiori",
+     "assist": "assist by Ben White",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.506
     },
     {
-     "perc": 70,
-     "jatekos": "Bruno Guimarães",
-     "gólpassz": "assist by Declan Rice",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 70,
+     "player": "Bruno Guimarães",
+     "assist": "assist by Declan Rice",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.1
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 83,
-     "jatekos": "Martin Ødegaard",
+     "minute": 83,
+     "player": "Martin Ødegaard",
      "xG": 0.706,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "kapura": true
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": true
     },
     {
-     "perc": 90,
-     "jatekos": "Bukayo Saka",
+     "minute": 90,
+     "player": "Bukayo Saka",
      "xG": 0.333,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "kapura": true
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "on_target": true
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "1187213": 4,
     "562727": 4
    },
-   "loves_db": 24
+   "shots": 24
   },
   "Aston Villa - Brentford": {
-   "kezdes": "2026-10-10T14:00:00Z",
+   "kickoff": "2026-10-10T14:00:00Z",
    "fotmob": "5795466",
-   "golok": [
+   "goals": [
     {
-     "perc": 10,
-     "jatekos": "Yehor Yarmoliuk",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 10,
+     "player": "Yehor Yarmoliuk",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.092
     },
     {
-     "perc": 12,
-     "jatekos": "Nicolas Jackson",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 12,
+     "player": "Nicolas Jackson",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.223
     },
     {
-     "perc": 77,
-     "jatekos": "John McGinn",
-     "gólpassz": "assist by Johan Manzambi",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 77,
+     "player": "John McGinn",
+     "assist": "assist by Johan Manzambi",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.06
     },
     {
-     "perc": 79,
-     "jatekos": "Kristoffer Ajer",
-     "gólpassz": "assist by Jaidon Anthony",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "ThrowInSetPiece",
-     "öngól": false,
+     "minute": 79,
+     "player": "Kristoffer Ajer",
+     "assist": "assist by Jaidon Anthony",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "ThrowInSetPiece",
+     "own_goal": false,
      "xG": 0.038
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 45,
-     "jatekos": "John McGinn",
+     "minute": 45,
+     "player": "John McGinn",
      "xG": 0.684,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "kapura": true
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "on_target": true
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "776689": 5,
     "1053679": 2
    },
-   "loves_db": 34
+   "shots": 34
   },
   "Chelsea - Bournemouth": {
-   "kezdes": "2026-10-10T14:00:00Z",
+   "kickoff": "2026-10-10T14:00:00Z",
    "fotmob": "5795467",
-   "golok": [
+   "goals": [
     {
-     "perc": 2,
-     "jatekos": "Jordan Henderson",
-     "gólpassz": "assist by Cole Palmer",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 2,
+     "player": "Jordan Henderson",
+     "assist": "assist by Cole Palmer",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.046
     },
     {
-     "perc": 3,
-     "jatekos": "Morgan Rogers",
-     "gólpassz": "assist by Jordan Henderson",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 3,
+     "player": "Morgan Rogers",
+     "assist": "assist by Jordan Henderson",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.046
     },
     {
-     "perc": 46,
-     "jatekos": "João Pedro",
-     "gólpassz": "assist by Pedro Neto",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 46,
+     "player": "João Pedro",
+     "assist": "assist by Pedro Neto",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.134
     },
     {
-     "perc": 51,
-     "jatekos": "Evanilson",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "FromCorner",
-     "öngól": false,
+     "minute": 51,
+     "player": "Evanilson",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "FromCorner",
+     "own_goal": false,
      "xG": 0.555
     },
     {
-     "perc": 67,
-     "jatekos": "João Pedro",
-     "gólpassz": "assist by Pep Chavarría",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 67,
+     "player": "João Pedro",
+     "assist": "assist by Pep Chavarría",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.462
     },
     {
-     "perc": 70,
-     "jatekos": "Jordan Henderson",
-     "gólpassz": null,
-     "leiras": "Direct freekick",
-     "mód": "RightFoot",
-     "helyzet": "FreeKick",
-     "öngól": false,
+     "minute": 70,
+     "player": "Jordan Henderson",
+     "assist": null,
+     "description": "Direct freekick",
+     "manner": "RightFoot",
+     "situation": "FreeKick",
+     "own_goal": false,
      "xG": 0.066
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 51,
-     "jatekos": "António Silva",
+     "minute": 51,
+     "player": "António Silva",
      "xG": 0.394,
-     "mód": "Header",
-     "helyzet": "FromCorner",
-     "kapura": true
+     "manner": "Header",
+     "situation": "FromCorner",
+     "on_target": true
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "1067256": 1,
     "268375": 3
    },
-   "loves_db": 19
+   "shots": 19
   },
   "Ipswich Town - Fulham": {
-   "kezdes": "2026-10-10T14:00:00Z",
+   "kickoff": "2026-10-10T14:00:00Z",
    "fotmob": "5795471",
-   "golok": [
+   "goals": [
     {
-     "perc": 55,
-     "jatekos": "Ryan Sessegnon",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "FromCorner",
-     "öngól": false,
+     "minute": 55,
+     "player": "Ryan Sessegnon",
+     "assist": null,
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "FromCorner",
+     "own_goal": false,
      "xG": 0.034
     },
     {
-     "perc": 88,
-     "jatekos": "Abdoul Ouattara",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 88,
+     "player": "Abdoul Ouattara",
+     "assist": null,
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.022
     },
     {
-     "perc": "90 + 2",
-     "jatekos": "Dara O'Shea",
-     "gólpassz": "assist by Jack Clarke",
-     "leiras": "Header",
-     "mód": "Header",
-     "helyzet": "SetPiece",
-     "öngól": false,
+     "minute": "90 + 2",
+     "player": "Dara O'Shea",
+     "assist": "assist by Jack Clarke",
+     "description": "Header",
+     "manner": "Header",
+     "situation": "SetPiece",
+     "own_goal": false,
      "xG": 0.232
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 53,
-     "jatekos": "Gonzalo García",
+     "minute": 53,
+     "player": "Gonzalo García",
      "xG": 0.578,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "kapura": true
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": true
     },
     {
-     "perc": 58,
-     "jatekos": "Emersonn",
+     "minute": 58,
+     "player": "Emersonn",
      "xG": 0.371,
-     "mód": "Header",
-     "helyzet": "RegularPlay",
-     "kapura": false
+     "manner": "Header",
+     "situation": "RegularPlay",
+     "on_target": false
     },
     {
-     "perc": 58,
-     "jatekos": "Oscar Bobb",
+     "minute": 58,
+     "player": "Oscar Bobb",
      "xG": 0.491,
-     "mód": "LeftFoot",
-     "helyzet": "FastBreak",
-     "kapura": false
+     "manner": "LeftFoot",
+     "situation": "FastBreak",
+     "on_target": false
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "215168": 3,
     "512013": 3,
     "None": 1
    },
-   "loves_db": 24
+   "shots": 24
   },
   "Sunderland - Brighton": {
-   "kezdes": "2026-10-10T14:00:00Z",
+   "kickoff": "2026-10-10T14:00:00Z",
    "fotmob": "5795474",
-   "golok": [
+   "goals": [
     {
-     "perc": 53,
-     "jatekos": "Maxim De Cuyper",
-     "gólpassz": "assist by Pascal Groß",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "ThrowInSetPiece",
-     "öngól": false,
+     "minute": 53,
+     "player": "Maxim De Cuyper",
+     "assist": "assist by Pascal Groß",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "ThrowInSetPiece",
+     "own_goal": false,
      "xG": 0.249
     },
     {
-     "perc": "90 + 3",
-     "jatekos": "Jaouen Hadjam",
-     "gólpassz": "assist by Georginio Rutter",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "FastBreak",
-     "öngól": false,
+     "minute": "90 + 3",
+     "player": "Jaouen Hadjam",
+     "assist": "assist by Georginio Rutter",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "FastBreak",
+     "own_goal": false,
      "xG": 0.146
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [],
-   "vedesek_kapusonkent": {
+   "big_chances_missed": [],
+   "saves_by_keeper": {
     "1125720": 2,
     "1131987": 3
    },
-   "loves_db": 25
+   "shots": 25
   },
   "Man Utd - Spurs": {
-   "kezdes": "2026-10-10T16:30:00Z",
+   "kickoff": "2026-10-10T16:30:00Z",
    "fotmob": "5795473",
-   "golok": [
+   "goals": [
     {
-     "perc": 73,
-     "jatekos": "Bryan Mbeumo",
-     "gólpassz": "assist by Matheus Cunha",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 73,
+     "player": "Bryan Mbeumo",
+     "assist": "assist by Matheus Cunha",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.098
     },
     {
-     "perc": "90 + 2",
-     "jatekos": "Dominic Solanke",
-     "gólpassz": "assist by Sandro Tonali",
-     "leiras": "Header",
-     "mód": "Header",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": "90 + 2",
+     "player": "Dominic Solanke",
+     "assist": "assist by Sandro Tonali",
+     "description": "Header",
+     "manner": "Header",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.228
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 42,
-     "jatekos": "Conor Gallagher",
+     "minute": 42,
+     "player": "Conor Gallagher",
      "xG": 0.444,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "kapura": true
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": true
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "1178602": 2,
     "1341475": 3
    },
-   "loves_db": 24
+   "shots": 24
   },
   "Crystal Palace - Nott'm Forest": {
-   "kezdes": "2026-10-11T13:00:00Z",
+   "kickoff": "2026-10-11T13:00:00Z",
    "fotmob": "5795469",
-   "golok": [
+   "goals": [
     {
-     "perc": 3,
-     "jatekos": "Dan Ndoye",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 3,
+     "player": "Dan Ndoye",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.067
     },
     {
-     "perc": 41,
-     "jatekos": "Daichi Kamada",
-     "gólpassz": "assist by Quinten Timber",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 41,
+     "player": "Daichi Kamada",
+     "assist": "assist by Quinten Timber",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.34
     },
     {
-     "perc": "45 + 4",
-     "jatekos": "Jefferson Lerma",
-     "gólpassz": "assist by Adam Wharton",
-     "leiras": "Header",
-     "mód": "Header",
-     "helyzet": "FromCorner",
-     "öngól": false,
+     "minute": "45 + 4",
+     "player": "Jefferson Lerma",
+     "assist": "assist by Adam Wharton",
+     "description": "Header",
+     "manner": "Header",
+     "situation": "FromCorner",
+     "own_goal": false,
      "xG": 0.347
     },
     {
-     "perc": 59,
-     "jatekos": "Yéremi Pino",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 59,
+     "player": "Yéremi Pino",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.349
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 8,
-     "jatekos": "Jørgen Strand Larsen",
+     "minute": 8,
+     "player": "Jørgen Strand Larsen",
      "xG": 0.466,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "kapura": true
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "on_target": true
     },
     {
-     "perc": 35,
-     "jatekos": "Liam Delap",
+     "minute": 35,
+     "player": "Liam Delap",
      "xG": 0.682,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "kapura": true
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": true
     },
     {
-     "perc": 40,
-     "jatekos": "Liam Delap",
+     "minute": 40,
+     "player": "Liam Delap",
      "xG": 0.331,
-     "mód": "Header",
-     "helyzet": "RegularPlay",
-     "kapura": false
+     "manner": "Header",
+     "situation": "RegularPlay",
+     "on_target": false
     },
     {
-     "perc": 59,
-     "jatekos": "Jørgen Strand Larsen",
+     "minute": 59,
+     "player": "Jørgen Strand Larsen",
      "xG": 0.486,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "kapura": true
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "on_target": true
     },
     {
-     "perc": 80,
-     "jatekos": "Chris Wood",
+     "minute": 80,
+     "player": "Chris Wood",
      "xG": 0.431,
-     "mód": "Header",
-     "helyzet": "RegularPlay",
-     "kapura": true
+     "manner": "Header",
+     "situation": "RegularPlay",
+     "on_target": true
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "448897": 5,
     "181069": 4
    },
-   "loves_db": 37
+   "shots": 37
   },
   "Hull City - Everton": {
-   "kezdes": "2026-10-11T13:00:00Z",
+   "kickoff": "2026-10-11T13:00:00Z",
    "fotmob": "5795470",
-   "golok": [
+   "goals": [
     {
-     "perc": 48,
-     "jatekos": "Joe Gelhardt",
-     "gólpassz": "assist by Sorba Thomas",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "FastBreak",
-     "öngól": false,
+     "minute": 48,
+     "player": "Joe Gelhardt",
+     "assist": "assist by Sorba Thomas",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "FastBreak",
+     "own_goal": false,
      "xG": 0.536
     },
     {
-     "perc": 55,
-     "jatekos": "Kiernan Dewsbury-Hall",
-     "gólpassz": "assist by Ainsley Maitland-Niles",
-     "leiras": "Header",
-     "mód": "Header",
-     "helyzet": "FromCorner",
-     "öngól": false,
+     "minute": 55,
+     "player": "Kiernan Dewsbury-Hall",
+     "assist": "assist by Ainsley Maitland-Niles",
+     "description": "Header",
+     "manner": "Header",
+     "situation": "FromCorner",
+     "own_goal": false,
      "xG": 0.4
     },
     {
-     "perc": 68,
-     "jatekos": "Thierno Barry",
-     "gólpassz": "assist by Kiernan Dewsbury-Hall",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 68,
+     "player": "Thierno Barry",
+     "assist": "assist by Kiernan Dewsbury-Hall",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.276
     },
     {
-     "perc": 74,
-     "jatekos": "Mohamed Belloumi",
-     "gólpassz": "assist by Elliot Stroud",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 74,
+     "player": "Mohamed Belloumi",
+     "assist": "assist by Elliot Stroud",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.079
     }
    ],
    "var": [
     {
-     "perc": 34,
-     "jatekos": "Brennan Johnson",
-     "mit": "Brennan Johnson"
+     "minute": 34,
+     "player": "Brennan Johnson",
+     "decision": "Brennan Johnson"
     }
    ],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 27,
-     "jatekos": "Thierno Barry",
+     "minute": 27,
+     "player": "Thierno Barry",
      "xG": 0.318,
-     "mód": "Header",
-     "helyzet": "FromCorner",
-     "kapura": true
+     "manner": "Header",
+     "situation": "FromCorner",
+     "on_target": true
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "1072068": 4,
     "303919": 2,
     "None": 2
    },
-   "loves_db": 24
+   "shots": 24
   },
   "Liverpool - Man City": {
-   "kezdes": "2026-10-11T15:30:00Z",
+   "kickoff": "2026-10-11T15:30:00Z",
    "fotmob": "5795472",
-   "golok": [
+   "goals": [
     {
-     "perc": 65,
-     "jatekos": "Erling Haaland",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 65,
+     "player": "Erling Haaland",
+     "assist": null,
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.059
     },
     {
-     "perc": 68,
-     "jatekos": "Jérémy Doku",
-     "gólpassz": "assist by Elliot Anderson",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 68,
+     "player": "Jérémy Doku",
+     "assist": "assist by Elliot Anderson",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.023
     },
     {
-     "perc": 78,
-     "jatekos": "Rayan Cherki",
-     "gólpassz": "assist by Joško Gvardiol",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 78,
+     "player": "Rayan Cherki",
+     "assist": "assist by Joško Gvardiol",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.374
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 60,
-     "jatekos": "Erling Haaland",
+     "minute": 60,
+     "player": "Erling Haaland",
      "xG": 0.34,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "kapura": false
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": false
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "618878": 6,
     "319784": 1
    },
-   "loves_db": 28
+   "shots": 28
   },
   "Coventry City - Newcastle": {
-   "kezdes": "2026-10-12T19:00:00Z",
+   "kickoff": "2026-10-12T19:00:00Z",
    "fotmob": "5795468",
-   "golok": [
+   "goals": [
     {
-     "perc": 6,
-     "jatekos": "Jack Rudoni",
-     "gólpassz": null,
-     "leiras": "Penalty",
-     "mód": "LeftFoot",
-     "helyzet": "Penalty",
-     "öngól": false,
+     "minute": 6,
+     "player": "Jack Rudoni",
+     "assist": null,
+     "description": "Penalty",
+     "manner": "LeftFoot",
+     "situation": "Penalty",
+     "own_goal": false,
      "xG": 0.788
     },
     {
-     "perc": 48,
-     "jatekos": "Sidiki Cherif",
-     "gólpassz": null,
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "ThrowInSetPiece",
-     "öngól": false,
+     "minute": 48,
+     "player": "Sidiki Cherif",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "ThrowInSetPiece",
+     "own_goal": false,
      "xG": 0.04
     },
     {
-     "perc": 70,
-     "jatekos": "Sven Botman",
-     "gólpassz": "assist by Nico González",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 70,
+     "player": "Sven Botman",
+     "assist": "assist by Nico González",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.035
     },
     {
-     "perc": 81,
-     "jatekos": "Ellis Simms",
-     "gólpassz": "assist by Brandon Thomas-Asante",
-     "leiras": null,
-     "mód": "RightFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 81,
+     "player": "Ellis Simms",
+     "assist": "assist by Brandon Thomas-Asante",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.099
     },
     {
-     "perc": 86,
-     "jatekos": "Stephen Mfuni",
-     "gólpassz": "assist by Jay Dasilva",
-     "leiras": null,
-     "mód": "LeftFoot",
-     "helyzet": "RegularPlay",
-     "öngól": false,
+     "minute": 86,
+     "player": "Stephen Mfuni",
+     "assist": "assist by Jay Dasilva",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
      "xG": 0.052
     }
    ],
    "var": [],
-   "kihagyott_nagy_helyzet": [
+   "big_chances_missed": [
     {
-     "perc": 43,
-     "jatekos": "Matias Fernandez-Pardo",
+     "minute": 43,
+     "player": "Matias Fernandez-Pardo",
      "xG": 0.491,
-     "mód": "RightFoot",
-     "helyzet": "FastBreak",
-     "kapura": true
+     "manner": "RightFoot",
+     "situation": "FastBreak",
+     "on_target": true
     }
    ],
-   "vedesek_kapusonkent": {
+   "saves_by_keeper": {
     "1187236": 4,
     "1186978": 2,
     "None": 1
    },
-   "loves_db": 28
+   "shots": 28
   }
  },
- "allitasok": [
+ "claims": [
   {
-   "jatekos": "Donnarumma",
-   "klub": "MCI",
-   "perc": null,
+   "player": "Donnarumma",
+   "club": "MCI",
+   "minute": null,
    "tag": "keeper_save",
-   "mondat": "hat lövést védett az Anfielden, és nem kapott gólt",
-   "horgony": "article_only",
-   "meccs": "Liverpool 0-3 Man City"
+   "sentence": "hat lövést védett az Anfielden, és nem kapott gólt",
+   "anchor": "article_only",
+   "match": "Liverpool 0-3 Man City"
   },
   {
-   "jatekos": "Haaland",
-   "klub": "MCI",
-   "perc": 65,
+   "player": "Haaland",
+   "club": "MCI",
+   "minute": 65,
    "tag": "goal_manner",
-   "mondat": "bal lábbal a tizenhatos közepéről",
-   "horgony": "event",
-   "meccs": "Liverpool 0-3 Man City"
+   "sentence": "bal lábbal a tizenhatos közepéről",
+   "anchor": "event",
+   "match": "Liverpool 0-3 Man City"
   },
   {
-   "jatekos": "Doku",
-   "klub": "MCI",
-   "perc": 68,
+   "player": "Doku",
+   "club": "MCI",
+   "minute": 68,
    "tag": "goal_manner",
-   "mondat": "jobb lábbal a bal oldalról a jobb felső sarokba, Anderson passzából",
-   "horgony": "event",
-   "meccs": "Liverpool 0-3 Man City"
+   "sentence": "jobb lábbal a bal oldalról a jobb felső sarokba, Anderson passzából",
+   "anchor": "event",
+   "match": "Liverpool 0-3 Man City"
   },
   {
-   "jatekos": "Cherki",
-   "klub": "MCI",
-   "perc": 78,
+   "player": "Cherki",
+   "club": "MCI",
+   "minute": 78,
    "tag": "goal_manner",
-   "mondat": "az ötösről, Gvardiol fejes passzából",
-   "horgony": "event",
-   "meccs": "Liverpool 0-3 Man City"
+   "sentence": "az ötösről, Gvardiol fejes passzából",
+   "anchor": "event",
+   "match": "Liverpool 0-3 Man City"
   },
   {
-   "jatekos": "João Pedro",
-   "klub": "CHE",
-   "perc": 46,
+   "player": "João Pedro",
+   "club": "CHE",
+   "minute": 46,
    "tag": "goal_manner",
-   "mondat": "a tizenhatos közepéről a jobb felső sarokba, Neto passzából, rögtön a második félidő elején",
-   "horgony": "event",
-   "meccs": "Chelsea 5-1 Bournemouth"
+   "sentence": "a tizenhatos közepéről a jobb felső sarokba, Neto passzából, rögtön a második félidő elején",
+   "anchor": "event",
+   "match": "Chelsea 5-1 Bournemouth"
   },
   {
-   "jatekos": "João Pedro",
-   "klub": "CHE",
-   "perc": 67,
+   "player": "João Pedro",
+   "club": "CHE",
+   "minute": 67,
    "tag": "goal_manner",
-   "mondat": "a tizenhatos közepéről a bal felső sarokba, Chavarría beadásából",
-   "horgony": "event",
-   "meccs": "Chelsea 5-1 Bournemouth"
+   "sentence": "a tizenhatos közepéről a bal felső sarokba, Chavarría beadásából",
+   "anchor": "event",
+   "match": "Chelsea 5-1 Bournemouth"
   },
   {
-   "jatekos": "Evanilson",
-   "klub": "BOU",
-   "perc": 51,
+   "player": "Evanilson",
+   "club": "BOU",
+   "minute": 51,
    "tag": "goal_manner",
-   "mondat": "szöglet után, közvetlen közelről",
-   "horgony": "event",
-   "meccs": "Chelsea 5-1 Bournemouth"
+   "sentence": "szöglet után, közvetlen közelről",
+   "anchor": "event",
+   "match": "Chelsea 5-1 Bournemouth"
   },
   {
-   "jatekos": "De Cuyper",
-   "klub": "BHA",
-   "perc": 53,
+   "player": "De Cuyper",
+   "club": "BHA",
+   "minute": 53,
    "tag": "goal_manner",
-   "mondat": "bal lábbal a tizenhatos közepéről a bal alsó sarokba, Groß passzából",
-   "horgony": "event",
-   "meccs": "Sunderland 0-2 Brighton"
+   "sentence": "bal lábbal a tizenhatos közepéről a bal alsó sarokba, Groß passzából",
+   "anchor": "event",
+   "match": "Sunderland 0-2 Brighton"
   },
   {
-   "jatekos": "Dewsbury-Hall",
-   "klub": "EVE",
-   "perc": 55,
+   "player": "Dewsbury-Hall",
+   "club": "EVE",
+   "minute": 55,
    "tag": "goal_manner",
-   "mondat": "szöglet után fejjel, közvetlen közelről, Maitland-Niles passzából",
-   "horgony": "event",
-   "meccs": "Hull City 2-2 Everton"
+   "sentence": "szöglet után fejjel, közvetlen közelről, Maitland-Niles passzából",
+   "anchor": "event",
+   "match": "Hull City 2-2 Everton"
   },
   {
-   "jatekos": "Barry",
-   "klub": "EVE",
-   "perc": 68,
+   "player": "Barry",
+   "club": "EVE",
+   "minute": 68,
    "tag": "goal_manner",
-   "mondat": "a tizenhatos közepéről a jobb felső sarokba, Dewsbury-Hall passzából",
-   "horgony": "event",
-   "meccs": "Hull City 2-2 Everton"
+   "sentence": "a tizenhatos közepéről a jobb felső sarokba, Dewsbury-Hall passzából",
+   "anchor": "event",
+   "match": "Hull City 2-2 Everton"
   },
   {
-   "jatekos": "Botman",
-   "klub": "NEW",
-   "perc": 70,
+   "player": "Botman",
+   "club": "NEW",
+   "minute": 70,
    "tag": "goal_manner",
-   "mondat": "a tizenhatoson kívülről a bal felső sarokba, Newcastle egyetlen gólja a négyből egyre végződő vereségben",
-   "horgony": "event",
-   "meccs": "Coventry City 4-1 Newcastle"
+   "sentence": "a tizenhatoson kívülről a bal felső sarokba, Newcastle egyetlen gólja a négyből egyre végződő vereségben",
+   "anchor": "event",
+   "match": "Coventry City 4-1 Newcastle"
   },
   {
-   "jatekos": "Strand Larsen",
-   "klub": "CRY",
-   "perc": 8,
+   "player": "Strand Larsen",
+   "club": "CRY",
+   "minute": 8,
    "tag": "big_miss",
-   "mondat": "a tizenhatos közepéről lőtt, Sels védte",
-   "horgony": "event",
-   "meccs": "Crystal Palace 3-1 Nott'm Forest"
+   "sentence": "a tizenhatos közepéről lőtt, Sels védte",
+   "anchor": "event",
+   "match": "Crystal Palace 3-1 Nott'm Forest"
   },
   {
-   "jatekos": "Strand Larsen",
-   "klub": "CRY",
-   "perc": 59,
+   "player": "Strand Larsen",
+   "club": "CRY",
+   "minute": 59,
    "tag": "big_miss",
-   "mondat": "a tizenhatos közepéről lőtt, Sels megint védte",
-   "horgony": "event",
-   "meccs": "Crystal Palace 3-1 Nott'm Forest"
+   "sentence": "a tizenhatos közepéről lőtt, Sels megint védte",
+   "anchor": "event",
+   "match": "Crystal Palace 3-1 Nott'm Forest"
   },
   {
-   "jatekos": "Yeremy",
-   "klub": "CRY",
-   "perc": 59,
+   "player": "Yeremy",
+   "club": "CRY",
+   "minute": 59,
    "tag": "goal_manner",
-   "mondat": "jobb lábbal a tizenhatos közepéről a jobb alsó sarokba",
-   "horgony": "event",
-   "meccs": "Crystal Palace 3-1 Nott'm Forest",
-   "forrasnev": "Yéremi Pino"
+   "sentence": "jobb lábbal a tizenhatos közepéről a jobb alsó sarokba",
+   "anchor": "event",
+   "match": "Crystal Palace 3-1 Nott'm Forest",
+   "source_name": "Yéremi Pino"
   },
   {
-   "jatekos": "Solanke",
-   "klub": "TOT",
-   "perc": "90+2",
+   "player": "Solanke",
+   "club": "TOT",
+   "minute": "90+2",
    "tag": "goal_manner",
-   "mondat": "a hosszabbításban fejjel, Tonali beadásából, egyenlítő gól",
-   "horgony": "event",
-   "meccs": "Man Utd 1-1 Spurs"
+   "sentence": "a hosszabbításban fejjel, Tonali beadásából, egyenlítő gól",
+   "anchor": "event",
+   "match": "Man Utd 1-1 Spurs"
   },
   {
-   "jatekos": "Mbeumo",
-   "klub": "MUN",
-   "perc": 73,
+   "player": "Mbeumo",
+   "club": "MUN",
+   "minute": 73,
    "tag": "goal_manner",
-   "mondat": "bal lábbal a bal oldalról, Cunha passzából",
-   "horgony": "event",
-   "meccs": "Man Utd 1-1 Spurs"
+   "sentence": "bal lábbal a bal oldalról, Cunha passzából",
+   "anchor": "event",
+   "match": "Man Utd 1-1 Spurs"
   },
   {
-   "jatekos": "McGinn",
-   "klub": "AVL",
-   "perc": 77,
+   "player": "McGinn",
+   "club": "AVL",
+   "minute": 77,
    "tag": "goal_manner",
-   "mondat": "a tizenhatos bal oldaláról, Manzambi passzából",
-   "horgony": "event",
-   "meccs": "Aston Villa 2-2 Brentford"
+   "sentence": "a tizenhatos bal oldaláról, Manzambi passzából",
+   "anchor": "event",
+   "match": "Aston Villa 2-2 Brentford"
   },
   {
-   "jatekos": "N.Jackson",
-   "klub": "AVL",
-   "perc": 12,
+   "player": "N.Jackson",
+   "club": "AVL",
+   "minute": 12,
    "tag": "goal_manner",
-   "mondat": "a tizenhatos közepéről a jobb alsó sarokba, két perccel a Brentford vezető gólja után",
-   "horgony": "event",
-   "meccs": "Aston Villa 2-2 Brentford"
+   "sentence": "a tizenhatos közepéről a jobb alsó sarokba, két perccel a Brentford vezető gólja után",
+   "anchor": "event",
+   "match": "Aston Villa 2-2 Brentford"
   },
   {
-   "jatekos": "Suzuki",
-   "klub": "AVL",
-   "perc": null,
+   "player": "Suzuki",
+   "club": "AVL",
+   "minute": null,
    "tag": "keeper_save",
-   "mondat": "két gólt kapott a 2-2-es döntetlenben",
-   "horgony": "article_only",
-   "meccs": "Aston Villa 2-2 Brentford"
+   "sentence": "két gólt kapott a 2-2-es döntetlenben",
+   "anchor": "article_only",
+   "match": "Aston Villa 2-2 Brentford"
   },
   {
-   "jatekos": "Rogers",
-   "klub": "CHE",
-   "perc": 3,
+   "player": "Rogers",
+   "club": "CHE",
+   "minute": 3,
    "tag": "goal_manner",
-   "mondat": "a harmadik percben a bal oldalról a jobb felső sarokba",
-   "horgony": "event",
-   "meccs": "Chelsea 5-1 Bournemouth"
+   "sentence": "a harmadik percben a bal oldalról a jobb felső sarokba",
+   "anchor": "event",
+   "match": "Chelsea 5-1 Bournemouth"
   },
   {
-   "jatekos": "Calafiori",
-   "klub": "ARS",
-   "perc": 62,
+   "player": "Calafiori",
+   "club": "ARS",
+   "minute": 62,
    "tag": "goal_manner",
-   "mondat": "bal lábbal a tizenhatos közepéről, White fejes passzából, az egyenlítő gól",
-   "horgony": "event",
-   "meccs": "Arsenal 2-1 Leeds"
+   "sentence": "bal lábbal a tizenhatos közepéről, White fejes passzából, az egyenlítő gól",
+   "anchor": "event",
+   "match": "Arsenal 2-1 Leeds"
   }
  ]
 }

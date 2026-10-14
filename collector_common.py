@@ -7,7 +7,7 @@ history, results, matches, closing substitutions) survive an interrupted run.
 
 Those files hold what a run cannot recompute: the past. The price log is the
 sharpest case - the MLSZ serves no price history at all
-(naplo/mlsz-arelozmeny.txt), so whatever the log loses is lost for good.
+(naplo/mlsz-price-history.txt), so whatever the log loses is lost for good.
 
 WHY IN ONE PLACE: the two collectors run from separate workflows, and for a
 long time each wrote this out on its own. While there are two copies, one of

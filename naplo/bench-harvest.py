@@ -1,163 +1,167 @@
 #!/usr/bin/env python3
-"""A Draft kispadjanak retege: mennyi termes maradt kint, es mennyi szamitott.
+"""The Draft bench layer: how much scoring stayed out, and how much of it counted.
 
-MIERT KELL: a Draftban nincs kapitany, nincs kozos jatekos es nincs arkeret -
-a szakvezeto egyetlen heti dontese a kezdo tizenegy. Hogy ezzel a dontessel
-mit kezd a mezony, egyetlen fordulobol nem latszik; tobb fordulon at viszont
-szamszeru.
+WHY IT IS NEEDED: the Draft has no captain, no shared player and no budget -
+the manager's only weekly decision is the starting eleven. What the field
+does with that decision does not show in a single round; across several
+rounds it is measurable.
 
-HAROM KULON SZAM, amit konnyu osszekeverni:
-  - a padon maradt termes: minden padon ulo osszege. A felso korlat, nem a
-    kar - tizenegy helyre negy embert nem lehet beallitani.
-  - a tokeletes kezdovel nyerheto tobblet: a lehetseges legjobb SZABALYOS
-    kezdo tizenegy es a tenylegesen kiallitott kulonbsege. EZ a valodi kar.
-    Szabalyos: pontosan 1 kapus, 3-5 vedo, 2-5 kozeppalyas, 1-3 csatar - egy
-    padon ulo kapus nem allithato be egy gyenge csatar helyere, tehat a
-    poziciot figyelmen kivul hagyo parositas felfele hazudna.
-  - a fordito eset: az a merkozes, ahol a padon maradt termes onmagaban
-    tobb volt, mint a vereseg kulonbsege.
+THREE SEPARATE NUMBERS that are easy to mix up:
+  - the score left on the bench: the sum of every bench player. The upper
+    bound, not the lever - four men cannot be fielded in eleven places.
+  - the surplus a perfect line-up would have won: the difference between the
+    best possible VALID starting eleven and the one actually fielded. THIS is
+    the real lever. Valid: exactly 1 goalkeeper, 3-5 defenders, 2-5
+    midfielders, 1-3 forwards - a goalkeeper on the bench cannot be fielded
+    in place of a weak forward, so a pairing that ignores positions would lie
+    upwards.
+  - the deciding case: the match where the score left on the bench alone
+    was more than the margin of the defeat.
 
-MIBOL: draft_history.json (fordulonkenti keret, `b` = padon ult, `pts`),
-draft.json (sorsolas, csapatnevek), draft_players.json (poziciok). Sajat adat,
-kulso keres nelkul.
+FROM WHAT: draft_history.json (squad per round, `b` = sat on the bench,
+`pts`), draft.json (fixtures, team names), draft_players.json (positions).
+Our own data, no external request.
+
+USAGE: python3 naplo/bench-harvest.py
 """
 import json
 import os
 import sys
 
-GYOKER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def betolt(nev):
-    with open(os.path.join(GYOKER, nev), encoding="utf-8") as fh:
+def load(name):
+    with open(os.path.join(ROOT, name), encoding="utf-8") as fh:
         return json.load(fh)
 
 
-# A szabalyos felallas hatarai (FPL Draft): a kapus szama kotott, a
-# mezonyjatekosoke sav. Ezek nelkul minden szam felfele csuszna.
-KERET = {"GKP": (1, 1), "DEF": (3, 5), "MID": (2, 5), "FWD": (1, 3)}
-KEZDO = 11
+# The limits of a valid formation (FPL Draft): the number of goalkeepers is
+# fixed, the outfield positions are ranges. Without them every number would
+# drift upwards.
+LIMITS = {"GKP": (1, 1), "DEF": (3, 5), "MID": (2, 5), "FWD": (1, 3)}
+STARTERS = 11
 
 
-def felallasok():
-    """Minden szabalyos 1-3-2-1 ... 1-5-5-3 osztas, ami tizenegyet ad ki."""
-    ki = []
-    for d in range(KERET["DEF"][0], KERET["DEF"][1] + 1):
-        for m in range(KERET["MID"][0], KERET["MID"][1] + 1):
-            for f in range(KERET["FWD"][0], KERET["FWD"][1] + 1):
-                if 1 + d + m + f == KEZDO:
-                    ki.append({"GKP": 1, "DEF": d, "MID": m, "FWD": f})
-    return ki
+def formations():
+    """Every valid split from 1-3-2-1 ... 1-5-5-3 that adds up to eleven."""
+    out = []
+    for d in range(LIMITS["DEF"][0], LIMITS["DEF"][1] + 1):
+        for m in range(LIMITS["MID"][0], LIMITS["MID"][1] + 1):
+            for f in range(LIMITS["FWD"][0], LIMITS["FWD"][1] + 1):
+                if 1 + d + m + f == STARTERS:
+                    out.append({"GKP": 1, "DEF": d, "MID": m, "FWD": f})
+    return out
 
 
-FELALLASOK = felallasok()
+FORMATIONS = formations()
 
 
-def legjobb_kezdo(keret, pozicio):
-    """A keretbol kiallithato legjobb SZABALYOS tizenegy termese.
+def best_eleven(squad, position):
+    """The score of the best VALID eleven that can be fielded from the squad.
 
-    Posztonkent a legjobbak eleve sorba rakhatok, tehat minden felallasra
-    eleg az elso n-et osszeadni, es a felallasok kozul a legjobbat venni.
+    The best per position can be sorted up front, so for every formation it
+    is enough to add up the first n, and take the best of the formations.
     """
-    rend = {}
-    for p in keret:
-        rend.setdefault(pozicio(p), []).append(p["pts"])
-    for lista in rend.values():
-        lista.sort(reverse=True)
-    legjobb = None
-    for f in FELALLASOK:
-        if any(len(rend.get(poz, [])) < db for poz, db in f.items()):
+    by_pos = {}
+    for p in squad:
+        by_pos.setdefault(position(p), []).append(p["pts"])
+    for pts in by_pos.values():
+        pts.sort(reverse=True)
+    best = None
+    for f in FORMATIONS:
+        if any(len(by_pos.get(pos, [])) < n for pos, n in f.items()):
             continue
-        ossz = sum(sum(rend[poz][:db]) for poz, db in f.items())
-        if legjobb is None or ossz > legjobb:
-            legjobb = ossz
-    return legjobb
+        total = sum(sum(by_pos[pos][:n]) for pos, n in f.items())
+        if best is None or total > best:
+            best = total
+    return best
 
 
-def tobblet(keret, pozicio):
-    """Mennyivel zart volna tobbet a keret a lehetseges legjobb tizenegygyel."""
-    volt = sum(p["pts"] for p in keret if not p["b"])
-    lehetett = legjobb_kezdo(keret, pozicio)
-    return 0 if lehetett is None else lehetett - volt
+def surplus(squad, position):
+    """How much more the squad would have scored with the best possible eleven."""
+    actual = sum(p["pts"] for p in squad if not p["b"])
+    possible = best_eleven(squad, position)
+    return 0 if possible is None else possible - actual
 
 
 def main():
-    tortenet = betolt("draft_history.json")["rounds"]
-    liga = betolt("draft.json")
-    jatekosok = betolt("draft_players.json")["players"]
-    nev = {str(e["id"]): e["name"] for e in liga["entries"]}
+    history = load("draft_history.json")["rounds"]
+    league = load("draft.json")
+    players = load("draft_players.json")["players"]
+    name = {str(e["id"]): e["name"] for e in league["entries"]}
 
-    def pozicio(p):
-        return (jatekosok.get(str(p["e"])) or {}).get("p", "MID")
+    def position(p):
+        return (players.get(str(p["e"])) or {}).get("p", "MID")
 
-    fordulok = sorted(tortenet, key=int)
+    rounds = sorted(history, key=int)
 
     print("=" * 70)
-    print("DRAFT KISPAD-RETEG - %s. fordulo" % ", ".join(fordulok))
+    print("DRAFT BENCH LAYER - rounds %s" % ", ".join(rounds))
     print("=" * 70)
 
-    print("\n  FORDULONKENT")
-    ossz_pad = ossz_tobblet = 0
-    for r in fordulok:
-        pad = sum(p["pts"] for k in tortenet[r].values() for p in k if p["b"])
-        tb = sum(tobblet(k, pozicio) for k in tortenet[r].values())
-        hibatlan = sum(1 for k in tortenet[r].values()
-                       if not tobblet(k, pozicio))
-        ossz_pad += pad
-        ossz_tobblet += tb
-        print("    %2s. fordulo: a padon %3d, jobb kezdovel +%3d, "
-              "hibatlan keret %d/%d" % (r, pad, tb, hibatlan, len(tortenet[r])))
-    print("    OSSZESEN:    a padon %3d, jobb kezdovel +%3d"
-          % (ossz_pad, ossz_tobblet))
+    print("\n  PER ROUND")
+    total_bench = total_surplus = 0
+    for r in rounds:
+        bench = sum(p["pts"] for k in history[r].values() for p in k if p["b"])
+        sp = sum(surplus(k, position) for k in history[r].values())
+        flawless = sum(1 for k in history[r].values()
+                       if not surplus(k, position))
+        total_bench += bench
+        total_surplus += sp
+        print("    round %2s: on the bench %3d, with a better line-up +%3d, "
+              "flawless squads %d/%d" % (r, bench, sp, flawless, len(history[r])))
+    print("    TOTAL:     on the bench %3d, with a better line-up +%3d"
+          % (total_bench, total_surplus))
 
-    print("\n  SZAKVEZETONKENT")
-    sor = {}
-    for r in fordulok:
-        for cs, keret in tortenet[r].items():
-            a = sor.setdefault(cs, [0, 0])
-            a[0] += sum(p["pts"] for p in keret if p["b"])
-            a[1] += tobblet(keret, pozicio)
-    for cs, (pad, tb) in sorted(sor.items(), key=lambda kv: -kv[1][0]):
-        print("    %-24s a padon %3d, jobb kezdovel +%3d"
-              % (nev.get(cs, cs), pad, tb))
+    print("\n  PER MANAGER")
+    per_team = {}
+    for r in rounds:
+        for team, squad in history[r].items():
+            a = per_team.setdefault(team, [0, 0])
+            a[0] += sum(p["pts"] for p in squad if p["b"])
+            a[1] += surplus(squad, position)
+    for team, (bench, sp) in sorted(per_team.items(), key=lambda kv: -kv[1][0]):
+        print("    %-24s on the bench %3d, with a better line-up +%3d"
+              % (name.get(team, team), bench, sp))
 
-    print("\n  HANY PADON ULO JATSZOTT EGYALTALAN")
-    print("  (a tiszta kispad lehet figyelem is, es lehet ures keret is -")
-    print("   ha a padon ulo be sem all, nem is volt mit kihagyni)")
-    for cs in sorted(sor, key=lambda c: -sor[c][0]):
-        volt = jatszott = 0
-        for r in fordulok:
-            for p in tortenet[r][cs]:
+    print("\n  HOW MANY BENCH PLAYERS PLAYED AT ALL")
+    print("  (a clean bench can be attention, and it can be an empty squad -")
+    print("   if the bench player does not come on, there was nothing to leave out)")
+    for team in sorted(per_team, key=lambda c: -per_team[c][0]):
+        benched = played = 0
+        for r in rounds:
+            for p in history[r][team]:
                 if p["b"]:
-                    volt += 1
-                    jatszott += 1 if p["pts"] > 0 else 0
-        print("    %-24s %2d/%2d allt be, padtermes %3d, jobb kezdovel +%3d"
-              % (nev.get(cs, cs), jatszott, volt, sor[cs][0], sor[cs][1]))
+                    benched += 1
+                    played += 1 if p["pts"] > 0 else 0
+        print("    %-24s %2d/%2d came on, bench score %3d, with a better line-up +%3d"
+              % (name.get(team, team), played, benched, per_team[team][0], per_team[team][1]))
 
-    print("\n  AMIT A SAJAT KISPAD NYERT MEG AZ ELLENFELNEK")
-    print("  (szabalyos felallitassal a vereseg elkerulheto lett volna)")
-    for r in fordulok:
-        pad = {cs: tobblet(k, pozicio) for cs, k in tortenet[r].items()}
-        for a, b, pa, pb in liga["schedule"][r]:
-            for en, ell, sajat, ove in ((a, b, pa, pb), (b, a, pb, pa)):
-                kul = ove - sajat
-                if kul > 0 and pad.get(str(en), 0) >= kul:
-                    print("    %2s. %-22s %2d:%-2d %-22s  hianyzott %2d, "
-                          "a keretben allt +%2d" % (r, nev[str(en)], sajat, ove,
-                                                    nev[str(ell)], kul,
-                                                    pad[str(en)]))
+    print("\n  WHAT A TEAM'S OWN BENCH WON FOR THE OPPONENT")
+    print("  (with a valid line-up the defeat could have been avoided)")
+    for r in rounds:
+        bench = {team: surplus(k, position) for team, k in history[r].items()}
+        for a, b, pa, pb in league["schedule"][r]:
+            for own, opp, own_pts, opp_pts in ((a, b, pa, pb), (b, a, pb, pa)):
+                margin = opp_pts - own_pts
+                if margin > 0 and bench.get(str(own), 0) >= margin:
+                    print("    %2s. %-22s %2d:%-2d %-22s  short by %2d, "
+                          "the squad held +%2d" % (r, name[str(own)], own_pts, opp_pts,
+                                                   name[str(opp)], margin,
+                                                   bench[str(own)]))
 
-    print("\n  A LEGNAGYOBB EGYENI PADON FELEJTES")
-    lista = []
-    for r in fordulok:
-        for cs, keret in tortenet[r].items():
-            for p in keret:
+    print("\n  THE BIGGEST SINGLE SCORES FORGOTTEN ON THE BENCH")
+    entries = []
+    for r in rounds:
+        for team, squad in history[r].items():
+            for p in squad:
                 if p["b"]:
-                    j = jatekosok.get(str(p["e"])) or {}
-                    lista.append((p["pts"], int(r), nev[str(cs)],
-                                  "%s (%s)" % (j.get("n", "?"), j.get("t", "?"))))
-    for pts, r, cs, j in sorted(lista, reverse=True)[:10]:
-        print("    %2d. fordulo  %2d  %-24s %s" % (r, pts, cs, j))
+                    j = players.get(str(p["e"])) or {}
+                    entries.append((p["pts"], int(r), name[str(team)],
+                                    "%s (%s)" % (j.get("n", "?"), j.get("t", "?"))))
+    for pts, r, team, j in sorted(entries, reverse=True)[:10]:
+        print("    round %2d  %2d  %-24s %s" % (r, pts, team, j))
     return 0
 
 

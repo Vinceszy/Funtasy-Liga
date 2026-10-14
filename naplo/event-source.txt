@@ -1,5 +1,5 @@
 Meccs-esemenyek kulso forrasanak meresei (golperc, esemeny-reszletesseg).
-A fajlt a naplo/esemeny-forras-meres.py irja.
+A fajlt a naplo/event-source-probe.py irja.
 Meg nem futott meres.
 
 ======================================================================

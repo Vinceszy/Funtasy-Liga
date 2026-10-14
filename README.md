@@ -314,7 +314,7 @@ eset máshogy tördelve, mint hogy a második meccs eltűnjön.
 gazdátlan fordulóké az MLSZ pont-bontásából), az ellenfél a `meccsek.json`-ból. A PL-ben
 mind a kettő **egyetlen kérésből**: a Draft `element-summary/{id}` fordulónként adja a pontot
 és egy `"BHA (A) 4-0"` alakú mezőt, amiben az ellenfél, a játékos csapatának pályája és az
-állás **hazai–vendég** sorrendben szerepel. Ez utóbbit kimértük (`naplo/fpl-profil.txt`):
+állás **hazai–vendég** sorrendben szerepel. Ez utóbbit kimértük (`naplo/fpl-profile.txt`):
 25 idegenbeli, nem döntetlen meccsen mind a 25 ezt igazolta, a „játékos csapata előre"
 olvasatot egy sem — rossz választással minden idegenbeli eredmény megfordult volna.
 
@@ -525,7 +525,7 @@ teljes képernyős, ragadós × gombbal.
 | `keretek/<forduló>.json` | Egy forduló keretei külön fájlban (`{round, squads}`). A meccs-nézet **ezt** tölti le, nem a teljes előzményt. |
 | `.github/workflows/archive.yml` | A gyűjtő munkafolyamata: `collect.py` + commit. **Meccsnapon (csütörtök–hétfő) óránként, kedden-szerdán 3 óránként** — lásd *Miért óránként a meccsnapokon*. |
 | `.github/workflows/draft.yml` | 3 óránként, délelőtt óránként futó (és kézzel is indítható) munkafolyamat: `collect_draft.py` + commit — lásd *Az FPL Draft adatai*. |
-| `.github/workflows/naplo-meres.yml` | **Kézi mérésfuttató**: egy `naplo/*.py`-t futtat Actionsből (a fejlesztői környezet hálózata minden külső forrást blokkol), és amit a mérés kiírt, azt a megadott ágra commitolja. Bemenetei: `szkript`, `branch`, `kornyezet` (soronként egy `NÉV=érték`, pl. `HARVEST_EVENT=5`). **Minden méréshez ez az egy munkafolyamat van** — mérésenként külön fájl nem készül: abból tizennégy majdnem azonos példány lett, bennük három elgépelt `git add` úttal, amitől a mérés eredménye némán elveszett. |
+| `.github/workflows/naplo-meres.yml` | **Kézi mérésfuttató**: egy `naplo/*.py`-t futtat Actionsből (a fejlesztői környezet hálózata minden külső forrást blokkol), és amit a mérés kiírt, azt a megadott ágra commitolja. Bemenetei: `script`, `branch`, `environment` (soronként egy `NÉV=érték`, pl. `HARVEST_EVENT=5`). **Minden méréshez ez az egy munkafolyamat van** — mérésenként külön fájl nem készül: abból tizennégy majdnem azonos példány lett, bennük három elgépelt `git add` úttal, amitől a mérés eredménye némán elveszett. |
 | `tartalek/` | Minden, ami nem kell a napi működéshez: a tartalék könyvjelző (`GOMB-bookmarklet.txt`, forrása és építője), az útmutatója (`KERET-MENTES.md`) és az elavult kézi pótlás leírása (`BACKFILL.md`). A weboldal és a gyűjtők semmit nem olvasnak innen. |
 
 ---
@@ -677,7 +677,7 @@ helyen állna össze, észrevétlenül elcsúszhatna, és a tároló sosem talá
 a `workers.dev`-re), ezért a logikáját hamis KV-vel mérjük
 (`tesztek/workertarolo.teszt.js`), a lap oldalát böngészőből
 (`tesztek/taroltallas.teszt.js`), a valódi végpontról-végpontig mérés pedig GitHub
-Actionsből megy (`naplo/tarolo-meres.py` a közös `.github/workflows/naplo-meres.yml`-lel).
+Actionsből megy (`naplo/storage-probe.py` a közös `.github/workflows/naplo-meres.yml`-lel).
 
 ### Az NB1 élő lekérése két körben megy, nem nyolcban (mérve)
 
@@ -712,7 +712,7 @@ proxyn megy át. Egyszer **a két akkori proxy egyszerre halt meg**: a `corsprox
 élő pontok, élő keret — egyszerre állt le. A tárolt adatot ez nem érintette.
 
 A tanulság: egy ingyenes proxy bármikor eltűnhet, ezért **több független út kell**. A
-kilenc jelöltet végigmérő futás (`naplo/proxy-meres.py` → `naplo/proxy-meres.txt`) alapján
+kilenc jelöltet végigmérő futás (`naplo/proxy-probe.py` → `naplo/proxy-probe.txt`) alapján
 az út-sorrend most: `direkt` → `proxy.cors.sh` → `allorigins /raw` → `allorigins /get`
 (ez **csomagolva** adja a választ, `{contents: "..."}` — a lekérő kibontja) → `cors.lol` →
 `corsproxy.io` (a sor végén, hátha visszaengedik). Az első siker után a lekérő a bevált
@@ -991,7 +991,7 @@ derült ki: a `meccsek.json` csak 08-24 óta létezik, előtte az 1–5. fordul�
 töltöttük le, csapatostul.
 
 A megoldás: a két csapatot **explicit kérjük** az include-ban. Amit a mérés adott
-(`naplo/mlsz-elo-meccs.txt`, élő 6. forduló):
+(`naplo/mlsz-live-match.txt`, élő 6. forduló):
 
 | Amit kértünk | Eredmény |
 |---|---|
@@ -1031,7 +1031,7 @@ Létezik még: `GET competitions/3/stat-configs` (a 10 szezonstatisztika-kategó
 
 ### Játékostörzs és a szezon egésze (mérésekkel)
 A játékosprofilhoz két dolgot kerestünk: a **teljes játékostörzset** (a kereséshez) és
-minden játékos **fordulónkénti pontját**. Amit a mérések hoztak (`naplo/mlsz-jatekoslista.txt`):
+minden játékos **fordulónkénti pontját**. Amit a mérések hoztak (`naplo/mlsz-player-list.txt`):
 
 | Kérdés | Válasz |
 |---|---|
@@ -1315,7 +1315,7 @@ kint a jelölést), de nem állít valótlant.
 **Mérve, lezárva :** napi zárás NINCS — a napok napokig `p`-n álltak, és
 mind a forduló lockdownjakor váltottak `r`-re (08:03–08:23 UTC, két lépésben: előbb a
 pontok/bónusz, ~15 perccel később a `current_event_finished`). A nyers napló:
-`naplo/fpl-allapot.txt` (archívum).
+`naplo/fpl-state.txt` (archívum).
 
 **A napi lekérést nem várjuk meg.** Másodlagos jelzés, csak a bónusz sorának jelöléséhez
 kell, amit a felhasználó kattintásra lát — ha a pontfrissítés megvárná, egy lassú vagy
@@ -1425,7 +1425,7 @@ van-e még — a perc-oszlopok felelnek, azt ez nem váltja ki.
 
 Az FPL a forduló végén **automatikus cseréket** hajt végre: a nem játszó kezdő helyére
 beállítja az első beférőt a padról — ezért számít a pad sorrendje. Mérve
-(`naplo/fpl-cserek.txt`):
+(`naplo/fpl-subs.txt`):
 
 - **Az FPL átírja a pick `position` mezőjét** (a becserélt 12→11 alá kerül, a kikerülő a
   helyére a padra), és **külön `subs` listát is ad** (`{element_in, element_out, event}`).
@@ -1616,7 +1616,7 @@ kerüljön be.
 
 **A fantasy forduló nem azonos a játéknappal.** Az elhalasztott meccset az MLSZ a **pótlás napja
 szerinti** fordulóba teszi — a pont is ott jár érte —, de meghagyja rajta az **eredeti forduló
-számát**. Megmérve (`naplo/mlsz-dupla-meccs.txt`), a 7. fordulóban:
+számát**. Megmérve (`naplo/mlsz-double-match.txt`), a 7. fordulóban:
 
 ```
 ETO   games: 2 elem
@@ -2157,7 +2157,7 @@ Ez a kör két ponton volt elvágható, és a kettő **együtt** adott adatveszt
 Egy megszakadt futás plusz egy tiszta futás tehát **minden korábbi fordulót eltörölt** — a
 kimenet érvényes JSON, csak a múltja hiányzik, tehát semmi nem jelzett volna. Az árnapló a
 legsúlyosabb eset: kimértük, hogy az MLSZ **semmilyen ár-előzményt nem szolgáltat**
-(`naplo/mlsz-arelozmeny.txt`), amit a napló elveszít, az visszamenőleg pótolhatatlan.
+(`naplo/mlsz-price-history.txt`), amit a napló elveszít, az visszamenőleg pótolhatatlan.
 
 Azóta az írás `<path>.uj`-ba megy `flush` + `fsync` után, és `os.replace` teszi a helyére:
 ez atomi, tehát az olvasó vagy a régi fájlt látja, vagy az újat, félkészet soha. Az

@@ -3,7 +3,7 @@ const { BASE, jo, cim, inditas, vege, apiKi, bontasKi } = require('./kozos');
 // ket akkori proxy (corsproxy.io, allorigins) egyszerre halt meg - a
 // corsproxy 401-re valtott, az allorigins tulterhelt volt -, es ezzel
 // MINDKET liga minden elo lekerese (pont-bontas, elo pontok) leallt. A
-// meres (naplo/proxy-meres.txt) alapjan az ut-lista kibovult; ez a teszt
+// meres (naplo/proxy-probe.txt) alapjan az ut-lista kibovult; ez a teszt
 // azt rogziti, hogy a lanc TENYLEG vegigesik a kovetkezo utig, es a
 // csomagolt allorigins-valaszt is erti.
 const BONTAS = { data: [

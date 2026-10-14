@@ -3,7 +3,7 @@
 
 MIERT: a torzs a fooldali lista es kereses forrasa, az arnaplo pedig az
 EGYETLEN ut az arak valtozasanak kovetesehez - kimertuk, hogy az MLSZ sehol
-nem ad ar-elozmenyt (naplo/mlsz-jatekoslista.txt, 6. kor: minden include-ot
+nem ad ar-elozmenyt (naplo/mlsz-player-list.txt, 6. kor: minden include-ot
 nemán elnyel, a kulon vegpontok 404-esek). Amit a naplo ma nem ir fel, az
 visszamenoleg pototlhatatlan - ezert erdemel sajat tesztet.
 """

@@ -17,5 +17,5 @@ Paks-ETO, Nyíregyháza-Honvéd - all six agree.
 The kick-off times differ between the sources; they are not used.
 
 The fantasy API cannot be asked for this in advance: no endpoint serves
-future matches (naplo/mlsz-jatekoslista.txt: ten forms, all 404), and the
+future matches (naplo/mlsz-player-list.txt: ten forms, all 404), and the
 round's squad response is 403 until the market closes.
