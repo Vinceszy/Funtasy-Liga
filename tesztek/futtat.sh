@@ -63,7 +63,7 @@ done
 IDOERZEKENY=" frissjelzo.teszt.js visszateres.teszt.js "
 PARHUZAMOSAK=()
 SOROSAK=()
-for t in "$GYOKER"/tesztek/*.teszt.js; do
+for t in "$GYOKER"/tesztek/*.teszt.js "$GYOKER"/tesztek/*.test.js; do
   [ -e "$t" ] || continue
   case "$IDOERZEKENY" in
     *" $(basename "$t") "*) SOROSAK+=("$t");;

@@ -98,7 +98,9 @@ def olvas(ut):
 teszt_readme = olvas("tesztek/README.md")
 tesztek = sorted(os.path.basename(f) for f in
                  glob.glob(os.path.join(GYOKER, "tesztek", "*.teszt.js"))
-                 + glob.glob(os.path.join(GYOKER, "tesztek", "gyujto_*.py")))
+                 + glob.glob(os.path.join(GYOKER, "tesztek", "*.test.js"))
+                 + glob.glob(os.path.join(GYOKER, "tesztek", "gyujto_*.py"))
+                 + glob.glob(os.path.join(GYOKER, "tesztek", "collector_*.py")))
 hianyzo = [t for t in tesztek if "`%s`" % t not in teszt_readme]
 allit(not hianyzo, "D1: minden tesztfajlnak van sora a tesztek/README-ben"
       + ("" if not hianyzo else " - HIANYZIK: %s" % ", ".join(hianyzo)))
