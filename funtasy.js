@@ -308,7 +308,10 @@
       /* Amig az adat nem jott meg, a tabla annyi ures sorral all, ahany
          csapat van: kulonben a sorok beerkezesekor az egesz lap lejjebb
          ugrik (telefonon jol lathatoan, betolteskor). */
-      if (!rows.length && opts.placeholderRows) {
+      // NB1 knows its managers before any data, so its rows would read as
+      // a real table of zeros: no loaded schedule counts as no data too.
+      var noData = !rows.length || !Object.keys(opts.schedule || {}).length;
+      if (noData && opts.placeholderRows) {
         var empty = '<tr><th></th><th>' + esc(opts.nameHeader || 'Szakvezető') + '</th>' +
           '<th>M</th><th>GY</th><th>D</th><th>V</th><th>SP</th><th>KP</th>' +
           '<th>KÜL</th><th>Pont</th><th>Forma</th></tr>';

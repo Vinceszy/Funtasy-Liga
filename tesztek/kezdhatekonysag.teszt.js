@@ -1,4 +1,4 @@
-const { BASE, jo, inditas, vege, apiKi } = require('./kozos');
+const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
 // Kezdoallitasi hatekonysag: mennyit hozott a felallitott kezdo abbol,
 // amennyit a keretbol ki lehetett volna hozni.
 //
@@ -125,11 +125,12 @@ const { BASE, jo, inditas, vege, apiKi } = require('./kozos');
     route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ rounds: { 1: sor(40, 50), 2: sor(50, 50), 5: sor(0, 100) } }) });
   });
-  await p2.route('**/results.json*', async route => {
-    const v3 = await route.fetch(); const j = await v3.json();
+  // From disk, not through the test server (kozos.jsonAtir): a network
+  // fetch inside the route outlived the page under the full suite's load.
+  await jsonAtir(p2, '**/results.json*', j => {
     j.provisional = [5];             // az 5. fordulo ideiglenes...
     j.schedule['5'] = (j.schedule['5'] || []).map(m => [m[0], m[1], null, null]);
-    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(j) });
+    return j;
   });
   await p2.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p2.waitForFunction(() => document.querySelector('#table td.kezdpc'), null, { timeout: 20000 });

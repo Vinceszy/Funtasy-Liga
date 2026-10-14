@@ -4,7 +4,8 @@ name: Napló-mérés (kézi)
 # A fejlesztoi kornyezet halozata minden kulso forrast blokkol, ezert megy
 # Actionsbol. A meresek csak olvasnak es a naplot irjak.
 #
-# Alapbol a MUNKAAGRA ir, nem a main-re.
+# Alapbol a main-re ir: a meresek eredmenye ott kell, ahonnan a cikkek
+# keszulnek.
 on:
   workflow_dispatch:
     inputs:
@@ -14,7 +15,7 @@ on:
       branch:
         description: 'Melyik agra irja az eredmenyt'
         required: false
-        default: 'claude/github-claude-code-integration-x4pk4k'
+        default: 'main'
       kornyezet:
         description: 'Soronkent egy NEV=ertek a meresnek (pl. HARVEST_EVENT=5)'
         required: false
