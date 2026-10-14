@@ -55,7 +55,14 @@ header{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px 20px;border-bot
 h1{font-family:var(--cim);font-size:clamp(26px,5vw,40px);letter-spacing:.5px}
 h1 .fun{color:var(--amber)}h1 .tag{color:var(--magenta)}
 .sub{color:var(--dim);font-size:13px}
-#status{font:500 12px var(--mono);color:var(--dim);width:100%;min-height:16px}
+/* A sor magassaga rogzitett: betolteskor elobb ures, aztan "Elo allas
+   lekerese...", vegul a vegleges allapot - ha mindegyik mas magas, a lap
+   minden valtasnal ugrik. Telefonon a vegleges sor ket sorba tor, ezert ott
+   ket sornyi helyet tartunk. */
+#status{font:500 12px/16px var(--mono);color:var(--dim);width:100%;min-height:16px}
+tr.placeholder td{color:transparent}
+tr.placeholder .nv{display:inline-block;width:9em;border-radius:3px;background:var(--line)}
+tr.placeholder .mgr,tr.placeholder .dot{background:none;border-color:transparent}
 #status.err{color:var(--lose)}#status.ok{color:var(--win)}
 /* Nem hiba, de nem is naprakesz: a fordulo lezarult, a tarolt adatban meg
    nincs benne az eredmeny (a gyujto 3 orankent fut). */
@@ -226,7 +233,9 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 /* EGY SOR, mindig. Korabban flex-wrap:wrap allt itt, es keskeny kepernyon az
    ujsag gombja onallo, harmadik sorba esett - nem oda tervezve, hanem mert
    nem fert ki. A ligafulek sava zsugorodhat es gorgethet, a gomb nem. */
-.liganav{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:nowrap}
+/* A sav tartalmat a JS irja: a helye mar az elso kepen foglalt, kulonben a
+   megjeleneskor az egesz lap lejjebb ugrik. */
+.liganav{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:nowrap;min-height:26px}
 .liganav .markanev{font-family:var(--cim);font-size:12px;letter-spacing:2px;
   color:var(--dim);text-decoration:none;text-transform:uppercase}
 .liganav .markanev:hover{color:var(--ink)}
@@ -807,7 +816,7 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   header{gap:8px 12px;padding-bottom:10px;margin-bottom:14px}
   h1{font-size:26px;width:100%}
   .sub{font-size:11px;order:3;width:100%}
-  #status{font-size:11px;order:4}
+  #status{font-size:11px;line-height:15px;min-height:30px;order:4}
   .grid{gap:14px}
   .panel{margin-bottom:14px;border-radius:8px}
   .panel h2{font-size:13px;padding:10px 12px;flex-wrap:wrap;gap:8px}

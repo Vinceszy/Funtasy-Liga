@@ -1,6 +1,16 @@
 {
  "bejegyzesek": [
   {
+   "datum": "2026-10-15",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
+   "cim": "Betöltéskor nem ugrál a lap",
+   "leiras": "Telefonon a lap betöltés közben többször is lejjebb ugrott: előbb megjelent a felső sáv, aztán az állapotsor egy, majd két sorban, végül a táblázat sorai — és minden lépés eltolta, amit épp néztél.\n\nMostantól a felső sávnak és az állapotsornak az első pillanattól megvan a helye, a táblázat pedig, amíg az adat meg nem jön, annyi üres sorral áll, ahány csapat van. Ami a képernyőn van, betöltés közben a helyén marad."
+  },
+  {
    "datum": "2026-10-14",
    "tipus": "bugfix",
    "ligak": [

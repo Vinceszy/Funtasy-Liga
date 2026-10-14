@@ -51,7 +51,7 @@
                      mintha "eddig" nem szerzett volna pontot */
   var LIGAK = [
     { id: 'nb1', nev: 'NB1', mappa: 'nb1/', cim: 'NB1 salary cap fantasy',
-      leiras: 'privát head-to-head · 8 csapat · 33 forduló',
+      leiras: 'privát head-to-head · 8 csapat · 33 forduló', teams: 8,
       tipus: 'salary-cap', tipusNev: 'Salary cap', tema: 'liga-nb1',
       eloPontok: false,
       /* Az MLSZ EJFELT ir, ha a pontos kezdes meg nincs kituzve. Ez nem
@@ -60,7 +60,7 @@
          liga-jellemzo, nem altalanos szabaly. */
       ejfelHelyorzo: true },
     { id: 'pl', nev: 'PL', mappa: 'pl/', cim: 'PL draft fantasy',
-      leiras: 'privát head-to-head · 10 csapat · 38 forduló',
+      leiras: 'privát head-to-head · 10 csapat · 38 forduló', teams: 10,
       tipus: 'draft', tipusNev: 'Draft', tema: 'liga-pl',
       eloPontok: true, ejfelHelyorzo: false }
   ];
@@ -304,6 +304,25 @@
     }
 
     api.renderTable = function () {
+      var rows = api.computeTable();
+      /* Amig az adat nem jott meg, a tabla annyi ures sorral all, ahany
+         csapat van: kulonben a sorok beerkezesekor az egesz lap lejjebb
+         ugrik (telefonon jol lathatoan, betolteskor). */
+      if (!rows.length && opts.placeholderRows) {
+        var empty = '<tr><th></th><th>' + esc(opts.nameHeader || 'Szakvezető') + '</th>' +
+          '<th>M</th><th>GY</th><th>D</th><th>V</th><th>SP</th><th>KP</th>' +
+          '<th>KÜL</th><th>Pont</th><th>Forma</th></tr>';
+        for (var u = 0; u < opts.placeholderRows; u++)
+          empty += '<tr class="placeholder"><td class="rank">' + (u + 1) + '.</td>' +
+            // the same inner structure as a real name cell, so the row is
+            // exactly as tall as the one that replaces it
+            '<td class="name"><span class="nevsor"><span class="nv">&nbsp;</span>' +
+            ' <span class="mgr">&nbsp;</span></span></td>' +
+            new Array(8).join('<td>&nbsp;</td>') + '<td class="pont">&nbsp;</td>' +
+            '<td><span class="form"><span class="dot"></span></span></td></tr>';
+        el(ids.table).innerHTML = empty;
+        return;
+      }
       var kezd = kezdOsszesito(), guard = guardOsszesito();
       var h = '<tr><th></th><th>' + esc(opts.nameHeader || 'Szakvezető') +
         '</th><th>M</th><th>GY</th><th>D</th><th>V</th>' +
@@ -312,7 +331,7 @@
         (kezd ? '<th title="' + KEZD_CIM + '">KEZD%</th>' : '') +
         (guard ? '<th title="' + esc(GUARD_CIM) + '">GUA</th>' : '') +
         '<th>Forma</th></tr>';
-      api.computeTable().forEach(function (r, i) {
+      rows.forEach(function (r, i) {
         var form = r.form.slice(-5).map(function (f) {
           return '<span class="dot ' + f + '"></span>';
         }).join('');
