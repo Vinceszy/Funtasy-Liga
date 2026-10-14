@@ -739,7 +739,21 @@
       return 'Élő állás — ' + fordulo + '. forduló · frissítve ' + ora(mikor) +
              ' (a tabella csak lezárt fordulókból számol)';
     },
-    naprakesz: function (mikor) { return 'Naprakész · ellenőrizve ' + ora(mikor); },
+    // Nyugalmi allapot. Nem eleg az ELLENORZES idejet kiirni: a valogatott
+    // szunetben harom hetig ez allt a lapon, es nem latszott, hogy a tarolt
+    // adat regi-e, vagy csak nem tortent semmi. Ezert az utolso lezart
+    // fordulo es a tarolt adat utolso VALTOZASA is ott all.
+    naprakesz: function (mikor, lezart, tarolt) {
+      return 'Naprakész' +
+             (lezart ? ' · utolsó lezárt: ' + lezart + '. forduló' +
+                       (tarolt ? ' (rögzítve: ' + datumOra(tarolt) + ')' : '') : '') +
+             ' · ellenőrizve ' + ora(mikor);
+    },
+    // A lezart fordulo eredmenye meg nincs a tarolt adatban.
+    lezartHianyzik: function (fordulo, tarolt) {
+      return fordulo + '. forduló lezárult — az eredmények a következő adatfrissítéssel kerülnek be' +
+             (tarolt ? ' (tárolt állás: ' + datumOra(tarolt) + ')' : '');
+    },
     // A folyo fordulo hibauzenetenek rogzitett szovege - ne irjuk at.
     hibaElo: 'Automata lekérés hiba: az állások a forduló végén frissülnek.',
     hibaNyugodt: function (mentve) {

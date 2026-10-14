@@ -63,6 +63,9 @@ async function statuszSzoveg(br, eredmenyVan){
   console.log('   eredménnyel:     ' + JSON.stringify(megvan.szoveg) + '  [' + megvan.osztaly + ']');
   jo(/Naprakész/.test(megvan.szoveg) && megvan.osztaly === 'ok',
      'ha az eredmény már a tárolt adatban van, újra „Naprakész"');
+  jo(new RegExp('utolsó lezárt: ' + GW + '\\. forduló \\(rögzítve: ').test(megvan.szoveg),
+     'a nyugalmi sor megmondja az utolsó lezárt fordulót és a rögzítés idejét: '
+     + JSON.stringify(megvan.szoveg));
 
   jo(!hianyzik.perr.length && !megvan.perr.length,
      'nincs JS-hiba: ' + JSON.stringify([...hianyzik.perr, ...megvan.perr]));

@@ -1,6 +1,16 @@
 {
  "bejegyzesek": [
   {
+   "datum": "2026-10-14",
+   "tipus": "bugfix",
+   "ligak": [
+    "nb1",
+    "pl"
+   ],
+   "cim": "Állapotsor: látszik, melyik forduló van bent és mikor került be",
+   "leiras": "Ha éppen nem megy forduló, a fejléc alatti sor eddig annyit írt: „Naprakész · ellenőrizve 15:10”. Az idő azonban az ellenőrzésé volt, nem az adaté: a válogatott szünetben hetekig ugyanez állt a lapon, és nem lehetett tudni, hogy régi-e a tárolt állás, vagy csak nem történt semmi.\n\nMostantól a sor azt is megmondja, melyik az utolsó lezárt forduló, és mikor került be az eredménye: „Naprakész · utolsó lezárt: 9. forduló (rögzítve: okt. 11. 00:01) · ellenőrizve 15:10”. Ha egy forduló már lezárult, de az eredménye még nincs bent, azt továbbra is külön kiírja."
+  },
+  {
    "datum": "2026-09-21",
    "tipus": "funkcio",
    "ligak": [
