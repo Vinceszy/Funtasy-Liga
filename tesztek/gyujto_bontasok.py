@@ -43,7 +43,7 @@ def mock(url, retries=3):
 c.api_get = mock
 
 # --- 1. lezart fordulora keszul fajl, nem lezartra nem ---
-c.bontasok_gyujtes([1], set(), TORZS)
+c.collect_breakdowns([1], set(), TORZS)
 allit(os.path.exists("bontasok/1.json"), "a lezart fordulohoz keszul fajl")
 allit(not os.path.exists("bontasok/2.json"), "a meg tarto fordulohoz NEM keszul")
 
@@ -52,10 +52,10 @@ allit(not os.path.exists("bontasok/2.json"), "a meg tarto fordulohoz NEM keszul"
 # fordulokat ismeri, tehat a bevezetesnel csak az utolsohoz keszult volna)
 MENETREND = {"1": [["A", "B", 50.0, 40.0]], "2": [["A", "B", 60.0, 55.0]],
              "3": [["A", "B", None, None]]}
-allit(c.zart_fordulok(MENETREND, []) == [1, 2],
-      "lezart: aminek minden meccse eredmenyes (%s)" % c.zart_fordulok(MENETREND, []))
-allit(c.zart_fordulok(MENETREND, [2]) == [1],
-      "az ideiglenes fordulo NEM lezart (%s)" % c.zart_fordulok(MENETREND, [2]))
+allit(c.closed_rounds(MENETREND, []) == [1, 2],
+      "lezart: aminek minden meccse eredmenyes (%s)" % c.closed_rounds(MENETREND, []))
+allit(c.closed_rounds(MENETREND, [2]) == [1],
+      "az ideiglenes fordulo NEM lezart (%s)" % c.closed_rounds(MENETREND, [2]))
 
 j = json.load(open("bontasok/1.json", encoding="utf-8"))
 allit(j.get("round") == 1 and len(j.get("bontasok") or {}) == len(TORZS),
@@ -71,35 +71,35 @@ allit(j["bontasok"]["1000"] == [{"n": "Játszott perc", "v": 90, "p": 0},
 NYERS = [{"n": "Gólok", "v": 1, "p": 5}, {"n": "Sárga lap", "v": 0, "p": 0},
          {"n": "Játszott perc", "v": 90, "p": 0},
          {"n": "Passzpontosság", "v": 0.59, "p": 0}]
-allit(c.bontas_szures(NYERS) == [{"n": "Gólok", "v": 1, "p": 5},
+allit(c.filter_breakdown(NYERS) == [{"n": "Gólok", "v": 1, "p": 5},
                                  {"n": "Játszott perc", "v": 90, "p": 0}],
       "a 0 pontos sorok kimaradnak, a Játszott perc marad (%s)"
-      % [x["n"] for x in c.bontas_szures(NYERS)])
-allit(c.bontas_szures([]) == [], "ures bontasbol ures marad")
+      % [x["n"] for x in c.filter_breakdown(NYERS)])
+allit(c.filter_breakdown([]) == [], "ures bontasbol ures marad")
 allit("updated" not in j,
       "nincs benne idobelyeg (kulonben minden futasnal ujrairodna)")
 
 # --- 2. masodszor NEM ker le ujra ---
 HIVAS.clear()
-c.bontasok_gyujtes([1], set(), TORZS)
+c.collect_breakdowns([1], set(), TORZS)
 allit(not HIVAS, "meglevo fajlnal egyetlen lekeres sincs (%d)" % len(HIVAS))
 
 # --- 3. de ha a fordulo eredmenye VALTOZOTT, ujra lekeri ---
 HIVAS.clear()
-c.bontasok_gyujtes([1], {1}, TORZS)
+c.collect_breakdowns([1], {1}, TORZS)
 allit(len(HIVAS) == len(TORZS),
       "MLSZ-korrekcio utan ujra lekeri az egesz fordulot (%d keres)" % len(HIVAS))
 
 # --- 4. hianyos futas NEM ir ki felig kesz fajlt ---
 os.chdir(tempfile.mkdtemp())
 BUKO.update(list(TORZS)[:5])          # 5/12 elhasal - tobb, mint 10%
-c.bontasok_gyujtes([1], set(), TORZS)
+c.collect_breakdowns([1], set(), TORZS)
 allit(not os.path.exists("bontasok/1.json"),
       "sok hibas keresnel a fajl NEM keszul el (a kovetkezo futas ujraprobal)")
 
 # --- 5. keves hiba viszont belefer ---
 BUKO.clear(); BUKO.add(list(TORZS)[0])   # 1/12 - a hatarertek alatt
-c.bontasok_gyujtes([1], set(), TORZS)
+c.collect_breakdowns([1], set(), TORZS)
 allit(os.path.exists("bontasok/1.json"), "egy-ket hibas keres nem akadalyozza a kiirast")
 j = json.load(open("bontasok/1.json", encoding="utf-8"))
 allit(len(j["bontasok"]) == len(TORZS) - 1,
@@ -110,7 +110,7 @@ allit(len(j["bontasok"]) == len(TORZS) - 1,
 os.chdir(tempfile.mkdtemp())
 BUKO.clear()
 c.api_get = lambda url, retries=3: (200, {"data": []}) if "game-player-stats" in url else (404, None)
-c.bontasok_gyujtes([1], set(), TORZS)
+c.collect_breakdowns([1], set(), TORZS)
 j = json.load(open("bontasok/1.json", encoding="utf-8"))
 allit(j["bontasok"].get("1000") == [],
       "a pont nelkuli jatekos URES listaval szerepel - ez mas, mint a hianyzas")

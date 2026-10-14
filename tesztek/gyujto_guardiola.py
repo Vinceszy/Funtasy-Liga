@@ -52,7 +52,7 @@ def keret(ids, **kw):
 ALAP = list(range(1, 16))
 # minden jatekos 5 pontot szerez ebben a forduloban
 NYERS = {str(x): 5 for x in range(1, 40)}
-c.nyers_pontok = lambda r: NYERS
+c.raw_points = lambda r: NYERS
 
 print("--- G1: valtozatlan keret -> pontosan 0 ---")
 h = {"1": {"A": keret(ALAP)}, "2": {"A": keret(ALAP)}}
@@ -64,16 +64,16 @@ print("\n--- G1b: PADOS jatekosnal is pontosan 0 (a felezes kerekitese) ---")
 # 0,75 nyers pont -> a pad felezve 0,38 (az API kerekit) - a ket oldalnak
 # ugyanabbol kell szamolnia, kulonben itt 0,01 jonne ki
 NYERS_TORT = {str(x): 0.75 for x in range(1, 40)}
-c.nyers_pontok = lambda r: NYERS_TORT
+c.raw_points = lambda r: NYERS_TORT
 g = c.guardiola(h, 2)
 allit(g and g["A"]["guard"] == 0,
       "G1b: tort pontnal is pontosan 0 - kapott: %s" % (g and g["A"]))
-c.nyers_pontok = lambda r: NYERS
+c.raw_points = lambda r: NYERS
 
 print("\n--- G2: csere -> a kulonbseg pontos ---")
 # a 12-es (pados, 5 pont) helyett a 20-as jon, aki 9-et szerez
 NYERS2 = dict(NYERS); NYERS2["20"] = 9
-c.nyers_pontok = lambda r: NYERS2
+c.raw_points = lambda r: NYERS2
 uj = keret(ALAP[:1] + [20] + ALAP[2:])          # a 2-es KEZDO helyere a 20-as
 h2 = {"1": {"A": keret(ALAP)}, "2": {"A": uj}}
 g = c.guardiola(h2, 2)
@@ -83,13 +83,13 @@ h3 = {"1": {"A": uj}, "2": {"A": keret(ALAP)}}
 g = c.guardiola(h3, 2)
 allit(g and g["A"]["guard"] == -4,
       "G2: forditva -4 - kapott: %s" % (g and g["A"]))
-c.nyers_pontok = lambda r: NYERS
+c.raw_points = lambda r: NYERS
 
 print("\n--- G3: a MULT HETI szerepek szamitanak ---")
 # mult hete a 3-as volt a kapitany, most a 4-es. Az alternativaban a 3-asnak
 # kell duplaznia. Adjunk a 3-asnak 10-et, a tobbinek 5-ot.
 NYERS3 = dict(NYERS); NYERS3["3"] = 10
-c.nyers_pontok = lambda r: NYERS3
+c.raw_points = lambda r: NYERS3
 regi = keret(ALAP); regi[2]["cap"] = True        # 3-as a kapitany
 most = keret(ALAP); most[3]["cap"] = True        # 4-es a kapitany
 g = c.guardiola({"1": {"A": regi}, "2": {"A": most}}, 2)
@@ -98,7 +98,7 @@ g = c.guardiola({"1": {"A": regi}, "2": {"A": most}}, 2)
 allit(g and g["A"]["guard"] == -5,
       "G3: a mult heti kapitany duplaz az alternativaban -> -5 - kapott: %s"
       % (g and g["A"]))
-c.nyers_pontok = lambda r: NYERS
+c.raw_points = lambda r: NYERS
 
 print("\n--- G4: a magyarszabaly az alternativara is jar ---")
 # mult hete 5 magyar kezdo (koztuk egy U21) -> +10. Most az egyiket lecsereltuk
@@ -118,14 +118,14 @@ allit(g and g["A"]["guard"] == -10,
 print("\n--- G5/G6: amikor nincs ertek ---")
 allit(c.guardiola({"1": {"A": keret(ALAP)}}, 1) is None,
       "G5: az elso fordulora nincs mutato")
-c.nyers_pontok = lambda r: None
+c.raw_points = lambda r: None
 allit(c.guardiola(h, 2) is None,
       "G6: bontas nelkul (nem lezart fordulo) nincs mutato")
-c.nyers_pontok = lambda r: NYERS
+c.raw_points = lambda r: NYERS
 
 print("\n--- G7: aki mar nincs a bontasban, 0 pontot ad ---")
 SZUK = {str(x): 5 for x in range(1, 15)}         # a 15-os hianyzik
-c.nyers_pontok = lambda r: SZUK
+c.raw_points = lambda r: SZUK
 regi = keret(ALAP)                                # 15-os: PADOS
 most = keret(ALAP[:14] + [21])                    # helyette a 21-es, szinten pados
 SZUK["21"] = 5
@@ -155,7 +155,7 @@ try:
     c.api_get = _api
     TORZS = {"1": {}, "2": {}}
     # a 99-es mar nincs a torzsben, de valaha birtokolta valaki
-    c.bontasok_gyujtes([2], set(), TORZS, {"99"})
+    c.collect_breakdowns([2], set(), TORZS, {"99"})
     with open("bontasok/2.json", encoding="utf-8") as f:
         b = _json.load(f)["bontasok"]
     allit(set(b) == {"1", "2", "99"},
@@ -165,7 +165,7 @@ try:
     # G9: mar letezo fajl, amibol csak a 99-es hianyzik
     c.write_compact("bontasok/2.json", {"round": 2, "bontasok": {"1": [], "2": []}})
     del _kert[:]
-    c.bontasok_gyujtes([2], set(), TORZS, {"99"})
+    c.collect_breakdowns([2], set(), TORZS, {"99"})
     with open("bontasok/2.json", encoding="utf-8") as f:
         b = _json.load(f)["bontasok"]
     allit(_kert == ["99"],
@@ -175,7 +175,7 @@ try:
 
     # ha mar semmi nem hianyzik, egyetlen keres sem megy ki
     del _kert[:]
-    c.bontasok_gyujtes([2], set(), TORZS, {"99"})
+    c.collect_breakdowns([2], set(), TORZS, {"99"})
     allit(_kert == [], "G9: teljes fajlnal nincs keres - kapott: %s" % _kert)
 finally:
     c.api_get = _regi_api

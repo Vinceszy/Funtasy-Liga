@@ -34,7 +34,7 @@ TOKELETES = ([j("K", 6), j("K", 0.5, sub=True)]
              + [j("H", 5), j("H", 4), j("H", 3), j("H", 0.5, sub=True)]
              + [j("KP", 7), j("KP", 6), j("KP", 5), j("KP", 4), j("KP", 1, sub=True)]
              + [j("CS", 18, cap=True), j("CS", 3), j("CS", 2), j("CS", 0.5, sub=True)])
-v = c.hatekonysag(TOKELETES)
+v = c.efficiency(TOKELETES)
 allit(v is not None and abs(v[1] - 65.5) < 1e-9,
       "leheto: posztonkenti minimum a padra, legjobb kezdo a kapitany (%.2f)" % (v[1] if v else -1))
 allit(v is not None and abs(v[0] - v[1]) < 1e-9,
@@ -46,7 +46,7 @@ ROSSZ = ([j("K", 6), j("K", 0.5, sub=True)]
          + [j("H", 10, cap=True), j("H", 4), j("H", 3), j("H", 0.5, sub=True)]
          + [j("KP", 7), j("KP", 6), j("KP", 5), j("KP", 4), j("KP", 1, sub=True)]
          + [j("CS", 4.5, sub=True), j("CS", 3), j("CS", 2), j("CS", 1)])
-v2 = c.hatekonysag(ROSSZ)
+v2 = c.efficiency(ROSSZ)
 allit(v2 is not None and abs(v2[1] - 65.5) < 1e-9,
       "a leheto NEM fugg a tenyleges felallitastol (%.2f)" % (v2[1] if v2 else -1))
 allit(v2 is not None and v2[0] < v2[1],
@@ -55,8 +55,8 @@ allit(v2 is not None and abs(v2[0] - sum(p["week"] for p in ROSSZ)) < 1e-9,
       "a szerzett a week-ek osszege (a hivatalos fordulopont)")
 
 # --- hianyos adat: nem 15 fos keret vagy hianyzo poszt -> None ---
-allit(c.hatekonysag(TOKELETES[:14]) is None, "14 fos keretre nincs ertek")
-allit(c.hatekonysag([j("K", 1)] * 15) is None, "egyposztos (serult) keretre nincs ertek")
+allit(c.efficiency(TOKELETES[:14]) is None, "14 fos keretre nincs ertek")
+allit(c.efficiency([j("K", 1)] * 15) is None, "egyposztos (serult) keretre nincs ertek")
 
 if hibak:
     print("\n%d allitas bukott." % len(hibak)); sys.exit(1)

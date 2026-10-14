@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 """GOMB-forras.js  ->  GOMB-bookmarklet.txt
 
-A konyvjelzo forraskodjat a GOMB-forras.js-ben kell szerkeszteni, majd ezt
-a szkriptet lefuttatni. A szkript osszefuzi a sorokat, szazalekjelesen
-kodolja, es kiirja a bongeszobe illesztheto egysoros valtozatot.
+The bookmarklet's source code is edited in GOMB-forras.js, and then this
+script is run. It joins the lines, percent-encodes them, and writes the
+one-line version that can be pasted into the browser.
 
-    python3 GOMB-epites.py
+    python3 bookmarklet-build.py
 
-A bongeszoben levo konyvjelzot ezutan kezzel kell frissiteni: az onnan fut,
-nem a repobol.
+The bookmark in the browser then has to be updated by hand: it runs from
+there, not from the repository.
 """
 import re, sys, urllib.parse
 
 SRC, DST, MARKER = "GOMB-forras.js", "GOMB-bookmarklet.txt", "// ==BOOKMARKLET-START=="
 
-# Ezeket a karaktereket hagyjuk kodolatlanul (igy all elo bitre az eddigi fajl).
-# Ami nincs a listan, az %XX formaban kerul be - uj karakter eseten is helyes marad.
+# These characters are left unencoded (this reproduces the existing file bit
+# for bit). Anything not on the list goes in as %XX - so a new character is
+# still encoded correctly.
 SAFE = set(' "-.0123456789<>ABCDEFGHIJKLMNOPRSTUVW_abcdefghijklmnopqrstuvwxyz'
            '·Ááéíóöüő–—…✔')
 
@@ -28,22 +29,22 @@ def encode(s):
 def main():
     src = open(SRC, encoding="utf-8").read()
     if MARKER not in src:
-        sys.exit("HIBA: nincs meg a '%s' jelolo a %s fajlban." % (MARKER, SRC))
+        sys.exit("ERROR: the '%s' marker is missing from %s." % (MARKER, SRC))
     body = src.split(MARKER, 1)[1]
 
-    # Biztonsagi fek: valodi token soha ne kerulhessen a kimenetbe.
+    # Safety brake: a real token must never get into the output.
     leak = re.search(r"gh[pousr]_[A-Za-z0-9]{10,}|github_pat_[A-Za-z0-9_]{10,}", body)
     if leak:
-        sys.exit("HIBA: valodi tokennek tuno szoveg a forrasban (%s...). "
-                 "Csereld vissza IDE_A_TOKEN-re." % leak.group(0)[:12])
+        sys.exit("ERROR: text that looks like a real token in the source (%s...). "
+                 "Put IDE_A_TOKEN back in its place." % leak.group(0)[:12])
 
     code = " ".join(l.strip() for l in body.strip().splitlines() if l.strip())
     out = "javascript:" + encode(code) + "\n"
     open(DST, "w", encoding="utf-8").write(out)
 
     back = urllib.parse.unquote(out.strip()[len("javascript:"):])
-    print("Kesz: %s (%d karakter)" % (DST, len(out.strip())))
-    print("Ellenorzes: a visszafejtett kod %d karakter, %d utasitas."
+    print("Done: %s (%d characters)" % (DST, len(out.strip())))
+    print("Check: the decoded code is %d characters, %d statements."
           % (len(back), back.count(";")))
     return 0
 

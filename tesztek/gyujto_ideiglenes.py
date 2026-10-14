@@ -55,7 +55,7 @@ def mock(url, retries=3):
 
 
 c.api_get = mock
-c.ellenorzendo = lambda regi, db=4: [2] if 2 in regi else []   # a 2. fordulot nezzuk
+c.rounds_to_recheck = lambda regi, db=4: [2] if 2 in regi else []   # a 2. fordulot nezzuk
 
 parok = [(NEVEK[0], NEVEK[1]), (NEVEK[2], NEVEK[3]), (NEVEK[4], NEVEK[5]), (NEVEK[6], NEVEK[7])]
 menetrend = {str(r): [[h, v, API[r][h] if r != 2 else 50.0, API[r][v] if r != 2 else 50.0]
@@ -103,7 +103,7 @@ def mock2(url, retries=3):
 
 
 c.api_get = mock2
-c.ellenorzendo = lambda regi, db=4: []
+c.rounds_to_recheck = lambda regi, db=4: []
 c.main()
 prov2 = json.load(open("results.json"))["provisional"]
 print("provisional:", prov2)
@@ -138,7 +138,7 @@ def mock3(url, retries=3):
 
 
 c.api_get = mock3
-c.ellenorzendo = lambda regi, db=4: []
+c.rounds_to_recheck = lambda regi, db=4: []
 c.main()
 prov3 = json.load(open("results.json"))["provisional"]
 print("provisional:", prov3)
@@ -173,7 +173,7 @@ json.dump({"updated": None, "rounds": {str(r): [
 # sem kell ide: az ELSO futas beallitja a vegallapotot, a MASODIK futasnak
 # mar semmit nem szabad irnia.
 c.api_get = mock
-c.ellenorzendo = lambda regi, db=4: []
+c.rounds_to_recheck = lambda regi, db=4: []
 # Az idobelyeg MASODPERC-pontossagu: ket egymas utani futas ugyanazt a
 # szoveget irna, es a teszt akkor is atmenne, ha a fajl ujrairodik. Ezert a
 # stamp helyere szamlalo kerul - igy minden iras LATSZIK.
@@ -237,7 +237,7 @@ json.dump({"updated": None, "rounds": {str(r): [
     {"id": 900 + r, "h": "XYZ", "v": "ZZZ", "start": "2026-08-01T17:30:00+02:00",
      "hp": 1, "vp": 0, "vege": True}] for r in range(1, 9)}}, open("meccsek.json", "w"))
 c.api_get = mock
-c.ellenorzendo = lambda regi, db=4: []
+c.rounds_to_recheck = lambda regi, db=4: []
 c.stamp = szamlalo_stamp
 c.main()                                     # 1. futas: minden felepul
 sq_elotte = open("squads.json", encoding="utf-8").read()
@@ -245,7 +245,7 @@ sh_elotte = open("squad_history.json", encoding="utf-8").read()
 
 # most jon a REGI (2.) fordulo korrekcioja
 API[2]['Csongi'] = API[2]['Csongi'] + 3.0
-c.ellenorzendo = lambda regi, db=4: [2]
+c.rounds_to_recheck = lambda regi, db=4: [2]
 c.main()
 c.stamp = eredeti_stamp
 sq_utana = open("squads.json", encoding="utf-8").read()

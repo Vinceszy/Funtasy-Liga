@@ -262,7 +262,7 @@ for _coll, _wf in _MUNKAK:
     _add = (_re.search(r"for f in ([^\n;]*); do\n[^\n]*git add", _wft)
             or _re.search(r"git add -A(?: --)? ([^\n]*?)(?: 2>/dev/null)?\n", _wft))
     _lista = [x.strip("'\"") for x in _add.group(1).split()] if _add else []
-    for _f in sorted(set(_re.findall(r'(?:write_compact|kiir_ha_valtozott)\(\s*"([^"]+)"',
+    for _f in sorted(set(_re.findall(r'(?:write_compact|write_if_changed|kiir_ha_valtozott)\(\s*"([^"]+)"',
                                      olvas(_coll)))):
         _mappa = _f.split("/")[0]
         _fed = any(_f == x or _mappa == x or (x.endswith("*.json") and _f.startswith(x[:-6]))
@@ -469,13 +469,13 @@ if _m:
 
 # ---- D18: a konyvjelzo az, amit a forrasabol epitunk ----
 # A tartalek/GOMB-bookmarklet.txt GENERALT: a GOMB-forras.js-bol keszul a
-# GOMB-epites.py-vel. Ket masolat ugyanarrol a kodrol, es a generalt az, amit
+# bookmarklet-build.py-vel. Ket masolat ugyanarrol a kodrol, es a generalt az, amit
 # a bongeszobe be kell masolni. Aki a forrast javitja, de ujraepiteni
 # elfelejti, az a repoban egy REGI konyvjelzot hagy - es ez sehol nem latszik,
 # mert mindket fajl ott van, mindketto ertelmes.
 _gmappa = os.path.join(GYOKER, "tartalek")
 _gspec = importlib.util.spec_from_file_location(
-    "gomb_epites", os.path.join(_gmappa, "GOMB-epites.py"))
+    "gomb_epites", os.path.join(_gmappa, "bookmarklet-build.py"))
 _gomb = importlib.util.module_from_spec(_gspec)
 _gspec.loader.exec_module(_gomb)                 # a main() csak __main__-kent fut
 _gsrc = olvas(os.path.join("tartalek", "GOMB-forras.js"))
@@ -485,7 +485,7 @@ _gvart = "javascript:" + _gomb.encode(
 _gvan = olvas(os.path.join("tartalek", "GOMB-bookmarklet.txt"))
 allit(_gvart == _gvan,
       "D18: a konyvjelzo a forrasabol frissen epult (futtasd: cd tartalek && "
-      "python3 GOMB-epites.py)" if _gvart != _gvan
+      "python3 bookmarklet-build.py)" if _gvart != _gvan
       else "D18: a konyvjelzo a forrasabol frissen epult (%d karakter)" % len(_gvan.strip()))
 
 # ---- D16: minden lap ugyanazt a betukeszletet tolti ----

@@ -9,7 +9,7 @@
 
    HA MÓDOSÍTANI KELL:
      1. ezt a fájlt szerkeszd
-     2. futtasd:  python3 GOMB-epites.py
+     2. futtasd:  python3 bookmarklet-build.py
      3. a szkript újragenerálja a GOMB-bookmarklet.txt-t
      4. a böngészőben lévő könyvjelzőt kézzel kell frissíteni az új
         tartalommal (a bookmarklet a böngésző saját másolatából fut)

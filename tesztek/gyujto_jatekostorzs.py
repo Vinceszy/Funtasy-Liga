@@ -37,7 +37,7 @@ VALASZ = {"data": [
 ]}
 kert = {}
 c.api_get = lambda url, retries=3: (kert.setdefault("url", url), (200, VALASZ))[1]
-t = c.jatekostorzs()
+t = c.player_roster()
 
 allit(t is not None and len(t) == 2, "az azonosito nelkuli sor kimarad (%s sor)" % (len(t) if t else None))
 allit("per_page=500" in kert["url"], "egy keres, nagy lapmerettel (per_page=500)")
@@ -47,17 +47,17 @@ allit(t["915"] == {"n": "Alaxai Áron", "t": "NYÍREGY", "p": "H", "u21": False,
       % t["915"]["n"])
 
 # a hosszu nev felismerheto resze a vezeteknev - annak kell elol allnia
-allit(c.jatekosnev("Gleofilo Sabrino Rudewald Hasselbaink", "Vlijter")
+allit(c.player_name("Gleofilo Sabrino Rudewald Hasselbaink", "Vlijter")
       == "Vlijter Gleofilo Sabrino Rudewald Hasselbaink",
       "hosszu nevnel is a vezeteknev all elol (ez van a mezen)")
-allit(c.jatekosnev(None, None, "#42") == "#42", "nev nelkul az azonosito a tartalek")
+allit(c.player_name(None, None, "#42") == "#42", "nev nelkul az azonosito a tartalek")
 allit(t["916"]["p"] == "Csatár" and t["916"]["t"] == "MTK",
       "monogram/rovidnev hianyaban a teljes nev a tartalek")
 allit(t["916"]["pts"] == 0 and t["916"]["ar"] is None,
       "hianyzo pont -> 0, hianyzo ar -> None (nem 0: az arvaltozasnak latszana)")
 
 c.api_get = lambda url, retries=3: (500, None)
-allit(c.jatekostorzs() is None, "hibas valasznal None jon (a fajl valtozatlan marad)")
+allit(c.player_roster() is None, "hibas valasznal None jon (a fajl valtozatlan marad)")
 
 # ---------------- 2) az arnaplo ----------------
 # A naplo a MUNKAKONYVTARBOL olvassa az arak.json-t. Ideiglenes konyvtarban
@@ -78,7 +78,7 @@ def naplo(torzs, mai, elozo=None):
     else:
         with open("arak.json", "w", encoding="utf-8") as f:
             json.dump({"arak": elozo}, f)
-    return c.arnaplo_frissit(torzs, mai)
+    return c.update_price_log(torzs, mai)
 
 
 T1 = {"1": {"ar": 5.0}, "2": {"ar": 8.0}}

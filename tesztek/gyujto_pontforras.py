@@ -39,7 +39,7 @@ print("--- P1: beragadt osszesito mellett a bontas nyer ---")
 beragadt = {"stats": {"total_points": 1, "minutes": 9},
             "explain": [[[sor("minutes", 2, 90), sor("goals_scored", 4, 1),
                           sor("bonus", 2, 2)], 12]]}
-p, bontasbol = c.jatekos_pont(beragadt)
+p, bontasbol = c.player_points(beragadt)
 allit(p == 8, "P1: a tarolt pont a bontas osszege (8), nem a beragadt 1 - kapott: %s" % p)
 allit(bontasbol, "P1: a fuggveny jelzi, hogy a bontasbol jott")
 
@@ -48,7 +48,7 @@ for cimke, v in (("ures explain", {"stats": {"total_points": 3}, "explain": []})
                  ("nincs explain kulcs", {"stats": {"total_points": 3}}),
                  ("ismeretlen szerkezet", {"stats": {"total_points": 3},
                                            "explain": [{"fixture": 1, "stats": []}]})):
-    p, bontasbol = c.jatekos_pont(v)
+    p, bontasbol = c.player_points(v)
     allit(p == 3 and not bontasbol,
           "P2: %s -> a stats osszesitoje marad (3) - kapott: %s" % (cimke, p))
 
@@ -56,14 +56,14 @@ print("\n--- P3: dupla fordulo: a ket meccs osszeadodik ---")
 dupla = {"stats": {"total_points": 0},
          "explain": [[[sor("minutes", 2, 90), sor("goals_scored", 4, 1)], 12],
                      [[sor("minutes", 2, 90), sor("assists", 3, 1)], 15]]}
-p, _ = c.jatekos_pont(dupla)
+p, _ = c.player_points(dupla)
 allit(p == 11, "P3: a ket meccs bontasa osszeadodik (2+4+2+3 = 11) - kapott: %s" % p)
 
 print("\n--- P4: hianyzo mezok nem dontik el ---")
 for cimke, v in (("ures dict", {}), ("None", None),
                  ("explain=None", {"stats": {"total_points": 5}, "explain": None})):
     try:
-        p, _ = c.jatekos_pont(v)
+        p, _ = c.player_points(v)
         allit(True, "P4: %s -> nem hasal el (%s pont)" % (cimke, p))
     except Exception as e:
         allit(False, "P4: %s -> KIVETEL: %r" % (cimke, e))

@@ -1,44 +1,46 @@
 #!/usr/bin/env python3
-"""FunTasy Liga - FPL Draft liga adatainak gyujtese.
+"""FunTasy Liga - collecting the data of the FPL Draft league.
 
-Negy fajlt gondoz (mind kompakt JSON, a repo tobbi adatfajljanak stilusaban):
+Looks after four files (all compact JSON, in the style of the repository's
+other data files):
 
-  draft.json         - resztvevok, menetrend, eredmenyek, allasok
-  draft_players.json - jatekos-torzsadat: {id: {n: nev, t: klub, p: poszt}}
-  draft_squads.json  - a JELENLEGI keretek: {liga_id: [element_id, ...]}
-  draft_history.json - fordulonkenti keretek pontokkal (a GW1 indulasatol):
-                       {rounds: {gw: {liga_id: [{e, b, pts}, ...]}}}
-                       e=jatekos-azonosito, b=pad (bench), pts=heti pont
+  draft.json         - entries, schedule, results, standings
+  draft_players.json - player master data: {id: {n: name, t: club, p: position}}
+  draft_squads.json  - the CURRENT squads: {league_id: [element_id, ...]}
+  draft_history.json - per-round squads with points (from the start of GW1):
+                       {rounds: {gw: {league_id: [{e, b, pts}, ...]}}}
+                       e=player id, b=bench, pts=weekly points
 
-VEGPONTOK (a GitHub futojarol merve):
-  - league/{id}/details        200 - resztvevok, menetrend, eredmenyek
-  - bootstrap-static           200 - 599 jatekos, klubok, posztok
-  - league/{id}/element-status 200 - ki birtokolja most az adott jatekost
-  - entry/{eid}/event/{gw}     404 A FORDULO INDULASAIG, utana picks
-  - event/{gw}/live            200 - jatekosonkenti heti pontok
-  - game                       200 - current_event (aktualis fordulo)
+ENDPOINTS (measured from the GitHub runner):
+  - league/{id}/details        200 - entries, schedule, results
+  - bootstrap-static           200 - 599 players, clubs, positions
+  - league/{id}/element-status 200 - who owns a given player now
+  - entry/{eid}/event/{gw}     404 UNTIL THE ROUND STARTS, picks after that
+  - event/{gw}/live            200 - weekly points per player
+  - game                       200 - current_event (the current round)
 
-FONTOS - adatvedelem:
-A details valasza a resztvevok VALODI NEVET is tartalmazza. A repo publikus,
-ezert soha nem mentunk nyers valaszt: minden kimeno rekord mezonkent epul,
-es a mentes elott a nevszures ellenorzi, hogy tiltott mezo (valodi nev,
-entry_id) nem szivargott-e ki. A labdarugok neve nyilvanos adat, az mehet.
+IMPORTANT - privacy:
+The details answer also holds the entrants' REAL NAMES. The repository is
+public, so a raw answer is never saved: every output record is built field
+by field, and before saving the private-field check makes sure that no
+forbidden field (real name, entry_id) has leaked. The footballers' names are
+public data, those may go.
 
-FONTOS - ket kulonbozo azonosito:
-Minden resztvevonek van "entry_id"-ja (FPL csapat-azonosito) es "id"-ja
-(liga-beli azonosito). A matches/standings az "id"-t hasznalja, a
-keret-vegpontok az entry_id-t. A repoban CSAK az "id" szerepel; az
-entry_id-t futas kozben, memoriaban hasznaljuk. Az element-status "owner"
-mezojenek azonosito-tere bizonytalan volt, ezert futaskor ismerjuk fel,
-melyik terben van, es liga-id-ra kepezzuk.
+IMPORTANT - two different ids:
+Every entrant has an "entry_id" (FPL team id) and an "id" (id within the
+league). matches/standings use the "id", the squad endpoints the entry_id.
+ONLY the "id" appears in the repository; the entry_id is used during the
+run, in memory. The id space of the element-status "owner" field was
+uncertain, so at run time we detect which space it is in, and map it to the
+league id.
 
-A liga azonositoja a DRAFT_LEAGUE_ID kornyezeti valtozobol felulirhato.
+The league id can be overridden by the DRAFT_LEAGUE_ID environment variable.
 """
 import json, os, sys, time, urllib.error, urllib.request
 
-# A tesztek a fajl UTJA szerint toltik be ezt a modult, tehat a sys.path-on a
-# tesztek konyvtara all, nem a repo gyokere. A sajat konyvtarunkat ezert mi
-# tesszuk fel, kulonben a kozos modul csak eles futasban lenne megtalalhato.
+# The tests load this module by its file PATH, so sys.path holds the tests
+# directory, not the repository root. We add our own directory, otherwise the
+# shared module would only be found in a live run.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from collector_common import stamp, write_compact, read_stored
 
@@ -53,7 +55,7 @@ HDRS = {
 
 
 def fetch(path, retries=3):
-    """(status, adat) - halozati hibanal ujraprobal, 4xx-nel nem."""
+    """(status, data) - retries on a network error, not on a 4xx."""
     url = B + path
     for i in range(retries):
         time.sleep(0.2)
@@ -65,15 +67,15 @@ def fetch(path, retries=3):
             return e.code, None
         except Exception as e:
             if i == retries - 1:
-                print("  ! halozati hiba (%s): %s" % (path, e), file=sys.stderr)
+                print("  ! network error (%s): %s" % (path, e), file=sys.stderr)
                 return None, None
             time.sleep(3)
     return None, None
 
 
-def atalakit(data):
-    """A details valaszabol a draft.json szerkezete - valodi nevek nelkul."""
-    liga = data.get("league") or {}
+def transform_details(data):
+    """The structure of draft.json from the details answer - without real names."""
+    league = data.get("league") or {}
     entries = []
     for e in data.get("league_entries") or []:
         entries.append({"id": e.get("id"),
@@ -81,649 +83,670 @@ def atalakit(data):
                         "short": e.get("short_name") or ""})
     entries.sort(key=lambda x: (x["name"] or "").lower())
 
-    schedule, lejatszott = {}, 0
+    schedule, played = {}, 0
     for m in data.get("matches") or []:
         rnd = str(m.get("event"))
-        kesz = bool(m.get("finished"))
-        hp = m.get("league_entry_1_points") if kesz else None
-        vp = m.get("league_entry_2_points") if kesz else None
-        if kesz:
-            lejatszott += 1
+        finished = bool(m.get("finished"))
+        hp = m.get("league_entry_1_points") if finished else None
+        vp = m.get("league_entry_2_points") if finished else None
+        if finished:
+            played += 1
         schedule.setdefault(rnd, []).append(
             [m.get("league_entry_1"), m.get("league_entry_2"), hp, vp])
 
-    allas = []
+    standings = []
     for s in data.get("standings") or []:
-        allas.append({"id": s.get("league_entry"), "rank": s.get("rank"),
-                      "played": s.get("matches_played"), "won": s.get("matches_won"),
-                      "drawn": s.get("matches_drawn"), "lost": s.get("matches_lost"),
-                      "for": s.get("points_for"), "against": s.get("points_against"),
-                      "total": s.get("total")})
+        standings.append({"id": s.get("league_entry"), "rank": s.get("rank"),
+                          "played": s.get("matches_played"), "won": s.get("matches_won"),
+                          "drawn": s.get("matches_drawn"), "lost": s.get("matches_lost"),
+                          "for": s.get("points_for"), "against": s.get("points_against"),
+                          "total": s.get("total")})
     return {
         "updated": None,
-        "league": {"id": liga.get("id"), "name": liga.get("name") or "",
-                   "start_event": liga.get("start_event"),
-                   "stop_event": liga.get("stop_event")},
-        "entries": entries, "schedule": schedule, "standings": allas,
-    }, lejatszott
+        "league": {"id": league.get("id"), "name": league.get("name") or "",
+                   "start_event": league.get("start_event"),
+                   "stop_event": league.get("stop_event")},
+        "entries": entries, "schedule": schedule, "standings": standings,
+    }, played
 
 
-def nevszures(payload):
-    """Biztonsagi halo: tiltott mezo a kimenetben -> leallas, nincs mentes."""
-    szoveg = json.dumps(payload, ensure_ascii=False)
-    for tiltott in ("player_first_name", "player_last_name", "entry_id"):
-        if tiltott in szoveg:
-            raise SystemExit("HIBA: '%s' a kimenetben - a mentes megszakitva." % tiltott)
+def check_private_fields(payload):
+    """Safety net: a forbidden field in the output -> stop, nothing is saved."""
+    text = json.dumps(payload, ensure_ascii=False)
+    for forbidden in ("player_first_name", "player_last_name", "entry_id"):
+        if forbidden in text:
+            raise SystemExit("ERROR: '%s' in the output - saving aborted." % forbidden)
 
 
-def kiir_ha_valtozott(path, tartalom, regi_nelkul_kulcs="updated"):
-    """Kompakt iras, csak ha a tartalom (updated nelkul) valtozott."""
+def write_if_changed(path, content, ignored_key="updated"):
+    """Compact write, only if the content (without updated) changed."""
     try:
         with open(path, encoding="utf-8") as f:
-            regi = json.load(f)
+            old = json.load(f)
     except Exception:
-        regi = None
+        old = None
 
-    def mag(x):
+    def core(x):
         if not isinstance(x, dict):
             return x
-        return {k: v for k, v in x.items() if k != regi_nelkul_kulcs}
+        return {k: v for k, v in x.items() if k != ignored_key}
 
-    if regi is not None and json.dumps(mag(regi), sort_keys=True, ensure_ascii=False) \
-                          == json.dumps(mag(tartalom), sort_keys=True, ensure_ascii=False):
+    if old is not None and json.dumps(core(old), sort_keys=True, ensure_ascii=False) \
+                        == json.dumps(core(content), sort_keys=True, ensure_ascii=False):
         return False
-    tartalom["updated"] = stamp()
-    nevszures(tartalom)
-    write_compact(path, tartalom)
-    print("  + %s kiirva (%d byte)" % (path, os.path.getsize(path)))
+    content["updated"] = stamp()
+    check_private_fields(content)
+    write_compact(path, content)
+    print("  + %s written (%d bytes)" % (path, os.path.getsize(path)))
     return True
 
 
-def zarasi_kulonbseg(regi, uj):
-    """A zaras elotti (tarolt) es utani (friss) keretek kulonbsege.
-    Csapatonkent: "pont" = jatekosonkenti pontvaltozas (a bonusz-korrekcio),
-    "ki"/"be" = az automatikus cserek (a pad-jelzo valtozasabol - a zaraskor
-    az FPL atirja a position mezot, merve). None, ha nincs mibol
-    szamolni (nincs tarolt pillanatkep); ures dict, ha semmi sem valtozott -
-    az is eredmeny: azt jelenti, a zaras nem hozott valtozast."""
-    if not regi:
+def closing_diff(old, new):
+    """The difference between the squads before (stored) and after (fresh)
+    the close.
+    Per team: "pont" = per-player points change (the bonus correction),
+    "ki"/"be" = the automatic substitutions (from the change of the bench
+    flag - at the close the FPL rewrites the position field, measured). None
+    if there is nothing to compute from (no stored snapshot); an empty dict
+    if nothing changed - that is a result too: it means the close brought no
+    change."""
+    if not old:
         return None
-    ki = {}
-    for lid, friss in uj.items():
-        volt = regi.get(lid)
-        if not volt:
+    out = {}
+    for lid, fresh in new.items():
+        before = old.get(lid)
+        if not before:
             continue
-        vp = {x["e"]: x for x in volt}
-        pont = [{"e": x["e"], "elott": vp[x["e"]]["pts"], "utan": x["pts"]}
-                for x in friss if x["e"] in vp and vp[x["e"]]["pts"] != x["pts"]]
-        # a cserenel a PONT is kell: a bekerult jatekos pontja mondja meg,
-        # mit hozott a csere (a kikerulte pedig, miert tortent)
-        csere_ki = [{"e": x["e"], "pts": x["pts"]} for x in friss
-                    if x["b"] and x["e"] in vp and not vp[x["e"]]["b"]]
-        csere_be = [{"e": x["e"], "pts": x["pts"]} for x in friss
-                    if not x["b"] and x["e"] in vp and vp[x["e"]]["b"]]
-        if pont or csere_ki or csere_be:
-            ki[lid] = {}
-            if pont:
-                ki[lid]["pont"] = pont
-            if csere_ki or csere_be:
-                ki[lid]["ki"], ki[lid]["be"] = csere_ki, csere_be
-    return ki
+        by_element = {x["e"]: x for x in before}
+        points = [{"e": x["e"], "elott": by_element[x["e"]]["pts"], "utan": x["pts"]}
+                  for x in fresh
+                  if x["e"] in by_element and by_element[x["e"]]["pts"] != x["pts"]]
+        # a substitution needs the POINTS too: the incoming player's points
+        # tell what the substitution brought (and the outgoing one's, why it
+        # happened)
+        sub_out = [{"e": x["e"], "pts": x["pts"]} for x in fresh
+                   if x["b"] and x["e"] in by_element and not by_element[x["e"]]["b"]]
+        sub_in = [{"e": x["e"], "pts": x["pts"]} for x in fresh
+                  if not x["b"] and x["e"] in by_element and by_element[x["e"]]["b"]]
+        if points or sub_out or sub_in:
+            out[lid] = {}
+            if points:
+                out[lid]["pont"] = points
+            if sub_out or sub_in:
+                out[lid]["ki"], out[lid]["be"] = sub_out, sub_in
+    return out
 
 
-def jatekos_pont(v):
-    """Egy jatekos fordulo-pontja a live valaszbol: (pont, bontasbol_jott).
+def player_points(v):
+    """One player's round points from the live answer: (points, from_breakdown).
 
-    A PONT A TETELES BONTASBOL (explain) ALL OSSZE, nem a stats
-    osszesitojebol - UGYANAZ A SZABALY, mint az oldalon (pl/index.html,
-    fetchLivePts). A ket helyen ugyanannak a szamnak kell kijonnie: amit a
-    latogato lat, azt kell archivalni is.
+    THE POINTS ARE SUMMED FROM THE ITEMISED BREAKDOWN (explain), not from the
+    stats total - THE SAME RULE as on the page (pl/index.html,
+    fetchLivePts). Both places must come to the same number: what the
+    visitor sees is what has to be archived.
 
-    MIERT (GW2): az FPL a stats.total_points-ot es az explain
-    esemenylistat KULON tartja, es az osszesito beragadt - egy jatekosnal a
-    sor 1 pontot mutatott, a bontasa viszont 90 percet es golt, osszesen
-    8-at. Ugyanez az ellentmondas a HIVATALOS FPL-appban is latszott, tehat
-    a forras hibaja. A bontas a hiteles: az konkret esemenyekbol all ossze.
+    WHY: the FPL keeps stats.total_points and the explain event list
+    SEPARATELY, and the total can get stuck - for one player the row showed
+    1 point while its breakdown had 90 minutes and a goal, 8 in all. The
+    same contradiction showed in the OFFICIAL FPL app as well, so it is a
+    fault of the source. The breakdown is the authoritative one: it adds up
+    from concrete events.
 
-    MIERT FONTOS ITT IS: a lezart fordulot a gyujto SOHA TOBBE nem keri le
-    (veglegesek), es az oldal onnantol a MENTETT szamot mutatja. Ami a
-    lezaraskor bekerult, az orokre bent marad - az FPL a regi fordulot nem
-    adja vissza.
+    WHY IT MATTERS HERE TOO: a closed round is NEVER fetched again by the
+    collector (veglegesek), and from then on the page shows the SAVED
+    number. Whatever went in at closing stays in forever - the FPL does not
+    give back an old round.
 
-    VISSZAESES: ha az explain ures (a jatekos nem lepett palyara) vagy az
-    FPL atalakitja a szerkezetet, egyetlen sort sem talalunk, es a
-    stats.total_points marad. Egy API-valtozas igy a REGI viselkedest adja
-    vissza, nem nullakat."""
+    FALLBACK: if explain is empty (the player did not come on) or the FPL
+    changes the structure, not a single row is found, and
+    stats.total_points remains. An API change thus gives back the OLD
+    behaviour, not zeros."""
     stats = (v or {}).get("stats") or {}
-    ossz, van = 0, False
+    total, found = 0, False
     for fx in (v or {}).get("explain") or []:
-        # a Draft alakja: [[stat-lista, meccs_id], ...] - dupla fordulonal
-        # ket elem, ezert osszeadjuk
+        # the Draft shape: [[stat list, match_id], ...] - in a double round
+        # there are two elements, so they are added up
         for t in (fx[0] if isinstance(fx, (list, tuple)) and fx else None) or []:
             if isinstance(t, dict):
-                van = True
-                ossz += t.get("points") or 0
-    return (ossz, True) if van else (stats.get("total_points") or 0, False)
+                found = True
+                total += t.get("points") or 0
+    return (total, True) if found else (stats.get("total_points") or 0, False)
 
 
-# A Draft ervenyes felallasai: pontosan 1 kapus, legalabb 3 vedo, legalabb 1
-# csatar. Az automatikus csere csak akkor mehet vegbe, ha a csere UTAN is
-# ervenyes a felallas - ezert valthatja a kapust csak kapus (ket kapus nem
-# ervenyes), es ezert nem all be egy pados, ha a felallas emiatt szetesne.
+# The valid Draft formations: exactly 1 goalkeeper, at least 3 defenders, at
+# least 1 forward. An automatic substitution can happen only if the
+# formation is still valid AFTER it - so only a goalkeeper can replace the
+# goalkeeper (two goalkeepers is not valid), and a bench player does not
+# come on if the formation would fall apart because of it.
 #
-# A KOZEPPALYAS MINIMUM 2, nem 3 - EZ A SOR A KERDESES. Az FPL sajat
-# megfogalmazasa (1 kapus, legalabb 3 vedo, legalabb 1 csatar) 5 vedovel es
-# 3 csatarral eppen 2 kozeppalyast hagy, vagyis az 5-2-3 ervenyes. A tarolt
-# 20 valos felallasban a legkevesebb 3 volt, de az 5-2-3 amugy is ritka,
-# tehat ez NEM bizonyitek. Ha kiderul, hogy a Draftban 3 a minimum, EZ AZ
-# EGY SZAM valtozik (es a gyujto_draftguardiola.py D7 esete fordul meg).
-FORMACIO = {"GKP": (1, 1), "DEF": (3, 5), "MID": (2, 5), "FWD": (1, 3)}
+# THE MIDFIELD MINIMUM IS 2, not 3 - THIS IS THE QUESTIONABLE LINE. The FPL's
+# own wording (1 goalkeeper, at least 3 defenders, at least 1 forward) leaves
+# exactly 2 midfielders with 5 defenders and 3 forwards, i.e. 5-2-3 is
+# valid. In the 20 real stored formations the lowest was 3, but 5-2-3 is
+# rare anyway, so this is NOT proof. If it turns out that the Draft minimum
+# is 3, THIS ONE NUMBER changes (and case D7 of gyujto_draftguardiola.py
+# flips).
+FORMATION = {"GKP": (1, 1), "DEF": (3, 5), "MID": (2, 5), "FWD": (1, 3)}
 
 
-def ervenyes_formacio(posztok):
-    if len(posztok) != 11 or None in posztok:
+def valid_formation(positions):
+    if len(positions) != 11 or None in positions:
         return False
-    for p, (lo, hi) in FORMACIO.items():
-        n = sum(1 for x in posztok if x == p)
+    for p, (lo, hi) in FORMATION.items():
+        n = sum(1 for x in positions if x == p)
         if not (lo <= n <= hi):
             return False
     return True
 
 
-def auto_csere(kezdok, pad, poszt, perc):
-    """Az FPL fordulo-vegi automatikus cserei: a palyara sem lepett kezdo
-    helyere beall az elso olyan pados, aki jatszott ES a felallitas utana is
-    ervenyes. A pad SORRENDJE szamit - azt az FPL-tol kapjuk (picks 12-15),
-    es soha nem rendezzuk at.
+def auto_substitute(starters, bench, position, minutes):
+    """The FPL's end-of-round automatic substitutions: in place of a starter
+    who did not come on, the first bench player who played AND keeps the
+    formation valid comes on. The ORDER of the bench matters - it comes from
+    the FPL (picks 12-15), and it is never reordered.
 
-    MIERT KELL A GUARDIOLA MUTATOHOZ: a valodi eredmenyben a cserek benne
-    vannak (a tarolt keret mar a zaras utani allapot). Ha az alternativat
-    csere nelkul szamolnank, a mult heti keretet ALULMERNENK, es a mutato
-    szisztematikusan a valtoztatas javara torzulna."""
-    kezdok, pad = list(kezdok), list(pad)
-    for i, e in enumerate(kezdok):
-        if perc.get(str(e), 0) > 0:
+    WHY THE GUARDIOLA MEASURE NEEDS IT: the real result has the
+    substitutions in it (the stored squad is already the post-close state).
+    If the alternative were computed without substitutions, last week's
+    squad would be UNDERRATED, and the measure would be systematically
+    skewed in favour of the change."""
+    starters, bench = list(starters), list(bench)
+    for i, e in enumerate(starters):
+        if minutes.get(str(e), 0) > 0:
             continue
-        for j, b in enumerate(pad):
-            if perc.get(str(b), 0) <= 0:
+        for j, b in enumerate(bench):
+            if minutes.get(str(b), 0) <= 0:
                 continue
-            proba = list(kezdok)
-            proba[i] = b
-            if ervenyes_formacio([poszt.get(str(x)) for x in proba]):
-                kezdok[i], pad[j] = b, e
+            trial = list(starters)
+            trial[i] = b
+            if valid_formation([position.get(str(x)) for x in trial]):
+                starters[i], bench[j] = b, e
                 break
-    return kezdok
+    return starters
 
 
-def keret_vegso(keret, pontok, poszt):
-    """Akik a fordulo vegen TENYLEG szamitanak (automatikus cserekkel).
+def final_lineup(squad, points, position):
+    """Who REALLY counts at the end of the round (with automatic
+    substitutions).
 
-    Kulon fuggveny, mert nem csak az osszeg kell: a "Valtoztatasok" ful
-    JATEKOSONKENT vezeti le a mutatot, ahhoz pedig tudni kell, ki szamitott
-    bele es ki nem. Egy keretben egy jatekos erteke = a pontja, ha benne van
-    ebben a listaban, kulonben 0 - es ezek osszege pontosan a keret_pont."""
-    kezdok = [x.get("e") for x in keret if not x.get("b")]
-    pad = [x.get("e") for x in keret if x.get("b")]
-    perc = {k: v[1] for k, v in pontok.items()}
-    return auto_csere(kezdok, pad, poszt, perc)
-
-
-def keret_pont(keret, pontok, poszt):
-    """Egy Draft-keret fordulo-pontja: a kezdok pontja, automatikus
-    cserekkel. A `keret` a tarolt alak: [{e, b, pts}, ...] - a `b` a padot
-    jelzi, a lista sorrendje az FPL sajat sorrendje."""
-    return round(sum((pontok.get(str(e)) or [0, 0])[0]
-                     for e in keret_vegso(keret, pontok, poszt)), 2)
+    A separate function, because not only the sum is needed: the
+    "Valtoztatasok" (changes) tab derives the measure PLAYER BY PLAYER, and
+    for that it has to be known who counted in it and who did not. Within a
+    squad a player's value = their points if they are in this list, else 0
+    - and the sum of these is exactly squad_points."""
+    starters = [x.get("e") for x in squad if not x.get("b")]
+    bench = [x.get("e") for x in squad if x.get("b")]
+    minutes = {k: v[1] for k, v in points.items()}
+    return auto_substitute(starters, bench, position, minutes)
 
 
-def draft_guardiola(hist_rounds, gw, pontok_gw, poszt):
-    """A "Guardiola mutato" egy fordulora: {liga_id: {teny, alt, guard}}.
+def squad_points(squad, points, position):
+    """The round points of a Draft squad: the starters' points, with
+    automatic substitutions. `squad` is the stored shape: [{e, b, pts}, ...]
+    - `b` marks the bench, the list order is the FPL's own order."""
+    return round(sum((points.get(str(e)) or [0, 0])[0]
+                     for e in final_lineup(squad, points, position)), 2)
 
-    guard = a MOSTANI keret pontja - a MULT HETI kerete UGYANEBBEN a
-    forduloban. Ugyanaz a definicio, mint az NB1-en (collect.py guardiola).
 
-    MINDKET oldal UGYANAZON a fuggvenyen (keret_pont) megy at, tehat a
-    valtozatlan keret pontosan 0-t ad - a cserelogika sem csuszhat el a ket
-    oldal kozott."""
-    elozo = hist_rounds.get(str(gw - 1)) or {}
-    mostani = hist_rounds.get(str(gw)) or {}
-    if not elozo or not mostani or not pontok_gw:
+def draft_guardiola(hist_rounds, gw, points_gw, position):
+    """The "Guardiola measure" for one round: {league_id: {teny, alt, guard}}.
+
+    guard = the points of the CURRENT squad - LAST WEEK's squad IN THE SAME
+    round. The same definition as for the NB1 (collect.py guardiola).
+
+    BOTH sides go through THE SAME function (squad_points), so an unchanged
+    squad gives exactly 0 - the substitution logic cannot drift apart
+    between the two sides either."""
+    previous = hist_rounds.get(str(gw - 1)) or {}
+    current = hist_rounds.get(str(gw)) or {}
+    if not previous or not current or not points_gw:
         return None
-    ki = {}
-    for lid, keret in mostani.items():
-        regi = elozo.get(lid)
-        if not regi or not keret:
+    out = {}
+    for lid, squad in current.items():
+        old = previous.get(lid)
+        if not old or not squad:
             continue
-        teny = keret_pont(keret, pontok_gw, poszt)
-        alt = keret_pont(regi, pontok_gw, poszt)
-        ki[str(lid)] = {"teny": teny, "alt": alt, "guard": round(teny - alt, 2)}
-    return ki or None
+        actual = squad_points(squad, points_gw, position)
+        alt = squad_points(old, points_gw, position)
+        out[str(lid)] = {"teny": actual, "alt": alt, "guard": round(actual - alt, 2)}
+    return out or None
 
 
-def draft_szerep(e, keret):
-    """Amit az EMBER dontott a jatekosrol: kezdo vagy pad.
+def draft_role(e, squad):
+    """What the PERSON decided about the player: starter ('kezdo') or bench
+    ('pad').
 
-    SZANDEKOSAN nem keveredik bele, hogy az automatikus csere utan
-    tenylegesen szamitott-e: az mar a GEP muve (lasd draft_keretvaltozas)."""
-    return "pad" if any(x.get("e") == e and x.get("b") for x in keret) else "kezdo"
+    ON PURPOSE it does not mix in whether the player actually counted after
+    the automatic substitution: that is the MACHINE's work (see
+    draft_squad_changes)."""
+    return "pad" if any(x.get("e") == e and x.get("b") for x in squad) else "kezdo"
 
 
-def draft_keretvaltozas_pont_nelkul(elozo, mostani):
-    """A FOLYO fordulo valtoztatasai a PL-en, pontertek nelkul.
+def draft_squad_changes_without_points(previous, current):
+    """The changes of the RUNNING round on the PL, without point values.
 
-    Csak azt tartalmazza, amit az EMBER dontott (elengedve / megszerezve /
-    kezdo <-> pad). A zarasi automatikus csere ilyenkor meg nem tortent meg,
-    tehat nincs is mit kulon sorba tenni."""
-    ki_ossz = {}
-    for lid, keret in mostani.items():
-        regi = elozo.get(lid)
-        if not regi or not keret:
+    It holds only what the PERSON decided (released / acquired / starter <->
+    bench). The automatic substitution at the close has not happened yet,
+    so there is nothing to put in a separate row."""
+    out_all = {}
+    for lid, squad in current.items():
+        old = previous.get(lid)
+        if not old or not squad:
             continue
-        uj_id = [x.get("e") for x in keret]
-        regi_id = [x.get("e") for x in regi]
-        ki = sorted(({"e": e, "sz": draft_szerep(e, regi)}
-                     for e in regi_id if e not in uj_id), key=lambda x: x["e"])
-        be = sorted(({"e": e, "sz": draft_szerep(e, keret)}
-                     for e in uj_id if e not in regi_id), key=lambda x: x["e"])
-        szer = sorted(({"e": e, "szE": draft_szerep(e, regi),
-                        "szU": draft_szerep(e, keret)}
-                       for e in uj_id
-                       if e in regi_id
-                       and draft_szerep(e, regi) != draft_szerep(e, keret)),
-                      key=lambda x: x["e"])
-        ki_ossz[str(lid)] = {"pontok": False, "guard": None,
-                             "ki": ki, "be": be, "szerep": szer}
-    return ki_ossz or None
+        new_ids = [x.get("e") for x in squad]
+        old_ids = [x.get("e") for x in old]
+        out = sorted(({"e": e, "sz": draft_role(e, old)}
+                      for e in old_ids if e not in new_ids), key=lambda x: x["e"])
+        into = sorted(({"e": e, "sz": draft_role(e, squad)}
+                       for e in new_ids if e not in old_ids), key=lambda x: x["e"])
+        role_changes = sorted(({"e": e, "szE": draft_role(e, old),
+                                "szU": draft_role(e, squad)}
+                               for e in new_ids
+                               if e in old_ids
+                               and draft_role(e, old) != draft_role(e, squad)),
+                              key=lambda x: x["e"])
+        out_all[str(lid)] = {"pontok": False, "guard": None,
+                             "ki": out, "be": into, "szerep": role_changes}
+    return out_all or None
 
 
-def draft_keretvaltozas(hist_rounds, gw, pontok_gw, poszt):
-    """Mit valtoztatott a csapat a fordulora, es mit ert - a "Valtoztatasok"
-    ful adata. Ugyanaz a szerep, mint az NB1-en (collect.py keretvaltozas):
-    LEVEZETI a Guardiola mutatot, es a tetelek osszege PONTOSAN a `guard`.
+def draft_squad_changes(hist_rounds, gw, points_gw, position):
+    """What the team changed for the round, and what it was worth - the data
+    of the "Valtoztatasok" (changes) tab. The same role as for the NB1
+    (collect.py squad_changes): it DERIVES the Guardiola measure, and the
+    sum of the items is EXACTLY the `guard`.
 
-    KETTEVALASZTVA: AMIT AZ EMBER CSINALT, ES AMIT A GEP JAVITOTT RAJTA.
-    A Draftban a fordulo vegen az FPL automatikus cseret hajt vegre - az nem
-    a szakvezeto erdeme vagy hibaja. Ha egyben mutatnank, ugy tunne, hogy
-    valaki jol variált, holott a gep tette helyre a keretet (vagy forditva).
-    Ezert:
-      ember: minden jatekos a MEGNEVEZETT szerepevel szamit - a kezdo a
-             pontjaval, a pados nullaval, akkor is, ha vegul beallt;
-      gep:   a keret tenyleges pontja (auto_csere-vel) MINUSZ a fenti osszeg.
-             Ez pontosan az automatikus csere hozadeka arra a keretre.
-    A ketto osszege a keret pontja, tehat a levezetes maradek nelkul kijon.
+    SPLIT IN TWO: WHAT THE PERSON DID, AND WHAT THE MACHINE FIXED ON IT.
+    In the Draft the FPL performs automatic substitutions at the end of the
+    round - that is not the manager's merit or fault. Shown together, it
+    would look as if someone had rotated well, when the machine put the
+    squad right (or the reverse).
+    So:
+      person:  every player counts with their NAMED role - a starter with
+               their points, a bench player with zero, even if they came on
+               in the end;
+      machine: the squad's actual points (with auto_substitute) MINUS the
+               sum above. This is exactly what the automatic substitution
+               brought for that squad.
+    The two add up to the squad's points, so the derivation comes out with
+    no remainder.
 
-    Magyarszabaly itt nincs, tehat kulon sor sem kell hozza."""
-    elozo = hist_rounds.get(str(gw - 1)) or {}
-    mostani = hist_rounds.get(str(gw)) or {}
-    if not elozo or not mostani:
+    There is no Hungarian rule here, so no separate row is needed for it."""
+    previous = hist_rounds.get(str(gw - 1)) or {}
+    current = hist_rounds.get(str(gw)) or {}
+    if not previous or not current:
         return None
-    if not pontok_gw:
-        # NINCS MEG A FORDULO PONT-ADATA - a valtoztatas viszont mar ismert:
-        # a keret a hatarido utan rogzitett. Ilyenkor pont nelkul adjuk ki
-        # (lasd collect.py keretvaltozas_pont_nelkul). A mutato ettol nem
-        # keszul el korabban.
-        return draft_keretvaltozas_pont_nelkul(elozo, mostani)
-    pont = lambda e: (pontok_gw.get(str(e)) or [0, 0])[0]
+    if not points_gw:
+        # NO POINTS DATA FOR THE ROUND YET - but the change is already known:
+        # the squad is fixed after the deadline. Then it is published
+        # without points (see collect.py squad_changes_without_points). The
+        # measure is not produced earlier because of this.
+        return draft_squad_changes_without_points(previous, current)
+    pts = lambda e: (points_gw.get(str(e)) or [0, 0])[0]
 
-    def ember(keret):
-        """{element: ertek} a MEGNEVEZETT szerepek szerint (pad = 0)."""
-        return {x.get("e"): (0 if x.get("b") else pont(x.get("e"))) for x in keret}
+    def person(squad):
+        """{element: value} by the NAMED roles (bench = 0)."""
+        return {x.get("e"): (0 if x.get("b") else pts(x.get("e"))) for x in squad}
 
-    ki_ossz = {}
-    for lid, keret in mostani.items():
-        regi = elozo.get(lid)
-        if not regi or not keret:
+    out_all = {}
+    for lid, squad in current.items():
+        old = previous.get(lid)
+        if not old or not squad:
             continue
-        eU, eE = ember(keret), ember(regi)
-        teny = keret_pont(keret, pontok_gw, poszt)
-        alt = keret_pont(regi, pontok_gw, poszt)
-        gepU = round(teny - sum(eU.values()), 2)
-        gepE = round(alt - sum(eE.values()), 2)
-        ki = [{"e": e, "sz": draft_szerep(e, regi), "pont": pont(e), "ert": eE[e]}
-              for e in eE if e not in eU]
-        be = [{"e": e, "sz": draft_szerep(e, keret), "pont": pont(e), "ert": eU[e]}
-              for e in eU if e not in eE]
-        szer = []
-        for e in eU:
-            if e not in eE:
+        person_new, person_old = person(squad), person(old)
+        actual = squad_points(squad, points_gw, position)
+        alt = squad_points(old, points_gw, position)
+        machine_new = round(actual - sum(person_new.values()), 2)
+        machine_old = round(alt - sum(person_old.values()), 2)
+        out = [{"e": e, "sz": draft_role(e, old), "pont": pts(e), "ert": person_old[e]}
+               for e in person_old if e not in person_new]
+        into = [{"e": e, "sz": draft_role(e, squad), "pont": pts(e), "ert": person_new[e]}
+                for e in person_new if e not in person_old]
+        role_changes = []
+        for e in person_new:
+            if e not in person_old:
                 continue
-            szE, szU = draft_szerep(e, regi), draft_szerep(e, keret)
-            if szE == szU:
+            role_old, role_new = draft_role(e, old), draft_role(e, squad)
+            if role_old == role_new:
                 continue
-            szer.append({"e": e, "pont": pont(e), "szE": szE, "szU": szU,
-                         "ertE": eE[e], "ertU": eU[e]})
-        guard = round(teny - alt, 2)
-        osszeg = round(sum(x["ert"] for x in be) - sum(x["ert"] for x in ki)
-                       + sum(x["ertU"] - x["ertE"] for x in szer)
-                       + (gepU - gepE), 2)
-        ki.sort(key=lambda x: (-x["ert"], x["e"]))
-        be.sort(key=lambda x: (-x["ert"], x["e"]))
-        szer.sort(key=lambda x: (-(x["ertU"] - x["ertE"]), x["e"]))
-        ki_ossz[str(lid)] = {"guard": guard, "ki": ki, "be": be, "szerep": szer,
-                             "gepE": gepE, "gepU": gepU,
-                             "stimmel": abs(osszeg - guard) < 0.005}
-        if not ki_ossz[str(lid)]["stimmel"]:
-            print("  ! draft_keretvaltozas: %d. fordulo, %s - a tetelek osszege"
-                  " %s, a mutato %s" % (gw, lid, osszeg, guard), file=sys.stderr)
-    return ki_ossz or None
+            role_changes.append({"e": e, "pont": pts(e), "szE": role_old, "szU": role_new,
+                                 "ertE": person_old[e], "ertU": person_new[e]})
+        guard = round(actual - alt, 2)
+        total = round(sum(x["ert"] for x in into) - sum(x["ert"] for x in out)
+                      + sum(x["ertU"] - x["ertE"] for x in role_changes)
+                      + (machine_new - machine_old), 2)
+        out.sort(key=lambda x: (-x["ert"], x["e"]))
+        into.sort(key=lambda x: (-x["ert"], x["e"]))
+        role_changes.sort(key=lambda x: (-(x["ertU"] - x["ertE"]), x["e"]))
+        out_all[str(lid)] = {"guard": guard, "ki": out, "be": into, "szerep": role_changes,
+                             "gepE": machine_old, "gepU": machine_new,
+                             "stimmel": abs(total - guard) < 0.005}
+        if not out_all[str(lid)]["stimmel"]:
+            print("  ! draft_squad_changes: round %d, %s - the items sum to"
+                  " %s, the measure is %s" % (gw, lid, total, guard), file=sys.stderr)
+    return out_all or None
 
 
 def main():
-    print("FPL Draft gyujtes (liga: %s)" % LEAGUE_ID)
+    print("FPL Draft collection (league: %s)" % LEAGUE_ID)
 
-    # ---- 1. Liga-adatok (resztvevok, menetrend, eredmenyek) ----
-    st, data = fetch("league/%s/details" % LEAGUE_ID)
-    if st != 200 or not data:
-        print("  ! details: HTTP %s - a fajlok valtozatlanok." % st, file=sys.stderr)
-        print("   (403/401: a vegpont zarva; 404: rossz liga-azonosito,")
-        print("    allitsd a DRAFT_LEAGUE_ID valtozot.)")
+    # ---- 1. League data (entries, schedule, results) ----
+    status, data = fetch("league/%s/details" % LEAGUE_ID)
+    if status != 200 or not data:
+        print("  ! details: HTTP %s - the files are unchanged." % status, file=sys.stderr)
+        print("   (403/401: the endpoint is closed; 404: wrong league id,")
+        print("    set the DRAFT_LEAGUE_ID variable.)")
         return 0
-    payload, lejatszott = atalakit(data)
+    payload, played = transform_details(data)
     # A 200 with no entries is not a league: writing it would empty the page
     # until the next good run.
     if not payload.get("entries"):
-        print("  ! details: ures resztvevo-lista - a fajlok valtozatlanok.", file=sys.stderr)
+        print("  ! details: empty entry list - the files are unchanged.", file=sys.stderr)
         return 0
-    liga_idk = {e["id"] for e in payload["entries"]}
-    # entry_id -> liga-id lekepezes, CSAK memoriaban
-    entry2liga = {e.get("entry_id"): e.get("id")
-                  for e in data.get("league_entries") or []}
-    print("  liga: %s | resztvevok: %d | lejatszott meccs: %d"
-          % (payload["league"]["name"], len(liga_idk), lejatszott))
-    kiir_ha_valtozott("draft.json", payload)
+    league_ids = {e["id"] for e in payload["entries"]}
+    # entry_id -> league id mapping, ONLY in memory
+    entry_to_league = {e.get("entry_id"): e.get("id")
+                       for e in data.get("league_entries") or []}
+    print("  league: %s | entries: %d | matches played: %d"
+          % (payload["league"]["name"], len(league_ids), played))
+    write_if_changed("draft.json", payload)
 
-    # ---- 2. Jatekos-torzsadat ----
-    st, bs = fetch("bootstrap-static")
+    # ---- 2. Player master data ----
+    status, bs = fetch("bootstrap-static")
     players = {}
-    if st == 200 and bs:
-        klub = {t.get("id"): (t.get("short_name") or t.get("name") or "")
+    if status == 200 and bs:
+        club = {t.get("id"): (t.get("short_name") or t.get("name") or "")
                 for t in bs.get("teams") or []}
-        poszt = {t.get("id"): (t.get("singular_name_short") or "")
-                 for t in bs.get("element_types") or []}
+        position = {t.get("id"): (t.get("singular_name_short") or "")
+                    for t in bs.get("element_types") or []}
         for el in bs.get("elements") or []:
             players[str(el.get("id"))] = {
                 "n": el.get("web_name") or "",
-                "t": klub.get(el.get("team"), ""),
-                "p": poszt.get(el.get("element_type"), ""),
-                # a szezonpont a fooldali jatekoslistahoz kell (csokkeno
-                # pontsorrend + kereses). A bootstrap-static amugy is
-                # lejon minden korben, tehat ez NEM plusz keres.
+                "t": club.get(el.get("team"), ""),
+                "p": position.get(el.get("element_type"), ""),
+                # the season points are needed for the home page player list
+                # (descending points order + search). bootstrap-static comes
+                # down on every run anyway, so this is NOT an extra request.
                 "pts": el.get("total_points") or 0,
             }
-        # a "teams" (csapat-id -> rovidnev) az elo fixtures-valasz
-        # csapat-azonositoinak feloldasahoz kell a bongeszoben
-        # (jatszott mar? jelzes: a meccse elkezdodott-e)
+        # "teams" (team id -> short name) is needed in the browser to resolve
+        # the team ids of the live fixtures answer
+        # (the "has played?" flag: has their match started)
         if players:
-            kiir_ha_valtozott("draft_players.json",
-                              {"updated": None, "players": players,
-                               "teams": {str(k): v for k, v in klub.items()}})
-            print("  jatekos-torzs: %d jatekos, %d csapat" % (len(players), len(klub)))
+            write_if_changed("draft_players.json",
+                             {"updated": None, "players": players,
+                              "teams": {str(k): v for k, v in club.items()}})
+            print("  player master data: %d players, %d teams" % (len(players), len(club)))
         else:
             # an empty 200 must not overwrite the stored player list
-            print("  ! bootstrap-static: ures jatekoslista - a torzsadat valtozatlan",
+            print("  ! bootstrap-static: empty player list - master data unchanged",
                   file=sys.stderr)
     else:
-        print("  ! bootstrap-static: HTTP %s - a torzsadat valtozatlan" % st,
+        print("  ! bootstrap-static: HTTP %s - master data unchanged" % status,
               file=sys.stderr)
 
-    # ---- 3. Jelenlegi keretek (tulajdonlas) ----
-    st, es = fetch("league/%s/element-status" % LEAGUE_ID)
-    if st == 200 and es:
+    # ---- 3. Current squads (ownership) ----
+    status, es = fetch("league/%s/element-status" % LEAGUE_ID)
+    if status == 200 and es:
         squads = {}
-        ismeretlen = set()
+        unknown = set()
         for x in es.get("element_status") or []:
             owner = x.get("owner")
             if owner is None:
                 continue
-            # az owner azonosito-tere futaskor derul ki
-            if owner in liga_idk:
+            # the owner's id space is found out at run time
+            if owner in league_ids:
                 lid = owner
-            elif owner in entry2liga:
-                lid = entry2liga[owner]
+            elif owner in entry_to_league:
+                lid = entry_to_league[owner]
             else:
-                ismeretlen.add(owner)
+                unknown.add(owner)
                 continue
             squads.setdefault(str(lid), []).append(x.get("element"))
         for lid in squads:
             squads[lid].sort()
-        if ismeretlen:
-            print("  ! element-status: %d ismeretlen tulajdonos-azonosito: %s"
-                  % (len(ismeretlen), sorted(ismeretlen)[:5]), file=sys.stderr)
+        if unknown:
+            print("  ! element-status: %d unknown owner ids: %s"
+                  % (len(unknown), sorted(unknown)[:5]), file=sys.stderr)
         if squads:
-            kiir_ha_valtozott("draft_squads.json",
-                              {"updated": None, "squads": squads})
-            print("  jelenlegi keretek: %d csapat, %d birtokolt jatekos"
+            write_if_changed("draft_squads.json",
+                             {"updated": None, "squads": squads})
+            print("  current squads: %d teams, %d owned players"
                   % (len(squads), sum(len(v) for v in squads.values())))
         else:
             # after the draft every team owns players: an empty answer is an
             # API fault, not an empty league
-            print("  ! element-status: ures tulajdonlas - a keretek valtozatlanok",
+            print("  ! element-status: empty ownership - squads unchanged",
                   file=sys.stderr)
     else:
-        print("  ! element-status: HTTP %s" % st, file=sys.stderr)
+        print("  ! element-status: HTTP %s" % status, file=sys.stderr)
 
-    # ---- 4. Fordulonkenti keretek + pontok (a GW1 indulasatol) ----
-    st, game = fetch("game")
-    if st != 200:
+    # ---- 4. Per-round squads + points (from the start of GW1) ----
+    status, game = fetch("game")
+    if status != 200:
         # an outage must not read like the close season in the run log
-        print("  ! game: HTTP %s - a fordulonkenti adat most nem frissul" % st,
+        print("  ! game: HTTP %s - per-round data is not refreshed now" % status,
               file=sys.stderr)
-        print("Kesz.")
+        print("Done.")
         return 0
-    aktualis = (game or {}).get("current_event")
-    if not aktualis:
-        print("  . a szezon meg nem kezdodott el (current_event=%s) - "
-              "fordulonkenti keret meg nincs" % aktualis)
-        print("Kesz.")
+    current = (game or {}).get("current_event")
+    if not current:
+        print("  . the season has not started yet (current_event=%s) - "
+              "no per-round squad yet" % current)
+        print("Done.")
         return 0
 
     hist = read_stored("draft_history.json", {"updated": None, "rounds": {}})
     hist.setdefault("rounds", {})
-    zarasok = read_stored("zarasok.json", {"updated": None, "rounds": {}})
-    zarasok.setdefault("rounds", {})
-    zarasok_elotte = json.dumps(zarasok["rounds"], ensure_ascii=False, sort_keys=True)
+    closings = read_stored("zarasok.json", {"updated": None, "rounds": {}})
+    closings.setdefault("rounds", {})
+    closings_before = json.dumps(closings["rounds"], ensure_ascii=False, sort_keys=True)
 
-    # Celok: az aktualis fordulo (frissul, amig tart), minden hianyzo, ES
-    # minden olyan fordulo, amirol meg NEM tudjuk biztosan, hogy veglegesen
-    # lezarult.
+    # Targets: the current round (refreshed while it runs), every missing
+    # one, AND every round not yet KNOWN for certain to have closed for good.
     #
-    # MIERT: az FPL a fordulo vegen AUTOMATIKUS CSEREKET hajt vegre - a nem
-    # jatszo kezdo helyere beallitja az elso beferot a padrol -, es ilyenkor
-    # ATIRJA a pick "position" mezojet. Merve (naplo/fpl-cserek.txt):
-    # ez a "lockdown"-kor tortenik, egyszerre a tobbivel, 08:03 es 08:23 UTC
-    # kozott; a jelzese a game vegpont "current_event_finished" mezoje.
-    # A gyujto 3 orankent fut, tehat ha a current_event azelott lepne tovabb,
-    # hogy a zaras utan meg egyszer lekertuk volna a fordulot, a keret
-    # VEGLEGESEN a csere elotti allapotban fagyna be (rossz "b" jelzo, rossz
-    # "Kezdok" osszeg). Egyszer ez csak azon mult, hogy a futas hat
-    # perccel a zaras utan esett.
+    # WHY: at the end of a round the FPL performs AUTOMATIC SUBSTITUTIONS -
+    # in place of a starter who did not play it puts in the first bench
+    # player who fits -, and then it REWRITES the pick's "position" field.
+    # Measured (naplo/fpl-cserek.txt): this happens at "lockdown", together
+    # with the rest, between 08:03 and 08:23 UTC; its signal is the game
+    # endpoint's "current_event_finished" field.
+    # The collector runs every 3 hours, so if current_event moved on before
+    # the round had been fetched once more after the close, the squad would
+    # freeze FOR GOOD in its pre-substitution state (wrong "b" flag, wrong
+    # "Kezdok" (starters) total). A run landing shortly after the close is
+    # not something to rely on.
     #
-    # A mar lezartnak ismert fordulokat a hist["veglegesek"] tartja szamon, hogy egy
-    # veglegesitett fordulot ne kerjunk le ujra minden korben.
-    # AZ AKTUALIS FORDULO MINDIG CEL, akkor is, ha mar lezarult. Ez a regi
-    # viselkedes, es nem diszites: amig a current_event nem lep tovabb (egy
-    # hetig), addig az utolagos FPL-korrekciok igy jonnek at. Egy korabbi
-    # valtozat ezt kivette (a lezart fordulot veglegesnek jelolve), amivel a
-    # zaras utani egesz hetet vakon hagyta volna.
-    # A `veglegesek` lista csak azt donti el, hogy a REGI fordulokat kell-e ujra
-    # kerni - lasd lentebb, miert.
-    veglegesek = {int(x) for x in (hist.get("veglegesek") or [])}
-    celok = {int(aktualis)}
-    for gw in range(1, int(aktualis) + 1):
-        megvan = hist["rounds"].get(str(gw)) or {}
-        if len(megvan) < len(liga_idk) or gw not in veglegesek:
-            celok.add(gw)
+    # The rounds already known to be closed are kept in hist["veglegesek"],
+    # so a finalised round is not fetched again on every run.
+    # THE CURRENT ROUND IS ALWAYS A TARGET, even if it has already closed.
+    # This is not decoration: until current_event moves on (a week), later
+    # FPL corrections come through this way. Marking the closed round as
+    # final and dropping it would leave the whole week after the close
+    # blind.
+    # The `veglegesek` list only decides whether the OLD rounds have to be
+    # fetched again - see below why.
+    finals = {int(x) for x in (hist.get("veglegesek") or [])}
+    targets = {int(current)}
+    for gw in range(1, int(current) + 1):
+        stored = hist["rounds"].get(str(gw)) or {}
+        if len(stored) < len(league_ids) or gw not in finals:
+            targets.add(gw)
 
-    most_teljes = {}          # gw -> ebben a futasban minden csapat kerete megjott-e
-    pontok_tar = {}           # gw -> {element: [pont, perc]} a TELJES mezonyre
-    for gw in sorted(celok):
-        st, live = fetch("event/%d/live" % gw)
-        pont, perc, eltero = {}, {}, 0
-        if st == 200 and live:
+    complete_now = {}         # gw -> did every team's squad arrive in this run
+    points_store = {}         # gw -> {element: [points, minutes]} for the WHOLE field
+    for gw in sorted(targets):
+        status, live = fetch("event/%d/live" % gw)
+        pts, minutes, mismatched = {}, {}, 0
+        if status == 200 and live:
             el = live.get("elements")
-            elemek = (list(el.items()) if isinstance(el, dict)
-                      else [(str((v or {}).get("id")), v) for v in el] if isinstance(el, list)
-                      else [])
-            for k, v in elemek:
-                p, van = jatekos_pont(v)
-                if van and p != (((v or {}).get("stats") or {}).get("total_points") or 0):
-                    eltero += 1
-                pont[str(k)] = p
-                # A PERC az automatikus cserekhez kell (0 perc = nem lepett
-                # palyara), a Guardiola mutato alternativajaban.
-                perc[str(k)] = ((v or {}).get("stats") or {}).get("minutes") or 0
-        # UGYANAZ A SZABALY, MINT AZ OLDALON: az elteres nem nema. Ha
-        # rendszeres, a naplobol latszik - es akkor nezzuk meg ujra, melyik
-        # forras romlott el.
-        if eltero:
-            print("  ! %d. fordulo: %d jatekosnal az FPL osszesitoje ELTER a"
-                  " teteles bontas osszegetol - a bontast tartjuk meg"
-                  % (gw, eltero), file=sys.stderr)
-        # D1: ha az elo pontok nem jottek meg, a fordulot KIHAGYJUK. Kulonben
-        # minden jatekos 0 ponttal irodna be, a fordulo "teljesnek" szamitana,
-        # es soha nem kernenk le ujra - a nullak veglegesen bennragadnanak.
-        if not pont:
-            print("  ! %d. fordulo: az elo pontok nem jottek meg (HTTP %s),"
-                  " a fordulot kihagyjuk" % (gw, st), file=sys.stderr)
+            elements = (list(el.items()) if isinstance(el, dict)
+                        else [(str((v or {}).get("id")), v) for v in el] if isinstance(el, list)
+                        else [])
+            for k, v in elements:
+                p, found = player_points(v)
+                if found and p != (((v or {}).get("stats") or {}).get("total_points") or 0):
+                    mismatched += 1
+                pts[str(k)] = p
+                # The MINUTES are needed for the automatic substitutions (0
+                # minutes = did not come on), in the Guardiola measure's
+                # alternative.
+                minutes[str(k)] = ((v or {}).get("stats") or {}).get("minutes") or 0
+        # THE SAME RULE AS ON THE PAGE: the mismatch is not silent. If it is
+        # regular, the log shows it - and then it is time to look again at
+        # which source broke.
+        if mismatched:
+            print("  ! round %d: for %d players the FPL total DIFFERS from the"
+                  " sum of the itemised breakdown - the breakdown is kept"
+                  % (gw, mismatched), file=sys.stderr)
+        # D1: if the live points did not arrive, the round is SKIPPED.
+        # Otherwise every player would be written with 0 points, the round
+        # would count as "complete", and it would never be fetched again -
+        # the zeros would be stuck for good.
+        if not pts:
+            print("  ! round %d: the live points did not arrive (HTTP %s),"
+                  " the round is skipped" % (gw, status), file=sys.stderr)
             continue
-        uj = {}
-        for eid, lid in entry2liga.items():
+        new = {}
+        for eid, lid in entry_to_league.items():
             if lid is None or eid is None:
                 continue
-            st, ev = fetch("entry/%d/event/%d" % (eid, gw))
-            if st != 200 or not isinstance(ev, dict):
-                print("  ! %d. fordulo / %s: HTTP %s" % (gw, lid, st), file=sys.stderr)
+            status, ev = fetch("entry/%d/event/%d" % (eid, gw))
+            if status != 200 or not isinstance(ev, dict):
+                print("  ! round %d / %s: HTTP %s" % (gw, lid, status), file=sys.stderr)
                 continue
             picks = ev.get("picks") or []
-            # D2: ures keretet nem tarolunk el - "teljes" rekordkent szamitana,
-            # es orokre ures maradna ehhez a fordulohoz
+            # D2: an empty squad is not stored - it would count as a
+            # "complete" record, and would stay empty for this round forever
             if not picks:
-                print("  ! %d. fordulo / %s: ures keret, kihagyva" % (gw, lid),
+                print("  ! round %d / %s: empty squad, skipped" % (gw, lid),
                       file=sys.stderr)
                 continue
             if "element" not in picks[0]:
-                print("  ! %d. fordulo: ismeretlen picks-szerkezet, kulcsok: %s"
+                print("  ! round %d: unknown picks structure, keys: %s"
                       % (gw, sorted(picks[0].keys())), file=sys.stderr)
                 continue
-            uj[str(lid)] = [{"e": p.get("element"),
-                             "b": (p.get("position") or 0) > 11,
-                             "pts": pont.get(str(p.get("element")), 0)}
-                            for p in picks]
-        # ZARASI KULONBSEG: pontosan egyszer, a veglegesito futasban
-        # szamoljuk ki - amikor a fordulo MOST kerulne a veglegesek koze.
-        # Ilyenkor a hist meg a zaras ELOTTI pillanatkepet orzi (a legutobbi,
-        # legfeljebb 3 oraval korabbi futasbol), az "uj" pedig a zaras UTANI
-        # allapot: a ketto kulonbsege a lockdown muve (bonusz-korrekcio,
-        # automatikus cserek). Regi pillanatkep nelkul (backfill) nincs mibol
-        # szamolni - olyankor kimarad.
-        veglegesitendo = (gw not in veglegesek and len(uj) == len(liga_idk)
-                          and (gw < int(aktualis)
-                               or (gw == int(aktualis)
-                                   and bool(game.get("current_event_finished")))))
-        if veglegesitendo and str(gw) not in zarasok["rounds"]:
-            valtozas = zarasi_kulonbseg(hist["rounds"].get(str(gw)) or {}, uj)
-            if valtozas is not None:
-                zarasok["rounds"][str(gw)] = valtozas
-                print("  zarasi kulonbseg: GW%d, %d csapat erintett"
-                      % (gw, len(valtozas)))
+            new[str(lid)] = [{"e": p.get("element"),
+                              "b": (p.get("position") or 0) > 11,
+                              "pts": pts.get(str(p.get("element")), 0)}
+                             for p in picks]
+        # CLOSING DIFFERENCE: computed exactly once, in the finalising run -
+        # when the round would NOW join the finals. At that point hist still
+        # keeps the snapshot from BEFORE the close (from the latest run, at
+        # most 3 hours earlier), and "new" is the state AFTER the close: the
+        # difference of the two is the work of the lockdown (bonus
+        # correction, automatic substitutions). Without an old snapshot
+        # (backfill) there is nothing to compute from - then it is left out.
+        to_finalise = (gw not in finals and len(new) == len(league_ids)
+                       and (gw < int(current)
+                            or (gw == int(current)
+                                and bool(game.get("current_event_finished")))))
+        if to_finalise and str(gw) not in closings["rounds"]:
+            diff = closing_diff(hist["rounds"].get(str(gw)) or {}, new)
+            if diff is not None:
+                closings["rounds"][str(gw)] = diff
+                print("  closing difference: GW%d, %d teams affected"
+                      % (gw, len(diff)))
 
-        # EBBEN A FUTASBAN jott-e be minden csapat kerete? A tarolt adatbol
-        # ez nem latszik: a sor alatti osszefesules miatt egy regebbi, teljes
-        # pillanatkep akkor is teljesnek mutatna a fordulot, ha most epp
-        # elhasalt egy lekeres - es akkor a csere elotti allapotot
-        # rogzitenenk veglegesnek.
-        # A TELJES mezony pontja+perce a fordulora. Kell a Guardiola
-        # mutatohoz: a mult heti keretben lehet olyan jatekos, aki mar
-        # SENKINEL sincs - GW1->GW2-ben 11 ilyen volt -, es akkor a pontja
-        # sehol nem lenne meg. Csak azt tesszuk el, aki jatszott vagy pontot
-        # szerzett; a hianyzo [0, 0]-nak szamit.
-        pontok_tar[str(gw)] = {k: [pont[k], perc.get(k, 0)]
-                               for k in pont if pont[k] or perc.get(k)}
-        most_teljes[gw] = (len(uj) == len(liga_idk))
-        if uj:
-            hist["rounds"][str(gw)] = {**(hist["rounds"].get(str(gw)) or {}), **uj}
-            print("  fordulonkenti keret: GW%d, %d/%d csapat"
-                  % (gw, len(uj), len(liga_idk)))
+        # Did EVERY team's squad arrive IN THIS RUN? The stored data does not
+        # show it: because of the merge below an older, complete snapshot
+        # would make the round look complete even if a request failed just
+        # now - and then the pre-substitution state would be recorded as
+        # final.
+        # The points+minutes of the WHOLE field for the round. The Guardiola
+        # measure needs it: last week's squad can hold a player who is now
+        # in NOBODY's squad - GW1->GW2 had 11 such -, and then their points
+        # would be nowhere. Only those who played or scored points are kept;
+        # a missing one counts as [0, 0].
+        points_store[str(gw)] = {k: [pts[k], minutes.get(k, 0)]
+                                 for k in pts if pts[k] or minutes.get(k)}
+        complete_now[gw] = (len(new) == len(league_ids))
+        if new:
+            hist["rounds"][str(gw)] = {**(hist["rounds"].get(str(gw)) or {}), **new}
+            print("  per-round squads: GW%d, %d/%d teams"
+                  % (gw, len(new), len(league_ids)))
 
-    # Egy fordulo VEGLEGES, ha az FPL mar tullepett rajta, vagy ha o az
-    # aktualis, de a game vegpont szerint befejezodott (lockdown megtortent).
-    # Csak akkor jelolheto veglegesnek, ha ebben a futasban minden csapat keretet
-    # sikerult behozni - kulonben egy elhasalt lekeres utan a csere elotti
-    # allapotot rogzitenenk veglegesnek.
-    veg = bool(game.get("current_event_finished")) if isinstance(game, dict) else False
-    for gw in sorted(celok):
-        if not most_teljes.get(gw):
+    # A round is FINAL if the FPL has moved past it, or if it is the current
+    # one but according to the game endpoint it has finished (lockdown done).
+    # It can be marked final only if every team's squad was brought in during
+    # this run - otherwise after a failed request the pre-substitution state
+    # would be recorded as final.
+    finished = bool(game.get("current_event_finished")) if isinstance(game, dict) else False
+    for gw in sorted(targets):
+        if not complete_now.get(gw):
             continue
-        if gw < int(aktualis) or (gw == int(aktualis) and veg):
-            veglegesek.add(gw)
-    if json.dumps(zarasok["rounds"], ensure_ascii=False, sort_keys=True) != zarasok_elotte:
-        zarasok["updated"] = stamp()
-        kiir_ha_valtozott("zarasok.json", zarasok)
+        if gw < int(current) or (gw == int(current) and finished):
+            finals.add(gw)
+    if json.dumps(closings["rounds"], ensure_ascii=False, sort_keys=True) != closings_before:
+        closings["updated"] = stamp()
+        write_if_changed("zarasok.json", closings)
 
-    kiir_ha_valtozott("draft_history.json",
-                      {"updated": None, "rounds": hist["rounds"],
-                       "veglegesek": sorted(veglegesek)})
+    write_if_changed("draft_history.json",
+                     {"updated": None, "rounds": hist["rounds"],
+                      "veglegesek": sorted(finals)})
 
-    # ---- A TELJES mezony fordulonkenti pontja+perce (draft_pontok.json).
-    # Osszefesuljuk a tarolttal: ebben a futasban csak a `celok` fordulait
-    # kertuk le, a tobbi adatat nem szabad eldobni.
-    pontok = read_stored("draft_pontok.json", {}).get("rounds") or {}
-    pontok.update(pontok_tar)
-    kiir_ha_valtozott("draft_pontok.json", {"updated": None, "rounds": pontok})
+    # ---- The per-round points+minutes of the WHOLE field (draft_pontok.json).
+    # Merged with the stored one: this run fetched only the `targets` rounds,
+    # the data of the others must not be thrown away.
+    points = read_stored("draft_pontok.json", {}).get("rounds") or {}
+    points.update(points_store)
+    write_if_changed("draft_pontok.json", {"updated": None, "rounds": points})
 
-    # ---- Guardiola mutato. Ugyanaz a definicio, mint az NB1-en; a
-    # szamitas determinisztikus, ezert minden futasban ujra megy.
-    # A nev SZANDEKOSAN nem `poszt`: az ebben a fuggvenyben mar foglalt
-    # (poszt-tipus -> rovidnev a bootstrap-bol). Ugyanaz a nevutkozes-csapda,
-    # mint a .pos/.ppos-nal.
-    jatekos_poszt = {k: (v or {}).get("p") for k, v in (players or {}).items()}
+    # ---- Guardiola measure. The same definition as for the NB1; the
+    # computation is deterministic, so it reruns on every run.
+    # The name is ON PURPOSE not `position`: that is already taken in this
+    # function (position type -> short name, from bootstrap). The same
+    # name-collision trap as with .pos/.ppos.
+    player_position = {k: (v or {}).get("p") for k, v in (players or {}).items()}
     gua = {}
-    # HA NINCS POSZT-ADAT, NEM SZAMOLUNK. A bootstrap-static elhasalasakor a
-    # `players` ures, es akkor az auto_csere formacio-ellenorzese MINDIG
-    # hamis lenne - egyetlen csere sem menne vegbe, es a mutato csendben
-    # rossz erteket adna. Ilyenkor a korabbi fajl marad ervenyben.
-    if jatekos_poszt:
+    # WITHOUT POSITION DATA, NOTHING IS COMPUTED. When bootstrap-static fails,
+    # `players` is empty, and then the formation check of auto_substitute
+    # would ALWAYS be false - not a single substitution would happen, and the
+    # measure would silently give a wrong value. The earlier file then stays
+    # in force.
+    if player_position:
         for gw_ in sorted(int(x) for x in hist["rounds"]):
-            g_ = draft_guardiola(hist["rounds"], gw_, pontok.get(str(gw_)), jatekos_poszt)
+            g_ = draft_guardiola(hist["rounds"], gw_, points.get(str(gw_)), player_position)
             if g_:
                 gua[str(gw_)] = g_
     else:
-        print("  ! nincs jatekos-poszt adat, a Guardiola mutato valtozatlan",
+        print("  ! no player position data, the Guardiola measure is unchanged",
               file=sys.stderr)
     try:
         with open("draft_guardiola.json", encoding="utf-8") as f:
-            gua_regi = json.load(f).get("rounds")
+            gua_old = json.load(f).get("rounds")
     except Exception:
-        gua_regi = None
+        gua_old = None
     if gua and json.dumps(gua, ensure_ascii=False, sort_keys=True) != \
-       json.dumps(gua_regi, ensure_ascii=False, sort_keys=True):
-        kiir_ha_valtozott("draft_guardiola.json", {"updated": stamp(), "rounds": gua})
-        print("  draft_guardiola.json frissitve (%d fordulo)" % len(gua))
+       json.dumps(gua_old, ensure_ascii=False, sort_keys=True):
+        write_if_changed("draft_guardiola.json", {"updated": stamp(), "rounds": gua})
+        print("  draft_guardiola.json updated (%d rounds)" % len(gua))
 
-    # ---- Keretvaltozasok ("Valtoztatasok" ful). Ugyanabbol a korbol, mint a
-    # mutato - a ful eppen azt vezeti le, tehat egyutt kell mozdulniuk.
-    # A jatekos NEVET nem taroljuk: a lap a draft_players.json-bol amugy is
-    # feloldja (a mezony teljes, a tavozo jatekos is benne marad) - az NB1-en
-    # ez azert mas, mert ott a jatekostorzs csak a MOSTANI mezonyt adja.
-    kvalt = {}
-    if jatekos_poszt:
+    # ---- Squad changes (the "Valtoztatasok" tab). From the same loop as the
+    # measure - the tab derives exactly that, so they have to move together.
+    # The player NAME is not stored: the page resolves it from
+    # draft_players.json anyway (the field is complete, a departed player
+    # stays in it) - on the NB1 this differs because there the player roster
+    # gives only the CURRENT field.
+    changes = {}
+    if player_position:
         for gw_ in sorted(int(x) for x in hist["rounds"]):
-            k_ = draft_keretvaltozas(hist["rounds"], gw_, pontok.get(str(gw_)),
-                                     jatekos_poszt)
+            k_ = draft_squad_changes(hist["rounds"], gw_, points.get(str(gw_)),
+                                     player_position)
             if k_:
-                kvalt[str(gw_)] = k_
+                changes[str(gw_)] = k_
     try:
         with open("draft_keretvaltozasok.json", encoding="utf-8") as f:
-            kvalt_regi = json.load(f).get("rounds")
+            changes_old = json.load(f).get("rounds")
     except Exception:
-        kvalt_regi = None
-    if kvalt and json.dumps(kvalt, ensure_ascii=False, sort_keys=True) != \
-       json.dumps(kvalt_regi, ensure_ascii=False, sort_keys=True):
-        kiir_ha_valtozott("draft_keretvaltozasok.json",
-                          {"updated": stamp(), "rounds": kvalt})
-        print("  draft_keretvaltozasok.json frissitve (%d fordulo)" % len(kvalt))
+        changes_old = None
+    if changes and json.dumps(changes, ensure_ascii=False, sort_keys=True) != \
+       json.dumps(changes_old, ensure_ascii=False, sort_keys=True):
+        write_if_changed("draft_keretvaltozasok.json",
+                         {"updated": stamp(), "rounds": changes})
+        print("  draft_keretvaltozasok.json updated (%d rounds)" % len(changes))
 
-    print("Kesz.")
+    print("Done.")
     return 0
 
 

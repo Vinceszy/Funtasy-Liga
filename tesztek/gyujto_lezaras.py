@@ -108,7 +108,7 @@ def futtat(status, bukjon_e, cimke, nogame_nevek=(), mlsz=None, akt=AKT, meccs_f
                               meccs_fordulo=meccs_fordulo)
         return 404, None
     c.api_get = mock
-    c.ellenorzendo = lambda regi, db=4: []
+    c.rounds_to_recheck = lambda regi, db=4: []
     print("\n--- " + cimke + " ---")
     c.main()
     return json.load(open("results.json"))["provisional"]

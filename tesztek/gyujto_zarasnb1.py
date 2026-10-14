@@ -40,27 +40,27 @@ MA = "2026-08-25"
 
 # --- lement meccs utani valtozas: ez a hir ---
 t = {}
-db = c.zaras_valtozas({"Katyul": [j("A", 5.0)]}, {"Katyul": [j("A", 6.0)]}, t, MA)
+db = c.closing_changes({"Katyul": [j("A", 5.0)]}, {"Katyul": [j("A", 6.0)]}, t, MA)
 allit(db == 1 and sorok(t) == [{"n": "A", "cp": 1, "pos": "MF", "tm": "MTK",
                                 "elott": 5.0, "utan": 6.0, "d": MA}],
       "lement meccs utan valtozott pont bekerul (%s)" % t)
 
 # --- meccs KOZBEN nem hir: a pont meg ketyeg ---
 t = {}
-db = c.zaras_valtozas({"Katyul": [j("A", 5.0, vege=False)]},
+db = c.closing_changes({"Katyul": [j("A", 5.0, vege=False)]},
                       {"Katyul": [j("A", 6.0, vege=False)]}, t, MA)
 allit(db == 0 and t == {}, "meccs kozbeni valtozas NEM kerul be (a pont meg ketyeg)")
 
 # --- valtozatlan pont nem hir ---
 t = {}
-allit(c.zaras_valtozas({"Katyul": [j("A", 5.0)]}, {"Katyul": [j("A", 5.0)]}, t, MA) == 0
+allit(c.closing_changes({"Katyul": [j("A", 5.0)]}, {"Katyul": [j("A", 5.0)]}, t, MA) == 0
       and t == {}, "valtozatlan pontra nem keletkezik bejegyzes")
 
 # --- a KAPITANYI duplazast visszaszamoljuk: ugyanaz a valtozas ---
 # regi: kezdo 5,0 -> uj: kapitany 12,0 (alappont 6,0). A valtozas 5 -> 6,
 # NEM 5 -> 12: a jatekos sajat pontja valtozott, nem a szerepe miatti szorzo.
 t = {}
-c.zaras_valtozas({"Katyul": [j("A", 5.0)]}, {"Katyul": [j("A", 12.0, cap=True)]}, t, MA)
+c.closing_changes({"Katyul": [j("A", 5.0)]}, {"Katyul": [j("A", 12.0, cap=True)]}, t, MA)
 s = sorok(t)
 allit(s and s[0]["elott"] == 5.0 and s[0]["utan"] == 6.0,
       "a kapitanyi duplazas vissza van szamolva (%s)" % (s[0] if s else None))
@@ -68,7 +68,7 @@ allit(s and s[0]["elott"] == 5.0 and s[0]["utan"] == 6.0,
 # --- a PAD felezeset is, negyedre kerekitve ---
 # 0,38 pados ertek = 0,75 alappont (az API a felezes utan ket tizedesre kerekit)
 t = {}
-c.zaras_valtozas({"Katyul": [j("A", 0.38, sub=True)]},
+c.closing_changes({"Katyul": [j("A", 0.38, sub=True)]},
                  {"Katyul": [j("A", 0.5, sub=True)]}, t, MA)
 s = sorok(t)
 allit(s and s[0]["elott"] == 0.75 and s[0]["utan"] == 1.0,
@@ -78,7 +78,7 @@ allit(s and s[0]["elott"] == 0.75 and s[0]["utan"] == 1.0,
 # A PL-panellel egyezoen szakvezeto szerint csoportositunk: akinel ott volt a
 # jatekos, annak a blokkjaban latnia kell a valtozast.
 t = {}
-db = c.zaras_valtozas({"Katyul": [j("A", 5.0)], "Bazsa": [j("A", 5.0)], "Csendi": [j("A", 5.0)]},
+db = c.closing_changes({"Katyul": [j("A", 5.0)], "Bazsa": [j("A", 5.0)], "Csendi": [j("A", 5.0)]},
                       {"Katyul": [j("A", 6.0)], "Bazsa": [j("A", 6.0)], "Csendi": [j("A", 6.0)]},
                       t, MA)
 allit(db == 3 and sorted(t) == ["Bazsa", "Csendi", "Katyul"]
@@ -86,25 +86,25 @@ allit(db == 3 and sorted(t) == ["Bazsa", "Csendi", "Katyul"]
       "ugyanaz a valtozas mindharom szakvezetonel megjelenik (%s)" % sorted(t))
 
 # --- ugyanaz a futas ketszer: a dedup nem duplaz ---
-c.zaras_valtozas({"Katyul": [j("A", 5.0)]}, {"Katyul": [j("A", 6.0)]}, t, MA)
+c.closing_changes({"Katyul": [j("A", 5.0)]}, {"Katyul": [j("A", 6.0)]}, t, MA)
 allit(len(sorok(t)) == 1, "ugyanaz az igazitas nem kerul be ketszer (%s)" % sorok(t))
 
 # --- de a KESOBBI, ujabb igazitas nem veszhet el ---
-c.zaras_valtozas({"Katyul": [j("A", 6.0)]}, {"Katyul": [j("A", 5.5)]}, t, "2026-08-26")
+c.closing_changes({"Katyul": [j("A", 6.0)]}, {"Katyul": [j("A", 5.5)]}, t, "2026-08-26")
 s = sorok(t)
 allit(len(s) == 2 and s[1]["elott"] == 6.0 and s[1]["utan"] == 5.5,
       "a kesobbi ujabb igazitas is bekerul, nem nyeli el a dedup (%s)" % s)
 
 # --- hianyzo adat nem ertelmezheto valtozaskent ---
 t = {}
-c.zaras_valtozas({"Katyul": [j("A", None)]}, {"Katyul": [j("A", 6.0)]}, t, MA)
-c.zaras_valtozas({"Katyul": [j("A", 5.0)]},
+c.closing_changes({"Katyul": [j("A", None)]}, {"Katyul": [j("A", 6.0)]}, t, MA)
+c.closing_changes({"Katyul": [j("A", 5.0)]},
                  {"Katyul": [{"name": "A", "id": 1, "vege": True}]}, t, MA)
 allit(t == {}, "hianyzo pont egyik iranyban sem szamit valtozasnak")
 
 # --- akit kicsereltek: nincs par, nincs bejegyzes ---
 t = {}
-c.zaras_valtozas({"Katyul": [j("A", 5.0, cp=1)]}, {"Katyul": [j("B", 9.0, cp=2)]}, t, MA)
+c.closing_changes({"Katyul": [j("A", 5.0, cp=1)]}, {"Katyul": [j("B", 9.0, cp=2)]}, t, MA)
 allit(t == {}, "aki mar nincs a keretben, arrol nem talalunk ki valtozast")
 
 if hibak:

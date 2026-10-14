@@ -52,17 +52,17 @@ jobs:
           git config user.name  "funtasy-archiver"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          # a 'draft*.json' glob csak a letezo fajlokat fogja - a felsorolassal
-          # az volt a baj, hogy egyetlen meg nem letezo fajl az EGESZ add-ot
-          # ervenytelenitette, es a hibat a /dev/null elnyelte
+          # the 'draft*.json' glob matches only the files that exist - with an
+          # explicit list, a single file that did not exist yet invalidated
+          # the WHOLE add, and /dev/null swallowed the error
           git add -A -- 'draft*.json' zarasok.json
           if git diff --cached --quiet; then
-            echo "Nincs valtozas."
+            echo "No change."
           else
             git commit -m "Draft-adat frissites ($(date -u +'%Y-%m-%d %H:%M') UTC)"
-            # push-utkozeskor rebase + ujraprobalkozas - az archive.yml
-            # vedtelen push-a 2026-08-25-en egy teljes futas eredmenyet
-            # eldobta, ugyanaz itt is megtortenhetett volna
+            # on a push conflict: rebase + retry - an unguarded push throws
+            # away the result of a whole run when another workflow has
+            # written to main in the meantime
             for i in 1 2 3; do
               git push origin HEAD:${GITHUB_REF_NAME} && exit 0
               git pull --rebase origin ${GITHUB_REF_NAME}

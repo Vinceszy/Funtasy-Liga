@@ -46,11 +46,11 @@ def keret(ids, **kw):
 
 ALAP = list(range(1, 16))
 NYERS = {str(x): 5 for x in range(1, 30)}
-c.nyers_pontok = lambda r: NYERS
+c.raw_points = lambda r: NYERS
 
 
 def egy(regi, most, r=2):
-    return (c.keretvaltozas({"1": {"A": regi}, "2": {"A": most}}, r) or {}).get("A")
+    return (c.squad_changes({"1": {"A": regi}, "2": {"A": most}}, r) or {}).get("A")
 
 
 print("--- K1-K2: eladott a mult heti, megvett a mostani szerepevel ---")
@@ -94,7 +94,7 @@ print("\n--- K5: A TETELEK OSSZEGE = a Guardiola mutato ---")
 
 def ellenoriz(regi, most, cimke):
     hist = {"1": {"A": regi}, "2": {"A": most}}
-    v = (c.keretvaltozas(hist, 2) or {}).get("A")
+    v = (c.squad_changes(hist, 2) or {}).get("A")
     g = (c.guardiola(hist, 2) or {}).get("A")
     ossz = round(sum(x["ert"] for x in v["be"]) - sum(x["ert"] for x in v["ki"])
                  + sum(x["ertU"] - x["ertE"] for x in v["szerep"]) + v["bonusz"], 2)
@@ -135,15 +135,15 @@ NYERS.update({str(x): 5 for x in range(1, 30)})
 v = egy(keret(ALAP), keret(ALAP))
 allit(v and not v["ki"] and not v["be"] and not v["szerep"] and v["guard"] == 0,
       "K6: valtozatlan keretnel nincs tetel es a mutato 0 - kapott: %s" % (v,))
-allit(c.keretvaltozas({"1": {"A": keret(ALAP)}}, 1) is None,
+allit(c.squad_changes({"1": {"A": keret(ALAP)}}, 1) is None,
       "K7: az elso fordulora nincs adat")
 print("\n--- K8: bontas nelkul is kijon a valtoztatas, pont nelkul ---")
-c.nyers_pontok = lambda r: None
+c.raw_points = lambda r: None
 regi8 = keret(ALAP)
 regi8[0]["cap"] = True
 most8 = keret([21] + ALAP[1:])
 most8[1]["sub"] = True                     # kezdobol pados
-v8 = (c.keretvaltozas({"1": {"A": regi8}, "2": {"A": most8}}, 2) or {}).get("A")
+v8 = (c.squad_changes({"1": {"A": regi8}, "2": {"A": most8}}, 2) or {}).get("A")
 allit(v8 and v8["pontok"] is False and v8["guard"] is None,
       "K8: pont nelkuli alak (pontok=False, guard=None) - kapott: %s"
       % ((v8 and (v8["pontok"], v8["guard"])),))

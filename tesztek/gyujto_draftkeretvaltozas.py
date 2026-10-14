@@ -56,7 +56,7 @@ def pontok(alap=5, perc=90, **kiv):
 
 
 def egy(regi, most, p, gw=2):
-    return (c.draft_keretvaltozas({"1": {"L": regi}, "2": {"L": most}}, gw, p, POSZT)
+    return (c.draft_squad_changes({"1": {"L": regi}, "2": {"L": most}}, gw, p, POSZT)
             or {}).get("L")
 
 
@@ -106,7 +106,7 @@ print("\n--- P5: EMBER + GEP = a Guardiola mutato ---")
 
 def ellenoriz(regi, most, p, cimke):
     hist = {"1": {"L": regi}, "2": {"L": most}}
-    v = (c.draft_keretvaltozas(hist, 2, p, POSZT) or {}).get("L")
+    v = (c.draft_squad_changes(hist, 2, p, POSZT) or {}).get("L")
     g = (c.draft_guardiola(hist, 2, p, POSZT) or {}).get("L")
     ember = round(sum(x["ert"] for x in v["be"]) - sum(x["ert"] for x in v["ki"])
                   + sum(x["ertU"] - x["ertE"] for x in v["szerep"]), 2)
@@ -134,11 +134,11 @@ print("\n--- P6-P7: hatarhelyzetek ---")
 v = egy(keret(KEZDO, PAD), keret(KEZDO, PAD), pontok())
 allit(v and not v["ki"] and not v["be"] and not v["szerep"] and v["guard"] == 0,
       "P6: valtozatlan keretnel nincs tetel es a mutato 0 - kapott: %s" % (v,))
-allit(c.draft_keretvaltozas({"1": {"L": keret(KEZDO, PAD)}}, 1, pontok(), POSZT) is None,
+allit(c.draft_squad_changes({"1": {"L": keret(KEZDO, PAD)}}, 1, pontok(), POSZT) is None,
       "P7: az elso fordulora nincs adat")
 print("\n--- P8: pont-adat nelkul is kijon a valtoztatas ---")
 most8 = keret(KEZDO[:10] + [20], PAD)          # a 11-es helyett a 20-as
-v8 = (c.draft_keretvaltozas({"1": {"L": keret(KEZDO, PAD)}, "2": {"L": most8}},
+v8 = (c.draft_squad_changes({"1": {"L": keret(KEZDO, PAD)}, "2": {"L": most8}},
                             2, None, POSZT) or {}).get("L")
 allit(v8 and v8["pontok"] is False and v8["guard"] is None,
       "P8: pont nelkuli alak - kapott: %s" % ((v8 and (v8["pontok"], v8["guard"])),))

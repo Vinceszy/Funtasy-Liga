@@ -2,23 +2,23 @@ name: Adatok frissítése
 
 on:
   schedule:
-    # MECCSNAPON ORANKENT, egyebkent haromoránként.
+    # HOURLY ON MATCH DAYS, every three hours otherwise.
     #
-    # Mert megmertuk (1-8. fordulo, 47 meccs): az NB1 csutortoktol hetfoig
-    # jatszik - vasarnap 43%, szombat 32%, pentek 17%, hetfo 6%, csutortok 2%
-    # -, keddre es szerdara EGYETLEN meccs sem esett. A kezdesek 14:00 es
-    # 20:00 helyi ido koze esnek, a piaczaras pedig nagyjabol ket oraval az
-    # adott fordulo elso meccse ele.
+    # Measured (rounds 1-8, 47 matches): the NB1 plays Thursday to Monday -
+    # Sunday 43%, Saturday 32%, Friday 17%, Monday 6%, Thursday 2% -, and not
+    # a single match fell on Tuesday or Wednesday. Kick-offs fall between
+    # 14:00 and 20:00 local time, and the market closes roughly two hours
+    # before the round's first match.
     #
-    # Miert szamit: a gyujto a piaczaras pillanataban tud eloszor keretet
-    # kerni (addig a vegpont 403-at ad). A 9. fordulo piaca szombat 12:45-kor
-    # zart, es a kovetkezo utemezett futas nem jott meg - a 9. fordulo keretei
-    # negy es fel oran at nem kerultek ki.
+    # Why it matters: the collector can first request squads at the moment
+    # the market closes (until then the endpoint answers 403). Round 9's
+    # market closed on Saturday at 12:45, the next scheduled run did not
+    # come, and round 9's squads stayed unpublished for four and a half hours.
     #
-    # Es mert ezt is megmertuk: a GitHub az utemezett inditasok tobb mint
-    # felet ELDOBJA. A '17 */3' napi nyolcat igert, a valosag napi 3-4 volt,
-    # rendszeres 7-9 oras lyukakkal. Az orankenti utemezes sem ad 24 futast -
-    # azt adja, hogy egy eldobott inditas egy orat keruljon, ne harmat.
+    # Also measured: GitHub DROPS more than half of the scheduled starts.
+    # '17 */3' promised eight a day, the reality was 3-4 a day, with regular
+    # gaps of 7-9 hours. An hourly schedule does not give 24 runs either -
+    # it makes a dropped start cost one hour instead of three.
     - cron: '17 * * * 4,5,6,0,1'
     - cron: '17 */3 * * 2,3'
   workflow_dispatch:
@@ -53,15 +53,15 @@ jobs:
           # made the whole `git add` fail, and the error was swallowed - every
           # run would then report "no change" while nothing reached main.
           for f in results.json squads.json squad_history.json meccsek.json hatekonysag.json guardiola.json keretvaltozasok.json jatekosok.json arak.json zarasok_nb1.json keretek bontasok; do
-            if [ -e "$f" ]; then git add -A -- "$f"; else echo "::warning::hianyzik: $f"; fi
+            if [ -e "$f" ]; then git add -A -- "$f"; else echo "::warning::missing: $f"; fi
           done
           if git diff --cached --quiet; then
-            echo "Nincs változás."
+            echo "No change."
           else
             git commit -m "Adatfrissítés ($(date -u +'%Y-%m-%d %H:%M') UTC)"
-            # A push kozben mas workflow is irhat a main-re (naplok, meresek) -
-            # rebase-elve ujraprobalkozunk, ahogy a tobbi workflow is teszi.
-            # E nelkul a futas minden eredmenye elveszett mar egyszer.
+            # Another workflow can write to main during the push (logs,
+            # probes) - so we rebase and retry, as the other workflows do.
+            # Without this a rejected push loses every result of the run.
             for i in 1 2 3; do
               git push origin HEAD:${GITHUB_REF_NAME} && exit 0
               git pull --rebase origin ${GITHUB_REF_NAME}

@@ -117,7 +117,7 @@ def mock(url, retries=3):
 
 
 c.api_get = mock
-c.ellenorzendo = lambda regi, db=4: []
+c.rounds_to_recheck = lambda regi, db=4: []
 
 menetrend = {str(r): [[h, v, API[r][h], API[r][v]] for h, v in parok] for r in (1, 2)}
 json.dump({"updated": None, "provisional": [], "schedule": menetrend}, open("results.json", "w"))
@@ -200,26 +200,26 @@ POTOLT = {"id": 431, "start_at": "2026-09-03T19:30:00+02:00",
 SAJAT = {"id": 9, "start_at": "2026-09-06T20:00:00+02:00",
          "status": "scheduled", "round_number": "7F",
          "home_team": {"short_name": "ETO"}, "away_team": {"short_name": "HONVÉD"}}
-mez = c.jatek_mezok({"games": [POTOLT, SAJAT]}, 7)
+mez = c.game_fields({"games": [POTOLT, SAJAT]}, 7)
 allit(not mez.get("nogame"),
       "M9: a klub NEM kap 'nincs meccse' jelolest - kapott: %s" % mez)
 allit(mez.get("start") == POTOLT["start_at"],
       "M10: a `start` a legkozelebbi meg le nem ment meccs (a potolt) - kapott: %s"
       % mez.get("start"))
-mez2 = c.jatek_mezok({"games": [dict(POTOLT, status="completed"), SAJAT]}, 7)
+mez2 = c.game_fields({"games": [dict(POTOLT, status="completed"), SAJAT]}, 7)
 allit(mez2.get("start") == SAJAT["start_at"] and not mez2.get("vege"),
       "M10: a potolt utan a KOVETKEZO meccsre mutat, es meg nincs 'vege' - kapott: %s" % mez2)
-mez3 = c.jatek_mezok({"games": [dict(POTOLT, status="completed"),
+mez3 = c.game_fields({"games": [dict(POTOLT, status="completed"),
                                 dict(SAJAT, status="completed")]}, 7)
 allit(mez3.get("vege") is True,
       "M10: csak MINDKETTO lementevel lesz 'vege' - kapott: %s" % mez3)
 # a visszaeses tovabbra is kiesik: az KESOBBI fordulohoz tartozik
 kesoi = {"id": 77, "start_at": "2026-09-20T18:00:00+02:00",
          "status": "scheduled", "round_number": "9F"}
-allit(c.jatek_mezok({"games": [kesoi]}, 3).get("nogame") is True,
+allit(c.game_fields({"games": [kesoi]}, 3).get("nogame") is True,
       "M3: a KESOBBI fordulos (visszaeso) meccs tovabbra is 'nincs meccse'")
 tarolo = {}
-c.meccsek_gyujtes({"data": [{"competition_player":
+c.collect_matches({"data": [{"competition_player":
                              {"current_round": {"games": [POTOLT, SAJAT]}}}]}, 7, tarolo)
 allit(sorted(tarolo) == [9, 431],
       "M9: a potolt meccs is bekerul a meccsek.json-ba - kapott: %s" % sorted(tarolo))
@@ -231,11 +231,11 @@ print("--- M11: a MOST lekert meccslista felulirja a regi jelzot ---")
 # hibat. A javitas ONMAGAT BLOKKOLTA volna.
 regi = {"A": [{"name": "J1", "nogame": True, "start": None, "vege": True}]}
 uj = {"A": [{"name": "J1", "start": "2026-09-03T19:30:00+02:00"}]}
-c.orokit_meccsjelzok(regi, uj, oroklunk=False)
+c.inherit_match_flags(regi, uj, inherit=False)
 allit(not uj["A"][0].get("nogame") and uj["A"][0]["start"],
       "M11: friss meccslistaval a regi 'nogame' NEM ragad be - kapott: %s" % uj["A"][0])
 uj2 = {"A": [{"name": "J1", "start": "2026-09-03T19:30:00+02:00"}]}
-c.orokit_meccsjelzok(regi, uj2, oroklunk=True)
+c.inherit_match_flags(regi, uj2, inherit=True)
 allit(uj2["A"][0].get("nogame") is True and uj2["A"][0]["start"] is None,
       "M11: meccslista NELKUL viszont tovabbra is oroklodik - kapott: %s" % uj2["A"][0])
 
