@@ -15,6 +15,11 @@ soronként egy állítás `{jatekos, perc, tag, mondat, horgony, meccs}` alakban
 és a horgony dönti el, hogy kimondható-e (tényként) vagy kimarad; forrásra a cikk
 soha nem hivatkozik, csak egy szakvezető saját szavai állnak idézetként.
 
+A szezonhoz tartozó, a szerkesztőségtől kapott háttértények (ki draftolt kinek,
+ki vette a szívére Kele írását) ligánként a `nb1-background.json` és a
+`pl-background.json` fájlban állnak: `{manager|team, fact, from_round, used_in}`.
+A PL-ben csapatnévvel, soha nem a valódi névvel.
+
 Every piece starts with one command: `python3 naplo/article-prep.py <nb1|pl>
 <round> <summary|preview|column>` - it prints the rules, the spent material and the
 round's data. The method is in one place: `round-pipeline.md`.

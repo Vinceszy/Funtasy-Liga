@@ -30,6 +30,15 @@ const enyem = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.GY * 3 + s.D, K
   for (const m of ['**mlsz.hu/**', '**corsproxy.io/**', '**allorigins**']) await p.route(m, r => r.abort());
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#table tr td', { timeout: 30000 });
+  // The table is drawn in steps (an earlier state first, then the full
+  // results), so wait for the STATE: every expected match counted and the
+  // head-to-head matrix drawn - not for the first row.
+  const merkozesek = enyem.reduce((ossz, v) => ossz + v.M, 0);
+  await p.waitForFunction((vart) => {
+    const sorok = [...document.querySelectorAll('#table tr')].filter((tr) => tr.querySelector('td'));
+    const lejatszott = sorok.reduce((ossz, tr) => ossz + (parseFloat(tr.children[2]?.textContent) || 0), 0);
+    return lejatszott === vart && document.querySelectorAll('#matrix tr').length > 1;
+  }, merkozesek, { timeout: 30000 }).catch(() => { /* the checks below report what is missing */ });
 
   // csak az adatsorok (a fejlec TH-kbol all)
   const oldal = await p.$$eval('#table tr', trs => trs

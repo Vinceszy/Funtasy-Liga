@@ -9,7 +9,8 @@ piece has to be written from:
      in front of them, instead of relying on having read them once;
   2. what is already spent - the published pieces the new one may not
      repeat (the round's preview for a summary, the last round's summaries
-     for a preview, the last column of the league for a column);
+     for a preview, the last column of the league for a column) - and the
+     background the editor told about the managers, with where it was used;
   3. the data:
        preview - a season mirror for every pairing of the round: margins,
                  where each finished in every round's score order, form,
@@ -273,6 +274,26 @@ def pl_story_material(rnd):
                                                    score[a], score[b]))
 
 
+def print_background(league):
+    """What the editor told about the managers: facts no harvest can find.
+
+    They live in naplo/<league>-background.json, not in a round's colour
+    table, because they belong to the season rather than to a round - in a
+    round table nothing would read them again. `used_in` lists the published
+    pieces a fact has carried; a used fact is spent like any other material.
+    """
+    path = os.path.join(HERE, "%s-background.json" % league)
+    heading("BACKGROUND - what the editor told about the managers")
+    if not os.path.exists(path):
+        print("(none recorded)")
+        return
+    for fact in load(path).get("facts", []):
+        who = fact.get("manager") or fact.get("team")
+        used = fact.get("used_in") or []
+        print("- %s (from round %s): %s" % (who, fact.get("from_round"), fact["fact"]))
+        print("    %s" % ("SPENT in: " + "; ".join(used) if used else "not used yet"))
+
+
 def run(script, *args):
     heading("DATA: naplo/%s %s" % (script, " ".join(args)))
     sys.stdout.flush()
@@ -296,6 +317,7 @@ def main():
 
     print_rules(kind)
     print_spent(league, rnd, kind)
+    print_background(league)
 
     if kind == "preview":
         heading("OWNERSHIP IS OPEN UNTIL THE DEADLINE")

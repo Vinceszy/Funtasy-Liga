@@ -191,6 +191,17 @@ the answer: that one was a different team entirely. The referent is asked
 for and written into the row (`cel`), because a piece built on a guessed
 target says something about a manager who was never mentioned.
 
+### A fifth source: what the editor tells about a manager
+
+Not a quote and not an event: a fact about a manager's season that only the
+league knows - who drafted for whom, who took a column to heart. It belongs
+to the season, not to a round, so it goes into
+`naplo/<league>-background.json` (`manager` or `team`, `fact`,
+`from_round`, `used_in`), never into a round's colour table, where nothing
+reads it again. The first step prints the file for every piece. A fact that
+carried a published piece is listed in its `used_in` and is spent from then
+on. In the Draft the fact names the team, never the person behind it.
+
 ## A measurement that is not written down did not happen
 
 The prose sources print to the run log and nowhere else, so a round's colour
