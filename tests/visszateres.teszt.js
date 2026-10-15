@@ -1,10 +1,10 @@
-const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozos');
+const { BASE, check, section, failures, launch, finish, blockApis, rewriteJson } = require('./common');
 // Frissites, amikor a lap ismet lathatova valik (FunTasy.onVisibleAgain).
 // 1) egysegteszt a segitore, 2) e2e a PL-oldalon mockolt FPL-API-val:
 //    a fooldal tenyleg ujra lekeri-e az elo pontokat visszatereskor.
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
   // ---------------- 1. egysegteszt ----------------
   let p = await br.newPage();
@@ -57,11 +57,11 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
   });
 
   console.log('--- egységteszt ---');
-  jo(e.harom === 3, 'mindhárom esemény indít (visibilitychange, focus, bfcache-es pageshow): ' + e.harom);
-  jo(e.simaPageshow === 0, 'a sima (nem bfcache-es) pageshow nem indít: ' + e.simaPageshow);
-  jo(e.frissenBetoltve === 0, 'frissen betöltött lapon nem kér le újra: ' + e.frissenBetoltve);
-  jo(e.parhuzamos === 1, 'futó frissítés alatt nem indul másik: ' + e.parhuzamos);
-  jo(e.hibaUtan === 2, 'hibába futó frissítés után a következő elindul: ' + e.hibaUtan);
+  check(e.harom === 3, 'mindhárom esemény indít (visibilitychange, focus, bfcache-es pageshow): ' + e.harom);
+  check(e.simaPageshow === 0, 'a sima (nem bfcache-es) pageshow nem indít: ' + e.simaPageshow);
+  check(e.frissenBetoltve === 0, 'frissen betöltött lapon nem kér le újra: ' + e.frissenBetoltve);
+  check(e.parhuzamos === 1, 'futó frissítés alatt nem indul másik: ' + e.parhuzamos);
+  check(e.hibaUtan === 2, 'hibába futó frissítés után a következő elindul: ' + e.hibaUtan);
   await p.close();
 
   // ---------------- 2. e2e a PL-oldalon, mockolt FPL-API-val ----------------
@@ -86,7 +86,7 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
   // adatban - kimondjuk, nem a repo pillanatnyi allapotabol orokoljuk (a
   // gyujto barmikor beirhatja az eredmenyt, es akkor az elo reteg mar nem
   // irna felul semmit - helyesen).
-  await jsonAtir(p, '**/draft.json*', j => {
+  await rewriteJson(p, '**/draft.json*', j => {
     j.schedule[GW] = (j.schedule[GW] || []).map(m => [m[0], m[1], null, null]);
     return j;
   });
@@ -116,7 +116,7 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
   const allas1 = await p.$$eval('.match .score', ns => ns.map(n => n.textContent.trim()).join(' | '));
   console.log('   /live lekérés betöltéskor:', betolteskor);
   console.log('   állás betöltéskor:', allas1.slice(0, 90));
-  jo(betolteskor > 0, 'betöltéskor lekéri az élő pontokat');
+  check(betolteskor > 0, 'betöltéskor lekéri az élő pontokat');
 
   // visszateres a laphoz
   await p.evaluate(() => { window.__ora = 120000; });
@@ -125,19 +125,19 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
   const allas2 = await p.$$eval('.match .score', ns => ns.map(n => n.textContent.trim()).join(' | '));
   console.log('   /live lekérés visszatérés után:', liveHivas);
   console.log('   állás visszatérés után:', allas2.slice(0, 90));
-  jo(liveHivas > betolteskor, 'visszatéréskor újra lekéri az élő pontokat');
-  jo(allas1 !== allas2, 'a főoldali meccslista állása tényleg frissül (nem fagy be)');
+  check(liveHivas > betolteskor, 'visszatéréskor újra lekéri az élő pontokat');
+  check(allas1 !== allas2, 'a főoldali meccslista állása tényleg frissül (nem fagy be)');
 
   // fojtas: azonnali masodik visszateres ne inditson ujabbat
   const elozo = liveHivas;
   await p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await p.waitForTimeout(800);
-  jo(liveHivas === elozo, 'közvetlenül utána nem kér le újra (fojtás): ' + liveHivas);
+  check(liveHivas === elozo, 'közvetlenül utána nem kér le újra (fojtás): ' + liveHivas);
 
   // idozitett frissites szandekosan NINCS
   await p.evaluate(() => { window.__ora = 900000; });
   await p.waitForTimeout(2000);
-  jo(liveHivas === elozo, 'nyitva hagyott lapon magától nem kér le: ' + liveHivas);
+  check(liveHivas === elozo, 'nyitva hagyott lapon magától nem kér le: ' + liveHivas);
 
   // Masodik visszateres: mar mindket allas ki van toltve, tehat ez mutatja
   // igazan, hogy a MAR KIIRT pontszam is kovetni tudja a valtozast (ez volt
@@ -148,12 +148,12 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
   const allas3 = await p.$$eval('.match .score', ns => ns.map(n => n.textContent.trim()).join(' | '));
   console.log('   /live lekérés 2. visszatérés után:', liveHivas);
   console.log('   állás 2. visszatérés után:', allas3.slice(0, 90));
-  jo(liveHivas === elozo + 1, 'a második visszatérés is lekér: ' + liveHivas);
-  jo(allas2 !== allas3 && /\d/.test(allas2) && /\d/.test(allas3),
+  check(liveHivas === elozo + 1, 'a második visszatérés is lekér: ' + liveHivas);
+  check(allas2 !== allas3 && /\d/.test(allas2) && /\d/.test(allas3),
     'a már kiírt pontszám is követi a változást (' + allas2.slice(0, 12) + ' -> ' + allas3.slice(0, 12) + ')');
 
   console.log('   pageerror:', perr.length ? perr : 'nincs');
-  jo(perr.length === 0, 'nincs JS-hiba a PL-oldalon');
+  check(perr.length === 0, 'nincs JS-hiba a PL-oldalon');
   await p.close();
 
   // ---------------- 3. e2e az NB1-oldalon ----------------
@@ -184,22 +184,22 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
   await p.waitForTimeout(1500);
   const nb1Betoltes = rankHivas;
   console.log('   ranglista-lekérés betöltéskor:', nb1Betoltes);
-  jo(nb1Betoltes > 0, 'betöltéskor lekéri a ranglistát');
+  check(nb1Betoltes > 0, 'betöltéskor lekéri a ranglistát');
 
   await p.evaluate(() => { window.__ora = 120000; });
   await p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await p.waitForTimeout(1500);
   console.log('   ranglista-lekérés visszatérés után:', rankHivas);
-  jo(rankHivas > nb1Betoltes, 'visszatéréskor az NB1-oldal is újra lekér');
+  check(rankHivas > nb1Betoltes, 'visszatéréskor az NB1-oldal is újra lekér');
 
   const nb1Elozo = rankHivas;
   await p.evaluate(() => { window.__ora = 900000; });
   await p.waitForTimeout(2000);
-  jo(rankHivas === nb1Elozo, 'nyitva hagyott NB1-lapon magától nem kér le: ' + rankHivas);
+  check(rankHivas === nb1Elozo, 'nyitva hagyott NB1-lapon magától nem kér le: ' + rankHivas);
   console.log('   pageerror:', perr2.length ? perr2 : 'nincs');
-  jo(perr2.length === 0, 'nincs JS-hiba az NB1-oldalon');
+  check(perr2.length === 0, 'nincs JS-hiba az NB1-oldalon');
   await p.close();
 
   await br.close();
-  process.exit(hibak.length ? 1 : 0);
+  process.exit(failures.length ? 1 : 0);
 })();

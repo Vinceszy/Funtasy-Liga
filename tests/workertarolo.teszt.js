@@ -1,4 +1,4 @@
-const { jo, cim, vege } = require('./kozos');
+const { check, section, finish } = require('./common');
 // A WORKER "UTOLSO ISMERT ALLAS" TAROLOJA (tartalek/proxy-worker.js).
 //
 // MIERT KELL: a gyorsitotar lejar es eldob - aki a lejarat utan erkezik,
@@ -62,75 +62,75 @@ function ujKV(){
   const at = cel => PROXY + '/?url=' + encodeURIComponent(cel);
 
   // ---- 1) tarolhato valasz: atmegy es eltarolodik ----
-  cim('Worker: a ritkán változó választ megjegyzi');
+  section('Worker: a ritkán változó választ megjegyzi');
   const kv = ujKV();
   const env = { TAROLT: kv };
   let r = await hiv(at(NB1('HolVanSalah')), env);
-  jo(r.status === 200, 'a válasz átmegy (HTTP ' + r.status + ')');
-  jo((await r.text()) === valaszTorzs, 'a törzs változatlan');
-  jo(felfele === 1, 'egy kérés ment felfelé — ' + felfele);
-  jo(kv.irasok === 1, 'egyszer tárolt — ' + kv.irasok + ' írás');
+  check(r.status === 200, 'a válasz átmegy (HTTP ' + r.status + ')');
+  check((await r.text()) === valaszTorzs, 'a törzs változatlan');
+  check(felfele === 1, 'egy kérés ment felfelé — ' + felfele);
+  check(kv.irasok === 1, 'egyszer tárolt — ' + kv.irasok + ' írás');
   const kulcs = [...kv.tar.keys()][0];
-  jo(!!(kv.tar.get(kulcs).meta || {}).ido, 'az időbélyeg is elmentődött');
+  check(!!(kv.tar.get(kulcs).meta || {}).ido, 'az időbélyeg is elmentődött');
 
   // ---- 2) valtozatlan valasz: NEM ir ujra ----
-  cim('Worker: változatlan válaszra nem ír');
+  section('Worker: változatlan válaszra nem ír');
   await hiv(at(NB1('HolVanSalah')), env);
-  jo(kv.irasok === 1, 'továbbra is 1 írás — ' + kv.irasok
+  check(kv.irasok === 1, 'továbbra is 1 írás — ' + kv.irasok
      + ' (a napi 1000-es keret miatt ez a lényeg)');
 
   // ---- 3) valtozas: ir ----
-  cim('Worker: változásra ír');
+  section('Worker: változásra ír');
   valaszTorzs = '{"data":[2]}';
   await hiv(at(NB1('HolVanSalah')), env);
-  jo(kv.irasok === 2, 'most már 2 írás — ' + kv.irasok);
-  jo(kv.tar.size === 1, 'ugyanaz a kulcs frissült, nem új jött létre — '
+  check(kv.irasok === 2, 'most már 2 írás — ' + kv.irasok);
+  check(kv.tar.size === 1, 'ugyanaz a kulcs frissült, nem új jött létre — '
      + kv.tar.size + ' kulcs');
 
   // ---- 4) a gyorsitotar-toro belyeg nem csinal uj kulcsot ----
-  cim('Worker: az fpl_ bélyeg nem szór szét kulcsokat');
+  section('Worker: az fpl_ bélyeg nem szór szét kulcsokat');
   const kv2 = ujKV(), env2 = { TAROLT: kv2 };
   await hiv(at(PL_KERET + '?fpl_=111'), env2);
   await hiv(at(PL_KERET + '?fpl_=222'), env2);
-  jo(kv2.tar.size === 1, 'egyetlen kulcs — ' + kv2.tar.size);
-  jo(kv2.irasok === 1, 'a második nem írt újra (ugyanaz az adat) — ' + kv2.irasok);
+  check(kv2.tar.size === 1, 'egyetlen kulcs — ' + kv2.tar.size);
+  check(kv2.irasok === 1, 'a második nem írt újra (ugyanaz az adat) — ' + kv2.irasok);
 
   // ---- 5) a gyorsan valtozo PL elo pontot nem taroljuk ----
-  cim('Worker: a percenként változó PL élő pontot nem tárolja');
+  section('Worker: a percenként változó PL élő pontot nem tárolja');
   const kv3 = ujKV(), env3 = { TAROLT: kv3 };
   const r3 = await hiv(at(PL_ELO), env3);
-  jo(r3.status === 200, 'a válasz ugyanúgy átmegy');
-  jo(kv3.irasok === 0, 'egyetlen írás sem — ' + kv3.irasok);
+  check(r3.status === 200, 'a válasz ugyanúgy átmegy');
+  check(kv3.irasok === 0, 'egyetlen írás sem — ' + kv3.irasok);
 
   // ---- 6) /tarolt: azonnali valasz, felfele semmi ----
-  cim('Worker: a /tarolt nem megy ki a hálózatra');
+  section('Worker: a /tarolt nem megy ki a hálózatra');
   const elotte = felfele;
   const t = await hiv(PROXY + '/tarolt?url=' + encodeURIComponent(NB1('HolVanSalah'))
                       + '&url=' + encodeURIComponent(NB1('Hoxha98')), env);
-  jo(felfele === elotte, 'egyetlen kérés sem ment felfelé — ' + (felfele - elotte));
+  check(felfele === elotte, 'egyetlen kérés sem ment felfelé — ' + (felfele - elotte));
   const j = await t.json();
-  jo(!!j[NB1('HolVanSalah')], 'a tárolt állás megjött');
-  jo(j[NB1('HolVanSalah')].adat === '{"data":[2]}',
+  check(!!j[NB1('HolVanSalah')], 'a tárolt állás megjött');
+  check(j[NB1('HolVanSalah')].adat === '{"data":[2]}',
      'a LEGUTÓBBI lekérés adata jött, nem a korábbi');
-  jo(!!j[NB1('HolVanSalah')].ido, 'időbélyeggel együtt');
-  jo(!(NB1('Hoxha98') in j), 'amit még senki nem kért le, arra nincs sor');
+  check(!!j[NB1('HolVanSalah')].ido, 'időbélyeggel együtt');
+  check(!(NB1('Hoxha98') in j), 'amit még senki nem kért le, arra nincs sor');
 
   // ---- 7) kotes nelkul minden marad a regiben ----
-  cim('Worker: KV-kötés nélkül a régi viselkedés');
+  section('Worker: KV-kötés nélkül a régi viselkedés');
   const elotte2 = felfele;
   const r4 = await hiv(at(NB1('samsonp')), {});
-  jo(r4.status === 200 && (await r4.text()) === valaszTorzs,
+  check(r4.status === 200 && (await r4.text()) === valaszTorzs,
      'a proxy ugyanúgy szolgál ki');
-  jo(felfele === elotte2 + 1, 'a lekérés megtörtént');
+  check(felfele === elotte2 + 1, 'a lekérés megtörtént');
   const t4 = await hiv(PROXY + '/tarolt?url=' + encodeURIComponent(NB1('samsonp')), {});
-  jo((await t4.text()) === '{}', 'a /tarolt üres választ ad, nem hibát');
+  check((await t4.text()) === '{}', 'a /tarolt üres választ ad, nem hibát');
 
   // ---- 8) az eredet-ellenorzes a /tarolt-ra is all ----
-  cim('Worker: a /tarolt sem szolgál ki idegen eredetet');
+  section('Worker: a /tarolt sem szolgál ki idegen eredetet');
   const r5 = await worker.fetch(
     new Request(PROXY + '/tarolt?url=' + encodeURIComponent(NB1('HolVanSalah')),
                 { headers: { Origin: 'https://valaki.mas' } }), env, ctx);
-  jo(r5.status === 403, 'idegen eredet elutasítva (HTTP ' + r5.status + ')');
+  check(r5.status === 403, 'idegen eredet elutasítva (HTTP ' + r5.status + ')');
 
-  await vege();
+  await finish();
 })();

@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege } = require('./kozos');
+const { BASE, check, section, launch, finish } = require('./common');
 // EGYETLEN OLDAL SEM LOG KI OLDALRA.
 //
 // Korabban ezt egy `html,body{overflow-x:hidden}` szabaly "oldotta meg":
@@ -13,7 +13,7 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
 const SZELESSEGEK = [320, 360, 390, 412];
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const hibak = [];
   for (const w of SZELESSEGEK) {
     const ctx = await br.newContext({ viewport: { width: w, height: 820 },
@@ -24,7 +24,7 @@ const SZELESSEGEK = [320, 360, 390, 412];
                      '**allorigins**', '**workers.dev/**', '**fonts.googleapis.com/**',
                      '**fonts.gstatic.com/**'])
       await p.route(m, r => r.abort());
-    cim(w + ' pixel');
+    section(w + ' pixel');
 
     // A hibauzenet NEVEZZE MEG a bunost: "kilog 12 pixellel" onmagaban nem
     // mondja meg, mit kell megjavitani.
@@ -38,7 +38,7 @@ const SZELESSEGEK = [320, 360, 390, 412];
             + (e.className ? '.' + String(e.className).split(/\s+/)[0] : '')) : [];
         return { tul, bunos };
       });
-      jo(r.tul === 0, `${cimke}: nem lóg ki oldalra`
+      check(r.tul === 0, `${cimke}: nem lóg ki oldalra`
          + (r.tul ? ` — ${r.tul} px, okozza: ${r.bunos.join(', ')}` : ''));
     };
 
@@ -80,6 +80,6 @@ const SZELESSEGEK = [320, 360, 390, 412];
     await mer('PL meccs-adatlap');
     await ctx.close();
   }
-  hibak.forEach(x => jo(false, 'oldalhiba: ' + x));
-  await vege(br);
+  hibak.forEach(x => check(false, 'oldalhiba: ' + x));
+  await finish(br);
 })();

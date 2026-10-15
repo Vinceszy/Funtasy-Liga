@@ -1,4 +1,4 @@
-const { BASE, jo, hibak, inditas, vege } = require('./kozos');
+const { BASE, check, failures, launch, finish } = require('./common');
 // A jatekos harom szama az elo forduloban: jatszott perc, meccsora, kezdo-e.
 //
 // Nyers ertekeket mutatunk, nem ertelmezunk helyette ("lecserelve") - ahhoz
@@ -22,7 +22,7 @@ const MECCSEK = [
 // jatekos -> {perc, kezdo}; a klubot a draft_players.json adja, ezert valodi
 // jatekos-azonositokat kell hasznalni: futas kozben valasztunk hozzajuk.
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const p = await br.newPage({ viewport: { width: 900, height: 900 } });
   const perr = []; p.on('pageerror', e => perr.push(e.message));
 
@@ -76,26 +76,26 @@ const MECCSEK = [
   const nulla = await cellak(jatekos.fut[3]);
   [['pályán, kezdő', palyan], ['lecserélve', le], ['becserélve', be], ['0 perc', nulla]]
     .forEach(([n, c]) => console.log('   ' + n.padEnd(15) + JSON.stringify(c)));
-  jo(JSON.stringify(palyan) === JSON.stringify(["70'", "70'", 'K']), 'pályán lévő kezdő: 70/70/K');
-  jo(JSON.stringify(le) === JSON.stringify(["62'", "70'", 'K']), 'lecserélt: 62/70/K — a néző látja, hogy nincs a pályán');
-  jo(JSON.stringify(be) === JSON.stringify(["12'", "70'", '–']), 'becserélt: 12/70/–');
-  jo(JSON.stringify(nulla) === JSON.stringify(["0'", "70'", '–']), 'nem lépett pályára: 0/70/–');
+  check(JSON.stringify(palyan) === JSON.stringify(["70'", "70'", 'K']), 'pályán lévő kezdő: 70/70/K');
+  check(JSON.stringify(le) === JSON.stringify(["62'", "70'", 'K']), 'lecserélt: 62/70/K — a néző látja, hogy nincs a pályán');
+  check(JSON.stringify(be) === JSON.stringify(["12'", "70'", '–']), 'becserélt: 12/70/–');
+  check(JSON.stringify(nulla) === JSON.stringify(["0'", "70'", '–']), 'nem lépett pályára: 0/70/–');
 
   console.log('\n--- lement meccs ---');
   const kesz = await cellak(jatekos.kesz[0]);
   console.log('   ' + JSON.stringify(kesz));
-  jo(kesz[1] === 'vége', 'lefújt meccsnél a meccsóra "vége" — a 90 önmagában kétértelmű lenne');
-  jo(kesz[0] === "90'" && kesz[2] === 'K', 'a játékos percei és a kezdő jelzés megmaradnak');
+  check(kesz[1] === 'vége', 'lefújt meccsnél a meccsóra "vége" — a 90 önmagában kétértelmű lenne');
+  check(kesz[0] === "90'" && kesz[2] === 'K', 'a játékos percei és a kezdő jelzés megmaradnak');
 
   console.log('\n--- még nem kezdődött el ---');
   const elotte = await cellak(jatekos.elotte[0]);
   console.log('   ' + JSON.stringify(elotte));
-  jo(elotte.length === 0, 'el nem kezdődött meccsnél nincs cella');
+  check(elotte.length === 0, 'el nem kezdődött meccsnél nincs cella');
 
   console.log('\n--- a meccsóra a JÁTÉKOSOK perceiből jön ---');
   const ora = await p.evaluate(() => LIVE_MATCHES[11].perc);
   console.log('   a 11-es meccs órája: ' + ora + " (a fixtures minutes mezoje 0 volt)");
-  jo(ora === 70, 'a meccsóra a pályán lévő kezdők percszáma, nem a fixtures mezője');
+  check(ora === 70, 'a meccsóra a pályán lévő kezdők percszáma, nem a fixtures mezője');
 
   console.log('\n--- oszlopnevek ---');
   // Harom cimkezetlen szam elsore rejtely, ezert a perc-oszlopok fole
@@ -133,16 +133,16 @@ const MECCSEK = [
   }, [kereet, GW, 99]);
   console.log('   címkék: ' + JSON.stringify(m.gep.cimkek));
   console.log('   fejléc közepek: ' + JSON.stringify(m.gep.fejKp) + '  sor közepek: ' + JSON.stringify(m.gep.sorKp));
-  jo(JSON.stringify(m.gep.cimkek) === JSON.stringify(['perc', 'meccs', 'kezdő', 'pont']),
+  check(JSON.stringify(m.gep.cimkek) === JSON.stringify(['perc', 'meccs', 'kezdő', 'pont']),
      'a négy oszlopnak neve van: perc / meccs / kezdő / pont');
-  jo(m.gep.fejDb === 2, 'a kezdők és a pad fölött is ott a fejléc (' + m.gep.fejDb + ')');
-  jo(m.gep.fejKp.length === 4 && m.gep.sorKp.length === 4
+  check(m.gep.fejDb === 2, 'a kezdők és a pad fölött is ott a fejléc (' + m.gep.fejDb + ')');
+  check(m.gep.fejKp.length === 4 && m.gep.sorKp.length === 4
      && m.gep.fejKp.every((x, i) => Math.abs(x - m.gep.sorKp[i]) <= 1),
      'minden címke a maga oszlopa fölött áll');
-  jo(m.mobil.fejKp.every((x, i) => Math.abs(x - m.mobil.sorKp[i]) <= 1),
+  check(m.mobil.fejKp.every((x, i) => Math.abs(x - m.mobil.sorKp[i]) <= 1),
      'mobil szélességen is illeszkedik');
-  jo(!m.gep.tulcsordul && !m.mobil.tulcsordul, 'a sor nem csordul túl (a név rövidül)');
-  jo(m.lezart.fejDb === 0, 'betöltetlen lezárt fordulóhoz nincs fejléc — nincs is perc-oszlop');
+  check(!m.gep.tulcsordul && !m.mobil.tulcsordul, 'a sor nem csordul túl (a név rövidül)');
+  check(m.lezart.fejDb === 0, 'betöltetlen lezárt fordulóhoz nincs fejléc — nincs is perc-oszlop');
 
   console.log('\n--- lezárt forduló ---');
   // Lezart forduloban is jar a perc es a "kezdo", de a meccsora nem: ott
@@ -150,16 +150,16 @@ const MECCSEK = [
   // lekeresbol jon, hanem a fordulo sajat /live valaszabol - amig az meg nem
   // erkezett meg, nincs cella.
   const elotte2 = await p.evaluate(e => minuteCellsHTML(e, 99), jatekos.fut[0]);
-  jo(elotte2 === '', 'betöltés előtt nincs cella a lezárt fordulóhoz');
+  check(elotte2 === '', 'betöltés előtt nincs cella a lezárt fordulóhoz');
   const betoltve = await p.evaluate(() => loadPastMinutes(99));
-  jo(betoltve === true, 'a lezárt forduló percei betölthetők');
+  check(betoltve === true, 'a lezárt forduló percei betölthetők');
   const zartC = await p.evaluate(e => {
     const d = document.createElement('div');
     d.innerHTML = minuteCellsHTML(e, 99);
     return [...d.children].map(x => x.textContent);
   }, jatekos.fut[1]);
   console.log('   lezárt forduló cellái: ' + JSON.stringify(zartC));
-  jo(JSON.stringify(zartC) === JSON.stringify(["62'", 'K']),
+  check(JSON.stringify(zartC) === JSON.stringify(["62'", 'K']),
      'lezárt fordulóban két cella: perc és kezdő — meccsóra nincs');
   const zartFej = await p.evaluate(([lista]) => {
     const d = document.createElement('div');
@@ -168,7 +168,7 @@ const MECCSEK = [
     return f ? [...f.children].map(x => x.textContent.trim()).filter(Boolean) : null;
   }, [kereet]);
   console.log('   lezárt forduló fejléce: ' + JSON.stringify(zartFej));
-  jo(JSON.stringify(zartFej) === JSON.stringify(['perc', 'kezdő', 'pont']),
+  check(JSON.stringify(zartFej) === JSON.stringify(['perc', 'kezdő', 'pont']),
      'a fejlécből is kimarad a meccs oszlop');
   const zartIll = await p.evaluate(([lista]) => {
     const d = document.createElement('div');
@@ -181,7 +181,7 @@ const MECCSEK = [
     d.remove();
     return { f, sor };
   }, [kereet]);
-  jo(zartIll.f.length === 3 && zartIll.f.every((x, i) => Math.abs(x - zartIll.sor[i]) <= 1),
+  check(zartIll.f.length === 3 && zartIll.f.every((x, i) => Math.abs(x - zartIll.sor[i]) <= 1),
      'a három oszlop lezárt fordulóban is illeszkedik');
   console.log('\n--- lezárt forduló megnyitva (utántöltés) ---');
   // Vegponttol vegpontig: a modal eloszor perc-oszlopok nelkul jon fel, es
@@ -205,12 +205,12 @@ const MECCSEK = [
   if (e2e.kihagy) console.log('   (nincs két csapat az első fordulóban — kihagyva)');
   else {
     console.log('   fejléc rögtön: ' + e2e.azonnal + ' · utána: ' + JSON.stringify(e2e.cimkek));
-    jo(e2e.azonnal === 0, 'a modal előbb jön fel, mint a percek — nem várakoztat');
-    jo(JSON.stringify(e2e.cimkek) === JSON.stringify(['perc', 'kezdő', 'pont']),
+    check(e2e.azonnal === 0, 'a modal előbb jön fel, mint a percek — nem várakoztat');
+    check(JSON.stringify(e2e.cimkek) === JSON.stringify(['perc', 'kezdő', 'pont']),
        'az adat megérkeztével magától újrarajzolódik, meccsóra nélkül');
-    jo(e2e.cellak > 0, 'a játékossorok is megkapják a perc-cellát (' + e2e.cellak + ')');
+    check(e2e.cellak > 0, 'a játékossorok is megkapják a perc-cellát (' + e2e.cellak + ')');
   }
 
-  jo(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr));
-  await vege(br);
+  check(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr));
+  await finish(br);
 })();

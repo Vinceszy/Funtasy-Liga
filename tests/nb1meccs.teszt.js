@@ -1,4 +1,4 @@
-const { BASE, jo, inditas, vege } = require('./kozos');
+const { BASE, check, launch, finish } = require('./common');
 // A jatekos meccse a pont-bontas folott az NB1-en (meccsek.json-bol).
 //
 // Amit rogzit:
@@ -9,7 +9,7 @@ const { BASE, jo, inditas, vege } = require('./kozos');
 //  - masik klub meccse nem jelenik meg; dupla meccsu klubnal ket sor
 //  - a bontasHTML a meccs-sort a tablazat FOLE teszi; nogame-nel nincs sor
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const p = await br.newPage({ viewport: { width: 900, height: 900 } });
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   await p.route('**fantasy-api.mlsz.hu/**', route => {
@@ -70,20 +70,20 @@ const { BASE, jo, inditas, vege } = require('./kozos');
   });
 
   console.log('   lezárt: ' + JSON.stringify(m.lezart));
-  jo(m.lezart.length === 1 && m.lezart[0][0] === 'VASAS 2–2 ETO' && m.lezart[0][1] === 'vége',
+  check(m.lezart.length === 1 && m.lezart[0][0] === 'VASAS 2–2 ETO' && m.lezart[0][1] === 'vége',
      'lezárt meccs: klubok + eredmény + „vége"');
   console.log('   előtte: ' + JSON.stringify(m.elotte));
-  jo(m.elotte.length === 1 && m.elotte[0][0] === 'PAFC–MTK' && m.elotte[0][1] === 'még nem kezdődött',
+  check(m.elotte.length === 1 && m.elotte[0][0] === 'PAFC–MTK' && m.elotte[0][1] === 'még nem kezdődött',
      'el nem kezdődött meccsnél nincs kitalált 0–0');
-  jo(m.zajlik.length === 1 && m.zajlik[0][1] === 'a meccs zajlik',
+  check(m.zajlik.length === 1 && m.zajlik[0][1] === 'a meccs zajlik',
      'az időkorláton belüli meccs: „a meccs zajlik" — ' + JSON.stringify(m.zajlik));
-  jo(m.lement.length === 1 && m.lement[0][0] === 'DVSC–PAKS' && m.lement[0][1] === 'vége',
+  check(m.lement.length === 1 && m.lement[0][0] === 'DVSC–PAKS' && m.lement[0][1] === 'vége',
      'rég elkezdődött meccs eredmény nélkül: „vége", de szám nélkül');
-  jo(m.dupla.length === 2, 'két meccses klubnál két sor (' + m.dupla.length + ')');
-  jo(m.idegen === '' && m.uresen === '', 'idegen klubra és üres fordulóra nincs sor');
-  jo(m.integHelyes, 'a bontasHTML a meccs-sort a táblázat fölé teszi');
-  jo(m.integPerc, 'a Játszott perc sor a táblázatban van (77 perc)');
-  jo(m.nogameNincs, 'nogame játékosnál nincs meccs-sor');
-  jo(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr));
-  await vege(br);
+  check(m.dupla.length === 2, 'két meccses klubnál két sor (' + m.dupla.length + ')');
+  check(m.idegen === '' && m.uresen === '', 'idegen klubra és üres fordulóra nincs sor');
+  check(m.integHelyes, 'a bontasHTML a meccs-sort a táblázat fölé teszi');
+  check(m.integPerc, 'a Játszott perc sor a táblázatban van (77 perc)');
+  check(m.nogameNincs, 'nogame játékosnál nincs meccs-sor');
+  check(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr));
+  await finish(br);
 })();

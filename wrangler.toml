@@ -22,7 +22,7 @@ workers_dev = true
 #
 # Ha a kotes valaha hianyozna (torolt nevter, mas fiok), a Worker pontosan
 # ugy mukodik, mint korabban - a tarolas nema no-op. Ezt a
-# tesztek/workertarolo.teszt.js kulon meri, hogy ne alljon meg tole semmi.
+# tests/workertarolo.teszt.js kulon meri, hogy ne alljon meg tole semmi.
 [[kv_namespaces]]
 binding = "TAROLT"
 id = "c2289a98dd404344b53d6a6aa7e85e36"

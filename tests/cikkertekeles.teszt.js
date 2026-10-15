@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege } = require('./kozos');
+const { BASE, check, section, launch, finish } = require('./common');
 // AZ IRAS ERTEKELESE a cikksav aljan.
 //
 // A funkcio celja nem a pontszam, hanem az INDOK: abbol lesz jobb a
@@ -26,7 +26,7 @@ const nyit = async (p, kertek) => {
 };
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const hibak = [];
   const p = await br.newPage({ viewport: { width: 1000, height: 1000 } });
   p.on('pageerror', e => hibak.push(e.message));
@@ -50,80 +50,80 @@ const nyit = async (p, kertek) => {
   await p.evaluate(() => { try { localStorage.clear(); } catch (e) {} });
 
   // ---- a sav helye ----
-  cim('Hol van a sáv');
+  section('Hol van a sáv');
   await p.evaluate(([a, b, r]) => showMatchRound(a, b, r), [H, V, R]);
   await p.waitForSelector('#mBody .artstrip');
-  jo(await p.locator('#mBody .artrate').isVisible() === false,
+  check(await p.locator('#mBody .artrate').isVisible() === false,
      'becsukott cikknél nem látszik — amit nem olvastál, ne értékeld');
   await p.evaluate(() => { document.querySelector('#mBody .artstrip').open = true; });
   await p.waitForSelector('#mBody .artrate');
-  jo(await p.locator('#mBody .artrate').isVisible(), 'kinyitva ott van');
-  jo(await p.locator('#mBody .artrateg').count() === 4, 'négy fokozat');
+  check(await p.locator('#mBody .artrate').isVisible(), 'kinyitva ott van');
+  check(await p.locator('#mBody .artrateg').count() === 4, 'négy fokozat');
 
   // ---- negyes: egy koppintas ----
-  cim('Négyes: egy koppintás');
+  section('Négyes: egy koppintás');
   kertek = [];
   await p.locator('#mBody .artrateg[data-pont="4"]').click();
   await p.waitForFunction(() => /Köszi/.test(document.querySelector('#mBody .artrate').textContent),
                           null, { timeout: 5000 });
-  jo(kertek.length === 1 && kertek[0].mod === 'POST', 'egy POST ment ki');
+  check(kertek.length === 1 && kertek[0].mod === 'POST', 'egy POST ment ki');
   const t4 = kertek[0].torzs;
-  jo(t4.pont === 4 && t4.cikk === KULCS, 'a pont és a cikk azonosítója helyes — '
+  check(t4.pont === 4 && t4.cikk === KULCS, 'a pont és a cikk azonosítója helyes — '
      + t4.pont + ' / ' + t4.cikk);
-  jo(/^[a-z0-9]{8,32}$/.test(t4.eszkoz || ''), 'eszközazonosítóval — ' + t4.eszkoz);
-  jo((t4.okok || []).length === 0 && !t4.indok, 'indokot nem kértünk tőle');
-  jo(await p.locator('#mBody .artreason').count() === 0, 'nem nyílt indok-panel');
-  jo(await p.evaluate(() => document.querySelector('#mBody .artstrip').open),
+  check(/^[a-z0-9]{8,32}$/.test(t4.eszkoz || ''), 'eszközazonosítóval — ' + t4.eszkoz);
+  check((t4.okok || []).length === 0 && !t4.indok, 'indokot nem kértünk tőle');
+  check(await p.locator('#mBody .artreason').count() === 0, 'nem nyílt indok-panel');
+  check(await p.evaluate(() => document.querySelector('#mBody .artstrip').open),
      'a cikk nyitva maradt — a kattintás nem csukta be');
 
   // ---- emlekszik ra, de at lehet ertekelni ----
-  cim('Emlékszik, de átértékelhető');
+  section('Emlékszik, de átértékelhető');
   await p.evaluate(() => showMatchRound('Bazsa', 'Ádám', 7));
   await p.waitForSelector('#mBody .plr');
   await nyit(p);
-  jo(/Köszi/.test(await p.locator('#mBody .artrate').innerText()),
+  check(/Köszi/.test(await p.locator('#mBody .artrate').innerText()),
      'visszatérve emlékszik rá: ' + (await p.locator('#mBody .artrate').innerText()).trim());
   await p.locator('#mBody .artrateagain').click();
   await p.waitForSelector('#mBody .artrateg');
-  jo(await p.locator('#mBody .artrateg').count() === 4, 'átértékeléskor újra ott a négy fokozat');
+  check(await p.locator('#mBody .artrateg').count() === 4, 'átértékeléskor újra ott a négy fokozat');
 
   // ---- kettes: helyben nyilo indok-panel ----
-  cim('Kettes: helyben kér indokot');
+  section('Kettes: helyben kér indokot');
   const elotteY = await p.evaluate(() =>
     document.querySelector('#mBody .artstripbody p').getBoundingClientRect().top);
   kertek = [];
   await p.locator('#mBody .artrateg[data-pont="2"]').click();
   await p.waitForSelector('#mBody .artreason');
-  jo(kertek.length === 0, 'még nem küldött semmit — előbb az indok');
-  jo(await p.locator('#mBody .artchip').count() === 0,
+  check(kertek.length === 0, 'még nem küldött semmit — előbb az indok');
+  check(await p.locator('#mBody .artchip').count() === 0,
      'nincs készre választható ok — a saját szavait kérjük');
-  jo(await p.locator('#mBody .artreasont').isVisible(), 'szabad szöveg');
-  jo(await p.locator('#mBody .artsend').isVisible()
+  check(await p.locator('#mBody .artreasont').isVisible(), 'szabad szöveg');
+  check(await p.locator('#mBody .artsend').isVisible()
      && await p.locator('#mBody .artskip').isVisible(), 'két gomb: küldés és kiút');
-  jo(await p.locator('#mBody .artsend').isDisabled(),
+  check(await p.locator('#mBody .artsend').isDisabled(),
      'az „Elküldöm" üres dobozzal nem kínálja magát');
-  jo(await p.locator('#mBody .artskip').isEnabled(), 'a kiút viszont végig elérhető');
+  check(await p.locator('#mBody .artskip').isEnabled(), 'a kiút viszont végig elérhető');
   const utanaY = await p.evaluate(() =>
     document.querySelector('#mBody .artstripbody p').getBoundingClientRect().top);
-  jo(Math.abs(utanaY - elotteY) < 2,
+  check(Math.abs(utanaY - elotteY) < 2,
      'a cikk szövege a helyén maradt — nem takarja el, amiről véleményt kérünk');
 
   // ---- gyorsvalaszto + szoveg ----
-  cim('Kettes: a saját szavai mennek el');
+  section('Kettes: a saját szavai mennek el');
   await p.locator('#mBody .artreasont').fill('Nem derült ki belőle, mi döntött.');
-  jo(await p.locator('#mBody .artsend').isEnabled(),
+  check(await p.locator('#mBody .artsend').isEnabled(),
      'ahogy van mit elküldeni, a gomb élesedik');
   await p.locator('#mBody .artsend').click();
   await p.waitForFunction(() => /Köszi/.test(document.querySelector('#mBody .artrate').textContent),
                           null, { timeout: 5000 });
-  jo(kertek.length === 1, 'egy POST ment ki');
+  check(kertek.length === 1, 'egy POST ment ki');
   const t2 = kertek[0].torzs;
-  jo(t2.pont === 2, 'a pont kettes — ' + t2.pont);
-  jo(t2.indok === 'Nem derült ki belőle, mi döntött.', 'a beírt mondat ment el');
-  jo(!('okok' in t2), 'kész kategóriát nem küldünk mellé');
+  check(t2.pont === 2, 'a pont kettes — ' + t2.pont);
+  check(t2.indok === 'Nem derült ki belőle, mi döntött.', 'a beírt mondat ment el');
+  check(!('okok' in t2), 'kész kategóriát nem küldünk mellé');
 
   // ---- a kiut: elmegy, de indok nelkul ----
-  cim('A kiút indok nélkül küld — nem hamisít');
+  section('A kiút indok nélkül küld — nem hamisít');
   await p.locator('#mBody .artrateagain').click();
   await p.waitForSelector('#mBody .artrateg');
   kertek = [];
@@ -134,13 +134,13 @@ const nyit = async (p, kertek) => {
   await p.waitForFunction(() => /Köszi/.test(document.querySelector('#mBody .artrate').textContent),
                           null, { timeout: 5000 });
   const t1 = kertek[0].torzs;
-  jo(t1.pont === 1, 'az egyes elment — ' + t1.pont);
-  jo(!t1.indok,
+  check(t1.pont === 1, 'az egyes elment — ' + t1.pont);
+  check(!t1.indok,
      'de indok nélkül: amit beírt, mielőtt meggondolta magát, nem megy el a háta mögött — '
      + JSON.stringify({ indok: t1.indok }));
 
   // ---- sikertelen kuldes: nem vesz el, amit beirtak ----
-  cim('Hibás küldésnél nem vész el, amit beírtak');
+  section('Hibás küldésnél nem vész el, amit beírtak');
   await p.locator('#mBody .artrateagain').click();
   await p.waitForSelector('#mBody .artrateg');
   valasz = { status: 500, body: '{"ok":false}' };
@@ -150,10 +150,10 @@ const nyit = async (p, kertek) => {
   await p.locator('#mBody .artsend').click();
   await p.waitForFunction(() => /Nem sikerült/.test(
     document.querySelector('#mBody .artreasonq').textContent), null, { timeout: 5000 });
-  jo(await p.locator('#mBody .artreasont').inputValue() === 'Ez maradjon meg.',
+  check(await p.locator('#mBody .artreasont').inputValue() === 'Ez maradjon meg.',
      'a beírt szöveg ott maradt');
-  jo(await p.locator('#mBody .artsend').isEnabled(), 'és újra lehet próbálni');
+  check(await p.locator('#mBody .artsend').isEnabled(), 'és újra lehet próbálni');
 
-  hibak.forEach(x => jo(false, 'oldalhiba: ' + x));
-  await vege(br);
+  hibak.forEach(x => check(false, 'oldalhiba: ' + x));
+  await finish(br);
 })();

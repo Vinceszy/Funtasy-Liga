@@ -1,4 +1,4 @@
-const { BASE, jo, inditas, vege } = require('./kozos');
+const { BASE, check, launch, finish } = require('./common');
 // A jatekos MECCSE a pont-bontas folott: "ARS 2-1 BRE - 70. perc".
 //
 // Az allas a fixtures valaszabol jon - ugyanabbol a keresbol, amit az elo
@@ -36,7 +36,7 @@ const LEZART = [
 ];
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const p = await br.newPage({ viewport: { width: 900, height: 900 } });
   const perr = []; p.on('pageerror', e => perr.push(e.message));
 
@@ -87,41 +87,41 @@ const LEZART = [
   console.log('--- élő forduló ---');
   const futo = await fejek(jatekos.egy, GW);
   console.log('   ' + JSON.stringify(futo.sorok));
-  jo(futo.sorok.length === 2, 'dupla fordulóban mindkét meccs sort kap (' + futo.sorok.length + ')');
-  jo(futo.sorok[0][0] === klub.egy + ' 2–1 ' + adat.teams['4'],
+  check(futo.sorok.length === 2, 'dupla fordulóban mindkét meccs sort kap (' + futo.sorok.length + ')');
+  check(futo.sorok[0][0] === klub.egy + ' 2–1 ' + adat.teams['4'],
      'a futó meccs állása a hazai–vendég sorrendben: ' + futo.sorok[0][0]);
-  jo(futo.sorok[0][1] === '70. perc', 'a meccsóra a játékosok perceiből: ' + futo.sorok[0][1]);
-  jo(futo.sorok[1][0] === adat.teams['7'] + '–' + klub.egy && futo.sorok[1][1] === 'még nem kezdődött',
+  check(futo.sorok[0][1] === '70. perc', 'a meccsóra a játékosok perceiből: ' + futo.sorok[0][1]);
+  check(futo.sorok[1][0] === adat.teams['7'] + '–' + klub.egy && futo.sorok[1][1] === 'még nem kezdődött',
      'az el nem kezdődött meccsnél nincs állás, csak a két klub');
-  jo(futo.felul, 'a meccsfejléc a pont-bontás FÖLÖTT áll');
-  jo(futo.vanTabla, 'a pont-bontás maga is ott van alatta');
+  check(futo.felul, 'a meccsfejléc a pont-bontás FÖLÖTT áll');
+  check(futo.vanTabla, 'a pont-bontás maga is ott van alatta');
 
   const lefujt = await fejek(jatekos.ketto, GW);
   console.log('   ' + JSON.stringify(lefujt.sorok));
-  jo(lefujt.sorok.length === 1 && lefujt.sorok[0][1] === 'vége',
+  check(lefujt.sorok.length === 1 && lefujt.sorok[0][1] === 'vége',
      'lefújt meccsnél "vége" áll az óra helyén');
-  jo(lefujt.sorok[0][0] === klub.ketto + ' 0–3 ' + adat.teams['5'],
+  check(lefujt.sorok[0][0] === klub.ketto + ' 0–3 ' + adat.teams['5'],
      'a lefújt meccs végeredménye is ott van: ' + lefujt.sorok[0][0]);
 
   const elotte = await fejek(jatekos.harom, GW);
   console.log('   ' + JSON.stringify(elotte.sorok));
-  jo(elotte.sorok.length === 1 && !/\d–\d/.test(elotte.sorok[0][0]),
+  check(elotte.sorok.length === 1 && !/\d–\d/.test(elotte.sorok[0][0]),
      'el nem kezdődött meccsnél nem írunk ki 0–0-t');
 
   console.log('\n--- lezárt forduló ---');
   const elotteDb = fxKeresek;
   const regi = await fejek(jatekos.egy, REGI);
   console.log('   ' + JSON.stringify(regi.sorok));
-  jo(regi.sorok.length === 1 && regi.sorok[0][0] === klub.egy + ' 4–0 ' + klub.ketto,
+  check(regi.sorok.length === 1 && regi.sorok[0][0] === klub.egy + ' 4–0 ' + klub.ketto,
      'lezárt fordulóban a végeredmény jön a saját fordulója fixtures-éből');
-  jo(regi.sorok[0][1] === 'vége', 'lezárt fordulóban "vége"');
+  check(regi.sorok[0][1] === 'vége', 'lezárt fordulóban "vége"');
   const egyKeres = fxKeresek - elotteDb;
   await fejek(jatekos.ketto, REGI);
   const masodik = fxKeresek - elotteDb - egyKeres;
   console.log('   fixtures-kérés: első megnyitásra ' + egyKeres + ', másodikra ' + masodik);
-  jo(egyKeres === 1 && masodik === 0,
+  check(egyKeres === 1 && masodik === 0,
      'a lezárt forduló meccslistája fordulónként EGYSZER töltődik le');
 
-  jo(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr));
-  await vege(br);
+  check(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr));
+  await finish(br);
 })();

@@ -224,7 +224,7 @@ def player_points(v):
 # exactly 2 midfielders with 5 defenders and 3 forwards, i.e. 5-2-3 is
 # valid. In the 20 real stored formations the lowest was 3, but 5-2-3 is
 # rare anyway, so this is NOT proof. If it turns out that the Draft minimum
-# is 3, THIS ONE NUMBER changes (and case D7 of gyujto_draftguardiola.py
+# is 3, THIS ONE NUMBER changes (and case D7 of tests/collector_draft_guardiola.py
 # flips).
 FORMATION = {"GKP": (1, 1), "DEF": (3, 5), "MID": (2, 5), "FWD": (1, 3)}
 

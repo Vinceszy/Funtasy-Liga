@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
+const { BASE, check, section, launch, finish, blockApis, rewriteJson } = require('./common');
 // A "Valtoztatasok" ful. A ful egesz ertelme, hogy a tabellaban allo GUARD
 // szam LEVEZETHETO legyen - ezert a fo allitas nem az, hogy latszik a lista,
 // hanem hogy MINDEN SZAM EGYEZIK MINDENNEL:
@@ -31,25 +31,25 @@ const LIGAK = [
 async function liga(br, L){
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
-  await apiKi(p);
+  await blockApis(p);
   await p.goto(BASE + L.ut, { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#table tr', { timeout: 20000 });
   await p.waitForFunction(() => document.querySelector('#table td.guard'), null, { timeout: 20000 });
 
-  cim('A fül ott van a többi mellett');
+  section('A fül ott van a többi mellett');
   // A Playwright evaluate EGY argumentumot vesz at, ezert a megnyito
   // fuggveny szovegkent utazik, es a lapon belul all ossze.
   const nyit = (n, t) => p.evaluate(a => eval(a.f)(a.n, a.t), { f: L.nyit, n: n, t: t });
   const nevek = await p.$$eval('#table tr [data-' + L.jelzo + ']',
                                (a, j) => a.map(x => x.dataset[j]), L.jelzo);
-  jo(nevek.length >= 2, 'van legalább két szakvezető a tabellában (' + nevek.length + ')');
+  check(nevek.length >= 2, 'van legalább két szakvezető a tabellában (' + nevek.length + ')');
   await nyit(nevek[0], null);
   await p.waitForSelector('#mTabs .tab', { timeout: 10000 });
   const fulek = await p.$$eval('#mTabs .tab', a => a.map(x => x.textContent.trim()));
-  jo(fulek.join('|') === L.fulek,
+  check(fulek.join('|') === L.fulek,
      'a négy fül a várt sorrendben: ' + fulek.join(' | '));
 
-  cim('Minden szám egyezik mindennel');
+  section('Minden szám egyezik mindennel');
   // A tabellabol vett kumulalt ertek szakvezetonkent - ehhez kell a vegen
   // stimmelnie a fordulonkenti osszegnek.
   const tabella = await p.$$eval('#table tr', (trs, j) => {
@@ -102,7 +102,7 @@ async function liga(br, L){
       ures: !!b.querySelector('.vaures'),
       ossz: (b.querySelector('.vaossz .zdiff') || {}).textContent,
     })));
-    jo(blokkok.length > 0, nev + ': van legalább egy forduló-blokk (' + blokkok.length + ')');
+    check(blokkok.length > 0, nev + ': van legalább egy forduló-blokk (' + blokkok.length + ')');
     lattunkBlokkot = true;
     // NOVEKVO SORRENDBEN, mint mindenutt maskor. Az elso valtozat a
     // legfrissebbel kezdett, es az szembement a Fordulok fullel.
@@ -149,11 +149,11 @@ async function liga(br, L){
     if (t == null || Math.abs(t - kum) > 0.005)
       bajok.push(nev + ': a tabellában ' + tabella[nev] + ', a fülek összege ' + kum);
   }
-  jo(bajok.length === 0, 'minden szám egyezik minden szakvezetőnél és fordulónál'
+  check(bajok.length === 0, 'minden szám egyezik minden szakvezetőnél és fordulónál'
      + (bajok.length ? ' — ELTÉRÉS: ' + bajok.join(' ; ') : '')
      + (lattunkBlokkot ? '' : ' (ebben a ligában még nincs lezárt forduló mutatóval)'));
 
-  cim('A változtatás nélküli forduló is kilátszik');
+  section('A változtatás nélküli forduló is kilátszik');
   // AZ ADATBOL DERUL KI, hogy VAN-E ilyen fordulo - nem feltetelezzuk.
   // A PL-en peldaul a GW2-ben minden csapat valtoztatott, tehat ott nincs
   // mit kilatszania; ha ilyenkor is "kell egy ures blokk"-ot allitanank, a
@@ -183,13 +183,13 @@ async function liga(br, L){
     }, null, { timeout: 10000 }).catch(() => {});
     if (await p.$('#mBody .vaures')) { vanUres = true; break; }
   }
-  jo(vanUres || !vanAdatban || !lattunkBlokkot,
+  check(vanUres || !vanAdatban || !lattunkBlokkot,
      !vanAdatban
        ? 'az adatban most nincs változtatás nélküli forduló — nincs mit kilátszania'
        : 'van olyan forduló, ahol "Nem változtatott a keretén." áll'
          + (lattunkBlokkot ? '' : ' (ebben a ligában még nincs lezárt forduló mutatóval)'));
 
-  cim('A folyamatban lévő forduló pont nélkül is ott van');
+  section('A folyamatban lévő forduló pont nélkül is ott van');
   // A keret a leadasi hatarido utan rogzitett, tehat a valtoztatas mar
   // ismert - a pontja meg nem. Ilyenkor a blokk ott van, de SEMMILYEN szam
   // nincs benne: se sorokban, se osszesen. A "0" hazugsag lenne.
@@ -243,42 +243,42 @@ async function liga(br, L){
   };
 
   if (!folyo){
-    jo(true, 'kihagyva: most nincs olyan forduló, aminek a kerete rögzített, de pontja még nincs');
+    check(true, 'kihagyva: most nincs olyan forduló, aminek a kerete rögzített, de pontja még nincs');
   } else {
     if (folyo.valtoztatott){
       const t = await pontNelkuliBlokk(folyo.valtoztatott);
-      jo(!!t, 'aki változtatott (' + folyo.valtoztatott + '), annak ott a pont nélküli blokk');
+      check(!!t, 'aki változtatott (' + folyo.valtoztatott + '), annak ott a pont nélküli blokk');
       if (t){
-        jo(t.cim.includes(folyo.r), 'a blokk a folyó fordulóé (' + t.cim + ')');
-        jo(/nincs pontszám/.test(t.megj),
+        check(t.cim.includes(folyo.r), 'a blokk a folyó fordulóé (' + t.cim + ')');
+        check(/nincs pontszám/.test(t.megj),
            'a fejléc megmondja, hogy még nincs pontszám ("' + t.megj + '")');
-        jo(!t.guardjel && !t.ossz, 'nincs GUARD a fejlécben és nincs "Összesen" sor');
-        jo(t.sorok > 0, 'a változtatás viszont látszik (' + t.sorok + ' sor)');
-        jo(t.uresDiff && t.uresErt, 'egyetlen szám sincs a sorokban — a „0" hazugság lenne');
+        check(!t.guardjel && !t.ossz, 'nincs GUARD a fejlécben és nincs "Összesen" sor');
+        check(t.sorok > 0, 'a változtatás viszont látszik (' + t.sorok + ' sor)');
+        check(t.uresDiff && t.uresErt, 'egyetlen szám sincs a sorokban — a „0" hazugság lenne');
       }
     } else {
-      jo(true, 'kihagyva: a folyó fordulóban senki nem változtatott');
+      check(true, 'kihagyva: a folyó fordulóban senki nem változtatott');
     }
     // A MASIK eset, ami korabban hibasan bukast okozott: aki hozza sem nyult
     // a kerethez, annak nem sorok jarnak, hanem az "Nem valtoztatott" uzenet.
     if (folyo.valtozatlan){
       const u = await pontNelkuliBlokk(folyo.valtozatlan);
-      jo(!!u, 'aki nem változtatott (' + folyo.valtozatlan + '), annál is ott a blokk');
+      check(!!u, 'aki nem változtatott (' + folyo.valtozatlan + '), annál is ott a blokk');
       if (u){
-        jo(/nincs pontszám/.test(u.megj), 'ott is "még nincs pontszám" áll');
-        jo(u.sorok === 0 && u.ures,
+        check(/nincs pontszám/.test(u.megj), 'ott is "még nincs pontszám" áll');
+        check(u.sorok === 0 && u.ures,
            'sorok helyett a „Nem változtatott a keretén." üzenet áll');
       }
     } else {
-      jo(true, 'kihagyva: a folyó fordulóban mindenki változtatott');
+      check(true, 'kihagyva: a folyó fordulóban mindenki változtatott');
     }
   }
 
-  cim('A nevek kattinthatók');
+  section('A nevek kattinthatók');
   await nyit(nevek[0], L.tab);
   if (!lattunkBlokkot){
-    jo(true, 'kihagyva: ebben a ligában még nincs lezárt forduló mutatóval');
-    jo(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+    check(true, 'kihagyva: ebben a ligában még nincs lezárt forduló mutatóval');
+    check(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
     await p.close();
     return;
   }
@@ -287,10 +287,10 @@ async function liga(br, L){
   await p.$eval('#mBody .valtlista .vanev.kattint', e => e.click());
   await p.waitForTimeout(600);
   const cimSor = await p.$eval('#mTitle', e => e.textContent.trim());
-  jo(nev0.indexOf(cimSor) === 0 || cimSor.length > 0 && nev0.indexOf(cimSor.split(' ')[0]) >= 0,
+  check(nev0.indexOf(cimSor) === 0 || cimSor.length > 0 && nev0.indexOf(cimSor.split(' ')[0]) >= 0,
      'a névre kattintva a játékos profilja nyílik (' + cimSor + ')');
 
-  jo(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+  check(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
   await p.close();
 }
 
@@ -302,8 +302,8 @@ async function liga(br, L){
 async function plLezartan(br){
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
-  await apiKi(p);
-  await jsonAtir(p, '**/draft.json*', j => {
+  await blockApis(p);
+  await rewriteJson(p, '**/draft.json*', j => {
     (j.schedule['2'] || []).forEach(m => { if (m[2] == null){ m[2] = 40; m[3] = 30; } });
     return j;
   });
@@ -352,10 +352,10 @@ async function plLezartan(br){
     else if (Math.abs(jo_ + sz(b.gep) - fej) > 0.005)
       bajok.push(id + ': ember ' + jo_ + ' + gép ' + sz(b.gep) + ' ≠ ' + fej);
   }
-  jo(idk.length > 0 && bajok.length === 0,
+  check(idk.length > 0 && bajok.length === 0,
      'lezárt fordulóval a PL-en is minden szám egyezik (' + idk.length + ' csapat)'
      + (bajok.length ? ' — ELTÉRÉS: ' + bajok.join(' ; ') : ''));
-  jo(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+  check(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
   await p.close();
 }
 
@@ -369,7 +369,7 @@ async function plLezartan(br){
 async function regiAlak(br){
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
-  await apiKi(p);
+  await blockApis(p);
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#table tr', { timeout: 20000 });
   const k = await p.evaluate(() => {
@@ -382,11 +382,11 @@ async function regiAlak(br){
              ures: !!b.querySelector('.vaures'),
              ossz: (b.querySelector('.vaossz .zdiff') || {}).textContent };
   });
-  jo(k.sorok === 2 && !k.ures,
+  check(k.sorok === 2 && !k.ures,
      'a címkézetlen `sorok` alakból is kirajzolódnak a tételek (' + JSON.stringify(k) + ')');
-  jo(k.ossz && k.ossz.replace(',', '.').indexOf('2') >= 0,
+  check(k.ossz && k.ossz.replace(',', '.').indexOf('2') >= 0,
      'és az Összesen sor is ott van (' + k.ossz + ')');
-  jo(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+  check(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
   await p.close();
 }
 
@@ -397,12 +397,12 @@ async function regiAlak(br){
 async function plPontNelkul(br){
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
-  await apiKi(p);
+  await blockApis(p);
   const GW = await new Promise(r => {
     const j = require(require('path').join(__dirname, '..', 'draft_keretvaltozasok.json'));
     r(Object.keys(j.rounds).map(Number).sort((a, b) => b - a)[0] + '');
   });
-  await jsonAtir(p, '**/draft.json*', j => {
+  await rewriteJson(p, '**/draft.json*', j => {
     j.schedule[GW] = (j.schedule[GW] || []).map(m => [m[0], m[1], null, null]);
     return j;
   });
@@ -427,13 +427,13 @@ async function plPontNelkul(br){
     uresDiff: [...b.querySelectorAll('.zdiff')].every(x => !x.textContent.trim()),
   });
   }, GW);
-  jo(!!t, 'megvan a ' + GW + '. forduló blokkja');
+  check(!!t, 'megvan a ' + GW + '. forduló blokkja');
   if (!t){ await p.close(); return; }
-  jo(/nincs pontszám/.test(t.megj || ''),
+  check(/nincs pontszám/.test(t.megj || ''),
      'PL: a fejléc megmondja, hogy még nincs pontszám ("' + t.megj + '")');
-  jo(!t.guardjel && !t.ossz, 'PL: nincs GUARD és nincs "Összesen" sor');
-  jo(!t.gep, 'PL: a gépi csere sora sincs — az automatikus csere még meg sem történt');
-  jo(t.sorok > 0 && t.uresDiff,
+  check(!t.guardjel && !t.ossz, 'PL: nincs GUARD és nincs "Összesen" sor');
+  check(!t.gep, 'PL: a gépi csere sora sincs — az automatikus csere még meg sem történt');
+  check(t.sorok > 0 && t.uresDiff,
      'PL: a változtatás látszik (' + t.sorok + ' sor), szám nélkül');
   // A FUL NEM A NEZOROL SZOL. Ugyanez a ful barmelyik szakvezeto lapjan
   // megnyithato, tehat egy "a kezdod atalakitasa" felirat mas emberre
@@ -445,24 +445,24 @@ async function plPontNelkul(br){
     n => n.map(x => x.textContent.trim())
           .join(' | ')
           .match(/(kereted|kezdőd|csapatod|neked|nálad|döntésed|általad)\w{0,8}/gi) || []);
-  jo(e2.length === 0,
+  check(e2.length === 0,
      'a fül nem szólítja meg a nézőt (egyes szám második személy)'
      + (e2.length ? ' — ' + [...new Set(e2)].join(', ') : ''));
-  jo(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+  check(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
   await p.close();
 }
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   for (const L of LIGAK){
-    cim('=== ' + L.ut.replace('/', '').toUpperCase() + ' ===');
+    section('=== ' + L.ut.replace('/', '').toUpperCase() + ' ===');
     await liga(br, L);
   }
-  cim('=== PL, lezárt fordulóval (a menetrend menet közben kiegészítve) ===');
+  section('=== PL, lezárt fordulóval (a menetrend menet közben kiegészítve) ===');
   await plLezartan(br);
-  cim('=== PL, pontszám nélküli (még le nem zárt) forduló ===');
+  section('=== PL, pontszám nélküli (még le nem zárt) forduló ===');
   await plPontNelkul(br);
-  cim('=== A régi, címkézetlen adatalak is megjelenik ===');
+  section('=== A régi, címkézetlen adatalak is megjelenik ===');
   await regiAlak(br);
-  await vege(br);
+  await finish(br);
 })();

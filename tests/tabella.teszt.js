@@ -1,4 +1,4 @@
-const { BASE, jo, cim, hibak, inditas, vege, apiKi } = require('./kozos');
+const { BASE, check, section, failures, launch, finish, blockApis } = require('./common');
 // A tabellat es a matrixot FUGGETLENUL ujraszamoljuk a results.json-bol, es
 // osszevetjuk azzal, amit az oldal kirajzol. Eddig ezt semmi nem ellenorizte.
 const fs = require('fs');
@@ -25,7 +25,7 @@ const enyem = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.GY * 3 + s.D, K
   .sort((x, y) => y.P - x.P || y.KUL - x.KUL || y.SP - x.SP);
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const p = await br.newPage();
   for (const m of ['**mlsz.hu/**', '**corsproxy.io/**', '**allorigins**']) await p.route(m, r => r.abort());
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
@@ -47,15 +47,15 @@ const enyem = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.GY * 3 + s.D, K
   const sz = t => parseFloat(String(t).replace(/\s/g, '').replace(',', '.'));
 
   console.log('--- tabella ---');
-  jo(oldal.length === enyem.length, `sorok száma (oldal ${oldal.length}, számolt ${enyem.length})`);
+  check(oldal.length === enyem.length, `sorok száma (oldal ${oldal.length}, számolt ${enyem.length})`);
   enyem.forEach((v, i) => {
     const o = oldal[i] || [];
-    jo((o[1] || '').startsWith(v.n), `${i + 1}. hely ${v.n} (oldalon: "${(o[1] || '').split(' ')[0]}")`);
+    check((o[1] || '').startsWith(v.n), `${i + 1}. hely ${v.n} (oldalon: "${(o[1] || '').split(' ')[0]}")`);
     const vart = [v.M, v.GY, v.D, v.V, ker(v.SP), ker(v.KP), v.KUL, v.P];
     const kap = [2, 3, 4, 5, 6, 7, 8, 9].map(j => sz(o[j]));
     const ok = vart.every((x, j) => Math.abs(x - kap[j]) < 0.005);
     if (!ok) console.log(`      várt:   ${vart.join(' | ')}\n      kapott: ${kap.join(' | ')}`);
-    jo(ok, `   ${v.n} számai (M/GY/D/V/SP/KP/KÜL/Pont)`);
+    check(ok, `   ${v.n} számai (M/GY/D/V/SP/KP/KÜL/Pont)`);
   });
 
   console.log('\n--- egymás elleni mátrix ---');
@@ -72,10 +72,10 @@ const enyem = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.GY * 3 + s.D, K
   let db = 0, elteres = 0;
   for (const sor of mx) {
     const a = enyem.find(x => x.n === sor.nev);
-    if (!a) { jo(false, 'ismeretlen mátrix-sor: ' + sor.nev); continue; }
+    if (!a) { check(false, 'ismeretlen mátrix-sor: ' + sor.nev); continue; }
     for (const c of sor.cellak) {
       const b = enyem.find(x => x.n.toLowerCase().startsWith(c.oszlop.toLowerCase()));
-      if (!b) { jo(false, 'ismeretlen mátrix-oszlop: ' + c.oszlop); continue; }
+      if (!b) { check(false, 'ismeretlen mátrix-oszlop: ' + c.oszlop); continue; }
       if (a.n === b.n) { if (c.ertek !== '—') { elteres++; console.log(`   átló ${a.n}: "${c.ertek}"`); } continue; }
       const m = H2H[a.n + '|' + b.n];
       const vart = m ? m.join('/') : '·';
@@ -85,9 +85,9 @@ const enyem = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.GY * 3 + s.D, K
       }
     }
   }
-  jo(elteres === 0, `mátrix cellái (${db} ellenőrizve, ${elteres} eltérés)`);
+  check(elteres === 0, `mátrix cellái (${db} ellenőrizve, ${elteres} eltérés)`);
 
-  cim('Vízszintes görgetésnél a helyezés ÉS a név is áll');
+  section('Vízszintes görgetésnél a helyezés ÉS a név is áll');
   // A KIZART HIBA (iPhone): gorgetesnel a SZAKVEZETO fejlec allva maradt, a
   // nevek viszont elcsusztak a szamok ala. Ok: a `td.name` maga volt a flex
   // kontener, es a flexes cella kikerul a tablazat-elrendezesbol - Safari
@@ -98,7 +98,7 @@ const enyem = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.GY * 3 + s.D, K
   // flex a benne levo .nevsor-on legyen. Ha valaki visszateszi a flexet a
   // cellara, ez a teszt bukik - a telefon nelkul is.
   const mob = await br.newPage({ viewport: { width: 390, height: 800 } });
-  await apiKi(mob);
+  await blockApis(mob);
   await mob.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await mob.waitForSelector('#table td.name', { timeout: 20000 });
   const st = await mob.evaluate(() => {
@@ -114,20 +114,20 @@ const enyem = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.GY * 3 + s.D, K
       borderCollapse: cs(document.getElementById('table')).borderCollapse,
     };
   });
-  jo(st.nevDisplay === 'table-cell',
+  check(st.nevDisplay === 'table-cell',
      'a névcella VALÓDI táblázat-cella marad (display: ' + st.nevDisplay + ')');
-  jo(st.nevsor && st.nevsorDisplay === 'flex',
+  check(st.nevsor && st.nevsorDisplay === 'flex',
      'a flex a cellán BELÜL, a .nevsor-on van (' + st.nevsorDisplay + ')');
-  jo(st.nevPos === 'sticky' && st.rangPos === 'sticky' && st.thPos === 'sticky',
+  check(st.nevPos === 'sticky' && st.rangPos === 'sticky' && st.thPos === 'sticky',
      'a helyezés, a név és a fejléc mind ragad (' + st.rangPos + ' / ' + st.nevPos
      + ' / ' + st.thPos + ')');
   // A WebKit (iPhone-on MINDEN bongeszo, a Chrome is) `collapse` mellett nem
   // ragasztja megbizhatoan a tablazat-cellakat. Megmerve: a `separate` a
   // rajzolaton semmit nem valtoztat.
-  jo(st.borderCollapse === 'separate',
+  check(st.borderCollapse === 'separate',
      'a ragadó cellás tábla border-collapse-e separate (' + st.borderCollapse + ')');
   await mob.close();
 
   await br.close();
-  process.exit(hibak.length ? 1 : 0);
+  process.exit(failures.length ? 1 : 0);
 })();

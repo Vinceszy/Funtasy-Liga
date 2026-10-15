@@ -41,7 +41,7 @@ body.liga-nb1 h1 .tag{color:#43E27F}
    its own scroll box, and momentum scrolling breaks: the page does not
    start, shudders, starts, then runs back. Worst on the longest page.
    What it would protect is guarded by a measurement instead
-   (tesztek/vizszintes.teszt.js): no page sticks out sideways even at 320
+   (tests/vizszintes.teszt.js): no page sticks out sideways even at 320
    pixels, not even with a match page open - so the clipping is not
    needed, only its harm would remain. */
 html,body{max-width:100%}

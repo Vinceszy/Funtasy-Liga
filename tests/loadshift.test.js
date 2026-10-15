@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege, jsonAtir } = require('./kozos');
+const { BASE, check, section, launch, finish, rewriteJson } = require('./common');
 // THE PAGE MUST NOT JUMP WHILE IT LOADS.
 //
 // A page that loads in steps moves what the reader is looking at with each
@@ -22,7 +22,7 @@ async function measure(br, path, dataFile) {
                    '**fonts.gstatic.com/**'])
     await p.route(m, r => r.abort());
   // Hold the league data back, so the empty first paint lasts long enough.
-  await jsonAtir(p, '**/' + dataFile + '*', j => j);
+  await rewriteJson(p, '**/' + dataFile + '*', j => j);
   await p.route('**/' + dataFile + '*', async route => {
     await new Promise(r => setTimeout(r, 700));
     route.fallback();
@@ -49,19 +49,19 @@ async function measure(br, path, dataFile) {
 }
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   for (const [name, path, dataFile] of [['PL', 'pl/', 'draft.json'], ['NB1', 'nb1/', 'results.json']]) {
-    cim(name + ': the page holds still while it loads');
+    section(name + ': the page holds still while it loads');
     const { samples, errors } = await measure(br, path, dataFile);
-    jo(samples.length > 20, 'enough samples (' + samples.length + ')');
+    check(samples.length > 20, 'enough samples (' + samples.length + ')');
     const range = k => Math.max(...samples.map(s => s[k])) - Math.min(...samples.map(s => s[k]));
     const filled = samples.filter(s => s.rows > 1);
-    jo(filled.length > 0, 'the table filled during the window');
-    jo(range('panel') <= MAX_SHIFT,
+    check(filled.length > 0, 'the table filled during the window');
+    check(range('panel') <= MAX_SHIFT,
        'the table panel stays put (moved ' + range('panel').toFixed(1) + ' px)');
-    jo(range('note') <= MAX_SHIFT,
+    check(range('note') <= MAX_SHIFT,
        'the note under the table stays put (moved ' + range('note').toFixed(1) + ' px)');
-    jo(!errors.length, 'no JS error: ' + JSON.stringify(errors));
+    check(!errors.length, 'no JS error: ' + JSON.stringify(errors));
   }
-  await vege(br);
+  await finish(br);
 })();

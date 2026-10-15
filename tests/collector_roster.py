@@ -1,108 +1,110 @@
 #!/usr/bin/env python3
-"""A jatekostorzs es az arnaplo (collect.py) - 12 allitas.
+"""The player roster and the price log (collect.py) - 12 assertions.
 
-MIERT: a torzs a fooldali lista es kereses forrasa, az arnaplo pedig az
-EGYETLEN ut az arak valtozasanak kovetesehez - kimertuk, hogy az MLSZ sehol
-nem ad ar-elozmenyt (naplo/mlsz-player-list.txt, 6. kor: minden include-ot
-nemán elnyel, a kulon vegpontok 404-esek). Amit a naplo ma nem ir fel, az
-visszamenoleg pototlhatatlan - ezert erdemel sajat tesztet.
+WHY: the roster is the source of the home page list and search, and the
+price log is the ONLY way to follow price changes - it was measured that MLSZ
+gives no price history anywhere (naplo/mlsz-player-list.txt, round 6: it
+silently swallows every include, the separate endpoints are 404). What the
+log does not write down today cannot be filled in retroactively - that is
+why it deserves its own test.
 """
 import importlib.util, json, os, sys
 
-FORRAS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'collect.py')
-spec = importlib.util.spec_from_file_location('collect', FORRAS)
+SOURCE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'collect.py')
+spec = importlib.util.spec_from_file_location('collect', SOURCE)
 c = importlib.util.module_from_spec(spec); sys.modules['collect'] = c
 spec.loader.exec_module(c)
-hibak = []
+failures = []
 
 
-def allit(felt, cimke):
-    print(("OK   " if felt else "HIBA ") + cimke)
-    if not felt:
-        hibak.append(cimke)
+def check(cond, label):
+    print(("OK   " if cond else "FAIL ") + label)
+    if not cond:
+        failures.append(label)
 
 
-# ---------------- 1) a torzs lekepezese ----------------
-VALASZ = {"data": [
+# ---------------- 1) mapping the roster ----------------
+RESPONSE = {"data": [
     {"id": 915, "first_name": "Áron", "last_name": "Alaxai", "is_u21": False,
      "position": {"monogram": "H", "name": "Hátvéd"},
      "team": {"short_name": "NYÍREGY", "name": "Nyíregyháza"},
      "current_round": {"market_price": 4.2},
      "summary_statistics": {"competition_points": 12.5}},
-    # hianyos sor: nincs monogram, nincs short_name, nincs ar
+    # incomplete row: no monogram, no short_name, no price
     {"id": 916, "first_name": "", "last_name": "Teszt", "is_u21": True,
      "position": {"name": "Csatár"}, "team": {"name": "MTK"},
      "current_round": {}, "summary_statistics": {}},
-    {"first_name": "Nincs", "last_name": "Azonosító"},          # id nelkul: kimarad
+    {"first_name": "Nincs", "last_name": "Azonosító"},          # without an id: left out
 ]}
-kert = {}
-c.api_get = lambda url, retries=3: (kert.setdefault("url", url), (200, VALASZ))[1]
+requested = {}
+c.api_get = lambda url, retries=3: (requested.setdefault("url", url), (200, RESPONSE))[1]
 t = c.player_roster()
 
-allit(t is not None and len(t) == 2, "az azonosito nelkuli sor kimarad (%s sor)" % (len(t) if t else None))
-allit("per_page=500" in kert["url"], "egy keres, nagy lapmerettel (per_page=500)")
-allit(t["915"] == {"n": "Alaxai Áron", "t": "NYÍREGY", "p": "H", "u21": False,
+check(t is not None and len(t) == 2, "the row without an id is left out (%s rows)" % (len(t) if t else None))
+check("per_page=500" in requested["url"], "one request, with a large page size (per_page=500)")
+check(t["915"] == {"n": "Alaxai Áron", "t": "NYÍREGY", "p": "H", "u21": False,
                    "pts": 12.5, "ar": 4.2},
-      "a teljes sor minden mezoje a helyere kerul, a nev MAGYAR sorrendben (%s)"
+      "every field of the complete row lands in place, the name in HUNGARIAN order (%s)"
       % t["915"]["n"])
 
-# a hosszu nev felismerheto resze a vezeteknev - annak kell elol allnia
-allit(c.player_name("Gleofilo Sabrino Rudewald Hasselbaink", "Vlijter")
+# the recognisable part of a long name is the surname - it must come first
+check(c.player_name("Gleofilo Sabrino Rudewald Hasselbaink", "Vlijter")
       == "Vlijter Gleofilo Sabrino Rudewald Hasselbaink",
-      "hosszu nevnel is a vezeteknev all elol (ez van a mezen)")
-allit(c.player_name(None, None, "#42") == "#42", "nev nelkul az azonosito a tartalek")
-allit(t["916"]["p"] == "Csatár" and t["916"]["t"] == "MTK",
-      "monogram/rovidnev hianyaban a teljes nev a tartalek")
-allit(t["916"]["pts"] == 0 and t["916"]["ar"] is None,
-      "hianyzo pont -> 0, hianyzo ar -> None (nem 0: az arvaltozasnak latszana)")
+      "with a long name too the surname comes first (that is what is on the shirt)")
+check(c.player_name(None, None, "#42") == "#42", "without a name the id is the fallback")
+check(t["916"]["p"] == "Csatár" and t["916"]["t"] == "MTK",
+      "without a monogram/short name the full name is the fallback")
+check(t["916"]["pts"] == 0 and t["916"]["ar"] is None,
+      "missing points -> 0, missing price -> None (not 0: that would look like a price change)")
 
 c.api_get = lambda url, retries=3: (500, None)
-allit(c.player_roster() is None, "hibas valasznal None jon (a fajl valtozatlan marad)")
+check(c.player_roster() is None, "on a failed response None comes back (the file stays unchanged)")
 
-# ---------------- 2) az arnaplo ----------------
-# A naplo a MUNKAKONYVTARBOL olvassa az arak.json-t. Ideiglenes konyvtarban
-# futtatjuk, sajat elozmennyel: igy a teszt nem fugg a repo aktualis adatatol,
-# es nem kell a modul `open`-jet arnyekolni sem (az a kozos modulba kerult
-# olvasast ugysem fogna el - egy ilyen trukk csendben mast mert volna).
+# ---------------- 2) the price log ----------------
+# The log reads arak.json FROM THE WORKING DIRECTORY. It runs in a temporary
+# directory, with its own history: this way the test does not depend on the
+# repository's current data, and the module's `open` does not have to be
+# shadowed either (that would not catch a read moved into the shared module
+# anyway - such a trick would silently have measured something else).
 import tempfile
 
-MUNKA = tempfile.mkdtemp()
-os.chdir(MUNKA)
+WORKDIR = tempfile.mkdtemp()
+os.chdir(WORKDIR)
 
 
-def naplo(torzs, mai, elozo=None):
-    """Az arnaplo egy lepese a megadott elozmennyel (None = meg nincs fajl)."""
-    if elozo is None:
+def log_step(roster, today, previous=None):
+    """One step of the price log with the given history (None = no file yet)."""
+    if previous is None:
         if os.path.exists("arak.json"):
             os.remove("arak.json")
     else:
         with open("arak.json", "w", encoding="utf-8") as f:
-            json.dump({"arak": elozo}, f)
-    return c.update_price_log(torzs, mai)
+            json.dump({"arak": previous}, f)
+    return c.update_price_log(roster, today)
 
 
 T1 = {"1": {"ar": 5.0}, "2": {"ar": 8.0}}
-n, db = naplo(T1, "2026-08-25")
-allit(db == 2 and n == {"1": [["2026-08-25", 5.0]], "2": [["2026-08-25", 8.0]]},
-      "elso futas: minden ar bekerul")
+n, count = log_step(T1, "2026-08-25")
+check(count == 2 and n == {"1": [["2026-08-25", 5.0]], "2": [["2026-08-25", 8.0]]},
+      "first run: every price is recorded")
 
-# valtozatlan ar -> NEM ir be uj sort (3 oraankent futunk, kulonben hizna)
-n2, db2 = naplo(T1, "2026-08-26", elozo=n)
-allit(db2 == 0 and n2 == n, "valtozatlan arnal nem keletkezik uj bejegyzes")
+# unchanged price -> NO new row is written (we run every 3 hours, it would grow otherwise)
+n2, count2 = log_step(T1, "2026-08-26", previous=n)
+check(count2 == 0 and n2 == n, "no new entry is made for an unchanged price")
 
-# valtozas -> csak az erintett jatekoshoz kerul uj sor, a regi MEGMARAD
-n3, db3 = naplo({"1": {"ar": 5.5}, "2": {"ar": 8.0}}, "2026-08-27", elozo=n)
-allit(db3 == 1 and n3["1"] == [["2026-08-25", 5.0], ["2026-08-27", 5.5]]
+# change -> a new row only for the affected player, the old one STAYS
+n3, count3 = log_step({"1": {"ar": 5.5}, "2": {"ar": 8.0}}, "2026-08-27", previous=n)
+check(count3 == 1 and n3["1"] == [["2026-08-25", 5.0], ["2026-08-27", 5.5]]
       and n3["2"] == [["2026-08-25", 8.0]],
-      "valtozasnal uj sor kerul be, a korabbi ertek megmarad")
+      "on a change a new row is added, the earlier value stays")
 
-# hianyzo/nulla ar NEM szamit valtozasnak - kulonben egy API-hiba hamis
-# "0-ra esett" bejegyzest irna be, amit utolag nem lehet megkulonboztetni
-n4, db4 = naplo({"1": {"ar": None}, "2": {"ar": 0}}, "2026-08-28", elozo=n)
-allit(db4 == 0 and n4 == n,
-      "hianyzo vagy nulla ar nem kerul be (API-hiba nem ir hamis arzuhanast)")
+# a missing/zero price does NOT count as a change - otherwise an API error
+# would write a false "dropped to 0" entry that cannot be told apart later
+n4, count4 = log_step({"1": {"ar": None}, "2": {"ar": 0}}, "2026-08-28", previous=n)
+check(count4 == 0 and n4 == n,
+      "a missing or zero price is not recorded (an API error does not write a false price crash)")
 
-if hibak:
-    print("\n%d allitas bukott." % len(hibak))
+if failures:
+    print("\n%d assertions failed." % len(failures))
     sys.exit(1)
-print("\nMind a %d allitas rendben." % 12)
+print("\nAll %d assertions passed." % 12)

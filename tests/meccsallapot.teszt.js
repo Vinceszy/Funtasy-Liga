@@ -1,8 +1,8 @@
-const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozos');
+const { BASE, check, section, failures, launch, finish, blockApis, rewriteJson } = require('./common');
 // A felulvizsgalat utani javitasok tesztje.
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
   // ---------- meccsFut ----------
   console.log('--- meccsFut: mikor fut a meccs ---');
@@ -24,14 +24,14 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
       nincsStart:      isMatchRunning(null, undefined),
     };
   });
-  jo(e.jovobeli === false, 'jövőbeli kezdés: még nem fut');
-  jo(e.fut30 === true, '30 perce kezdődött: fut');
-  jo(e.fut30VegeHazug === true, '30 percnél a "completed" jelzést NEM hisszük el (ez volt a hiba)');
-  jo(e.fut110 === true, '110 perce kezdődött, nincs vége-jelzés: még fut');
-  jo(e.veget110 === false, '110 percnél a "completed" már hiteles: nem fut');
-  jo(e.lejart200 === false, '200 perc után akkor sem fut, ha nincs vége-jelzés');
-  jo(e.ejfel === false, 'éjfél (nincs kitűzött kezdés): nem tekintjük futónak');
-  jo(e.nincsStart === false, 'kezdés nélkül nem állítunk semmit');
+  check(e.jovobeli === false, 'jövőbeli kezdés: még nem fut');
+  check(e.fut30 === true, '30 perce kezdődött: fut');
+  check(e.fut30VegeHazug === true, '30 percnél a "completed" jelzést NEM hisszük el (ez volt a hiba)');
+  check(e.fut110 === true, '110 perce kezdődött, nincs vége-jelzés: még fut');
+  check(e.veget110 === false, '110 percnél a "completed" már hiteles: nem fut');
+  check(e.lejart200 === false, '200 perc után akkor sem fut, ha nincs vége-jelzés');
+  check(e.ejfel === false, 'éjfél (nincs kitűzött kezdés): nem tekintjük futónak');
+  check(e.nincsStart === false, 'kezdés nélkül nem állítunk semmit');
 
   // ---------- "lejatszotta" csak bizonyitekkal ----------
   console.log('\n--- "lejátszotta" állításhoz bizonyíték kell ---');
@@ -55,11 +55,11 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
     };
   });
   Object.entries(u).forEach(([k, v]) => console.log('   ' + k.padEnd(12) + ' -> ' + JSON.stringify(v)));
-  jo(/A meccs zajlik/.test(u.futKozben), 'futó meccs + is_played=true -> "zajlik" (a bejelentett hiba)');
-  jo(/Lejátszotta/.test(u.regenNincs), 'lement meccs + üres bontás -> lejátszotta, pont nélkül');
-  jo(/Lejátszotta/.test(u.regenVan), 'megjött bontással már állítunk (90 perc, pont nélkül -> lejátszotta)');
-  jo(/Lejátszotta/.test(u.lezart), 'lezárt fordulóban a régi viselkedés marad');
-  jo(/Lejátszotta/.test(u.nincsIdo), 'kezdési idő nélkül is a lejátszotta marad (régi rekord)');
+  check(/A meccs zajlik/.test(u.futKozben), 'futó meccs + is_played=true -> "zajlik" (a bejelentett hiba)');
+  check(/Lejátszotta/.test(u.regenNincs), 'lement meccs + üres bontás -> lejátszotta, pont nélkül');
+  check(/Lejátszotta/.test(u.regenVan), 'megjött bontással már állítunk (90 perc, pont nélkül -> lejátszotta)');
+  check(/Lejátszotta/.test(u.lezart), 'lezárt fordulóban a régi viselkedés marad');
+  check(/Lejátszotta/.test(u.nincsIdo), 'kezdési idő nélkül is a lejátszotta marad (régi rekord)');
 
   // ---------- lejart helyorzo datum + masik fordulo meccse ----------
   console.log('\n--- kitűzetlen kezdés, aminek a napja már elmúlt ---');
@@ -77,11 +77,11 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
     };
   });
   Object.entries(h).forEach(([k, v]) => console.log('   ' + k.padEnd(9) + ' -> ' + JSON.stringify(v)));
-  jo(/elmaradt/.test(h.lejart) && !/kezdés/.test(h.lejart),
+  check(/elmaradt/.test(h.lejart) && !/kezdés/.test(h.lejart),
     'lejárt helyőrző: nem ígér kezdési időt, hanem elmaradt meccset mond');
-  jo(/kezdés/.test(h.jovobeli), 'jövőbeli helyőrzőnél a dátum megmarad');
-  jo(/nem játszik/.test(h.ngElo), 'élő fordulóban jelen idő');
-  jo(/nem volt meccse/.test(h.ngLezart), 'lezárt fordulóban múlt idő');
+  check(/kezdés/.test(h.jovobeli), 'jövőbeli helyőrzőnél a dátum megmarad');
+  check(/nem játszik/.test(h.ngElo), 'élő fordulóban jelen idő');
+  check(/nem volt meccse/.test(h.ngLezart), 'lezárt fordulóban múlt idő');
 
   console.log('\n--- a meccs round_number-e árulja el, hogy másik fordulóé ---');
   const k = await p.evaluate(() => {
@@ -98,12 +98,12 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
   });
   console.log('   másik fordulóé ->', JSON.stringify(k.masik.nogame), 'start:', JSON.stringify(k.masik.start),
               '| sajátja ->', JSON.stringify(k.sajat.nogame), 'start:', JSON.stringify(k.sajat.start));
-  jo(k.masik.nogame === true, 'másik forduló meccse -> nincs meccse ebben a fordulóban');
-  jo(k.masik.start === null, 'másik forduló meccséből nem veszünk át kezdési időt');
-  jo(k.masik.vege === undefined, 'másik forduló meccsének állapota sem szivárog át');
-  jo(k.futoMasik.nogame === true && k.futoMasik.vege === undefined,
+  check(k.masik.nogame === true, 'másik forduló meccse -> nincs meccse ebben a fordulóban');
+  check(k.masik.start === null, 'másik forduló meccséből nem veszünk át kezdési időt');
+  check(k.masik.vege === undefined, 'másik forduló meccsének állapota sem szivárog át');
+  check(k.futoMasik.nogame === true && k.futoMasik.vege === undefined,
     'a másik fordulóból visszaeső, még le nem ment meccs sem téveszt meg');
-  jo(k.sajat.nogame === undefined && k.sajat.start === '2026-08-23T17:30:00+02:00' && k.sajat.vege === true,
+  check(k.sajat.nogame === undefined && k.sajat.start === '2026-08-23T17:30:00+02:00' && k.sajat.vege === true,
     'a fordulóhoz tartozó meccs adatait viszont átvesszük');
 
   // ---------- PL: lezarult fordulo eldobja az elo reteget ----------
@@ -121,7 +121,7 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
   const GW = Object.keys(hist.rounds).map(Number).sort((a, b) => b - a)[0] + '';
   const elemek = [...new Set(Object.values(hist.rounds[GW]).flat().map(x => x.e))];
   let kesz = false;
-  await jsonAtir(p2, '**/draft.json*', j => {
+  await rewriteJson(p2, '**/draft.json*', j => {
     j.schedule[GW] = (j.schedule[GW] || []).map(m => [m[0], m[1], null, null]);
     return j;
   });
@@ -150,11 +150,11 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
   const eloUtana = await p2.locator('.match.elo').count();
   const statusz = (await p2.locator('#status').innerText()).trim();
   console.log('   "élő" jelölés a lezárás után:', eloUtana, '| státusz:', JSON.stringify(statusz.slice(0, 40)));
-  jo(eloElotte > 0, 'a forduló alatt van "élő" jelölés');
-  jo(eloUtana === 0, 'a lezárás után egy meccs sem marad "élő" jelölésű');
-  jo(/lezárult/.test(statusz) && !/Naprakész/.test(statusz),
+  check(eloElotte > 0, 'a forduló alatt van "élő" jelölés');
+  check(eloUtana === 0, 'a lezárás után egy meccs sem marad "élő" jelölésű');
+  check(/lezárult/.test(statusz) && !/Naprakész/.test(statusz),
      'a státuszsáv megmondja, hogy az eredmény még hiányzik — nem ír „naprakész"-t');
   await p2.close(); await p.close();
   await br.close();
-  process.exit(hibak.length ? 1 : 0);
+  process.exit(failures.length ? 1 : 0);
 })();

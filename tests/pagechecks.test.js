@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege, jsonAtir } = require('./kozos');
+const { BASE, check, section, launch, finish, rewriteJson } = require('./common');
 // SMALL PAGE GUARANTEES, each one a fault that once went unnoticed.
 //
 //  * The magazine's rating buttons answer a click (the listener used to be
@@ -21,50 +21,50 @@ async function page(br, viewport) {
 }
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
-  cim('magazine: the rating buttons answer');
+  section('magazine: the rating buttons answer');
   {
     const p = await page(br);
     await p.goto(BASE + 'nemzethy/', { waitUntil: 'domcontentloaded' });
     const gomb = p.locator('.artrate button[data-pont="2"]').first();
     await gomb.waitFor({ timeout: 15000 }).catch(() => {});
     const van = await gomb.count();
-    jo(van > 0, 'there is a rating bar on the magazine');
+    check(van > 0, 'there is a rating bar on the magazine');
     if (van) {
       await gomb.click({ force: true });
       const doboz = await p.waitForSelector('.artreasont', { timeout: 5000 }).catch(() => null);
-      jo(!!doboz, 'a 2 opens the reason box');
+      check(!!doboz, 'a 2 opens the reason box');
     }
     await p.close();
   }
 
-  cim('subpage: verzio.json is found next to funtasy.js');
+  section('subpage: verzio.json is found next to funtasy.js');
   {
     const p = await page(br);
     const kert = [];
     p.on('response', r => { if (r.url().includes('verzio.json')) kert.push([r.url(), r.status()]); });
     await p.goto(BASE + 'nb1/', { waitUntil: 'load' });
     await p.waitForTimeout(800);
-    jo(kert.length > 0 && kert.every(([, st]) => st === 200),
+    check(kert.length > 0 && kert.every(([, st]) => st === 200),
        'every verzio.json request answered 200: ' + JSON.stringify(kert));
     await p.close();
   }
 
-  cim('home: the league card titles keep their size on a phone');
+  section('home: the league card titles keep their size on a phone');
   {
     const p = await page(br);
     await p.goto(BASE, { waitUntil: 'load' });
     await p.waitForSelector('.ligakartya h2', { timeout: 10000 });
     const meret = await p.$$eval('.ligakartya h2', hs => hs.map(h => getComputedStyle(h).fontSize));
-    jo(meret.length && meret.every(m => m === '22px'), 'every card title is 22px: ' + JSON.stringify(meret));
+    check(meret.length && meret.every(m => m === '22px'), 'every card title is 22px: ' + JSON.stringify(meret));
     await p.close();
   }
 
-  cim('NB1: no numbers in the table before results.json arrives');
+  section('NB1: no numbers in the table before results.json arrives');
   {
     const p = await page(br);
-    await jsonAtir(p, '**/results.json*', j => j);
+    await rewriteJson(p, '**/results.json*', j => j);
     let engedd;
     const kapu = new Promise(r => { engedd = r; });
     await p.route('**/results.json*', async route => { await kapu; route.fallback(); });
@@ -72,15 +72,15 @@ async function page(br, viewport) {
     await p.waitForSelector('#table tr', { timeout: 10000 });
     const elotte = await p.$$eval('#table tr', trs => trs.slice(1).map(tr => tr.className + '|' +
       [...tr.cells].slice(2).map(c => c.textContent.trim()).join('')));
-    jo(elotte.length === 8 && elotte.every(s => s.startsWith('placeholder|') && !/\d/.test(s.split('|')[1])),
+    check(elotte.length === 8 && elotte.every(s => s.startsWith('placeholder|') && !/\d/.test(s.split('|')[1])),
        'eight placeholder rows, no digits: ' + JSON.stringify(elotte.slice(0, 2)));
     engedd();
     await p.waitForFunction(() => document.querySelectorAll('#table tr.placeholder').length === 0,
                             null, { timeout: 15000 }).catch(() => {});
     const utana = await p.$$eval('#table tr', trs => trs.length - 1);
-    jo(utana === 8, 'after the results: eight real rows (' + utana + ')');
+    check(utana === 8, 'after the results: eight real rows (' + utana + ')');
     await p.close();
   }
 
-  await vege(br);
+  await finish(br);
 })();

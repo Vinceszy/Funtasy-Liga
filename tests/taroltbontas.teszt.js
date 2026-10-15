@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
+const { BASE, check, section, launch, finish, blockApis, rewriteJson } = require('./common');
 // A LEZART fordulo teteles bontasa a REPOBOL jon (bontasok/<r>.json), nem az
 // MLSZ-tol. MIERT: a bontas eddig kizarolag elo lekeresbol jott, kattintasra
 // - ha az MLSZ vagy a kozvetito nem valaszolt, a lenyilo hibat irt. A lezart
@@ -18,7 +18,7 @@ const ELO = { data: [
 async function nyit(br, opts){
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
-  await apiKi(p);
+  await blockApis(p);
   const elohivas = [];
   await p.route('**fantasy-api.mlsz.hu/**', r => {
     const u = decodeURIComponent(r.request().url());
@@ -27,7 +27,7 @@ async function nyit(br, opts){
     return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(ELO) });
   });
   if (opts.provisional)
-    await jsonAtir(p, '**/results.json*', j => Object.assign(j, { provisional: opts.provisional }));
+    await rewriteJson(p, '**/results.json*', j => Object.assign(j, { provisional: opts.provisional }));
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#table tr', { timeout: 20000 });
   await p.waitForTimeout(1200);
@@ -53,30 +53,30 @@ async function nyit(br, opts){
 }
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
-  cim('Lezárt forduló: a tárolt bontás jön, élő lekérés nélkül');
+  section('Lezárt forduló: a tárolt bontás jön, élő lekérés nélkül');
   let x = await nyit(br, { fordulo: 4, tarolt: true });
-  jo(/TÁROLT GÓL/.test(x.szoveg), 'a tárolt fájlból jön a bontás ('
+  check(/TÁROLT GÓL/.test(x.szoveg), 'a tárolt fájlból jön a bontás ('
      + x.szoveg.replace(/\n/g, ' | ').slice(0, 70) + ')');
-  jo(x.elohivas.length === 0,
+  check(x.elohivas.length === 0,
      'NINCS élő MLSZ-lekérés lezárt fordulónál (' + x.elohivas.length + ')');
-  jo(x.err.length === 0, 'nincs JS-hiba' + (x.err.length ? ': ' + x.err.join(' | ') : ''));
+  check(x.err.length === 0, 'nincs JS-hiba' + (x.err.length ? ': ' + x.err.join(' | ') : ''));
 
-  cim('Hiányzó fájl: csendes visszaesés az élő útra');
+  section('Hiányzó fájl: csendes visszaesés az élő útra');
   x = await nyit(br, { fordulo: 4, tarolt: false });
-  jo(/ÉLŐ GÓL/.test(x.szoveg), 'a bontás az élő lekérésből jön ('
+  check(/ÉLŐ GÓL/.test(x.szoveg), 'a bontás az élő lekérésből jön ('
      + x.szoveg.replace(/\n/g, ' | ').slice(0, 70) + ')');
-  jo(x.elohivas.length > 0, 'volt élő lekérés (' + x.elohivas.length + ')');
-  jo(x.err.length === 0, 'nincs JS-hiba' + (x.err.length ? ': ' + x.err.join(' | ') : ''));
+  check(x.elohivas.length > 0, 'volt élő lekérés (' + x.elohivas.length + ')');
+  check(x.err.length === 0, 'nincs JS-hiba' + (x.err.length ? ': ' + x.err.join(' | ') : ''));
 
-  cim('Élő forduló: a tárolt fájlt NEM használjuk');
+  section('Élő forduló: a tárolt fájlt NEM használjuk');
   // az 5. fordulot elore kimondjuk elonek; ott a bontas meg valtozhat,
   // tehat a tarolt (esetleg reg mentett) valtozat felrevezetne
   x = await nyit(br, { fordulo: 5, tarolt: true, provisional: [5] });
-  jo(/ÉLŐ GÓL/.test(x.szoveg) && !/TÁROLT/.test(x.szoveg),
+  check(/ÉLŐ GÓL/.test(x.szoveg) && !/TÁROLT/.test(x.szoveg),
      'élő fordulónál az élő lekérés nyer (' + x.szoveg.replace(/\n/g, ' | ').slice(0, 70) + ')');
-  jo(x.err.length === 0, 'nincs JS-hiba' + (x.err.length ? ': ' + x.err.join(' | ') : ''));
+  check(x.err.length === 0, 'nincs JS-hiba' + (x.err.length ? ': ' + x.err.join(' | ') : ''));
 
-  await vege(br);
+  await finish(br);
 })();

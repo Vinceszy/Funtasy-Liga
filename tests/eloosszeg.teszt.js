@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
+const { BASE, check, section, launch, finish, blockApis, rewriteJson } = require('./common');
 // A JATEKOS ELO PONTJA A TETELES BONTASBOL JON, nem az FPL osszesitojebol.
 //
 // MERVE (GW2): az FPL a ket erteket kulon tartja, es az
@@ -21,17 +21,17 @@ const CSAPAT_MERET = 15, KEZDOK = 11;
 // kivesszuk a fordulo eredmenyet.
 const HIST = require(require('path').join(__dirname, '..', 'draft_history.json'));
 const GW = Object.keys(HIST.rounds).map(Number).sort((a, b) => b - a)[0] + '';
-const eloFordulova = p => jsonAtir(p, '**/draft.json*', j => {
+const eloFordulova = p => rewriteJson(p, '**/draft.json*', j => {
   j.schedule[GW] = (j.schedule[GW] || []).map(m => [m[0], m[1], null, null]);
   return j;
 });
 
 (async () => {
-  const br = await inditas();
-  cim('PL: az élő pont a bontásból áll össze');
+  const br = await launch();
+  section('PL: az élő pont a bontásból áll össze');
   const p = await br.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
-  await apiKi(p);
+  await blockApis(p);
   await eloFordulova(p);
 
   await p.route('**premierleague.com/api/**', async route => {
@@ -67,24 +67,24 @@ const eloFordulova = p => jsonAtir(p, '**/draft.json*', j => {
     const e = Object.keys(LIVEPTS)[0];
     return { pont: LIVEPTS[e], perc: (LIVE_MINUTES[e] || {}).perc };
   });
-  jo(egy.pont === 8, 'a játékos pontja a bontás összege (8), nem a beragadt összesítő (1) '
+  check(egy.pont === 8, 'a játékos pontja a bontás összege (8), nem a beragadt összesítő (1) '
      + '— kapott: ' + egy.pont);
-  jo(egy.perc === 90, 'a perc is a bontásból jön (90), nem a beragadt 9 — kapott: ' + egy.perc);
+  check(egy.perc === 90, 'a perc is a bontásból jön (90), nem a beragadt 9 — kapott: ' + egy.perc);
 
   // a csapat elo osszege: 11 kezdo x 8 = 88 (a pad nem szamit)
   const allas = await p.evaluate(() => [...document.querySelectorAll('.match .score')]
     .map(x => x.textContent.trim()).join(' '));
-  jo(new RegExp('\\b' + (KEZDOK * 8) + '\\b').test(allas),
+  check(new RegExp('\\b' + (KEZDOK * 8) + '\\b').test(allas),
      'az élő meccsállás is ebből számol (' + KEZDOK * 8 + '): ' + allas);
-  jo(!/\b11\b/.test(allas),
+  check(!/\b11\b/.test(allas),
      'a beragadt összesítőből számolt állás (11) NEM jelenik meg: ' + allas);
-  jo(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr.slice(0, 2)));
+  check(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr.slice(0, 2)));
   await p.close();
 
-  cim('Nincs bontás: marad a stats (még nem játszott)');
+  section('Nincs bontás: marad a stats (még nem játszott)');
   const q = await br.newPage();
   const qerr = []; q.on('pageerror', e => qerr.push(e.message));
-  await apiKi(q);
+  await blockApis(q);
   await eloFordulova(q);
   await q.route('**premierleague.com/api/**', async route => {
     const u = decodeURIComponent(route.request().url());
@@ -109,10 +109,10 @@ const eloFordulova = p => jsonAtir(p, '**/draft.json*', j => {
     const e = Object.keys(LIVEPTS)[0];
     return { pont: LIVEPTS[e], perc: (LIVE_MINUTES[e] || {}).perc };
   });
-  jo(ures.pont === 3 && ures.perc === 45,
+  check(ures.pont === 3 && ures.perc === 45,
      'üres bontásnál a stats marad a forrás (3 pont, 45 perc) — kapott: '
      + ures.pont + ' pont, ' + ures.perc + ' perc');
-  jo(qerr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(qerr.slice(0, 2)));
+  check(qerr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(qerr.slice(0, 2)));
 
-  await vege(br);
+  await finish(br);
 })();

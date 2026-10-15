@@ -1,4 +1,4 @@
-const { BASE, jo, inditas, vege } = require('./kozos');
+const { BASE, check, launch, finish } = require('./common');
 // A PAD SORRENDJE AZ FPL CSERE-SORRENDJE, es nem rendezheto at.
 //
 // A fordulo vegen az FPL az elso olyan padost allitja be a nem jatszo kezdo
@@ -9,7 +9,7 @@ const { BASE, jo, inditas, vege } = require('./kozos');
 // A kezdoket viszont TOVABBRA IS poszt szerint rendezzuk: ott a sorrendnek
 // nincs jelentese, es a kapus-vedo-kozeppalyas-csatar felepites olvashatobb.
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const p = await br.newPage({ viewport: { width: 900, height: 900 } });
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   await p.route('**premierleague.com/**', route => route.fulfill({
@@ -29,7 +29,7 @@ const { BASE, jo, inditas, vege } = require('./kozos');
     return poszt;
   });
   const [GKP, DEF, MID, FWD] = ['GKP', 'DEF', 'MID', 'FWD'].map(k => valasztas[k] || []);
-  jo(GKP.length && DEF.length && MID.length && FWD.length, 'van mind a négy poszt a törzsadatban');
+  check(GKP.length && DEF.length && MID.length && FWD.length, 'van mind a négy poszt a törzsadatban');
 
   // pad: kapus, csatar, vedo, kozeppalyas - egyetlen poszt-rendezes sem adja
   // vissza ezt a sorrendet, tehat ha megmarad, akkor tenyleg nem rendezunk
@@ -59,24 +59,24 @@ const { BASE, jo, inditas, vege } = require('./kozos');
 
   console.log('   pad bemenet:   ' + JSON.stringify(padSorrend));
   console.log('   pad a DOM-ban: ' + JSON.stringify(dom.padE));
-  jo(dom.padE.length === padSorrend.length && dom.kezdoE.length === kezdok.length,
+  check(dom.padE.length === padSorrend.length && dom.kezdoE.length === kezdok.length,
      'minden sor kirajzolodott (' + dom.kezdoE.length + ' kezdo + ' + dom.padE.length + ' pad)');
-  jo(dom.padE.length === padSorrend.length
+  check(dom.padE.length === padSorrend.length
      && dom.padE.every((x, i) => x === padSorrend[i]),
      'a pad pontosan a bemeneti (FPL-) sorrendben all - nincs poszt szerinti rendezes');
   // ellenorzes az ellenorzesre: poszt szerint rendezve MAS sorrend jonne ki,
   // tehat az allitas nem trivialisan igaz
   const rang = { GKP: 0, DEF: 1, MID: 2, FWD: 3 };
   const poszt = await p.evaluate(([ids]) => ids.map(e => PLAYERS[e].p), [padSorrend]);
-  jo(poszt.some((x, i) => i && rang[poszt[i - 1]] > rang[x]),
+  check(poszt.some((x, i) => i && rang[poszt[i - 1]] > rang[x]),
      'a teszt pad-sorrendje tenyleg NEM poszt-sorrend: ' + JSON.stringify(poszt));
 
   const kPoszt = await p.evaluate(([ids]) => ids.map(e => PLAYERS[e].p), [dom.kezdoE]);
   console.log('   kezdok a DOM-ban: ' + JSON.stringify(kPoszt));
-  jo(kPoszt.length === kezdok.length
+  check(kPoszt.length === kezdok.length
      && kPoszt.every((x, i) => !i || rang[kPoszt[i - 1]] <= rang[x]),
      'a kezdok viszont poszt szerint rendezve maradnak');
 
-  jo(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr));
-  await vege(br);
+  check(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr));
+  await finish(br);
 })();

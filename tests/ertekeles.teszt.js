@@ -1,4 +1,4 @@
-const { jo, cim, vege } = require('./kozos');
+const { check, section, finish } = require('./common');
 // A CIKK-ERTEKELES TAROLASA (tartalek/proxy-worker.js: /ertekeles).
 //
 // MIERT KELL: az irasok attol lesznek jobbak, hogy megtudjuk, MI nem
@@ -7,7 +7,7 @@ const { jo, cim, vege } = require('./kozos');
 // nem ismer fel, azt ne irja be.
 //
 // A Workert INNEN nem lehet elerni, ezert a logikat hamis KV-vel merjuk -
-// ugyanugy, mint a tarolonal (tesztek/workertarolo.teszt.js).
+// ugyanugy, mint a tarolonal (tests/workertarolo.teszt.js).
 //
 // Amit rogzit:
 //  - ervenyes ertekeles eltarolodik, a pont es az indok egyutt;
@@ -60,31 +60,31 @@ function ujKV(){
   };
 
   // ---- 1) ervenyes ertekeles ----
-  cim('Értékelés: eltárolódik a pont és az indok');
+  section('Értékelés: eltárolódik a pont és az indok');
   const kv = ujKV(), env = { TAROLT: kv };
   let r = await kuld({ cikk: CIKK, eszkoz: ESZKOZ, pont: 2,
                        indok: 'Semmi nem derült ki belőle.' }, env);
-  jo(r.status === 200, 'HTTP 200 — ' + r.status);
-  jo((await r.json()).ok === true, 'a válasz nyugtáz');
-  jo(kv.irasok === 1, 'egy írás — ' + kv.irasok);
+  check(r.status === 200, 'HTTP 200 — ' + r.status);
+  check((await r.json()).ok === true, 'a válasz nyugtáz');
+  check(kv.irasok === 1, 'egy írás — ' + kv.irasok);
   const kulcs = [...kv.tar.keys()][0];
-  jo(kulcs === 'ert/' + CIKK + '/' + ESZKOZ, 'a kulcsban a cikk ÉS az eszköz — ' + kulcs);
+  check(kulcs === 'ert/' + CIKK + '/' + ESZKOZ, 'a kulcsban a cikk ÉS az eszköz — ' + kulcs);
   const mentett = JSON.parse(kv.tar.get(kulcs));
-  jo(mentett.pont === 2, 'a pont elmentődött — ' + mentett.pont);
-  jo(mentett.indok === 'Semmi nem derült ki belőle.', 'a néző saját szavai is');
-  jo(!('okok' in mentett),
+  check(mentett.pont === 2, 'a pont elmentődött — ' + mentett.pont);
+  check(mentett.indok === 'Semmi nem derült ki belőle.', 'a néző saját szavai is');
+  check(!('okok' in mentett),
      'készre választható okokat nem tárolunk — a mi kategóriáink nem tanítanak semmire');
-  jo(!!mentett.ido, 'időbélyeggel');
+  check(!!mentett.ido, 'időbélyeggel');
 
   // ---- 1/b) a HETI ROVAT ertekelese ----
   // Ennek nincs parharca, az utolso mezo a cim. A Worker mintajabol a fajta
   // sokaig hianyzott, igy minden rovat-ertekeles 400-zal esett el, es a
   // naplo ugy mutatta, mintha senki nem ertekelt volna.
-  cim('Értékelés: a heti rovat is értékelhető');
+  section('Értékelés: a heti rovat is értékelhető');
   const kvR = ujKV();
   const rR = await kuld({ cikk: ROVAT, eszkoz: ESZKOZ, pont: 4 }, { TAROLT: kvR });
-  jo(rR.status === 200, 'a rovatra adott értékelés átmegy — HTTP ' + rR.status);
-  jo([...kvR.tar.keys()][0] === 'ert/' + ROVAT + '/' + ESZKOZ,
+  check(rR.status === 200, 'a rovatra adott értékelés átmegy — HTTP ' + rR.status);
+  check([...kvR.tar.keys()][0] === 'ert/' + ROVAT + '/' + ESZKOZ,
      'és a cím a kulcsba kerül — ' + [...kvR.tar.keys()][0]);
 
   // A Worker mintaja es a lap cikkfajtai EGYUTT valtoznak. Ha a lapra uj
@@ -97,20 +97,20 @@ function ujKV(){
     require('path').join(__dirname, '..', 'tartalek', 'proxy-worker.js'), 'utf8')
       .match(/ARTICLE_KEY_PATTERN\s*=\s*\n?\s*\/\^\(nb1\|pl\)[^;]*?\(([a-z|]+)\)/) || [])[1] || '';
   const workerFajtak = minta.split('|').sort();
-  jo(JSON.stringify(lapFajtak) === JSON.stringify(workerFajtak),
+  check(JSON.stringify(lapFajtak) === JSON.stringify(workerFajtak),
      'a Worker minden lapon létező cikkfajtát elfogad — lap: ['
      + lapFajtak + '] worker: [' + workerFajtak + ']');
 
   // ---- 2) ugyanaz az eszkoz nem halmoz ----
-  cim('Értékelés: ugyanaz az eszköz felülír, nem halmoz');
+  section('Értékelés: ugyanaz az eszköz felülír, nem halmoz');
   await kuld({ cikk: CIKK, eszkoz: ESZKOZ, pont: 4 }, env);
-  jo(kv.tar.size === 1, 'továbbra is egy sor — ' + kv.tar.size);
-  jo(JSON.parse(kv.tar.get(kulcs)).pont === 4, 'az új pont lépett a régi helyére');
+  check(kv.tar.size === 1, 'továbbra is egy sor — ' + kv.tar.size);
+  check(JSON.parse(kv.tar.get(kulcs)).pont === 4, 'az új pont lépett a régi helyére');
   await kuld({ cikk: CIKK, eszkoz: 'masikeszkoz99', pont: 1, indok: 'Unalmas.' }, env);
-  jo(kv.tar.size === 2, 'másik eszköz külön sort kap — ' + kv.tar.size);
+  check(kv.tar.size === 2, 'másik eszköz külön sort kap — ' + kv.tar.size);
 
   // ---- 3) amit nem ismerunk fel, azt nem irjuk be ----
-  cim('Értékelés: a hibás kérés nem ír');
+  section('Értékelés: a hibás kérés nem ír');
   const rossz = [
     ['tartományon kívüli pont', { cikk: CIKK, eszkoz: ESZKOZ, pont: 7 }],
     ['nulla pont',              { cikk: CIKK, eszkoz: ESZKOZ, pont: 0 }],
@@ -124,59 +124,59 @@ function ujKV(){
   for (const [cimke, torzs] of rossz) {
     const elotte = kv.irasok;
     const v = await kuld(torzs, env);
-    jo(v.status === 400 && kv.irasok === elotte, cimke + ' -> HTTP ' + v.status
+    check(v.status === 400 && kv.irasok === elotte, cimke + ' -> HTTP ' + v.status
        + ', írás: ' + (kv.irasok - elotte));
   }
 
   // ---- 4) a tul hosszu indok le van vagva ----
-  cim('Értékelés: a túl hosszú indok levágva');
+  section('Értékelés: a túl hosszú indok levágva');
   const kv2 = ujKV(), env2 = { TAROLT: kv2 };
   await kuld({ cikk: CIKK, eszkoz: ESZKOZ, pont: 1, indok: 'x'.repeat(5000),
                okok: new Array(50).fill('y'.repeat(200)) }, env2);
   const m2 = JSON.parse(kv2.tar.get('ert/' + CIKK + '/' + ESZKOZ));
-  jo(m2.indok.length === modul.MAX_REASON, 'az indok ' + m2.indok.length + ' karakter');
-  jo(!('okok' in m2), 'a kívülről küldött okokat el sem tároljuk');
+  check(m2.indok.length === modul.MAX_REASON, 'az indok ' + m2.indok.length + ' karakter');
+  check(!('okok' in m2), 'a kívülről küldött okokat el sem tároljuk');
 
   // ---- 5) GET-tel nem lehet ertekelni, kotes nelkul pedig szol ----
-  cim('Értékelés: GET nem megy, kötés nélkül megmondja');
+  section('Értékelés: GET nem megy, kötés nélkül megmondja');
   const g = await kuld(null, env, 'GET');
-  jo(g.status === 400, 'GET-re nem ír, hanem hibázik — HTTP ' + g.status);
+  check(g.status === 400, 'GET-re nem ír, hanem hibázik — HTTP ' + g.status);
   const n = await kuld({ cikk: CIKK, eszkoz: ESZKOZ, pont: 3 }, {});
-  jo(n.status === 503, 'kötés nélkül HTTP 503 — ' + n.status
+  check(n.status === 503, 'kötés nélkül HTTP 503 — ' + n.status
      + ' (nem hazudjuk azt, hogy elment)');
 
   // ---- 6) Origin nelkul nem lehet irni ----
   // A GET-eket az vedi, hogy csak a ket ismert API-ra mennek; az ertekeles
   // viszont a MI tarolonkba ir, es az eszkoz-azonositot a hivo adja. Origin
   // nelkul (curl, szkript) barhonnan korlatlan sok kulcs keletkezhetne benne.
-  cim('Értékelés: Origin nélkül nem lehet írni');
+  section('Értékelés: Origin nélkül nem lehet írni');
   const kv3 = ujKV(), env3 = { TAROLT: kv3 };
   const nyers = await worker.fetch(new Request(PROXY + '/ertekeles',
     { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cikk: CIKK, eszkoz: ESZKOZ, pont: 4 }) }), env3, ctx);
-  jo(nyers.status === 403, 'Origin nélküli POST-ra HTTP 403 — ' + nyers.status);
-  jo(kv3.irasok === 0, 'és nem is írt a tárolóba — ' + kv3.irasok + ' írás');
+  check(nyers.status === 403, 'Origin nélküli POST-ra HTTP 403 — ' + nyers.status);
+  check(kv3.irasok === 0, 'és nem is írt a tárolóba — ' + kv3.irasok + ' írás');
 
   // ---- 7) a lista visszaadja ----
-  cim('Értékelés: a lista visszaadja, amit kaptunk');
+  section('Értékelés: a lista visszaadja, amit kaptunk');
   const l = await worker.fetch(new Request(PROXY + '/ertekelesek',
     { headers: { Origin: EREDET } }), env, ctx);
   const lista = await l.json();
-  jo(Array.isArray(lista) && lista.length === 2, 'két értékelés jött — ' + lista.length);
-  jo(lista.every(x => x.cikk === CIKK), 'mindkettő a cikkhez tartozik');
-  jo(lista.some(x => x.indok === 'Unalmas.'), 'az indok is benne van');
+  check(Array.isArray(lista) && lista.length === 2, 'két értékelés jött — ' + lista.length);
+  check(lista.every(x => x.cikk === CIKK), 'mindkettő a cikkhez tartozik');
+  check(lista.some(x => x.indok === 'Unalmas.'), 'az indok is benne van');
 
   // "Meg senki nem ertekelt" es "nincs tarolo" ket kulonbozo allapot. Ha
   // mindketto ures listat adna, egy elszallt kotes nulla ertekelesnek
   // latszana - vagyis pont akkor hallgatnank, amikor szolni kellene.
   const kotesNelkul = await worker.fetch(new Request(PROXY + '/ertekelesek',
     { headers: { Origin: EREDET } }), {}, ctx);
-  jo(kotesNelkul.status === 503, 'kötés nélkül a lista is 503-at ad — '
+  check(kotesNelkul.status === 503, 'kötés nélkül a lista is 503-at ad — '
      + kotesNelkul.status + ' (az üres lista nem hazudhat nullát)');
   const uresKv = await worker.fetch(new Request(PROXY + '/ertekelesek',
     { headers: { Origin: EREDET } }), { TAROLT: ujKV() }, ctx);
-  jo(uresKv.status === 200 && (await uresKv.json()).length === 0,
+  check(uresKv.status === 200 && (await uresKv.json()).length === 0,
      'üres tárolónál viszont 200 és üres lista — ott tényleg nincs értékelés');
 
-  await vege(null);
+  await finish(null);
 })();

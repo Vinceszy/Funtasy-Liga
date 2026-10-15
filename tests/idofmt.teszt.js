@@ -1,4 +1,4 @@
-const { jo, cim, hibak, inditas, vege, BASE } = require('./kozos');
+const { check, section, failures, launch, finish, BASE } = require('./common');
 // KEZDESI IDOPONT, KET LIGARA EGY FORMAZOVAL (funtasy.js idoFmt).
 //
 // Ket kulon valtozat volt ra, es a masodik a szelen hibasan viselkedett:
@@ -11,7 +11,7 @@ const { jo, cim, hibak, inditas, vege, BASE } = require('./kozos');
 // FPL ilyenkor egyaltalan nem ad idopontot. Ha az nb1-es szabaly a pl-re is
 // atszivarogna, egy valodi ejfeli kezdes "nincs kituzve"-kent latszana.
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const p = await br.newPage();
   const err = []; p.on('pageerror', e => err.push(e.message));
   for (const m of ['**fonts.googleapis.com/**', '**fonts.gstatic.com/**'])
@@ -21,31 +21,31 @@ const { jo, cim, hibak, inditas, vege, BASE } = require('./kozos');
 
   const f = (s, lg) => p.evaluate(([s, lg]) => FunTasy.formatKickoff(s, lg), [s, lg]);
 
-  cim('Rendes időpont');
-  jo(await f('2026-09-27T17:30:00Z', 'nb1') === await f('2026-09-27T17:30:00Z', 'pl'),
+  section('Rendes időpont');
+  check(await f('2026-09-27T17:30:00Z', 'nb1') === await f('2026-09-27T17:30:00Z', 'pl'),
      'a két liga ugyanazt adja egy valódi időpontra');
-  jo(/17:30|19:30/.test(await f('2026-09-27T17:30:00Z', 'nb1')),
+  check(/17:30|19:30/.test(await f('2026-09-27T17:30:00Z', 'nb1')),
      'és óra is van benne — ' + await f('2026-09-27T17:30:00Z', 'nb1'));
 
-  cim('Éjfél: liga dönti el');
+  section('Éjfél: liga dönti el');
   const ejNb1 = await f('2026-09-27T00:00:00Z', 'nb1');
   const ejPl  = await f('2026-09-27T00:00:00Z', 'pl');
-  jo(/nincs kitűzve/.test(ejNb1), 'NB1-en az éjfél = még nincs kitűzve — ' + ejNb1);
-  jo(!/nincs kitűzve/.test(ejPl), 'PL-en viszont valódi óra marad — ' + ejPl);
+  check(/nincs kitűzve/.test(ejNb1), 'NB1-en az éjfél = még nincs kitűzve — ' + ejNb1);
+  check(!/nincs kitűzve/.test(ejPl), 'PL-en viszont valódi óra marad — ' + ejPl);
 
-  cim('Szélső értékek: soha nem találunk ki dátumot');
+  section('Szélső értékek: soha nem találunk ki dátumot');
   for (const [be, mit] of [[null, 'null'], ['', 'üres'], ['nincs', 'nem dátum'],
                            ['2026-09-27', 'óra nélküli dátum']]) {
     for (const lg of ['nb1', 'pl']) {
       const k = await f(be, lg);
-      jo(!/Invalid Date/.test(k) && !/jan\. 1\./.test(k),
+      check(!/Invalid Date/.test(k) && !/jan\. 1\./.test(k),
          `${mit} (${lg}): nincs kitalált dátum — ${JSON.stringify(k)}`);
     }
   }
-  jo(await f('nincs', 'nb1') === 'nincs', 'amit nem értünk, azt változatlanul adjuk vissza');
-  jo(await f(null, 'pl') === '', 'null-ból üres lesz, nem dátum');
+  check(await f('nincs', 'nb1') === 'nincs', 'amit nem értünk, azt változatlanul adjuk vissza');
+  check(await f(null, 'pl') === '', 'null-ból üres lesz, nem dátum');
 
-  jo(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+  check(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
   await p.close();
-  await vege(br);
+  await finish(br);
 })();

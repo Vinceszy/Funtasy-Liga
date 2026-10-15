@@ -1,4 +1,4 @@
-const { BASE, jo, inditas, vege, jsonAtir } = require('./kozos');
+const { BASE, check, launch, finish, rewriteJson } = require('./common');
 // A "Zarasi valtozasok" panel a PL fooldalon (zarasok.json).
 //
 // Amit rogzit: a panel csak adat mellett latszik; a harom nezet (Mind /
@@ -6,7 +6,7 @@ const { BASE, jo, inditas, vege, jsonAtir } = require('./kozos');
 // lapozni lehet; ures nezethez ertelmes uzenet jar; a ki/be KULON sorokban
 // all (parositast nem allitunk, mert a pad-jelzobol nem tudhato).
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const p = await br.newPage({ viewport: { width: 900, height: 1200 } });
   const perr = []; p.on('pageerror', e => perr.push(e.message));
 
@@ -23,7 +23,7 @@ const { BASE, jo, inditas, vege, jsonAtir } = require('./kozos');
   // hamisitott fajlban nincs sor: a panel uresen allna, es a teszt a
   // valosagot hibaztatna. Ahogy haladt a szezon, pontosan ez tortent.
   // A ketto egyutt jar, tehat egyutt is allitjuk be.
-  await jsonAtir(p, '**/draft_history.json*', j => {
+  await rewriteJson(p, '**/draft_history.json*', j => {
     j.veglegesek = [1, 2];
     return j;
   });
@@ -56,36 +56,36 @@ const { BASE, jo, inditas, vege, jsonAtir } = require('./kozos');
   console.log('--- Mind nézet, legfrissebb forduló elöl ---');
   let a = await allapot();
   console.log('   forduló: ' + a.valaszto + ' | csapatok: ' + JSON.stringify(a.csapatok));
-  jo(a.valaszto === '2', 'a legfrissebb forduló nyílik meg elsőnek');
+  check(a.valaszto === '2', 'a legfrissebb forduló nyílik meg elsőnek');
   // Ugyanaz a szoveg, mint az NB1 panelen - a ketto egy renderert hasznal.
-  jo(/Nem történt változás/.test(a.ures || ''), 'változás nélküli fordulónál ezt meg is mondja');
+  check(/Nem történt változás/.test(a.ures || ''), 'változás nélküli fordulónál ezt meg is mondja');
 
   await p.click('[data-znav="-1"]');          // vissza az 1. fordulora
   a = await allapot();
   console.log('   1. forduló sorai: ' + JSON.stringify(a.sorok));
-  jo(a.valaszto === '1' && a.csapatok.length === 2, 'lapozás az 1. fordulóra, két érintett csapat');
-  jo(a.sorok.some(x => /5 → 7/.test(x) && /\+2/.test(x)), 'a pontváltozás sora: előtte → utána (+diff)');
-  jo(a.sorok.some(x => /kikerült/.test(x)) && a.sorok.some(x => /beállt/.test(x)),
+  check(a.valaszto === '1' && a.csapatok.length === 2, 'lapozás az 1. fordulóra, két érintett csapat');
+  check(a.sorok.some(x => /5 → 7/.test(x) && /\+2/.test(x)), 'a pontváltozás sora: előtte → utána (+diff)');
+  check(a.sorok.some(x => /kikerült/.test(x)) && a.sorok.some(x => /beállt/.test(x)),
      'a csere két külön sor: kikerült / beállt — nincs hamis párosítás');
-  jo(a.sorok.some(x => /6 pont.*beállt/.test(x)),
+  check(a.sorok.some(x => /6 pont.*beállt/.test(x)),
      'a beállt játékosnál ott a pontja: ' + JSON.stringify(a.sorok.filter(x => /beállt/.test(x))));
 
   console.log('--- szűrés ---');
   await p.click('[data-znezet="pont"]');
   a = await allapot();
-  jo(a.csapatok.length === 1 && a.sorok.every(x => !/kikerült|beállt/.test(x)),
+  check(a.csapatok.length === 1 && a.sorok.every(x => !/kikerült|beállt/.test(x)),
      'Pontváltozás nézetben csak a pontos csapat marad');
   await p.click('[data-znezet="csere"]');
   a = await allapot();
-  jo(a.csapatok.length === 1 && a.sorok.every(x => /kikerült|beállt/.test(x)),
+  check(a.csapatok.length === 1 && a.sorok.every(x => /kikerült|beállt/.test(x)),
      'Cserék nézetben csak a cserés csapat marad');
   await p.click('[data-znav="1"]');           // elore a 2. fordulora, csere nezetben
   a = await allapot();
-  jo(/nem történt automatikus csere/.test(a.ures || ''),
+  check(/nem történt automatikus csere/.test(a.ures || ''),
      'üres csere-nézethez saját üzenet jár: ' + JSON.stringify(a.ures));
   await p.click('[data-znezet="mind"]');
   a = await allapot();
-  jo(a.aktivChip === 'Mind', 'a Mind visszakapcsolható');
+  check(a.aktivChip === 'Mind', 'a Mind visszakapcsolható');
 
   console.log('--- adat nélkül nincs panel ---');
   const p2 = await br.newPage();
@@ -95,9 +95,9 @@ const { BASE, jo, inditas, vege, jsonAtir } = require('./kozos');
   await p2.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
   await p2.waitForSelector('#table tr', { timeout: 20000 });
   await p2.waitForTimeout(400);
-  jo(await p2.$eval('#zarasPanel', el => el.style.display === 'none'),
+  check(await p2.$eval('#zarasPanel', el => el.style.display === 'none'),
      'zarasok.json nélkül a panel rejtve marad');
 
-  jo(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr));
-  await vege(br);
+  check(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr));
+  await finish(br);
 })();

@@ -16,7 +16,7 @@ A régi `draft.html` cím átirányít a `/pl/`-re, hogy a korábbi linkek ne ha
 A résztvevőket mindkét oldalon a **monogram** azonosítja (a név mögött) — személyenként
 azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
 
-<!-- tartalomjegyzek: a tesztek/dokuk.py tartja karban, kezzel ne szerkeszd -->
+<!-- tartalomjegyzek: a tests/doc_checks.py tartja karban, kezzel ne szerkeszd -->
 <details>
 <summary><b>Tartalom</b></summary>
 
@@ -466,7 +466,7 @@ Mostantól a szöveg alatt halványan ott az ok.
 
 Ez mindkét ligában több helyen fordul elő (élő keret, perc-utántöltés, élő pontok), ezért a
 mechanika a közös rétegben van — külön-külön megírva pontosan egy helyen maradt volna ki.
-Rögzítve: `tesztek/accordionorzes.teszt.js`.
+Rögzítve: `tests/accordionorzes.teszt.js`.
 
 ### Navigáció a modalon belül
 A modal kis böngészőként működik: a listák soraira kattintva a tartalom cserélődik
@@ -508,9 +508,9 @@ teljes képernyős, ragadós × gombbal.
 | `bontasok/<forduló>.json` | A forduló **tételes pont-bontása** minden játékosra (`{round, bontasok:{cp-azonosító:[{n,v,p}]}}`): mi adta ki a heti pontot — gól, gólpassz, játszott perc… A gyűjtő a forduló lezárásakor **egyszer** kéri le mind a 385 játékosra, és MLSZ-korrekció után újra. Az `updated` mező szándékosan nincs benne (lásd `keretek/`). |
 | `zarasok_nb1.json` | Fordulónként azok a **meccs utáni pontigazítások**, amiket az MLSZ a forduló véglegesítése előtt vezetett át. Alakja a PL `zarasok.json`-jáét követi, hogy ugyanaz a megjelenítés szolgálhassa ki: `{rounds:{forduló:{szakvezető:{pont:[{n,cp,pos,tm,elott,utan,d}]}}}}`. Az `nk:1` jelzőt viselő sor azt jelenti, hogy a játékos nem ismert: ott név helyett „Ismeretlen játékos" áll, és `elott`/`utan` helyett `dl` (a változás mértéke). Élesben ritka esemény: a fájl üres vázként létezik, és csak akkor bővül, ha tényleg történt igazítás — a panel is csak akkor jelenik meg. |
 | `arak.json` | Az árak **változásai** (`{arak:{id:[[dátum, ár], …]}}`). Csak akkor bővül, ha egy ár tényleg megváltozott. |
-| `articles.json` | A liga **kint lévő** írásai (`{updated, leagues:{liga:{forduló:{summary|preview|elemzes:{kulcs:{text:[bekezdés,…], short, source, kozzetett}}}}}}`). **Három rovat van.** A `summary` és a `preview` egy-egy párharchoz tartozik, a kulcsuk `"Hazai|Vendég"`. Az `elemzes` — *Kele Janek elemez* — a fordulóhoz tartozik, nem párharchoz: a kulcsa a **saját címe**, `|` nélkül, és épp ebből tudni, hogy nincs ellenfele (`FunTasy.articleList`). A `text` a teljes szöveg bekezdésenként. A `short` a becsukott sávban látszó egy mondat — a rovatnak **nincs**: ott a felütés maga az alcím lenne, és megtöri a szöveg ívét; ilyenkor az első bekezdés lép a helyére. A `kozzetett` az élesbe kerülés ISO-időbélyege, és **ez a lap sorrendje**: az újság nem a fordulóval halad, hanem az idővel (lásd *A magazin publikációs sorrendben áll*). Gépi őrzés: **D15** — kint lévő írás nem lehet nélküle. A meccs adatlapján egy **becsukott** sáv olvassa (`FunTasy.matchArticle`): a szöveg egyszeri szórakozás, az alatta lévő számok a lényeg, ezért nem tolhatja le őket. **Az összefoglaló csak lezárt fordulón jelenik meg** — addig a pontok még elmozdulhatnak (NB1: meccs utáni igazítások, Draft: külön véglegesítés), és egy „X nyert ennyivel" szöveg hazudna. A beharangozóra ez nem áll. A kapu **alapból zár**: aki nem mondja meg, hogy a forduló lezárult, nem tud korai összefoglalót kiengedni. Jelenleg **kézzel írjuk** (`source: "manual"`); a mező azért van benne, hogy a később generált szöveg megkülönböztethető legyen. **Cikk csak LEZÁRT adatból készülhet**: összefoglaló csak végleges fordulóról, beharangozó csak a soron következőről. Egy forduló KÖZBEN írt szöveg a még mozgó számokból dolgozik — egy beharangozó így állította azt, hogy valaki megnyerte azt a meccset, amit a végén elvesztett. Gépi őrzés: `tesztek/dokuk.py` **D11**. Kiadatlan szöveg nem kerül a repóba: a cikk a jóváhagyás után egyenesen ide íródik. |
+| `articles.json` | A liga **kint lévő** írásai (`{updated, leagues:{liga:{forduló:{summary|preview|elemzes:{kulcs:{text:[bekezdés,…], short, source, kozzetett}}}}}}`). **Három rovat van.** A `summary` és a `preview` egy-egy párharchoz tartozik, a kulcsuk `"Hazai|Vendég"`. Az `elemzes` — *Kele Janek elemez* — a fordulóhoz tartozik, nem párharchoz: a kulcsa a **saját címe**, `|` nélkül, és épp ebből tudni, hogy nincs ellenfele (`FunTasy.articleList`). A `text` a teljes szöveg bekezdésenként. A `short` a becsukott sávban látszó egy mondat — a rovatnak **nincs**: ott a felütés maga az alcím lenne, és megtöri a szöveg ívét; ilyenkor az első bekezdés lép a helyére. A `kozzetett` az élesbe kerülés ISO-időbélyege, és **ez a lap sorrendje**: az újság nem a fordulóval halad, hanem az idővel (lásd *A magazin publikációs sorrendben áll*). Gépi őrzés: **D15** — kint lévő írás nem lehet nélküle. A meccs adatlapján egy **becsukott** sáv olvassa (`FunTasy.matchArticle`): a szöveg egyszeri szórakozás, az alatta lévő számok a lényeg, ezért nem tolhatja le őket. **Az összefoglaló csak lezárt fordulón jelenik meg** — addig a pontok még elmozdulhatnak (NB1: meccs utáni igazítások, Draft: külön véglegesítés), és egy „X nyert ennyivel" szöveg hazudna. A beharangozóra ez nem áll. A kapu **alapból zár**: aki nem mondja meg, hogy a forduló lezárult, nem tud korai összefoglalót kiengedni. Jelenleg **kézzel írjuk** (`source: "manual"`); a mező azért van benne, hogy a később generált szöveg megkülönböztethető legyen. **Cikk csak LEZÁRT adatból készülhet**: összefoglaló csak végleges fordulóról, beharangozó csak a soron következőről. Egy forduló KÖZBEN írt szöveg a még mozgó számokból dolgozik — egy beharangozó így állította azt, hogy valaki megnyerte azt a meccset, amit a végén elvesztett. Gépi őrzés: `tests/doc_checks.py` **D11**. Kiadatlan szöveg nem kerül a repóba: a cikk a jóváhagyás után egyenesen ide íródik. |
 | — | **Az írások értékelése.** A kinyitott cikk alján egytől négyig lehet pontozni. A két felső fokozat egyetlen koppintás — aki elégedett, ne dolgozzon érte. A két alsó **indokot kér, a néző saját szavaival**: helyben nyílik egy szövegdoboz. Készre választható okokat szándékosan nem kínálunk — azok a mi kategóriáinkat adnák vissza, és épp az a mondat maradna ki, amire nem gondoltunk. Az „Elküldöm” addig nem kínálja magát, amíg nincs mit elküldeni; mellette halkabban a kiút („Kötekszem, de indokolni már nem fogok”), ami a pontot elviszi, az indokot nem. A panel a sávon **belül** nyílik, nem új rétegben: épp arról kérünk véleményt, ami alatta áll, azt nem szabad eltakarni. Az értékelés a Workerhez megy (`POST /ertekeles`), és a KV-ben `ert/<cikk>/<eszköz>` kulcson áll — egy eszköz egy írást egyszer értékel, az átértékelés a sajátját írja felül. Visszaolvasni: `GET /ertekelesek`. |
-| `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. **Egy funkció = egy bejegyzés**: amit a néző egy dolognak lát, az egy bejegyzés, akkor is, ha több részből áll és több lépésben készült el — nem daraboljuk szét annyi posztra, ahány részét megcsináltuk. A `leiras` ezért lehet **több bekezdés** (üres sorral elválasztva), a napló oldala így is jeleníti meg. Amíg a funkció nincs kész, a bejegyzés a `valtozasok-vazlat.json`-ban vár. A szétdarabolást a `tesztek/dokuk.py` **D4/b** esete nézi. |
+| `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. **Egy funkció = egy bejegyzés**: amit a néző egy dolognak lát, az egy bejegyzés, akkor is, ha több részből áll és több lépésben készült el — nem daraboljuk szét annyi posztra, ahány részét megcsináltuk. A `leiras` ezért lehet **több bekezdés** (üres sorral elválasztva), a napló oldala így is jeleníti meg. Amíg a funkció nincs kész, a bejegyzés a `valtozasok-vazlat.json`-ban vár. A szétdarabolást a `tests/doc_checks.py` **D4/b** esete nézi. |
 | `valtozasok-vazlat.json` | **Még nem publikált** naplóbejegyzések, ugyanabban a formában. A napló oldala ezt nem olvassa; a kész bejegyzés innen kerül át a `valtozasok.json`-ba. |
 | `nemzethy/index.html` | A **Nemzethy Sport** — *Heti Funtasy Magazin*. **Két üzemmódja van.** `?liga=nb1` (vagy `pl`) az **adott liga újságja**: a liga saját színeivel, a nevével a fejlécben, és csak az ő írásaival — innen nyílik a liga-oldal felső sávjából, tehát az olvasó nem esik ki a liga világából. Paraméter nélkül a **közös kiadás**, liga-szűrővel; erre a kezdőlap mutat kiemelt soron. Mindkettőben minden írás teljes szöveggel, **publikációs sorrendben** — a legutóbb kiadott elöl, ligától és fordulótól függetlenül; ezért nincs liga-címsor, a liga neve a cikk fejlécében áll. Egy íráson belül: rovat, a párharc (a rovatnál a saját címe), a rövid változat felütésként, aztán a törzs. Szűrők egyetlen sávban: **liga, szakvezető, forduló, típus — négy külön vezérlő**, szabadon kombinálva (egy ember egy ligában is kérdezhető), mellettük a találatszám és egy törlés; mindegyik csak azokat az értékeket kínálja, amik a többi szűrő mellett tényleg léteznek, tehát üres találatra nem lehet állítani. A liga-szűrő a liga saját újságjában magától elmarad (egy érték mellett a legördülő üres marad). A szakvezetők **emberenként** állnak a listában, nem nevenként: a két liga más néven ismeri ugyanazt az embert (NB1-ben becenév, PL-ben csapatnév), és aki mindkettőben játszik, egyetlen sorban áll a két nevével — rá szűrve mindkét liga írásai előjönnek. Az összekötés a közös rétegben van (`FunTasy.SZEMELYEK` + `FunTasy.szemelyTar`), a PL-csapatnevet a közös kiadás a `draft.json`-ból olvassa hozzá; a liga saját újságjában nincs mit összekötni, ott ez a kérés el is marad. **Ugyanaz a kapu**, mint a meccs adatlapján: le nem zárt forduló összefoglalója itt sem látszik — a válogatást a `FunTasy.articleList` végzi, hogy a két nézet ne csúszhasson el abban, mit szabad mutatni. Minden írás alatt ott az értékelő sáv, és egy „Másolom” gomb, ami a **teljes cikket** meg a rá mutató hivatkozást teszi a vágólapra (korábban a felütést adta — aki másol, a szöveget viszi). A szövegoszlop szélessége pixelben áll (a `ch` a betűkészlettől függ, tehát a webfont beérkezésekor az egész lap újratördelné magát). **`content-visibility` nincs rajta, és szándékosan nincs**: a becsült magasság helyére görgetés közben lép be a valódi, és ettől a lap magassága változik meg az ujjad alatt — megmérve egyetlen végiggörgetés alatt nyolcszor, egyszerre akár 361 pixelt. A felső sáv **két szintet** mutat: a ligák egymás alternatívái, az újság viszont az adott liga része — ezért mindig pontosan egy elem világít (ahol vagy), az újság gombja nem tűnik el, ha rajta állsz, és onnan a liga pöttye visz vissza a liga oldalára. |
 | `valtozasok/index.html` | A változásnapló oldala („Mi újult meg?"). |
@@ -675,8 +675,8 @@ helyen állna össze, észrevétlenül elcsúszhatna, és a tároló sosem talá
 
 **Mérés.** A Workert a fejlesztői környezetből nem lehet elérni (a hálózat nem enged ki
 a `workers.dev`-re), ezért a logikáját hamis KV-vel mérjük
-(`tesztek/workertarolo.teszt.js`), a lap oldalát böngészőből
-(`tesztek/taroltallas.teszt.js`), a valódi végpontról-végpontig mérés pedig GitHub
+(`tests/workertarolo.teszt.js`), a lap oldalát böngészőből
+(`tests/taroltallas.teszt.js`), a valódi végpontról-végpontig mérés pedig GitHub
 Actionsből megy (`naplo/storage-probe.py` a közös `.github/workflows/naplo-meres.yml`-lel).
 
 ### Az NB1 élő lekérése két körben megy, nem nyolcban (mérve)
@@ -716,7 +716,7 @@ kilenc jelöltet végigmérő futás (`naplo/proxy-probe.py` → `naplo/proxy-pr
 az út-sorrend most: `direkt` → `proxy.cors.sh` → `allorigins /raw` → `allorigins /get`
 (ez **csomagolva** adja a választ, `{contents: "..."}` — a lekérő kibontja) → `cors.lol` →
 `corsproxy.io` (a sor végén, hátha visszaengedik). Az első siker után a lekérő a bevált
-úton marad. A láncot a `tesztek/lekero.teszt.js` rögzíti — benne pont ez a
+úton marad. A láncot a `tests/lekero.teszt.js` rögzíti — benne pont ez a
 hibakép: corsproxy 401 + néma allorigins mellett a cors.sh-nak kell kiszolgálnia.
 
 Ha megint minden út elhasal, a pont-bontás hibaüzenete felsorolja, melyik miért
@@ -754,7 +754,7 @@ böngésző alapértelmezésével (talpas Times) festene először, más betűsz
 táblázat ugrana egyet a webfont megérkezésekor. A változók egyben a korábbi **60+ helyre
 beírt** betűnevet is egy helyre húzták.
 
-Rögzítve: `tesztek/betukeszlet.teszt.js`.
+Rögzítve: `tests/betukeszlet.teszt.js`.
 
 **JavaScript nélkül** eddig csak az üres váz látszott — panel-címek, üres táblázatok, egy szó
 magyarázat nélkül. Mostantól minden oldal tetején `<noscript>`-figyelmeztetés áll, hogy a
@@ -1009,7 +1009,7 @@ amúgy is megy) semmilyen include-dal nem tud a meccsről.
 marad az újrakérendők közt, amíg valódi név nem érkezik. Enélkül, ha egy forduló összes meccse
 lement, mialatt a nevek még `"?"`-ek voltak, a forduló kikerült volna az újrakérendők közül, és
 az MLSZ továbblépése után **soha többé** nem kértük volna le — a `"?"` véglegesen bent ragadt
-volna. Rögzítve: `tesztek/gyujto_meccsek.py` M7 és M8, mindkettő bizonyítottan bukik a régi kódon.
+volna. Rögzítve: `tests/collector_matches.py` M7 és M8, mindkettő bizonyítottan bukik a régi kódon.
 
 ### Pont-bontás (game-player-stats)
 A felület játékos-modalja ezt hívja (a bundle-ből visszafejtve):
@@ -1445,7 +1445,7 @@ megjött (különben egy elhasalt lekérés a csere előtti állapotot rögzíte
 
 **Az aktuális fordulót ettől függetlenül minden körben lekérjük**, a zárás után is —
 a `veglegesek` lista csak a *régi* fordulókról dönt. Lásd „3/b. A lezárás": ez a szabály
-nem a zárásról szól, hanem az utólagos korrekciókról. Rögzíti: `gyujto_draftzaras.py`.
+nem a zárásról szól, hanem az utólagos korrekciókról. Rögzíti: `collector_draft_closing.py`.
 
 Egyszer ez **csak azon múlt**, hogy a futás hat perccel a zárás után esett.
 
@@ -1660,7 +1660,7 @@ rekordokat (`keretRekord`) — ugyanaz a szabály kell bele. Ez a gyűjtő javí
 jó volt, a friss lekérés írta felül. Ha a szabály változik, **mindkét helyen** változtatni
 kell.
 
-Rögzítve: `tesztek/gyujto_meccsek.py` M9–M11 (gyűjtő) és `tesztek/forduloelott.teszt.js`
+Rögzítve: `tests/collector_matches.py` M9–M11 (gyűjtő) és `tests/forduloelott.teszt.js`
 (böngésző, a mérés valódi alakjával).
 
 ### A zárási panel a LEZÁRT fordulókig megy
@@ -1681,7 +1681,7 @@ minden körben helyesen kiszámolta, és a repóba **soha nem került be**. A �
 ezért állt a már lezárt 7. fordulónál is, hogy *„még nincs pontszám"* — a fájlban a lezárás
 előtti, pont nélküli állapot maradt. Semmi nem jelezte.
 
-Ezt gép nézi: a `tesztek/dokuk.py` **D8** összeveti a gyűjtők `write_compact` / `kiir_ha_valtozott`
+Ezt gép nézi: a `tests/doc_checks.py` **D8** összeveti a gyűjtők `write_compact` / `kiir_ha_valtozott`
 hívásait a workflow `git add` listájával (a mappa-előtag és a `draft*.json`-szerű glob is
 számít). Ha egy új kimeneti fájl kimarad, a teszt megnevezi.
 
@@ -1697,10 +1697,10 @@ Ezért a lap betöltéskor megkérdezi a `verzio.json`-t, és ha ő régebbi, **
 `sessionStorage`-os kapu védi a hurkot: ha az újratöltés után is régi marad (közvetítő
 gyorsítótár), többször nem próbálja — inkább csendben marad, mint hogy oda-vissza töltsön.
 
-A `verzio.json` és a `?v=` **együtt kell mozduljon**: ezt a `tesztek/dokuk.py` **D6/b** nézi,
+A `verzio.json` és a `?v=` **együtt kell mozduljon**: ezt a `tests/doc_checks.py` **D6/b** nézi,
 mert elcsúszva a védelem vagy nem fog, vagy végtelen újratöltést okozna.
 
-Rögzítve: `tesztek/verzio.teszt.js`.
+Rögzítve: `tests/verzio.teszt.js`.
 
 ### A közös játékost AZONOSÍTÓ párosítja, nem név
 
@@ -1712,7 +1712,7 @@ azonosító (`competition_player.id`) mindkét forrásban ugyanaz, ezért a `sze
 használja. A **szerep** (kapitány / pad) továbbra is a kulcs része: ugyanaz a játékos más
 szerepben nem közös — a pontja sem ugyanannyi.
 
-Rögzítve: `tesztek/kulonbseg.teszt.js` — tárolt, vegyes és élő alakban is ugyanannyi közös
+Rögzítve: `tests/kulonbseg.teszt.js` — tárolt, vegyes és élő alakban is ugyanannyi közös
 játékost kell találnia.
 
 ## 5. Ismert korlátok, buktatók
@@ -1823,7 +1823,7 @@ Ha a játékos-poszt adat hiányzik (elhasalt `bootstrap-static`), a gyűjtő **
 újra**: enélkül a formáció-ellenőrzés mindig hamis lenne, egyetlen csere sem menne végbe,
 és a mutató csendben rossz értéket adna. Ilyenkor a korábbi fájl marad érvényben.
 
-Rögzítve: `tesztek/gyujto_guardiola.py` (NB1) és `tesztek/gyujto_draftguardiola.py` (PL).
+Rögzítve: `tests/collector_guardiola.py` (NB1) és `tests/collector_draft_guardiola.py` (PL).
 
 ## 5/a5. A „Változtatások" fül
 
@@ -1915,7 +1915,7 @@ konténer (a monogram védelme miatt), a cella kikerült a táblázat-elrendezé
 névtelen cellába burkolja —, és **iPhone-on nem ragadt**: görgetésnél a SZAKVEZETŐ fejléc
 állva maradt (azon nincs flex), a nevek viszont elcsúsztak a számok alá. Chromiumban ez nem
 látszik, ott a sticky a flexes cellán is fog. A flex azóta a cellán **belül**, a `.nevsor`
-span-on van. Rögzítve: `tesztek/tabella.teszt.js` — Safari nélkül is, mert nem a ragadás
+span-on van. Rögzítve: `tests/tabella.teszt.js` — Safari nélkül is, mert nem a ragadás
 látszatát méri, hanem az okot (a cella `display`-ét és azt, hogy a flex beljebb van).
 
 ### A közös réteg mindkét adatalakot érti — és ez nem kényelmi kérdés
@@ -1931,8 +1931,8 @@ Ezért a `FunTasy.valtoztatasLista` a címkézett `reszek` mellett a **régi, eg
 közös réteg bemenete változik, a régi alakot addig kell érteni, amíg a lapok gyorsítótára
 kifuthat. Rögzítve a `valtoztatasok.teszt.js` utolsó szakaszában.
 
-Rögzítve: `tesztek/gyujto_keretvaltozas.py` (NB1), `tesztek/gyujto_draftkeretvaltozas.py` (PL)
-és `tesztek/valtoztatasok.teszt.js` — az utóbbi **minden szakvezetőnél és minden fordulónál**
+Rögzítve: `tests/collector_squad_moves.py` (NB1), `tests/collector_draft_squad_moves.py` (PL)
+és `tests/valtoztatasok.teszt.js` — az utóbbi **minden szakvezetőnél és minden fordulónál**
 összeveti a sorok összegét, a blokk „Összesen" sorát, a Fordulók fül GUARD oszlopát és a
 tabella GUA celláját.
 
@@ -1971,7 +1971,7 @@ ad, a `refresh` azt teszi a helyére.
 fogunk semmit. A PL-oldalon ez a kapu sosem volt ott: a `showMatch` mindig kirajzolja a keretet,
 ha a fordulóhoz van tárolt adat.
 
-Rögzítve: `tesztek/forduloelott.teszt.js`.
+Rögzítve: `tests/forduloelott.teszt.js`.
 
 ## 5/a. Miért van fordulónként külön keret-fájl
 
@@ -2048,8 +2048,8 @@ Két részlet, ami fontos:
   eredményét javítja, annak a bontását is újrahúzza.
 
 Ha a fájl hiányzik (a bevezetés előtti forduló, vagy még nem futott a gyűjtő), az oldal
-csendben visszaesik az élő lekérésre. Rögzítve: `tesztek/gyujto_bontasok.py` és
-`tesztek/taroltbontas.teszt.js`.
+csendben visszaesik az élő lekérésre. Rögzítve: `tests/collector_breakdowns.py` és
+`tests/taroltbontas.teszt.js`.
 
 ### Az élő pont a tételes bontásból áll össze (PL)
 
@@ -2092,7 +2092,7 @@ rendszeressé válik, onnan derül ki.
 API-változás így a **régi viselkedést** adja vissza, nem nullákat. A pontot és a percet külön
 tartjuk számon: lehet pontot érő sor perc-sor nélkül, és ott a 0 perc hamis lenne.
 
-Rögzítve: `tesztek/eloosszeg.teszt.js` (lap) és `tesztek/gyujto_pontforras.py` (gyűjtő) —
+Rögzítve: `tests/eloosszeg.teszt.js` (lap) és `tests/collector_points_source.py` (gyűjtő) —
 beragadt összesítő mellett 8 pont és 90 perc, az élő állás 88 (11 kezdő), a hibás 11 sehol;
 üres vagy ismeretlen szerkezetű bontásnál a `stats` marad; dupla fordulónál a két meccs
 összeadódik. Mindkettő a régi kódon bizonyítottan bukik.
@@ -2116,7 +2116,7 @@ akárhányan nézik ugyanazt a fordulót, az API felé percenként egy kérés m
 akkor**, ha van folyó forduló, és **csak** látható lapon. Fordulók között és háttérbe tett
 lapon egyetlen kérés sem megy ki.
 
-Rögzítve: `tesztek/eloora.teszt.js` — élő fordulónál a kiírt állás kattintás nélkül vált
+Rögzítve: `tests/eloora.teszt.js` — élő fordulónál a kiírt állás kattintás nélkül vált
 44-ről 99-re; lezárt fordulónál egyetlen ismételt kérés sem megy ki. A régi kódon
 bizonyítottan bukik.
 
@@ -2134,7 +2134,7 @@ Ez kétszer csúszott el:
   utolsó forduló keretét tartalmazza — egy régi forduló korrekciója így változatlan
   tartalommal írta újra (14-ből 2 alkalommal).
 
-Mindkettőt teszt fedi (`tesztek/gyujto_ideiglenes.py`, C3 és C4): a C3 a gyűjtőt kétszer
+Mindkettőt teszt fedi (`tests/collector_provisional.py`, C3 és C4): a C3 a gyűjtőt kétszer
 futtatja változatlan adaton, és **egyetlen** kimeneti fájl sem változhat — nem csak a
 `results.json`, hanem minden, amit a futás után talál. A `stamp` helyére számláló kerül,
 különben a másodperc-pontosságú időbélyeg elrejtené a fölösleges írást.
@@ -2165,7 +2165,7 @@ olvasás pedig a `read_stored`-on át megy, ami **csak** `FileNotFoundError`-ra 
 alapértelmezést (első futás); sérült fájlnál a kivétel felszáll, a futás megáll, és a
 fájlhoz hozzá sem nyúlunk — a következő körben megvan az esély, hogy épen olvassuk.
 
-Teszt: `tesztek/collector_storage.py`, tíz állítással mindkét gyűjtőre. Köztük egy
+Teszt: `tests/collector_storage.py`, tíz állítással mindkét gyűjtőre. Köztük egy
 **forráskód-szintű**: minden `open(..., "w")` ideiglenes nevet kell hogy kapjon. Enélkül a
 következő új kimenet csendben visszahozná a régi utat.
 
@@ -2205,7 +2205,7 @@ Felhasználói napló, nem technikai: **csak az kerül bele, amit a használó l
   félkész állapotot mutatna annak, aki épp megnyitja. A készülő szöveg addig a
   `valtozasok-vazlat.json`-ban áll (a napló oldala ezt nem olvassa), és amikor az utolsó
   szakasz is kész, egy mozdulattal átkerül. Ugyanaz az alaki ellenőrzés vonatkozik rá
-  (`tesztek/dokuk.py`, D5), tehát nem tud félig megírva elaludni.
+  (`tests/doc_checks.py`, D5), tehát nem tud félig megírva elaludni.
 
 Az adat a `valtozasok.json`-ban van, kézzel bővítjük (a még nem publikált szöveg a `valtozasok-vazlat.json`-ban). A szűrők a `LIGAK` listából
 készülnek, tehát egy új liga felvétele itt sem igényel külön munkát.
@@ -2232,7 +2232,7 @@ A naplón magán nincs lábléc, mert önmagára mutatna.
 Nincs build és nincs sablon, tehát a `<head>`, a fejléc, a panel-keretek és a lábléc
 **mindkét liga-oldalon külön ott áll**. Ez tud szétcsúszni — meg is tette: a zárási
 változások panelje egy ideig más címmel, más oszlopban és más elrendezéssel állt a két
-oldalon. Ilyenkor nem elég „figyelni rá": a `tesztek/ligavaz.teszt.js` géppel nézi, hogy a
+oldalon. Ilyenkor nem elég „figyelni rá": a `tests/ligavaz.teszt.js` géppel nézi, hogy a
 `<head>` mind a négy oldalon azonos (a címen és az útvonal-előtagon kívül), a panelek
 sorrendje és oszlopa gépen és mobilon ugyanaz, és a tabella fejléce is egyezik — csak a
 résztvevő oszlopa fut más néven (Szakvezető / Csapat).
@@ -2261,7 +2261,7 @@ Két dolgot érdemes tudni róla:
   belül ezért nem a beillesztés sorrendje dönt (az esetleges), hanem: frissebb forduló
   elöl, azon belül rovat → összefoglaló → beharangozó.
 
-Gépi őrzés: **D15** (`tesztek/dokuk.py`) — kint lévő írás nem lehet `kozzetett` nélkül,
+Gépi őrzés: **D15** (`tests/doc_checks.py`) — kint lévő írás nem lehet `kozzetett` nélkül,
 különben csendben a lap aljára esne.
 
 ### A heti rovat nem párharchoz tartozik
@@ -2282,14 +2282,14 @@ a fordulón belül a lista elején áll.
 ## 5/b. Tesztek
 
 ```bash
-tesztek/futtat.sh
+tests/run_all.sh
 ```
 
 Elindít egy helyi kiszolgálót a repó gyökerére, lefuttat mindent — a doksi-konzisztencia
 ellenőrzését, a gyűjtő-teszteket, majd a böngészős teszteket **párhuzamosan** (3 munkás;
 a két időzítést mérő teszt a végén, egyedül fut) —, és összegez; a kilépőkód a bukott
-tesztek száma. `PARHUZAM=1` a régi soros mód. A tesztek darabszámát szándékosan nem írjuk
-ide: kétszer is elavult. Tesztenkénti bontás: `tesztek/README.md`.
+tesztek száma. `WORKERS=1` a régi soros mód. A tesztek darabszámát szándékosan nem írjuk
+ide: kétszer is elavult. Tesztenkénti bontás: `tests/README.md`.
 
 Két elv, amit érdemes megtartani:
 
@@ -2313,7 +2313,7 @@ nem fogta meg. Ha egy tesztet a kód alá igazítasz, állj meg: valószínűleg
 rossz, nem a kód.
 
 **A dokumentáció-frissítés nem opcionális lépés, és nem is bizalmi kérdés többé:** a
-`tesztek/dokuk.py` a tesztsor részeként ellenőrzi, hogy minden teszt- és adatfájl
+`tests/doc_checks.py` a tesztsor részeként ellenőrzi, hogy minden teszt- és adatfájl
 dokumentálva van, a fájl-táblázat nem hivatkozik törölt fájlra, és a változásnapló
 bejegyzései teljesek. (Azért született, mert a doksi-szerkesztés kétszer hasalt el
 csendben.)

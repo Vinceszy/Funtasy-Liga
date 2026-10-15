@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
+const { BASE, check, section, launch, finish, blockApis } = require('./common');
 // AZ ELAVULT LAP MAGATOL UJRATOLT.
 //
 // MIERT: a `?v=` a funtasy.js/css gyorsitotarat tori - a lap SAJAT HTML-jet
@@ -24,7 +24,7 @@ async function meres(br, v, ut){
   let nav = 0;
   p.on('framenavigated', f => { if (f === p.mainFrame()) nav++; });
   const err = []; p.on('pageerror', e => err.push(e.message));
-  await apiKi(p);
+  await blockApis(p);
   await p.route('**/verzio.json*', r => r.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify({ v: v }) }));
   await p.goto(BASE + ut, { waitUntil: 'domcontentloaded' });
@@ -34,35 +34,35 @@ async function meres(br, v, ut){
 }
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const sajat = +require('fs').readFileSync(
     require('path').join(__dirname, '..', 'verzio.json'), 'utf8').match(/\d+/)[0];
 
-  cim('V1: azonos verziónál nincs újratöltés');
+  section('V1: azonos verziónál nincs újratöltés');
   const a = await meres(br, sajat, 'nb1/');
-  jo(a.nav === 1, 'egyetlen betöltés (' + a.nav + ')');
-  jo(a.err.length === 0, 'nincs JS-hiba' + (a.err.length ? ': ' + a.err.join(' | ') : ''));
+  check(a.nav === 1, 'egyetlen betöltés (' + a.nav + ')');
+  check(a.err.length === 0, 'nincs JS-hiba' + (a.err.length ? ': ' + a.err.join(' | ') : ''));
 
-  cim('V2: újabb verziónál EGYSZER újratölt');
+  section('V2: újabb verziónál EGYSZER újratölt');
   const b = await meres(br, sajat + 20, 'nb1/');
-  jo(b.nav === 2, 'pontosan egy újratöltés (' + b.nav + ' navigáció)');
-  jo(b.err.length === 0, 'nincs JS-hiba' + (b.err.length ? ': ' + b.err.join(' | ') : ''));
+  check(b.nav === 2, 'pontosan egy újratöltés (' + b.nav + ' navigáció)');
+  check(b.err.length === 0, 'nincs JS-hiba' + (b.err.length ? ': ' + b.err.join(' | ') : ''));
 
-  cim('V3: a PL-oldal is ellenőrzi');
+  section('V3: a PL-oldal is ellenőrzi');
   const c = await meres(br, sajat + 20, 'pl/');
-  jo(c.nav === 2, 'a PL-oldal is újratölt (' + c.nav + ' navigáció)');
+  check(c.nav === 2, 'a PL-oldal is újratölt (' + c.nav + ' navigáció)');
 
-  cim('V4: a verzio.json egyezik a lapok ?v= számával');
+  section('V4: a verzio.json egyezik a lapok ?v= számával');
   // Ha elcsuszna, a vedelem vagy nem fogna, vagy VEGTELEN ujratoltest
-  // okozna. A dokuk.py D6/b is nezi; itt a FUTO lapon ellenorizzuk.
+  // okozna. A doc_checks.py D6/b is nezi; itt a FUTO lapon ellenorizzuk.
   const p = await br.newPage();
-  await apiKi(p);
+  await blockApis(p);
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   const lapV = await p.evaluate(() => {
     const sc = document.querySelector('script[src*="funtasy.js?v="]');
     return sc ? +sc.getAttribute('src').split('v=')[1] : null;
   });
-  jo(lapV === sajat, 'a lap ?v=' + lapV + ' és a verzio.json v=' + sajat + ' egyezik');
+  check(lapV === sajat, 'a lap ?v=' + lapV + ' és a verzio.json v=' + sajat + ' egyezik');
   await p.close();
-  await vege(br);
+  await finish(br);
 })();

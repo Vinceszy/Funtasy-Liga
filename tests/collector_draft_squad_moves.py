@@ -1,154 +1,156 @@
 #!/usr/bin/env python3
-"""A "Valtoztatasok" ful adata a PL-en (collect_draft.py draft_keretvaltozas).
+"""The data of the "Valtoztatasok" tab on PL (collect_draft.py draft_squad_changes).
 
-A ful azt vezeti le, hogy mibol jott ki a Guardiola mutato - es a Draftban
-ehhez KETTE KELL VALASZTANI, mit csinalt az EMBER, es mit javitott rajta a
-GEP. Az FPL a fordulo vegen automatikus cseret hajt vegre; ha egyben
-mutatnank, ugy tunne, hogy a szakvezeto variált jol, holott a gep tette
-helyre a keretet (vagy forditva).
+The tab derives where the Guardiola indicator came from - and in Draft that
+requires SEPARATING what the HUMAN did from what the MACHINE fixed on top of
+it. FPL makes automatic substitutions at the end of the round; if they were
+shown together, it would look as if the manager had rotated well, while it
+was the machine that repaired the squad (or the other way round).
 
-P1: elengedett jatekos a MULT HETI megnevezett szerepevel szamit (pad = 0).
-P2: megszerzett jatekos a MOSTANI megnevezett szerepevel.
-P3: kezdo <-> pad valtas kulon tetel.
-P4: A GEP KULON: az automatikus csere hozadeka nem a jatekos-tetelek kozott
-    all, hanem sajat sorban (gepE -> gepU).
-P5: A TETELEK OSSZEGE (ember + gep) = a draft_guardiola altal adott `guard`.
-P6: valtozatlan keretnel nincs tetel es a mutato 0.
-P7: nincs mihez hasonlitani -> nincs adat.
-P8: NINCS PONT-ADAT (a fordulo meg zajlik) -> a valtoztatas MEGIS kijon,
-    csak pontertek nelkul; a gepi csere sora sem kerul bele, hiszen az
-    automatikus csere meg meg sem tortent.
+P1: a released player counts with LAST WEEK's named role (bench = 0).
+P2: an acquired player counts with the CURRENT named role.
+P3: a starter <-> bench switch is a separate item.
+P4: THE MACHINE SEPARATELY: the gain of the automatic substitution is not
+    among the player items, but in its own row (gepE -> gepU).
+P5: THE SUM OF THE ITEMS (human + machine) = the `guard` given by
+    draft_guardiola.
+P6: with an unchanged squad there are no items and the indicator is 0.
+P7: nothing to compare with -> no data.
+P8: NO POINTS DATA (the round is still in progress) -> the change STILL
+    comes out, only without point values; the automatic substitution row is
+    not in it either, since the automatic substitution has not happened yet.
 """
 import os, sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import collect_draft as c
 
-hibak, osszes = [], 0
+failures, total = [], 0
 
 
-def allit(felt, cimke):
-    global osszes
-    osszes += 1
-    print(("OK   " if felt else "HIBA ") + cimke)
-    if not felt:
-        hibak.append(cimke)
+def check(cond, label):
+    global total
+    total += 1
+    print(("OK   " if cond else "FAIL ") + label)
+    if not cond:
+        failures.append(label)
 
 
-POSZT = {}
-KEZDO = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-PAD = [12, 13, 14, 15]
-for e in KEZDO + PAD + [20, 21]:
-    POSZT[str(e)] = ("GKP" if e in (1, 12) else "DEF" if e in (2, 3, 4, 5, 13, 20)
-                     else "MID" if e in (6, 7, 8, 9, 14, 21) else "FWD")
+POSITION = {}
+STARTERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+BENCH = [12, 13, 14, 15]
+for e in STARTERS + BENCH + [20, 21]:
+    POSITION[str(e)] = ("GKP" if e in (1, 12) else "DEF" if e in (2, 3, 4, 5, 13, 20)
+                        else "MID" if e in (6, 7, 8, 9, 14, 21) else "FWD")
 
 
-def keret(ids, padok):
+def squad(ids, bench):
     return ([{"e": e, "b": False, "pts": 0} for e in ids]
-            + [{"e": e, "b": True, "pts": 0} for e in padok])
+            + [{"e": e, "b": True, "pts": 0} for e in bench])
 
 
-def pontok(alap=5, perc=90, **kiv):
-    d = {str(e): [alap, perc] for e in POSZT}
-    for k, v in kiv.items():
+def points(base=5, minutes=90, **overrides):
+    d = {str(e): [base, minutes] for e in POSITION}
+    for k, v in overrides.items():
         d[k.lstrip("j")] = v
     return d
 
 
-def egy(regi, most, p, gw=2):
-    return (c.draft_squad_changes({"1": {"L": regi}, "2": {"L": most}}, gw, p, POSZT)
+def one(old, new, p, gw=2):
+    return (c.draft_squad_changes({"1": {"L": old}, "2": {"L": new}}, gw, p, POSITION)
             or {}).get("L")
 
 
-print("--- P1-P3: az EMBER tetelei a megnevezett szerep szerint ---")
-p = pontok()
+print("--- P1-P3: the HUMAN's items by the named role ---")
+p = points()
 p["20"] = [9, 90]
-v = egy(keret(KEZDO, PAD), keret([20] + KEZDO[1:], PAD), p)
-allit(v and len(v["ki"]) == 1 and v["ki"][0]["e"] == 1 and v["ki"][0]["ert"] == 5
+v = one(squad(STARTERS, BENCH), squad([20] + STARTERS[1:], BENCH), p)
+check(v and len(v["ki"]) == 1 and v["ki"][0]["e"] == 1 and v["ki"][0]["ert"] == 5
       and v["ki"][0]["sz"] == "kezdo",
-      "P1: az elengedett kezdo 5 pontja szamit - kapott: %s" % (v and v["ki"]))
-allit(v and len(v["be"]) == 1 and v["be"][0]["e"] == 20 and v["be"][0]["ert"] == 9,
-      "P2: a megszerzett kezdo 9 pontja szamit - kapott: %s" % (v and v["be"]))
+      "P1: the released starter's 5 points count - got: %s" % (v and v["ki"]))
+check(v and len(v["be"]) == 1 and v["be"][0]["e"] == 20 and v["be"][0]["ert"] == 9,
+      "P2: the acquired starter's 9 points count - got: %s" % (v and v["be"]))
 
-# a 11-es (FWD) padra kerul, helyette a 15-os (FWD) all be kezdokent
-v = egy(keret(KEZDO, PAD), keret(KEZDO[:10] + [15], PAD[:3] + [11]), pontok())
-allit(v and not v["ki"] and not v["be"] and len(v["szerep"]) == 2,
-      "P3: nincs csere, ket szerepvaltas - kapott: %s" % (v and v["szerep"]))
-allit(v and sorted((x["szE"], x["szU"], x["ertE"], x["ertU"]) for x in v["szerep"])
+# number 11 (FWD) goes to the bench, number 15 (FWD) starts in their place
+v = one(squad(STARTERS, BENCH), squad(STARTERS[:10] + [15], BENCH[:3] + [11]), points())
+check(v and not v["ki"] and not v["be"] and len(v["szerep"]) == 2,
+      "P3: no transfer, two role changes - got: %s" % (v and v["szerep"]))
+check(v and sorted((x["szE"], x["szU"], x["ertE"], x["ertU"]) for x in v["szerep"])
       == [("kezdo", "pad", 5, 0), ("pad", "kezdo", 0, 5)],
-      "P3: kezdo->pad 5->0 es pad->kezdo 0->5 - kapott: %s" % (v and v["szerep"]))
+      "P3: starter->bench 5->0 and bench->starter 0->5 - got: %s" % (v and v["szerep"]))
 
-print("\n--- P4: a GEP kulon all ---")
-# A 11-es kezdo 0 percet jatszott; a 15-os (FWD, pad) 12 pontot hozott, tehat
-# az automatikus csere beallitja - ez NEM a szakvezeto erdeme.
-p = pontok()
-p["11"] = [0, 0]                       # a FWD kezdo palyara sem lepett
-for e in ("12", "13", "14"):           # rajta kivul csak a 15-os jatszott a padrol
+print("\n--- P4: the MACHINE stands apart ---")
+# Starter number 11 played 0 minutes; number 15 (FWD, bench) brought 12
+# points, so the automatic substitution brings them on - this is NOT the
+# manager's merit.
+p = points()
+p["11"] = [0, 0]                       # the FWD starter did not even take the field
+for e in ("12", "13", "14"):           # besides them only number 15 played from the bench
     p[e] = [0, 0]
 p["15"] = [12, 90]
-v = egy(keret(KEZDO, PAD), keret(KEZDO, PAD), p)
-allit(v and not v["ki"] and not v["be"] and not v["szerep"],
-      "P4: az ember semmit nem valtoztatott - kapott: %s"
+v = one(squad(STARTERS, BENCH), squad(STARTERS, BENCH), p)
+check(v and not v["ki"] and not v["be"] and not v["szerep"],
+      "P4: the human changed nothing - got: %s"
       % ((v and (v["ki"], v["be"], v["szerep"])),))
-allit(v and v["gepE"] == 12 and v["gepU"] == 12 and v["guard"] == 0,
-      "P4: a csere hozadeka mindket oldalon 12, a mutato 0 - kapott: %s"
+check(v and v["gepE"] == 12 and v["gepU"] == 12 and v["guard"] == 0,
+      "P4: the substitution's gain is 12 on both sides, the indicator is 0 - got: %s"
       % ((v and (v["gepE"], v["gepU"], v["guard"])),))
 
-# most a szakvezeto atrendezi a padot: a 12 pontos 15-os elore kerul a padon,
-# de a 13-as (DEF) nem allhatna be a FWD helyere - a sorrend szamit
-v2 = egy(keret(KEZDO, PAD), keret(KEZDO, [15] + PAD[:3]), p)
-allit(v2 and v2["gepU"] == 12 and v2["guard"] == 0,
-      "P4: a pad atrendezese itt nem valtoztat (a 15-os igy is beall) - kapott: %s"
+# now the manager reorders the bench: the 12-point number 15 moves forward on
+# the bench, but number 13 (DEF) could not come on for the FWD - the order matters
+v2 = one(squad(STARTERS, BENCH), squad(STARTERS, [15] + BENCH[:3]), p)
+check(v2 and v2["gepU"] == 12 and v2["guard"] == 0,
+      "P4: reordering the bench changes nothing here (number 15 comes on anyway) - got: %s"
       % ((v2 and (v2["gepU"], v2["guard"])),))
 
-print("\n--- P5: EMBER + GEP = a Guardiola mutato ---")
+print("\n--- P5: HUMAN + MACHINE = the Guardiola indicator ---")
 
 
-def ellenoriz(regi, most, p, cimke):
-    hist = {"1": {"L": regi}, "2": {"L": most}}
-    v = (c.draft_squad_changes(hist, 2, p, POSZT) or {}).get("L")
-    g = (c.draft_guardiola(hist, 2, p, POSZT) or {}).get("L")
-    ember = round(sum(x["ert"] for x in v["be"]) - sum(x["ert"] for x in v["ki"])
+def check_sum(old, new, p, label):
+    hist = {"1": {"L": old}, "2": {"L": new}}
+    v = (c.draft_squad_changes(hist, 2, p, POSITION) or {}).get("L")
+    g = (c.draft_guardiola(hist, 2, p, POSITION) or {}).get("L")
+    human = round(sum(x["ert"] for x in v["be"]) - sum(x["ert"] for x in v["ki"])
                   + sum(x["ertU"] - x["ertE"] for x in v["szerep"]), 2)
-    gep = round(v["gepU"] - v["gepE"], 2)
-    allit(v["stimmel"] and round(ember + gep, 2) == g["guard"] == v["guard"],
-          "P5: %s - ember %s + gep %s = %s, guardiola %s"
-          % (cimke, ember, gep, round(ember + gep, 2), g["guard"]))
+    machine = round(v["gepU"] - v["gepE"], 2)
+    check(v["stimmel"] and round(human + machine, 2) == g["guard"] == v["guard"],
+          "P5: %s - human %s + machine %s = %s, guardiola %s"
+          % (label, human, machine, round(human + machine, 2), g["guard"]))
 
 
-p = pontok()
+p = points()
 p["11"] = [0, 0]
 p["15"] = [12, 90]
 p["20"] = [9, 90]
-ellenoriz(keret(KEZDO, PAD), keret([20] + KEZDO[1:], PAD),
-          p, "csere + automatikus csere egyszerre")
-ellenoriz(keret(KEZDO, PAD), keret(KEZDO[:10] + [15], PAD[:3] + [11]),
-          p, "szerepvaltas + automatikus csere")
-p2 = pontok()
-p2["1"] = [0, 0]          # a kapus nem jatszott -> csak kapus valthatja
+check_sum(squad(STARTERS, BENCH), squad([20] + STARTERS[1:], BENCH),
+          p, "transfer + automatic substitution at once")
+check_sum(squad(STARTERS, BENCH), squad(STARTERS[:10] + [15], BENCH[:3] + [11]),
+          p, "role change + automatic substitution")
+p2 = points()
+p2["1"] = [0, 0]          # the goalkeeper did not play -> only a goalkeeper can replace them
 p2["12"] = [7, 90]
-ellenoriz(keret(KEZDO, PAD), keret(KEZDO, PAD[1:] + [12]), p2,
-          "a pad sorrendje valtozik, kapus-csere")
+check_sum(squad(STARTERS, BENCH), squad(STARTERS, BENCH[1:] + [12]), p2,
+          "the bench order changes, goalkeeper substitution")
 
-print("\n--- P6-P7: hatarhelyzetek ---")
-v = egy(keret(KEZDO, PAD), keret(KEZDO, PAD), pontok())
-allit(v and not v["ki"] and not v["be"] and not v["szerep"] and v["guard"] == 0,
-      "P6: valtozatlan keretnel nincs tetel es a mutato 0 - kapott: %s" % (v,))
-allit(c.draft_squad_changes({"1": {"L": keret(KEZDO, PAD)}}, 1, pontok(), POSZT) is None,
-      "P7: az elso fordulora nincs adat")
-print("\n--- P8: pont-adat nelkul is kijon a valtoztatas ---")
-most8 = keret(KEZDO[:10] + [20], PAD)          # a 11-es helyett a 20-as
-v8 = (c.draft_squad_changes({"1": {"L": keret(KEZDO, PAD)}, "2": {"L": most8}},
-                            2, None, POSZT) or {}).get("L")
-allit(v8 and v8["pontok"] is False and v8["guard"] is None,
-      "P8: pont nelkuli alak - kapott: %s" % ((v8 and (v8["pontok"], v8["guard"])),))
-allit(v8 and [x["e"] for x in v8["ki"]] == [11] and [x["e"] for x in v8["be"]] == [20],
-      "P8: a csere latszik - kapott: ki=%s be=%s"
+print("\n--- P6-P7: edge cases ---")
+v = one(squad(STARTERS, BENCH), squad(STARTERS, BENCH), points())
+check(v and not v["ki"] and not v["be"] and not v["szerep"] and v["guard"] == 0,
+      "P6: with an unchanged squad there are no items and the indicator is 0 - got: %s" % (v,))
+check(c.draft_squad_changes({"1": {"L": squad(STARTERS, BENCH)}}, 1, points(), POSITION) is None,
+      "P7: no data for the first round")
+print("\n--- P8: the change comes out without points data too ---")
+new8 = squad(STARTERS[:10] + [20], BENCH)      # number 20 instead of number 11
+v8 = (c.draft_squad_changes({"1": {"L": squad(STARTERS, BENCH)}, "2": {"L": new8}},
+                            2, None, POSITION) or {}).get("L")
+check(v8 and v8["pontok"] is False and v8["guard"] is None,
+      "P8: the shape without points - got: %s" % ((v8 and (v8["pontok"], v8["guard"])),))
+check(v8 and [x["e"] for x in v8["ki"]] == [11] and [x["e"] for x in v8["be"]] == [20],
+      "P8: the transfer is visible - got: ki=%s be=%s"
       % ((v8 and [x["e"] for x in v8["ki"]]), (v8 and [x["e"] for x in v8["be"]])))
-allit(v8 and "gepE" not in v8 and "gepU" not in v8,
-      "P8: a gepi csere sora nincs benne (meg meg sem tortent)")
+check(v8 and "gepE" not in v8 and "gepU" not in v8,
+      "P8: the automatic substitution row is not in it (it has not happened yet)")
 
-if hibak:
-    print("\n%d allitas bukott." % len(hibak))
+if failures:
+    print("\n%d assertions failed." % len(failures))
     sys.exit(1)
-print("\nMind a %d allitas rendben." % osszes)
+print("\nAll %d assertions passed." % total)

@@ -1,4 +1,4 @@
-const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozos');
+const { BASE, check, section, failures, launch, finish, blockApis, rewriteJson } = require('./common');
 // A "frissítés…" jelzes: lassu lekeresnel latszik, gyorsnal nem villan fel.
 
 // Megjelenik-e a jelzes a megadott idon belul? (A vegallapotot nezni keves
@@ -65,20 +65,20 @@ async function plMeccs(br, keses){
 }
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
   console.log('--- PL: lassú lekérés (3 mp) ---');
   const lassu = await plMeccs(br, 3000);
   console.log('   jelzés szövege:', JSON.stringify(lassu.szoveg));
-  jo(lassu.szoveg !== null, 'lassú lekérésnél megjelenik a jelzés');
-  jo(/^frissítés… \d+,\d mp$/.test(lassu.szoveg || ''), 'a jelzés kiírja az eltelt időt');
-  jo(lassu.maradt === 0, 'a lekérés végén eltűnik');
-  jo(lassu.perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(lassu.perr.slice(0, 2)));
+  check(lassu.szoveg !== null, 'lassú lekérésnél megjelenik a jelzés');
+  check(/^frissítés… \d+,\d mp$/.test(lassu.szoveg || ''), 'a jelzés kiírja az eltelt időt');
+  check(lassu.maradt === 0, 'a lekérés végén eltűnik');
+  check(lassu.perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(lassu.perr.slice(0, 2)));
 
   console.log('\n--- PL: gyors lekérés ---');
   const gyors = await plMeccs(br, 0);
   console.log('   jelzés szövege:', JSON.stringify(gyors.szoveg));
-  jo(gyors.szoveg === null, 'gyors lekérésnél nem villan fel (nincs zaj)');
+  check(gyors.szoveg === null, 'gyors lekérésnél nem villan fel (nincs zaj)');
 
   // ---------------- NB1 ----------------
   console.log('\n--- NB1: lassú élő keret-lekérés (3 mp) ---');
@@ -90,7 +90,7 @@ async function plMeccs(br, keses){
   // kattintas ELOTT beertek-e - ha nem, az elo keret-lekeres el se indult,
   // es a teszt jelzes nelkul, felrevezeto hibaval bukott (flake, kb. minden
   // harmadik futas). Ugyanigy rogzit a uzenetek.teszt.js is.
-  await jsonAtir(p, '**/results.json*', j => Object.assign(j, { provisional: [5] }));
+  await rewriteJson(p, '**/results.json*', j => Object.assign(j, { provisional: [5] }));
   const start = new Date(Date.now() - 1800000).toISOString();
   await p.route('**fantasy-api.mlsz.hu/**', async route => {
     const u = decodeURIComponent(route.request().url());
@@ -125,12 +125,12 @@ async function plMeccs(br, keses){
   await p.evaluate(() => { showLiveMatch('Bazsa', 'Vince', 5); });
   const nb1Szoveg = await jelzesreVar(p, 8000);   // lasd fent: terheles alatt kevés volt
   console.log('   jelzés szövege:', JSON.stringify(nb1Szoveg));
-  jo(nb1Szoveg !== null, 'NB1: lassú élő keret-lekérésnél is megjelenik');
+  check(nb1Szoveg !== null, 'NB1: lassú élő keret-lekérésnél is megjelenik');
   await p.waitForTimeout(4000);
-  jo(await p.locator('.frissjel').count() === 0, 'NB1: a végén eltűnik');
-  jo(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr.slice(0, 2)));
+  check(await p.locator('.frissjel').count() === 0, 'NB1: a végén eltűnik');
+  check(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr.slice(0, 2)));
   await p.close();
 
   await br.close();
-  process.exit(hibak.length ? 1 : 0);
+  process.exit(failures.length ? 1 : 0);
 })();

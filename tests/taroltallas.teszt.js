@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege } = require('./kozos');
+const { BASE, check, section, launch, finish } = require('./common');
 // AZ UTOLSO ISMERT ALLAS MAR AZ ELSO KEPEN OTT VAN (NB1).
 //
 // A KIZART HIBA: "ha valaki mar lekerdezte, lassam azt -
@@ -51,10 +51,10 @@ const valasz = (uname, pont) => ({
 });
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
   // ---- 1) a tarolt allas megelozi az elo lekerest ----
-  cim('NB1: a tárolt állás már az első képen ott van');
+  section('NB1: a tárolt állás már az első képen ott van');
   const p = await br.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   const sz = { tarolt: 0, elo: 0 };
@@ -99,15 +99,15 @@ const valasz = (uname, pont) => ({
   await p.waitForFunction(v => Object.values(LIVE).flat().filter(Boolean)
     .some(x => x[2] === v), TAROLT_PONT, { timeout: 20000 });
   const eloKesz = sz.elo;
-  jo(eloKesz === 0,
+  check(eloKesz === 0,
      'a tárolt állás kirajzolódott, mielőtt bármelyik élő lekérés beért volna — '
      + eloKesz + ' élő válasz volt eddig');
-  jo(sz.tarolt === 1, 'a tárolt állás EGYETLEN kör-útból jött — ' + sz.tarolt + ' kérés');
+  check(sz.tarolt === 1, 'a tárolt állás EGYETLEN kör-útból jött — ' + sz.tarolt + ' kérés');
 
   const statuszok = await p.evaluate(() => window.__statuszok || []);
   const vartOra = ketjegy(ido.getHours()) + ':' + ketjegy(ido.getMinutes());
   const mostOra = ketjegy(new Date().getHours()) + ':' + ketjegy(new Date().getMinutes());
-  jo(statuszok.some(t => t.includes(vartOra)),
+  check(statuszok.some(t => t.includes(vartOra)),
      'a státuszsáv a LEKÉRÉS idejét írta ki (' + vartOra + '), nem a mostanit ('
      + mostOra + '): ' + JSON.stringify(statuszok));
 
@@ -115,13 +115,13 @@ const valasz = (uname, pont) => ({
   await p.waitForFunction(v => Object.values(LIVE).flat().filter(Boolean)
     .some(x => x[2] === v), ELO_PONT, { timeout: 30000 });
   const vegso = await eloErtekek();
-  jo(vegso.length > 0 && vegso.every(x => x === ELO_PONT),
+  check(vegso.length > 0 && vegso.every(x => x === ELO_PONT),
      'az élő lekérés felülírta a tároltat — élő értékek: ' + vegso.join(', '));
-  jo(!perr.length, 'nincs JS-hiba: ' + perr.join(' | '));
+  check(!perr.length, 'nincs JS-hiba: ' + perr.join(' | '));
   await p.close();
 
   // ---- 3) ures tarolo: minden megy a szokasos uton ----
-  cim('NB1: üres tárolónál semmi nem romlik el');
+  section('NB1: üres tárolónál semmi nem romlik el');
   const q = await br.newPage();
   const qerr = []; q.on('pageerror', e => qerr.push(e.message));
   const sz2 = { tarolt: 0, elo: 0 };
@@ -129,9 +129,9 @@ const valasz = (uname, pont) => ({
   await q.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await q.waitForFunction(v => Object.values(LIVE).flat().filter(Boolean)
     .some(x => x[2] === v), ELO_PONT, { timeout: 30000 });
-  jo(true, 'az élő állás üres tároló mellett is megjelenik');
-  jo(!qerr.length, 'nincs JS-hiba: ' + qerr.join(' | '));
+  check(true, 'az élő állás üres tároló mellett is megjelenik');
+  check(!qerr.length, 'nincs JS-hiba: ' + qerr.join(' | '));
   await q.close();
 
-  await vege(br);
+  await finish(br);
 })();

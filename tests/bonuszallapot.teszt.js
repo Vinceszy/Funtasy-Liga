@@ -1,4 +1,4 @@
-const { BASE, jo, hibak, inditas, vege } = require('./kozos');
+const { BASE, check, failures, launch, finish } = require('./common');
 // A bonusz harom allapota a PL-oldalon.
 //
 // MERVE : az FPL a bonuszt a meccs alatt is szamolja a
@@ -53,7 +53,7 @@ const explain = parok => parok.map(([mid, bonusz]) => [[
 let napokKi = true;   // a napi zaras adata megjon-e (a tartalek-ag teszteléséhez)
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const p = await br.newPage({ viewport: { width: 1100, height: 900 } });
   const perr = []; p.on('pageerror', e => perr.push(e.message));
 
@@ -105,15 +105,15 @@ let napokKi = true;   // a napi zaras adata megjon-e (a tartalek-ag tesztelésé
   console.log('   futó meccs      ->', JSON.stringify(fut));
   console.log('   lefújva         ->', JSON.stringify(lefujva));
   console.log('   hivatalos       ->', JSON.stringify(kesz));
-  jo(/b-valtozik/.test(fut.cls) && /változik/.test(fut.megj),
+  check(/b-valtozik/.test(fut.cls) && /változik/.test(fut.megj),
     'futó meccs: a bónusz sor jelölt, és megmondja, hogy még változik');
-  jo(/b-ideiglenes/.test(lefujva.cls) && /forduló végéig/.test(lefujva.megj),
+  check(/b-ideiglenes/.test(lefujva.cls) && /forduló végéig/.test(lefujva.megj),
     'lefújt meccs, a forduló még nyitva: külön jelölés, és megmondja, mire vár');
-  jo(!/b-valtozik|b-ideiglenes/.test(kesz.cls) && kesz.megj === '',
+  check(!/b-valtozik|b-ideiglenes/.test(kesz.cls) && kesz.megj === '',
     'a forduló zárása után: semmilyen jelölés (a jelöletlen = fix)');
-  jo(/még változhat/.test(lefujva.megj) && kesz.megj === '',
+  check(/még változhat/.test(lefujva.megj) && kesz.megj === '',
     'a "p" (Provisional) jelölést kap, a "r" (Confirmed) nem');
-  jo(fut.cls !== lefujva.cls, 'a két jelölt állapot nem ugyanaz');
+  check(fut.cls !== lefujva.cls, 'a két jelölt állapot nem ugyanaz');
 
   console.log('\n--- a bónusz "Added" önmagában is véglegessé tesz ---');
   const added = await p.evaluate(() => {
@@ -123,14 +123,14 @@ let napokKi = true;   // a napi zaras adata megjon-e (a tartalek-ag tesztelésé
   });
   const addedSor = sorok(added)[0];
   console.log('   Added esetén:', JSON.stringify(addedSor));
-  jo(addedSor.megj === '' && !/b-/.test(addedSor.cls),
+  check(addedSor.megj === '' && !/b-/.test(addedSor.cls),
     'ha az FPL szerint a bónusz már Added, nincs jelölés');
 
   console.log('\n--- dupla forduló: két meccs, két állapot ---');
   const ketto = sorok(ki[204]);
   console.log('   sorok:', JSON.stringify(ketto));
-  jo(ketto.length === 2, 'két bónusz sor van (meccsenként egy)');
-  jo(ketto.some(x => !/b-/.test(x.cls)) && ketto.some(x => /b-valtozik/.test(x.cls)),
+  check(ketto.length === 2, 'két bónusz sor van (meccsenként egy)');
+  check(ketto.some(x => !/b-/.test(x.cls)) && ketto.some(x => /b-valtozik/.test(x.cls)),
     'a kész meccs sora jelöletlen, a futóé jelölt — nem mossuk össze őket');
 
   console.log('\n--- tartalék: ha a napi zárás adata nem jön meg ---');
@@ -158,14 +158,14 @@ let napokKi = true;   // a napi zaras adata megjon-e (a tartalek-ag tesztelésé
     && Object.keys(LIVE_MATCHES).length === 3, null, { timeout: 20000 });
   const tartalek = sorok(await p2.evaluate(GW => breakdownHTML(203, GW), GW))[0];
   console.log('   napi adat nélkül, lefújt meccs ->', JSON.stringify(tartalek));
-  jo(/b-ideiglenes/.test(tartalek.cls),
+  check(/b-ideiglenes/.test(tartalek.cls),
     'napi adat nélkül a lefújt meccs jelölt marad (a meccs finished mezője a tartalék)');
 
   console.log('\n--- a többi sor érintetlen ---');
-  jo(!/b-valtozik|b-ideiglenes/.test(ki[201].replace(/Bónuszpontok[\s\S]*?<\/tr>/g, '')),
+  check(!/b-valtozik|b-ideiglenes/.test(ki[201].replace(/Bónuszpontok[\s\S]*?<\/tr>/g, '')),
     'a gól és a percek sora nem kap jelölést');
 
   console.log('\npageerror:', perr.length ? perr : 'nincs');
-  jo(perr.length === 0, 'nincs JS-hiba');
-  await vege(br);
+  check(perr.length === 0, 'nincs JS-hiba');
+  await finish(br);
 })();

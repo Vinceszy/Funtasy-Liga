@@ -1,189 +1,194 @@
 #!/usr/bin/env python3
-"""A draft-gyujto fordulo-veglegesitese - negy allitas.
+"""The Draft collector finalising a round - four assertions.
 
-MIERT KELL: az FPL a fordulo vegen AUTOMATIKUS CSEREKET hajt vegre (a nem
-jatszo kezdo helyere beall az elso befero padrol), es ilyenkor ATIRJA a pick
-"position" mezojet. Merve : ez a "lockdown"-kor tortenik, a
-jelzese a game vegpont "current_event_finished" mezoje - es EKKOR A
-current_event MEG A REGI FORDULO. Ha a gyujto a zaras utan nem keri le
-megegyszer a fordulot, a keret veglegesen a csere elotti allapotban fagy be.
+WHY IT IS NEEDED: at the end of the round FPL makes AUTOMATIC SUBSTITUTIONS
+(the first bench player who fits comes on for a starter who did not play),
+and in doing so it REWRITES the pick's "position" field. Measured: this
+happens at "lockdown", its signal is the "current_event_finished" field of
+the game endpoint - and AT THAT POINT current_event IS STILL THE OLD ROUND.
+If the collector does not fetch the round once more after closing, the squad
+freezes for good in its state before the substitution.
 
-D1: amig a fordulo nincs lezarva (current_event_finished=false), minden
-    futas ujra lekeri - akkor is, ha a keret mar teljes.
-D2: a zaras utani futas lekeri megegyszer, es a CSERE UTANI allapot kerul be
-    (a "b" jelzo a friss position-bol szamolodik).
-D3: a lezart fordulo bekerul a "veglegesek" listaba - de amig O AZ AKTUALIS,
-    tovabbra is minden korben lekerjuk (az utolagos FPL-korrekciok igy
-    jonnek at); csak amikor a current_event tovabblep, akkor hagyjuk el.
-D4: ha a lekeres elhasal, a fordulo NEM jelolodik veglegesnek - kulonben a csere
-    elotti allapotot rogzitenenk veglegesnek.
-D5: ...es akkor sem, ha a TAROLT adat mar teljes egy korabbi futasbol.
-D6: a ZARASI KULONBSEG (zarasok.json) pontosan egyszer, a veglegesito
-    futasban keszul: a zaras elotti tarolt pillanatkep es a friss allapot
-    elterese. A cserek (ki/be) es a pontvaltozasok is benne vannak; ha a
-    zaras semmit sem valtoztatott, URES bejegyzes keszul (az is eredmeny).
-    A zaras elotti futasokban nem keszul, es masodszor sem szamoljuk ujra. A
-    gyujto osszefesuli a regit az ujjal, tehat a tarolt allapotbol nem
-    latszik, hogy MOST bejott-e minden csapat. Ez a valodi eset: a keret mar
-    megvan a zaras elottrol, a zaras utani lekeres viszont elhasal - a csere
-    igy pont attol a csapattol hianyozna.
+D1: while the round is not closed (current_event_finished=false), every run
+    fetches it again - even if the squad is already complete.
+D2: the run after closing fetches it once more, and the state AFTER THE
+    SUBSTITUTION goes in (the "b" flag is computed from the fresh position).
+D3: the closed round goes into the "veglegesek" list - but while IT IS THE
+    CURRENT one, it is still fetched in every run (later FPL corrections
+    come through this way); only once current_event moves on is it left alone.
+D4: if the fetch fails, the round is NOT marked final - otherwise the state
+    before the substitution would be recorded as final.
+D5: ...and not even if the STORED data is already complete from an earlier run.
+D6: the CLOSING DIFFERENCE (zarasok.json) is made exactly once, in the
+    finalising run: the difference between the stored snapshot before
+    closing and the fresh state. The transfers (ki/be) and the points
+    changes are in it; if closing changed nothing, an EMPTY entry is made
+    (that is a result too). It is not made in the runs before closing, and
+    it is not recomputed a second time. The collector merges the old with
+    the new, so the stored state does not show whether every team came in
+    NOW. This is the real case: the squad already exists from before
+    closing, but the fetch after closing fails - the substitution would
+    then be missing from exactly that team.
 """
 import importlib.util, json, os, sys, tempfile
 
-FORRAS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'collect_draft.py')
+SOURCE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'collect_draft.py')
 os.chdir(tempfile.mkdtemp())
-spec = importlib.util.spec_from_file_location('collect_draft', FORRAS)
+spec = importlib.util.spec_from_file_location('collect_draft', SOURCE)
 c = importlib.util.module_from_spec(spec); sys.modules['collect_draft'] = c
 spec.loader.exec_module(c)
 
-hibak = []
-LIGAK = [101, 102]
+failures = []
+LEAGUE_ENTRIES = [101, 102]
 ENTRY = {201: 101, 202: 102}
-# a kezdo 11 + 4 pad; a 15-os elem (id 15) a 0 perces kezdo, a 12-es a pad elso
-KEZDOK = list(range(1, 12))
-PAD = [12, 13, 14, 15]
+# the 11 starters + 4 on the bench; number 11 is the starter with 0 minutes,
+# number 12 is first on the bench
+STARTERS = list(range(1, 12))
+BENCH = [12, 13, 14, 15]
 
-allapot = {"zarva": False, "akt": 1}
-keresek = []          # (gw, entry) parok, hogy szamolhassuk a lekereseket
-
-
-def allit(felt, cimke):
-    print(("OK   " if felt else "HIBA ") + cimke)
-    if not felt:
-        hibak.append(cimke)
+state = {"closed": False, "current": 1}
+requests = []         # (gw, entry) pairs, so the fetches can be counted
 
 
-def picks(csere):
-    """csere=True: az FPL mar beallitotta a 12-est a 11-es helyere."""
-    kezdo = KEZDOK[:] if not csere else KEZDOK[:10] + [12]
-    pad = PAD[:] if not csere else [11, 13, 14, 15]
-    return ([{"element": e, "position": i + 1} for i, e in enumerate(kezdo)]
-            + [{"element": e, "position": 12 + i} for i, e in enumerate(pad)])
+def check(cond, label):
+    print(("OK   " if cond else "FAIL ") + label)
+    if not cond:
+        failures.append(label)
+
+
+def picks(substituted):
+    """substituted=True: FPL has already brought number 12 on for number 11."""
+    starters = STARTERS[:] if not substituted else STARTERS[:10] + [12]
+    bench = BENCH[:] if not substituted else [11, 13, 14, 15]
+    return ([{"element": e, "position": i + 1} for i, e in enumerate(starters)]
+            + [{"element": e, "position": 12 + i} for i, e in enumerate(bench)])
 
 
 def mock(path, retries=3):
     if path == "game":
-        return 200, {"current_event": allapot["akt"],
-                     "current_event_finished": allapot["zarva"]}
+        return 200, {"current_event": state["current"],
+                     "current_event_finished": state["closed"]}
     if path.startswith("league/") and "details" in path:
         return 200, {"league": {"id": 1, "name": "T"},
                      "league_entries": [{"id": l, "entry_id": e, "player_first_name": "A",
                                          "player_last_name": "B", "entry_name": "C"}
                                         for e, l in ENTRY.items()],
-                     "matches": [], "standings": [{"league_entry": l} for l in LIGAK]}
+                     "matches": [], "standings": [{"league_entry": l} for l in LEAGUE_ENTRIES]}
     if "element-status" in path:
         return 200, {"element_status": []}
     if path.startswith("bootstrap-static"):
         return 200, {"elements": [], "teams": [], "element_types": []}
     if "/live" in path:
         gw = int(path.split("/")[1])
-        pontok = {str(e): {"stats": {"total_points": 1}} for e in range(1, 16)}
-        # a 15-os jatekos pontja a zaraskor valtozik (bonusz-korrekcio) -
-        # ebbol merjuk, hogy a zarasi kulonbseg a pontot is eszreveszi
-        pontok["15"] = {"stats": {"total_points": 5 if allapot["zarva"] else 2}}
-        return 200, {"elements": pontok}
+        points = {str(e): {"stats": {"total_points": 1}} for e in range(1, 16)}
+        # player 15's points change at closing (bonus correction) - this
+        # measures that the closing difference notices points too
+        points["15"] = {"stats": {"total_points": 5 if state["closed"] else 2}}
+        return 200, {"elements": points}
     if path.startswith("entry/"):
-        reszek = path.split("/")
-        entry, gw = int(reszek[1]), int(reszek[3])
-        keresek.append((gw, entry))
-        if allapot.get("bukjon") == entry:
+        parts = path.split("/")
+        entry, gw = int(parts[1]), int(parts[3])
+        requests.append((gw, entry))
+        if state.get("fail") == entry:
             return 500, None
-        return 200, {"picks": picks(allapot["zarva"])}
+        return 200, {"picks": picks(state["closed"])}
     return 404, None
 
 
 c.fetch = mock
 
-print("--- 1. futas: a fordulo MEG TART ---")
+print("--- run 1: the round is STILL IN PROGRESS ---")
 c.main()
 h = json.load(open("draft_history.json"))
-allit(len(h["rounds"].get("1") or {}) == 2, "az 1. fordulo keretei bekerultek")
-allit(not h.get("veglegesek"), "D1: a meg tarto fordulo NEM kesz: " + repr(h.get("veglegesek")))
-padE = {x["e"] for x in h["rounds"]["1"]["101"] if x["b"]}
-allit(padE == set(PAD), "a pad a csere ELOTTI allapot: " + repr(sorted(padE)))
+check(len(h["rounds"].get("1") or {}) == 2, "the squads of round 1 are in")
+check(not h.get("veglegesek"), "D1: the round in progress is NOT final: " + repr(h.get("veglegesek")))
+bench_e = {x["e"] for x in h["rounds"]["1"]["101"] if x["b"]}
+check(bench_e == set(BENCH), "the bench is the state BEFORE the substitution: " + repr(sorted(bench_e)))
 
-print("\n--- 2. futas: meg mindig tart, a keret mar teljes ---")
-keresek.clear()
+print("\n--- run 2: still in progress, the squad is already complete ---")
+requests.clear()
 c.main()
-allit(len(keresek) == 2,
-      "D1: a le nem zart fordulot teljes keret mellett is ujra lekeri (%d keres)" % len(keresek))
+check(len(requests) == 2,
+      "D1: the unclosed round is fetched again even with a complete squad (%d requests)" % len(requests))
 
-print("\n--- 3. futas: LOCKDOWN, az FPL vegrehajtotta a cseret ---")
-allapot["zarva"] = True
-keresek.clear()
+print("\n--- run 3: LOCKDOWN, FPL has made the substitution ---")
+state["closed"] = True
+requests.clear()
 c.main()
 h = json.load(open("draft_history.json"))
-padE = {x["e"] for x in h["rounds"]["1"]["101"] if x["b"]}
-allit(len(keresek) == 2, "a zaras utan meg egyszer lekeri (%d keres)" % len(keresek))
-allit(padE == {11, 13, 14, 15},
-      "D2: a CSERE UTANI allapot kerult be - a 0 perces kezdo a padra: " + repr(sorted(padE)))
-allit(h.get("veglegesek") == [1], "D3: a fordulo bekerult a veglegesek listaba: " + repr(h.get("veglegesek")))
+bench_e = {x["e"] for x in h["rounds"]["1"]["101"] if x["b"]}
+check(len(requests) == 2, "after closing it is fetched once more (%d requests)" % len(requests))
+check(bench_e == {11, 13, 14, 15},
+      "D2: the state AFTER THE SUBSTITUTION is in - the 0-minute starter to the bench: "
+      + repr(sorted(bench_e)))
+check(h.get("veglegesek") == [1], "D3: the round is in the veglegesek list: " + repr(h.get("veglegesek")))
 
 z = json.load(open("zarasok.json"))
 z1 = z["rounds"].get("1") or {}
-allit("1" in z["rounds"], "D6: a veglegesito futasban elkeszult a zarasi bejegyzes")
-erintett = next(iter(z1.values())) if z1 else {}
-# a ki/be elemei {e, pts} alakuak: a bekerult jatekos PONTJA mondja meg,
-# mit hozott a csere (a kikerulte pedig, miert tortent)
-allit([x["e"] for x in erintett.get("ki") or []] == [11]
-      and [x["e"] for x in erintett.get("be") or []] == [12],
-      "D6: a csere benne van (ki=11, be=12): " + repr(erintett))
-allit(all("pts" in x for x in (erintett.get("ki") or []) + (erintett.get("be") or [])),
-      "D6: a csere-elemeknel ott a pont is")
-pontok_d6 = erintett.get("pont") or []
-allit(any(x["e"] == 15 and x["elott"] == 2 and x["utan"] == 5 for x in pontok_d6),
-      "D6: a pontvaltozas is benne van (15-os: 2 -> 5): " + repr(pontok_d6))
+check("1" in z["rounds"], "D6: the closing entry was made in the finalising run")
+affected = next(iter(z1.values())) if z1 else {}
+# the ki/be items have the shape {e, pts}: the incoming player's POINTS tell
+# what the substitution brought (and the outgoing one's, why it happened)
+check([x["e"] for x in affected.get("ki") or []] == [11]
+      and [x["e"] for x in affected.get("be") or []] == [12],
+      "D6: the substitution is in it (ki=11, be=12): " + repr(affected))
+check(all("pts" in x for x in (affected.get("ki") or []) + (affected.get("be") or [])),
+      "D6: the substitution items carry the points too")
+points_d6 = affected.get("pont") or []
+check(any(x["e"] == 15 and x["elott"] == 2 and x["utan"] == 5 for x in points_d6),
+      "D6: the points change is in it too (number 15: 2 -> 5): " + repr(points_d6))
 
-print("\n--- 4. futas: lezart, DE MEG AKTUALIS fordulo ---")
-keresek.clear()
+print("\n--- run 4: closed, BUT STILL CURRENT round ---")
+requests.clear()
 c.main()
-allit(len(keresek) == 2,
-      "D3: amig a fordulo az aktualis, a zaras utan is lekerjuk - igy jon at egy "
-      "utolagos FPL-korrekcio (%d keres)" % len(keresek))
+check(len(requests) == 2,
+      "D3: while the round is the current one, it is fetched after closing too - this is how "
+      "a later FPL correction comes through (%d requests)" % len(requests))
 
-z_elott = json.dumps(json.load(open("zarasok.json"))["rounds"], sort_keys=True)
+z_before = json.dumps(json.load(open("zarasok.json"))["rounds"], sort_keys=True)
 
-print("\n--- 5. futas: a current_event tovabblepett ---")
-allapot["akt"] = 2
-allapot["zarva"] = False        # a 2. fordulo mar tart
-keresek.clear()
+print("\n--- run 5: current_event has moved on ---")
+state["current"] = 2
+state["closed"] = False         # round 2 is already in progress
+requests.clear()
 c.main()
-elso = [x for x in keresek if x[0] == 1]
-allit(not elso, "D3: a mar NEM aktualis, lezart fordulot nem kerdezzuk tobbe (%d keres)" % len(elso))
-allit([x for x in keresek if x[0] == 2], "a 2. fordulot viszont igen")
-allit(json.dumps(json.load(open("zarasok.json"))["rounds"], sort_keys=True) == z_elott,
-      "D6: a zarasi bejegyzest masodszor nem szamoljuk ujra")
+first = [x for x in requests if x[0] == 1]
+check(not first, "D3: the closed round that is NO longer current is not requested any more (%d requests)"
+      % len(first))
+check([x for x in requests if x[0] == 2], "but round 2 is")
+check(json.dumps(json.load(open("zarasok.json"))["rounds"], sort_keys=True) == z_before,
+      "D6: the closing entry is not recomputed a second time")
 
-print("\n--- 6. eset: zaraskor elhasal az egyik lekeres (ures elozmeny) ---")
+print("\n--- case 6: one of the fetches fails at closing (empty history) ---")
 os.chdir(tempfile.mkdtemp())
-allapot["akt"] = 1
-allapot["zarva"] = True
-allapot["bukjon"] = 202
+state["current"] = 1
+state["closed"] = True
+state["fail"] = 202
 c.main()
 h = json.load(open("draft_history.json"))
-allit(not h.get("veglegesek"),
-      "D4: hianyos lekeres utan NEM jelolodik veglegesnek: " + repr(h.get("veglegesek")))
+check(not h.get("veglegesek"),
+      "D4: after an incomplete fetch it is NOT marked final: " + repr(h.get("veglegesek")))
 
-print("\n--- 7. eset: a TAROLT adat mar teljes, de a zarasi lekeres elhasal ---")
+print("\n--- case 7: the STORED data is already complete, but the closing fetch fails ---")
 os.chdir(tempfile.mkdtemp())
-allapot["akt"] = 1
-allapot["zarva"] = False
-allapot["bukjon"] = None
-c.main()                                   # elso kor: teljes keret, csere elott
+state["current"] = 1
+state["closed"] = False
+state["fail"] = None
+c.main()                                   # first run: complete squad, before the substitution
 h = json.load(open("draft_history.json"))
-allit(len(h["rounds"]["1"]) == 2 and not h.get("veglegesek"),
-      "eloallt a teljes, csere ELOTTI allapot")
-allapot["zarva"] = True                    # lockdown...
-allapot["bukjon"] = 202                    # ...de az egyik lekeres elhasal
+check(len(h["rounds"]["1"]) == 2 and not h.get("veglegesek"),
+      "the complete state BEFORE the substitution exists")
+state["closed"] = True                     # lockdown...
+state["fail"] = 202                        # ...but one of the fetches fails
 c.main()
 h = json.load(open("draft_history.json"))
-padE = {x["e"] for x in h["rounds"]["1"]["102"] if x["b"]}
-allit(padE == set(PAD),
-      "a 102-es csapatnal a csere NEM jott be (a lekeres elhasalt): " + repr(sorted(padE)))
-allit(not h.get("veglegesek"),
-      "D5: teljes tarolt adat + hianyos mostani lekeres -> NEM veglegesitunk: "
+bench_e = {x["e"] for x in h["rounds"]["1"]["102"] if x["b"]}
+check(bench_e == set(BENCH),
+      "for team 102 the substitution did NOT come in (the fetch failed): " + repr(sorted(bench_e)))
+check(not h.get("veglegesek"),
+      "D5: complete stored data + incomplete current fetch -> NOT finalised: "
       + repr(h.get("veglegesek")))
 
-if hibak:
-    print("\n%d allitas bukott." % len(hibak)); sys.exit(1)
-print("\nMind a tizenkilenc allitas rendben.")
+if failures:
+    print("\n%d assertions failed." % len(failures)); sys.exit(1)
+print("\nAll nineteen assertions passed.")

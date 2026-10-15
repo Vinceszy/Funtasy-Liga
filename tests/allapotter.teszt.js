@@ -1,10 +1,10 @@
-const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
+const { BASE, check, section, launch, finish, blockApis } = require('./common');
 // A "mit irjunk a 0 pontos jatekosrol" logika TELJES allapottere.
 // Nem talalgatott esetek: minden ertelmes kombinacio lefut, es a kimenetre
 // invarianseket ellenorzunk. Ami serti oket, azt kilistazzuk.
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const p = await br.newPage();
   await p.route('**fantasy-api.mlsz.hu/**', r => r.abort());
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });

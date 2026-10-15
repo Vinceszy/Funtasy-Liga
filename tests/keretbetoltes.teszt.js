@@ -1,12 +1,12 @@
-const { BASE, jo, cim, hibak, inditas, vege } = require('./kozos');
+const { BASE, check, section, failures, launch, finish } = require('./common');
 // A meccs megnyitasa a FORDULONKENTI keret-fajlt toltse le, ne a teljes
 // elozmenyt - es ha a fordulonkenti fajl hianyzik, essen vissza rá.
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
   // ---------- 1. normal eset: fordulonkenti fajl ----------
-  cim('Meccs megnyitasa: melyik fajlt tolti le?');
+  section('Meccs megnyitasa: melyik fajlt tolti le?');
   let p = await br.newPage();
   const kert = [];
   p.on('request', r => {
@@ -21,13 +21,13 @@ const { BASE, jo, cim, hibak, inditas, vege } = require('./kozos');
   await p.waitForSelector('.sqcol .plr', { timeout: 20000 });
   const jatekosok = await p.locator('.sqcol .plr').count();
   console.log('   lekért fájlok: ' + JSON.stringify(kert) + ' | játékos-sor: ' + jatekosok);
-  jo(kert.includes('keretek/1'), 'az 1. forduló saját fájlját kéri le');
-  jo(!kert.includes('squad_history'), 'a teljes előzményt NEM tölti le');
-  jo(jatekosok >= 20, 'a keretek meg is jelennek (' + jatekosok + ' sor)');
+  check(kert.includes('keretek/1'), 'az 1. forduló saját fájlját kéri le');
+  check(!kert.includes('squad_history'), 'a teljes előzményt NEM tölti le');
+  check(jatekosok >= 20, 'a keretek meg is jelennek (' + jatekosok + ' sor)');
   await p.close();
 
   // ---------- 2. visszaeses: nincs fordulonkenti fajl ----------
-  cim('Ha a fordulonkenti fajl hianyzik, a teljes elozmeny a tartalek');
+  section('Ha a fordulonkenti fajl hianyzik, a teljes elozmeny a tartalek');
   p = await br.newPage();
   const kert2 = [];
   p.on('request', r => { if (/squad_history\.json/.test(r.url())) kert2.push('squad_history'); });
@@ -39,12 +39,12 @@ const { BASE, jo, cim, hibak, inditas, vege } = require('./kozos');
   await p.waitForSelector('.sqcol .plr', { timeout: 20000 });
   const jatekosok2 = await p.locator('.sqcol .plr').count();
   console.log('   tartalék lekérés: ' + JSON.stringify(kert2) + ' | játékos-sor: ' + jatekosok2);
-  jo(kert2.includes('squad_history'), 'visszaesik a teljes előzményre');
-  jo(jatekosok2 >= 20, 'a keretek így is megjelennek (' + jatekosok2 + ' sor)');
+  check(kert2.includes('squad_history'), 'visszaesik a teljes előzményre');
+  check(jatekosok2 >= 20, 'a keretek így is megjelennek (' + jatekosok2 + ' sor)');
   await p.close();
 
   // ---------- 3. a ket forras ugyanazt adja ----------
-  cim('A fordulonkenti fajl es a teljes elozmeny egyezik');
+  section('A fordulonkenti fajl es a teljes elozmeny egyezik');
   const fs = require('fs'), path = require('path');
   const teljes = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'squad_history.json'), 'utf8')).rounds;
   let elteres = 0;
@@ -54,7 +54,7 @@ const { BASE, jo, cim, hibak, inditas, vege } = require('./kozos');
     const egy = JSON.parse(fs.readFileSync(f, 'utf8')).squads;
     if (JSON.stringify(egy) !== JSON.stringify(teljes[r])) { elteres++; console.log('   eltér: ' + r); }
   }
-  jo(elteres === 0, 'mind a ' + Object.keys(teljes).length + ' forduló fájlja egyezik az előzménnyel');
+  check(elteres === 0, 'mind a ' + Object.keys(teljes).length + ' forduló fájlja egyezik az előzménnyel');
 
-  await vege(br);
+  await finish(br);
 })();

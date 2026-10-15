@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege } = require('./kozos');
+const { BASE, check, section, launch, finish } = require('./common');
 // AZ NB1 ELO LEKERES NEM MEGY EGYMAS UTAN.
 //
 // Az elo allas szakvezetonkent egy kulon MLSZ-lekeresbol all ossze (8 ember
@@ -55,10 +55,10 @@ const keszVar = p => p.waitForFunction(() => {
 }, null, { timeout: 40000 });
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
   // ---- 1) sorrend es ido ----
-  cim('NB1: az élő lekérés két körben megy, nem nyolcban');
+  section('NB1: az élő lekérés két körben megy, nem nyolcban');
   const p = await br.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   const naplo = [];
@@ -66,22 +66,22 @@ const keszVar = p => p.waitForFunction(() => {
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await keszVar(p);
 
-  jo(naplo.length === TAGOK,
+  check(naplo.length === TAGOK,
      'mind a ' + TAGOK + ' szakvezető adata lekérődött — kapott: ' + naplo.length);
 
   const sorrend = [...naplo].sort((a, b) => a.t0 - b.t0);
   const elso = sorrend[0], tobbi = sorrend.slice(1);
-  jo(elso.t1 <= tobbi[0].t0 + 5,
+  check(elso.t1 <= tobbi[0].t0 + 5,
      'az első kérés befejeződik, mielőtt a második elindul (út-tanulás) — '
      + (tobbi[0].t0 - elso.t1) + ' ms különbség');
 
   const szoras = tobbi[tobbi.length - 1].t0 - tobbi[0].t0;
-  jo(szoras < KESES,
+  check(szoras < KESES,
      'a maradék ' + tobbi.length + ' egyszerre indul (indulásaik ' + szoras
      + ' ms-en belül, egy kérés ' + KESES + ' ms)');
 
   const teljes = Math.max(...naplo.map(x => x.t1)) - Math.min(...naplo.map(x => x.t0));
-  jo(teljes < 4 * KESES,
+  check(teljes < 4 * KESES,
      'a teljes lekérés két kör ideje (' + teljes + ' ms), nem nyolcé (~'
      + TAGOK * KESES + ' ms)');
 
@@ -89,13 +89,13 @@ const keszVar = p => p.waitForFunction(() => {
     const r = Object.keys(LIVE).map(Number).sort((a, b) => a - b)[0];
     return { r, sorok: (LIVE[r] || []).filter(Boolean).length };
   });
-  jo(allas.sorok > 0,
+  check(allas.sorok > 0,
      'az élő állás ki is töltődött (' + allas.r + '. forduló, ' + allas.sorok + ' meccs)');
-  jo(!perr.length, 'nincs JS-hiba: ' + perr.join(' | '));
+  check(!perr.length, 'nincs JS-hiba: ' + perr.join(' | '));
   await p.close();
 
   // ---- 2) az elhasalt keresst egyesevel ujraprobaljuk ----
-  cim('NB1: aki a párhuzamos körből kiesik, azt újrakérjük');
+  section('NB1: aki a párhuzamos körből kiesik, azt újrakérjük');
   const q = await br.newPage();
   const qerr = []; q.on('pageerror', e => qerr.push(e.message));
   const naplo2 = [];
@@ -105,13 +105,13 @@ const keszVar = p => p.waitForFunction(() => {
   await keszVar(q);
 
   const hany = naplo2.filter(x => x.uname === BUKO).length;
-  jo(hany === 2, 'a bukott szakvezetőt pontosan egyszer kérjük újra — '
+  check(hany === 2, 'a bukott szakvezetőt pontosan egyszer kérjük újra — '
      + hany + ' kérés ment ki rá');
 
   const megvan = await q.evaluate(() => !!(USER_IDS['Bazsa']));
-  jo(megvan, 'az újrakérés után az ő adata is bekerült');
-  jo(!qerr.length, 'nincs JS-hiba: ' + qerr.join(' | '));
+  check(megvan, 'az újrakérés után az ő adata is bekerült');
+  check(!qerr.length, 'nincs JS-hiba: ' + qerr.join(' | '));
   await q.close();
 
-  await vege(br);
+  await finish(br);
 })();

@@ -1,11 +1,11 @@
-const { BASE, jo, cim, hibak, inditas, vege, apiKi } = require('./kozos');
+const { BASE, check, section, failures, launch, finish, blockApis } = require('./common');
 // A magyarszabaly (+10) elhelyezese a kulonbseg-nezetben.
 // Ket eset: ha mindket keret ugyanannyit kap, kozos tetel; ha nem, akkor
 // mindket oldalon az eltero csoportba kerul (a masiknal 0-val).
 const szam = t => parseFloat(String(t).replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3}\b)/g, '').replace(',', '.'));
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const p = await br.newPage({ viewport: { width: 1100, height: 1000 } });
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   for (const m of ['**mlsz.hu/**', '**corsproxy.io/**', '**allorigins**']) await p.route(m, r => r.abort());
@@ -70,11 +70,11 @@ const szam = t => parseFloat(String(t).replace(/[^\d,.-]/g, '').replace(/\.(?=\d
     console.log(`\n--- ${kulcs === 'kozos' ? 'KÖZÖS szabály' : 'CSAK AZ EGYIK OLDALON'}: ${h} vs ${v}, ${r}. forduló ---`);
     console.log('   szabálysor — közös részben:', kozosBan, '| eltérők közt:', eltBan, '| mobil blokkban:', mobil);
     if (kulcs === 'kozos') {
-      jo(kozosBan === 2 && eltBan === 0, 'közös szabály: mindkét oszlop közös részében, az eltérők közt sehol');
-      jo(mobil === 1, 'a mobil közös blokkban egyszer szerepel');
+      check(kozosBan === 2 && eltBan === 0, 'közös szabály: mindkét oszlop közös részében, az eltérők közt sehol');
+      check(mobil === 1, 'a mobil közös blokkban egyszer szerepel');
     } else {
-      jo(kozosBan === 0 && eltBan === 2, 'eltérő szabály: mindkét oszlopban az eltérők közt, saját sorként');
-      jo(mobil === 0, 'a mobil közös blokkban nem szerepel');
+      check(kozosBan === 0 && eltBan === 2, 'eltérő szabály: mindkét oszlopban az eltérők közt, saját sorként');
+      check(mobil === 0, 'a mobil közös blokkban nem szerepel');
     }
 
     const szamlak = await p.$$eval('.sqcol', cols => cols.map(c => ({
@@ -87,10 +87,10 @@ const szam = t => parseFloat(String(t).replace(/[^\d,.-]/g, '').replace(/\.(?=\d
       // A szintetikus esetben az elso oszlopbol szandekosan kivettuk a +10-et,
       // a hivatalos pontszam viszont meg tartalmazza - ott ennyi a kulonbseg.
       const varhato = (szintetikus && i === 0) ? ossz - 10 : ossz;
-      jo(Math.abs(kozos + elt - varhato) < 0.005,
+      check(Math.abs(kozos + elt - varhato) < 0.005,
         `${i + 1}. oszlop számlája: ${kozos} + ${elt} = ${varhato}`
         + (varhato !== ossz ? ` (+10 hivatalos, a szintetikus keretben nem jár)` : ''));
-      jo(Math.abs(ossz - szam(c.fejlec)) < 0.005, `${i + 1}. oszlop végösszege = a fejléc pontja (${c.fejlec})`);
+      check(Math.abs(ossz - szam(c.fejlec)) < 0.005, `${i + 1}. oszlop végösszege = a fejléc pontja (${c.fejlec})`);
     });
     await p.click('.mclose');
     await p.waitForTimeout(150);
@@ -98,5 +98,5 @@ const szam = t => parseFloat(String(t).replace(/[^\d,.-]/g, '').replace(/\.(?=\d
 
   console.log('\npageerror:', perr.length ? perr : 'nincs');
   await br.close();
-  process.exit(hibak.length ? 1 : 0);
+  process.exit(failures.length ? 1 : 0);
 })();

@@ -1,4 +1,4 @@
-const { BASE, jo, inditas, vege, jsonAtir } = require('./kozos');
+const { BASE, check, launch, finish, rewriteJson } = require('./common');
 // AZ NB1 NYUGALMI STATUSZSORA.
 //
 // Korabban "Naprakesz · ellenorizve <most>" allt itt: a kiirt ido a
@@ -12,11 +12,11 @@ const { BASE, jo, inditas, vege, jsonAtir } = require('./kozos');
 const TAROLT = '2026-08-30T10:00:00Z';
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const p = await br.newPage({ viewport: { width: 900, height: 800 } });
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   let utolso = null;
-  await jsonAtir(p, '**/results.json*', j => {
+  await rewriteJson(p, '**/results.json*', j => {
     j.provisional = [];
     j.updated = TAROLT;
     const lejatszott = Object.keys(j.schedule || {}).map(Number)
@@ -41,12 +41,12 @@ const TAROLT = '2026-08-30T10:00:00Z';
   const szoveg = await p.evaluate(() => document.getElementById('status').textContent.trim());
   console.log('   státusz: ' + JSON.stringify(szoveg));
 
-  jo(/^Naprakész/.test(szoveg), 'nyugalomban „Naprakész"');
-  jo(szoveg.includes('utolsó lezárt: ' + utolso + '. forduló'),
+  check(/^Naprakész/.test(szoveg), 'nyugalomban „Naprakész"');
+  check(szoveg.includes('utolsó lezárt: ' + utolso + '. forduló'),
      'kiírja az utolsó lezárt fordulót (' + utolso + '.)');
-  jo(/rögzítve: aug\. 30/.test(szoveg),
+  check(/rögzítve: aug\. 30/.test(szoveg),
      'kiírja a TÁROLT adat utolsó változását, nem a lekérését');
-  jo(/ellenőrizve \d{2}:\d{2}$/.test(szoveg), 'és hogy mikor ellenőrizte');
-  jo(!perr.length, 'nincs JS-hiba: ' + JSON.stringify(perr));
-  await vege(br);
+  check(/ellenőrizve \d{2}:\d{2}$/.test(szoveg), 'és hogy mikor ellenőrizte');
+  check(!perr.length, 'nincs JS-hiba: ' + JSON.stringify(perr));
+  await finish(br);
 })();

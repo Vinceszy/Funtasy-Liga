@@ -1,4 +1,4 @@
-const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
+const { BASE, check, launch, finish, blockApis, rewriteJson } = require('./common');
 // Kezdoallitasi hatekonysag: mennyit hozott a felallitott kezdo abbol,
 // amennyit a keretbol ki lehetett volna hozni.
 //
@@ -6,17 +6,17 @@ const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
 // (1 kapus, 3-5 vedo, 1-3 csatar) a 15-bol. A teszt kezzel kiszamolt
 // keretre allit, es rogziti, hogy az ervenytelen formacio (6 vedo) nem
 // szamit lehetonek.
-// NB1: a gyujto szamol (gyujto_hatekonysag.py teszteli); itt azt merjuk,
+// NB1: a gyujto szamol (collector_efficiency.py teszteli); itt azt merjuk,
 // hogy a tabella oszlopa a hatekonysag.json-bol toltodik, es a szazalek
 // a lezart fordulok osszesitese.
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
   // ---------------- PL: a szamitas maga ----------------
   console.log('--- PL: plHatekonysag ---');
   const p = await br.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
-  await apiKi(p);
+  await blockApis(p);
   await p.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
   await p.waitForFunction(() => typeof plEfficiency === 'function'
     && Object.keys(PLAYERS).length > 0, null, { timeout: 20000 });
@@ -46,8 +46,8 @@ const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
     ['FWD', 2, [10, 4], false], ['FWD', 1, [1], true],
   ]);
   console.log('   szerzett/leheto: ' + JSON.stringify(v));
-  jo(v && v.le === 59, 'a lehető a legjobb ÉRVÉNYES formáció (59): ' + (v && v.le));
-  jo(v && v.sz === 8 + 16 + 21 + 14, 'a szerzett a kezdők összege (' + (v && v.sz) + ')');
+  check(v && v.le === 59, 'a lehető a legjobb ÉRVÉNYES formáció (59): ' + (v && v.le));
+  check(v && v.sz === 8 + 16 + 21 + 14, 'a szerzett a kezdők összege (' + (v && v.sz) + ')');
 
   // ervenytelen formaciot nem szamolunk lehetonek: 6 vedos "legjobb" tiltott
   const v2 = await szamol([
@@ -56,7 +56,7 @@ const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
     ['MID', 4, [1, 1, 0, 0], false], ['MID', 1, [0], true],
     ['FWD', 1, [1], false], ['FWD', 1, [0], true],
   ]);
-  jo(v2 && v2.le === 8 + 45 + 2 + 1,
+  check(v2 && v2.le === 8 + 45 + 2 + 1,
      'legfeljebb 5 védő számolható, a hatodik helyére középpályás jön: ' + (v2 && v2.le));
 
   // a tabella oszlopa valodi adaton: minden sorban van % vagy kotojel
@@ -66,8 +66,8 @@ const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
              cellak: [...document.querySelectorAll('#table td.kezdpc')].map(x => x.textContent) };
   });
   console.log('   tabella: ' + JSON.stringify(oszlop.cellak));
-  jo(oszlop.fej, 'a PL tabellának van KEZD% oszlopa (title-lel)');
-  jo(oszlop.cellak.length === 10 && oszlop.cellak.every(x => /^\d+%$|^–$/.test(x)),
+  check(oszlop.fej, 'a PL tabellának van KEZD% oszlopa (title-lel)');
+  check(oszlop.cellak.length === 10 && oszlop.cellak.every(x => /^\d+%$|^–$/.test(x)),
      'minden sorban százalék (vagy kötőjel) áll');
   // A nevsor FLEX (a monogram vedelme miatt) - flex konteneren a SZOVEG es
   // a span kozotti szokoz ELVESZIK, ezert a tavolsagot gap adja. E nelkul
@@ -96,18 +96,18 @@ const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
     return van;
   }, [Object.keys(require === undefined ? {} : {})[0] || (await p.evaluate(() => Object.keys(ENTRIES)[0]))]);
   console.log('   név és klub-címke közti térköz: ' + JSON.stringify(koz));
-  jo(koz.szoveg && koz.klub, 'a mérés talált névszöveget ÉS klub-címkét (nem üresen megy át)');
-  jo(koz.res != null && koz.res >= 3,
+  check(koz.szoveg && koz.klub, 'a mérés talált névszöveget ÉS klub-címkét (nem üresen megy át)');
+  check(koz.res != null && koz.res >= 3,
      'van térköz a név és a klub-címke között (nem "WhiteARS"): ' + koz.res + 'px');
 
-  jo(perr.length === 0, 'nincs JS-hiba a PL-oldalon: ' + JSON.stringify(perr));
+  check(perr.length === 0, 'nincs JS-hiba a PL-oldalon: ' + JSON.stringify(perr));
   await p.close();
 
   // ---------------- NB1: a json-bol toltodo oszlop ----------------
   console.log('--- NB1: tabella a hatekonysag.json-ból ---');
   const p2 = await br.newPage();
   const perr2 = []; p2.on('pageerror', e => perr2.push(e.message));
-  await apiKi(p2);
+  await blockApis(p2);
   // sajat adat, hogy az elvart szazalek kezzel szamolhato legyen:
   // 1. fordulo (lezart): sz=40 le=50; 2. fordulo (lezart): sz=50 le=50
   // -> osszesitve 90/100 = 90%. Az 5. IDEIGLENES fordulo (sz=0 le=100)
@@ -125,9 +125,9 @@ const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
     route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ rounds: { 1: sor(40, 50), 2: sor(50, 50), 5: sor(0, 100) } }) });
   });
-  // From disk, not through the test server (kozos.jsonAtir): a network
+  // From disk, not through the test server (common.rewriteJson): a network
   // fetch inside the route outlived the page under the full suite's load.
-  await jsonAtir(p2, '**/results.json*', j => {
+  await rewriteJson(p2, '**/results.json*', j => {
     j.provisional = [5];             // az 5. fordulo ideiglenes...
     j.schedule['5'] = (j.schedule['5'] || []).map(m => [m[0], m[1], null, null]);
     return j;
@@ -139,9 +139,9 @@ const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
     cim: (document.querySelector('#table td.kezdpc') || {}).title,
   }));
   console.log('   cellák: ' + JSON.stringify(nb1.cellak) + ' | title: ' + JSON.stringify(nb1.cim));
-  jo(nb1.cellak.length > 0 && nb1.cellak.every(x => x === '90%'),
+  check(nb1.cellak.length > 0 && nb1.cellak.every(x => x === '90%'),
      'az összesítés a LEZÁRT fordulókból számol (40+50)/(50+50)=90% — az ideiglenes kimarad');
-  jo(/40|90/.test(nb1.cim || ''), 'a cella title-je a pont-párt mutatja: ' + JSON.stringify(nb1.cim));
+  check(/40|90/.test(nb1.cim || ''), 'a cella title-je a pont-párt mutatja: ' + JSON.stringify(nb1.cim));
 
   // a Fordulok ful KOZOS renderelobol jon (T.fordulokHTML) - az NB1-en is
   // ott a KEZD% oszlop, fordulonkent (1.: 40/50=80%, 2.: 50/50=100%)
@@ -152,8 +152,8 @@ const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
              cellak: [...d.querySelectorAll('td.kezdpc')].map(x => x.textContent).slice(0, 4) };
   }, [nevek[0]]);
   console.log('   NB1 Fordulók fül: ' + JSON.stringify(fordulok.cellak));
-  jo(fordulok.fej, 'az NB1 Fordulók fülén is van KEZD% oszlop (közös renderelő)');
-  jo(fordulok.cellak[0] === '80%' && fordulok.cellak[1] === '100%',
+  check(fordulok.fej, 'az NB1 Fordulók fülén is van KEZD% oszlop (közös renderelő)');
+  check(fordulok.cellak[0] === '80%' && fordulok.cellak[1] === '100%',
      'fordulónkénti értékek: 1.=80%, 2.=100% — ' + JSON.stringify(fordulok.cellak));
 
   // a meccs-fejlec sora KETOLDALT igazit: a bal ertek a bal szelhez, a
@@ -170,10 +170,10 @@ const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
     d.remove();
     return { balOK: Math.abs(bal.left - k.left) <= 1, jobbOK: Math.abs(jobb.right - k.right) <= 1, cim };
   });
-  jo(igazitas.balOK && igazitas.jobbOK,
+  check(igazitas.balOK && igazitas.jobbOK,
      'a két érték a saját térfeléhez igazodik (bal a bal szélen, jobb a jobbon)');
-  jo(/kezdőállítás/.test(igazitas.cim), 'középen a címke: ' + JSON.stringify(igazitas.cim));
+  check(/kezdőállítás/.test(igazitas.cim), 'középen a címke: ' + JSON.stringify(igazitas.cim));
 
-  jo(perr2.length === 0, 'nincs JS-hiba az NB1-oldalon: ' + JSON.stringify(perr2));
-  await vege(br);
+  check(perr2.length === 0, 'nincs JS-hiba az NB1-oldalon: ' + JSON.stringify(perr2));
+  await finish(br);
 })();

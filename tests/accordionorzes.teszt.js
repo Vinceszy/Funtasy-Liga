@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege, apiKi, bontasKi } = require('./kozos');
+const { BASE, check, section, launch, finish, blockApis, blockStoredBreakdowns } = require('./common');
 // A NYITOTT pont-bontas nem tunhet el a hatterben beero frissitestol.
 //
 // A KIZART HIBA: "ha megnyitom a jatekos pontreszletezeset a meccsben, a
@@ -13,17 +13,17 @@ const BONTAS = { data: [
   { value: 1,  points: 5, competition_stat_config: { name: 'Gól' } } ] };
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
-  cim('NB1: a meccs-nézet újrarajzolása');
+  section('NB1: a meccs-nézet újrarajzolása');
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
-  await apiKi(p);
+  await blockApis(p);
   // A LEKEREST koveto orzest merjuk: a panel a "bontás betöltése" allapoton
   // at jut el a kesz tartalomig. A tarolt bontas ezt atugorja (a repobol
   // azonnal megvan), ezert itt szandekosan nincs kiszolgalva - a mockolt
   // MLSZ-valasz kell hogy ervenyesuljon.
-  await bontasKi(p);
+  await blockStoredBreakdowns(p);
   await p.route('**fantasy-api.mlsz.hu/**', r => /game-player-stats/.test(decodeURIComponent(r.request().url()))
     ? r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BONTAS) })
     : r.abort());
@@ -38,7 +38,7 @@ const BONTAS = { data: [
     return a && !/betöltése/i.test(a.textContent);
   }, null, { timeout: 10000 });
   const elotte = await p.evaluate(() => document.querySelector('.accpanel').innerText);
-  jo(/Gól/.test(elotte), 'a bontás betöltődött (' + elotte.slice(0, 40).replace(/\n/g, ' ') + ')');
+  check(/Gól/.test(elotte), 'a bontás betöltődött (' + elotte.slice(0, 40).replace(/\n/g, ' ') + ')');
 
   await p.evaluate(() => matchBody());          // ezt hivja az élő frissítés is
   await p.waitForTimeout(300);
@@ -46,11 +46,11 @@ const BONTAS = { data: [
     const a = document.querySelector('.accpanel');
     return { van: !!a, szoveg: a ? a.innerText : '', nyilt: !!document.querySelector('.plr.open') };
   });
-  jo(utana.van, 'az újrarajzolás után is nyitva van a bontás');
-  jo(utana.nyilt, 'a sor is nyitottnak látszik (a nyíl nem fordul vissza)');
-  jo(utana.szoveg === elotte, 'a panel TARTALMA is ugyanaz — nincs villanás, nincs újabb lekérés');
+  check(utana.van, 'az újrarajzolás után is nyitva van a bontás');
+  check(utana.nyilt, 'a sor is nyitottnak látszik (a nyíl nem fordul vissza)');
+  check(utana.szoveg === elotte, 'a panel TARTALMA is ugyanaz — nincs villanás, nincs újabb lekérés');
 
-  cim('NB1: a keret-nézet újrarajzolása');
+  section('NB1: a keret-nézet újrarajzolása');
   await p.evaluate(() => { const b = document.getElementById('ovClose'); if (b) b.click(); });
   await p.waitForTimeout(200);
   await p.evaluate(() => showSquad(['Katyul']));
@@ -71,9 +71,9 @@ const BONTAS = { data: [
     const a = document.querySelector('.accpanel');
     return a ? a.innerText : null;
   });
-  jo(k2 === k1, 'a keret-nézetben is megmarad a nyitott bontás');
+  check(k2 === k1, 'a keret-nézetben is megmarad a nyitott bontás');
 
-  cim('Hibás betöltést NEM őrzünk meg (a megőrzés maga okozott hibát)');
+  section('Hibás betöltést NEM őrzünk meg (a megőrzés maga okozott hibát)');
   // MERVE: az orzes a HIBAUZENETET is visszatette, es a sort nyitva
   // hagyta - egy atmeneti halozati hiba igy beragadt, es a kovetkezo
   // kattintas becsukta a sort ahelyett, hogy ujraprobalta volna. A bontas
@@ -82,8 +82,8 @@ const BONTAS = { data: [
   await p.close();
   var p2 = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err2 = []; p2.on('pageerror', e => err2.push(e.message));
-  await apiKi(p2);
-  await bontasKi(p2);   // a HIBAS betoltest merjuk - tarolt bontasbol nem lenne hiba
+  await blockApis(p2);
+  await blockStoredBreakdowns(p2);   // a HIBAS betoltest merjuk - tarolt bontasbol nem lenne hiba
   // A lekero TOBB uton probalkozik (direkt + proxyk), es a proxys URL-ben is
   // benne van a cel-URL - tehat "az elso keres" nem egy URL, hanem egy teljes
   // PROBALKOZAS-KOR. Kapcsoloval vezereljuk: eloszor MINDEN ut elhasal, a
@@ -105,16 +105,16 @@ const BONTAS = { data: [
     const a = document.querySelector('.accpanel');
     return a && a.dataset.allapot === 'hiba';
   }, null, { timeout: 10000 });
-  jo(true, 'az első lekérés elhasalt, a panel hibát mutat');
+  check(true, 'az első lekérés elhasalt, a panel hibát mutat');
   // Az OK is ott van: melyik ut miert nem ment. Enelkul se a felhasznalo, se
   // a fejleszto nem tudja eldonteni, halozat-e, proxy-e vagy az API valtozott.
-  jo(await p2.$$eval('.accpanel .accmiert', a => a.length) === 1,
+  check(await p2.$$eval('.accpanel .accmiert', a => a.length) === 1,
      'a hibaüzenet mellett ott áll az OK is (melyik út mivel bukott)');
   await p2.evaluate(() => matchBody());
   await p2.waitForTimeout(300);
-  jo((await p2.$$eval('.accpanel', a => a.length)) === 0,
+  check((await p2.$$eval('.accpanel', a => a.length)) === 0,
      'az újrarajzolás NEM őrzi meg a hibaüzenetet (a sor bezár)');
-  jo((await p2.$$eval('.plr.open', a => a.length)) === 0,
+  check((await p2.$$eval('.plr.open', a => a.length)) === 0,
      'a sor sem marad nyitottnak jelölve — különben a kattintás csak becsukná');
   szolgal = true;                       // mostantol a lekeres sikerulhet
   await p2.$eval('#mBody .plr[data-acc]', e => e.click());
@@ -122,10 +122,10 @@ const BONTAS = { data: [
     const a = document.querySelector('.accpanel');
     return a && a.dataset.allapot === 'kesz';
   }, null, { timeout: 10000 });
-  jo(/Gól/.test(await p2.evaluate(() => document.querySelector('.accpanel').innerText)),
+  check(/Gól/.test(await p2.evaluate(() => document.querySelector('.accpanel').innerText)),
      'EGY kattintás újrapróbálja, és most sikerül');
 
-  cim('Betöltés közbeni újrarajzolás újraindítja a lekérést');
+  section('Betöltés közbeni újrarajzolás újraindítja a lekérést');
   // Ha az ujrarajzolas a "Bontas betoltese..." allapotot kapja el, a regi
   // keres mar az elavult sorra fut ki - a panel orokre a betoltes-jelzesen
   // ragadt volna. Ilyenkor ujra kell inditani.
@@ -153,11 +153,11 @@ const BONTAS = { data: [
     const a = document.querySelector('.accpanel');
     return a ? { allapot: a.dataset.allapot, szoveg: a.innerText } : null;
   });
-  jo(t && t.allapot === 'kesz' && /Gól/.test(t.szoveg) && !/betöltése/i.test(t.szoveg),
+  check(t && t.allapot === 'kesz' && /Gól/.test(t.szoveg) && !/betöltése/i.test(t.szoveg),
      'betöltés közbeni újrarajzolás után is megjön a bontás — nem ragad be a jelzésen ('
      + JSON.stringify(t && { allapot: t.allapot, szoveg: t.szoveg.slice(0, 40) }) + ')');
 
-  cim('Zárt állapotban nincs mellékhatás');
+  section('Zárt állapotban nincs mellékhatás');
   await p2.evaluate(() => { const s = document.querySelector('.plr.open'); if (s) s.click(); });
   await p2.waitForTimeout(200);
   await p2.evaluate(() => {
@@ -165,10 +165,10 @@ const BONTAS = { data: [
     FunTasy.accPreserve(() => { document.getElementById('mBody').innerHTML = test; });
   });
   await p2.waitForTimeout(200);
-  jo((await p2.$$eval('.accpanel', a => a.length)) === 0,
+  check((await p2.$$eval('.accpanel', a => a.length)) === 0,
      'ha semmi nem volt nyitva, az újrarajzolás nem nyit meg semmit');
-  jo(err.length === 0 && err2.length === 0, 'nincs JS-hiba'
+  check(err.length === 0 && err2.length === 0, 'nincs JS-hiba'
      + (err.concat(err2).length ? ': ' + err.concat(err2).join(' | ') : ''));
   await p2.close();
-  await vege(br);
+  await finish(br);
 })();

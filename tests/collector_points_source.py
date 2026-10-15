@@ -1,74 +1,73 @@
 #!/usr/bin/env python3
-"""A MENTETT fordulo-pont a TETELES BONTASBOL all ossze, nem az FPL
-osszesitojebol - ugyanaz a szabaly, mint az oldalon.
+"""The SAVED round points are added up from the ITEMISED BREAKDOWN, not taken
+from the FPL total - the same rule as on the page.
 
-MIERT: az FPL a stats.total_points-ot es az explain esemenylistat KULON
-tartja, es az osszesito be tud ragadni (GW2: a sor 1 pontot
-mutatott, a bontas 90 percet es golt, osszesen 8-at; ugyanez a hivatalos
-FPL-appban is). A lezart fordulot a gyujto SOHA TOBBE nem keri le, es az
-oldal onnantol a MENTETT szamot mutatja - ami a lezaraskor bekerult, az
-orokre bent marad.
+WHY: FPL keeps stats.total_points and the explain event list SEPARATELY, and
+the total can get stuck (GW2: the row showed 1 point, the breakdown 90
+minutes and a goal, 8 in total; the same in the official FPL app). The
+collector NEVER fetches a closed round again, and from then on the page shows
+the SAVED number - whatever went in at closing stays in for good.
 
-P1: beragadt osszesito mellett a bontas osszege kerul a tarolt adatba.
-P2: ha nincs explain (nem lepett palyara), a stats marad a forras -
-    egy API-valtozas igy a REGI viselkedest adja vissza, nem nullakat.
-P3: dupla fordulonal a ket meccs bontasa OSSZEADODIK.
-P4: elteresnel a futas HANGOSAN szol (a naplobol latszik, ha rendszeres).
+P1: next to a stuck total, the sum of the breakdown goes into the stored data.
+P2: if there is no explain (the player did not play), stats stays the
+    source - an API change thus gives back the OLD behaviour, not zeros.
+P3: in a double gameweek the breakdowns of the two matches ADD UP.
+P4: on a mismatch the run reports LOUDLY (the log shows if it is recurring).
 """
 import io, os, sys, contextlib
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import collect_draft as c
 
-hibak, osszes = [], 0
+failures, total = [], 0
 
 
-def allit(felt, cimke):
-    global osszes
-    osszes += 1
-    print(("OK   " if felt else "HIBA ") + cimke)
-    if not felt:
-        hibak.append(cimke)
+def check(cond, label):
+    global total
+    total += 1
+    print(("OK   " if cond else "FAIL ") + label)
+    if not cond:
+        failures.append(label)
 
 
-def sor(stat, pont, ertek=0):
-    return {"name": stat, "stat": stat, "points": pont, "value": ertek}
+def row(stat, points, value=0):
+    return {"name": stat, "stat": stat, "points": points, "value": value}
 
 
-print("--- P1: beragadt osszesito mellett a bontas nyer ---")
-beragadt = {"stats": {"total_points": 1, "minutes": 9},
-            "explain": [[[sor("minutes", 2, 90), sor("goals_scored", 4, 1),
-                          sor("bonus", 2, 2)], 12]]}
-p, bontasbol = c.player_points(beragadt)
-allit(p == 8, "P1: a tarolt pont a bontas osszege (8), nem a beragadt 1 - kapott: %s" % p)
-allit(bontasbol, "P1: a fuggveny jelzi, hogy a bontasbol jott")
+print("--- P1: next to a stuck total, the breakdown wins ---")
+stuck = {"stats": {"total_points": 1, "minutes": 9},
+         "explain": [[[row("minutes", 2, 90), row("goals_scored", 4, 1),
+                       row("bonus", 2, 2)], 12]]}
+p, from_breakdown = c.player_points(stuck)
+check(p == 8, "P1: the stored points are the breakdown's sum (8), not the stuck 1 - got: %s" % p)
+check(from_breakdown, "P1: the function signals that it came from the breakdown")
 
-print("\n--- P2: nincs bontas -> a stats marad ---")
-for cimke, v in (("ures explain", {"stats": {"total_points": 3}, "explain": []}),
-                 ("nincs explain kulcs", {"stats": {"total_points": 3}}),
-                 ("ismeretlen szerkezet", {"stats": {"total_points": 3},
-                                           "explain": [{"fixture": 1, "stats": []}]})):
-    p, bontasbol = c.player_points(v)
-    allit(p == 3 and not bontasbol,
-          "P2: %s -> a stats osszesitoje marad (3) - kapott: %s" % (cimke, p))
+print("\n--- P2: no breakdown -> stats stays ---")
+for label, v in (("empty explain", {"stats": {"total_points": 3}, "explain": []}),
+                 ("no explain key", {"stats": {"total_points": 3}}),
+                 ("unknown structure", {"stats": {"total_points": 3},
+                                        "explain": [{"fixture": 1, "stats": []}]})):
+    p, from_breakdown = c.player_points(v)
+    check(p == 3 and not from_breakdown,
+          "P2: %s -> the stats total stays (3) - got: %s" % (label, p))
 
-print("\n--- P3: dupla fordulo: a ket meccs osszeadodik ---")
-dupla = {"stats": {"total_points": 0},
-         "explain": [[[sor("minutes", 2, 90), sor("goals_scored", 4, 1)], 12],
-                     [[sor("minutes", 2, 90), sor("assists", 3, 1)], 15]]}
-p, _ = c.player_points(dupla)
-allit(p == 11, "P3: a ket meccs bontasa osszeadodik (2+4+2+3 = 11) - kapott: %s" % p)
+print("\n--- P3: double gameweek: the two matches add up ---")
+double = {"stats": {"total_points": 0},
+          "explain": [[[row("minutes", 2, 90), row("goals_scored", 4, 1)], 12],
+                      [[row("minutes", 2, 90), row("assists", 3, 1)], 15]]}
+p, _ = c.player_points(double)
+check(p == 11, "P3: the breakdowns of the two matches add up (2+4+2+3 = 11) - got: %s" % p)
 
-print("\n--- P4: hianyzo mezok nem dontik el ---")
-for cimke, v in (("ures dict", {}), ("None", None),
+print("\n--- P4: missing fields do not break it ---")
+for label, v in (("empty dict", {}), ("None", None),
                  ("explain=None", {"stats": {"total_points": 5}, "explain": None})):
     try:
         p, _ = c.player_points(v)
-        allit(True, "P4: %s -> nem hasal el (%s pont)" % (cimke, p))
+        check(True, "P4: %s -> does not fail (%s points)" % (label, p))
     except Exception as e:
-        allit(False, "P4: %s -> KIVETEL: %r" % (cimke, e))
+        check(False, "P4: %s -> EXCEPTION: %r" % (label, e))
 
-if hibak:
-    print("\n%d allitas bukott." % len(hibak))
+if failures:
+    print("\n%d assertions failed." % len(failures))
     sys.exit(1)
-print("\nMind a %d allitas rendben." % osszes)
+print("\nAll %d assertions passed." % total)

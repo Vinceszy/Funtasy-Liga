@@ -1,4 +1,4 @@
-const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozos');
+const { BASE, check, section, failures, launch, finish, blockApis, rewriteJson } = require('./common');
 // A negy bejelentett hiba tesztje.
 //  1-2) gyorsitotar: minden elo lekeres MAS URL-re megy es no-store-ral
 //  3)   meccs kozben nem szabad azt irni, hogy "lejatszotta pont nelkul"
@@ -16,7 +16,7 @@ function keret(opts){
 }
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
   // =============== 3-4) NB1 uzenet meccs kozben ===============
   console.log('--- NB1: mit ír meccs közben ---');
@@ -36,7 +36,7 @@ function keret(opts){
     // A teszt elofeltetele, hogy az 5. fordulo ELO legyen. Ezt kimondjuk, nem
     // remeljuk: korabban a valodi results.json provisional listajara epult, es
     // a teszt attol bukott meg, hogy a gyujto kozben lezarta az 5. fordulot.
-    await jsonAtir(p, '**/results.json*', j => Object.assign(j, { provisional: [5] }));
+    await rewriteJson(p, '**/results.json*', j => Object.assign(j, { provisional: [5] }));
     // a meccs 1 oraja tart (mult ideju kezdes)
     const start = new Date(Date.now() - eset.ora * 3600000).toISOString().replace('Z', '+00:00');
     await p.route('**fantasy-api.mlsz.hu/**', route => {
@@ -99,12 +99,12 @@ function keret(opts){
         elo5: isLiveRound(5),
         sor: { ...(document.querySelector('.plr[data-acc]') || { dataset: {} }).dataset },
       }))));
-    jo(eset.vart.test(szoveg), eset.nev);
+    check(eset.vart.test(szoveg), eset.nev);
     if (/zajlik/.test(szoveg))
-      jo(!/eddig nincs pontot érő/.test(szoveg)
+      check(!/eddig nincs pontot érő/.test(szoveg)
          && /a pontok csak a meccs végén kerülnek be/.test(szoveg),
         'a "zajlik" szöveg nem ígér élő pontot, hanem megmondja, mikor jön');
-    jo(perr.length === 0, 'nincs JS-hiba (' + eset.nev + ')');
+    check(perr.length === 0, 'nincs JS-hiba (' + eset.nev + ')');
     await p.close();
   }
 
@@ -142,15 +142,15 @@ function keret(opts){
     const eloModok = await p.evaluate(() => window.__cacheMod);
     console.log('   ' + liga + ': ' + urlek.length + ' API-kérés, cache-módok: ' +
       JSON.stringify([...new Set(eloModok)]));
-    jo(urlek.length > 0, liga + ': van API-kérés');
+    check(urlek.length > 0, liga + ': van API-kérés');
     if (liga === 'pl'){
       // az FPL belso URL-jere is kerul idobelyeg
-      jo(urlek.every(u => /fpl_=\d+/.test(decodeURIComponent(u))),
+      check(urlek.every(u => /fpl_=\d+/.test(decodeURIComponent(u))),
         'PL: minden FPL-kérés kap időbélyeget');
       const egyedi = new Set(urlek.map(u => decodeURIComponent(u)));
-      jo(egyedi.size === urlek.length, 'PL: nincs két azonos URL (' + egyedi.size + '/' + urlek.length + ')');
+      check(egyedi.size === urlek.length, 'PL: nincs két azonos URL (' + egyedi.size + '/' + urlek.length + ')');
     }
-    jo(eloModok.filter(m => m === 'no-store').length > 0, liga + ': no-store van a lekéréseken');
+    check(eloModok.filter(m => m === 'no-store').length > 0, liga + ': no-store van a lekéréseken');
     await p.close();
   }
 
@@ -168,13 +168,13 @@ function keret(opts){
     await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
     for (let i = 0; i < 150 && proxyUrlek.length < 2; i++) await p.waitForTimeout(100);
     console.log('   corsproxy-kérések: ' + proxyUrlek.length);
-    jo(proxyUrlek.length > 0 && proxyUrlek.every(u => /&_=\d+/.test(u)),
+    check(proxyUrlek.length > 0 && proxyUrlek.every(u => /&_=\d+/.test(u)),
       'NB1: a corsproxy URL-je kap időbélyeget');
-    jo(new Set(proxyUrlek).size === proxyUrlek.length,
+    check(new Set(proxyUrlek).size === proxyUrlek.length,
       'NB1: nincs két azonos proxy-URL (' + new Set(proxyUrlek).size + '/' + proxyUrlek.length + ')');
     await p.close();
   }
 
   await br.close();
-  process.exit(hibak.length ? 1 : 0);
+  process.exit(failures.length ? 1 : 0);
 })();

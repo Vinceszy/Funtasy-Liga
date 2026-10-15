@@ -1,113 +1,113 @@
 #!/usr/bin/env python3
-"""NB1 pontigazitas a meccs vege utan (collect.py zaras_valtozas) - 10 allitas.
+"""NB1 points adjustment after the end of a match (collect.py closing_changes) - 10 assertions.
 
-MIERT LETEZIK: a hivatalos szabalyzat szerint a pont minden meccs utan
-meghatarozasra kerul, de a heti osszeg csak a fordulo utolso jateknapjanak
-vegen VEGLEGES. A ketto kozott az MLSZ meg igazithat - a gyujto ezt eddig
-atvezette, de nem orizte meg, pedig utolag rekonstrualhatatlan.
+WHY IT EXISTS: by the official rules the points are determined after every
+match, but the weekly total is FINAL only at the end of the round's last
+matchday. In between MLSZ can still adjust - the collector applied these,
+but did not keep them, although afterwards they cannot be reconstructed.
 
-A tarolo alakja a PL zarasok.json-jat koveti, hogy az oldal ugyanazt a
-megjelenitest hasznalhassa:  {szakvezeto: {"pont": [{n,cp,pos,tm,elott,utan,d}]}}
+The shape of the store follows PL's zarasok.json, so that the page can use
+the same display:  {manager: {"pont": [{n,cp,pos,tm,elott,utan,d}]}}
 
-Ez a resz elesben ritkan sul el, tehat a teszt az EGYETLEN hely, ahol
-lathato, hogy mukodik-e.
+This part rarely fires in production, so the test is the ONLY place where
+it is visible whether it works.
 """
 import importlib.util, os, sys
 
-FORRAS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'collect.py')
-spec = importlib.util.spec_from_file_location('collect', FORRAS)
+SOURCE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'collect.py')
+spec = importlib.util.spec_from_file_location('collect', SOURCE)
 c = importlib.util.module_from_spec(spec); sys.modules['collect'] = c
 spec.loader.exec_module(c)
-hibak = []
+failures = []
 
 
-def allit(felt, cimke):
-    print(("OK   " if felt else "HIBA ") + cimke)
-    if not felt:
-        hibak.append(cimke)
+def check(cond, label):
+    print(("OK   " if cond else "FAIL ") + label)
+    if not cond:
+        failures.append(label)
 
 
-def j(nev, week, cp=1, vege=True, cap=False, sub=False, pos="MF", team="MTK"):
-    return {"name": nev, "id": cp, "week": week, "vege": vege, "cap": cap,
+def pl(name, week, cp=1, finished=True, cap=False, sub=False, pos="MF", team="MTK"):
+    return {"name": name, "id": cp, "week": week, "vege": finished, "cap": cap,
             "sub": sub, "pos": pos, "team": team}
 
 
-def sorok(t, mgr="Katyul"):
+def rows(t, mgr="Katyul"):
     return (t.get(mgr) or {}).get("pont") or []
 
 
-MA = "2026-08-25"
+TODAY = "2026-08-25"
 
-# --- lement meccs utani valtozas: ez a hir ---
+# --- a change after a finished match: this is the news ---
 t = {}
-db = c.closing_changes({"Katyul": [j("A", 5.0)]}, {"Katyul": [j("A", 6.0)]}, t, MA)
-allit(db == 1 and sorok(t) == [{"n": "A", "cp": 1, "pos": "MF", "tm": "MTK",
-                                "elott": 5.0, "utan": 6.0, "d": MA}],
-      "lement meccs utan valtozott pont bekerul (%s)" % t)
+n = c.closing_changes({"Katyul": [pl("A", 5.0)]}, {"Katyul": [pl("A", 6.0)]}, t, TODAY)
+check(n == 1 and rows(t) == [{"n": "A", "cp": 1, "pos": "MF", "tm": "MTK",
+                              "elott": 5.0, "utan": 6.0, "d": TODAY}],
+      "points changed after a finished match are recorded (%s)" % t)
 
-# --- meccs KOZBEN nem hir: a pont meg ketyeg ---
+# --- DURING a match it is not news: the points are still ticking ---
 t = {}
-db = c.closing_changes({"Katyul": [j("A", 5.0, vege=False)]},
-                      {"Katyul": [j("A", 6.0, vege=False)]}, t, MA)
-allit(db == 0 and t == {}, "meccs kozbeni valtozas NEM kerul be (a pont meg ketyeg)")
+n = c.closing_changes({"Katyul": [pl("A", 5.0, finished=False)]},
+                      {"Katyul": [pl("A", 6.0, finished=False)]}, t, TODAY)
+check(n == 0 and t == {}, "a change during the match is NOT recorded (the points are still ticking)")
 
-# --- valtozatlan pont nem hir ---
+# --- unchanged points are not news ---
 t = {}
-allit(c.closing_changes({"Katyul": [j("A", 5.0)]}, {"Katyul": [j("A", 5.0)]}, t, MA) == 0
-      and t == {}, "valtozatlan pontra nem keletkezik bejegyzes")
+check(c.closing_changes({"Katyul": [pl("A", 5.0)]}, {"Katyul": [pl("A", 5.0)]}, t, TODAY) == 0
+      and t == {}, "no entry is made for unchanged points")
 
-# --- a KAPITANYI duplazast visszaszamoljuk: ugyanaz a valtozas ---
-# regi: kezdo 5,0 -> uj: kapitany 12,0 (alappont 6,0). A valtozas 5 -> 6,
-# NEM 5 -> 12: a jatekos sajat pontja valtozott, nem a szerepe miatti szorzo.
+# --- the CAPTAIN doubling is worked back: it is the same change ---
+# old: starter 5.0 -> new: captain 12.0 (base points 6.0). The change is 5 -> 6,
+# NOT 5 -> 12: the player's own points changed, not the multiplier of the role.
 t = {}
-c.closing_changes({"Katyul": [j("A", 5.0)]}, {"Katyul": [j("A", 12.0, cap=True)]}, t, MA)
-s = sorok(t)
-allit(s and s[0]["elott"] == 5.0 and s[0]["utan"] == 6.0,
-      "a kapitanyi duplazas vissza van szamolva (%s)" % (s[0] if s else None))
+c.closing_changes({"Katyul": [pl("A", 5.0)]}, {"Katyul": [pl("A", 12.0, cap=True)]}, t, TODAY)
+s = rows(t)
+check(s and s[0]["elott"] == 5.0 and s[0]["utan"] == 6.0,
+      "the captain doubling is worked back (%s)" % (s[0] if s else None))
 
-# --- a PAD felezeset is, negyedre kerekitve ---
-# 0,38 pados ertek = 0,75 alappont (az API a felezes utan ket tizedesre kerekit)
+# --- and the BENCH halving too, rounded to a quarter ---
+# a bench value of 0.38 = 0.75 base points (the API rounds to two decimals after halving)
 t = {}
-c.closing_changes({"Katyul": [j("A", 0.38, sub=True)]},
-                 {"Katyul": [j("A", 0.5, sub=True)]}, t, MA)
-s = sorok(t)
-allit(s and s[0]["elott"] == 0.75 and s[0]["utan"] == 1.0,
-      "a padfelezes vissza van szamolva, negyedre kerekitve (%s)" % (s[0] if s else None))
+c.closing_changes({"Katyul": [pl("A", 0.38, sub=True)]},
+                  {"Katyul": [pl("A", 0.5, sub=True)]}, t, TODAY)
+s = rows(t)
+check(s and s[0]["elott"] == 0.75 and s[0]["utan"] == 1.0,
+      "the bench halving is worked back, rounded to a quarter (%s)" % (s[0] if s else None))
 
-# --- ugyanaz a jatekos TOBB keretben: mindegyik szakvezetonel ott a sor ---
-# A PL-panellel egyezoen szakvezeto szerint csoportositunk: akinel ott volt a
-# jatekos, annak a blokkjaban latnia kell a valtozast.
+# --- the same player in SEVERAL squads: the row is there for every manager ---
+# As on the PL panel, it is grouped by manager: everyone who had the player
+# must see the change in their block.
 t = {}
-db = c.closing_changes({"Katyul": [j("A", 5.0)], "Bazsa": [j("A", 5.0)], "Csendi": [j("A", 5.0)]},
-                      {"Katyul": [j("A", 6.0)], "Bazsa": [j("A", 6.0)], "Csendi": [j("A", 6.0)]},
-                      t, MA)
-allit(db == 3 and sorted(t) == ["Bazsa", "Csendi", "Katyul"]
-      and all(len(sorok(t, m)) == 1 for m in t),
-      "ugyanaz a valtozas mindharom szakvezetonel megjelenik (%s)" % sorted(t))
+n = c.closing_changes({"Katyul": [pl("A", 5.0)], "Bazsa": [pl("A", 5.0)], "Csendi": [pl("A", 5.0)]},
+                      {"Katyul": [pl("A", 6.0)], "Bazsa": [pl("A", 6.0)], "Csendi": [pl("A", 6.0)]},
+                      t, TODAY)
+check(n == 3 and sorted(t) == ["Bazsa", "Csendi", "Katyul"]
+      and all(len(rows(t, m)) == 1 for m in t),
+      "the same change appears for all three managers (%s)" % sorted(t))
 
-# --- ugyanaz a futas ketszer: a dedup nem duplaz ---
-c.closing_changes({"Katyul": [j("A", 5.0)]}, {"Katyul": [j("A", 6.0)]}, t, MA)
-allit(len(sorok(t)) == 1, "ugyanaz az igazitas nem kerul be ketszer (%s)" % sorok(t))
+# --- the same run twice: the dedup does not duplicate ---
+c.closing_changes({"Katyul": [pl("A", 5.0)]}, {"Katyul": [pl("A", 6.0)]}, t, TODAY)
+check(len(rows(t)) == 1, "the same adjustment is not recorded twice (%s)" % rows(t))
 
-# --- de a KESOBBI, ujabb igazitas nem veszhet el ---
-c.closing_changes({"Katyul": [j("A", 6.0)]}, {"Katyul": [j("A", 5.5)]}, t, "2026-08-26")
-s = sorok(t)
-allit(len(s) == 2 and s[1]["elott"] == 6.0 and s[1]["utan"] == 5.5,
-      "a kesobbi ujabb igazitas is bekerul, nem nyeli el a dedup (%s)" % s)
+# --- but a LATER, new adjustment must not be lost ---
+c.closing_changes({"Katyul": [pl("A", 6.0)]}, {"Katyul": [pl("A", 5.5)]}, t, "2026-08-26")
+s = rows(t)
+check(len(s) == 2 and s[1]["elott"] == 6.0 and s[1]["utan"] == 5.5,
+      "the later, new adjustment is recorded too, the dedup does not swallow it (%s)" % s)
 
-# --- hianyzo adat nem ertelmezheto valtozaskent ---
+# --- missing data cannot be read as a change ---
 t = {}
-c.closing_changes({"Katyul": [j("A", None)]}, {"Katyul": [j("A", 6.0)]}, t, MA)
-c.closing_changes({"Katyul": [j("A", 5.0)]},
-                 {"Katyul": [{"name": "A", "id": 1, "vege": True}]}, t, MA)
-allit(t == {}, "hianyzo pont egyik iranyban sem szamit valtozasnak")
+c.closing_changes({"Katyul": [pl("A", None)]}, {"Katyul": [pl("A", 6.0)]}, t, TODAY)
+c.closing_changes({"Katyul": [pl("A", 5.0)]},
+                  {"Katyul": [{"name": "A", "id": 1, "vege": True}]}, t, TODAY)
+check(t == {}, "missing points count as a change in neither direction")
 
-# --- akit kicsereltek: nincs par, nincs bejegyzes ---
+# --- a player transferred out: no pair, no entry ---
 t = {}
-c.closing_changes({"Katyul": [j("A", 5.0, cp=1)]}, {"Katyul": [j("B", 9.0, cp=2)]}, t, MA)
-allit(t == {}, "aki mar nincs a keretben, arrol nem talalunk ki valtozast")
+c.closing_changes({"Katyul": [pl("A", 5.0, cp=1)]}, {"Katyul": [pl("B", 9.0, cp=2)]}, t, TODAY)
+check(t == {}, "no change is made up for a player who is no longer in the squad")
 
-if hibak:
-    print("\n%d allitas bukott." % len(hibak))
+if failures:
+    print("\n%d assertions failed." % len(failures))
     sys.exit(1)
-print("\nMind a 10 allitas rendben.")
+print("\nAll 10 assertions passed.")

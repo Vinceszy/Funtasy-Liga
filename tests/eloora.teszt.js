@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
+const { BASE, check, section, launch, finish, blockApis, rewriteJson } = require('./common');
 // ELO FORDULO ALATT A LAP MAGATOL FRISSUL (FunTasy.liveRefresher).
 //
 // A KIZART HIBA (PL): a nyitva hagyott lap a BETOLTESKORI
@@ -25,12 +25,12 @@ const allas = p => p.evaluate(() => [...document.querySelectorAll('.match.elo .s
   .map(x => x.textContent.trim()).join(' '));
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
-  cim('PL: élő fordulónál magától frissül');
+  section('PL: élő fordulónál magától frissül');
   const p = await br.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
-  await apiKi(p);
+  await blockApis(p);
   // az ora kozet a lapba injektaljuk, mielott a sajat szkript lefutna
   await p.addInitScript(k => { window.LIVE_INTERVAL = k; }, KOZ);
 
@@ -42,7 +42,7 @@ const allas = p => p.evaluate(() => [...document.querySelectorAll('.match.elo .s
   // menet kozben kivesszuk a fordulo eredmenyet.
   const HIST = require(require('path').join(__dirname, '..', 'draft_history.json'));
   const GW = Object.keys(HIST.rounds).map(Number).sort((a, b) => b - a)[0] + '';
-  await jsonAtir(p, '**/draft.json*', j => {
+  await rewriteJson(p, '**/draft.json*', j => {
     j.schedule[GW] = (j.schedule[GW] || []).map(m => [m[0], m[1], null, null]);
     return j;
   });
@@ -70,29 +70,29 @@ const allas = p => p.evaluate(() => [...document.querySelectorAll('.match.elo .s
   await p.waitForFunction(() => typeof LIVEPTS !== 'undefined'
                              && Object.keys(LIVEPTS).length > 0, null, { timeout: 30000 });
   const elso = liveKeres, allasElotte = await allas(p);
-  jo(elso > 0, 'a betöltés lekéri az élő állást (' + elso + ' kérés)');
-  jo(/\d/.test(allasElotte), 'az élő állás megjelenik: ' + allasElotte.slice(0, 40));
+  check(elso > 0, 'a betöltés lekéri az élő állást (' + elso + ' kérés)');
+  check(/\d/.test(allasElotte), 'az élő állás megjelenik: ' + allasElotte.slice(0, 40));
 
   // A LENYEG: kattintas es fokuszvaltas NELKUL is frissulnie kell.
   pont = 9;                                   // kozben valtozik az allas
   await new Promise(r => setTimeout(r, KOZ * 3));
-  jo(liveKeres > elso,
+  check(liveKeres > elso,
      'élő fordulónál magától újra lekéri az állást (' + elso + ' → ' + liveKeres + ')');
   const allasUtana = await allas(p);
   // A kezdok szama 11, tehat a kiirt elo allasnak 11*4 = 44-rol 11*9 = 99-re
   // kell valtania. Nem azt allitjuk, hogy "valtozott valami" - azt, hogy a
   // KONKRET uj szam megjelent, kulonben a teszt egy szokoz-elteresre is zold.
-  jo(/\b44\b/.test(allasElotte),
+  check(/\b44\b/.test(allasElotte),
      'betöltéskor a 4 pontos állás (44) látszik: ' + allasElotte);
-  jo(/\b99\b/.test(allasUtana) && !/\b44\b/.test(allasUtana),
+  check(/\b99\b/.test(allasUtana) && !/\b44\b/.test(allasUtana),
      'magától átvált a 9 pontos állásra (99), és a régi (44) eltűnik: ' + allasUtana);
-  jo(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr.slice(0, 2)));
+  check(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr.slice(0, 2)));
   await p.close();
 
-  cim('Nincs folyó forduló: egyetlen ismételt kérés sem megy ki');
+  section('Nincs folyó forduló: egyetlen ismételt kérés sem megy ki');
   const q = await br.newPage();
   const qerr = []; q.on('pageerror', e => qerr.push(e.message));
-  await apiKi(q);
+  await blockApis(q);
   await q.addInitScript(k => { window.LIVE_INTERVAL = k; }, KOZ);
   let qLive = 0;
   await q.route('**premierleague.com/api/**', async route => {
@@ -110,9 +110,9 @@ const allas = p => p.evaluate(() => [...document.querySelectorAll('.match.elo .s
   await q.waitForSelector('#table tr', { timeout: 30000 });
   const q0 = qLive;
   await new Promise(r => setTimeout(r, KOZ * 4));
-  jo(qLive === q0,
+  check(qLive === q0,
      'lezárt fordulónál nem megy ki ismételt kérés (' + q0 + ' → ' + qLive + ')');
-  jo(qerr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(qerr.slice(0, 2)));
+  check(qerr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(qerr.slice(0, 2)));
 
-  await vege(br);
+  await finish(br);
 })();

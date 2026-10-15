@@ -1,5 +1,5 @@
 const path = require('path');
-const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
+const { BASE, check, section, launch, finish, blockApis, rewriteJson } = require('./common');
 // A FOLYO FORDULO KERETEIT A BONGESZO POTOLJA, AMIG A GYUJTO MEG NEM IRTA BE.
 //
 // MERVE (PL 5. fordulo): elo meccs alatt a lap nem frissult.
@@ -28,11 +28,11 @@ const EID = {};                       // liga_id -> kitalalt FPL entry_id
 LIDK.forEach((lid, i) => { EID[lid] = 900001 + i; });
 
 const elofeltetel = p => Promise.all([
-  jsonAtir(p, '**/draft.json*', j => {
+  rewriteJson(p, '**/draft.json*', j => {
     j.schedule[GW] = (j.schedule[GW] || []).map(m => [m[0], m[1], null, null]);
     return j;
   }),
-  jsonAtir(p, '**/draft_history.json*', j => {
+  rewriteJson(p, '**/draft_history.json*', j => {
     delete j.rounds[GW];
     j.veglegesek = (j.veglegesek || []).filter(x => +x !== +GW);
     return j;
@@ -78,13 +78,13 @@ const allasok = p => p.evaluate(() => [...document.querySelectorAll('.match .sco
   .map(x => x.textContent.trim()));
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
   // ---- 1) teljes potlas ----
-  cim('PL: a böngésző pótolja a folyó forduló kereteit');
+  section('PL: a böngésző pótolja a folyó forduló kereteit');
   const p = await br.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
-  await apiKi(p);
+  await blockApis(p);
   await elofeltetel(p);
   await utvonalak(p, null);
   await p.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
@@ -92,26 +92,26 @@ const allasok = p => p.evaluate(() => [...document.querySelectorAll('.match .sco
                           GW, { timeout: 30000 });
 
   const potolt = await p.evaluate(g => Object.keys(BACKFILLED[g] || {}).length, GW);
-  jo(potolt === LIDK.length,
+  check(potolt === LIDK.length,
      'mind a ' + LIDK.length + ' keretet pótolta — kapott: ' + potolt);
 
   const nincsHist = await p.evaluate(g => !HIST[g], GW);
-  jo(nincsHist, 'a tárolt adatban tényleg nincs keret ehhez a fordulóhoz (az előfeltétel áll)');
+  check(nincsHist, 'a tárolt adatban tényleg nincs keret ehhez a fordulóhoz (az előfeltétel áll)');
 
   const a1 = await allasok(p);
-  jo(a1.some(x => new RegExp('\\b' + VART + '\\b').test(x)),
+  check(a1.some(x => new RegExp('\\b' + VART + '\\b').test(x)),
      'az élő meccsállás megjelenik a pótolt keretből (' + VART + '): ' + a1.join(' | '));
 
   const statusz = await p.evaluate(() => document.getElementById('status').textContent);
-  jo(/él/i.test(statusz), 'a státuszsáv élő fordulót jelez: ' + statusz);
-  jo(!perr.length, 'nincs JS-hiba: ' + perr.join(' | '));
+  check(/él/i.test(statusz), 'a státuszsáv élő fordulót jelez: ' + statusz);
+  check(!perr.length, 'nincs JS-hiba: ' + perr.join(' | '));
   await p.close();
 
   // ---- 2) reszleges potlas: a hianyzo csapat meccse NEM kap hamis 0-t ----
-  cim('PL: részleges pótlásnál nincs hamis állás');
+  section('PL: részleges pótlásnál nincs hamis állás');
   const q = await br.newPage();
   const qerr = []; q.on('pageerror', e => qerr.push(e.message));
-  await apiKi(q);
+  await blockApis(q);
   await elofeltetel(q);
   const bukott = LIDK[0];
   await utvonalak(q, bukott);
@@ -120,7 +120,7 @@ const allasok = p => p.evaluate(() => [...document.querySelectorAll('.match .sco
                           GW, { timeout: 30000 });
 
   const reszleges = await q.evaluate(g => Object.keys(BACKFILLED[g] || {}).length, GW);
-  jo(reszleges === LIDK.length - 1,
+  check(reszleges === LIDK.length - 1,
      'egy keret hiányzik, a többi megvan (' + (LIDK.length - 1) + ') — kapott: ' + reszleges);
 
   // a bukott csapat meccsen a ket fel egyike sem kap elo szamot
@@ -130,18 +130,18 @@ const allasok = p => p.evaluate(() => [...document.querySelectorAll('.match .sco
              elo: (LIVE[g] || [])[sor] || null,
              masik: (LIVE[g] || []).filter(Boolean).length };
   }, [GW, bukott]);
-  jo(ervenyes.elo === null,
+  check(ervenyes.elo === null,
      'a hiányzó kerethez tartozó meccs NEM kap élő állást (a 0 hamis szám lenne) — kapott: '
      + JSON.stringify(ervenyes.elo));
-  jo(ervenyes.masik === ervenyes.meccsek - 1,
+  check(ervenyes.masik === ervenyes.meccsek - 1,
      'a többi meccs viszont kap élő állást (' + (ervenyes.meccsek - 1) + ') — kapott: '
      + ervenyes.masik);
 
   const a2 = await allasok(q);
-  jo(a2.some(x => new RegExp('\\b' + VART + '\\b').test(x)),
+  check(a2.some(x => new RegExp('\\b' + VART + '\\b').test(x)),
      'a teljes keretű meccseken ott az élő állás: ' + a2.join(' | '));
-  jo(!qerr.length, 'nincs JS-hiba: ' + qerr.join(' | '));
+  check(!qerr.length, 'nincs JS-hiba: ' + qerr.join(' | '));
   await q.close();
 
-  await vege(br);
+  await finish(br);
 })();

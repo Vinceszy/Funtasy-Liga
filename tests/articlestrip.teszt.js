@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege, jsonAtir, apiKi } = require('./kozos');
+const { BASE, check, section, launch, finish, rewriteJson, blockApis } = require('./common');
 
 // Az a fordulo, amelyikre van beharangozonk - itt mondjuk ki egyszer, hogy
 // az elofeltetel (nincs hozza keret) es a megnyitott meccs ne csuszhasson szet.
@@ -21,7 +21,7 @@ const R = 7, HAZAI = 'Bence', VENDEG = 'Csendi';
 const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
   const hibak = [];
 
   for (const [w, h, cimke] of [[1000, 900, 'GÉP'], [390, 844, 'MOBIL']]) {
@@ -39,7 +39,7 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     await p.waitForSelector('#mBody .plr');
     await p.waitForSelector('#mBody .artstrip');
 
-    cim(cimke);
+    section(cimke);
     const sav = p.locator('#mBody .artstrip');
     const meret = async () => p.evaluate(() => {
       const s = document.querySelector('#mBody .artstrip');
@@ -51,10 +51,10 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     });
 
     const zart = await meret();
-    jo(zart.nyitva === false, 'lezárt forduló: a sáv CSUKVA jön');
-    jo(zart.fej < 48, `a csukott fejléc egy sor (${Math.round(zart.fej)} px)`);
-    jo(zart.sav < 60, `a csukott sáv nem nyom le semmit (${Math.round(zart.sav)} px)`);
-    jo(zart.keretTeteje < h,
+    check(zart.nyitva === false, 'lezárt forduló: a sáv CSUKVA jön');
+    check(zart.fej < 48, `a csukott fejléc egy sor (${Math.round(zart.fej)} px)`);
+    check(zart.sav < 60, `a csukott sáv nem nyom le semmit (${Math.round(zart.sav)} px)`);
+    check(zart.keretTeteje < h,
        `a keret-oszlopok a képernyőn maradnak (tetejük ${Math.round(zart.keretTeteje)} px, ` +
        `ablak ${h} px)`);
     // The lead must stay ONE line however long it is - that is what keeps
@@ -70,18 +70,18 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
       l.textContent = eredeti;
       return r;
     });
-    jo(csonkolt.egySor, 'a felütés egyetlen sorban fut');
-    jo(csonkolt.hosszanIsEgySor && csonkolt.csonk,
+    check(csonkolt.egySor, 'a felütés egyetlen sorban fut');
+    check(csonkolt.hosszanIsEgySor && csonkolt.csonk,
        'a bármilyen hosszú felütés is egy sor marad, a vége levágva');
 
     // ---- kinyitás ----
     await sav.locator('.artstriphead').click();
     await p.waitForTimeout(120);
     const nyitott = await meret();
-    jo(nyitott.nyitva === true, 'kattintásra kinyílik');
-    jo(nyitott.sav > zart.sav + 40, `a nyitott sáv nagyobb (${Math.round(zart.sav)} → ` +
+    check(nyitott.nyitva === true, 'kattintásra kinyílik');
+    check(nyitott.sav > zart.sav + 40, `a nyitott sáv nagyobb (${Math.round(zart.sav)} → ` +
        `${Math.round(nyitott.sav)} px)`);
-    jo(nyitott.keretTeteje > zart.keretTeteje,
+    check(nyitott.keretTeteje > zart.keretTeteje,
        'a keret-oszlopok CSAK nyitáskor csúsznak lejjebb');
 
     // the text is the file's text, paragraph for paragraph
@@ -94,17 +94,17 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
                felutes: document.querySelector('#mBody .artstriplead').textContent === c.short,
                cimke: document.querySelector('#mBody .artstriptag').textContent };
     }, [HAZAI, VENDEG, String(R)]);
-    jo(egyezik.db === egyezik.vart && egyezik.db > 0,
+    check(egyezik.db === egyezik.vart && egyezik.db > 0,
        `minden bekezdés kint van (${egyezik.db}/${egyezik.vart})`);
-    jo(egyezik.elso && egyezik.utolso, 'a szöveg szó szerint a fájlé');
-    jo(egyezik.felutes, 'a csukott sávban a rövid változat áll');
-    jo(egyezik.cimke === 'Összefoglaló', `lezárt fordulón „Összefoglaló" a címke (${egyezik.cimke})`);
+    check(egyezik.elso && egyezik.utolso, 'a szöveg szó szerint a fájlé');
+    check(egyezik.felutes, 'a csukott sávban a rövid változat áll');
+    check(egyezik.cimke === 'Összefoglaló', `lezárt fordulón „Összefoglaló" a címke (${egyezik.cimke})`);
 
     // ---- becsukás: nem marad utána semmi ----
     await sav.locator('.artstriphead').click();
     await p.waitForTimeout(120);
     const ujraZart = await meret();
-    jo(Math.abs(ujraZart.keretTeteje - zart.keretTeteje) < 2,
+    check(Math.abs(ujraZart.keretTeteje - zart.keretTeteje) < 2,
        'becsukás után a keret-oszlopok visszaállnak a helyükre');
 
     // ---- az újrarajzolás nem csukja be a nézőre ----
@@ -112,15 +112,15 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     await p.waitForTimeout(120);
     await p.evaluate(() => matchBody());
     await p.waitForSelector('#mBody .artstrip');
-    jo(await p.evaluate(() => document.querySelector('#mBody .artstrip').open),
+    check(await p.evaluate(() => document.querySelector('#mBody .artstrip').open),
        'újrarajzolás után is nyitva marad (élő fordulón percenként újraépül a test)');
 
     // ---- cikk nélküli meccs: NINCS sáv ----
     await p.evaluate(([a, b, r]) => showMatchRound(a, b, r), [UH, UV, URES_R]);
     await p.waitForSelector('#mBody .plr');
-    jo(await p.locator('#mBody .artstrip').count() === 0,
+    check(await p.locator('#mBody .artstrip').count() === 0,
        'cikk nélküli meccsen nyoma sincs a sávnak');
-    jo(await p.evaluate(() => document.querySelector('#mBody').firstElementChild
+    check(await p.evaluate(() => document.querySelector('#mBody').firstElementChild
                               .classList.contains('meccsfej')),
        'ilyenkor a meccsfej az első elem — a nézet változatlan');
 
@@ -130,12 +130,12 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   // ---- beharangozó olyan fordulón, ahol még nincs keret ----
   const p = await br.newPage({ viewport: { width: 1000, height: 900 } });
   p.on('pageerror', e => hibak.push('BEHARANGOZÓ: ' + e.message));
-  // A KOZOS apiKi-t hasznaljuk, nem sajat listat: a sajat harom hosztot
+  // A KOZOS blockApis-t hasznaljuk, nem sajat listat: a sajat harom hosztot
   // sorolt fel, a lekero ut-listaja viszont kilencet - a sajat Worker
   // (/tarolt) kimaradt belole, es azon keresztul mar a 9. fordulo ELO
   // allasa is bejott. Attol a lap - helyesen - az elo nezetre valtott, ahol
   // nincs sav, es a teszt ugy bukott, hogy a termekben semmi nem valtozott.
-  await apiKi(p);
+  await blockApis(p);
   // AZ ELOFELTETELT KIMONDJUK, nem a repo pillanatnyi allapotabol orokoljuk:
   // ebben a fordulóban NINCS keret. A fordulonkenti fajlt elvagjuk, de az
   // onmagaban keves - a lap onnan a TELJES elozmenyre esik vissza
@@ -143,7 +143,7 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   // veletlenul zold volt; a piaczaraskor beerkeztek, es ez az allitas bukott,
   // holott a termekben semmi nem valtozott.
   await p.route('**/keretek/*.json*', r => r.fulfill({ status: 404, body: '' }));
-  await jsonAtir(p, '**/squad_history.json*', j => {
+  await rewriteJson(p, '**/squad_history.json*', j => {
     delete (j.rounds || {})[String(BEHARANGOZO_R)];
     return j;
   });
@@ -152,7 +152,7 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   // - helyesen - a "meccs meg tart" uzenetre valtott, ahol nincs sav. A
   // teszt ettol bukott, holott a termekben semmi nem valtozott: csak a
   // kimondatlan elofeltetel (nincs meg meccs ehhez a fordulohoz) szunt meg.
-  await jsonAtir(p, '**/meccsek.json*', j => {
+  await rewriteJson(p, '**/meccsek.json*', j => {
     delete (j.rounds || {})[String(BEHARANGOZO_R)];
     return j;
   });
@@ -160,12 +160,12 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   // `eloKeretbol` ebbol szamol elo allast, halozat nelkul). Amig a 9.
   // fordulo keretei meg nem erkeztek meg, ez a fajl a 8. fordulot tartotta,
   // es a teszt veletlenul zold volt.
-  await jsonAtir(p, '**/squads.json*', j => ({ ...j, squads: {} }));
+  await rewriteJson(p, '**/squads.json*', j => ({ ...j, squads: {} }));
   // ES az EREDMENYT is: beharangozot csak olyan fordulohoz mutatunk, aminek
   // meg nincs allasa. Amint a fordulo elindult, a menetrendben megjelent az
   // ideiglenes pontszam, a lap - helyesen - a lejatszott agra ment, ahol
   // nincs sav. Ugyanaz a fogas, amit a forduloelott-teszt is hasznal.
-  await jsonAtir(p, '**/results.json*', j => {
+  await rewriteJson(p, '**/results.json*', j => {
     (j.schedule[String(BEHARANGOZO_R)] || []).forEach(m => { m[2] = null; m[3] = null; });
     return j;
   });
@@ -177,21 +177,21 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     const j = await (await fetch('../articles.json')).json();
     return Object.keys(j.leagues.nb1[r].preview)[0].split('|');
   }, String(BEHARANGOZO_R));
-  cim('BEHARANGOZÓ (nincs még keret)');
+  section('BEHARANGOZÓ (nincs még keret)');
   await p.evaluate(([a, b, r]) => showMatchRound(a, b, +r), [bh, bv, String(BEHARANGOZO_R)]);
   await p.waitForSelector('#mBody .artstrip');
-  jo(await p.evaluate(() => document.querySelector('#mBody .artstrip').open),
+  check(await p.evaluate(() => document.querySelector('#mBody .artstrip').open),
      'keret nélküli fordulón a beharangozó NYITVA jön (nincs mit eltakarnia)');
-  jo(await p.evaluate(() => document.querySelector('#mBody .artstriptag').textContent)
+  check(await p.evaluate(() => document.querySelector('#mBody .artstriptag').textContent)
        === 'Beharangozó', 'a címke „Beharangozó"');
-  jo(await p.evaluate(() => !!document.querySelector('#mBody .loading')),
+  check(await p.evaluate(() => !!document.querySelector('#mBody .loading')),
      'a „még nem kezdődött el" üzenet mellette marad');
   // the reader's own click wins over the default
   await p.locator('#mBody .artstriphead').click();
   await p.waitForTimeout(120);
   await p.evaluate(([a, b]) => showMatchRound(a, b, 9), [bh, bv]);
   await p.waitForSelector('#mBody .artstrip');
-  jo(await p.evaluate(() => !document.querySelector('#mBody .artstrip').open),
+  check(await p.evaluate(() => !document.querySelector('#mBody .artstrip').open),
      'ha a néző becsukta, becsukva is marad');
 
   await p.close();
@@ -208,7 +208,7 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   await q.goto(BASE + 'pl/');
   await q.waitForSelector('#table tr');
   await q.waitForFunction(() => Object.keys(SCHEDULE).length > 0, null, { timeout: 20000 });
-  cim('PL');
+  section('PL');
   const plm = await q.evaluate(() => {
     // az utolso olyan fordulo, aminek van lejatszott meccse
     const gw = Object.keys(SCHEDULE).map(Number).sort((a, b) => b - a)
@@ -229,19 +229,19 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
              felutes: s.querySelector('.artstriplead').textContent,
              keretTeteje: w ? w.getBoundingClientRect().top : null };
   });
-  jo(pl.nyitva === false, `PL: a sáv csukva jön (${plm.gw}. forduló)`);
-  jo(pl.magas < 60, `PL: a csukott sáv egy sor (${Math.round(pl.magas)} px)`);
-  jo(pl.cimke === 'Összefoglaló' && pl.felutes === 'Egy mondat a sav szamara.',
+  check(pl.nyitva === false, `PL: a sáv csukva jön (${plm.gw}. forduló)`);
+  check(pl.magas < 60, `PL: a csukott sáv egy sor (${Math.round(pl.magas)} px)`);
+  check(pl.cimke === 'Összefoglaló' && pl.felutes === 'Egy mondat a sav szamara.',
      'PL: a címke és a felütés a tárolóból jön');
-  jo(pl.keretTeteje !== null && pl.keretTeteje < 900,
+  check(pl.keretTeteje !== null && pl.keretTeteje < 900,
      `PL: a keret-oszlopok a képernyőn maradnak (${Math.round(pl.keretTeteje)} px)`);
   await q.locator('#mBody .artstriphead').click();
   await q.waitForTimeout(120);
-  jo(await q.$$eval('#mBody .artstripbody p', n => n.length) === 2,
+  check(await q.$$eval('#mBody .artstripbody p', n => n.length) === 2,
      'PL: kinyitva mindkét bekezdés kint van');
   await q.evaluate(([h, v, gw]) => showMatch(h, v, gw, 'root'), [plm.h, plm.v, plm.gw]);
   await q.waitForSelector('#mBody .artstrip');
-  jo(await q.evaluate(() => document.querySelector('#mBody .artstrip').open),
+  check(await q.evaluate(() => document.querySelector('#mBody .artstrip').open),
      'PL: újrarajzolás után is nyitva marad');
 
   // ---- a lezart fordulon MINDKET szoveg kint marad ----
@@ -249,7 +249,7 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   // a meccs elott, az osszefoglalo meg azt, mi lett a valasz - egymas alatt a
   // ketto tobbet er. A parost a TAROLOBOL keressuk ki, nem beirjuk: igy a
   // teszt nem avul el azzal, hogy melyik fordulohoz mit irtunk.
-  cim('Lezárt forduló: mindkét szöveg');
+  section('Lezárt forduló: mindkét szöveg');
   const mk = await br.newPage({ viewport: { width: 1000, height: 900 } });
   mk.on('pageerror', e => hibak.push('MINDKETTO: ' + e.message));
   for (const m of ['**mlsz.hu/**', '**corsproxy.io/**', '**allorigins**'])
@@ -269,15 +269,15 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     return null;
   });
   if (!par) {
-    jo(false, 'nincs olyan forduló, amihez összefoglaló ÉS beharangozó is van');
+    check(false, 'nincs olyan forduló, amihez összefoglaló ÉS beharangozó is van');
   } else {
     await mk.evaluate(([h, v, r]) => showMatchRound(h, v, r),
                      [par.felek[0], par.felek[1], par.r]);
     await mk.waitForSelector('#mBody .artstrip');
     const cimkek = await mk.$$eval('#mBody .artstriptag', n => n.map(x => x.textContent));
-    jo(JSON.stringify(cimkek) === JSON.stringify(['Összefoglaló', 'Beharangozó']),
+    check(JSON.stringify(cimkek) === JSON.stringify(['Összefoglaló', 'Beharangozó']),
        `a ${par.r}. fordulón mindkettő ott van, az összefoglaló elöl — ` + cimkek.join(', '));
-    jo(await mk.$$eval('#mBody .artstrip', n => n.filter(x => x.open).length) === 0,
+    check(await mk.$$eval('#mBody .artstrip', n => n.filter(x => x.open).length) === 0,
        'és mindkettő csukva jön, nem tolja el a kereteket');
   }
   await mk.close();
@@ -297,13 +297,13 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
                              ['pl/?draft=1', 'KAPU — PL, ?draft=1']]) {
     const g = await br.newPage({ viewport: { width: 1000, height: 900 } });
     g.on('pageerror', e => hibak.push(cimke + ': ' + e.message));
-    // A kozos apiKi, nem sajat lista: a sajat Worker (/tarolt) kimaradt a
+    // A kozos blockApis, nem sajat lista: a sajat Worker (/tarolt) kimaradt a
     // kezzel irt negybol, es azon at a tarolt allas a LIVE-ba is beirt - egy
     // regi fordulo igy "nyitottnak" latszott a kereseskor, aztan lezartnak.
-    await apiKi(g);
+    await blockApis(g);
     await g.goto(BASE + ut);
     await g.waitForSelector('#table tr');
-    cim(cimke);
+    section(cimke);
     const nb1 = ut.startsWith('nb1');
     // AZ ELOFELTETELT KIVARJUK, nem a tablazatra hagyatkozunk: a fejlec-sor
     // mar a betoltes elott ott all, tehat a '#table tr' akkor is teljesul,
@@ -356,7 +356,7 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
       showMatch(h, v, gw, 'root');
       return { r: gw, zart: roundClosed(gw) };
     }, nb1);
-    jo(!!nyitott && nyitott.zart === false,
+    check(!!nyitott && nyitott.zart === false,
        `van le nem zárt forduló keretekkel (${nyitott && nyitott.r}.)`);
     await g.waitForSelector('#mBody .artstrip', { timeout: 15000 });
     const allapot = await g.evaluate(() => {
@@ -365,12 +365,12 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
                db: document.querySelectorAll('#mBody .artstrip').length,
                szoveg: s.querySelector('.artstripbody p').textContent };
     });
-    jo(allapot.db === 1 && allapot.cimke === 'Beharangozó'
+    check(allapot.db === 1 && allapot.cimke === 'Beharangozó'
          && allapot.szoveg === 'Beharangozo bekezdes.',
        `le nem zárt fordulón CSAK a beharangozó látszik (${allapot.cimke}, ${allapot.db} sáv)`);
     await g.close();
   }
 
-  hibak.forEach(x => jo(false, 'oldalhiba: ' + x));
-  await vege(br);
+  hibak.forEach(x => check(false, 'oldalhiba: ' + x));
+  await finish(br);
 })();

@@ -1,4 +1,4 @@
-const { BASE, jo, cim, inditas, vege, apiKi, bontasKi } = require('./kozos');
+const { BASE, check, section, launch, finish, blockApis, blockStoredBreakdowns } = require('./common');
 // A lekero (FunTasy.makeFetcher) tartalek-utjai. MIERT LETEZIK: egyszer a
 // ket akkori proxy (corsproxy.io, allorigins) egyszerre halt meg - a
 // corsproxy 401-re valtott, az allorigins tulterhelt volt -, es ezzel
@@ -14,12 +14,12 @@ const JSONV = b => ({ status: 200, contentType: 'application/json', body: JSON.s
 async function lap(br, utak){
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
-  await apiKi(p);   // minden kulso ut zarva; az egyes esetek nyitjak, amit akarnak
+  await blockApis(p);   // minden kulso ut zarva; az egyes esetek nyitjak, amit akarnak
   // Ez a teszt A LEKERO UT-LANCAT meri (melyik proxy jon szoba, mit ir a
   // hibauzenet). A lezart fordulo bontasa viszont mar a repobol jon, tehat
   // lekeres nelkul is megvan - a lancig el sem jutnank. Ezert itt a tarolt
   // bontas szandekosan nincs kiszolgalva.
-  await bontasKi(p);
+  await blockStoredBreakdowns(p);
   // FONTOS a sorrend: a '**fantasy-api.mlsz.hu/**' minta a PROXYS URL-ekre is
   // illeszkedik (cors.sh: .../proxy.cors.sh/https://fantasy-api.mlsz.hu/...),
   // de a kesobb regisztralt utvonal nyer - ezert a proxy-utak UTANA jonnek.
@@ -42,9 +42,9 @@ async function lap(br, utak){
 }
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
-  cim('corsproxy 401 + allorigins néma → a cors.sh úton megjön a bontás');
+  section('corsproxy 401 + allorigins néma → a cors.sh úton megjön a bontás');
   // Pontosan a megtortent hibakep: direkt CORS-hiba, corsproxy 401,
   // allorigins nem valaszol. A cors.sh-nak kell kiszolgalnia.
   let { p, err, panel } = await lap(br, [
@@ -52,12 +52,12 @@ async function lap(br, utak){
     ['**corsproxy.io/**', r => r.fulfill({ status: 401, body: '' })],
     ['**proxy.cors.sh/**', r => r.fulfill(JSONV(BONTAS))],         // kesobb: ez nyer
   ]);
-  jo(panel.allapot === 'kesz' && /Gól/.test(panel.szoveg),
+  check(panel.allapot === 'kesz' && /Gól/.test(panel.szoveg),
      'a bontás a cors.sh úton megjött (' + panel.szoveg.slice(0, 60) + ')');
-  jo(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+  check(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
   await p.close();
 
-  cim('a csomagolt allorigins-válasz (get?url=) kibontása');
+  section('a csomagolt allorigins-válasz (get?url=) kibontása');
   // A meresben pont a /get ut ment, amikor a /raw nem: a valasz ott
   // {contents: "<json szovegkent>"} alaku - ezt kell kibontani.
   ({ p, err, panel } = await lap(br, [
@@ -67,16 +67,16 @@ async function lap(br, utak){
     ['**allorigins.win/raw**', r => r.abort('failed')],
     ['**allorigins.win/get**', r => r.fulfill(JSONV({ contents: JSON.stringify(BONTAS) }))],
   ]));
-  jo(panel.allapot === 'kesz' && /Gól/.test(panel.szoveg),
+  check(panel.allapot === 'kesz' && /Gól/.test(panel.szoveg),
      'a csomagolt válasz kibontva megjelenik (' + panel.szoveg.slice(0, 60) + ')');
-  jo(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+  check(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
   await p.close();
 
-  cim('ha minden út elhasal, a hibaüzenet felsorolja őket');
-  ({ p, err, panel } = await lap(br, []));   // az apiKi mindent elvag
-  jo(panel.allapot === 'hiba', 'a panel hibát mutat');
+  section('ha minden út elhasal, a hibaüzenet felsorolja őket');
+  ({ p, err, panel } = await lap(br, []));   // az blockApis mindent elvag
+  check(panel.allapot === 'hiba', 'a panel hibát mutat');
   for (const ut of ['sajat', 'direkt', 'cors.sh', 'allorigins', 'cors.lol', 'corsproxy'])
-    jo(panel.szoveg.indexOf(ut) >= 0, 'a hibaüzenetben ott a(z) ' + ut + ' út');
+    check(panel.szoveg.indexOf(ut) >= 0, 'a hibaüzenetben ott a(z) ' + ut + ' út');
   await p.close();
-  await vege(br);
+  await finish(br);
 })();

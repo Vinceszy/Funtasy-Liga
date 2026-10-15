@@ -1,4 +1,4 @@
-const { BASE, jo, inditas, vege, jsonAtir } = require('./kozos');
+const { BASE, check, launch, finish, rewriteJson } = require('./common');
 // A ZARAS ES A GYUJTES KOZOTTI RES (PL).
 //
 // Az FPL a fordulot a "lockdown"-kor zarja (merve: 08:03 es 08:23
@@ -26,7 +26,7 @@ async function statuszSzoveg(br, eredmenyVan){
     return json({});
   });
   // a tarolt adatban VAN vagy NINCS eredmeny erre a fordulora
-  await jsonAtir(p, '**/draft.json*', j => {
+  await rewriteJson(p, '**/draft.json*', j => {
     const s = (j.schedule && j.schedule[GW]) || [];
     j.schedule[GW] = s.map(m => eredmenyVan ? [m[0], m[1], 20, 30] : [m[0], m[1], null, null]);
     j.updated = '2026-08-25T05:47:00Z';
@@ -46,28 +46,28 @@ async function statuszSzoveg(br, eredmenyVan){
 }
 
 (async () => {
-  const br = await inditas();
+  const br = await launch();
 
   const hianyzik = await statuszSzoveg(br, false);
   console.log('   eredmény nélkül: ' + JSON.stringify(hianyzik.szoveg) + '  [' + hianyzik.osztaly + ']');
-  jo(!/Naprakész/.test(hianyzik.szoveg),
+  check(!/Naprakész/.test(hianyzik.szoveg),
      'lezárt forduló + hiányzó eredmény: NEM ír „Naprakész"-t');
-  jo(/lezárult/.test(hianyzik.szoveg) && /adatfrissítéssel/.test(hianyzik.szoveg),
+  check(/lezárult/.test(hianyzik.szoveg) && /adatfrissítéssel/.test(hianyzik.szoveg),
      'megmondja, mi hiányzik és mikor pótlódik');
-  jo(/tárolt állás/.test(hianyzik.szoveg) && /aug\./.test(hianyzik.szoveg),
+  check(/tárolt állás/.test(hianyzik.szoveg) && /aug\./.test(hianyzik.szoveg),
      'kiírja a TÁROLT állás idejét, nem a lekérését: ' + JSON.stringify(hianyzik.szoveg));
-  jo(hianyzik.osztaly === 'varakozik',
+  check(hianyzik.osztaly === 'varakozik',
      'saját jelölést kap (nem „ok", nem hiba): ' + JSON.stringify(hianyzik.osztaly));
 
   const megvan = await statuszSzoveg(br, true);
   console.log('   eredménnyel:     ' + JSON.stringify(megvan.szoveg) + '  [' + megvan.osztaly + ']');
-  jo(/Naprakész/.test(megvan.szoveg) && megvan.osztaly === 'ok',
+  check(/Naprakész/.test(megvan.szoveg) && megvan.osztaly === 'ok',
      'ha az eredmény már a tárolt adatban van, újra „Naprakész"');
-  jo(new RegExp('utolsó lezárt: ' + GW + '\\. forduló \\(rögzítve: ').test(megvan.szoveg),
+  check(new RegExp('utolsó lezárt: ' + GW + '\\. forduló \\(rögzítve: ').test(megvan.szoveg),
      'a nyugalmi sor megmondja az utolsó lezárt fordulót és a rögzítés idejét: '
      + JSON.stringify(megvan.szoveg));
 
-  jo(!hianyzik.perr.length && !megvan.perr.length,
+  check(!hianyzik.perr.length && !megvan.perr.length,
      'nincs JS-hiba: ' + JSON.stringify([...hianyzik.perr, ...megvan.perr]));
-  await vege(br);
+  await finish(br);
 })();
