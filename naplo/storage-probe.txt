@@ -19,3 +19,12 @@ MERES: 2026-09-19 23:08 UTC | szakvezeto: HolVanSalah
    egyezik a proxy valaszaval: IGEN
    a tarolt valasz 22.2x gyorsabban jott, mint a friss lekeres
 4. valtozatlan adat utan az idobelyeg: VALTOZATLAN - csak valtozaskor irunk, ahogy kell
+
+==============================================================
+PROBE: 2026-10-15 00:38 UTC | manager: HolVanSalah
+1. /tarolt BEFORE the request: present, ido=2026-10-12T08:31:00.322Z, 1421 bytes (244 ms)
+2. ordinary proxy request: HTTP 200, 1421 bytes, 2302 ms
+3. /tarolt AFTER the request: present, ido=2026-10-12T08:31:00.322Z, 1421 bytes (77 ms)
+   matches the proxy response: YES
+   the stored response came 29.9x faster than the fresh request
+4. the timestamp after unchanged data: UNCHANGED - written only on a change, as it should be
