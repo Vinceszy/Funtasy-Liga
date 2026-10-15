@@ -5,8 +5,10 @@ Looks after four files (all compact JSON, in the style of the repository's
 other data files):
 
   draft.json         - entries, schedule, results, standings
-  draft_players.json - player master data: {id: {n: name, t: club, p: position}}
-  draft_squads.json  - the CURRENT squads: {league_id: [element_id, ...]}
+  draft_players.json - player master data: {updated, players: {id: {n: name,
+                       t: club, p: position, pts: season points}}, teams}
+  draft_squads.json  - the CURRENT squads:
+                       {updated, squads: {league_id: [element_id, ...]}}
   draft_history.json - per-round squads with points (from the start of GW1):
                        {rounds: {gw: {league_id: [{e, b, pts}, ...]}}}
                        e=player id, b=bench, pts=weekly points

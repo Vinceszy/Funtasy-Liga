@@ -1,1285 +1,1345 @@
-# FunTasy — privát fantasy-ligák H2H követése
+# FunTasy — head-to-head tracking for private fantasy leagues
 
-Privát head-to-head liga követő oldalak baráti ligákhoz: a **fantasy.mlsz.hu** (MLSZ NB I
-Fantasy) és az **FPL Draft** adataira építve. Statikus oldal GitHub Pages-en: nincs build,
-nincs függőség. Az adatgyűjtés **teljesen automatikus** (GitHub Actions: az NB1 meccsnapon óránként, egyébként 3 óránként; a PL 3 óránként, a zárás délelőtti ablakában óránként) — a
-böngészős könyvjelző már csak tartalék.
+Head-to-head league tracker pages for private leagues among friends, built on the data of
+**fantasy.mlsz.hu** (MLSZ NB I Fantasy) and **FPL Draft**. A static site on GitHub Pages: no
+build, no dependencies. Data collection is **fully automatic** (GitHub Actions, UTC: NB1
+hourly on match days (Thursday–Monday) and every 3 hours on Tuesday–Wednesday; PL every 3
+hours plus hourly in the late-morning closing window, 07:00–13:00 — see section 3) — the
+browser bookmarklet is only a fallback.
 
-| Oldal | Cím |
+| Page | URL |
 |---|---|
-| Kezdőlap (ligaválasztó) | https://vinceszy.github.io/Funtasy-Liga/ |
+| Home (league picker) | https://vinceszy.github.io/Funtasy-Liga/ |
 | FunTasy NB1 | https://vinceszy.github.io/Funtasy-Liga/nb1/ |
 | FunTasy PL | https://vinceszy.github.io/Funtasy-Liga/pl/ |
 
-A régi `draft.html` cím átirányít a `/pl/`-re, hogy a korábbi linkek ne haljanak el.
+The old `draft.html` address redirects to `/pl/`, so older links keep working.
 
-A résztvevőket mindkét oldalon a **monogram** azonosítja (a név mögött) — személyenként
-azonos a két ligában, ez lesz a kulcs a majdani összesítő oldalhoz.
+On both pages the participants are identified by their **monogram** (after the name) — the
+same for a person in both leagues; it will be the key of the planned combined page.
 
-<!-- tartalomjegyzek: a tests/doc_checks.py tartja karban, kezzel ne szerkeszd -->
+<!-- table of contents: maintained by tests/doc_checks.py, do not edit by hand -->
 <details>
-<summary><b>Tartalom</b></summary>
+<summary><b>Contents</b></summary>
 
-- [1. Mit tud az oldal](#1-mit-tud-az-oldal)
-  - [Tabella](#tabella)
-  - [Meccsek — két külön panel](#meccsek--két-külön-panel)
-  - [Egymás elleni mátrix](#egymás-elleni-mátrix)
-  - [Modal — három fül](#modal--három-fül)
-  - [A FunTasy PL oldal](#a-funtasy-pl-oldal)
-  - [Pont-bontás (accordion) és a „még nem játszott” jelölés](#pont-bontás-accordion-és-a-még-nem-játszott-jelölés)
-  - [Játékosprofil](#játékosprofil)
-  - [A mezőny játékosai (főoldali lista)](#a-mezőny-játékosai-főoldali-lista)
-  - [Zárási változások (mindkét liga)](#zárási-változások-mindkét-liga)
-  - [A nyitott pont-bontás túléli a frissítést](#a-nyitott-pont-bontás-túléli-a-frissítést)
-  - [Navigáció a modalon belül](#navigáció-a-modalon-belül)
-  - [Mobil](#mobil)
-- [2. Fájlok](#2-fájlok)
-- [3. Hogyan frissül az adat](#3-hogyan-frissül-az-adat)
-  - [Minden automatikusan megy (GitHub Actions, meccsnapon óránként)](#minden-automatikusan-megy-github-actions-meccsnapon-óránként)
-  - [Az FPL Draft adatai (draft.yml)](#az-fpl-draft-adatai-draftyml)
-  - [Élő frissítés a böngészőből (mindkét oldal)](#élő-frissítés-a-böngészőből-mindkét-oldal)
-  - [Az utolsó ismert állás — „ha valaki már lekérdezte, lássam azt"](#az-utolsó-ismert-állás--ha-valaki-már-lekérdezte-lássam-azt)
-  - [Az NB1 élő lekérése két körben megy, nem nyolcban (mérve)](#az-nb1-élő-lekérése-két-körben-megy-nem-nyolcban-mérve)
-  - [A CORS-proxyk cserélhetők — és cserélni is kellett (mérve)](#a-cors-proxyk-cserélhetők--és-cserélni-is-kellett-mérve)
-  - [A betűkészlet nem állíthatja meg a lapot (mérve)](#a-betűkészlet-nem-állíthatja-meg-a-lapot-mérve)
-  - [Gyorsítótár: miért ragadt be a pontszám iPhone-on](#gyorsítótár-miért-ragadt-be-a-pontszám-iphone-on)
-  - [„frissítés… 1,2 mp" — a néma számcsere ellen](#frissítés-12-mp--a-néma-számcsere-ellen)
-  - [Fordulóhatár és lezárult PL-forduló: az élő réteget el kell dobni](#fordulóhatár-és-lezárult-pl-forduló-az-élő-réteget-el-kell-dobni)
-  - [A főoldali lista és a meccs-adatlap nem mondhat mást](#a-főoldali-lista-és-a-meccs-adatlap-nem-mondhat-mást)
-  - [Ami tudatosan következetlen maradt](#ami-tudatosan-következetlen-maradt)
-  - [Tartalék: a böngészős könyvjelző](#tartalék-a-böngészős-könyvjelző)
-- [3/b. A LEZÁRÁS — mi mit jelent, és hol dől el](#3b-a-lezárás--mi-mit-jelent-és-hol-dől-el)
-  - [Amit a lezárás után is frissíteni KELL](#amit-a-lezárás-után-is-frissíteni-kell)
-- [4. Az MLSZ Fantasy API — amit a fejlesztés során kiderítettünk](#4-az-mlsz-fantasy-api--amit-a-fejlesztés-során-kiderítettünk)
-  - [Ranglista](#ranglista)
-  - [Keret (bárhonnan működik — ha jól kérdezed)](#keret-bárhonnan-működik--ha-jól-kérdezed)
-  - [Ki nem játszik a fordulóban (a meccslista)](#ki-nem-játszik-a-fordulóban-a-meccslista)
-  - [Pont-bontás (game-player-stats)](#pont-bontás-game-player-stats)
-  - [Játékostörzs és a szezon egésze (mérésekkel)](#játékostörzs-és-a-szezon-egésze-mérésekkel)
-  - [A játékos-adatlap végpontja (mérve)](#a-játékos-adatlap-végpontja-mérve)
-  - [A jövőbeli menetrend nem érhető el (mérve)](#a-jövőbeli-menetrend-nem-érhető-el-mérve)
-  - [Az árakról nincs előzmény (mérve)](#az-árakról-nincs-előzmény-mérve)
-  - [Amit a hivatalos szabályzat rögzít (fantasy.mlsz.hu)](#amit-a-hivatalos-szabályzat-rögzít-fantasymlszhu)
-  - [A pontszámítás kulcsa](#a-pontszámítás-kulcsa)
-  - [A „szerverről tilos” tévhit története](#a-szerverről-tilos-tévhit-története)
-  - [Forduló-lezárás és utólagos MLSZ-korrekciók](#forduló-lezárás-és-utólagos-mlsz-korrekciók)
-  - [A bónuszpontok három állapota (PL)](#a-bónuszpontok-három-állapota-pl)
-  - [Ki van még a pályán (PL)](#ki-van-még-a-pályán-pl)
-  - [A meccs állása a pont-bontás fölött (PL és NB1)](#a-meccs-állása-a-pont-bontás-fölött-pl-és-nb1)
-  - [Automatikus cserék a forduló zárásakor (PL)](#automatikus-cserék-a-forduló-zárásakor-pl)
-  - [A zárás és a gyűjtés közötti rés (PL)](#a-zárás-és-a-gyűjtés-közötti-rés-pl)
-  - [Az indulás és a gyűjtés közötti rés (PL) — a keretet a böngésző pótolja](#az-indulás-és-a-gyűjtés-közötti-rés-pl--a-keretet-a-böngésző-pótolja)
-  - [Név és monogram: a monogram sosem vágódik le](#név-és-monogram-a-monogram-sosem-vágódik-le)
-  - [Kezdőállítási hatékonyság (KEZD%)](#kezdőállítási-hatékonyság-kezd)
-  - [A pad sorrendje (PL) — és ami még nyitott](#a-pad-sorrendje-pl--és-ami-még-nyitott)
-  - [Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva](#az-fpl-draft-api-draftpremierleaguecomapi--mérésekkel-igazolva)
-- [4/c. Egy klubnak két meccse is lehet egy fordulóban](#4c-egy-klubnak-két-meccse-is-lehet-egy-fordulóban)
-  - [A zárási panel a LEZÁRT fordulókig megy](#a-zárási-panel-a-lezárt-fordulókig-megy)
-  - [Amit a gyűjtő kiír, azt a workflow commitolja is](#amit-a-gyűjtő-kiír-azt-a-workflow-commitolja-is)
-  - [Az elavult lap magától újratölt](#az-elavult-lap-magától-újratölt)
-  - [A közös játékost AZONOSÍTÓ párosítja, nem név](#a-közös-játékost-azonosító-párosítja-nem-név)
-- [5. Ismert korlátok, buktatók](#5-ismert-korlátok-buktatók)
-- [5/a4. A Guardiola mutató](#5a4-a-guardiola-mutató)
-  - [A PL-en ugyanez, automatikus cserékkel](#a-pl-en-ugyanez-automatikus-cserékkel)
-- [5/a5. A „Változtatások" fül](#5a5-a-változtatások-fül)
-  - [A PL-en külön áll, amit az ember csinált, és amit a gép](#a-pl-en-külön-áll-amit-az-ember-csinált-és-amit-a-gép)
-  - [A folyamatban lévő forduló pont nélkül szerepel](#a-folyamatban-lévő-forduló-pont-nélkül-szerepel)
-  - [Egy kapu dönt, mikor van pontszám](#egy-kapu-dönt-mikor-van-pontszám)
-  - [Vízszintes görgetésnél a helyezés és a név áll](#vízszintes-görgetésnél-a-helyezés-és-a-név-áll)
-  - [A közös réteg mindkét adatalakot érti — és ez nem kényelmi kérdés](#a-közös-réteg-mindkét-adatalakot-érti--és-ez-nem-kényelmi-kérdés)
-- [5/a6. A keret már a sípszó előtt látszik](#5a6-a-keret-már-a-sípszó-előtt-látszik)
-- [5/a. Miért van fordulónként külön keret-fájl](#5a-miért-van-fordulónként-külön-keret-fájl)
-- [5/a3. A lezárt forduló bontása a repóból jön](#5a3-a-lezárt-forduló-bontása-a-repóból-jön)
-  - [Az élő pont a tételes bontásból áll össze (PL)](#az-élő-pont-a-tételes-bontásból-áll-össze-pl)
-  - [Élő forduló alatt a lap magától frissül](#élő-forduló-alatt-a-lap-magától-frissül)
-  - [Írás csak akkor, ha tényleg változott](#írás-csak-akkor-ha-tényleg-változott)
-  - [A félbeszakadt írás nem olvasható „nincs előzmény"-ként](#a-félbeszakadt-írás-nem-olvasható-nincs-előzmény-ként)
-- [5/a2. Változásnapló („Mi újult meg?")](#5a2-változásnapló-mi-újult-meg)
-  - [A két oldal váza kézzel van kétszer leírva](#a-két-oldal-váza-kézzel-van-kétszer-leírva)
-- [5/a7. A magazin publikációs sorrendben áll](#5a7-a-magazin-publikációs-sorrendben-áll)
-  - [A heti rovat nem párharchoz tartozik](#a-heti-rovat-nem-párharchoz-tartozik)
-- [5/b. Tesztek](#5b-tesztek)
-- [6. Ha módosítani kell](#6-ha-módosítani-kell)
-  - [Új liga felvétele](#új-liga-felvétele)
-- [7. Tervezett, még nem elkészült](#7-tervezett-még-nem-elkészült)
+- [1. What the site does](#1-what-the-site-does)
+  - [Table](#table)
+  - [Matches — two separate panels](#matches--two-separate-panels)
+  - [Head-to-head matrix](#head-to-head-matrix)
+  - [Modal — three tabs](#modal--three-tabs)
+  - [The FunTasy PL page](#the-funtasy-pl-page)
+  - [Points breakdown (accordion) and the "not played yet" marking](#points-breakdown-accordion-and-the-not-played-yet-marking)
+  - [Player profile](#player-profile)
+  - [The field's players (main page list)](#the-fields-players-main-page-list)
+  - [Closing changes (both leagues)](#closing-changes-both-leagues)
+  - [The open points breakdown survives the refresh](#the-open-points-breakdown-survives-the-refresh)
+  - [Navigation inside the modal](#navigation-inside-the-modal)
+  - [Mobile](#mobile)
+- [2. Files](#2-files)
+- [3. How the data is updated](#3-how-the-data-is-updated)
+  - [Everything runs automatically (GitHub Actions, hourly on match days)](#everything-runs-automatically-github-actions-hourly-on-match-days)
+  - [The FPL Draft data (draft.yml)](#the-fpl-draft-data-draftyml)
+  - [Live refresh from the browser (both pages)](#live-refresh-from-the-browser-both-pages)
+  - [The last known score — "if somebody has already fetched it, let me see that"](#the-last-known-score--if-somebody-has-already-fetched-it-let-me-see-that)
+  - [The NB1 live fetch runs in two rounds, not eight (measured)](#the-nb1-live-fetch-runs-in-two-rounds-not-eight-measured)
+  - [The CORS proxies are interchangeable — a free proxy can disappear (measured)](#the-cors-proxies-are-interchangeable--a-free-proxy-can-disappear-measured)
+  - [The fonts cannot stop the page (measured)](#the-fonts-cannot-stop-the-page-measured)
+  - [Cache: why the score got stuck on an iPhone](#cache-why-the-score-got-stuck-on-an-iphone)
+  - [„frissítés… 1,2 mp" — against the silent number swap](#frissítés-12-mp--against-the-silent-number-swap)
+  - [Round boundary and a closed PL round: the live layer must be dropped](#round-boundary-and-a-closed-pl-round-the-live-layer-must-be-dropped)
+  - [The main page list and the match sheet cannot disagree](#the-main-page-list-and-the-match-sheet-cannot-disagree)
+  - [What is deliberately left inconsistent](#what-is-deliberately-left-inconsistent)
+  - [Fallback: the browser bookmarklet](#fallback-the-browser-bookmarklet)
+- [3/b. CLOSING — what means what, and where it is decided](#3b-closing--what-means-what-and-where-it-is-decided)
+  - [What MUST still be updated after the close](#what-must-still-be-updated-after-the-close)
+- [4. The MLSZ Fantasy API — what is known about it](#4-the-mlsz-fantasy-api--what-is-known-about-it)
+  - [Rankings](#rankings)
+  - [Squad (works from anywhere — if you ask the right way)](#squad-works-from-anywhere--if-you-ask-the-right-way)
+  - [Who is not playing in the round (the match list)](#who-is-not-playing-in-the-round-the-match-list)
+  - [Points breakdown (game-player-stats)](#points-breakdown-game-player-stats)
+  - [Player master data and the whole season (with measurements)](#player-master-data-and-the-whole-season-with-measurements)
+  - [The player detail endpoint (measured)](#the-player-detail-endpoint-measured)
+  - [The future schedule is not available (measured)](#the-future-schedule-is-not-available-measured)
+  - [There is no price history (measured)](#there-is-no-price-history-measured)
+  - [What the official rules state (fantasy.mlsz.hu)](#what-the-official-rules-state-fantasymlszhu)
+  - [The key to the points calculation](#the-key-to-the-points-calculation)
+  - [The “blocked from servers” misconception](#the-blocked-from-servers-misconception)
+  - [Round closing and later MLSZ corrections](#round-closing-and-later-mlsz-corrections)
+  - [The three states of bonus points (PL)](#the-three-states-of-bonus-points-pl)
+  - [Who is still on the pitch (PL)](#who-is-still-on-the-pitch-pl)
+  - [The match score above the points breakdown (PL and NB1)](#the-match-score-above-the-points-breakdown-pl-and-nb1)
+  - [Automatic substitutions at the round's close (PL)](#automatic-substitutions-at-the-rounds-close-pl)
+  - [The gap between closing and collection (PL)](#the-gap-between-closing-and-collection-pl)
+  - [The gap between the start and collection (PL) — the browser backfills the squads](#the-gap-between-the-start-and-collection-pl--the-browser-backfills-the-squads)
+  - [Name and monogram: the monogram is never cut off](#name-and-monogram-the-monogram-is-never-cut-off)
+  - [Line-up efficiency (KEZD%)](#line-up-efficiency-kezd)
+  - [The bench order (PL) — and what is still open](#the-bench-order-pl--and-what-is-still-open)
+  - [The FPL Draft API (draft.premierleague.com/api/) — verified by measurement](#the-fpl-draft-api-draftpremierleaguecomapi--verified-by-measurement)
+- [4/c. A club can have two matches in one round](#4c-a-club-can-have-two-matches-in-one-round)
+  - [The closing panel goes up to the CLOSED rounds](#the-closing-panel-goes-up-to-the-closed-rounds)
+  - [What the collector writes, the workflow commits too](#what-the-collector-writes-the-workflow-commits-too)
+  - [A stale page reloads itself](#a-stale-page-reloads-itself)
+  - [Shared players are paired by ID, not by name](#shared-players-are-paired-by-id-not-by-name)
+- [5. Known limitations and pitfalls](#5-known-limitations-and-pitfalls)
+- [5/a4. The Guardiola measure](#5a4-the-guardiola-measure)
+  - [The same on PL, with automatic substitutions](#the-same-on-pl-with-automatic-substitutions)
+- [5/a5. The „Változtatások" (Changes) tab](#5a5-the-változtatások-changes-tab)
+  - [On PL, what the manager did and what the machine did stand apart](#on-pl-what-the-manager-did-and-what-the-machine-did-stand-apart)
+  - [The round in progress is shown without points](#the-round-in-progress-is-shown-without-points)
+  - [One gate decides when there is a score](#one-gate-decides-when-there-is-a-score)
+  - [On horizontal scroll, the position and the name stay put](#on-horizontal-scroll-the-position-and-the-name-stay-put)
+  - [The shared layer understands both data shapes — and this is not a convenience](#the-shared-layer-understands-both-data-shapes--and-this-is-not-a-convenience)
+- [5/a6. The squads are visible before kick-off](#5a6-the-squads-are-visible-before-kick-off)
+- [5/a. Why there is a separate squad file per round](#5a-why-there-is-a-separate-squad-file-per-round)
+- [5/a3. A closed round's breakdown comes from the repository](#5a3-a-closed-rounds-breakdown-comes-from-the-repository)
+  - [Live points are summed from the itemised breakdown (PL)](#live-points-are-summed-from-the-itemised-breakdown-pl)
+  - [During a live round the page refreshes itself](#during-a-live-round-the-page-refreshes-itself)
+  - [Write only when something really changed](#write-only-when-something-really-changed)
+  - [An interrupted write cannot be read as "no history"](#an-interrupted-write-cannot-be-read-as-no-history)
+- [5/a2. Changelog („Mi újult meg?" — What's new?)](#5a2-changelog-mi-újult-meg--whats-new)
+  - [The frame of the two pages is written twice by hand](#the-frame-of-the-two-pages-is-written-twice-by-hand)
+- [5/a7. The magazine is in publication order](#5a7-the-magazine-is-in-publication-order)
+  - [The weekly column does not belong to a pairing](#the-weekly-column-does-not-belong-to-a-pairing)
+- [5/b. Tests](#5b-tests)
+- [6. Making changes](#6-making-changes)
+  - [Adding a new league](#adding-a-new-league)
+- [7. Planned, not yet built](#7-planned-not-yet-built)
 
 </details>
 
 ---
 
-## 1. Mit tud az oldal
+## 1. What the site does
 
-### Tabella
-- 8 szakvezető, 33 fordulós körmérkőzéses H2H menetrend
-- Pontozás: **győzelem 3 · döntetlen 1 · vereség 0**
-- Holtverseny az NB1-ben: **1) pont → 2) KÜL (pontkülönbség) → 3) SP (szerzett pont)**;
-  a PL-ben az FPL alappontozása szerint **a szerzett pont az első** holtverseny-szempont
-  (a `tiebreak: 'rg'` opció a `pl/index.html`-ben)
-  *(A liga korábbi Excel-táblája is pontkülönbség-elsős volt. Ha ezen változtatni kell,
-  egyetlen sort érint: a `funtasy.js`-ben a `computeTable` végén a `.sort(...)`.)*
-- **A tabella csak lezárt fordulókból számol.** A folyamatban lévő forduló eredményei a
-  meccspanelen látszanak, „élő” jelöléssel — a tabellát nem mozgatják, amíg a forduló
-  le nem zárul.
-- Oszlopok: helyezés, név, M, GY, D, V, SP (szerzett pont), KP (kapott pont),
-  KÜL (pontkülönbség), Pont, Forma (utolsó 5 meccs pöttyökkel)
-- A névre kattintva modal nyílik (lásd lentebb)
+### Table
+- 8 managers, a 33-round round-robin H2H schedule
+- Scoring: **win 3 · draw 1 · loss 0**
+- Tiebreak in the NB1: **1) points → 2) KÜL (points difference) → 3) SP (points scored)**;
+  in the PL, following FPL's default scoring, **points scored comes first** as the
+  tiebreaker (the `tiebreak: 'rg'` option in `pl/index.html`)
+  *(The league's original Excel table also put points difference first. If this has to
+  change, it is a single line: the `.sort(...)` at the end of `computeTable` in `funtasy.js`.)*
+- **The table counts closed rounds only.** The results of the round in progress show on
+  the match panel, marked „élő” (live) — they do not move the table until the round
+  closes.
+- Columns: rank, name, M (matches), GY (wins), D (draws), V (losses), SP (points scored),
+  KP (points conceded), KÜL (points difference), Pont (points), Forma (form: the last 5
+  matches as dots)
+- Clicking a name opens a modal (see below)
 
-### Meccsek — két külön panel
-- **„Legutóbbi forduló”** — automatikusan az utolsó lejátszottra áll
-- **„Következő forduló”** — automatikusan a soron következőre áll
-- Mindkettő külön lapozható (‹ › gombok + fordulóválasztó)
-- A meccssorra kattintva a két érintett keret egymás mellett jelenik meg —
-  **fordulóhűen**: az adott forduló akkori keretei, az akkori pontokkal, a fejlécben a
-  hivatalos fordulópontszámmal (jövőbeli fordulónál magyarázó szöveg)
-- **Élő (még tartó) meccsre kattintva** a két keret jön, játékosonkénti élő pontokkal:
-  azonnal a tárolt (legfeljebb 3 órás) állapot, majd a háttérben percre frissre cserélve.
-- **A meccs adatlapjának tetején eredménysor áll** (`Bazsa 41 : 36,63 Vince`), a főoldali
-  meccspanelekkel azonos megjelenéssel; élő meccsnél szaggatott kerettel és `élő` jelvénnyel.
-  Enélkül az állás csak a két keret-oszlop fejlécében szerepelt külön-külön. Az eredménysor
-  és az oszlopfejlécek **ugyanabból a számításból** jönnek, tehát nem mondhatnak mást.
-  Ha a fordulóhoz még semmilyen keret-adat nincs, tartalékként ez a szöveg jön:
-  *„A meccs még tart, a keretek által szerzett pontok a forduló zárta után elérhetőek.”*
-- **„Különbségek” nézet (csak salary cap ligában, tehát az NB1-en):** az állás alatti
-  kapcsoló két csoportra bontja a kereteket — **közös** és **eltérő** játékosokra —, mert
-  a közösek pontja kiüti egymást, a meccset az eltérők döntik el.
+### Matches — two separate panels
+- **„Legutóbbi forduló”** (Last round) — set automatically to the last one played
+- **„Következő forduló”** (Next round) — set automatically to the upcoming one
+- Each can be paged on its own (‹ › buttons + round picker)
+- Clicking a match row shows the two squads involved side by side — **true to the round**:
+  the squads of that round as they were then, with the points of then, and the official
+  round score in the header (for a future round, an explanatory text)
+- **Clicking a live (still running) match** brings up the two squads with live points per
+  player: immediately the stored state (at most 3 hours old), then replaced in the
+  background by minute-fresh data.
+- **The match sheet starts with a score line** (`Bazsa 41 : 36,63 Vince`), looking the same
+  as the match panels of the main page; for a live match with a dashed border and an `élő`
+  badge. Without it the score would only appear separately, in the headers of the two squad
+  columns. The score line and the column headers come **from the same calculation**, so they
+  cannot disagree. If there is no squad data for the round at all, this fallback text is
+  shown: *„A meccs még tart, a keretek által szerzett pontok a forduló zárta után
+  elérhetőek.”* (The match is still on; the points scored by the squads are available after
+  the round closes.)
+- **„Különbségek” (Differences) view (salary cap leagues only, i.e. the NB1):** the switch
+  under the score splits the squads into two groups — **shared** and **different**
+  players —, because the points of the shared ones cancel out; the match is decided by the
+  different ones.
 
-  **A bal/jobb szerkezet végig megmarad** (bal oszlop az egyik szakvezető, jobb a másik):
-  asztali gépen a közös játékosok **mindkét oszlopban** ott vannak, ugyanazokkal a
-  számokkal. A szem azonnal látja, hogy a két rész egyezik; ha külön blokkba emelnénk,
-  megtörne a megszokott elrendezés. **Mobilon** viszont az oszlopok egymás alá kerülnek,
-  ott a duplikálás csak hosszabbítaná a lapot: egy közös blokk áll elöl, utána a két
-  szakvezető a saját eltérő játékosaival. A váltást CSS végzi, nincs átméretezés-figyelés.
+  **The left/right structure is kept throughout** (left column one manager, right column
+  the other): on desktop the shared players are in **both columns**, with the same numbers.
+  The eye sees at once that the two parts match; lifting them into a separate block would
+  break the familiar layout. **On mobile**, however, the columns stack, and there the
+  duplication would only make the page longer: one shared block comes first, then the two
+  managers with their own different players. CSS does the switch; there is no resize
+  listener.
 
-  Minden csoport alatt **összesítő sor** áll (a keret-fejléccel azonos megjelenéssel):
-  *Közös összesen*, *Eltérő összesen*, végül *<név> összesen* — az utolsó a csapat teljes
-  fordulópontszáma, és a fenti kettő összege pontosan ezt adja ki.
+  Every group ends with a **total row** (styled like the squad header): *Közös összesen*
+  (Shared total), *Eltérő összesen* (Different total), finally *<név> összesen* (<name>
+  total) — the last one is the team's full round score, and the two above add up to exactly
+  that.
 
-  **Az azonossághoz nem elég a névegyezés:** a kapitányság és a kezdő/pad szerep is
-  számít, mert azoktól más a játékos pontja (Szalai kezdőként 10, kapitányként 20 — az nem
-  azonos tétel). **A magyarszabály (+10) ugyanúgy tétel:** ha mindkét keret megkapja, a
-  közös csoportba kerül; ha csak az egyik, akkor mindkét oldalon az eltérők közé (a
-  másiknál 0-val).
+  **A matching name is not enough for identity:** captaincy and the starter/bench role
+  count too, because they change the player's points (Szalai as a starter 10, as captain
+  20 — that is not the same item). **The Hungarian rule (+10) is an item too:** if both
+  squads get it, it goes into the shared group; if only one does, it goes among the
+  different items on both sides (with 0 for the other).
 
-  A PL-oldalon szándékosan nincs ilyen nézet: draft ligában egy játékos egy csapatban
-  lehet, tehát közös tétel nem is fordulhat elő.
+  The PL page deliberately has no such view: in a draft league a player can be in only one
+  team, so a shared item cannot occur.
 
-### Egymás elleni mátrix
-8×8 rács, minden párosításnál `GY/D/V` az eddigi meccsekből. Mobilon vízszintesen
-görgethető, ragadós névoszloppal. **A cellára kattintva** modal nyílik a két csapat
-összes egymás elleni párosításával: lejátszott meccsek eredménnyel és GY/D/V-vel
-(a sor-játékos szemszögéből), élő meccs élő jelöléssel, jövőbeliek „— : —"-mal.
-A sorra kattintva a meccs részletei nyílnak meg. Mindkét oldalon így működik.
+### Head-to-head matrix
+An 8×8 grid, `GY/D/V` (win/draw/loss) for every pairing from the matches so far. On mobile it
+scrolls horizontally, with a sticky name column. **Clicking a cell** opens a modal with all
+head-to-head pairings of the two teams: matches played with their result and GY/D/V (from
+the row player's point of view), a live match with the live marking, future ones with
+„— : —". Clicking a row opens the match details. It works the same way on both pages.
 
-### Modal — három fül
-1. **Aktuális keret** — lezárt fordulónál a legutóbbi forduló kerete, a fejlécben a
-   **hivatalos fordulópontszámmal**; élő forduló közben az élő meccskeret, megnyitáskor
-   **percre frissre** húzott pontokkal (a felirat ilyenkor „élő pontösszeg"-et mond).
-   Posztonként rendezve
-   (GK → DEF → MID → ST), magyar játékosoknál piros-fehér-zöld zászlócska (CSS-ből rajzolva,
-   **nem emoji** — a Windows Chrome a zászló-emoji helyett „HU” betűpárt mutatna), U21-eseknél
-   kék `U21` címke, kapitánynál `C ×2`. Külön **magyarszabály-sáv** (hány magyar kezdő, ebből
-   hány U21, jár-e a +10), a fejlécben a **hivatalos fordulópontszám**, és külön összegsor a
-   kezdőkre és a padra.
-2. **Fordulók** — a szakvezető teljes szezonja fordulónként (ellenfél, saját pont, ellenfél
-   pontja, GY/D/V), fent a mérleggel. Sorra kattintva a meccs részletei nyílnak meg.
-   A **folyamatban lévő forduló sorában az élő állás** látszik `élő` jelöléssel; a mérlegbe
-   (GY/D/V) nem számít bele, ahogy a tabellába sem.
-3. **Szezon játékosai** — minden játékos, aki valaha a keretben volt, a nála termelt ponttal,
-   hány fordulóban volt nála, hányszor kezdő/pados, hányszor kapitány. Fent: hány fordulóban
-   teljesült a magyarszabály (+10-ek összege), a magyar játékosok pontja, ebből az U21-eseké.
+### Modal — three tabs
+1. **Aktuális keret** (Current squad) — for a closed round the squad of the last round,
+   with the **official round score** in the header; during a live round the live match
+   squad, with points pulled **minute-fresh** on opening (the label then says „élő
+   pontösszeg" (live points total)). Sorted by position
+   (GK → DEF → MID → ST), Hungarian players with a small red-white-green flag (drawn in CSS,
+   **not an emoji** — Chrome on Windows would show the letter pair "HU" instead of the flag
+   emoji), u21 players with a blue `U21` label, the captain with `C ×2`. A separate
+   **Hungarian rule bar** (how many Hungarian starters, how many of them u21, whether the +10
+   is due), the **official round score** in the header, and separate total rows for the
+   starters and the bench.
+2. **Fordulók** (Rounds) — the manager's whole season round by round (opponent, own points,
+   opponent's points, GY/D/V), with the record at the top. Clicking a row opens the match
+   details. The **row of the round in progress shows the live score**, marked `élő`; it does
+   not count in the record (GY/D/V), just as it does not count in the table.
+3. **Szezon játékosai** (Season's players) — every player who was ever in the squad, with
+   the points he produced there, how many rounds he was there, how many times starter /
+   bench, how many times captain. At the top: in how many rounds the Hungarian rule was met
+   (the sum of the +10s), the points of the Hungarian players, and of those the u21 players'.
 
-### A FunTasy PL oldal
-Ugyanaz a felépítés (tabella, meccspanelek, mátrix, modal három füllel, élő állások),
-a Premier League lila színvilágában, az FPL Draft sajátosságaival:
-- csapatnevek + monogram (a mátrixban csak monogramok), holtversenynél a szerzett pont dönt
-- nincs kapitány és magyarszabály; a pad pontjai nem számítanak a csapatnak
-- élő állás forduló közben: a kezdőcsapatok a forduló indulásakor rögzülnek (a repóban
-  vannak), a böngésző csak a nyilvános játékos-pontokat kéri le percre frissen, és abból
-  összegez minden meccset
-- a „Szezon játékosai" fül és a meccs-keretek a GW1 indulásától gyűlnek
+### The FunTasy PL page
+The same structure (table, match panels, matrix, modal with three tabs, live scores), in the
+Premier League's purple colours, with the specifics of FPL Draft:
+- team names + monogram (only monograms in the matrix); on a tie the points scored decide
+- no captain and no Hungarian rule; bench points do not count for the team
+- live score during a round: the line-ups are fixed when the round starts (they are in the
+  repository), the browser only fetches the public player points minute-fresh, and sums
+  every match from them
+- the „Szezon játékosai" tab and the match squads accumulate from the start of GW1
 
-### Pont-bontás (accordion) és a „még nem játszott” jelölés
-Mindkét oldalon, minden keret-nézetben (aktuális keret, meccs-keretek, élő meccs):
+### Points breakdown (accordion) and the "not played yet" marking
+On both pages, in every squad view (current squad, match squads, live match):
 
-- **A játékos sorára kattintva** a sor alatt kinyílik a pont-bontás: esemény, érték, pont
-  (pl. „Győzelem · 1 · 3”, „Percek a pályán (több, mint 60 perc) · 90 · 2”). Csak a pontot
-  érő sorok látszanak, ahogy az MLSZ felülete is mutatja. A kapitány ×2 és a pad ×0,5 külön
-  sorként jelenik meg, mert a kiírt heti pont ezeket már tartalmazza, a bontás sorai viszont
-  a nyers értékek. Újrakattintás zár; másik játékosra kattintva az előző bezárul — egyszerre
-  egy panel van nyitva. A bontást a böngésző kéri le kattintáskor (ugyanazokon a
-  CORS-proxykon át, mint minden élő lekérés), és a megnyitott játékosokét megjegyzi.
-- **A kattinthatóságot a név után álló kis nyíl (▼) jelzi**, ami nyitáskor átfordul, fölötte
-  pedig egy súgósor áll („Kattints egy játékosra a pontjai részletezéséhez.”). A nyíl azért a név után van és nem
-  a sor végén, mert ott védett: a szűk oszlopban az ellipszis előbb a klub-címkét vágja le.
-  Egérrel a sor ki is világosodik, de a nyíl a lényeg — **telefonon nincs hover**.
-- **Ha nincs pontot érő esemény, az üzenet megmondja, miért** — hét eset, mert a 0-nak
-  többféle oka lehet: *a klubnak nincs meccse ebben a fordulóban* (elmaradt/elhalasztott,
-  a PL-en üres forduló), *a meccs még nem kezdődött el* (a kezdés időpontjával),
-  *a meccs elmaradt, új időpontja nincs kitűzve*, *a meccs zajlik, eddig nincs pontot érő
-  eseménye*, *a meccs véget ért, de a pontok feldolgozása még tart*, *lejátszotta a
-  meccset pont nélkül*, vagy *nem lépett pályára*. Az elsőt a forduló meccslistája mondja
-  meg (lásd lent), a következőket a kezdési idő, a meccs állapota és a lejátszottság, az
-  utolsó kettőt a bontás játszott-perc sora (ez 0 perccel is megjön, ha a játékos végig a
-  kispadon ült).
+- **Clicking a player's row** opens the points breakdown under the row: event, value, points
+  (e.g. „Győzelem · 1 · 3” (Win), „Percek a pályán (több, mint 60 perc) · 90 · 2” (Minutes
+  on the pitch, more than 60)). Only the rows worth points are shown, just as the MLSZ
+  interface shows them. The captain ×2 and the bench ×0.5 appear as separate rows, because
+  the weekly points shown already contain them, while the breakdown rows are the raw values.
+  Clicking again closes it; clicking another player closes the previous one — one panel is
+  open at a time. The browser fetches the breakdown on click (through the same CORS proxies
+  as every live fetch) and remembers the ones opened.
+- **A small arrow (▼) after the name shows that the row is clickable**; it turns over when
+  open, and a hint line stands above the list („Kattints egy játékosra a pontjai
+  részletezéséhez.” (Click a player for the details of his points.)). The arrow is after the
+  name and not at the end of the row because it is safe there: in the narrow column the
+  ellipsis cuts the club label first. With a mouse the row also lights up, but the arrow is
+  what matters — **there is no hover on a phone**.
+- **If there is no event worth points, the message says why** — seven cases, because a 0
+  can have several causes: *the club has no match in this round* (called off / postponed,
+  an empty round on the PL), *the match has not started yet* (with the kick-off time),
+  *the match was called off, no new date set*, *the match is on, no event worth points so
+  far*, *the match is over, but the points are still being processed*, *played the match
+  without points*, or *did not take the pitch*. The first comes from the round's match list
+  (see below), the next ones from the kick-off time, the match state and the played flag,
+  the last two from the minutes-played row of the breakdown (it arrives with 0 minutes too,
+  if the player sat on the bench throughout).
 
-  Két helyen az **idő** is számít a szövegben. A „nincs meccse" lezárt fordulóban múlt
-  időben áll, mert a „nem játszik" hetekkel később hamis. A „még nem kezdődött el" pedig
-  csak addig szól kezdési időpontról, amíg a dátum a jövőben van: az MLSZ éjfélt ír a
-  kitűzetlen kezdésre, és az a nap el is múlhat — onnantól a mondat elmaradt meccsről
-  szól, nem ígér kezdést.
+  In two places **time** matters in the text as well. "No match" is in the past tense for
+  a closed round, because "is not playing" is false weeks later. And "has not started yet"
+  only talks about a kick-off time while the date is in the future: the MLSZ writes
+  midnight for an unscheduled kick-off, and that day can pass — from then on the sentence
+  is about a called-off match and promises no kick-off.
 
-  **Az `is_played` NEM azt jelenti, hogy a meccsnek vége.** Az MLSZ már a meccs *közben*
-  igazra billenti. Emiatt írtuk élő forduló alatt gyakorlatilag mindenkire, hogy
-  „lejátszotta a meccset, pontot érő esemény nélkül" — miközben a meccs javában ment.
+  **`is_played` does NOT mean the match is over.** The MLSZ flips it to true already
+  *during* the match. Trusting it, the page would say for practically everybody during a
+  live round that they "played the match without an event worth points" — while the match
+  was in full swing.
 
-  Élő fordulóban ezért a **meccs állapota** dönt, nem a lejátszottság. Egyetlen helyen,
-  a `meccsAllapot`-ban, négy értékkel: *előtte* / *fut* / *utána* / *ismeretlen* — így a
-  játékos sora és a pont-bontás soha nem mondhat mást ugyanarról a meccsről.
+  So in a live round the **match state** decides, not the played flag. In a single place,
+  `matchState` (in `nb1/index.html`), with four values: *elotte* (before) / *fut*
+  (running) / *utana* (after) / *ismeretlen* (unknown) — so the player's row and the points
+  breakdown can never say different things about the same match.
 
-  A szabály **két időkorláton** áll, és mindkettőnek konkrét oka van:
+  The rule rests on **two time limits**, and each has a concrete reason:
 
-  - **100 perc alatt a `vege` jelzést nem hisszük el.** Egy meccs 2×45 perc + szünet +
-    hosszabbítás, tehát ennyi idő alatt fizikailag nem érhet véget. Azt ugyanis *nem
-    tudtuk ellenőrizni*, hogy az MLSZ mikor billenti át a meccslista `completed` mezőjét —
-    ha ugyanúgy tenné, mint az `is_played`-del (menet közben), akkor egy naiv javítás
-    semmit nem oldana meg. Így a javítás **független ettől a nyitott kérdéstől**.
-  - **180 perc után nem állítjuk, hogy fut**, akkor sem, ha `vege` jelzés nem érkezett.
-    A `vege` ugyanis nem mindig áll rendelkezésre (a legkorábbi keret-rekordokban
-    nincs is ilyen mező).
+  - **Under 100 minutes the `vege` (ended) signal is not believed.** A match is 2×45
+    minutes + half-time + stoppage time, so it physically cannot end in that time. It
+    could *not be checked* when the MLSZ flips the match list's `completed` field — if it
+    did it the same way as `is_played` (during the match), a naive fix would solve nothing.
+    So the fix is **independent of this open question**.
+  - **After 180 minutes we do not claim it is running**, even if no `vege` signal has
+    arrived. `vege` is not always available (the earliest squad records do not even have
+    such a field).
 
-  Ha nincs kitűzött kezdési idő (az MLSZ ilyenkor éjfélt ír), a meccset **nem** tekintjük
-  elkezdettnek.
+  If no kick-off time is set (the MLSZ then writes midnight), the match is **not** treated
+  as started.
 
-  **Mért tény: az MLSZ a 0 pontos játékosra ÜRES pont-bontást ad vissza.** Bizonyíték:
-  Heitor (Újpest) 0 ponttal üres listát kapott, miközben klubtársa, Ljujić — ugyanabból a
-  meccsből — 1,75-öt, tehát a meccs fel volt dolgozva. Az üres bontás tehát **nem** jelent
-  feldolgozatlan meccset. Egy ideig erre alapoztunk („a lejátszotta állításhoz kell egy
-  bontás-sor"), és emiatt a valóban 0 pontos, rég lement meccsű játékosra azt írtuk, hogy
-  „a pontok feldolgozása még tart". A meccs közbeni tévedés ellen nem ez véd, hanem a
-  fenti állapot-kapu.
+  **Measured fact: for a player with 0 points the MLSZ returns an EMPTY points
+  breakdown.** Evidence: Heitor (Újpest) with 0 points got an empty list, while his
+  teammate Ljujić — from the same match — got 1.75, so the match had been processed. An
+  empty breakdown therefore does **not** mean an unprocessed match. Building on that
+  ("the played claim needs a breakdown row") makes the page say „a pontok feldolgozása még
+  tart" (the points are still being processed) for a player who really scored 0 in a match
+  long finished. What protects against the during-the-match error is not this but the state
+  gate above.
 
-  **A lefújás és a pontok megjelenése között is idő telik el.** A PL-en az FPL **két
-  lépésben** zárja a meccset: a `finished_provisional` a lefújáskor igaz, a `finished`
-  csak a bónuszpontok véglegesítésekor — ezért a kettő közül bármelyik elég ahhoz, hogy
-  lejátszottnak vegyük. (Enélkül a már lejátszott meccsre is azt írtuk: „a meccs zajlik".)
+  **Time passes between the final whistle and the points appearing, too.** On the PL, the
+  FPL closes a match **in two steps**: `finished_provisional` is true at the final whistle,
+  `finished` only when the bonus points are finalised — so either of the two is enough to
+  take the match as played. (Without this, a match already played would be described as „a
+  meccs zajlik" (the match is on).)
 
-- **A „meccs zajlik" szövege ligánként más, mert a forrás is más** (`eloPontok` mező a
-  `LIGAK`-ban). A PL-en az FPL percről percre adja a pontot, tehát a 0 tényleg azt jelenti,
-  hogy *eddig* nem volt pontot érő eseménye. Az MLSZ viszont csak a meccs után rögzíti a
-  pontokat, ott ilyen állapot sosem áll elő — ezért az NB1-en az „eddig nincs pontot érő
-  eseménye" hamis ígéret volt, és helyette az áll, hogy *a pontok csak a meccs végén
-  kerülnek be*. **A mondatot a közös réteg adja** (`FunTasy.UZENET.meccsKozben(liga)`), nem
-  az oldal írja le magának: két példányban állt, és már el is kezdtek elcsúszni egymástól.
-- **Ahol a kezdés időpontja még nincs kitűzve**, ott csak a dátum jelenik meg
-  („kezdés: aug. 29. (időpont még nincs kitűzve)") — az MLSZ ilyenkor éjfélt ír, amit
-  hiba lenne valódi kezdésként kiírni.
-- **Élő forduló közben a 0 pontos játékosoknál kötőjel áll, ha nincs róluk adat.** Két
-  ilyen eset van: aki még nem játszott (a meccse el sem kezdődött), és — **csak az
-  NB1-en** — akinek a meccse épp fut. Az MLSZ ugyanis a pontokat csak a meccs után
-  rögzíti (`eloPontok: false`), tehát a 0 ott nem „nulla pontot szerzett", hanem
-  „még nincs róla adat" — kötőjelként őszinte. A PL-en fordítva: az FPL percről percre
-  ad pontot, ezért ott a futó meccs 0-ja valódi 0, és **számként** marad. A kötőjel
-  magyarázata egérrel elolvasható (`title`).
+- **The "match is on" text differs by league, because the source differs** (the
+  `livePoints` field in `LEAGUES`). On the PL, the FPL gives points minute by minute, so a 0
+  really means there has been no event worth points *so far*. The MLSZ, however, records the
+  points only after the match, so that state never occurs there — on the NB1, "no event
+  worth points so far" would be a false promise, and instead the text says that *the points
+  only go in at the end of the match*. **The sentence comes from the shared layer**
+  (`FunTasy.MESSAGES.duringMatch(leagueId)`), the page does not write it for itself: in two
+  copies the two would drift apart.
+- **Where the kick-off time is not set yet**, only the date is shown („kezdés: aug. 29.
+  (időpont még nincs kitűzve)" (kick-off: 29 Aug, time not set yet)) — the MLSZ writes
+  midnight in that case, and printing it as a real kick-off would be wrong.
+- **During a live round a dash stands for 0-point players when there is no data on them.**
+  There are two such cases: a player who has not played yet (his match has not even
+  started), and — **on the NB1 only** — a player whose match is running. The MLSZ records the
+  points only after the match (`livePoints: false`), so a 0 there does not mean "scored zero
+  points" but "no data on him yet" — honest as a dash. On the PL it is the other way round:
+  the FPL gives points minute by minute, so a 0 in a running match is a real 0 and stays
+  **a number**. The explanation of the dash can be read with the mouse (`title`).
 
-### Játékosprofil
-Mindkét ligában. A **Szezon játékosai** listában egy névre kattintva megnyílik a játékos profilja. Fent az
-alapadatok (poszt, klub, magyar/U21 jelölés, összpont, hány fordulóról van adat, ebből
-hányban volt valakinek a keretében), alatta fordulónként egy sor: **ellenfél, a meccs
-állása** (mindig hazai–vendég sorrendben, mellette hogy otthon vagy idegenben játszott),
-a játékos **saját pontja**, és hogy **melyik szakvezetőnél** volt — kezdőként, padon vagy
-kapitányként. Salary cap ligában ugyanaz a játékos egy fordulóban **több szakvezetőnél is**
-lehet: ilyenkor mind ott van, mindegyik a maga szerepével. Ha senkinél sem volt, rövid
-kötőjel áll ott — jövőbeli fordulónál pedig semmi, mert azt, hogy kinél *lesz*, nem tudjuk.
+### Player profile
+In both leagues. Clicking a name in the **Szezon játékosai** list opens the player's
+profile. At the top the basic data (position, club, Hungarian/u21 marking, total points, how
+many rounds there is data for, and in how many of them he was in someone's squad), below it
+one row per round: **opponent, the match score** (always in home–away order, with whether he
+played at home or away), the player's **own points**, and **which manager** had him — as a
+starter, on the bench or as captain. In a salary cap league the same player can be with
+**several managers** in one round: then all of them are listed, each with its own role. If
+nobody had him, a short dash stands there — and for a future round nothing, because we do not
+know who *will* have him.
 
-A felsorolás végén a **ligára vetített arányok**: a forduló kereteinek hány százalékában volt
-benne (*keret*), hányban volt kezdő (*kezdő*) és hányban kapitány (*kapitány*). A nevező a
-forduló **tényleges** keretszáma — ahány szakvezetőről mentett keret van —, nem beégetett 8,
-így egy kimaradó keret nem húzza le az arányt. **A kapitány kezdőnek is számít**, tehát a három
-szám egymásba ágyazódik: keret ≥ kezdő ≥ kapitány. Akinél senki sem volt, ott nincs arány-blokk.
+At the end of the list come the **league-relative shares**: in what percentage of the round's
+squads he was (*keret* (squad)), in how many he was a starter (*kezdő* (starter)) and in how
+many captain (*kapitány* (captain)). The denominator is the round's **actual** number of
+squads — as many as there are saved squads of managers —, not a hard-coded 8, so a missing
+squad does not pull the share down. **The captain counts as a starter too**, so the three
+numbers nest: squad ≥ starter ≥ captain. For a player nobody had, there is no share block.
 
-**Meddig megy a lista?** A **PL-profil a szezon összes fordulóját** felsorolja: a lejátszott
-sorokban a pont és az eredmény, a jövőbeliekben az ellenfél és a pálya (a Draft
-`element-summary` `fixtures` tömbjéből). Az **NB1-profil csak a lejátszott fordulókat**
-mutatja, mert ott a jövőbeli párosítás nem érhető el (lásd a 4. fejezetet) — ellenfél és
-időpont nélküli üres sorokat nem írunk ki.
+**How far does the list go?** The **PL profile lists every round of the season**: the played
+rows with points and result, the future ones with opponent and venue (from the `fixtures`
+array of the Draft `element-summary`). The **NB1 profile shows only the rounds played**,
+because there the future pairings are not available (see section 4) — empty rows without
+opponent and date are not printed.
 
-**Több meccs egy fordulóban.** A sor a klub **összes** meccsét mutatja az adott fordulóban,
-nem az elsőt. A PL-ben ez a dupla forduló (egy klub kétszer játszik), az NB1-ben a pótolt,
-korábban elhalasztott meccs hozhatja elő. Egy meccsnél az ellenfél és a pálya a név-cellában,
-az állás a saját oszlopában áll (így a számok egymás alá igazodnak); kettőnél mindkét meccs
-az állásával együtt a név-cellába kerül, és az állás-oszlop üres marad. Inkább legyen a ritka
-eset máshogy tördelve, mint hogy a második meccs eltűnjön.
+**Several matches in one round.** The row shows **all** of the club's matches in that round,
+not the first one. In the PL this is the double gameweek (a club plays twice), in the NB1 a
+rescheduled, earlier postponed match can bring it about. For one match the opponent and venue
+are in the name cell and the score in its own column (so the numbers line up); for two, both
+matches with their scores go into the name cell, and the score column stays empty. Better for
+the rare case to wrap differently than for the second match to disappear.
 
-**Honnan jön az adat ligánként.** Az NB1-ben a fordulónkénti pont a keret-előzményből (a
-gazdátlan fordulóké az MLSZ pont-bontásából), az ellenfél a `meccsek.json`-ból. A PL-ben
-mind a kettő **egyetlen kérésből**: a Draft `element-summary/{id}` fordulónként adja a pontot
-és egy `"BHA (A) 4-0"` alakú mezőt, amiben az ellenfél, a játékos csapatának pályája és az
-állás **hazai–vendég** sorrendben szerepel. Ez utóbbit kimértük (`naplo/fpl-profile.txt`):
-25 idegenbeli, nem döntetlen meccsen mind a 25 ezt igazolta, a „játékos csapata előre"
-olvasatot egy sem — rossz választással minden idegenbeli eredmény megfordult volna.
+**Where the data comes from, per league.** In the NB1 the per-round points come from the
+squad history (for rounds when nobody had the player, from the MLSZ points breakdown), the
+opponent from `meccsek.json`. In the PL both come **from a single request**: the Draft
+`element-summary/{id}` gives the points per round and a field of the form `"BHA (A) 4-0"`,
+which holds the opponent, the venue of the player's team, and the score in **home–away**
+order. The latter was measured (`naplo/fpl-profile.txt`): on 25 away matches that were not
+draws, all 25 confirmed it, and none the "player's team first" reading — with the wrong
+choice every away result would have been reversed.
 
-**Ha az `element-summary` nem érhető el**, a PL-profil a **tárolt** fordulónkénti pontból
-dolgozik (`draft_history.json` → `pts`): a pont és a szerep (kezdő/pad) megjelenik, csak az
-ellenfél marad üres. Korábban ilyenkor minden sor kötőjel volt, a „Pont összesen" pedig 0 —
-miközben az adat ott hevert a repóban. Az NB1-profil mindig is a tárolt adatból épült, a
-tételes bontást pótolja utólag az API-ból; ez a két liga most ebben is egyformán működik.
+**If `element-summary` is not available**, the PL profile works from the **stored** points
+per round (`draft_history.json` → `pts`): the points and the role (starter/bench) appear,
+only the opponent stays empty. Without this fallback every row would be a dash and „Pont
+összesen" (Total points) 0 — while the data is in the repository. The NB1 profile is built
+from the stored data as well, and fills in the itemised breakdown from the API afterwards;
+the two leagues work the same way in this.
 
-**Ez az arány csak salary cap ligában jelenik meg**, és ezt a liga `tipus` mezője dönti el
-(`funtasy.js` → `LIGAK`), nem a liga azonosítója. Draft ligában egy játékos pontosan egy
-szakvezetőnél lehet — vagy senkinél —, tehát a *keret* mindig 1/N vagy 0 lenne, kapitány pedig
-nincs is: a három szám nem mondana semmit. A szerep neve (kezdő / pad / kapitány) viszont ott
-is látszik. A közös réteg ezért nem kész magyar szöveget kap, hanem `{nev, kezdo, kapitany}`
-mezőket — így a szóhasználat és az arányszámítás is egy helyen áll.
+**This share only appears in a salary cap league**, and the league's `type` field decides
+that (`funtasy.js` → `LEAGUES`), not the league's id. In a draft league a player can be with
+exactly one manager — or nobody —, so *keret* would always be 1/N or 0, and there is no
+captain at all: the three numbers would say nothing. The name of the role (kezdő / pad /
+kapitány — starter / bench / captain) still shows there. So the shared layer does not get
+ready Hungarian text but the fields `{nev, kezdo, kapitany}` — that way both the wording and
+the share calculation live in one place.
 
-A sorra kattintva a szokásos accordion nyílik le a **tételes pont-bontással** és a klub
-meccsével — ugyanaz a lekérés és ugyanaz a gyorsítótár, mint a keret-nézetben.
+Clicking the row opens the usual accordion with the **itemised points breakdown** and the
+club's match — the same request and the same cache as in the squad view.
 
-Két dolog, ami könnyen félreérthető, ezért így csináljuk:
+Two things that are easy to misunderstand, so this is how we do them:
 
-- **A pont a játékosé, nem a csapaté.** A tárolt heti pont már tartalmazza a kapitányi
-  duplázást és a padfelezést; a profil ezeket **visszaszámolja**, mert különben ugyanaz a
-  teljesítmény más számot mutatna aszerint, hogy kinél volt. A padnál az API a felezés után
-  két tizedesre kerekít (0,75 → 0,38), így a puszta kétszerezés 0,01-gyel mellémenne — ezért
-  a legközelebbi negyedre kerekítünk. Hogy ez helyes, azt kimértük: a játékosok alappontja
-  377 összevetett fordulón **mindig 0,25 többszöröse** volt.
-- **Amikor senkinél sem volt**, a pont sehol nincs eltárolva — ilyenkor (és csak ilyenkor)
-  megy egy lekérés az MLSZ pont-bontás végpontjára. A profil ezt **nem várja meg**: azonnal
-  megjelenik kötőjelekkel, a pontok a háttérben, **sorban** pótlódnak. Párhuzamosan kilőve
-  a proxy eldobta a kéréseket — a profil percekig töltött, a lenyíló bontás elhasalt
-  (bejelentett hiba).
+- **The points are the player's, not the team's.** The stored weekly points already contain
+  the captain's doubling and the bench halving; the profile **reverses** them, because
+  otherwise the same performance would show a different number depending on who had the
+  player. For the bench the API rounds to two decimals after halving (0.75 → 0.38), so plain
+  doubling would be off by 0.01 — so the result is rounded to the nearest quarter. This is
+  measured to be correct: over 377 compared rounds the players' base points were **always a
+  multiple of 0.25**.
+- **When nobody had the player**, his points are not stored anywhere — then (and only then)
+  a request goes to the MLSZ points breakdown endpoint. The profile **does not wait** for it:
+  it appears at once with dashes, and the points are filled in in the background, **one
+  after another**. Fired in parallel, the requests were dropped by the proxy — the profile
+  kept loading for minutes, and the drop-down breakdown failed.
 
-### A mezőny játékosai (főoldali lista)
-Mindkét liga főoldalán, a bal oszlop alján. A **teljes mezőny** benne van (NB1: 385,
-PL: 612 játékos), a lista alapból a legtöbb pontot szerző 40-et mutatja — a keresés és a
-szűrés viszont **mindig az egész mezőnyben fut**, különben pont arra lenne alkalmatlan,
-amire kell: megtalálni egy hátrébb állót, és megnézni, kinél van.
+### The field's players (main page list)
+On the main page of both leagues, at the bottom of the left column. The **whole field** is in
+it (NB1: 385, PL: 612 players); by default the list shows the 40 highest scorers — but search
+and filtering **always run over the whole field**, otherwise the list would be useless for
+exactly what it is for: finding someone further down, and seeing who has him.
 
-Oszlopok: **#** (hányadik a jelenlegi nézetben — nem fix rangsor, átrendezéskor csak
-számol), **Poszt**, **Játékos** (U21-jelöléssel), **Klub**, **Kinél van** (most kinél;
-salary capben többen is lehetnek — a szakvezetőt **monogram** jelöli, így négy is
-kifér, utána `+N`), **Keret%** és **Ár**
-(mindkettő csak NB1 — a draftban egy játékos egy keretben van, és nem veszel játékost),
-végül **Pont**.
+Columns: **#** (position in the current view — not a fixed ranking, it just counts after
+re-sorting), **Poszt** (position), **Játékos** (player, with the u21 marking), **Klub**
+(club), **Kinél van** (who has him now; in salary cap there can be several — a manager is
+marked by **monogram**, so four fit, then `+N`), **Keret%** (squad %) and **Ár** (price)
+(both NB1 only — in the draft a player is in one squad, and you do not buy players),
+finally **Pont** (points).
 
-- **A kereső** a névben *és* a klubban is keres, és **ékezet nélkül is talál**
-  (`ljujic` → Ljujić): senki nem fog kalapos c-t írni a keresőbe.
-- **Minden oszlop szűrhető** a maga módján: poszt / klub / kinél van legördülő
-  (az értékek magából az adatból jönnek, tehát egy új klub vagy szakvezető magától
-  megjelenik bennük), az árnál felső korlát („mi fér bele"), a pontnál és a Keret%-nál
-  alsó. A „Kinél van" szűrőben a **Mindegy** a szűrő kikapcsolása, a **Valakinél** azt
-  kérdezi, van-e egyáltalán gazdája, a **Senkinél** pedig a gazdátlanokat hozza — ez
-  három különböző kérdés. A gazdátlan játékos cellájában rövid kötőjel áll, nem szó:
-  az oszlop szűk, a felirat csak helyet foglalt.
-- **Minden oszlop rendezhető** a fejlécre kattintva; újrakattintás megfordítja.
-  Szöveges oszlop alapból növekvő, számos csökkenő.
-- **Lapozható**: a lábléc mutatja, hol tartunk (`41–80 / 385`), és a nyilakkal lehet
-  előre-hátra lépni. Szűrésre, keresésre és átrendezésre visszaugrik az első oldalra —
-  különben egy szűkebb találati halmaznál egy üres oldalon ragadnánk.
-- **Telefonon egyetlen oszlop sem tűnik el** — akkor szűrhetetlen és rendezhetetlen
-  lenne. Helyette a sor **két sorra törik**: fent a sorszám, a poszt, a név és a pont,
-  alatta a klub, a Keret%, az ár és a „kinél van", kiírt felirattal (magukban a számok
-  nem mondanának semmit). A fejléccellák ugyanígy tördelnek, tehát a rendezés minden
-  oszlopra megmarad. A törést egy külön elem (`.jltores`) végzi: az `order` önmagában
-  nem tör sort.
-- **Telefonon ez az utolsó blokk.** A rácsot ott egy oszlopos flexre váltjuk, a két
-  burkoló `div` `display:contents`-szel eltűnik a layoutból, így a panelek közvetlen
-  flex-elemek lesznek, és az `order` rájuk hat.
+- **The search** looks in the name *and* the club, and **finds without accents too**
+  (`ljujic` → Ljujić): nobody will type a c with a háček into the search box.
+- **Every column can be filtered** in its own way: position / club / who-has-him drop-down
+  (the values come from the data itself, so a new club or manager shows up in them by
+  itself), an upper limit for the price ("what fits"), a lower one for points and Keret%. In
+  the „Kinél van" filter **Mindegy** (any) switches the filter off, **Valakinél** (with
+  someone) asks whether he has an owner at all, and **Senkinél** (with nobody) brings the
+  unowned ones — three different questions. An unowned player's cell shows a short dash, not
+  a word: the column is narrow, a label only took space.
+- **Every column can be sorted** by clicking its header; clicking again reverses it. Text
+  columns sort ascending by default, numeric ones descending.
+- **It is paged**: the footer shows where we are (`41–80 / 385`), and the arrows step
+  forward and back. Filtering, searching and re-sorting jump back to the first page —
+  otherwise a smaller result set could leave us stuck on an empty page.
+- **On a phone no column disappears** — the list would then be impossible to filter and sort
+  by it. Instead the row **breaks into two lines**: at the top the number, position, name and
+  points, below them the club, Keret%, price and „kinél van", with written labels (the
+  numbers alone would say nothing). The header cells wrap the same way, so sorting stays
+  available for every column. The break is done by a separate element (`.jltores`): `order`
+  alone does not break a line.
+- **On a phone this is the last block.** There the grid switches to a one-column flex, the
+  two wrapper `div`s disappear from the layout with `display:contents`, so the panels become
+  direct flex items, and `order` affects them.
 
-A sorra kattintva megnyílik a játékosprofil.
+Clicking a row opens the player profile.
 
-**A lista sorai ugyanazt a `.plr` osztályt viselik**, mint a keret-nézet sorai — így a
-megjelenésük egységes, viszont egy oldal-szintű `.plr` lekérdezés (pl. egy tesztben)
-ezeket is beszámolja. A modalra vonatkozó kereséseket ezért `#mBody`-ra kell szűkíteni.
-(A különbségek-teszt pontosan ezen bukott el, amikor a lista bekerült.)
+**The list's rows carry the same `.plr` class** as the rows of the squad view — so they look
+the same, but a page-wide `.plr` query (e.g. in a test) counts them too. Queries about the
+modal must therefore be narrowed to `#mBody`. (The differences test needs exactly this
+scoping, because of the list.)
 
-### Zárási változások (mindkét liga)
-A hivatalos szabályzat szerint a pont minden meccs után megvan, de a **heti összeg csak a
-forduló utolsó játéknapjának végén válik véglegessé** — a kettő között az MLSZ még
-igazíthat. A gyűjtő ezt eddig átvezette, de nem őrizte meg; mostantól naplózza
-(`zarasok_nb1.json`), mert utólag rekonstruálhatatlan.
+### Closing changes (both leagues)
+According to the official rules, the points exist after every match, but the **weekly total
+only becomes final at the end of the round's last match day** — in between, the MLSZ can
+still adjust it. The collector applies these adjustments and also logs them
+(`zarasok_nb1.json`), because they cannot be reconstructed afterwards.
 
-Mindkét ligában van „Zárási változások" panel, **ugyanazon a helyen, ugyanazzal a címmel
-és ugyanazzal a megjelenítéssel**: jobb oszlop, szakvezető szerint csoportosítva,
-soronként poszt-címke, játékosnév + klub, `előtte → utána` érték és előjeles különbség. A
-játékos neve a profilt, a szakvezető neve a keretet nyitja. Ahol nem volt változás, ott az
-áll, hogy **nem történt változás** — a legördülőben minden eddigi forduló szerepel, nem
-csak az, amelyikben volt, és a lapozó alapból a **legutolsó** fordulón áll. A fordulók
-mindkét oldalon növekvő sorrendben állnak, tehát a `‹` visszafelé, a `›` előre lép.
-(Korábban a PL-en fordítva volt: ott csökkenő volt a lista, és a két panelen a nyilak
-ellenkező irányba vittek.)
+Both leagues have a „Zárási változások" (Closing changes) panel, **in the same place, with the
+same title and the same display**: right column, grouped by manager, each row a position
+label, player name + club, the `előtte → utána` (before → after) value and the signed
+difference. The player's name opens the profile, the manager's name the squad. Where nothing
+changed, the panel says **nem történt változás** (no change) — the drop-down lists every round
+so far, not only those with a change, and the pager starts on the **latest** round. The rounds
+are in ascending order on both pages, so `‹` steps back and `›` forward. (The two panels must
+not differ in this: with opposite orders the arrows of the two panels would lead in opposite
+directions.)
 
-**A HTML-t a közös réteg állítja elő** (`funtasy.js` → `FunTasy.zarasLista`); a két oldal
-csak normalizált sorokat ad át. Ez azért így van, mert külön-külön megírva a két panel
-egyszer már szétcsúszott (más cím, más elrendezés, más üres szöveg).
+**The HTML is built by the shared layer** (`funtasy.js` → `FunTasy.closingList`); the two
+pages only pass normalised rows. The reason: written separately, the two panels drift apart
+(different title, different layout, different empty text).
 
-A **tárgya** ligánként más:
+What the panel is **about** differs by league:
 
-- **PL:** az FPL az utolsó meccs utáni reggelen véglegesíti a fordulót — ekkor rögzül a
-  bónusz, és ekkor állnak be az automatikus cserék. Ezért van ott nézetváltó sor
-  (Mind / Pontváltozás / Cserék).
-- **NB1:** a pont minden meccs után megvan, de a heti összeg csak a forduló utolsó
-  játéknapjának végén válik véglegessé — a kettő között az MLSZ még igazíthat. Automatikus
-  csere nincs, tehát nézetváltó sor sincs.
+- **PL:** the FPL finalises the round on the morning after the last match — that is when the
+  bonus is fixed and when the automatic substitutions take effect. That is why there is a
+  view switcher row there (Mind / Pontváltozás / Cserék — All / Points changes /
+  Substitutions).
+- **NB1:** the points exist after every match, but the weekly total only becomes final at the
+  end of the round's last match day — in between, the MLSZ can still adjust it. There are no
+  automatic substitutions, so there is no view switcher row either.
 
-Az NB1-ben az érték a játékos **saját** pontja (kapitányi duplázás és padfelezés
-visszaszámolva), tehát ugyanaz a változás nem néz ki másképp aszerint, hogy kinél volt.
-Csak **lement meccsű** játékosnál számít változásnak: a meccs közbeni pontketyegés nem hír.
-Ugyanaz a játékos annyi blokkban jelenik meg, ahány keretben benne volt.
+In the NB1 the value is the player's **own** points (captain's doubling and bench halving
+reversed), so the same change does not look different depending on who had him. It only
+counts as a change for a player whose **match is over**: points ticking during a match are not
+news. The same player appears in as many blocks as the squads he was in.
 
-Kivétel az első három forduló három ismert esete, ahol csak a **változás mértékét** tudjuk,
-a játékost nem. Azok a sorok „Ismeretlen játékos" névvel állnak ott (`nk:1` jelző, nem
-kattinthatók, `előtte → utána` nélkül, csak az előjeles különbséggel), alattuk kiírt
-magyarázattal.
+The exception is three known cases of the first three rounds, where only the **size of the
+change** is known, not the player. Those rows stand there with the name „Ismeretlen játékos"
+(Unknown player) (`nk:1` flag, not clickable, without `előtte → utána`, only with the signed
+difference), with an explanation printed under them.
 
-A panel csak akkor jelenik meg, ha van benne adat: egy állandóan üres doboz azt sugallná,
-hogy valami hiányzik.
+The panel only appears when it has data: a permanently empty box would suggest that something
+is missing.
 
-### A nyitott pont-bontás túléli a frissítést
+### The open points breakdown survives the refresh
 
-A meccs- és keret-nézet **utólag frissül**: beér a percre friss keret, a játszott percek, az
-élő pontok. Ilyenkor a `#mBody` teljes tartalma újraépül — és a nyitott accordion eltűnt
-alóla. A felhasználónak úgy nézett ki, mintha a „Bontás betöltése…" után **magától
-visszazárt** volna, és újra meg kellene nyitnia. (Bejelentett hiba.)
+The match and squad views **refresh after they are drawn**: the minute-fresh squad, the minutes
+played and the live points arrive. Each time, the whole content of `#mBody` is rebuilt — and
+an open accordion would disappear from under it. To the user it looks as if it **closed by
+itself** after „Bontás betöltése…" (Loading the breakdown…), and has to be opened again.
 
-Minden ilyen újrarajzolás mostantól a `FunTasy.accOrzo`-n megy át: megjegyzi, melyik sor volt
-nyitva (a `data-*` jelzőiből képzett, sorrendtől független kulccsal) és mi állt a panelben,
-majd az újrarajzolás után visszateszi. Így **nincs villanás és nincs újabb lekérés** sem.
+So every such redraw goes through `FunTasy.accPreserve`: it remembers which row was open (by a
+key built from its `data-*` flags, independent of order) and what was in the panel, and puts
+it back after the redraw. So there is **no flash and no new request** either.
 
-**Csak a kész panelt szabad megőrizni.** Az első változat mindent visszatett — a
-hibaüzenetet is. Egy átmeneti hálózati hiba így **beragadt**: a sor nyitva maradt, a
-következő kattintás pedig becsukta ahelyett, hogy újrapróbálta volna, tehát a bontás csak
-két kattintásra jött vissza. (Bejelentett hiba, a javítás javítása.) Ezért a panel az
-**állapotát jelzőben hordozza** (`data-allapot`: `tolt` / `kesz` / `hiba`), nem a szövegéből
-találgatjuk:
+**Only a finished panel may be preserved.** Putting everything back — the error message too —
+makes a transient network error **stick**: the row stays open, and the next click closes it
+instead of retrying, so the breakdown only comes back after two clicks. So the panel **carries
+its state in a flag** (`data-allapot`: `tolt` (loading) / `kesz` (done) / `hiba` (error)),
+it is not guessed from its text:
 
-- `kesz` → változatlanul visszakerül;
-- `tolt` → a régi kérés már az elavult sorra futna ki, ezért **újraindul** a betöltés;
-- `hiba` → **nem** kerül vissza; a sor bezár, és egy kattintás újrapróbálja.
+- `kesz` → put back unchanged;
+- `tolt` → the old request would land on a stale row, so loading **restarts**;
+- `hiba` → **not** put back; the row closes, and one click retries.
 
-**A hibaüzenet megmondja az okot is.** A lekérő (`FunTasy.lekero`) több úton próbálkozik —
-direkt kérés és CORS-proxyk, lásd „A CORS-proxyk cserélhetők" szakaszt —, és a
-hibaüzenetbe beleírja, melyik miért nem ment
-(`direkt:CORS · corsproxy:HTTP 429 · allorigins:időtúllépés`). Ez eddig elveszett: az
-accordion csak annyit írt ki, hogy „A bontás lekérése nem sikerült", amiből sem a
-felhasználó, sem a fejlesztő nem tudta eldönteni, hálózat-e, proxy-e vagy az API változott.
-Mostantól a szöveg alatt halványan ott az ok.
+**The error message gives the reason too.** The fetcher (`FunTasy.makeFetcher`) tries several
+routes — the site's own Worker, a direct request and CORS proxies, see "The CORS proxies are
+interchangeable" —, and writes into the error message which one failed and why
+(`direkt:CORS · corsproxy:HTTP 429 · allorigins:időtúllépés` — időtúllépés = timeout).
+Without it the accordion would only say „A bontás lekérése nem sikerült" (Fetching the
+breakdown failed), from which neither the user nor the developer could tell whether it is the
+network, a proxy or a changed API. The reason is shown faintly under the text.
 
-Ez mindkét ligában több helyen fordul elő (élő keret, perc-utántöltés, élő pontok), ezért a
-mechanika a közös rétegben van — külön-külön megírva pontosan egy helyen maradt volna ki.
-Rögzítve: `tests/accordionorzes.teszt.js`.
+This occurs in several places in both leagues (live squad, minutes refill, live points), so the
+mechanism is in the shared layer — written separately, it would be missing in exactly one
+place. Pinned by: `tests/accordionorzes.teszt.js`.
 
-### Navigáció a modalon belül
-A modal kis böngészőként működik: a listák soraira kattintva a tartalom cserélődik
-(pl. Fordulók → egy meccs két kerete), és a fejlécben megjelenő **‹ vissza** gomb az
-előző nézetre lép. Az ×, a félrekattintás és az Escape mindig az egészet zárja.
-Nincs modal a modalban. Mindkét oldalon ugyanígy működik.
+### Navigation inside the modal
+The modal works like a small browser: clicking the rows of the lists replaces the content
+(e.g. Fordulók → the two squads of a match), and the **‹ vissza** (back) button that appears
+in the header steps back to the previous view. ×, clicking outside and Escape always close the
+whole thing. There is no modal in a modal. It works the same way on both pages.
 
-### Mobil
-Teljes reszponzív átdolgozás: nincs vízszintes csúszkálás, és **minden oszlop megmarad** —
-a táblázatok a saját dobozukban görgethetők, ragadós név-oszloppal. A modal telefonon
-teljes képernyős, ragadós × gombbal.
-
----
-
-## 2. Fájlok
-
-| Fájl | Szerep |
-|---|---|
-| `index.html` | **Kezdőlap: ligaválasztó.** A kártyákat a `funtasy.js` `LIGAK` listájából rajzolja, saját adatot nem tölt. |
-| `nb1/index.html` | A FunTasy NB1 oldal (korábban a gyökér `index.html`). Csak az oldalspecifikus HTML + JS; a menetrend a `SCHEDULE`, a tagok a `MEMBERS` konstansban beégetve. |
-| `pl/index.html` | A FunTasy PL oldal (korábban `draft.html`). |
-| `draft.html` | Átirányító a régi PL-címről a `/pl/`-re. Új hivatkozás ne ide mutasson. |
-| `funtasy.css` | A közös stíluslap (mindhárom oldal ezt tölti). |
-| `funtasy.js` | A közös motor: tabella, meccspanelek, mátrix, élő-jelölés (`FunTasy.create(...)`), a pont-bontás accordionja és a **ligalista** (`LIGAK`), amiből a ligaváltó sáv és a kezdőlap kártyái készülnek. |
-| `results.json` | H2H eredmények archívuma: `{updated, provisional:[...], schedule:{"1":[[hazai,vendég,hp,vp],...]}}`. Az oldal ebből tölt, felülírva a beégetett menetrendet. A `provisional` a még le nem zárult fordulók listája. |
-| `squads.json` | A legutóbbi elérhető forduló keretei (`{updated, round, squads:{név:[játékos,...]}}`) — az „Aktuális keret” fül forrása; a `round` mondja meg, hányadik fordulóé. A játékos-rekord a könyvjelző mezőin felül `id`-t (MLSZ játékos-azonosító, a pont-bontáshoz), `played`-et („játszott már?”), `start`-ot (az adott fordulós meccsének kezdése), `vege: true`-t (a meccse már lement, akkor is, ha a pontok még nincsenek feldolgozva) és — ha a klubnak nincs meccse a fordulóban — `nogame: true`-t is tartalmaz. A régebbi, e mezők nélküli rekordokat az oldal tolerálja, de a gyűjtő nem hagyja őket úgy: az olyan fordulót, amelynek a rekordjaiban nincs `played`, egyszer újra lekéri a meccslistával együtt, és pótolja a hiányzó mezőket. |
-| `squad_history.json` | Fordulónkénti keret-pillanatképek (`{updated, rounds:{"4":{név:[...]}}}`) — a „Szezon játékosai” fül forrása. A rekord-formátum a `squads.json`-éval azonos. |
-| `naplo/` | **Mérési archívum** (lezárt egyszeri megfigyelések nyers naplói — lásd `naplo/README.md`). A hozzájuk tartozó workflow-k törölve; a következtetések ebben a README-ben vannak (3/b, „Automatikus cserék”, „Ki van még a pályán”, bónusz-szakasz). |
-| `hatekonysag.json` | Kezdőállítási hatékonyság fordulónként (`{updated, rounds:{"1":{név:{sz, le}}}}`) — az NB1 KEZD% oszlopának és meccs-nézetének forrása. A gyűjtő minden futásnál az összes tárolt fordulóra újraszámolja (determinisztikus). A PL-nek nincs ilyen fájlja: ott a böngésző számol a már betöltött kerettörténetből. |
-| `guardiola.json` | A **Guardiola mutató** fordulónként: `{rounds:{forduló:{szakvezető:{teny,alt,guard}}}}`. `guard` = a mostani keret pontja mínusz a múlt hetié ugyanebben a fordulóban. A gyűjtő számolja, mert a múlt heti kerethez az adott forduló **összes** játékosának nyers pontja kell (`bontasok/<forduló>.json`, fordulónként 40 KB) — a lapnak így elég ez a pár kilobájt. |
-| `draft_pontok.json` | A PL **teljes mezőnyének** fordulónkénti pontja és perce: `{rounds:{gw:{element:[pont,perc]}}}`. A Guardiola mutatóhoz kell: a múlt heti keretben lehet olyan játékos, aki már **senkinél sincs** (GW1→GW2-ben 11 ilyen volt), és akkor a pontja sehol nem lenne meg. A perc az automatikus cserékhez. Csak az kerül bele, aki játszott vagy pontot szerzett. |
-| `draft_guardiola.json` | Ugyanaz, mint a `guardiola.json`, csak a PL-re, `liga_id` kulccsal. |
-| `verzio.json` | Egyetlen szám: a jelenlegi `?v=`. A lap ebből tudja meg, hogy **elavult-e** — a `?v=` ugyanis a `funtasy.js`/`css` gyorsítótárát töri, a lap saját HTML-jét nem. Ha a fájl nagyobb számot mond, a lap **egyszer** újratölt (`FunTasy.verzioOr`). |
-| `keretvaltozasok.json` | A **Változtatások** fül adata fordulónként: ki került ki (`ki`), ki jött be (`be`), kinek változott a szerepe (`szerep`), és a magyarszabály különbsége (`bonusz`) — mindegyik mellett az, hogy **mennyit ért**. A tételek összege pontosan a `guard`; ezt a `stimmel` mező is jelzi. A lap ebből vezeti le a tabellában álló számot. |
-| `draft_keretvaltozasok.json` | Ugyanaz a PL-re, `liga_id` kulccsal — plusz a `gepE`/`gepU`: mennyit hozott a **zárási automatikus csere** a régi és az új keretnek. A játékos-tételek csak azt tartalmazzák, amit az **ember** döntött; a gép hozadéka külön áll. Játékosnevet nem tárol: a lap a `draft_players.json`-ból oldja fel. |
-| `zarasok.json` | A forduló-zárás változásai (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — a főoldali „Zárási változások” panel forrása. A gyűjtő **pontosan egyszer**, a véglegesítő futásban írja: a zárás előtti tárolt pillanatkép és a friss állapot különbsége. Üres bejegyzés is eredmény („a zárás nem változtatott semmit”); régi pillanatkép nélkül (backfill) nem számolható. A `ki`/`be` külön listák — a pad-jelzőből nem tudható, ki kinek a helyére állt be, ezért **párosítást nem állítunk**; elemeik `{e, pts}` alakúak, mert a beállt játékos pontja mondja meg, mit hozott a csere (a régi, csak azonosítót tartalmazó alakot a lap még elfogadja). A GW1 a git-történetből lett pótolva. |
-| `meccsek.json` | Fordulónkénti NB1-meccsek (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — a pont-részletező fölötti meccs-sor forrása. A gyűjtő írja a keret-válaszokban utazó meccs-objektumokból; **eredmény csak lezárt meccsről kerül bele** (részállást a 3 óránként futó gyűjtő véglegesként örökítene meg). A hiányzó vagy befejezetlen meccsű fordulót meccslistával kéri újra, a már teljeset csak akkor, ha a forduló hivatalos pontja változott (ez a **pótolt meccs** esete — az elhalasztott meccs nincs benne a listában, tehát „befejezetlenként” nem látszana). **Nem a forduló összes meccse:** csak azoké a kluboké, amelyeknek van játékosuk valamelyik keretben — a részletező fölötti sorhoz ennyi kell. |
-| `jatekosok.json` | A mezőny **összes** játékosa (`{players:{id:{n,t,p,u21,pts,ar}}}`) — a főoldali lista és keresés forrása. A gyűjtő írja, egy kérésből. |
-| `bontasok/<forduló>.json` | A forduló **tételes pont-bontása** minden játékosra (`{round, bontasok:{cp-azonosító:[{n,v,p}]}}`): mi adta ki a heti pontot — gól, gólpassz, játszott perc… A gyűjtő a forduló lezárásakor **egyszer** kéri le mind a 385 játékosra, és MLSZ-korrekció után újra. Az `updated` mező szándékosan nincs benne (lásd `keretek/`). |
-| `zarasok_nb1.json` | Fordulónként azok a **meccs utáni pontigazítások**, amiket az MLSZ a forduló véglegesítése előtt vezetett át. Alakja a PL `zarasok.json`-jáét követi, hogy ugyanaz a megjelenítés szolgálhassa ki: `{rounds:{forduló:{szakvezető:{pont:[{n,cp,pos,tm,elott,utan,d}]}}}}`. Az `nk:1` jelzőt viselő sor azt jelenti, hogy a játékos nem ismert: ott név helyett „Ismeretlen játékos" áll, és `elott`/`utan` helyett `dl` (a változás mértéke). Élesben ritka esemény: a fájl üres vázként létezik, és csak akkor bővül, ha tényleg történt igazítás — a panel is csak akkor jelenik meg. |
-| `arak.json` | Az árak **változásai** (`{arak:{id:[[dátum, ár], …]}}`). Csak akkor bővül, ha egy ár tényleg megváltozott. |
-| `articles.json` | A liga **kint lévő** írásai (`{updated, leagues:{liga:{forduló:{summary|preview|elemzes:{kulcs:{text:[bekezdés,…], short, source, kozzetett}}}}}}`). **Három rovat van.** A `summary` és a `preview` egy-egy párharchoz tartozik, a kulcsuk `"Hazai|Vendég"`. Az `elemzes` — *Kele Janek elemez* — a fordulóhoz tartozik, nem párharchoz: a kulcsa a **saját címe**, `|` nélkül, és épp ebből tudni, hogy nincs ellenfele (`FunTasy.articleList`). A `text` a teljes szöveg bekezdésenként. A `short` a becsukott sávban látszó egy mondat — a rovatnak **nincs**: ott a felütés maga az alcím lenne, és megtöri a szöveg ívét; ilyenkor az első bekezdés lép a helyére. A `kozzetett` az élesbe kerülés ISO-időbélyege, és **ez a lap sorrendje**: az újság nem a fordulóval halad, hanem az idővel (lásd *A magazin publikációs sorrendben áll*). Gépi őrzés: **D15** — kint lévő írás nem lehet nélküle. A meccs adatlapján egy **becsukott** sáv olvassa (`FunTasy.matchArticle`): a szöveg egyszeri szórakozás, az alatta lévő számok a lényeg, ezért nem tolhatja le őket. **Az összefoglaló csak lezárt fordulón jelenik meg** — addig a pontok még elmozdulhatnak (NB1: meccs utáni igazítások, Draft: külön véglegesítés), és egy „X nyert ennyivel" szöveg hazudna. A beharangozóra ez nem áll. A kapu **alapból zár**: aki nem mondja meg, hogy a forduló lezárult, nem tud korai összefoglalót kiengedni. Jelenleg **kézzel írjuk** (`source: "manual"`); a mező azért van benne, hogy a később generált szöveg megkülönböztethető legyen. **Cikk csak LEZÁRT adatból készülhet**: összefoglaló csak végleges fordulóról, beharangozó csak a soron következőről. Egy forduló KÖZBEN írt szöveg a még mozgó számokból dolgozik — egy beharangozó így állította azt, hogy valaki megnyerte azt a meccset, amit a végén elvesztett. Gépi őrzés: `tests/doc_checks.py` **D11**. Kiadatlan szöveg nem kerül a repóba: a cikk a jóváhagyás után egyenesen ide íródik. |
-| — | **Az írások értékelése.** A kinyitott cikk alján egytől négyig lehet pontozni. A két felső fokozat egyetlen koppintás — aki elégedett, ne dolgozzon érte. A két alsó **indokot kér, a néző saját szavaival**: helyben nyílik egy szövegdoboz. Készre választható okokat szándékosan nem kínálunk — azok a mi kategóriáinkat adnák vissza, és épp az a mondat maradna ki, amire nem gondoltunk. Az „Elküldöm” addig nem kínálja magát, amíg nincs mit elküldeni; mellette halkabban a kiút („Kötekszem, de indokolni már nem fogok”), ami a pontot elviszi, az indokot nem. A panel a sávon **belül** nyílik, nem új rétegben: épp arról kérünk véleményt, ami alatta áll, azt nem szabad eltakarni. Az értékelés a Workerhez megy (`POST /ertekeles`), és a KV-ben `ert/<cikk>/<eszköz>` kulcson áll — egy eszköz egy írást egyszer értékel, az átértékelés a sajátját írja felül. Visszaolvasni: `GET /ertekelesek`. |
-| `valtozasok.json` | A változásnapló bejegyzései (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Kézzel írjuk**, nem gyűjtő tölti. **Egy funkció = egy bejegyzés**: amit a néző egy dolognak lát, az egy bejegyzés, akkor is, ha több részből áll és több lépésben készült el — nem daraboljuk szét annyi posztra, ahány részét megcsináltuk. A `leiras` ezért lehet **több bekezdés** (üres sorral elválasztva), a napló oldala így is jeleníti meg. Amíg a funkció nincs kész, a bejegyzés a `valtozasok-vazlat.json`-ban vár. A szétdarabolást a `tests/doc_checks.py` **D4/b** esete nézi. |
-| `valtozasok-vazlat.json` | **Még nem publikált** naplóbejegyzések, ugyanabban a formában. A napló oldala ezt nem olvassa; a kész bejegyzés innen kerül át a `valtozasok.json`-ba. |
-| `nemzethy/index.html` | A **Nemzethy Sport** — *Heti Funtasy Magazin*. **Két üzemmódja van.** `?liga=nb1` (vagy `pl`) az **adott liga újságja**: a liga saját színeivel, a nevével a fejlécben, és csak az ő írásaival — innen nyílik a liga-oldal felső sávjából, tehát az olvasó nem esik ki a liga világából. Paraméter nélkül a **közös kiadás**, liga-szűrővel; erre a kezdőlap mutat kiemelt soron. Mindkettőben minden írás teljes szöveggel, **publikációs sorrendben** — a legutóbb kiadott elöl, ligától és fordulótól függetlenül; ezért nincs liga-címsor, a liga neve a cikk fejlécében áll. Egy íráson belül: rovat, a párharc (a rovatnál a saját címe), a rövid változat felütésként, aztán a törzs. Szűrők egyetlen sávban: **liga, szakvezető, forduló, típus — négy külön vezérlő**, szabadon kombinálva (egy ember egy ligában is kérdezhető), mellettük a találatszám és egy törlés; mindegyik csak azokat az értékeket kínálja, amik a többi szűrő mellett tényleg léteznek, tehát üres találatra nem lehet állítani. A liga-szűrő a liga saját újságjában magától elmarad (egy érték mellett a legördülő üres marad). A szakvezetők **emberenként** állnak a listában, nem nevenként: a két liga más néven ismeri ugyanazt az embert (NB1-ben becenév, PL-ben csapatnév), és aki mindkettőben játszik, egyetlen sorban áll a két nevével — rá szűrve mindkét liga írásai előjönnek. Az összekötés a közös rétegben van (`FunTasy.SZEMELYEK` + `FunTasy.szemelyTar`), a PL-csapatnevet a közös kiadás a `draft.json`-ból olvassa hozzá; a liga saját újságjában nincs mit összekötni, ott ez a kérés el is marad. **Ugyanaz a kapu**, mint a meccs adatlapján: le nem zárt forduló összefoglalója itt sem látszik — a válogatást a `FunTasy.articleList` végzi, hogy a két nézet ne csúszhasson el abban, mit szabad mutatni. Minden írás alatt ott az értékelő sáv, és egy „Másolom” gomb, ami a **teljes cikket** meg a rá mutató hivatkozást teszi a vágólapra (korábban a felütést adta — aki másol, a szöveget viszi). A szövegoszlop szélessége pixelben áll (a `ch` a betűkészlettől függ, tehát a webfont beérkezésekor az egész lap újratördelné magát). **`content-visibility` nincs rajta, és szándékosan nincs**: a becsült magasság helyére görgetés közben lép be a valódi, és ettől a lap magassága változik meg az ujjad alatt — megmérve egyetlen végiggörgetés alatt nyolcszor, egyszerre akár 361 pixelt. A felső sáv **két szintet** mutat: a ligák egymás alternatívái, az újság viszont az adott liga része — ezért mindig pontosan egy elem világít (ahol vagy), az újság gombja nem tűnik el, ha rajta állsz, és onnan a liga pöttye visz vissza a liga oldalára. |
-| `valtozasok/index.html` | A változásnapló oldala („Mi újult meg?"). |
-| `collect.py` | GitHub Actions: H2H eredmények (ranglista-végpont) **és** keretek (keret-végpont) gyűjtése, forduló-lezárás megállapítása, kimaradt fordulók pótlása. |
-| `collect_draft.py` | GitHub Actions: az FPL Draft liga adatai. A résztvevők valódi nevét és az `entry_id`-t kiszűri (a repó publikus). |
-| `collector_common.py` | What **both** collectors do identically, in one copy: `stamp`, `write_compact` (atomic write) and `read_stored` (a missing file and a damaged one are not the same). Not a drawer for shared things - exactly these three live here, and all three are about one thing: that the **accumulating** files survive an interrupted run. While there were two copies, one could forget the guarantee, and it would only have shown **after** an interrupted run. See *A félbeszakadt írás nem olvasható „nincs előzmény"-ként*. |
-| `draft.json` | Az FPL Draft liga adatai (résztvevők, menetrend, eredmények) — a `pl/index.html` forrása. |
-| `draft_picks.json` | **A draft maga**: ki kit választott, hányadik körben és hányadik helyen (`{updated, league, rounds, picks:[{r, p, i, e, t, auto, sec}]}`). Az `i` az összesített sorszám (1–150), a `t` a mi csapat-azonosítónk, az `auto` azt jelzi, hogy a **gép választott** a szakvezető helyett. A draft egyszer történt és soha nem változik, ezért nem a gyűjtő írja, hanem kézzel készül (`naplo/draft-picks-harvest.py`). Két azonosító van: a válaszban a csapat a valódi FPL entry-azonosítóján szerepel, nálunk pedig a league-entry az azonosító — a leképezés a liga-adatból jön, és a valódi azonosító **nem kerül a fájlba**, ahogy a nevek sem. Színezésre való: az első körös választás, amit eladtak, vagy a draft utolsó emberének a gólja. |
-| `draft_players.json` | FPL játékos-törzs: `{players: {id: {n: név, t: klub, p: poszt}}, teams: {csapat_id: rövidnév}}`. A `teams` a fixtures-válasz csapat-azonosítóinak feloldásához kell (kinek kezdődött el a meccse). |
-| `draft_squads.json` | A jelenlegi FPL-keretek (tulajdonlás): `{liga_id: [játékos_id,...]}`. |
-| `draft_history.json` | Fordulónkénti FPL-keretek pontokkal (`{rounds:{gw:{liga_id:[{e,b,pts},...]}}, kesz:[...]}`) — a GW1 indulásától gyűlik. A **`veglegesek`** lista mondja meg, mely RÉGI fordulók véglegesek: azokat a gyűjtő nem kéri le többé. Az aktuális fordulót minden körben lekéri, a zárás után is (lásd „3/b. A lezárás”). |
-| `keretek/<forduló>.json` | Egy forduló keretei külön fájlban (`{round, squads}`). A meccs-nézet **ezt** tölti le, nem a teljes előzményt. |
-| `.github/workflows/archive.yml` | A gyűjtő munkafolyamata: `collect.py` + commit. **Meccsnapon (csütörtök–hétfő) óránként, kedden-szerdán 3 óránként** — lásd *Miért óránként a meccsnapokon*. |
-| `.github/workflows/draft.yml` | 3 óránként, délelőtt óránként futó (és kézzel is indítható) munkafolyamat: `collect_draft.py` + commit — lásd *Az FPL Draft adatai*. |
-| `.github/workflows/naplo-meres.yml` | **Kézi mérésfuttató**: egy `naplo/*.py`-t futtat Actionsből (a fejlesztői környezet hálózata minden külső forrást blokkol), és amit a mérés kiírt, azt a megadott ágra commitolja. Bemenetei: `script`, `branch`, `environment` (soronként egy `NÉV=érték`, pl. `HARVEST_EVENT=5`). **Minden méréshez ez az egy munkafolyamat van** — mérésenként külön fájl nem készül: abból tizennégy majdnem azonos példány lett, bennük három elgépelt `git add` úttal, amitől a mérés eredménye némán elveszett. |
-| `tartalek/` | Minden, ami nem kell a napi működéshez: a tartalék könyvjelző (`GOMB-bookmarklet.txt`, forrása és építője), az útmutatója (`KERET-MENTES.md`) és az elavult kézi pótlás leírása (`BACKFILL.md`). A weboldal és a gyűjtők semmit nem olvasnak innen. |
+### Mobile
+Fully responsive: no horizontal sliding, and **every column is kept** — the tables scroll in
+their own box, with a sticky name column. On a phone the modal is full-screen, with a sticky ×
+button.
 
 ---
 
-## 3. Hogyan frissül az adat
+## 2. Files
 
-### Minden automatikusan megy (GitHub Actions, meccsnapon óránként)
-
-Az `archive.yml` a `collect.py`-t futtatja, ami **mindent** frissít, teendő nélkül:
-
-1. **H2H eredmények** a ranglista-végpontról (hivatalos fordulópontszámok — ez a tabella
-   egyetlen forrása).
-2. **Régi fordulók újraellenőrzése**: a ranglista alapból csak a két legfrissebb fordulót
-   adja vissza, tehát egy régi forduló utólagos korrekciójáról magától nem értesülnénk.
-   Ezért minden futás **négy régi fordulót** kér le újra, körbeforgó sorrendben (lásd
-   *Önjavítás* lentebb).
-3. **Keretek** a keret-végpontról: az aktuális forduló (élő játékos-pontokkal), az utolsó
-   lezárt, minden hiányzó forduló — és minden olyan régi forduló, amelynek a pontszáma
-   ebben a futásban változott (akkor ugyanis a keret-pillanatkép is elavult). **Egy régi,
-   újra lekért forduló ettől nem lehet „ideiglenes"**: ideiglenessé csak a most zajló vagy
-   éppen most zárult forduló válhat. Enélkül egyetlen elhasalt keret-lekérés kivehetett
-   volna egy hetekkel korábbi, lejátszott fordulót a tabellából.
-
-   **A hiányos adat nem jelent „még tart"-ot.** A gyűjtő külön kezeli a „tudjuk, hogy a
-   forduló még tart" és a „nem tudtuk lekérdezni" esetet. Amit nem tudott kiértékelni (403,
-   elhasalt keret-lekérés), ott a forduló **korábbi** ideiglenes-állapota marad érvényben —
-   sem újat nem talál ki, sem meglévőt nem töröl találgatásból. Enélkül két irányba is
-   romolhatott az adat: egy hibás futás vagy kivett a tabellából egy lezárt fordulót, vagy
-   — súlyosabb — kiürítette a `provisional` listát, és akkor az élő forduló
-   **részeredménye véglegesként számított volna be**.
-4. **Forduló-lezárás**: egy forduló akkor végleges, ha minden játékosnak, **akinek van
-   meccse**, lement a meccse. Ehhez két jelzés kell együtt: `is_played`, **és** a meccslista
-   `completed` státusza. Csak az `is_played`-re támaszkodni hibás volt: az MLSZ már a meccs
-   *közben* igazra billenti, tehát amint a forduló utolsó meccse elkezdődött, mindenki
-   „játszott" lett — a gyűjtő lezártnak minősítette a fordulót, és a **félig kész eredmény
-   véglegesként került a tabellába**. Akinek **nincs meccse** a fordulóban (halasztás), az
-   nem számít bele — lásd lentebb, hogy miért. Mögötte biztonsági háló áll: ha a
-   játékos-szintű kép mégsem áll össze, de az MLSZ már továbblépett a fordulón, a gyűjtő
-   akkor is lezárja. Amíg a forduló nem végleges, a `provisional` listában van, és az oldal
-   nem számolja a tabellába.
-5. **Keresztellenőrzés**: a keretekből számolt pontszámot összeveti a hivatalossal. Ha
-   eltér, **nem jelzést ír, hanem javít**: újra lekéri a hivatalos értéket az adott
-   fordulóra, és azt vezeti át.
-
-#### Miért óránként a meccsnapokon (mérve)
-
-A `collect.py` **a piaczárás pillanatában tud először keretet kérni** — addig a
-keret-végpont 403-at ad, és a gyűjtő jogosan hagyja ki a fordulót. A piac nagyjából két
-órával a forduló első meccse elé zár. Ha az ezt követő futás kimarad, a forduló keretei
-addig nem kerülnek ki, amíg a következő meg nem jön.
-
-Elő is állt: a 9. forduló piaca szombat délben zárt, a következő ütemezett futás nem
-jött meg, és a nyolc keret **négy és fél órán át** nem került ki — a lapon közben az
-állt, hogy „Naprakész". A mérés nyersen: `naplo/nb1-round-state.txt`.
-
-Két mérés döntötte el az új ütemezést:
-
-| mit | mi jött ki |
+| File | Role |
 |---|---|
-| az NB1 kezdései az 1–8. fordulóból (47 meccs) | vasárnap 43%, szombat 32%, péntek 17%, hétfő 6%, csütörtök 2% — **keddre és szerdára egyetlen meccs sem esett**; a kezdések 14:00 és 20:00 helyi idő közé esnek |
-| a `17 */3` ütemezés tényleges teljesülése | a napi nyolc ígért futásból **3–4** lett, rendszeres **7–9 órás** lyukakkal — a GitHub az ütemezett indítások több mint felét eldobja |
+| `index.html` | **Home page: league picker.** It draws the cards from the `LEAGUES` list of `funtasy.js`, it loads no data of its own. |
+| `nb1/index.html` | The FunTasy NB1 page (formerly the root `index.html`). Only the page-specific HTML + JS; the schedule is hard-coded in the `SCHEDULE` constant, the managers in `MEMBERS`. |
+| `pl/index.html` | The FunTasy PL page (formerly `draft.html`). |
+| `draft.html` | Redirect from the old PL address to `/pl/`. New links must not point here. |
+| `funtasy.css` | The shared stylesheet (all three pages load it). |
+| `funtasy.js` | The shared engine: table, match panels, matrix, live marking (`FunTasy.create(...)`), the points breakdown accordion and the **league list** (`LEAGUES`), from which the league switcher bar and the home page cards are made. |
+| `results.json` | Archive of the H2H results: `{updated, provisional:[...], schedule:{"1":[[hazai,vendég,hp,vp],...]}}` (home, away, home points, away points). The page loads from it, overriding the hard-coded schedule. `provisional` is the list of rounds not closed yet. |
+| `squads.json` | The squads of the latest available round (`{updated, round, squads:{név:[játékos,...]}}`) — the source of the „Aktuális keret” tab; `round` says which round they belong to. On top of the bookmarklet's fields, a player record holds `id` (MLSZ player id, for the points breakdown), `played` ("played yet?"), `start` (the kick-off of his match in that round), `vege: true` (his match is over, even if the points are not processed yet) and — if the club has no match in the round — `nogame: true`. The page tolerates older records without these fields, but the collector does not leave them that way: a round whose records have no `played` is fetched once more together with the match list, and the missing fields are filled in. |
+| `squad_history.json` | Squad snapshots per round (`{updated, rounds:{"4":{név:[...]}}}`) — the source of the „Szezon játékosai” tab. The record format is the same as in `squads.json`. |
+| `naplo/` | **Measurement archive and the article tools** (see `naplo/README.md`). It holds the raw logs of one-off measurements (`*-probe.py` + `*.txt`; their conclusions are in this README: 3/b, "Automatic substitutions at the round's close (PL)", "Who is still on the pitch (PL)", "The three states of bonus points (PL)"), and the ACTIVE tools of the Nemzethy Sport articles: `article-prep.py` (the first step of every piece), `colour-check.py`, the harvest scripts (`*-harvest.py`, `timeline.py`), the rule files (`round-pipeline.md`, `kele-janek.md`, `summary-voice.md`, `colour-taxonomy.md`), the per-round colour tables (`nb1-colour-<round>.json`, `pl-colour-<round>.json`) and the per-league background facts (`nb1-background.json`, `pl-background.json`). Every probe runs from `.github/workflows/naplo-meres.yml`. |
+| `hatekonysag.json` | Line-up efficiency per round (`{updated, rounds:{"1":{név:{sz, le}}}}`) — the source of the NB1 KEZD% column and its match view. The collector recomputes it for every stored round on every run (deterministic). The PL has no such file: there the browser computes it from the squad history it has already loaded. |
+| `guardiola.json` | The **Guardiola index** per round: `{rounds:{forduló:{szakvezető:{teny,alt,guard}}}}` (round → manager). `guard` = the current squad's points minus the points of last week's squad in the same round. The collector computes it, because last week's squad needs the raw points of **every** player of that round (`bontasok/<round>.json`, 40 KB per round) — this way the page only needs these few kilobytes. |
+| `draft_pontok.json` | The points and minutes of the PL's **whole field** per round: `{rounds:{gw:{element:[pont,perc]}}}` (points, minutes). Needed for the Guardiola index: last week's squad can contain a player who is **no longer with anybody** (there were 11 such players from GW1 to GW2), and then his points would not be anywhere. The minutes are for the automatic substitutions. Only players who played or scored points are included. |
+| `draft_guardiola.json` | The same as `guardiola.json`, for the PL, keyed by `liga_id` (league entry id). |
+| `verzio.json` | A single number: the current `?v=`. From it the page knows whether it is **stale** — `?v=` busts the cache of `funtasy.js`/`css`, but not of the page's own HTML. If the file says a higher number, the page reloads **once** (`FunTasy.reloadIfStale`). |
+| `keretvaltozasok.json` | The data of the **Változtatások** (Moves) tab per round: who went out (`ki`), who came in (`be`), whose role changed (`szerep`), and the difference of the Hungarian rule (`bonusz`) — each with **how much it was worth**. The items add up to exactly `guard`; the `stimmel` (adds up) field says so too. The page derives the number in the table from it. |
+| `draft_keretvaltozasok.json` | The same for the PL, keyed by `liga_id` — plus `gepE`/`gepU`: what the **automatic substitution at closing** brought for the old and the new squad. The player items only contain what the **human** decided; the machine's contribution is separate. It stores no player names: the page resolves them from `draft_players.json`. |
+| `zarasok.json` | The changes of the round close (`{updated, rounds:{"1":{csapat_id:{pont:[{e,elott,utan}], ki:[...], be:[...]}}}}`) — the source of the main page's „Zárási változások” panel. The collector writes it **exactly once**, in the finalising run: the difference between the stored snapshot before the close and the fresh state. An empty entry is a result too ("the close changed nothing"); without an old snapshot (backfill) it cannot be computed. `ki`/`be` (out/in) are separate lists — the bench flag does not tell who came on for whom, so **no pairing is claimed**; their elements have the form `{e, pts}`, because the incoming player's points tell what the substitution brought (the page still accepts the old, id-only form). GW1 was filled in from the git history. |
+| `meccsek.json` | NB1 matches per round (`{updated, rounds:{"5":[{id,h,v,hp,vp,vege,start}]}}`) — the source of the match row above the points breakdown. The collector writes it from the match objects that travel in the squad responses; **a result only goes in for a finished match** (the collector, which runs hourly to every 3 hours, would otherwise preserve a partial score as final). A round with a missing or unfinished match is fetched again with the match list; a complete one only if the round's official points changed (this is the case of a **rescheduled match** — the postponed match is not in the list, so it would not show as "unfinished"). **Not every match of the round:** only those of the clubs that have a player in some squad — that is all the row above the breakdown needs. |
+| `jatekosok.json` | **All** players of the field (`{players:{id:{n,t,p,u21,pts,ar}}}`) — the source of the main page list and search. The collector writes it, from one request. |
+| `bontasok/<round>.json` | The **itemised points breakdown** of the round for every player (`{round, bontasok:{cp-id:[{n,v,p}]}}`): what made up the weekly points — goal, assist, minutes played… The collector fetches it **once**, when the round closes, for all 385 players, and again after an MLSZ correction. It deliberately has no `updated` field (see `keretek/`). |
+| `zarasok_nb1.json` | Per round, the **post-match point adjustments** the MLSZ applied before finalising the round. Its shape follows the PL `zarasok.json`, so the same display can serve it: `{rounds:{forduló:{szakvezető:{pont:[{n,cp,pos,tm,elott,utan,d}]}}}}`. A row with the `nk:1` flag means the player is not known: it shows „Ismeretlen játékos" (Unknown player) instead of a name, and `dl` (the size of the change) instead of `elott`/`utan`. A rare event in practice: the file exists as an empty skeleton and only grows when an adjustment really happened — the panel, too, only appears then. |
+| `arak.json` | The **changes** of the prices (`{arak:{id:[[dátum, ár], …]}}` — date, price). It only grows when a price really changed. |
+| `articles.json` | The league's **published** pieces (`{updated, leagues:{liga:{forduló:{summary|preview|elemzes:{kulcs:{text:[bekezdés,…], short, source, kozzetett}}}}}}`). **There are three kinds.** The `summary` and the `preview` each belong to a pairing; their key is `"Hazai|Vendég"` (Home|Away). The `elemzes` — *Kele Janek elemez* (Kele Janek analyses), the weekly column — belongs to the round, not to a pairing: its key is **its own title**, without `|`, and that is exactly how it is known to have no opponent (`FunTasy.articleList`). `text` is the full text by paragraph. `short` is the one sentence shown in the closed strip — the column **has none**: there the lead would be the subtitle itself and would break the arc of the text; then the first paragraph takes its place. `kozzetett` (published) is the ISO timestamp of going live, and **it is the page's order**: the paper does not go by round but by time (see *5/a7. The magazine is in publication order*). Machine guard: **D15** — a published piece cannot be without it. On the match sheet a **closed** strip reads it (`FunTasy.matchArticle`): the text is a one-off entertainment, the numbers under it are what matters, so it must not push them down. **The summary only appears for a closed round** — until then the points can still move (NB1: post-match adjustments, Draft: separate finalisation), and an "X won by this much" text would lie. This does not apply to the preview. The gate **is closed by default**: a caller that does not say the round has closed cannot let out an early summary. The pieces are currently **written by hand** (`source: "manual"`); the field is there so that later generated text can be told apart. **An article may only be made from CLOSED data**: a summary only of a final round, a preview only of the coming one. A text written DURING a round works from numbers that are still moving — a preview made that way claimed that someone had won the match he lost in the end. Machine guard: `tests/doc_checks.py` **D11**. Unpublished text does not go into the repository: the article is written straight here after approval. |
+| — | **Rating the pieces.** At the bottom of an opened article the piece can be rated from one to four. The two top grades are a single tap — whoever is satisfied should not have to work for it. The two lower ones **ask for a reason, in the viewer's own words**: a text box opens in place. Ready-made reasons are deliberately not offered — they would give back our own categories, and exactly the sentence we did not think of would be left out. „Elküldöm” (Send) does not offer itself while there is nothing to send; next to it, more quietly, the way out („Kötekszem, de indokolni már nem fogok” — "I'm nitpicking, but I won't give a reason"), which takes the grade but not the reason. The panel opens **inside** the strip, not in a new layer: the opinion is about what is under it, which must not be covered. The rating goes to the Worker (`POST /ertekeles`), and is kept in KV under the key `ert/<cikk>/<eszköz>` (article / device) — one device rates a piece once, a re-rating overwrites its own. To read them back: `GET /ertekelesek`. |
+| `valtozasok.json` | The entries of the changelog (`{bejegyzesek:[{datum, tipus, ligak, cim, leiras}]}`). **Written by hand**, not filled by a collector. **One feature = one entry**: what the viewer sees as one thing is one entry, even if it has several parts and was finished in several steps — it is not split into as many posts as the parts that were done. So `leiras` (description) can be **several paragraphs** (separated by an empty line), and the changelog page displays it that way. Until the feature is finished, the entry waits in `valtozasok-vazlat.json`. Splitting is checked by case **D4/b** of `tests/doc_checks.py`. |
+| `valtozasok-vazlat.json` | **Not yet published** changelog entries, in the same form. The changelog page does not read it; a finished entry moves from here to `valtozasok.json`. |
+| `nemzethy/index.html` | The **Nemzethy Sport** — *Heti Funtasy Magazin* (Weekly Funtasy Magazine). **It has two modes.** `?liga=nb1` (or `pl`) is **that league's paper**: in the league's own colours, with its name in the header, and only its pieces — it is opened from the league page's top bar, so the reader does not drop out of the league's world. Without a parameter it is the **combined edition**, with a league filter; the home page points to it in a highlighted row. In both, every piece in full text, **in publication order** — the most recently published first, regardless of league and round; so there is no league heading, the league's name is in the piece's header. Within a piece: kind, the pairing (for the column its own title), the short version as the lead, then the body. Filters in a single bar: **league, manager, round, kind — four separate controls**, freely combined (one person can be asked about within one league), next to them the hit count and a clear button; each only offers the values that really exist next to the other filters, so it cannot be set to an empty result. In the league's own paper the league filter drops out by itself (with one value the drop-down stays empty). Managers are listed **per person**, not per name: the two leagues know the same person by a different name (a nickname in the NB1, a team name in the PL), and someone who plays in both stands in a single row with both names — filtering on them brings up the pieces of both leagues. The linking is in the shared layer (`FunTasy.PEOPLE` + `FunTasy.personLookup`); the combined edition reads the PL team names from `draft.json` for it; in the league's own paper there is nothing to link, and that request is skipped. **The same gate** as on the match sheet: the summary of a round not closed does not show here either — the selection is done by `FunTasy.articleList`, so the two views cannot drift apart in what may be shown. Under every piece there is the rating strip, and a „Másolom” (Copy) button that puts the **full article** and the link to it on the clipboard (not just the lead — whoever copies takes the text). The text column's width is set in pixels (`ch` depends on the font, so the whole page would re-wrap when the web font arrives). **It has no `content-visibility`, deliberately**: while scrolling, the real height replaces the estimated one, and the page's height changes under your finger — measured eight times during one scroll to the end, up to 361 pixels at once. The top bar shows **two levels**: the leagues are alternatives to each other, but the paper is part of a league — so exactly one item is always lit (where you are), the paper's button does not disappear when you are on it, and from there the league's dot takes you back to the league page. |
+| `valtozasok/index.html` | The changelog page („Mi újult meg?" — What's new?). |
+| `collect.py` | GitHub Actions: collects the H2H results (rankings endpoint) **and** the squads (squad endpoint), determines the round close, fills in missed rounds. |
+| `collect_draft.py` | GitHub Actions: the data of the FPL Draft league. It filters out the participants' real names and the `entry_id` (the repository is public). |
+| `collector_common.py` | What **both** collectors do identically, in one copy: `stamp`, `write_compact` (atomic write) and `read_stored` (a missing file and a damaged one are not the same). Not a drawer for shared things - exactly these three live here, and all three are about one thing: that the **accumulating** files survive an interrupted run. While there were two copies, one could forget the guarantee, and it would only have shown **after** an interrupted run. See *An interrupted write cannot be read as "no history"*. |
+| `draft.json` | The data of the FPL Draft league (participants, schedule, results) — the source of `pl/index.html`. |
+| `draft_picks.json` | **The draft itself**: who picked whom, in which round and at which place (`{updated, league, rounds, picks:[{r, p, i, e, t, auto, sec}]}`). `i` is the overall pick number (1–150), `t` is our team id, `auto` says that **the machine picked** instead of the manager. The draft happened once and never changes, so it is not written by the collector but made by hand (`naplo/draft-picks-harvest.py`). There are two ids: in the response a team appears under its real FPL entry id, while ours is the league-entry id — the mapping comes from the league data, and the real id **does not go into the file**, just like the names. It is for colour: the first-round pick that was sold, or the goal of the draft's last pick. |
+| `draft_players.json` | FPL player master data: `{players: {id: {n: név, t: klub, p: poszt, pts: pont}}, teams: {csapat_id: rövidnév}}` (name, club, position, season points; team id → short name). `pts` (the season points) is for the main page player list. `teams` is needed to resolve the team ids of the fixtures response (whose match has started). |
+| `draft_squads.json` | The current FPL squads (ownership): `{updated, squads: {liga_id: [játékos_id,...]}}` (league entry id → player ids). |
+| `draft_history.json` | FPL squads per round, with points (`{updated, rounds:{gw:{liga_id:[{e,b,pts},...]}}, veglegesek:[...]}`) — accumulating from the start of GW1. The **`veglegesek`** (finals) list says which OLD rounds are final: the collector does not fetch those any more. It fetches the current round on every run, after the close too (see "3/b. CLOSING"). |
+| `keretek/<round>.json` | The squads of one round in a separate file (`{round, squads}`). The match view downloads **this**, not the whole history. |
+| `.github/workflows/archive.yml` | The collector's workflow: `collect.py` + commit. **On match days (Thursday–Monday) hourly at :17, on Tuesday–Wednesday every 3 hours at :17** (UTC) — see *Why hourly on match days*. |
+| `.github/workflows/draft.yml` | Workflow running `collect_draft.py` + commit: **every 3 hours at :47, plus hourly at :37 between 07:00 and 13:00 UTC** (and it can be started by hand) — see *The FPL Draft data*. |
+| `.github/workflows/naplo-meres.yml` | **Manual probe runner**: runs one `naplo/*.py` from Actions (the development environment's network blocks every external source), and commits what the probe wrote to the given branch. Its inputs: `script`, `branch`, `environment` (one `NAME=value` per line, e.g. `HARVEST_EVENT=5`). **This one workflow serves every probe** — no separate file is made per probe: that approach produced fourteen near-identical copies, three of them with a mistyped `git add` path, which silently lost the probe's result. |
+| `wrangler.toml` | The deploy config of the site's own Cloudflare Worker (`tartalek/proxy-worker.js`): Cloudflare runs `npx wrangler deploy` after every push to `main`, which reads this file. It also holds the binding of the Workers KV namespace (`TAROLT`) for the stored responses; the namespace id is not a secret (see "The last known score"). |
+| `tartalek/` | Not a spare-parts drawer only. **`tartalek/proxy-worker.js` is the LIVE Cloudflare Worker**: the site's own CORS proxy (the first route of every live fetch), the store of stored responses (`/tarolt`) and the ratings endpoint (`POST /ertekeles`, `GET /ertekelesek`) — deployed from `wrangler.toml`. `tartalek/kele/` holds the voice corpus of the model writer of the weekly column (the author's own football texts, saved by `naplo/kele-voice-probe.py`). The rest is the fallback: the bookmarklet (`GOMB-bookmarklet.txt`, its source `GOMB-forras.js` and its builder `bookmarklet-build.py`), its guide (`KERET-MENTES.md`) and the description of the obsolete manual backfill (`BACKFILL.md`). The website and the collectors read no data from here. |
+| `tests/` | The test suite: Python collector tests, browser tests and the documentation checks (`tests/doc_checks.py`), run together by `tests/run_all.sh` — see `tests/README.md` and section 5/b. |
 
-Ezért **csütörtöktől hétfőig óránként**, kedden-szerdán marad a három óra. Az óránkénti
-ütemezés nem ad 24 futást — azt adja, hogy **egy eldobott indítás egy órát kerüljön, ne
-hármat**. A kedd-szerda azért marad ritka, mert ott nincs mit elkapni.
+---
 
-### Az FPL Draft adatai (draft.yml)
+## 3. How the data is updated
 
-A `draft.yml` **3 óránként** fut, **07:00 és 13:00 UTC között pedig óránként**. A PL-forduló
-lezárását (`current_event_finished`) csak egy futás veheti észre, és az FPL a fordulót az
-utolsó meccs utáni napon, **délelőtt** zárja: mérve 08:03–08:23 UTC között billent át, és a
-gyűjtő minden eddigi zárást 08:52 és 13:01 UTC között rögzített. Háromórás ütemmel — a
-GitHub által kihagyott indításokkal együtt — a zárás órákig érvényesítetlen maradt, a forduló
-a lapon élőként állt. A nap többi részében nincs mit sűrűn elkapni: az élő állást a böngésző
-maga kéri le.
+### Everything runs automatically (GitHub Actions, hourly on match days)
 
-A `collect_draft.py` a liga-adatokon túl a játékos-törzset, a jelenlegi kereteket
-(tulajdonlás) és — a GW1 indulásától — a fordulónkénti kereteket gyűjti, pontokkal.
-A résztvevők valódi neve és `entry_id`-ja soha nem kerülhet a repóba (mentés előtti szűrő).
+`archive.yml` runs `collect.py`, which updates **everything**, with nothing to do by hand:
 
-### Élő frissítés a böngészőből (mindkét oldal)
+1. **H2H results** from the rankings endpoint (official round scores — the table's only
+   source).
+2. **Rechecking old rounds**: by default the rankings only return the two latest rounds, so
+   we would not learn of a later correction of an old round by ourselves. So every run
+   fetches **four old rounds** again, in rotating order (see *Self-repair: when the MLSZ corrects, the collector corrects too* below).
+3. **Squads** from the squad endpoint: the current round (with live player points), the last
+   closed one, every missing round — and every old round whose score changed in this run
+   (because then the squad snapshot is out of date too). **An old round fetched again cannot
+   become "provisional" because of this**: only the round being played now or the one that
+   has just closed can become provisional. Without this, a single failed squad fetch could
+   take a round played weeks earlier out of the table.
 
-Betöltéskor mindkét oldal percre friss adatot kér CORS-proxykon át: az NB1 a
-ranglista-végpontról az eredményeket (és kattintásra a kereteket), a PL a játékosonkénti
-élő pontokat, amikből a meccsállásokat összegzi. Hiba esetén a tárolt (néhány óránként
-frissülő) állapot marad.
+   **Incomplete data does not mean "still running".** The collector treats "we know the round
+   is still running" and "we could not fetch it" separately. Where it could not evaluate
+   (403, failed squad fetch), the round's **earlier** provisional state stays in force — it
+   neither makes up a new one nor deletes an existing one on a guess. Without this the data
+   could go wrong in two directions: a faulty run either took a closed round out of the
+   table, or — worse — emptied the `provisional` list, and then the live round's **partial
+   result would have counted as final**.
+4. **Round close**: a round is final when every player **who has a match** has finished his
+   match. This takes two signals together: `is_played` **and** the match list's `completed`
+   status. Relying on `is_played` alone is wrong: the MLSZ flips it to true already *during*
+   the match, so as soon as the round's last match started, everybody "played" — the
+   collector would judge the round closed, and the **half-finished result would go into the
+   table as final**. A player **with no match** in the round (postponement) does not count —
+   see below why. Behind it there is a safety net: if the player-level picture does not come
+   together but the MLSZ has already moved past the round, the collector closes it anyway.
+   While the round is not final, it is in the `provisional` list, and the page does not count
+   it in the table.
+5. **Cross-check**: the score computed from the squads is compared with the official one. If
+   they differ, it **does not write a warning, it corrects**: it fetches the official value
+   for that round again, and applies it.
 
-**Visszatéréskor újra lekér** (`FunTasy.ujraLathatokor`). Ez sokáig hiányzott: az élő
-állást csak a betöltés kérte le, egyszer. Asztali gépen ez nem tűnt fel, mert oda
-általában friss betöltéssel térünk vissza — **mobilon viszont nem töltünk újra**, csak
-visszaváltunk a lapra, amit a böngésző memóriából állít vissza. Így a főoldali meccslista
-a betöltéskori álláson fagyott (39 pont), miközben a meccs-adatlap — aminek van saját,
-nyitáskori lekérése — már a frisset mutatta (38). A segítő a `visibilitychange`, a
-bfcache-es `pageshow` és a `focus` eseményre futtatja újra a frissítést, legfeljebb
-30 másodpercenként, és sosem párhuzamosan.
+#### Why hourly on match days (measured)
 
-**Időzített frissítés szándékosan nincs:** nyitva hagyott lapon nem megy lekérés a
-proxykon át (mobilon adat és akku). Ha nézni akarod, hogy változik, vissza kell térni
-a laphoz — vagy újratölteni.
+`collect.py` **can fetch a squad at the earliest at the moment the market closes** — until
+then the squad endpoint answers 403, and the collector rightly skips the round. The market
+closes roughly two hours before the round's first match. If the run after that is missed, the
+round's squads are not published until the next one comes.
 
-### Az utolsó ismert állás — „ha valaki már lekérdezte, lássam azt"
+A measured case: round 9's market closed on Saturday around noon, the next scheduled run never
+came, and the eight squads were not published for **four and a half hours** — while the page
+said „Naprakész" (Up to date). The raw measurement: `naplo/nb1-round-state.txt`.
 
-**A kérés :** *„ne lássak régebbi adatot, mint a legutóbbi
-lekérdezés."* Megnyitod a telefonon, szépen befrissül; egy órával később a gépen
-ugyanazt a frissítést végig kell várni, és közben egy régebbi állást bámulsz.
+Two measurements set the schedule:
 
-**Miért állt elő.** A közös állapotunk egyetlen dolog: a repóban fekvő JSON-ok, amiket
-a gyűjtő néhány óránként ír. Az élő számot viszont minden eszköz a saját böngészőjében
-számolja ki, és az eredmény ott is marad. A telefon munkája nem írt vissza sehova.
+| what | what came out |
+|---|---|
+| NB1 kick-offs of rounds 1–8 (47 matches) | Sunday 43%, Saturday 32%, Friday 17%, Monday 6%, Thursday 2% — **not a single match fell on Tuesday or Wednesday**; kick-offs fall between 14:00 and 20:00 local time |
+| how the `17 */3` schedule is actually kept | of the eight promised runs a day, **3–4** happened, with regular **7–9 hour** gaps — GitHub drops more than half of the scheduled starts |
 
-**Amivel NEM oldható meg: gyorsítótár.** A lejáratos gyorsítótár csak akkor segít, ha a
-lejáraton belül érkezel; egyébként eldobja a másolatot, és kezdheted elölről. A
-stale-while-revalidate meg épp fordítva rossz: hosszú szünet után **az elsőként érkező**
-kapja a régi másolatot — vagyis pont az, akinek segíteni akarnánk.
+So **Thursday to Monday hourly** (at :17 UTC), on Tuesday–Wednesday it stays every three hours
+(at :17). The hourly schedule does not give 24 runs — what it gives is that **a dropped start
+costs one hour, not three**. Tuesday–Wednesday stays sparse because there is nothing to catch
+then.
 
-**A megoldás: tároló a Workerben.** Nem lejáró gyorsítótár, hanem tároló, ami megőrzi,
-amíg jobb nem jön. A Worker — ami eddig is ott ült minden lekérés útjában — megjegyzi a
-választ, amit **ő maga** kért le (tehát nincs mit meghamisítani: nem a böngésző küld fel
-adatot), a lap pedig betöltéskor **egyetlen kérésben** elkéri az egészet
-(`/tarolt?url=..&url=..`), még az élő lekérés előtt.
+### The FPL Draft data (draft.yml)
+
+`draft.yml` runs **every 3 hours at :47**, plus **hourly at :37 between 07:00 and 13:00 UTC**.
+Only a run can notice the close of a PL round (`current_event_finished`), and the FPL closes
+the round on the day after the last match, **in the morning**: measured, it flipped between
+08:03 and 08:23 UTC, and the collector recorded every close so far between 08:52 and
+13:01 UTC. With a three-hour schedule alone — together with the starts GitHub skips — the close
+would stay unapplied for hours, and the round would show as live on the page. For the rest of
+the day there is nothing to catch often: the browser fetches the live score itself.
+
+Besides the league data, `collect_draft.py` collects the player master data, the current
+squads (ownership) and — from the start of GW1 — the squads per round, with points.
+The participants' real names and `entry_id` can never go into the repository (a filter before
+saving).
+
+### Live refresh from the browser (both pages)
+
+On load both pages fetch minute-fresh data through CORS proxies: the NB1 fetches the results
+from the rankings endpoint (and the squads on click), the PL the live points per player, from
+which it sums the match scores. On error the stored state (refreshed every few hours) stays.
+
+**It fetches again when you return** (`FunTasy.onVisibleAgain`). Fetching only on load, once,
+is not enough. On desktop it would not show, because there one usually returns with a fresh
+load — **on mobile, however, one does not reload**, only switches back to the tab, which the
+browser restores from memory. The main page's match list then stays frozen at the load-time
+score (39 points), while the match sheet — which has its own fetch on opening — already shows
+the fresh one (38). The helper reruns the refresh on the `visibilitychange` event, the
+bfcache `pageshow` and `focus`, at most every 30 seconds, and never in parallel.
+
+**There is deliberately no timed refresh:** a tab left open sends no requests through the
+proxies (data and battery on mobile). If you want to watch it change, you have to return to
+the tab — or reload it.
+
+### The last known score — "if somebody has already fetched it, let me see that"
+
+**The requirement:** *"let me not see older data than the latest fetch."* You open it on the
+phone, it refreshes nicely; an hour later on the computer you have to wait through the same
+refresh, and meanwhile you stare at an older score.
+
+**Why it happens.** Our only shared state is the JSON files in the repository, which the
+collector writes every few hours. The live number, however, is computed by every device in
+its own browser, and the result stays there. The phone's work is not written back anywhere.
+
+**What does NOT solve it: a cache.** An expiring cache only helps if you arrive within the
+expiry; otherwise it discards the copy, and you start from scratch. Stale-while-revalidate is
+wrong the other way round: after a long pause **the first to arrive** gets the old copy — that
+is, exactly the one we would want to help.
+
+**The solution: a store in the Worker.** Not an expiring cache but a store, which keeps the
+response until a better one comes. The Worker — which already sits in the path of every fetch —
+remembers the response that **it fetched itself** (so there is nothing to forge: the browser
+does not send data up), and on load the page asks for all of it in **a single request**
+(`/tarolt?url=..&url=..`), before the live fetch.
 
 | | |
 |---|---|
-| Mit tárol | amit **ritkán** változik: NB1 élő pont (naponta 2-4×), PL keretek és liga-adat (fordulónként fix) |
-| Mit nem | a PL élő pontot — az percenként változik, a legutóbbi válasz egy perc múlva értéktelen |
-| Mikor ír | **csak változáskor** — enélkül a KV napi 1000 írásos ingyenes kerete pár óra alatt elfogyna |
-| Mennyibe kerül | NB1: ~30 írás/nap · PL keretek: 10-20 írás/forduló |
+| What it stores | what changes **rarely**: NB1 live points (2-4× a day), PL squads and league data (fixed per round) |
+| What it does not | the PL live points — they change every minute, the last response is worthless a minute later |
+| When it writes | **only on change** — otherwise the KV's free allowance of 1000 writes a day would run out in a few hours |
+| What it costs | NB1: ~30 writes/day · PL squads: 10-20 writes/round |
 
-A státuszsáv a **lekérés** idejét írja ki, nem a mostanit: „Élő állás — 8. forduló ·
-frissítve 21:27" pontosan azt állítja, hogy ezt látta utoljára bárki — nem azt, hogy épp
-most ellenőriztük.
+The status bar shows the time of the **fetch**, not the current time: „Élő állás — 8. forduló ·
+frissítve 21:27" (Live score — round 8 · updated 21:27) states exactly that this is what
+anybody last saw — not that we have just checked.
 
-**Két védővonal.** Ha a KV-kötés valaha hiányozna (törölt névtér, más fiók), a Worker
-pontosan úgy működik, mint korábban, és a lap a szokásos élő úton megy — ezt külön teszt
-méri, hogy ne álljon meg tőle semmi. A tárolt állás pedig sosem helyettesíti az élő
-lekérést, csak megelőzi: a `refresh` utána ugyanúgy fut, és ha közben változott
-valami, felülírja.
+**Two lines of defence.** If the KV binding were ever missing (deleted namespace, another
+account), the Worker works exactly as without the store, and the page goes the usual live way —
+a separate test checks this, so that nothing stops because of it. And the stored score never
+replaces the live fetch, it only comes before it: `refresh` runs after it just the same, and if
+something changed in the meantime, it overwrites it.
 
-A névtér azonosítója a `wrangler.toml`-ban áll. Ez **nem titok**: önmagában semmire nem
-jogosít, a tartalmához a Cloudflare-fiók kell — ahogy a worker URL-je is a repóban van.
+The namespace id is in `wrangler.toml`. It is **not a secret**: by itself it grants nothing,
+its content needs the Cloudflare account — just as the worker's URL is in the repository too.
 
-**Ahol a szabály két helyen élne, ott nem él kétszer.** A ranglista-URL egyetlen helyen
-készül (`rangUrl`), mert ugyanaz az URL a lekérés címe **és** a tároló kulcsa — ha két
-helyen állna össze, észrevétlenül elcsúszhatna, és a tároló sosem találna. A válasz
-értelmezése (`beolvas`) és a kirajzolás (`kirajzol`) szintén közös az élő és a tárolt
-úton.
+**Where the rule would live in two places, it does not live twice.** The rankings URL is built
+in a single place (`rankingUrl`), because the same URL is the address of the fetch **and** the
+key of the store — if it were assembled in two places, it could drift apart unnoticed, and the
+store would never hit. Reading the response (`readRanking`) and drawing it (`applyLive`) are
+also shared by the live and the stored path.
 
-**Mérés.** A Workert a fejlesztői környezetből nem lehet elérni (a hálózat nem enged ki
-a `workers.dev`-re), ezért a logikáját hamis KV-vel mérjük
-(`tests/workertarolo.teszt.js`), a lap oldalát böngészőből
-(`tests/taroltallas.teszt.js`), a valódi végpontról-végpontig mérés pedig GitHub
-Actionsből megy (`naplo/storage-probe.py` a közös `.github/workflows/naplo-meres.yml`-lel).
+**Measurement.** The Worker cannot be reached from the development environment (the network
+does not let out to `workers.dev`), so its logic is checked with a fake KV
+(`tests/workertarolo.teszt.js`), the page side from a browser
+(`tests/taroltallas.teszt.js`), and the real end-to-end measurement runs from GitHub
+Actions (`naplo/storage-probe.py` with the shared `.github/workflows/naplo-meres.yml`).
 
-### Az NB1 élő lekérése két körben megy, nem nyolcban (mérve)
+### The NB1 live fetch runs in two rounds, not eight (measured)
 
-Az NB1 élő állása **szakvezetőnként egy külön MLSZ-lekérésből** áll össze: 8 ember =
-8 kérés, és ez élő forduló alatt percenként újra lefut. Korábban mind a nyolc **egymás
-után** ment, egyenként megvárva — nyolc kör-út sorban. Ez volt a fő oka annak, hogy az
-oldal „szép lassan" frissült be, nem a gyorsítótár.
+The NB1 live score is put together from **a separate MLSZ request per manager**: 8 people =
+8 requests, and during a live round this reruns every minute. Sent **one after another**,
+each awaited, that is eight round trips in a row. That is the main reason the page refreshes
+"slowly", not the cache.
 
-Az arány külön rossz volt, mert az MLSZ **meccs közben nem ad pontot** (`eloPontok:
-false`): a pontok a lefújás után kerülnek be, vagyis a nyolc kör-út percenként olyan
-adatért ment, ami naponta 2-4-szer változik.
+The ratio is especially bad because the MLSZ **gives no points during a match** (`livePoints:
+false`): the points go in after the final whistle, so the eight round trips every minute
+would be for data that changes 2-4 times a day.
 
-Most az **első kérés megy egyedül**, a maradék hét **egyszerre**. Az első azért marad
-külön, mert a lekérő abból tanulja meg, melyik proxy-út működik (`FunTasy.lekero`
-„bevált" útja); ha mind a nyolc egyszerre indulna, egy rossz napon mind a nyolc
-végigpróbálná a teljes útlistát — volt már ilyen nap.
+Now the **first request goes alone**, the remaining seven **at once**. The first stays
+separate because the fetcher learns from it which proxy route works (the "proven" route of
+`FunTasy.makeFetcher`); if all eight started at once, on a bad day all eight would try the
+whole route list — such days happen.
 
-Aki a párhuzamos körből kiesik, azt **egyesével újrakérjük**: egy sorozatkérésre adott
-elutasítás ne hagyjon lyukat az állásban (a hiányzó szakvezető meccse különben állás
-nélkül maradna abban a körben).
+Whoever drops out of the parallel round is **fetched again one by one**: a rejection of a burst
+of requests must not leave a hole in the score (the missing manager's match would otherwise be
+without a score in that round).
 
-Mérve a teszttel, kérésenként 250 ms késleltetéssel: **513 ms** a korábbi ~2000 ms
-helyett. Rögzíti: `parhuzamos.teszt.js`.
+Measured with the test, with a 250 ms delay per request: **513 ms** instead of ~2000 ms
+sequentially. Pinned by: `parhuzamos.teszt.js`.
 
-### A CORS-proxyk cserélhetők — és cserélni is kellett (mérve)
+### The CORS proxies are interchangeable — a free proxy can disappear (measured)
 
-A böngésző az MLSZ/FPL API-t közvetlenül nem érheti el (a válaszban nincs
-`Access-Control-Allow-Origin` — ezt mértük, nem hisszük), ezért minden élő lekérés
-proxyn megy át. Egyszer **a két akkori proxy egyszerre halt meg**: a `corsproxy.io`
-401-re váltott (regisztrációhoz kötötték a szolgáltatást), az `allorigins` túlterhelt volt
-(522). Mivel minden élő kérés ezen a kettőn múlt, **mindkét liga** élő része — pont-bontás,
-élő pontok, élő keret — egyszerre állt le. A tárolt adatot ez nem érintette.
+The browser cannot reach the MLSZ/FPL API directly (the response has no
+`Access-Control-Allow-Origin` — measured, not assumed), so every live fetch goes through a
+proxy. Two free proxies can **fail at the same time**: `corsproxy.io` switched to 401 (the
+service was tied to registration), `allorigins` was overloaded (522). With every live request
+depending on those two, the live part of **both leagues** — points breakdown, live points,
+live squad — stopped at once. The stored data was not affected.
 
-A tanulság: egy ingyenes proxy bármikor eltűnhet, ezért **több független út kell**. A
-kilenc jelöltet végigmérő futás (`naplo/proxy-probe.py` → `naplo/proxy-probe.txt`) alapján
-az út-sorrend most: `direkt` → `proxy.cors.sh` → `allorigins /raw` → `allorigins /get`
-(ez **csomagolva** adja a választ, `{contents: "..."}` — a lekérő kibontja) → `cors.lol` →
-`corsproxy.io` (a sor végén, hátha visszaengedik). Az első siker után a lekérő a bevált
-úton marad. A láncot a `tests/lekero.teszt.js` rögzíti — benne pont ez a
-hibakép: corsproxy 401 + néma allorigins mellett a cors.sh-nak kell kiszolgálnia.
+The lesson: a free proxy can disappear at any time, so **several independent routes are
+needed**. The route order in `funtasy.js` (`makeFetcher`) is: `sajat` (the site's own
+Cloudflare Worker, `OWN_PROXY`) → `direkt` → `proxy.cors.sh` → `allorigins /raw` →
+`allorigins /get` (this one returns the response **wrapped**, `{contents: "..."}` — the fetcher
+unwraps it) → `cors.lol` → `corsproxy.io` (at the end of the list, in case it is let back in).
+The own Worker comes first, even before `direkt`, because the direct route to these two APIs
+never works from a browser (they send no CORS headers) — trying it first would be wasted. The
+order of the public proxies follows the run that measured nine candidates
+(`naplo/proxy-probe.py` → `naplo/proxy-probe.txt`). After the first success the fetcher stays
+on the proven route. The chain is pinned by `tests/lekero.teszt.js` — including exactly this
+failure: with corsproxy 401 + a silent allorigins, cors.sh has to serve.
 
-Ha megint minden út elhasal, a pont-bontás hibaüzenete felsorolja, melyik miért
-(`direkt:CORS · corsproxy:HTTP 401 · …`) — ebből lehet diagnosztizálni, kézre esik
-képernyőképen is.
+If every route fails again, the points breakdown's error message lists which one failed and why
+(`direkt:CORS · corsproxy:HTTP 401 · …`) — it can be diagnosed from this, handy in a screenshot
+too.
 
-**Saját proxy (Cloudflare Worker).** A tartós megoldás a saját közvetítő: a
-`tartalek/proxy-worker.js`-ben élő Cloudflare Worker (ingyenes terv, bankkártya nem
-kell, a napi 100 000-es keret a forgalmunk sokszorosa). A worker **a repóhoz van kötve**:
-a Cloudflare minden `main`-re érkező push után lefuttatja az `npx wrangler deploy`-t, ami
-a gyökérbeli `wrangler.toml` alapján a worker-kódot telepíti — kézzel soha nem kell kódot
-másolni, a worker együtt változik az oldallal. Csak a két ismert API-t szolgálja ki és csak
-ennek az oldalnak, tehát nem lehet visszaélni vele; az MLSZ-válaszokat 60 másodpercig a
-Cloudflare peremhálója gyorsítótárazza, így akárhányan nézik ugyanazt, az MLSZ felé
-percenként egy kérés megy. A Worker URL-je a `funtasy.js` elején álló `SAJAT_PROXY`
-konstansba kerül — amíg üres, a lekérő kihagyja, és a publikus proxyk viszik (utána is
-ott maradnak tartaléknak).
+**Own proxy (Cloudflare Worker).** The durable solution is our own intermediary: the Cloudflare
+Worker in `tartalek/proxy-worker.js` (free plan, no bank card needed, the daily allowance of
+100,000 requests is many times our traffic). The worker **is tied to the repository**: after
+every push to `main`, Cloudflare runs `npx wrangler deploy`, which deploys the worker code
+according to `wrangler.toml` in the root — code never has to be copied by hand, the worker
+changes together with the site. It only serves the two known APIs and only for this site, so
+it cannot be abused; MLSZ responses are cached for 60 seconds by Cloudflare's edge network, so
+however many people watch the same thing, one request a minute goes to the MLSZ. The Worker's
+URL is in the `OWN_PROXY` constant of `funtasy.js`, and it is the **first** route of the
+fetcher. If the constant were empty, the fetcher would skip it and the public proxies would
+carry the traffic — they stay in the list as fallbacks either way.
 
-### A betűkészlet nem állíthatja meg a lapot (mérve)
+### The fonts cannot stop the page (measured)
 
-A három betűcsalád (Inter, JetBrains Mono, Archivo Black) a Google Fontsról jön. Sokáig
-sima `<link rel="stylesheet">`-tel — ami **renderelést blokkoló**: amíg a Google nem
-válaszol, a lapon *semmi* nincs. Kimérve: ha a `fonts.googleapis.com` nem elérhető, a
-`DOMContentLoaded` **57 ms helyett 12 640 ms**. Mobilon, gyenge hálón pont az a helyzet,
-amikor az ember megnézné az állást.
+The three font families (Inter, JetBrains Mono, Archivo Black) come from Google Fonts. A plain
+`<link rel="stylesheet">` is **render-blocking**: until Google answers, there is *nothing* on
+the page. Measured: if `fonts.googleapis.com` is unreachable, `DOMContentLoaded` comes at
+**12,640 ms instead of 57 ms**. On mobile, on a weak network, that is exactly when one wants
+to check the score.
 
-Mostantól az ív **aszinkron** (`media="print"` + `onload="this.media='all'"`, mellette
-`<noscript>`-ág annak, akinél nincs JS), és a `fonts.gstatic.com`-ra is megy `preconnect` —
-a betűfájlok onnan jönnek. Ugyanezzel a méréssel a lap **216 ms** alatt kirajzolódik akkor
-is, ha a betűkészlet-szolgáltatás egyáltalán nem válaszol.
+So the stylesheet loads **asynchronously** (`media="print"` + `onload="this.media='all'"`,
+with a `<noscript>` branch for those without JS), and `fonts.gstatic.com` gets a `preconnect`
+too — the font files come from there. With the same measurement the page draws in **216 ms**
+even if the font service does not answer at all.
 
-A másik fele a CSS-ben van: a három családnak **tartalék-sora** van, és mindegyik egy
-változón át megy (`--fo`, `--mono`, `--cim` a `:root`-ban). Enélkül a `display=swap` a
-böngésző alapértelmezésével (talpas Times) festene először, más betűszélességgel — a
-táblázat ugrana egyet a webfont megérkezésekor. A változók egyben a korábbi **60+ helyre
-beírt** betűnevet is egy helyre húzták.
+The other half is in the CSS: the three families have **fallback stacks**, and each goes
+through a variable (`--fo`, `--mono`, `--cim` in `:root`). Without them `display=swap` would
+first paint with the browser default (serif Times), with different glyph widths — the table
+would jump when the web font arrives. The variables also keep the font names in one place
+instead of the **60+ places** they would otherwise be written in.
 
-Rögzítve: `tests/betukeszlet.teszt.js`.
+Pinned by: `tests/betukeszlet.teszt.js`.
 
-**JavaScript nélkül** eddig csak az üres váz látszott — panel-címek, üres táblázatok, egy szó
-magyarázat nélkül. Mostantól minden oldal tetején `<noscript>`-figyelmeztetés áll, hogy a
-táblázatokat a böngésző tölti fel, tehát JS kell hozzá. Ugyanaz az elv, mint a státuszsornál:
-ha valami hiányzik, azt az oldal **mondja meg**, ne a látogató találgassa.
+**Without JavaScript** only the empty skeleton would show — panel titles, empty tables,
+without a word of explanation. So every page has a `<noscript>` warning at the top saying
+that the browser fills the tables, so JS is needed. The same principle as with the status
+line: if something is missing, the page **says so**, the visitor does not have to guess.
 
-### Gyorsítótár: miért ragadt be a pontszám iPhone-on
+### Cache: why the score got stuck on an iPhone
 
-Az élő lekérések sokáig **gyorsítótár-törés nélkül** mentek, és a `fetch` sem kapott
-`cache` beállítást. Emiatt állt elő, hogy iPhone-on *akárhányszor újratöltve* ugyanaz a
-játékos-pont jött vissza, miközben másik eszközön már a friss. Ez **megosztott**
-gyorsítótár volt (a CORS-proxyké), nem a készüléké — ezért nem is oldotta meg az
-újratöltés.
+Without cache busting on the live fetches, and with no `cache` option on `fetch`, an iPhone
+got back the same player points *however many times it was reloaded*, while another device
+already showed the fresh ones. That was a **shared** cache (the CORS proxies'), not the
+device's — which is why reloading did not solve it.
 
-Három rétegben törjük:
+It is busted in three layers:
 
-| Réteg | Hogyan |
+| Layer | How |
 |---|---|
-| böngésző | `cache:'no-store'` **minden** élő lekérésen (a repóból jövő JSON-oknak eddig is volt `?t=` bélyegük) |
-| CORS-proxy | a proxy URL-je `&_=<időbélyeg>`-et kap, tehát a proxy gyorsítótárkulcsa mindig más |
-| FPL | a **belső** URL is kap `fpl_=<időbélyeg>`-et (az FPL az ismeretlen paramétert figyelmen kívül hagyja) |
+| browser | `cache:'no-store'` on **every** live fetch (the JSON files from the repository already had a `?t=` stamp) |
+| CORS proxy | the proxy URL gets `&_=<timestamp>`, so the proxy's cache key is always different |
+| FPL | the **inner** URL gets `fpl_=<timestamp>` too (the FPL ignores an unknown parameter) |
 
-Az **MLSZ saját URL-jéhez szándékosan nem nyúlunk**: nincs igazolva, hogy tűr egy
-ismeretlen paramétert, és ott a `no-store` amúgy is elég — a direkt kérés és az MLSZ
-között nincs megosztott gyorsítótár.
+**The MLSZ's own URL is deliberately left alone**: it is not verified that it tolerates an
+unknown parameter, and there `no-store` is enough anyway — there is no shared cache between
+the direct request and the MLSZ.
 
-Az NB1 pont-bontásának gyorsítótára is kapott lejáratot: **élő fordulóban 60 másodperc**
-(lezárt forduló bontása már nem változik), ahogy a PL-en is.
+The NB1 points breakdown cache has an expiry too: **60 seconds in a live round** (the
+breakdown of a closed round no longer changes), as on the PL.
 
-### „frissítés… 1,2 mp" — a néma számcsere ellen
+### „frissítés… 1,2 mp" — against the silent number swap
 
-A meccs-adatlap és (élő fordulóban) a keret-nézet **először a tárolt számokkal rajzol**,
-és amikor a percre friss lekérés megjön, kicseréli őket. Gyors hálón ez észre sem vehető;
-lassún viszont vagy régi adatot nézel anélkül, hogy tudnád, vagy a számok az orrod előtt
-ugranak át.
+The match sheet and (in a live round) the squad view **draw with the stored numbers first**,
+and when the minute-fresh fetch arrives, they swap them. On a fast network this goes
+unnoticed; on a slow one, however, you either look at old data without knowing it, or the
+numbers jump under your nose.
 
-Fix küszöböt nem lehet jól megválasztani — a lekérés ideje a hálózattól és a CORS-proxytól
-függ, és ugyanazon a készüléken is szór. Ezért a jelzés **magát méri**: csak akkor jelenik
-meg, ha a lekérés fél másodpercnél tovább tart, és kiírja, mennyi ideje fut
-(`FunTasy.lassuJelzo`). Gyors válasznál soha nem látszik, tehát nem villog feleslegesen —
-lassúnál viszont a kiírt idő egyben mérés is arról, mennyibe kerül valójában egy lekérés.
+No fixed threshold can be chosen well — the fetch time depends on the network and the CORS
+proxy, and varies on the same device too. So the indicator **measures itself**: it only
+appears if the fetch takes longer than half a second, and shows how long it has been running
+(„frissítés… 1,2 mp" — refreshing… 1.2 s; `FunTasy.slowIndicator`). With a fast response it
+never shows, so it does not flicker needlessly — with a slow one, the time shown is also a
+measurement of what a fetch really costs.
 
-Három helyen van ilyen csere, mindhárom kapott jelzést: az NB1 élő meccs-adatlapja, az NB1
-keret-nézete élő forduló közben, és a PL meccs-adatlapja.
+There are three places with such a swap, and all three have the indicator: the NB1 live match
+sheet, the NB1 squad view during a live round, and the PL match sheet.
 
-### Fordulóhatár és lezárult PL-forduló: az élő réteget el kell dobni
+### Round boundary and a closed PL round: the live layer must be dropped
 
-Ha a forduló azóta zárult le, hogy a lapot betöltötted (például háttérben volt a fül), a
-visszatéréskori frissítés a státuszsávot naprakészre állítja — de a meccslistában bent
-maradnának a legutolsó lekérés számai **„élő" felirattal**, holott már végleges eredmény
-jár oda. Ezért ilyenkor az élő réteg törlődik, és a lista a tárolt eredményre esik vissza
-(azt a gyűjtő írja be a következő körben).
+If the round closed since you loaded the page (for example the tab was in the background), the
+refresh on returning sets the status bar to up to date — but the match list would keep the
+numbers of the last fetch **with the „élő" (live) label**, although a final result belongs
+there. So in this case the live layer is cleared, and the list falls back to the stored result
+(the collector writes it in on its next run).
 
-Ugyanez kell **fordulóhatáron** is: amikor az API átlép a következő fordulóra, az előzőt
-el kell engedni. Két baj származna belőle. Egyrészt a régi forduló panelja „élő"
-jelöléssel ragadna bent. Másrészt — és ez a rosszabb — a `LIVEPTS` és a `LIVEFX` csak
-**sikeres** lekéréskor frissül, tehát ha az új forduló első lekérése elhasal, az *előző*
-forduló pontjai jelentek volna meg az újé gyanánt, „élő állás" felirattal.
+The same is needed **at a round boundary**: when the API moves on to the next round, the
+previous one has to be let go. Two problems would follow otherwise. First, the old round's
+panel would stick with the „élő" marking. Second — and this is the worse one — `LIVEPTS` and
+`LIVEFX` are only updated on a **successful** fetch, so if the new round's first fetch fails,
+the *previous* round's points would appear as the new one's, labelled as a live score.
 
-### A főoldali lista és a meccs-adatlap nem mondhat mást
+### The main page list and the match sheet cannot disagree
 
-A meccs-adatlap megnyitáskor **saját** élő lekérést indít, a főoldali lista viszont csak
-betöltéskor és visszatéréskor számol. Így fordulhatott elő, hogy a listán 39 pont állt,
-rákattintva viszont 38 (a játékos időközben pontot bukott). Mostantól amit az adatlap
-lekér, azzal a **mögöttes lista is frissül** (`eloAllasFrissit`) — ugyanabból az adatból
-két különböző szám nem jöhet ki, és plusz hálózati kérésbe sem kerül. Ugyanez vonatkozik a
-csapat **keret-nézetére** is, aminek szintén van saját élő lekérése.
+The match sheet starts its **own** live fetch on opening, while the main page list only
+computes on load and on return. So the list could show 39 points while clicking it showed 38
+(the player lost points in the meantime). What the sheet fetches therefore **also updates the
+list behind it** (`updateLiveScores`) — two different numbers cannot come out of the same
+data, and it costs no extra network request. The same applies to the team's **squad view**,
+which also has its own live fetch.
 
-### Ami tudatosan következetlen maradt
+### What is deliberately left inconsistent
 
-A meccs vége után, amíg az MLSZ nem tette be a pontokat, a **sor 0-t mutat**, a pont-bontás
-viszont megmondja az igazat („a pontok feldolgozása még tart"). Kötőjelet azért nem teszünk
-oda, mert a sor nem tudhatja, megérkezett-e már a bontás — kideríteni csak játékosonkénti
-lekéréssel lehetne (15 játékos × 8 keret fordulónként). Mivel a bontásból egy kattintással
-kiderül az igazság, ez nem éri meg a bonyolítást.
+After the match ends, until the MLSZ has put the points in, the **row shows 0**, while the
+points breakdown tells the truth („a pontok feldolgozása még tart" — the points are still
+being processed). A dash is not put there, because the row cannot know whether the breakdown
+has arrived — finding out would take a fetch per player (15 players × 8 squads per round).
+Since one click on the breakdown reveals the truth, it is not worth the complication.
 
-**A státuszsáv szövegei közösek** (`funtasy.js` → `FunTasy.statusz`), hogy a két oldal
-ne beszéljen kétféleképpen ugyanarról az állapotról:
+**The status bar texts are shared** (`funtasy.js` → `FunTasy.statusLine`), so that the two
+pages do not speak about the same state in two ways:
 
-| Állapot | Szöveg |
+| State | Text |
 |---|---|
-| lekérés közben | *Élő állás lekérése…* |
-| élő forduló, friss adattal | *Élő állás — 5. forduló · frissítve 21:07 (a tabella csak lezárt fordulókból számol)* |
-| nincs folyamatban lévő forduló | *Naprakész · ellenőrizve 21:07* |
-| a lekérés elhasalt, forduló közben | *Automata lekérés hiba: az állások a forduló végén frissülnek.* |
-| a lekérés elhasalt, nyugalmi időszakban | *Az élő frissítés most nem elérhető — a tárolt állás látható (mentve: aug. 21. 19:14).* |
+| while fetching | *Élő állás lekérése…* |
+| live round, with fresh data | *Élő állás — 5. forduló · frissítve 21:07 (a tabella csak lezárt fordulókból számol)* |
+| no round in progress | *Naprakész · ellenőrizve 21:07* |
+| the fetch failed, during a round | *Automata lekérés hiba: az állások a forduló végén frissülnek.* |
+| the fetch failed, in a quiet period | *Az élő frissítés most nem elérhető — a tárolt állás látható (mentve: aug. 21. 19:14).* |
 
-A „frissítve" itt **mindig az élő ellenőrzés ideje**, a „mentve" pedig a tárolt fájl kora.
-Korábban a PL a fájl korát írta ki „Frissítve" néven, az NB1 viszont az ellenőrzés idejét
-— ugyanaz a szó két különböző dolgot jelentett.
+(In order: fetching the live score…; live score — round 5 · updated 21:07 (the table counts
+closed rounds only); up to date · checked 21:07; automatic fetch error: the scores update at
+the end of the round; the live refresh is not available now — the stored score is shown
+(saved: 21 Aug 19:14).)
 
-### Tartalék: a böngészős könyvjelző
+Here „frissítve" (updated) is **always the time of the live check**, and „mentve" (saved) the
+age of the stored file. The two must not be mixed: if one page printed the file's age as
+„Frissítve" and the other the time of the check, the same word would mean two different
+things.
 
-Ha a szerveroldali gyűjtés elromlana (pl. az MLSZ tényleg letiltaná az adatközponti
-IP-ket), a keretek a `Keret mentés` könyvjelzővel menthetők a böngésződből — beállítása:
-[`tartalek/KERET-MENTES.md`](tartalek/KERET-MENTES.md). A könyvjelző fine-grained tokent használ (csak erre
-a repóra, csak `Contents: Read and write`); a repóban a token mindig helyőrző.
+### Fallback: the browser bookmarklet
+
+If server-side collection broke (e.g. the MLSZ really blocked data-centre IPs), the squads can
+be saved from your browser with the `Keret mentés` (Save squad) bookmarklet — its setup:
+[`tartalek/KERET-MENTES.md`](tartalek/KERET-MENTES.md). The bookmarklet uses a fine-grained
+token (only for this repository, only `Contents: Read and write`); in the repository the token
+is always a placeholder.
 
 ---
 
-## 3/b. A LEZÁRÁS — mi mit jelent, és hol dől el
+## 3/b. CLOSING — what means what, and where it is decided
 
-**Ezt olvasd el, mielőtt bármelyik lezárás-logikához hozzányúlsz.** A „lezárult" szó a
-projektben **négy különböző dolgot** jelent, külön jelzőkkel és külön következményekkel.
-Egyszer már abból lett hiba, hogy az egyiket a többi ismerete nélkül írtam át.
+**Read this before you touch any closing logic.** In this project the word "closed" means
+**four different things**, with separate flags and separate consequences. Changing one of them
+without knowing the others causes bugs.
 
-| mit zárunk le | liga | miből dől el | mire hat |
+| what is closed | league | what decides it | what it affects |
 |---|---|---|---|
-| **egy meccs** | NB1 | a meccslista `status == "completed"` — de csak a `meccsAllapot` időkorlátaival együtt hihető | a részletező üzenete, a `meccsek.json` eredménye, a játszott perc sora |
-| **egy meccs** | PL | `started` → `finished_provisional` → `finished` (három állapot) | a perc-oszlop „vége", a bónusz jelölése |
-| **egy forduló** | NB1 | mindenki játszott (`played` vagy `nogame`) **és** minden meccs lement; biztonsági háló: az MLSZ továbblépett (`mlsz_lezarta`) | bekerül-e a tabellába, vagy `provisional` marad |
-| **egy forduló** | PL | a `game` végpont **`current_event_finished`** mezője | az automatikus cserék bekerülése, a bónusz véglegessége, a státuszsor |
+| **a match** | NB1 | the match list's `status == "completed"` — but only believable together with the time limits of `matchState` | the breakdown's message, the result in `meccsek.json`, the minutes-played row |
+| **a match** | PL | `started` → `finished_provisional` → `finished` (three states) | the "vége" (over) of the minutes column, the bonus marking |
+| **a round** | NB1 | everybody played (`played` or `nogame`) **and** every match is over; safety net: the MLSZ has moved on (`mlsz_round_over`) | whether it goes into the table or stays `provisional` |
+| **a round** | PL | the **`current_event_finished`** field of the `game` endpoint | the automatic substitutions going in, the bonus being final, the status line |
 
-**A PL forduló-zárás egyetlen pillanat, több jelzővel.** Mérve (08:03 és
-08:23 UTC között) **egyszerre** billent át mind: `current_event_finished` → igaz, a H2H
-meccsek `finished`-re, az `event-status` `points` `p`-ről `r`-re, a `bonus_added` igazra.
-Ezért olvassa a gyűjtő a `current_event_finished`-ből, az oldal bónusz-jelzése pedig a
-`points === "r" || bonus_added`-ből — **ugyanazt az eseményt**, két végpontról (a Draftnak
-nincs `event-status`-a, az a klasszikus FPL-ről jön). Ha valaha eltérnének, az mérésre
-való, nem tippelésre.
+**The PL round close is a single moment, with several flags.** Measured (between 08:03 and
+08:23 UTC), all of them flip **at once**: `current_event_finished` → true, the H2H matches to
+`finished`, the `event-status` `points` from `p` to `r`, `bonus_added` to true. That is why the
+collector reads it from `current_event_finished` and the page's bonus marking from
+`points === "r" || bonus_added` — **the same event**, from two endpoints (the Draft has no
+`event-status`, it comes from classic FPL). If they ever differed, that calls for a
+measurement, not a guess.
 
-**A `current_event` ilyenkor MÉG a régi forduló** — a zárás nem forduló-váltás. Aki ezt
-összekeveri, az a cseréket veszíti el (lásd lentebb).
+**At that moment `current_event` is STILL the old round** — the close is not a round change.
+Whoever mixes the two up loses the substitutions (see below).
 
-### Amit a lezárás után is frissíteni KELL
+### What MUST still be updated after the close
 
-| forrás | meddig frissül | miért |
+| source | how long it is updated | why |
 |---|---|---|
-| NB1 keret + pont | az aktuális **és az előző** forduló minden körben, plusz körbeforgó ellenőrzés négy régi fordulóra (`ellenorzendo`) | az MLSZ utólag korrigál |
-| PL keret + pont | az **aktuális** forduló minden körben (a zárás után is, amíg a `current_event` tovább nem lép), plusz minden forduló, ami nincs a `draft_history.json` `veglegesek` listájában | az FPL a záráskor automatikus cseréket hajt végre, és utólag is korrigálhat |
-| PL meccseredmény | a `draft.json` `schedule`/`standings` az FPL saját válaszából, minden körben | ez a hivatalos eredmény, nem mi számoljuk |
-| NB1 meccseredmény | a `meccsek.json` addig kéri újra a fordulót, amíg van benne eredmény nélküli meccs | részállást nem tárolunk |
+| NB1 squad + points | the current **and the previous** round on every run, plus a rotating check of four old rounds (`rounds_to_recheck`) | the MLSZ corrects afterwards |
+| PL squad + points | the **current** round on every run (after the close too, until `current_event` moves on), plus every round not in the `veglegesek` list of `draft_history.json` | at the close the FPL makes automatic substitutions, and it can correct afterwards too |
+| PL match result | `schedule`/`standings` of `draft.json` from the FPL's own response, on every run | this is the official result, we do not compute it |
+| NB1 match result | `meccsek.json` fetches the round again as long as it has a match without a result | partial scores are not stored |
 
-A véglegesítő futás **melléktermékként a zárási különbséget is elmenti** (`zarasok.json`):
-a zárás előtti tárolt pillanatkép és a friss állapot eltérése — ebből él a főoldali
-„Zárási változások" panel. A pillanatkép legfeljebb 3 órával a zárás előtti; a mérés
-szerint (GW1) a lefújás és a zárás között semmi nem változik, tehát ez a különbség
-ténylegesen a lockdown műve.
+As a by-product, the finalising run **also saves the closing difference** (`zarasok.json`): the
+difference between the stored snapshot before the close and the fresh state — the main page's
+„Zárási változások" panel lives on it. The snapshot is at most 3 hours older than the close;
+according to the measurement (GW1) nothing changes between the final whistle and the close, so
+this difference really is the work of the lockdown.
 
-**Amit soha ne csinálj:** ne szüntesd meg az „aktuális fordulót minden körben lekérjük"
-szabályt azzal az indokkal, hogy a forduló már lezárult. Az a szabály **nem** a zárásról
-szól, hanem az utólagos korrekciókról — a zárás utáni egy hét különben vakon maradna.
-Ez pontosan egyszer már megtörtént , és a saját tesztem rögzítette a hibás
-viselkedést, mielőtt észrevettük volna.
+**What you must never do:** do not remove the rule "the current round is fetched on every run"
+on the grounds that the round has already closed. That rule is **not** about the close, it is
+about later corrections — otherwise the week after the close would be blind. A test written
+together with such a change can pin down the wrong behaviour instead of catching it, so a
+passing test proves nothing here.
 
-**Névhasználat.** A `collect_draft.py`-ban a `kesz` **meccset** jelent (`atalakit`), a
-fordulók listája ezért `veglegesek`. Ugyanez a csapda volt a `.pos`/`.ppos` és a
-`.meccsfej` esetében is: ha egy szónak már van jelentése a kódban, ne adj neki másikat.
+**Naming.** In `collect_draft.py` "finished" (`finished` in `transform_details`) belongs to a
+**match**, so the list of final rounds has a different name: `veglegesek` (in the code
+`finals`). The same trap existed with `.pos`/`.ppos` and `.meccsfej`: if a word already has a
+meaning in the code, do not give it another one.
 
-## 4. Az MLSZ Fantasy API — amit a fejlesztés során kiderítettünk
+## 4. The MLSZ Fantasy API — what is known about it
 
 Base URL: `https://fantasy-api.mlsz.hu/competitions/3/`
-Nincs hivatalos dokumentáció; az alábbiak kísérletezéssel derültek ki.
+There is no official documentation; everything below was established by experiment.
 
-### Ranglista
+### Rankings
 ```
 GET /rankings?include=user_team.user.id,summary_statistics,ranking,rounds,competition_rank
     &page=1&per_page=20&filter[search]={felhasználónév}
 ```
-Visszaad: `user_team.user.id`, `user_team.round_statistics[]` (`round_id`, `round_number`,
-`points`), összpont, helyezés.
+Returns: `user_team.user.id`, `user_team.round_statistics[]` (`round_id`, `round_number`,
+`points`), total points, rank. (`{felhasználónév}` = the username.)
 
-**Alapból csak az utolsó lezárt és az aktuális fordulót adja vissza.** Régebbi forduló a
-`&filter[round_id]={rid}` paraméterrel kérhető le (a válasz az adott fordulót **és** az
-előzőt tartalmazza) — így egy kimaradt forduló hivatalos pontjai utólag is pótolhatók.
+**By default it only returns the last closed and the current round.** An older round can be
+fetched with the `&filter[round_id]={rid}` parameter (the response contains that round **and**
+the one before it) — so the official points of a missed round can be filled in afterwards.
 
-### Keret (bárhonnan működik — ha jól kérdezed)
+### Squad (works from anywhere — if you ask the right way)
 ```
 GET /user-team-players-history?include={INCLUDE}&filter[user_id]={id}&filter[round_id]={rid}
 ```
 
-**Három buktató, mindegyik órákat vitt el:**
+**Four pitfalls, each of which cost hours:**
 
-1. **`filter[round_id]` kötelező.** Enélkül 403 Forbidden. (Kezdetben enélkül is működött,
-   majd szigorítottak rajta menet közben — ez okozta a „hirtelen elromlott” élményt.)
-2. **`round_id = 75 + 2 × fordulószám`** (1.→77, 2.→79, 3.→81, 4.→83, 5.→85). Ezzel a
-   **korábbi fordulók keretei visszamenőleg is lekérhetők**, nem csak az aktuális.
-3. **A `position` reláció csak akkor jön vissza, ha a `position.alternatives`-t is bekéred.**
-   Enélkül a `position` mező egyszerűen hiányzik a válaszból, hibaüzenet nélkül.
-4. **A `competition_player.current_round` reláció élő fordulónál csak explicit include-dal
-   jön vissza** (lezárt fordulónál enélkül is megjelenik). Belőle jön az `is_played`
-   („játszott már?” jelzés és forduló-lezárás) és a `first_played_at` (a játékos adott
-   fordulós meccsének kezdése) — ezért kötelező eleme az include-nak.
+1. **`filter[round_id]` is mandatory.** Without it, 403 Forbidden. (It used to work without it;
+   the API was tightened mid-season, which is why it can look as if it "suddenly broke".)
+2. **`round_id = 75 + 2 × round number`** (1→77, 2→79, 3→81, 4→83, 5→85). With this the
+   **squads of earlier rounds can be fetched retroactively too**, not only the current one.
+3. **The `position` relation only comes back if you request `position.alternatives` too.**
+   Without it the `position` field is simply missing from the response, with no error message.
+4. **The `competition_player.current_round` relation only comes back for a live round with an
+   explicit include** (for a closed round it appears without it too). It supplies `is_played`
+   (the "played yet?" flag and the round close) and `first_played_at` (the kick-off of the
+   player's match in that round) — so it is a mandatory part of the include.
 
-**Működő include (bizonyított):**
+**Working include (verified):**
 ```
 position,position.alternatives,competition_player,competition_player.team,
 competition_player.countries,competition_player.current_round,summary_statistics
 ```
 
-**Fontos:** a név **közvetlenül a `competition_player`-ben** van (`first_name`/`last_name`),
-NEM egy beágyazott `player` objektumban. A poszt a `position.monogram` (K/H/KP/CS).
+**Important:** the name is **directly in `competition_player`** (`first_name`/`last_name`),
+NOT in a nested `player` object. The position is `position.monogram` (K/H/KP/CS).
 
-### Ki nem játszik a fordulóban (a meccslista)
-A `competition_player.current_round.games` include játékosonként megadja a klub **adott
-fordulóbeli** meccsét (`start_at`, `status`, `round_number`). A „nincs meccse" **két
-alakban** jön, és mindkettőt kezelni kell:
+### Who is not playing in the round (the match list)
+The `competition_player.current_round.games` include gives, per player, the club's match **in
+that round** (`start_at`, `status`, `round_number`). "No match" comes **in two forms**, and both
+have to be handled:
 
-1. **Üres lista** — az élő fordulónál ez jön (mérve: Honvéd, 5. forduló).
-2. **Másik forduló meccse** — régi fordulónál az API a klub **legutóbbi** meccsére esik
-   vissza a hiányzó helyett. Ezt maga a meccs árulja el: a `round_number` mezője `"3F"` /
-   `"5F"` alakú, és ha nem a kért fordulóra mutat, akkor a klubnak nincs meccse benne.
-   (Mérve: a 3. fordulóra lekért ETO-játékosoknál a meccs `round_number`-e `"5F"`.)
+1. **An empty list** — this is what comes for the live round (measured: Honvéd, round 5).
+2. **A match of another round** — for an old round the API falls back to the club's **latest**
+   match instead of the missing one. The match itself gives this away: its `round_number`
+   field has the form `"3F"` / `"5F"`, and if it does not point to the requested round, the
+   club has no match in it. (Measured: for ETO players fetched for round 3, the match's
+   `round_number` is `"5F"`.)
 
-**Fontos csapda:** a `first_played_at` egyik esetben sem használható. Vagy a klub
-**következő** meccsére mutat — ez okozta a „furcsa kezdési időpont" hibát (Csontos, 5.
-forduló: aug. 29. 00:00, ami valójában a 6. forduló dátuma) —, vagy egy **éjféles
-helyőrzőre**, aminek a napja akár már el is múlt: a 3. fordulós ETO-játékosoknál
-`2026-08-15T00:00`, amitől az oldal hetekkel később is azt írta, hogy „a meccs még nem
-kezdődött el — kezdés: aug. 15.". Ha a helyőrző napja elmúlt, a dátum nem kezdési
-időpont többé, hanem annyit jelent, hogy a meccs elmaradt és újat nem tűztek ki.
+**Important trap:** `first_played_at` is unusable in both cases. It either points to the club's
+**next** match — this caused the "strange kick-off time" error (Csontos, round 5: 29 Aug 00:00,
+which is in fact the date of round 6) —, or to a **midnight placeholder**, whose day may already
+be over: for the round 3 ETO players `2026-08-15T00:00`, which made the page say weeks later
+that „a meccs még nem kezdődött el — kezdés: aug. 15." (the match has not started yet —
+kick-off: 15 Aug). If the placeholder's day has passed, the date is no longer a kick-off time;
+it means the match was called off and no new date was set.
 
-**Az include ára fordulófüggő** (mérve, 15 játékos):
+**The cost of the include depends on the round** (measured, 15 players):
 
-| A forduló állapota | Alap | `games`-szel |
+| The round's state | Base | With `games` |
 |---|---|---|
-| élő (a meccsek `scheduled`) | 17,8 KB | 19,7 KB |
-| lezárt (a meccsek `completed`) | 17,5 KB | 118,8 KB |
+| live (matches `scheduled`) | 17.8 KB | 19.7 KB |
+| closed (matches `completed`) | 17.5 KB | 118.8 KB |
 
-A különbség oka: a **lejátszott** meccs mellé az API a két csapat teljes objektumát is
-beteszi, benne a klublogóval, base64 képadatként. Ezért a gyűjtő a meccslistát rendes
-esetben **csak az élő fordulóra** kéri; a lezártakhoz a forduló alatt már elmentett
-jelzés marad meg (`collect.py` → `orokit_meccsjelzok`). Egy kivétel van: a régi
-formátumú fordulót (nincs a rekordokban `played`) a gyűjtő **egyszer** meccslistával
-együtt kéri le, hogy a hiányzó jelzések bekerüljenek.
+The reason for the difference: next to a **played** match the API also includes both teams'
+full objects, with the club logo as base64 image data. So in the normal case the collector
+requests the match list **only for the live round**; for the closed ones the flags saved during
+the round are kept (`collect.py` → `inherit_match_flags`). There is one exception: a round in the
+old format (no `played` in the records) is fetched **once** together with the match list, so
+that the missing flags get in.
 
-#### A két klubot külön kell kérni (mérve)
+#### The two clubs have to be requested separately (measured)
 
-Élő fordulónál a meccs-objektum **csak** `id`, `start_at`, `status`, `home_score`,
-`away_score` és `round_number` — **klub nélkül**. A gyűjtő ilyenkor `"?"`-et írt a
-`meccsek.json`-ba, és mivel az oldal a játékos klubjára szűrve keresi a meccset, a
-profilban kötőjel állt az ellenfél helyén, holott az eredmény megvolt. Ez a 6. fordulónál
-derült ki: a `meccsek.json` csak 08-24 óta létezik, előtte az 1–5. fordulót már **lezártan**
-töltöttük le, csapatostul.
+For a live round the match object is **only** `id`, `start_at`, `status`, `home_score`,
+`away_score` and `round_number` — **without the clubs**. The collector then wrote `"?"` into
+`meccsek.json`, and since the page looks up the match filtered by the player's club, the
+profile showed a dash in place of the opponent, although the result was there. Rounds 1–5 do
+not show this: they went into `meccsek.json` when they were already **closed**, so they were
+fetched with the teams included.
 
-A megoldás: a két csapatot **explicit kérjük** az include-ban. Amit a mérés adott
-(`naplo/mlsz-live-match.txt`, élő 6. forduló):
+The solution: the two teams are **requested explicitly** in the include. What the measurement
+gave (`naplo/mlsz-live-match.txt`, live round 6):
 
-| Amit kértünk | Eredmény |
+| What was requested | Result |
 |---|---|
-| `games.home_team` + `games.away_team` | **működik** — 22,3 KB → 24,8 KB (+2,5 KB) |
-| `games.homeTeam` / `games.awayTeam` | a mező meg sem jelenik |
-| `games.teams` | a mező meg sem jelenik |
-| `games/<id>`, `matches/<id>`, `fixtures/<id>` a gyökéren és `competitions/3` alatt | mind a tíz alak **404** |
-| a birtokolt játékosok saját klubjaiból levezetve | csak 4/6 meccs, és a hazai/vendég oldal sehogy |
+| `games.home_team` + `games.away_team` | **works** — 22.3 KB → 24.8 KB (+2.5 KB) |
+| `games.homeTeam` / `games.awayTeam` | the field does not even appear |
+| `games.teams` | the field does not even appear |
+| `games/<id>`, `matches/<id>`, `fixtures/<id>` at the root and under `competitions/3` | all ten forms **404** |
+| derived from the owned players' own clubs | only 4/6 matches, and the home/away side not at all |
 
-A csapat-objektum itt **sovány** (`id`, `name`, `short_name`, `color_hex`), **logó nélkül** —
-tehát ez nem a fenti 118 KB-os hízás, csak +2,5 KB. A pont-bontás végpontja (ami a lenyílóhoz
-amúgy is megy) semmilyen include-dal nem tud a meccsről.
+The team object here is **lean** (`id`, `name`, `short_name`, `color_hex`), **without a logo** —
+so this is not the 118 KB bloat above, only +2.5 KB. The points breakdown endpoint (which is
+called for the drop-down anyway) knows nothing about the match with any include.
 
-**Vissza nem évülő védelem:** a `"?"` klubú meccs is hiányosnak számít, tehát a forduló addig
-marad az újrakérendők közt, amíg valódi név nem érkezik. Enélkül, ha egy forduló összes meccse
-lement, mialatt a nevek még `"?"`-ek voltak, a forduló kikerült volna az újrakérendők közül, és
-az MLSZ továbblépése után **soha többé** nem kértük volna le — a `"?"` véglegesen bent ragadt
-volna. Rögzítve: `tests/collector_matches.py` M7 és M8, mindkettő bizonyítottan bukik a régi kódon.
+**Protection that does not expire:** a match with a `"?"` club counts as incomplete too, so the
+round stays among those to be fetched again until a real name arrives. Without this, if all
+matches of a round finished while the names were still `"?"`, the round would have left the
+list to be fetched again, and after the MLSZ moved on it would **never again** have been
+fetched — the `"?"` would have stuck for good. Pinned by: `tests/collector_matches.py` M7 and
+M8, both proven to fail on the old code.
 
-### Pont-bontás (game-player-stats)
-A felület játékos-modalja ezt hívja (a bundle-ből visszafejtve):
+### Points breakdown (game-player-stats)
+The interface's player modal calls this (reverse-engineered from the bundle):
 ```
 GET https://fantasy-api.mlsz.hu/game-player-stats
     ?include=competition_stat_config
     &filter[competition_player_id]={cp_id}&filter[round_id]={rid}
 ```
-**A `competitions/3/` előtag NÉLKÜL** — közvetlenül az API gyökerén él. Fordulónként
-22 sort ad: `{value, points, round_id, competition_stat_config:{name}}` — a `name` a
-magyar eseménynév („Győzelem”, „Kulcspasszok”, „Percek a pályán (több, mint 60 perc)”…).
-A felület a 0 pontos sorokat elrejti, a kapitány ×2 / csere ×0,5 sort a kliens teszi
-hozzá — mi is így csináljuk. A `cp_id` a keret-válasz `competition_player.id` mezője
-(az új keret-rekordokban `id` néven tárolva; a régiekhez az oldal név alapján oldja fel
-a forduló keretéből). Bárhonnan, bejelentkezés nélkül működik.
+**WITHOUT the `competitions/3/` prefix** — it lives directly at the API root. Per round it
+gives 22 rows: `{value, points, round_id, competition_stat_config:{name}}` — `name` is the
+Hungarian event name („Győzelem” (Win), „Kulcspasszok” (Key passes), „Percek a pályán (több,
+mint 60 perc)” (Minutes on the pitch, more than 60)…). The interface hides the rows with 0
+points, the captain ×2 / substitute ×0.5 row is added by the client — we do the same. `cp_id`
+is the `competition_player.id` field of the squad response (stored as `id` in the new squad
+records; for the old ones the page resolves it by name from the round's squad). It works from
+anywhere, without logging in.
 
-Létezik még: `GET competitions/3/stat-configs` (a 10 szezonstatisztika-kategória neve) és
-`stat-leaders` (toplisták) — jelenleg egyiket sem használjuk.
+Also exists: `GET competitions/3/stat-configs` (the names of the 10 season statistics
+categories) and `stat-leaders` (top lists) — neither is used at the moment.
 
-### Játékostörzs és a szezon egésze (mérésekkel)
-A játékosprofilhoz két dolgot kerestünk: a **teljes játékostörzset** (a kereséshez) és
-minden játékos **fordulónkénti pontját**. Amit a mérések hoztak (`naplo/mlsz-player-list.txt`):
+### Player master data and the whole season (with measurements)
+For the player profile two things were needed: the **full player master list** (for the
+search) and every player's **points per round**. What the measurements gave
+(`naplo/mlsz-player-list.txt`):
 
-| Kérdés | Válasz |
+| Question | Answer |
 |---|---|
-| Van teljes játékoslista? | **Igen:** `competitions/3/players?include=team,position,summary_statistics` — 385 játékos, klub, poszt, `is_u21`, `injury_status`, `market_price`, `competition_points`. |
-| Egy kérésből? | **Igen**, `per_page=500`-zal (alapból 15/lap, 26 lap). A `page[size]`-t eldobja. |
-| Ad fordulónkénti pontot? | **Nem.** A `weekly_points` mindig az **aktuális** fordulóé, és a végpont `filter[round_id]`-re **400**-at ad. |
-| A pont-bontás lekérhető forduló-szűrő nélkül? | **Igen**, akkor az egész szezon jön — **de csak az első 50 sor.** |
-| Lehet lapozni rajta? | **Nem.** Sem `page`, sem `page[number]`, sem `offset`, sem `page[offset]`, sem `per_page`/`limit`/`page[size]` — mind ugyanazt az első lapot adja vissza. Egy szezon ~109 sor, tehát **a teljes szezon egy kérésből nem hozható le**; fordulónként viszont ~22 sor, ami elfér egy lapon. A profil ezért fordulónként kérdez, és csak akkor, ha muszáj. |
+| Is there a full player list? | **Yes:** `competitions/3/players?include=team,position,summary_statistics` — 385 players, club, position, `is_u21`, `injury_status`, `market_price`, `competition_points`. |
+| In one request? | **Yes**, with `per_page=500` (by default 15/page, 26 pages). It ignores `page[size]`. |
+| Does it give points per round? | **No.** `weekly_points` is always the **current** round's, and the endpoint answers **400** to `filter[round_id]`. |
+| Can the points breakdown be fetched without a round filter? | **Yes**, then the whole season comes — **but only the first 50 rows.** |
+| Can it be paged? | **No.** Neither `page`, `page[number]`, `offset`, `page[offset]`, nor `per_page`/`limit`/`page[size]` — all of them return the same first page. A season is ~109 rows, so **the whole season cannot be fetched in one request**; per round, however, it is ~22 rows, which fits on one page. So the profile asks per round, and only when it must. |
 
-**A pontok felbontása 0,25.** 377 (játékos, forduló) párra összevetettük a bontás-sorok
-összegét a keret-fájlok tárolt heti pontjával: **238 pontosan egyezett**, 123 esetben a
-bontás üres volt — de mind a 123-nál a tárolt érték is 0 volt (ez az MLSZ ismert
-viselkedése: 0 pontos játékosra üres bontást ad). A maradék **16 eltérés mind pontosan
-0,01** volt, és mind **pados** játékos: a felezés utáni két tizedesre kerekítés miatt.
-Ebből következik, hogy az alappont mindig 0,25 többszöröse — a visszaszámolásnál ezért
-kerekítünk negyedre.
+**The resolution of the points is 0.25.** For 377 (player, round) pairs the sum of the
+breakdown rows was compared with the weekly points stored in the squad files: **238 matched
+exactly**, in 123 cases the breakdown was empty — but in all 123 the stored value was 0 too
+(this is the MLSZ's known behaviour: it gives an empty breakdown for a player with 0 points).
+The remaining **16 differences were all exactly 0.01**, and all of them **bench** players:
+because of rounding to two decimals after halving. It follows that the base points are always a
+multiple of 0.25 — so the reversal rounds to a quarter.
 
-### A játékos-adatlap végpontja (mérve)
-`GET competitions/3/players/{competition_player_id}` — **nincs `data` burok**, a mezők a
-gyökérben állnak (ezen csúszott el az első mérés: a `data`-t néztem, és üresnek látszott).
-Amit ad a törzs-soron felül:
+### The player detail endpoint (measured)
+`GET competitions/3/players/{competition_player_id}` — **there is no `data` wrapper**, the fields
+are at the root (reading `data` makes the response look empty).
+What it gives beyond the master-data row:
 
-- `countries` — ebből derül ki, hogy magyar-e a játékos (a listás törzs ezt nem adja);
-- `rounds` — fordulónkénti sor `market_price`-szal, `is_played`-del és a forduló
-  objektumával: vagyis **a múltbeli árak visszamenőleg is megvannak**, játékosonként egy
-  kéréssel. Az `arak.json` ettől függetlenül hasznos: az finomabb felbontású (a forduló
-  közbeni változásokat is rögzíti);
-- `extended_summary_statistics` — hazai/idegenbeli átlagok (jelenleg nem használjuk).
+- `countries` — this tells whether the player is Hungarian (the list endpoint does not give
+  it);
+- `rounds` — a row per round with `market_price`, `is_played` and the round object: so **past
+  prices are available retroactively**, with one request per player. `arak.json` is useful
+  regardless: it has a finer resolution (it records the changes during a round too);
+- `extended_summary_statistics` — home/away averages (not used at the moment).
 
-**Amit NEM ad: a jövőbeli ellenfelet.** A `rounds` csak az eddigi fordulókat sorolja, és
-ellenfél nincs benne.
+**What it does NOT give: the future opponent.** `rounds` only lists the rounds so far, and there
+is no opponent in it.
 
-### A jövőbeli menetrend nem érhető el (mérve)
-Emiatt az **NB1-profil csak a lejátszott fordulókat sorolja fel** — a PL-profil előre is
-megy, mert ott a Draft adja a hátralévő meccseket. Huszonhét üres sor ellenfél és időpont
-nélkül nem információ, csak zaj; ha a menetrend előkerül, az NB1 is előre megy majd.
-Az MLSZ fantasy felülete mutat ilyen táblát („Következő mérkőzések"), tehát
-az adat létezik — de a hozzá tartozó végpontot nem sikerült megtalálni. Ami 404-et adott:
+### The future schedule is not available (measured)
+That is why the **NB1 profile only lists the rounds played** — the PL profile goes ahead too,
+because there the Draft gives the remaining matches. Twenty-seven empty rows without opponent
+and date are not information, only noise; if the schedule turns up, the NB1 will go ahead too.
+The MLSZ fantasy interface shows such a table („Következő mérkőzések" — Next matches), so the
+data exists — but its endpoint has not been found. What gave 404:
 `games`, `matches`, `fixtures`, `competitions/3/games`, `competitions/3/schedule`,
 `competitions/3/game-days`, `competitions/3/rounds`, `competitions/3/teams`,
 `competitions/3/teams/{id}[/games]`, `teams/{id}[/games|/next-games]`,
-`games?filter[team_id]`, `rounds?filter[competition_id]`. A keret-végpont jövőbeli
-`round_id`-val HTTP 200-at ad, de **üres listát** (a keret csak elindult fordulóra
-létezik), a `competitions?include=rounds` pedig csak a **már elkezdődött** fordulókat
-sorolja (mérés idején 6-ot), lapmérettől függetlenül.
+`games?filter[team_id]`, `rounds?filter[competition_id]`. The squad endpoint answers HTTP 200
+for a future `round_id`, but with an **empty list** (a squad only exists for a round that has
+started), and `competitions?include=rounds` only lists the rounds **already started** (6 at
+the time of the measurement), regardless of page size.
 
-A következő lépés a felület JS-bundle-jének visszafejtése lenne — ugyanaz a módszer,
-amivel a pont-bontás végpontja megkerült. A PL-oldalon ez a gond nincs: ott a Draft
-`element-summary` `fixtures` tömbje adja a hátralévő meccseket, ellenfél-azonosítóval és
-pálya-jelzéssel.
+The next step would be reverse-engineering the interface's JS bundle — the same method that
+found the points breakdown endpoint. The PL page does not have this problem: there the
+`fixtures` array of the Draft `element-summary` gives the remaining matches, with the opponent's
+id and the venue flag.
 
-### Az árakról nincs előzmény (mérve)
-A törzs a `current_round.market_price` mezőben a **mostani** árat adja. Ár-előzményt az
-MLSZ **sehol nem ad**: a `players` végpont az `include=rounds` / `player_rounds` /
-`market_prices` / `price_history` / `prices` kéréseket **némán elnyeli** (a válasz sorai
-egyetlen új mezőt sem kapnak), az önálló `market-prices`, `player-market-prices`,
-`competition-player-rounds`, `player-rounds`, `price-history` végpontok pedig **404**-et.
+### There is no price history (measured)
+The master data gives the **current** price in the `current_round.market_price` field. The MLSZ
+gives price history **nowhere**: the `players` endpoint **silently swallows** the
+`include=rounds` / `player_rounds` / `market_prices` / `price_history` / `prices` requests (the
+response rows get no new field at all), and the standalone `market-prices`,
+`player-market-prices`, `competition-player-rounds`, `player-rounds`, `price-history`
+endpoints answer **404**.
 
-Ezért a gyűjtő maga naplózza az árakat (`arak.json`), és **csak a változásokat**: a
-gyűjtő meccsnapon óránként fut, minden futás feljegyzése napi huszonnégy azonos sort jelentene. Egy
-játékos sora `[[dátum, ár], …]`. A hiányzó vagy nulla árat nem tekintjük változásnak —
-különben egy API-hiba hamis „0-ra esett" bejegyzést írna be, amit utólag nem lehetne
-megkülönböztetni a valóditól (ugyanaz a logika, mint a 0–0 védelem a `results.json`-nál).
-**A listás törzs végpontja nem ad ár-előzményt** — a *játékos-adatlap* `rounds` tömbje
-viszont igen, fordulónkénti bontásban (lásd fentebb), tehát a múlt játékosonként egy
-kéréssel pótolható. Az `arak.json` ettől függetlenül hasznos: az minden gyűjtő-futásnál
-figyel, tehát a forduló KÖZBENI változást is rögzíti, amit a fordulónkénti bontás nem.
+So the collector logs the prices itself (`arak.json`), and **only the changes**: the collector
+runs hourly on match days, and recording every run would mean twenty-four identical rows a day.
+A player's row is `[[dátum, ár], …]` (date, price). A missing or zero price is not taken as a
+change — otherwise an API error would write a false "dropped to 0" entry, which could not be
+told apart from a real one afterwards (the same logic as the 0–0 protection in `results.json`).
+**The list endpoint of the master data gives no price history** — the `rounds` array of the
+*player detail*, however, does, broken down per round (see above), so the past can be filled in
+with one request per player. `arak.json` is useful regardless: it watches on every collector
+run, so it also records the change DURING a round, which the per-round breakdown does not.
 
-### Amit a hivatalos szabályzat rögzít (fantasy.mlsz.hu)
-A szabályzat több, addig csak mérésből ismert viselkedést megerősít — és a „zárási
-változások" kérdését el is dönti:
+### What the official rules state (fantasy.mlsz.hu)
+The rules confirm several behaviours that were otherwise known only from measurement — and
+they settle the question of "changes at closing" as well:
 
 - **„A heti összpontszám az adott forduló utolsó játéknapjának végén válik véglegessé."**
-  Vagyis az NB1-ben a zárás pillanatában **tervezetten semmi nem változik** — nincs
-  másnapi bónusz-véglegesítés, mint az FPL-ben. Utólagos módosítás csak hibajavítás
-  lehetne (a pontozás a STATS adatbázisából jön), ilyet pedig még nem figyeltünk meg.
-- **Halasztott meccs:** a játékosok az eredeti héten nem szereznek pontot; a pont **azon
-  a héten** jár, amikor a meccset ténylegesen lejátsszák — annak alapján, hogy a játékos
-  benne van-e a **pótlás hetének** piaczárásig kialakított keretében. Ezért fordulhat elő,
-  hogy valaki egy héten két meccs után is pontot szerez — a profil fordulónkénti sora
-  ezért kezel több meccset.
-- **Árváltozás csak piacnyitáskor:** a játékosok ára „minden hétkezdet (piacnyitás) során
-  változhat" — tehát hetente egyszer, nem folyamatosan. A piac az előző forduló utolsó
-  játéknapjának **másnapján, reggel 10-kor** nyit, és a forduló első meccse előtt
-  **2 órával** zár. Az `arak.json` 3 óránkénti figyelése ezt bőven elkapja.
-- **A pad kötelező összetétele** (1 kapus + 1 védő + 1 középpályás + 1 csatár), a kezdő
-  formáció-korlátai (1 kapus, 3–5 védő, 3–5 középpályás, 1–3 csatár), a kapitány ×2, a
-  csere ×0,5 és a magyarszabály (+10, legalább 5 magyar kezdő, köztük U21-es) — mind
-  hivatalosan is így van, ahogy a KEZD% számítás használja.
-- **Egy valós klubból legfeljebb 3 játékos** lehet egy keretben; hetente **3 csere**
-  (téli és válogatott szünetben korlátlan).
+  (The weekly total becomes final at the end of the round's last match day.) So in the NB1
+  **nothing is planned to change** at the moment of closing — there is no next-day bonus
+  finalisation as in the FPL. A later change could only be an error correction (the scoring
+  comes from the STATS database), and none has been observed so far.
+- **Postponed match:** the players get no points in the original week; the points are
+  awarded **in the week** the match is actually played — based on whether the player is in
+  the squad formed by the market close of **the week of the replay**. That is why someone
+  can score points after two matches in one week — and that is why a profile's per-round
+  row handles several matches.
+- **Price changes only at market opening:** player prices „minden hétkezdet (piacnyitás)
+  során változhat" (may change at every week start, i.e. market opening) — so once a week,
+  not continuously. The market opens **at 10:00 on the day after** the previous round's last
+  match day, and closes **2 hours** before the round's first match. The collector watches
+  `arak.json` on every run — hourly from Thursday to Monday, every 3 hours on Tuesday and
+  Wednesday — which catches this easily.
+- **The mandatory bench** (1 goalkeeper + 1 defender + 1 midfielder + 1 forward), the
+  formation limits of the line-up (1 goalkeeper, 3–5 defenders, 3–5 midfielders, 1–3
+  forwards), the captain ×2, the bench ×0.5 and the Hungarian rule (+10, at least 5
+  Hungarian starters, including a u21 player) — are all officially as the KEZD% calculation
+  uses them.
+- **At most 3 players from one real club** may be in a squad; **3 transfers** a week
+  (unlimited in the winter and international breaks).
 
-### A pontszámítás kulcsa
-A `weekly_points` **már kész érték**: tartalmazza a kapitányi duplázást és a pad felezését.
-A csapat fordulópontszáma tehát:
+### The key to the points calculation
+`weekly_points` is **already a finished value**: it includes the captain's doubling and the
+bench halving. A team's round score is therefore:
 
 ```
 összes játékos weekly_points összege + (magyarszabály teljesül ? 10 : 0)
 ```
 
-Ellenőrizve a 4. fordulón két csapaton: 67,5 (kezdők) + 3,75 (pad) + 10 = **81,25** ✓,
-illetve 63,25 + 2,5 + 10 = **75,75** ✓ — mindkettő pontosan a hivatalos pontszám.
-**Soha ne szorozz újra ×2-vel a kapitánynál és ne felezz a padnál.**
+(the sum of all players' `weekly_points` + 10 if the Hungarian rule is met, otherwise 0)
 
-### A „szerverről tilos” tévhit története
-Sokáig azt hittük, a keret-végpont adatközponti IP-kről tiltott: GitHub Actionsből,
-proxykon át és Playwright-tal is 403 jött. Az ok más volt: **a 403-at a hiányzó
-`filter[round_id]` okozta** — a szerveres próbák még a paraméter felfedezése előtt
-készültek. Helyes kéréssel a végpont bárhonnan, **bejelentkezés nélkül** működik
-(bizonyíték: ugyanarról a gépről, ugyanabban a másodpercben paraméter nélkül 403,
-paraméterrel 200). Egy megkötés maradt: **a még el nem kezdődött forduló keretei 403-at
-adnak** — piaczárásig titkosak.
+Checked on round 4 on two teams: 67.5 (starters) + 3.75 (bench) + 10 = **81.25** ✓,
+and 63.25 + 2.5 + 10 = **75.75** ✓ — both exactly the official score.
+**Never multiply the captain by 2 again, and never halve the bench.**
 
-### Forduló-lezárás és utólagos MLSZ-korrekciók
+### The “blocked from servers” misconception
+The squad endpoint is **not** blocked for data-centre IPs, although GitHub Actions, proxies
+and Playwright all got 403 from it. **The 403 was caused by the missing
+`filter[round_id]`** — those server-side attempts were made without the parameter. With a
+correct request the endpoint works from anywhere, **without logging in** (evidence: from the
+same machine, in the same second, 403 without the parameter, 200 with it). One restriction
+remains: **the squads of a round that has not started yet give 403** — they are secret until
+the market closes.
 
-> A négy különböző „lezárás" áttekintése a **3/b** szakaszban van — ott látszik, melyik
-> jelző mire hat. Ez a szakasz csak az NB1 forduló-lezárásának részleteit adja.
-- A keret-válasz `current_round.is_played` mezője megmondja, lejátszotta-e a játékos a
-  meccsét. **Egy forduló akkor zárult le, ha mindenki játszott, akinek volt meccse** — és a
-  meccse `completed` státuszú.
+### Round closing and later MLSZ corrections
 
-#### Akinek nincs meccse, az nem akaszthatja meg a lezárást
+> An overview of the four different kinds of "closing" is in section **3/b** — it shows
+> which flag affects what. This section only gives the details of closing an NB1 round.
+- The `current_round.is_played` field of the squad response tells whether the player has
+  played their match. **A round is closed when everyone who had a match has played** — and
+  their match has `completed` status.
 
-Sokáig azt hittük, hogy a halasztott meccs játékosait az MLSZ lejátszottnak jelöli 0
-ponttal, tehát a halasztás magától megoldódik. **A mérés ezt megcáfolta:**
+#### A player without a match cannot hold up the close
 
-| eset | `is_played` | meccslista |
+It is tempting to assume that the MLSZ marks the players of a postponed match as played with
+0 points, so a postponement would resolve itself. **Measurement shows otherwise:**
+
+| case | `is_played` | match list |
 |---|---|---|
-| 5. forduló, Honvéd (nincs meccse, élő forduló) | `false` | üres |
-| 3. forduló, ETO (nem volt meccse, régi forduló) | `true`, 0 ponttal | a klub **legutóbbi** meccse |
+| round 5, Honvéd (no match, live round) | `false` | empty |
+| round 3, ETO (had no match, old round) | `true`, with 0 points | the club's **latest** match |
 
-A régi fordulónál látott `true` tehát nem a forduló lezárásából jön: ha a klubnak nem volt
-meccse abban a fordulóban, az API a klub **legutóbbi** meccsére esik vissza (ugyanaz a
-visszaesés, ami a „furcsa kezdési időpont" hibát okozta), és onnan örökli a jelzést is. Az
-`is_played` tehát nem akkor billen át, amikor a forduló véget ér, hanem amikor **a klub
-legközelebb pályára lép** — ami egy egész hetet is csúszhat.
+So the `true` seen for the old round does not come from the round closing: if the club had
+no match in that round, the API falls back to the club's **latest** match (the same fallback
+that caused the "odd kick-off time" error), and inherits the flag from there too. So
+`is_played` does not flip when the round ends, but when **the club next takes the pitch** —
+which can be a whole week later.
 
-Ezért a lezárás-vizsgálat kihagyja azt, akinek nincs meccse (`nogame`). Enélkül az 5.
-forduló a Honvéd következő meccséig, nagyjából egy hétig a `provisional` listában maradt
-volna, pedig minden meccse lement. A jelzést a **tárolt keretből** olvassa, nem a friss
-válaszból: a meccslistát rendes esetben csak az élő fordulóra kérjük le (a lezárthoz
-hatszor akkora válasz jönne), utána az `orokit_meccsjelzok` hozza át a korábbi
-pillanatképből.
+That is why the closing check skips anyone without a match (`nogame`). Without this, round 5
+would have stayed in the `provisional` list until Honvéd's next match, for about a week,
+although all of its matches had been played. The flag is read from the **stored squad**, not
+from the fresh response: normally the match list is only requested for the live round (for a
+closed one the response would be six times as large), after that `inherit_match_flags`
+carries it over from the earlier snapshot.
 
-#### Biztonsági háló: az MLSZ saját forduló-objektuma
+#### Safety net: the MLSZ's own round object
 
-Ha a játékos-szintű kép mégsem áll össze, a fordulónak akkor sem szabad örökre nyitva
-maradnia. A tartalék jelzés az MLSZ saját forduló-objektuma. **Önálló forduló-végpont
-nincs** (`rounds`, `competitions/3/rounds`, `competition-rounds` — mind 404); a fordulólista
-a **versenylistán** keresztül jön, ugyanazzal a hívással, amit az MLSZ frontendje használ:
+If the player-level picture does not add up, the round still must not stay open forever.
+The fallback signal is the MLSZ's own round object. **There is no separate round endpoint**
+(`rounds`, `competitions/3/rounds`, `competition-rounds` — all 404); the round list comes
+through the **competition list**, with the same call the MLSZ frontend uses:
 
 ```
 GET https://fantasy-api.mlsz.hu/competitions?include=rounds,current_round
 ```
 
-Egy forduló mezői: `id`, `round_number`, `start_at`, `end_at`, `is_transfers_closed`,
-`closed_transfers_at`. **Lezártság-jelző nincs köztük** — az MLSZ-nél a forduló naptári
-határ (az egyik `end_at`-je a következő `start_at`-je), és az `end_at` elteltével lép
-tovább a `current_round`. Ezért csak háló, nem elsődleges forrás.
+The fields of a round: `id`, `round_number`, `start_at`, `end_at`, `is_transfers_closed`,
+`closed_transfers_at`. **There is no closed flag among them** — at the MLSZ a round is a
+calendar boundary (one round's `end_at` is the next one's `start_at`), and `current_round`
+moves on once `end_at` has passed. That is why it is only a safety net, not a primary source.
 
-A szabály: a `current_round` az erősebb jel. Ha az MLSZ szerint **még ez** az aktuális
-forduló, akkor az `end_at` eltelte sem zárja le — a futó fordulót lezárni a rosszabb téves
-lépés, mert a félig kész eredmény csendben bekerülne a tabellába. Az `end_at` csak akkor
-dönt, ha a `current_round` egyáltalán nem jött meg.
-- **Az MLSZ utólag korrigál** — három megfigyelt esetünk van. Az egyikben a
-  fantasy.mlsz.hu már más hivatalos fordulóösszeget mutatott Csendinél, mint amit a
-  lezáráskor rögzítettünk (1. forduló +1, 2. +1, 3. −2,5; képernyőképpel igazolva).
-  **Hogy melyik játékosnál mozdult a pont, ez a három eset nem visszakereshető**, és nem is
-  lesz: a `squad_history.json` első játékos-szintű pillanatképe már a korrekció utáni, és
-  már az — és utána mindegyik — a JAVÍTOTT összegeket adja ki (38,00 / 42,88 / 42,88 alap +
-  10 bónusz = 48 / 52,88 / 52,88). A régi értékek csak a `results.json` csapatösszegében
-  éltek, bontás nélkül. A `zarasok_nb1.json`-ban ezért „Ismeretlen játékos" névvel állnak
-  (`nk:1`), és csak a változás mértéke (`dl`: +1, +1, −2,5) — nevet nem találunk ki hozzájuk.
-  A 08-20-i szinkron óta (3 óránkénti összevetéssel) nem volt újabb ilyen.
+The rule: `current_round` is the stronger signal. If according to the MLSZ **this** is still
+the current round, then even a passed `end_at` does not close it — closing a running round is
+the worse mistake, because the half-finished result would silently get into the table.
+`end_at` only decides if `current_round` did not arrive at all.
+- **The MLSZ corrects after the fact** — there are three observed cases. In one of them
+  fantasy.mlsz.hu already showed a different official round total for Csendi than the one
+  recorded at closing (round 1 +1, round 2 +1, round 3 −2.5; confirmed by a screenshot).
+  **Which player's points moved in these three cases cannot be traced back**, and never will
+  be: the first player-level snapshot in `squad_history.json` is already from after the
+  correction, and it — and every one after it — gives the CORRECTED totals (38.00 / 42.88 /
+  42.88 base + 10 bonus = 48 / 52.88 / 52.88). The old values only lived in the team total of
+  `results.json`, without a breakdown. That is why in `zarasok_nb1.json` they stand under the
+  name „Ismeretlen játékos" (unknown player) (`nk:1`), with only the size of the change
+  (`dl`: +1, +1, −2.5) — no name is made up for them. Since the stored results are compared
+  with the official ones on every collector run (at least every 3 hours), no further such
+  case has occurred.
 
-#### A szakvezetőt a felhasználóneve azonosítja — és ha nem, arról szólunk
+#### A manager is identified by username — and when not, the log says so
 
-A gyűjtő a ranglista-végponton **névre keres** (`filter[search]`), majd a találatok közül azt
-veszi, akinek a `username`-je pontosan egyezik. Ha nincs pontos egyezés, a lista első elemét
-használja — ez azért kell, mert a válasz nem mindig hozza a `username` mezőt.
+The collector **searches by name** on the rankings endpoint (`filter[search]`), then takes
+the hit whose `username` matches exactly. If no hit matches exactly, there are two cases:
 
-Ez a visszaesési út **csendben** működött, pedig ha valaha félrekeresne, egy **másik
-szakvezető pontjait** írná be a tabellába — pont az a „csendes, hihető, rossz" hibafajta,
-ami ellen a többi védelem is szól. Mostantól a futásnapló kiírja (`stderr`), ha a fallbackra
-került sor, és azt is, hány találat volt. A viselkedés nem változott, csak láthatóvá vált.
+- **The hits carry usernames, and none of them is ours:** the search matched somebody else.
+  The collector records **nothing** for that manager in that run, and logs the names of the
+  hits (`stderr`).
+- **The hits carry no usernames at all:** the collector uses the first element of the list —
+  this is needed because the response does not always include the `username` field.
 
-#### Önjavítás: ha az MLSZ korrigál, a gyűjtő is korrigál
+That fallback path must not be **silent**: if it ever matched the wrong person, it would
+write **another manager's points** into the table — exactly the "silent, plausible, wrong"
+kind of error the other guards are against. So the run log states (`stderr`) when the
+fallback was used, and how many hits there were.
 
-A `collect.py` nem jelzést ír a naplóba, hanem **átvezeti a változást — mindenhol**.
-Három egymást kiegészítő fogása van:
+#### Self-repair: when the MLSZ corrects, the collector corrects too
 
-1. **Körbeforgó újraellenőrzés.** A ranglista-végpont alapból csak a két legfrissebb
-   fordulót adja vissza, ezért minden futás **négy régi fordulót** kér le újra
-   (`ellenorzendo`), és az ablak **három óránként lép egyet** — nem futásonként. Napi nyolc
-   ablak × négy forduló = 32 ellenőrzés, a lista pedig legfeljebb 31 elemű (az utolsó két
-   fordulót amúgy is minden futás lekéri), tehát **egy napon belül** körbeér. Az óránkénti
-   futás ezen nem ront: ugyanaz a négy forduló jön háromszor, viszont nő az esélye, hogy
-   minden ablakra jusson legalább egy futás — eldobott indításnál különben kimaradna. A lekért
-   érték felülírja a tároltat (`setdefault` helyett értékadás): a végpont az igazság.
-2. **A javított forduló keretei is frissülnek.** Ha egy régi forduló pontszáma változott,
-   a hozzá tartozó keret-pillanatkép is elavult, ezért a gyűjtő azt is újra lekéri
-   (`celok |= valtozott`) — így a pont-bontás és a „Különbségek” nézet számlája is a
-   javított adattal jön ki.
-3. **A keresztellenőrzés is javít.** Ha a keretből számolt összeg eltér a tárolt
-   hivatalostól, a gyűjtő **újra lekéri a hivatalos értéket** arra a fordulóra, és ha
-   tényleg változott, beírja a `results.json`-ba (`beir_eredmeny`). ELTÉRÉS-figyelmeztetés
-   már csak akkor megy a naplóba, ha a két forrás az újralekérés után **sem** egyezik —
-   az valódi ellentmondás, nem korrekció.
+`collect.py` does not write a flag into the log; it **carries the change over — everywhere**.
+It has three complementary mechanisms:
 
-Ehhez tartozott egy régi hiba is: a `rankings` a `round_id` paramétert
-`"...filter%5Bround_id%5D=%d" % round_id` módon fűzte a linkre, amiben a `%5B`-t a Python
-formázó jelnek olvasta (`ValueError`). A backfill-ág addig sosem futott le élesben, ezért
-nem derült ki; a körbeforgó ellenőrzés viszont minden futásban használja, így javítva
-lett (sztring-összefűzésre).
+1. **Rolling re-check.** By default the rankings endpoint only returns the two most recent
+   rounds, so every run **re-fetches four old rounds** (`rounds_to_recheck`), and the window
+   **moves on every three hours** — not on every run. Eight windows a day × four rounds = 32
+   checks, and the list has at most 31 elements (the last two rounds are fetched by every run
+   anyway), so it comes full circle **within a day**. More frequent runs do not hurt this: on
+   Thursday–Monday the collector runs hourly, so the same four rounds come up to three times,
+   but the chance grows that every window gets at least one run — after a dropped start it
+   would otherwise be missed. On Tuesday and Wednesday it runs every 3 hours, one run per
+   window. The fetched value overwrites the stored one (assignment instead of `setdefault`):
+   the endpoint is the truth.
+2. **The corrected round's squads are refreshed too.** If an old round's score changed, its
+   squad snapshot is stale as well, so the collector fetches that again too
+   (`targets |= changed`) — this way the points breakdown and the arithmetic of the
+   „Különbségek" (Differences) view come out with the corrected data.
+3. **The cross-check repairs too.** If the total computed from the squad differs from the
+   stored official one, the collector **fetches the official value again** for that round,
+   and if it really changed, writes it into `results.json` (`set_result`). A fresh value of 0
+   for a closed round is not taken as a correction: it is a transient answer, and writing it
+   would record a zero for that manager. The MISMATCH warning only goes into the log if the
+   two sources do **not** agree even after the re-fetch — that is a real contradiction, not a
+   correction.
 
-### A bónuszpontok három állapota (PL)
+A related pitfall: `rankings` must append the `round_id` parameter to the URL by string
+concatenation. With `"...filter%5Bround_id%5D=%d" % round_id` Python reads `%5B` as a
+format directive (`ValueError`). The backfill branch alone runs too rarely to show this; the
+rolling check uses it on every run.
 
-> A harmadik állapotot a **forduló** zárása adja — ugyanaz az esemény, amiből a gyűjtő
-> az automatikus cseréket veszi (3/b). Két végpontról olvassuk, mert a Draftnak nincs
-> `event-status`-a.
+### The three states of bonus points (PL)
 
-A bónusz nem úgy végleges, mint a többi pont. Az FPL **a meccs alatt is számolja** a
-BPS-táblából, és bele is teszi a `live` végpont `explain` mezőjébe (`stat: "bonus"`) —
-tehát az oldalunk kiírja, miközben még változhat. Három állapot van, a meccs jelzőiből:
+> The third state comes from the **round's** close — the same event from which the collector
+> takes the automatic substitutions (3/b). It is read from two endpoints, because the Draft
+> has no `event-status`.
 
-| állapot | miből látszik | mit jelent |
+The bonus is not final the way the other points are. The FPL **computes it during the match
+too** from the BPS table, and puts it into the `explain` field of the `live` endpoint
+(`stat: "bonus"`) — so our page shows it while it can still change. There are three states,
+from the match's flags:
+
+| state | how it shows | what it means |
 |---|---|---|
-| a meccs alatt még változik | a meccs `started`, de még nem `finished_provisional` | percről percre változhat |
-| lefújva — a forduló végéig még változhat | a meccs `finished_provisional`, de a forduló még nincs lezárva | rögzült, de az Opta felülvizsgálata még módosíthatja |
-| végleges | a forduló le van zárva (`points: "r"` vagy `bonus_added`) | innentől nem változik |
+| still changing during the match | the match is `started`, but not yet `finished_provisional` | can change minute by minute |
+| full time — can still change until the round's end | the match is `finished_provisional`, but the round is not closed yet | fixed, but Opta's review can still modify it |
+| final | the round is closed (`points: "r"` or `bonus_added`) | does not change from here on |
 
-A pont-bontásban a bónusz sora **színt és rövid szöveget** kap az első két állapotban; a
-harmadik szándékosan **jelöletlen**. A szezon nagy részében minden bónusz végleges, így a
-jelölés ritka, és ezért feltűnő. Szín önmagában sosem áll: minden jelöléshez tartozik
-szöveg is.
+In the points breakdown the bonus row gets **a colour and a short text** in the first two
+states; the third is deliberately **unmarked**. For most of the season every bonus is final,
+so the marking is rare, and that is why it stands out. Colour never stands alone: every
+marking has a text too.
 
-**A harmadik állapotot a NAP mondja meg, nem a meccs.** Az FPL naponta zár: az adott este
-egyszerre nézi át az aznapi összes meccset, és onnantól a bónusz fix. Erre külön végpont
-van — de **csak a klasszikus FPL-ben**, a Draftban `event-status` 404-et ad:
+**The third state is told by the DAY, not by the match.** The FPL closes per day: on the
+given evening it reviews all of that day's matches at once, and from then on the bonus is
+fixed. There is a separate endpoint for this — but **only in the classic FPL**, in the Draft
+`event-status` gives 404:
 
 ```
 GET https://fantasy.premierleague.com/api/event-status/
 {"status":[{"bonus_added":false,"date":"2026-08-21","event":1,"points":"p"}, ...]}
 ```
 
-**A mezők jelentését a Draft frontendjének forrásából olvastuk ki** , tehát
-nem tippelés. Ez rajzolja azt a naponkénti táblázatot, amit a Draft „Current team" lapja
-mutat:
+**The meaning of the fields was read from the source of the Draft frontend**, so it is not a
+guess. This draws the per-day table that the Draft's "Current team" page shows:
 
 ```js
 o7 = { "": ``, l: `Live`, p: `Provisional`, r: `Confirmed` }
@@ -1287,336 +1347,353 @@ o7 = { "": ``, l: `Live`, p: `Provisional`, r: `Confirmed` }
 <td>{ bonus_added && <span>Added</span> }</td>
 ```
 
-| oszlop | mező | értékek |
+| column | field | values |
 |---|---|---|
-| Match Points | `points` | `""` (üres) → `l` **Live** → `p` **Provisional** → `r` **Confirmed** |
-| Bonus Points | `bonus_added` | igaz esetén **„Added"** |
+| Match Points | `points` | `""` (empty) → `l` **Live** → `p` **Provisional** → `r` **Confirmed** |
+| Bonus Points | `bonus_added` | **"Added"** when true |
 
-**A `"p"` (Provisional) NEM a véglegesítés jele, hanem az előtte lévő állapot.** Ez a
-legkönnyebben félreolvasható pont az egészben — magyarul a „provisional" szó azt sugallja,
-hogy már lezárult valami.
+**`"p"` (Provisional) is NOT the sign of finalisation, but the state before it.** This is the
+easiest point to misread in the whole thing — the word "provisional" suggests that something
+has already been settled.
 
-**2026/27-től nincs napi zárás.** A forduló „lockdown"-ja — amikor a pontok véglegessé
-válnak — az utolsó meccs **utáni nap 09:00 UK**-kor van; korábban ez a lefújás után egy
-órával volt. A haladék azért kell, hogy az Opta utólagos felülvizsgálata még
-beleszámíthasson a bónuszba és a védekező pontokba. Ezért szól a jelölés a **forduló**
-végéig, nem a napéig.
+**From 2026/27 there is no daily close.** The round's "lockdown" — when the points become
+final — is at **09:00 UK on the day after** the last match; it used to be one hour after the
+final whistle. The delay is there so that Opta's later review can still count towards the
+bonus and the defensive points. That is why the marking lasts until the end of the
+**round**, not of the day.
 
-Ezt megerősíti a mérés is: egy este, négy lekérésben 21:04 és 22:06 UTC között
-mind a kilenc lejátszott meccs `finished_provisional` volt, egyik sem `finished`, minden
-nap `points: "p"`, és sehol nem volt `bonus_added` — pedig a pénteki meccs két nappal
-korábban lement. A GW1 zárása kedden 09:00 UK-kor lesz.
+Measurement confirms this: on one evening, in four requests between 21:04 and 22:06 UTC, all
+nine played matches were `finished_provisional`, none `finished`, every day was
+`points: "p"`, and there was no `bonus_added` anywhere — although the Friday match had been
+played two days earlier. GW1's close is on Tuesday at 09:00 UK.
 
-A kód szerint véglegesnek az számít, ha az FPL **bármelyik** jelzője kimondja: `points`
-`"r"`, vagy `bonus_added`. Mindkettő pozitív állítás a véglegességről. Tartalékként a
-meccs `finished` mezője marad, ha a napi adat nem jön meg — pontatlanabb (tovább hagyja
-kint a jelölést), de nem állít valótlant.
+According to the code, a round counts as final if **either** FPL flag says so: `points`
+`"r"`, or `bonus_added`. Both are positive claims of finality. As a fallback the match's
+`finished` field remains, if the daily data does not arrive — less precise (it keeps the
+marking up longer), but it does not claim anything untrue.
 
-**Mérve, lezárva :** napi zárás NINCS — a napok napokig `p`-n álltak, és
-mind a forduló lockdownjakor váltottak `r`-re (08:03–08:23 UTC, két lépésben: előbb a
-pontok/bónusz, ~15 perccel később a `current_event_finished`). A nyers napló:
-`naplo/fpl-state.txt` (archívum).
+**Measured and settled:** there is NO daily close — the days stood at `p` for days, and all
+switched to `r` at the round's lockdown (08:03–08:23 UTC, in two steps: first the
+points/bonus, ~15 minutes later `current_event_finished`). The raw log:
+`naplo/fpl-state.txt` (archive).
 
-**A napi lekérést nem várjuk meg.** Másodlagos jelzés, csak a bónusz sorának jelöléséhez
-kell, amit a felhasználó kattintásra lát — ha a pontfrissítés megvárná, egy lassú vagy
-elhasalt lekérés a főfrissítést is lassítaná (a „frissítés…" jelzés akkor is felvillanna,
-amikor a pontok már rég megjöttek).
+**The daily request is not waited for.** It is a secondary signal, only needed to mark the
+bonus row, which the user sees on a click — if the points refresh waited for it, a slow or
+failed request would slow the main refresh too (the „frissítés…" (refreshing…) indicator
+would flash even when the points had long arrived).
 
-**A sort a saját meccséhez kötjük.** Az `explain` fordulónként meccsekre bontva jön,
-`[[stat-lista, meccs_id]]` alakban — a második elem a meccs azonosítója. Ez dupla
-fordulónál számít, ahol egy játékosnak két meccse van, és a kettő külön állapotban lehet
-(mérve: az egyik lefújva, a másik még megy). Klub szerint összevonva ez elmosódna, ezért
-a bónusz állapota **meccsenként** (`LIVEMECCS`) áll, nem klubonként (`LIVEFX`).
+**The row is tied to its own match.** `explain` comes per round split by match, in the form
+`[[stat-list, match_id]]` — the second element is the match id. This matters in a double
+round, where a player has two matches and the two can be in different states (measured: one
+over, the other still running). Merged per club this would blur, so the bonus state is kept
+**per match** (`LIVE_MATCHES`), not per club (`LIVEFX`).
 
-**Zsákutca, hogy ne kelljen újra megjárni:** a meccs saját `stats` tömbjében is van egy
-`bonus` tétel (a három legjobb BPS), de az **mindig ott van**, tehát a megléte nem jelzi,
-hogy a bónuszt véglegesítették. A Draft API-ban ez a tömb `{s, h, a}` alakú, nincs benne
-`identifier` kulcs, mint a klasszikus FPL-ben.
+**Dead end, so it need not be walked again:** the match's own `stats` array also has a
+`bonus` item (the three best BPS), but it is **always there**, so its presence does not
+signal that the bonus has been finalised. In the Draft API this array has the shape
+`{s, h, a}`, with no `identifier` key as in the classic FPL.
 
-### Ki van még a pályán (PL)
+### Who is still on the pitch (PL)
 
-A pont mellett ott a játékos percei és az, hogy kezdőként lépett-e pályára — a keretben
-és a meccs nézetében, **fejléccel** (`perc · meccs · kezdő · pont`), mert a címkézetlen
-szám elsőre rejtély:
+Next to the points are the player's minutes and whether they started — in the squad and in
+the match view, **with a header** (`perc · meccs · kezdő · pont`), because an unlabelled
+number is a puzzle at first sight:
 
-| oszlop | mit mutat | mikor |
+| column | what it shows | when |
 |---|---|---|
-| `perc` | a játékos lejátszott percei (`stats.minutes`) | mindig |
-| `meccs` | a meccsóra, lefújás után `vége` | **csak az élő fordulóban** |
-| `kezdő` | `K`, ha kezdőként lépett pályára, egyébként `–` | mindig |
+| `perc` (minutes) | the player's minutes played (`stats.minutes`) | always |
+| `meccs` (match) | the match clock, `vége` (over) after full time | **only in the live round** |
+| `kezdő` (starter) | `K` if they started, otherwise `–` | always |
 
-**Lezárt fordulóban a meccsóra elmarad** — ott minden meccs lement, tehát mindenkinél
-`vége` állna. A fejléc is két oszlopra rövidül. Az adat forrása ilyenkor **nem** az élő
-lekérés (`LIVEPERC`), hanem az adott forduló saját `event/{gw}/live` válasza
-(`regiPercBetolt` → `REGIPERC[gw]`) — ugyanaz a kérés, amiből a pont-részletező is jön,
-fordulónként gyorsítótárazva, tehát nincs miatta plusz lekérés. Aszinkron, ezért a modal
-**előbb jön fel, mint a percek**, és az adat megérkeztével rajzolja újra magát
-(`percUtantoltes`); az újrarajzolás csak akkor fut le, ha közben nem lépett máshova a
-néző. A `draft_history.json` percet nem tárol, ezért kell a lekérés.
+**In a closed round the match clock is left out** — every match there has been played, so
+everyone would show `vége`. The header shrinks to two columns too. The source of the data is
+then **not** the live request (`LIVE_MINUTES`), but the round's own `event/{gw}/live`
+response (`loadPastMinutes` → `PAST_MINUTES[gw]`) — the same request the points detail comes
+from, cached per round, so it costs no extra request. It is asynchronous, so the modal
+**comes up before the minutes**, and redraws itself when the data arrives
+(`backfillMinutes`); the redraw only runs if the viewer has not moved elsewhere in the
+meantime. `draft_history.json` stores no minutes, which is why the request is needed.
 
-**Akinek nincs adata, annál üresek a cellák, és ez nem csúsztat el semmit:** a `.pts`
-jobbra zárt és utolsó, a `.nm` pedig `flex:1`, tehát a pont oszlopa akkor is a helyén
-marad, ha a perc-cellák hiányoznak (élő fordulóban ez a még el nem kezdődött meccsek
-játékosainál látszik).
+**Where there is no data, the cells are empty, and this shifts nothing:** `.pts` is
+right-aligned and last, `.nm` is `flex:1`, so the points column stays in place even if the
+minute cells are missing (in a live round this shows for players whose match has not started
+yet).
 
-**Nyers értékeket mutatunk, nem értelmezünk a néző helyett.** A „lecserélve" felirathoz
-tűréshatár kellene, és egy egyperces csúszás a két végpont között hamis állítást szülne.
-A két számból magától látszik, pályán van-e: ha egyeznek, igen.
+**Raw values are shown; nothing is interpreted for the viewer.** A „lecserélve"
+(substituted off) label would need a tolerance, and a one-minute slip between the two
+endpoints would produce a false claim. The two numbers show by themselves whether the player
+is on the pitch: if they are equal, yes.
 
-**A meccsóra a játékosok perceinek maximuma**, klubonként összegyűjtve — nem a fixtures
-`minutes` mezője. Élő meccs alatt mérve  az **mindig 0**, még a lement
-meccseknél is. A játékosok percei viszont együtt ketyegnek: 15 mintában, fél óra alatt a
-futó meccs minden pályán lévő kezdője ugyanazt a számot mutatta. Ez nem becslés: 11
-kezdővel és legfeljebb 5 cserével mindig marad valaki, aki végigjátssza a meccset.
-A `perccellak.teszt.js` mockjában a `minutes` **szándékosan 0** — ha valaki visszatenné a
-meccs saját mezőjét, a teszt bukik.
+**The match clock is the maximum of the players' minutes**, collected per club — not the
+fixtures' `minutes` field. Measured during a live match, that is **always 0**, even for
+finished matches. The players' minutes, however, tick together: in 15 samples over half an
+hour every starter on the pitch in the running match showed the same number. This is not an
+estimate: with 11 starters and at most 5 substitutions there is always someone who plays the
+whole match. In the mock of `perccellak.teszt.js` the `minutes` is **deliberately 0** — if
+someone put back the match's own field, the test fails.
 
-**A lecserélt játékos percei megállnak** — mérve: egy lement meccsen a kezdők 81', 80',
-75'… értéken álltak (ekkor cserélték le őket), a csereként beállók pedig 28', 22', 20'…
-értéken. 15 mintában, fél óra alatt egyetlen szám sem változott.
+**A substituted player's minutes stop** — measured: in a finished match the starters stood
+at 81', 80', 75'… (when they were taken off), and those who came on at 28', 22', 20'…. In 15
+samples over half an hour not a single number changed.
 
-**A meccsóra 45-nél és 90-nél megáll**, ezért a 90 önmagában nem árulja el, vége van-e a
-meccsnek — ott a cella `vége`-t ír.
+**The match clock stops at 45 and 90**, so 90 alone does not tell whether the match is over —
+there the cell says `vége`.
 
-**Dupla fordulóban mindkét meccs értéke szerepel**, `|` elválasztóval. A `kezdő` oszlop
-ilyenkor nem bontható meccsre: az `explain` **csak pontot érő tételeket** tartalmaz, a
-`starts` sosem szerepel benne.
+**In a double round both matches' values appear**, separated by `|`. The `kezdő` column
+cannot be split per match then: `explain` **only contains items worth points**, `starts`
+never appears in it.
 
-**Az adat késése ~3 perc** a valós időhöz képest (mérve, stabilan): 19:14:47-kor 12' a
-valós 14.8 helyett, 19:43:00-kor 40' a valós 43.0 helyett.
+**The data lags ~3 minutes** behind real time (measured, steadily): at 19:14:47 it showed
+12' instead of the real 14.8, at 19:43:00 40' instead of the real 43.0.
 
-Fejléc csak ott jelenik meg, ahol van is perc-cella (élő forduló, elkezdődött meccs) —
-lezárt fordulóban nincs mit címkézni. A címke nem lehet szélesebb a saját oszlopánál,
-különben elcsúszik a számoktól; a teszt középpontra méri.
+The header only appears where there is a minute cell (live round, started match) — in a
+closed round there is nothing to label. The label must not be wider than its own column,
+otherwise it slips away from the numbers; the test measures it by the centre point.
 
-### A meccs állása a pont-bontás fölött (PL és NB1)
+### The match score above the points breakdown (PL and NB1)
 
-A játékosra kattintva a pontok fölött egy sor: `ARS 2–1 BRE · 70. perc`. Lefújás után
-`vége`, el nem kezdődött meccsnél nincs állás, csak a két klub — **0–0-t nem írunk ki**,
-mert az állítás lenne, nem adat. Kettős fordulóban mindkét meccs külön sort kap.
+Clicking a player shows a row above the points: `ARS 2–1 BRE · 70. perc`. After full time
+`vége`; for a match not yet started there is no score, only the two clubs — **0–0 is not
+shown**, because it would be a claim, not data. In a double round each match gets its own
+row.
 
-Az állás a **fixtures** válasz `team_h_score` / `team_a_score` mezőjéből jön:
+The score comes from the `team_h_score` / `team_a_score` fields of the **fixtures** response:
 
-- **élő fordulóban** a már meglévő `LIVEMECCS`-ből, tehát nincs miatta plusz lekérés;
-- **lezárt fordulóban** egy fordulónként gyorsítótárazott `event/{gw}/fixtures` kérésből
-  (`forduloMeccsei` → `REGIFX`). Itt nem kell utántöltés, mint a perc-oszlopoknál: a
-  `bontasHTML` amúgy is aszinkron, tehát mire a lenyíló tartalma elkészül, ez is megvan.
+- **in the live round** from the existing `LIVE_MATCHES`, so it costs no extra request;
+- **in a closed round** from an `event/{gw}/fixtures` request cached per round
+  (`gamesOfRound` → `PAST_FIXTURES`). No backfill is needed here as for the minute columns:
+  `breakdownHTML` is asynchronous anyway, so by the time the dropdown's content is ready,
+  this is there too.
 
-A fixtures válasz értelmezése **egy helyen** él (`meccsRekord`), hogy az élő és a lezárt
-forduló ne csússzon el egymástól.
+The interpretation of the fixtures response lives **in one place** (`fixtureRecord`), so the
+live and the closed round cannot drift apart.
 
-**Az NB1-en ugyanez a sor** a `meccsek.json`-ból jön (a gyűjtő tölti, lásd a fájl-táblázatot),
-a jobb oldali címke pedig a már meglévő `meccsAllapot`-ból (időkorlátokkal védve) — a
-kirajzolás közös (`FunTasy.bontasMeccsSor`), az adat-előállítás ligánkénti adapter.
-Az NB1 részletezője emellett **első sorként a játszott percet** is mutatja: a "Játszott
-perc" sor eddig ki volt szűrve (0 pontot ér), pedig megjön — aki 60 percnél kevesebbet
-játszott, annak a perce sosem látszott. A sor **csak lement meccsnél** kerül be: az
-állapot-kaput (előtte/fut → szöveges üzenet) nem kerülheti meg. 0 percnél az üzenet
-marad ("Nem lépett pályára"), mert az többet mond.
+**On the NB1 the same row** comes from `meccsek.json` (filled by the collector, see the file
+table), and the right-hand label from the existing `matchState` (guarded by time limits) —
+the drawing is shared (`FunTasy.breakdownMatchRow`), producing the data is a per-league
+adapter. The NB1 detail also shows **the minutes played as the first row**: the „Játszott
+perc" (minutes played) row used to be filtered out (it is worth 0 points), although it
+arrives — for anyone who played less than 60 minutes the minutes never showed. The row is
+**only added for a finished match**: it cannot bypass the state gate (before/running → a
+text message). At 0 minutes the message stays („Nem lépett pályára" — did not come on),
+because it says more.
 
-**Miért a lenyílóban, és nem oszlopban.** Kimérve (360px): egy állás-oszlop a névnek
-maradó helyet 112 → 70px-re vinné, tehát a nevek látható része csonkulna; a név alatti
-második sor a sormagasságot 31 → 51px-re. A lenyíló ezzel szemben ingyen van, és ott az
-állás a bontást is olvashatóvá teszi (a „Kapott gólok 3" az `AVL 0–3 BHA` alatt már
-mond valamit). A keretlistában a *pillantásra* szóló kérdésre — kezdett-e, pályán
-van-e még — a perc-oszlopok felelnek, azt ez nem váltja ki.
+**Why in the dropdown and not in a column.** Measured (360px): a score column would cut the
+space left for the name from 112 → 70px, so the visible part of the names would be truncated;
+a second row under the name would raise the row height from 31 → 51px. The dropdown on the
+other hand is free, and there the score makes the breakdown readable too („Kapott gólok 3"
+(goals conceded 3) means something under `AVL 0–3 BHA`). In the squad list the
+*at-a-glance* question — did they start, are they still on the pitch — is answered by the
+minute columns; this does not replace them.
 
-### Automatikus cserék a forduló zárásakor (PL)
+### Automatic substitutions at the round's close (PL)
 
-Az FPL a forduló végén **automatikus cseréket** hajt végre: a nem játszó kezdő helyére
-beállítja az első beférőt a padról — ezért számít a pad sorrendje. Mérve
-(`naplo/fpl-subs.txt`):
+At the end of the round the FPL makes **automatic substitutions**: in place of a starter who
+did not play it brings in the first bench player who fits — that is why the bench order
+matters. Measured (`naplo/fpl-subs.txt`):
 
-- **Az FPL átírja a pick `position` mezőjét** (a becserélt 12→11 alá kerül, a kikerülő a
-  helyére a padra), és **külön `subs` listát is ad** (`{element_in, element_out, event}`).
-  A gyűjtőnk a `position`-ből számolja a `b` (pad) jelzőt, tehát magától rendbe jön —
-  **ha időben újra lekéri a fordulót.**
-- **Ez a lockdownkor történik**, nem a meccs után: 08:03 és 08:23 UTC között billent át
-  minden egyszerre (H2H `finished`, `points` → `r`, `bonus_added`, `current_event_finished`).
-- **A `current_event` ilyenkor MÉG a régi forduló** — a zárás jelzése a `game` végpont
-  **`current_event_finished`** mezője. (A `processing_status` és a `waivers_processed`
-  végig változatlan maradt, azok mást jelentenek.)
+- **The FPL rewrites the pick's `position` field** (the one coming on moves 12→ to 11 or
+  below, the one going off takes their place on the bench), and **also gives a separate
+  `subs` list** (`{element_in, element_out, event}`). Our collector computes the `b` (bench)
+  flag from `position`, so it sets itself right — **if it fetches the round again in time.**
+- **This happens at lockdown**, not after the match: between 08:03 and 08:23 UTC everything
+  flipped at once (H2H `finished`, `points` → `r`, `bonus_added`, `current_event_finished`).
+- **At that point `current_event` is STILL the old round** — the close is signalled by the
+  **`current_event_finished`** field of the `game` endpoint. (`processing_status` and
+  `waivers_processed` stayed unchanged throughout; they mean something else.)
 
-Ezért a gyűjtő addig kéri újra a fordulót, amíg nem tudja biztosan, hogy lezárult:
-a `draft_history.json` **`veglegesek`** listája tartja számon a véglegesített fordulókat.
-Egy forduló akkor kerül bele, ha az FPL már túllépett rajta, **vagy** ő az aktuális, de
-`current_event_finished` — és csak akkor, ha abban a futásban **minden csapat** kerete
-megjött (különben egy elhasalt lekérés a csere előtti állapotot rögzítené véglegesnek).
+That is why the collector keeps fetching the round again until it knows for certain that it
+has closed: the **`veglegesek`** list in `draft_history.json` keeps track of the finalised
+rounds. A round gets into it if the FPL has already moved past it, **or** it is the current
+one but `current_event_finished` — and only if in that run **every team's** squad arrived
+(otherwise a failed request would record the pre-substitution state as final).
 
-**Az aktuális fordulót ettől függetlenül minden körben lekérjük**, a zárás után is —
-a `veglegesek` lista csak a *régi* fordulókról dönt. Lásd „3/b. A lezárás": ez a szabály
-nem a zárásról szól, hanem az utólagos korrekciókról. Rögzíti: `collector_draft_closing.py`.
+**The current round is fetched on every run regardless**, after the close too — the
+`veglegesek` list only decides about the *old* rounds. See "3/b" on closing: this rule is not
+about the close, but about later corrections. Pinned by: `collector_draft_closing.py`.
 
-Egyszer ez **csak azon múlt**, hogy a futás hat perccel a zárás után esett.
+Without this rule, getting the substituted state recorded would depend on luck: on one
+occasion it only worked because a run happened to fall six minutes after the close.
 
-### A zárás és a gyűjtés közötti rés (PL)
+### The gap between closing and collection (PL)
 
-Az FPL a fordulót a **lockdownkor** zárja le egyszerre — mérve 08:03 és
-08:23 UTC között billent át minden: a H2H meccsek `finished`-re, a `points` `p`-ről
-`r`-re, a `bonus_added` igazra, a `current_event_finished` igazra. A gyűjtőnk viszont
-nem folyamatosan fut (a zárás délelőtti ablakában óránként), tehát van egy rés, amikor a `game` végpont már lezártat mond, de a
-tárolt `draft.json`-ban még a zárás előtti állás van.
+The FPL closes the round all at once at **lockdown** — measured, everything flipped between
+08:03 and 08:23 UTC: the H2H matches to `finished`, `points` from `p` to `r`, `bonus_added`
+to true, `current_event_finished` to true. Our collector, however, does not run continuously
+(hourly at :37 between 07:00 and 13:00 UTC, which covers the morning closing window; every
+3 hours at :47 otherwise), so there is a gap in which the `game` endpoint already says
+closed, but the stored `draft.json` still has the pre-close standings.
 
-Ebben a résben a státuszsor korábban **„Naprakész · ellenőrizve <most>"**-ot írt: a
-kiírt idő a *lekérésé* volt, nem az *adaté* — vagyis pont akkor állította magáról, hogy
-naprakész, amikor bizonyíthatóan nem volt az. Most megmondja, hogy a forduló lezárult,
-az eredmény a következő adatfrissítéssel jön, és a **tárolt** állás idejét írja ki.
-Rögzíti: `zarasires.teszt.js`.
+In this gap the status line must not say **„Naprakész · ellenőrizve <most>"** (up to date ·
+checked <now>): the time shown would be that of the *request*, not of the *data* — so it
+would claim to be up to date exactly when it provably was not. Instead it says that the round
+has closed, that the result comes with the next data refresh, and it shows the time of the
+**stored** standings. Pinned by: `zarasires.teszt.js`.
 
-Az NB1-en ez a rés nem áll fenn: ott a gyűjtő maga dönti el a lezárást, és ugyanabban a
-futásban írja be az eredményt is.
+On the NB1 this gap does not exist: there the collector itself decides the close, and writes
+the result in the same run.
 
-### Az indulás és a gyűjtés közötti rés (PL) — a keretet a böngésző pótolja
+### The gap between the start and collection (PL) — the browser backfills the squads
 
-A fenti rés párja, a forduló **elején**. Az FPL a fordulót a nevezési határidővel
-indítja (`current_event` átlép), a gyűjtőnk viszont nem folyamatosan fut — **mérve** (még háromórás ütemmel): a
-16:43 UTC-s futás még a 4. fordulót látta (a log szerint
-`fordulonkenti keret: GW4`), a következő 23:47-re volt időzítve, közben ~17:30-kor
-elindult az 5. Abban a résben a repóban **egyáltalán nem létezett keret** az 5.
-fordulóhoz.
+The counterpart of the gap above, at the **start** of the round. The FPL starts the round at
+the entry deadline (`current_event` moves on), but our collector does not run continuously —
+**measured** while the collector ran only every 3 hours: the 16:43 UTC run still saw round 4
+(the log said `fordulonkenti keret: GW4`), the next one was scheduled for 23:47, and in
+between, at ~17:30, round 5 started. In that gap **no squad existed at all** in the
+repository for round 5. The current schedule (every 3 hours at :47, plus hourly at :37
+between 07:00 and 13:00 UTC) still leaves such a gap after an evening deadline.
 
-Ettől a lap élő meccs alatt nem mutatott semmit — és félrevezető módon: kiment az
-API-ra, meg is kapta az élő pontokat, csak nem volt *kire* rátérítenie őket
-(`eloAllasFrissit` a `HIST[gw]` hiányában kilépett), így élő állás helyett
-**„Naprakész"** állt a státuszsávban, miközben ment a meccs.
+Without a fix the page shows nothing during a live match — and misleadingly: it goes out to
+the API, it even gets the live points, it just has nobody to *apply* them to
+(`updateLiveScores` exits when `HIST[gw]` is missing), so instead of a live score the status
+bar says **„Naprakész"** (up to date) while the match is on.
 
-Megoldás: a hiányzó kereteket a **böngésző kéri le** — `entry/{eid}/event/{gw}`, ami a
-forduló indulásáig 404-et ad, utána `picks`-et; mi csak élő fordulóra hívjuk. A
-`draft.json` a ligán belüli azonosítót tárolja (`league_entry "id"`), a végpont az FPL
-`entry_id`-t kéri — a kettőt a `league/{id}/details` köti össze, azt egyszer kérjük le.
+The fix: the **browser fetches** the missing squads — `entry/{eid}/event/{gw}`, which gives
+404 until the round starts, `picks` after; we only call it for a live round. `draft.json`
+stores the id within the league (`league_entry "id"`), the endpoint wants the FPL `entry_id`
+— `league/{id}/details` links the two, and it is fetched once.
 
-Két szabály védi:
+Two rules guard it:
 
-- **A gyűjtőé az erősebb.** Amit ő már beírt, azt a pótlás nem írja felül: az ő kerete
-  már a zárás utáni, automatikus cserékkel javított állapot lehet, a böngészőé mindig a
-  zárás előtti pillanatkép. Fordulóhatáron a pótolt keretet eldobjuk.
-- **Részleges pótlásból nem lesz hamis állás.** Akinek a kerete nem jött meg, annak a
-  meccse élő állás nélkül marad — a 0 futó meccsen nem „még nincs pont", hanem téves
-  szám. (A keret részlegesen a gyűjtőtől is hiányozhat: az egy elhasalt csapat-lekérést
-  átlép.)
+- **The collector's is the stronger.** What the collector has already written, the backfill
+  does not overwrite: its squad may already be the post-close state corrected by automatic
+  substitutions, the browser's is always the pre-close snapshot. At a round boundary the
+  backfilled squads are dropped.
+- **A partial backfill does not make a false score.** A team whose squad did not arrive keeps
+  its match without a live score — a 0 on a running match is not "no points yet", but a
+  wrong number. (A squad can be partly missing from the collector too: it skips a failed
+  team request.)
 
-A parancs **közös** (`FunTasy.potKeretek`), mert a helyzet mindkét ligán ugyanez; a
-végpont ligánként más, azt a hívó adja. Az NB1-en ma azért nem áll elő, mert ott a
-gyűjtő **minden futásban** kiírja a teljes aktuális keretet (`squads.json`), és a lap
-abból tölti ki a folyó forduló állását — ha az a fájl valaha lemarad, ugyanez a pótlás
-áll oda is. Rögzíti: `keretpotlas.teszt.js`.
+The routine is **shared** (`FunTasy.backfillSquads`), because the situation is the same in
+both leagues; the endpoint differs per league, the caller supplies it. On the NB1 it does
+not arise today, because there the collector writes the whole current squad on **every
+run** (`squads.json`), and the page fills the running round's score from that — if that file
+ever lags behind, the same backfill applies there too. Pinned by: `keretpotlas.teszt.js`.
 
-### Név és monogram: a monogram sosem vágódik le
+### Name and monogram: the monogram is never cut off
 
-A csapatnév mellett álló monogram (`.mgr`) **szűk helyen az azonosító** — ezért nem a
-sor végén vágjuk le, hanem a nevet rövidítjük. A pár közös (`nevMgr` a `funtasy.js`-ben):
-a név `.nv`-be kerül (ellipszis, zsugorodik), a monogram `flex:none`. A konténerek
-(`td.name`, `.match .h/.v`) flexek, nem `text-align`-nal igazítanak.
+The monogram next to the team name (`.mgr`) **is the identifier in a narrow space** — so it
+is not cut at the end of the line; the name is shortened instead. The pair is shared
+(`nameTagHTML` in `FunTasy.create` in `funtasy.js`): the name goes into `.nv` (ellipsis,
+shrinks), the monogram is `flex:none`. The containers (`td.name`, `.match .h/.v`) are
+flexboxes, they do not align with `text-align`.
 
-Mobilon a szélesség-korlát a **néven** van (`td.name .nv{max-width:42vw}`), nem a cellán:
-a `td` `max-width`-je table-layout alatt nem korlátoz megbízhatóan, és a hosszú név
-kitolta a monogramot a cellából (mérve: a 30 monogramból egy túlnyúlt).
+On mobile the width limit is on the **name** (`td.name .nv{max-width:42vw}`), not on the
+cell: a `td`'s `max-width` does not limit reliably under table layout, and a long name pushed
+the monogram out of the cell (measured: one of the 30 monograms overflowed).
 
-### Kezdőállítási hatékonyság (KEZD%)
+### Line-up efficiency (KEZD%)
 
-**Mit mér:** a keretből elérhető pontok hány százalékát hozta a ténylegesen beállított
-kezdő. `szerzett / lehető`, ahol a lehető a keret **utólag ismert** pontjaiból számolt
-legjobb érvényes felállítás. A tabella KEZD% oszlopa a lezárt fordulók összesítése
-(ugyanabból a körből, amiből a tabella számol — élő/ideiglenes forduló nem számít bele);
-a meccs-nézet fejlécében és az egymás elleni listában fordulónként áll.
+**What it measures:** what percentage of the points available from the squad the actually
+fielded line-up brought. `scored / possible`, where possible is the best valid line-up
+computed from the squad's points **known after the fact**. The table's KEZD% column is the
+total of the closed rounds (from the same set the table computes from — a live/provisional
+round does not count); in the match view's header and in the head-to-head list it is shown
+per round.
 
-**NB1** (a gyűjtő számolja, `collect.py hatekonysag` → `hatekonysag.json`):
-- A pad kötelezően 1 kapus + 1 védő + 1 középpályás + 1 csatár —
-  formációválasztás tehát nincs. Az optimum **mégsem** posztonkénti minimum: a
-  magyarszabály (+10) függ attól, ki ül a padon, ezért a ~160 pad-kombinációt
-  végigpróbáljuk, mindegyikhez a legjobb kezdő a kapitány.
-- A tárolt `week` már kész érték (kapitányi ×2, pad ×0,5) — a nyers pontot a `cap`/`sub`
-  jelzőből fejtjük vissza. A szerzett a `keret_osszeg` (= a hivatalos fordulópont).
+**NB1** (computed by the collector, `collect.py` → `efficiency()` → `hatekonysag.json`):
+- The bench is mandatorily 1 goalkeeper + 1 defender + 1 midfielder + 1 forward — so there
+  is no choice of formation. The optimum is **still not** a per-position minimum: the
+  Hungarian rule (+10) depends on who sits on the bench, so all ~160 bench combinations are
+  tried, and for each the captain is the best starter.
+- The stored `week` is already a finished value (captain ×2, bench ×0.5) — the raw points
+  are worked back from the `cap`/`sub` flags. The scored value is `squad_total` (= the
+  official round score).
 
-**PL** (a böngésző számolja, `plHatekonysag` a `pl/index.html`-ben):
-- A legjobb **érvényes** kezdő 11: pontosan 1 kapus, 3–5 védő, 1–3 csatár, a középpályás
-  a maradék (2–5). A Draftban nincs kapitány, a pad pontja nem számít.
-- Élő fordulóra a tabella nem számol (csak lejátszott meccsekre aggregál); a meccs-modal
-  élő meccsen a friss pontokból számol, „élő" jelöléssel.
+**PL** (computed by the browser, `plEfficiency` in `pl/index.html`):
+- The best **valid** starting 11: exactly 1 goalkeeper, 3–5 defenders, 1–3 forwards, the
+  midfielders are the rest (2–5). The Draft has no captain, bench points do not count.
+- For a live round the table does not compute (it aggregates only played matches); the match
+  modal computes from the fresh points during a live match, with an „élő" (live) marking.
 
-A megjelenítés közös (`opts.kezd` hook a `FunTasy.create`-ben: tabella-oszlop, h2h-jel,
-`fordulokHTML`; `FunTasy.kezdParHTML` a meccs-fejléc kétoldalt igazított sora) — a
-számítás ligánkénti adapter. A **Fordulók fül is közös** (`T.fordulokHTML`): a PL és az
-NB1 korábban két majdnem azonos példányban tartotta (`fordulokHTML` / `seasonHTML`),
-ebből lett a kimaradó NB1-es KEZD% — az ilyen kettőzés pontosan az, amiről a
-6. fejezet közösítés-szabálya szól. Ugyanez történt a **zárási változások** paneljével is:
-két külön példányból két különböző kinézet lett, ezért a HTML most közös
-(`FunTasy.zarasLista`), és a két oldal csak normalizált sorokat ad át.
+The display is shared (the `opts.lineup` hook in `FunTasy.create`: table column, h2h mark,
+`roundsHTML`; `FunTasy.lineupPairHTML` is the match header's row aligned to both sides) —
+the computation is a per-league adapter. The **Fordulók (Rounds) tab is shared too**
+(`T.roundsHTML`): PL and NB1 used to keep it in two nearly identical copies, which is how
+the NB1 ended up without KEZD% — such duplication is exactly what the sharing rule in
+chapter 6 (Making changes) is about. The same happened with the **closing changes** panel:
+two separate copies turned into two different looks, so the HTML is now shared
+(`FunTasy.closingList`), and the two pages only pass normalised rows.
 
-A **játékosprofil megnyitása** is közös (`FunTasy.profilNezo`): a cím, a felirat, a
-betöltés-jelzés, az elavultság-védelem (amíg tölt, nyitható másik — a később beérő válasz
-nem írhatja felül az újabbat) és a hibaüzenet egy helyen van. A két oldal csak azt adja meg,
-hogy a kulcsból hogyan lesz név és adat, és hogy a kirajzolás után van-e még pótolnivaló
-(az NB1-en a gazdátlan fordulók pontja utólag, sorban töltődik).
+**Opening a player profile** is shared too (`FunTasy.profileViewer`): the title, the
+caption, the loading indicator, the staleness guard (while it loads, another one can be
+opened — a response arriving later must not overwrite the newer one) and the error message
+are in one place. The two pages only specify how a key becomes a name and data, and whether
+there is still something to fill in after drawing (on the NB1 the points of the ownerless
+rounds load afterwards, one by one).
 
-### A pad sorrendje (PL) — és ami még nyitott
+### The bench order (PL) — and what is still open
 
-**A pad sorrendje az FPL csere-sorrendje**, nem díszítés: a forduló végén az FPL az első
-olyan padost állítja be a nem játszó kezdő helyére, aki formációlag befér. Ezért a padot
-**úgy hagyjuk, ahogy jött** — a kezdőket viszont továbbra is poszt szerint rendezzük, ott
-a sorrendnek nincs jelentése. (Korábban a padot is poszt szerint rendeztük, és ezzel pont
-azt az információt dobtuk el, amiért nézni kell. A `padsorrend.teszt.js` rögzíti.)
+**The bench order is the FPL's substitution order**, not decoration: at the end of the
+round the FPL brings in, in place of a starter who did not play, the first bench player who
+fits the formation. That is why the bench is **left as it came** — the starters, however, are
+still sorted by position, where the order has no meaning. (Sorting the bench by position
+would throw away exactly the information it is worth looking at. Pinned by
+`padsorrend.teszt.js`.)
 
-Az adat végig jó volt: a gyűjtő a `picks` API-sorrendjében írja ki a keretet, tehát a
-`draft_history.json` a 12–15. helyeket az FPL sorrendjében őrzi. A `position` mezőt maga
-nem tárolja, csak a `b` (pad) jelzőt — a sorrendet a **lista sorrendje** hordozza.
+The data has always been right: the collector writes the squad in the API order of `picks`,
+so `draft_history.json` keeps places 12–15 in the FPL's order. It does not store the
+`position` field itself, only the `b` (bench) flag — the order is carried by the **order of
+the list**.
 
-**Nyitott kérdés: mi történik a fordulózáráskor.** Az FPL ilyenkor végrehajtja az
-automatikus cseréket. Amit biztosan tudunk:
+**Open question: what happens at the round's close.** The FPL then makes the automatic
+substitutions. What is known for certain:
 
-- **A tabella nem érintett.** A `draft.json` `standings` és `schedule` mezője az FPL saját
-  `league/{id}/details` végpontjáról jön, tehát a hivatalos eredményt mutatja, a cserékkel
-  együtt. Ezt nem mi számoljuk.
-- **A „Kezdők" összeg viszont a mi számításunk** a tárolt `b` jelzőből, és csak akkor
-  követi a cserét, ha a gyűjtő újra lekéri a fordulót.
-- **A gyűjtő ma csak az aktuális fordulót kéri le újra** (plusz azokat, amikből hiányzik
-  csapat). Amint a `current_event` továbblép, a lezárt forduló **befagy** — azzal a
-  keretbeosztással és pontokkal, ami épp akkor volt benne. Ha a csere vagy a bónusz
-  véglegesítése a váltás után történik, az a forduló nálunk örökre a váltás előtti
-  állapotot mutatja, a „Szezon játékosai" fülön is.
+- **The table is not affected.** The `standings` and `schedule` fields of `draft.json` come
+  from the FPL's own `league/{id}/details` endpoint, so they show the official result,
+  substitutions included. We do not compute this.
+- **The „Kezdők" (Starters) total, however, is our computation** from the stored `b` flag,
+  and it only follows a substitution if the collector fetches the round again.
+- **The collector only re-fetches the current round** (plus those with a team missing). As
+  soon as `current_event` moves on, the closed round **freezes** — with the squad assignment
+  and points it had at that moment. If the substitution or the bonus finalisation happens
+  after the switch, that round shows the pre-switch state forever on our side, on the
+  „Szezon játékosai" (Players of the season) tab too.
 
-Ezt a kérdést a mérés azóta megválaszolta — lásd az „Automatikus cserék a forduló
-zárásakor" szakaszt: az FPL **átírja** a `position`-t (és külön `subs` listát is ad),
-a gyűjtő pedig a `veglegesek` listával gondoskodik róla, hogy a csere utáni állapot
-kerüljön be.
+Measurement has since answered this question — see the section "Automatic substitutions at
+the round's close": the FPL **rewrites** `position` (and gives a separate `subs` list too),
+and the collector makes sure, with the `veglegesek` list, that the post-substitution state
+gets in.
 
-### Az FPL Draft API (draft.premierleague.com/api/) — mérésekkel igazolva
+### The FPL Draft API (draft.premierleague.com/api/) — verified by measurement
 
-- `league/{id}/details` — résztvevők, menetrend, eredmények; **a valódi neveket is
-  tartalmazza**, ezért nyers válasz soha nem kerül a repóba
-- `bootstrap-static` — játekos-törzs (599 játékos, klubok, posztok)
-- `league/{id}/element-status` — ki birtokolja most az adott játékost; az `owner` mező
-  azonosító-terét futáskor kell felismerni (liga-id vagy entry_id lehet)
-- `entry/{entry_id}/event/{gw}` — heti keret (kezdő/pad); **a forduló indulásáig 404-et
-  ad**, ez várható viselkedés
-- `event/{gw}/live` — játékosonkénti heti pontok; nyilvános, ebből megy az élő állás.
-  Az elemek `explain` mezője a kész pont-bontás (esemény, érték, pont — angol nevekkel;
-  az oldal a `stat` kulcs alapján fordítja magyarra). A még nem játszott játékosnál is van
-  `explain` (0 perccel), ezért a „játszott már?” jelzéshez nem elég — arra a fixtures való.
-- `event/{gw}/fixtures` — a forduló meccsei `started` / `finished` állapottal,
-  `kickoff_time`-mal és csapat-azonosítókkal; ebből tudjuk, kinek kezdődött már el a
-  meccse (kötőjel vs 0) és mikor kezdődik. Az oldal klubonként **összevonja** az
-  állapotokat: „indult", ha bármelyik meccse elkezdődött, „kész", ha mindegyik lement —
-  dupla fordulón ugyanis egy klubnak két meccse van. Ha egy klub **egyáltalán nem
-  szerepel** a forduló meccsei között, akkor üres fordulója van (blank gameweek): a
-  játékosai kötőjelet kapnak, és a bontás is ezt írja ki
-- `element-summary/{element_id}` — **egy játékos egész szezonja EGY kérésből** (mérve): a `history` tömbben fordulónként `event`, `total_points`, minden statisztika,
-  és egy `detail` mező `"AVL (H) 4-0"` alakban — vagyis az ellenfél, a pálya és a végeredmény
-  együtt. A `fixtures` a hátralévő meccseket adja. Ez a PL-oldali játékosprofil forrása;
-  a gyűjtőnek nem kerül semmibe, mert a böngésző kéri le, akkor, amikor kell.
-  **A klasszikus FPL (`fantasy.premierleague.com/api/element-summary/{id}/`) NEM használható
-  helyette:** ugyanaz az útvonal létezik, de az **azonosítók nem egyeznek** a Drafttal. A
-  mérésben öt játékosból négynél véletlenül stimmelt a pont, az ötödiknél viszont 1 vs 14 —
-  egy felületes ellenőrzés tehát átengedte volna. Mindig a Draft saját végpontját használjuk.
-- `game` — `current_event`: a folyamatban lévő forduló száma (vagy null)
+- `league/{id}/details` — participants, schedule, results; **it contains the real names
+  too**, so a raw response never goes into the repository
+- `bootstrap-static` — player master data (599 players, clubs, positions)
+- `league/{id}/element-status` — who owns a given player now; the id space of the `owner`
+  field has to be recognised at run time (it can be the league id or the entry_id)
+- `entry/{entry_id}/event/{gw}` — weekly squad (starters/bench); **it gives 404 until the
+  round starts**, this is expected behaviour
+- `event/{gw}/live` — weekly points per player; public, the live score comes from it.
+  The elements' `explain` field is the finished points breakdown (event, value, points — with
+  English names; the page translates it into Hungarian by the `stat` key). A player who has
+  not played yet also has an `explain` (with 0 minutes), so it is not enough for the "has
+  played yet?" flag — that is what the fixtures are for.
+- `event/{gw}/fixtures` — the round's matches with `started` / `finished` state,
+  `kickoff_time` and team ids; from this we know whose match has already started (dash vs 0)
+  and when it starts. The page **merges** the states per club: "started" if any of its
+  matches has begun, "done" if all have been played — in a double round a club has two
+  matches. If a club **does not appear at all** among the round's matches, it has a blank
+  gameweek: its players get a dash, and the breakdown says so too
+- `element-summary/{element_id}` — **a player's whole season in ONE request** (measured):
+  in the `history` array per round `event`, `total_points`, every statistic, and a `detail`
+  field in the form `"AVL (H) 4-0"` — that is, the opponent, the venue and the final score
+  together. `fixtures` gives the remaining matches. This is the source of the PL player
+  profile; it costs the collector nothing, because the browser fetches it when needed.
+  **The classic FPL (`fantasy.premierleague.com/api/element-summary/{id}/`) can NOT be used
+  instead:** the same path exists, but the **ids do not match** the Draft's. In the
+  measurement the points happened to match for four of five players, but for the fifth it was
+  1 vs 14 — so a superficial check would have let it through. Always use the Draft's own
+  endpoint.
+- `game` — `current_event`: the number of the round in progress (or null)
 
 ---
 
-## 4/c. Egy klubnak két meccse is lehet egy fordulóban
+## 4/c. A club can have two matches in one round
 
-**A fantasy forduló nem azonos a játéknappal.** Az elhalasztott meccset az MLSZ a **pótlás napja
-szerinti** fordulóba teszi — a pont is ott jár érte —, de meghagyja rajta az **eredeti forduló
-számát**. Megmérve (`naplo/mlsz-double-match.txt`), a 7. fordulóban:
+**A fantasy round is not the same as a match day.** The MLSZ puts a postponed match into the
+round **of the replay day** — the points are awarded there too —, but keeps the **original
+round number** on it. Measured (`naplo/mlsz-double-match.txt`), in round 7:
 
 ```
 ETO   games: 2 elem
@@ -1624,746 +1701,772 @@ ETO   games: 2 elem
         round_number=7F   start=2026-09-06 20:00   ETO - HONVÉD
 ```
 
-Minden más klubnak egy eleme volt.
+Every other club had one element.
 
-**Ez élesben elrontotta az adatot.** A gyűjtő három helyen is csak a `games[0]`-t nézte, és ha
-annak a fordulószáma nem egyezett, „nincs meccse"-t mondott: mind a kilenc ETO-játékos
-`nogame: True` jelölést kapott aznap, amikor pályára léptek; a pótolt meccs nem került be a
-`meccsek.json`-ba; és a „minden meccs lement" vizsgálat is átugrotta a klub valódi fordulós
-meccsét — vagyis a forduló lezárható lett volna egy még le nem játszott meccsel.
+**Reading only `games[0]` corrupts the live data.** If the collector looks only at
+`games[0]` and says "no match" when its round number does not match, then: all nine ETO
+players get `nogame: True` on the very day they took the pitch; the replayed match does not
+get into `meccsek.json`; and the "every match has been played" check skips the club's real
+match of the round — that is, the round could be closed with a match not yet played. The
+collector made this error in three places.
 
-**A szétválasztás nem a fordulószám iránya.** A *visszaesés* (a klubnak nincs meccse a kért
-fordulóban, ezért az API a másik meccsére esik vissza) szintén más fordulószámot hoz. A
-különbség: a pótolt meccs **mellett ott áll a forduló saját meccse is**, a visszaesésnél éppen
-az hiányzik. Ezért: ha a listában van a kért fordulóhoz tartozó meccs, akkor a többi is
-idetartozik; ha nincs, az egész lista visszaesés (`fordulo_meccsei_kozul`).
+**The split is not by the direction of the round number.** The *fallback* (the club has no
+match in the requested round, so the API falls back to its other match) also brings a
+different round number. The difference: next to the replayed match **the round's own match
+is there too**, while in the fallback exactly that is missing. Therefore: if the list has a
+match belonging to the requested round, the others belong here too; if not, the whole list
+is a fallback (`games_of_round`).
 
-**Több meccsnél** a játékos `start`-ja a legközelebbi **még le nem ment** meccse — az mondja meg,
-mire vár még —, és a `vege` csak akkor igaz, ha **mindegyik** lement: a pontja addig változhat.
+**With several matches** the player's `start` is their nearest match **not yet played** —
+that tells what they are still waiting for —, and `vege` is only true if **all** have been
+played: until then their points can change.
 
-**Ismert korlát:** ha egy klubnak *csak* pótolt meccse van a fordulóban (a sajátja is elmaradt),
-ezt visszaesésnek látjuk, és „nincs meccse"-t mondunk. Ez a korábbi viselkedés is, tehát nem
-romlás — a pontos megoldás a fordulók **időhatára** lenne (a meccs a forduló ablakában van-e),
-az viszont a forduló-határok átvezetését kívánja minden hívási ponton. Ha egyszer előáll, azt
-kell megcsinálni.
+**Known limitation:** if a club has *only* a replayed match in the round (its own was
+postponed too), we see it as a fallback and say "no match". This is the earlier behaviour
+too, so it is not a regression — the exact solution would be the rounds' **time bounds**
+(whether the match is within the round's window), but that requires passing the round
+boundaries to every call site. If it ever occurs, that is what has to be done.
 
-**A javítás önmagát blokkolta volna.** A `nogame` és a `vege` jelzőt a gyűjtő átörökli a
-korábbi rekordból, mert a meccslistát csak az élő fordulóra kéri le — enélkül a lezárás utáni
-újralekérésekkor elveszne. Csakhogy így a tévesen beragadt `nogame` **örökre** bent maradt
-volna: a friss válasz helyesen mondta, hogy az ETO-nak van meccse, az öröklés meg
-visszaállította a hibát. Mostantól az öröklés **kimarad, ha épp lekértük a meccslistát** — akkor
-a friss válasz az igazság.
+**The fix would have blocked itself.** The collector inherits the `nogame` and `vege` flags
+from the earlier record, because it requests the match list only for the live round —
+without this they would be lost on the re-fetches after the close. But this way a wrongly
+stuck `nogame` would have stayed in **forever**: the fresh response correctly said that ETO
+has a match, and the inheritance restored the error. So the inheritance is **skipped when the
+match list was just fetched** — then the fresh response is the truth.
 
-**A böngésző külön is megvalósítja ugyanezt.** Az élő keret-lekérés a lapon építi újra a
-rekordokat (`keretRekord`) — ugyanaz a szabály kell bele. Ez a gyűjtő javításából kimaradt,
-és emiatt a lapon **továbbra is** az állt, hogy „a klubnak nincs meccse”: a tárolt adat már
-jó volt, a friss lekérés írta felül. Ha a szabály változik, **mindkét helyen** változtatni
-kell.
+**The browser implements the same separately.** The live squad fetch rebuilds the records on
+the page (`squadRecord`) — the same rule is needed there. Without it the page **still**
+says "the club has no match": the stored data is already right, the fresh fetch overwrites
+it. If the rule changes, it has to be changed **in both places**.
 
-Rögzítve: `tests/collector_matches.py` M9–M11 (gyűjtő) és `tests/forduloelott.teszt.js`
-(böngésző, a mérés valódi alakjával).
+Pinned by: `tests/collector_matches.py` M9–M11 (collector) and `tests/forduloelott.teszt.js`
+(browser, with the real shape of the measurement).
 
-### A zárási panel a LEZÁRT fordulókig megy
+### The closing panel goes up to the CLOSED rounds
 
-A PL „Zárási változások" panelje a tárolt keretek (`draft_history`) legnagyobb fordulójáig
-listázott — csakhogy a gyűjtő a **folyó** forduló kereteit is elmenti, tehát élő forduló alatt
-a lista eggyel tovább tartott, és a panel egy **még le sem zárt** fordulón nyílt meg, üresen
-(*„nem történt változás"*). A zárás akkor még meg sem történt.
+The PL „Zárási változások" (closing changes) panel must not list up to the largest round of
+the stored squads (`draft_history`): the collector saves the squads of the **running** round
+too, so during a live round that list goes one further, and the panel would open on a round
+**not even closed yet**, empty (*„nem történt változás"* — no change). At that point the
+close has not even happened.
 
-Mostantól a `draft_history.json` **`veglegesek`** listája dönt: az mondja meg pontosan, mit
-zárt le a gyűjtő.
+So the **`veglegesek`** list in `draft_history.json` decides: it tells exactly what the
+collector has closed.
 
-### Amit a gyűjtő kiír, azt a workflow commitolja is
+### What the collector writes, the workflow commits too
 
-A workflow-k **kézzel felsorolt** fájlokat adnak a committhoz — ez szándékos (nem söpör be
-szemetet), de **néma**: a `keretvaltozasok.json` egyáltalán nem volt a listán, tehát a gyűjtő
-minden körben helyesen kiszámolta, és a repóba **soha nem került be**. A „Változtatások" fülön
-ezért állt a már lezárt 7. fordulónál is, hogy *„még nincs pontszám"* — a fájlban a lezárás
-előtti, pont nélküli állapot maradt. Semmi nem jelezte.
+The workflows add **manually listed** files to the commit — this is deliberate (it does not
+sweep in rubbish), but **silent**: if an output file is missing from the list, the collector
+computes it correctly on every run, and it **never gets into** the repository. This is how
+`keretvaltozasok.json` was left out: the „Változtatások" (Changes) tab therefore showed
+*„még nincs pontszám"* (no score yet) even for the already closed round 7 — the file kept the
+pre-close state without points. Nothing flagged it.
 
-Ezt gép nézi: a `tests/doc_checks.py` **D8** összeveti a gyűjtők `write_compact` / `kiir_ha_valtozott`
-hívásait a workflow `git add` listájával (a mappa-előtag és a `draft*.json`-szerű glob is
-számít). Ha egy új kimeneti fájl kimarad, a teszt megnevezi.
+A machine checks this: **D8** in `tests/doc_checks.py` compares the collectors'
+`write_compact` / `write_if_changed` calls with the workflow's `git add` list (a folder
+prefix and a `draft*.json`-like glob count too). If a new output file is left out, the test
+names it.
 
-### Az elavult lap magától újratölt
+### A stale page reloads itself
 
-A `?v=` a `funtasy.js`/`funtasy.css` gyorsítótárát töri — **a lap saját HTML-jét nem**. Az
-`nb1/index.html`-ben viszont éles logika él (közös játékosok párosítása, az élő keret-rekordok
-építése, a meccsállapot), és egy régi HTML ezeket a **régi szabály** szerint futtatja. Egy nap
-alatt kétszer állt elő, hogy a javítás kint volt, a néző mégis a régi viselkedést látta — és
-semmi nem jelezte.
+The `?v=` busts the cache of `funtasy.js`/`funtasy.css` — **not of the page's own HTML**.
+But `nb1/index.html` holds live logic (pairing shared players, building the live squad
+records, the match state), and an old HTML runs them by the **old rule**. Twice in one day the
+fix was out, yet the viewer saw the old behaviour — and nothing flagged it.
 
-Ezért a lap betöltéskor megkérdezi a `verzio.json`-t, és ha ő régebbi, **egyszer** újratölt. A
-`sessionStorage`-os kapu védi a hurkot: ha az újratöltés után is régi marad (közvetítő
-gyorsítótár), többször nem próbálja — inkább csendben marad, mint hogy oda-vissza töltsön.
+So on load the page asks `verzio.json`, and if the page is older, it reloads **once**. A
+`sessionStorage` gate protects against a loop: if it is still old after the reload (an
+intermediary cache), it does not try again — it would rather stay quiet than reload back and
+forth.
 
-A `verzio.json` és a `?v=` **együtt kell mozduljon**: ezt a `tests/doc_checks.py` **D6/b** nézi,
-mert elcsúszva a védelem vagy nem fog, vagy végtelen újratöltést okozna.
+`verzio.json` and `?v=` **must move together**: **D6/b** in `tests/doc_checks.py` checks
+this, because if they drift apart the protection either does not catch, or causes an endless
+reload.
 
-Rögzítve: `tests/verzio.teszt.js`.
+Pinned by: `tests/verzio.teszt.js`.
 
-### A közös játékost AZONOSÍTÓ párosítja, nem név
+### Shared players are paired by ID, not by name
 
-Az élő meccs-nézet a két keretet **külön** kéri le, és ha csak az egyik jön meg, a másik a
-tárolt marad. A két forrás viszont **más névalakot** ad — a tárolt a magyar sorrendet
-(`Lehoczki Bendegúz`), az élő lekérés a keresztnév-vezetéknév alakot (`Bendegúz Lehoczki`).
-Név szerint párosítva ilyenkor **nulla** közös játékos jött ki, holott kettő volt. Az
-azonosító (`competition_player.id`) mindkét forrásban ugyanaz, ezért a `szerepKulcs` azt
-használja. A **szerep** (kapitány / pad) továbbra is a kulcs része: ugyanaz a játékos más
-szerepben nem közös — a pontja sem ugyanannyi.
+The live match view fetches the two squads **separately**, and if only one of them arrives,
+the other stays the stored one. But the two sources give **different name forms** — the
+stored one the Hungarian order (`Lehoczki Bendegúz`), the live fetch the first name–surname
+form (`Bendegúz Lehoczki`). Paired by name, this gave **zero** shared players, when there
+were two. The id (`competition_player.id`) is the same in both sources, so `roleKey` uses
+that. The **role** (captain / bench) is still part of the key: the same player in a different
+role is not shared — their points are not the same either.
 
-Rögzítve: `tests/kulonbseg.teszt.js` — tárolt, vegyes és élő alakban is ugyanannyi közös
-játékost kell találnia.
+Pinned by: `tests/kulonbseg.teszt.js` — it must find the same number of shared players in
+the stored, the mixed and the live form.
 
-## 5. Ismert korlátok, buktatók
+## 5. Known limitations and pitfalls
 
-- **A GitHub Pages gyorsítótáraz** — feltöltés után 1-2 percig a régi fájl jöhet. Ctrl+F5.
-- **A `results.json`-ba 0–0 nem kerülhet be**: a le nem zárt forduló minden játékosnál 0 pontot
-  ad, amit a rendszer lejátszott döntetlennek hinne. A `collect.py`-ban van rá védelem
-  (`if not hp and not vp: continue`). Ez egy már majdnem bekövetkezett adatrontás volt.
-- **A mentett `price` a lekérés pillanatának piaci ára**, nem az adott fordulóé. Visszamenőleg
-  pótolt fordulóknál tehát nem historikus érték. Az oldal jelenleg nem jeleníti meg, de
-  árfolyam-statisztikát erre a mezőre építeni nem szabad.
-- **Halasztott meccsek:** a Ferencváros európai kupaszereplése miatt az ellenfelének fordulója
-  elmaradhat. Ilyenkor az érintett klub játékosai 0 pontot kapnak.
-- **NB1 szezon közbeni klubváltás — a játékosprofil ellenfél-oszlopa.** A keret-rekord
-  fordulónként tárolja a játékos klubját (`team`), tehát azokra a fordulókra, amikor a
-  játékos **valakinek a keretében volt**, a profil a helyes klubot — és így a helyes
-  ellenfelet — használja. A gond csak azoknál a fordulóknál marad, amikor **senkinél sem
-  volt**: ott nincs eltárolt klub, és a pont-bontás sorai sem árulják el (csak a fordulót
-  mondják meg), ezért a profil a játékos **mostani** klubjából keresi ki az ellenfelet.
-  Aki a szezon közben klubot vált, annál az ilyen — váltás előtti, senkinél sem töltött —
-  fordulóknál rossz ellenfél jelenne meg. A téli átigazolási időszakig ez nem fordulhat elő;
-  **akkor viszont kezelni kell** — vagy egy klubváltást is rögzítő adatforrásból, vagy ha
-  addigra az MLSZ API maga adja a fordulónkénti klubot. A PL-oldalon ez a gond nincs: ott a
-  Draft `element-summary` `detail` mezője (`"AVL (H) 4-0"`) magával hozza az ellenfelet.
+- **GitHub Pages caches** — after an upload the old file can come for 1–2 minutes. Ctrl+F5.
+- **A 0–0 must not get into `results.json`**: a round not yet closed gives 0 points for every
+  player, which the system would take for a played draw. `collect.py` has a guard against it
+  (`if not hp and not vp: continue`). This was a data corruption that very nearly happened.
+- **The saved `price` is the market price at the moment of the request**, not the round's.
+  For rounds backfilled after the fact it is therefore not a historical value. The page does
+  not show it at present, but price statistics must not be built on this field.
+- **Postponed matches:** because of Ferencváros's European cup matches, its opponent's round
+  match can be postponed. Then the affected club's players get 0 points.
+- **NB1 club change during the season — the opponent column of the player profile.** The
+  squad record stores the player's club (`team`) per round, so for the rounds when the player
+  **was in someone's squad**, the profile uses the right club — and so the right opponent. The
+  problem only remains for the rounds when they were **in nobody's squad**: there is no stored
+  club there, and the rows of the points breakdown do not give it away either (they only tell
+  the round), so the profile looks up the opponent from the player's **current** club. For
+  someone who changes club during the season, such rounds — before the change, spent in
+  nobody's squad — would show the wrong opponent. This cannot happen until the winter
+  transfer window; **then, however, it has to be handled** — either from a data source that
+  also records club changes, or if by then the MLSZ API itself gives the club per round. On
+  the PL side this problem does not exist: there the Draft `element-summary` `detail` field
+  (`"AVL (H) 4-0"`) brings the opponent with it.
 
-- **A könyvjelző (tartalék) a böngésződ másolatából fut**, nem a repóból. Ha a
-  `tartalek/GOMB-bookmarklet.txt` módosul, a böngészőben lévő könyvjelzőt kézzel kell frissíteni.
-- **A PL-en a GW első óráiban** (amíg a gyűjtő először le nem tárolja a forduló kereteit,
-  legfeljebb ~3 óra) élő meccsállás még nem számolható — utána percre pontos.
-- **A régi keret-rekordokban nem volt `id`, `played`, `start` és `nogame` mező** (ezek
-  később kerültek be). Emiatt az oldal a pont-bontáshoz élő lekérést volt kénytelen
-  indítani, és a „nincs meccse" jelölés teljesen hiányzott — a 3. fordulós ETO-játékosoknál
-  ezért írta az oldal egy már elmúlt helyőrző dátummal, hogy a meccs még nem kezdődött el.
-  A gyűjtő azóta **egyszer újra lekéri** az ilyen fordulót, a meccslistával együtt, és a
-  hiányzó mezőket pótolja; utána a feltétel már nem teljesül, tehát nem ismétlődik.
-- **A „nincs meccse a fordulóban" jelzés a forduló alatt rögzül**, és a lezárás után már
-  nem kérjük le újra a meccslistát (hatszor akkora válasz jönne), hanem az
-  `orokit_meccsjelzok` hozza át a korábbi pillanatképből.
-- **A pont-bontás sorait a magyar eseménynév azonosítja** (pl. a „nem lépett pályára”
-  eset a „Játszott perc” sor 0 értékéből derül ki). Az API nem ad stabil kulcsot ezekhez,
-  úgyhogy ha az MLSZ átnevez egy eseményt, az oldal a részletesebb üzenet helyett az
-  általánosabbra esik vissza — hibát nem okoz, de a szövegek pontatlanabbak lesznek.
-- **Élő lekérés a böngészőből:** az oldal betöltéskor közvetlenül is lekéri a friss
-  eredményeket (CORS-proxykon át). Ha ez elromlik, a státuszsávban jelzi (a szövegeket
-  lásd a 3. fejezetben), és a tárolt (néhány óránként frissülő) adat marad látható.
+- **The bookmarklet (fallback) runs from your browser's copy**, not from the repository. If
+  `tartalek/GOMB-bookmarklet.txt` changes, the bookmarklet in the browser has to be updated
+  by hand.
+- **On the PL, in the first hours of a GW**, until the collector first stores the round's
+  squads, the live match score comes from squads the browser backfills (see "The gap between
+  the start and collection (PL)" in chapter 4). A team whose squad the backfill could not
+  fetch keeps its match without a live score until the collector writes the squads; after
+  that it is accurate to the minute.
+- **The old squad records had no `id`, `played`, `start` and `nogame` fields** (these were
+  added later). Because of this the page had to start a live request for the points
+  breakdown, and the "no match" marking was missing entirely — for the round 3 ETO players
+  this made the page say, with a placeholder date already past, that the match had not
+  started yet. The collector therefore **re-fetches** such a round **once**, together with
+  the match list, and fills in the missing fields; after that the condition no longer holds,
+  so it does not repeat.
+- **The "no match in the round" flag is fixed during the round**, and after the close the
+  match list is not requested again (the response would be six times as large); instead
+  `inherit_match_flags` carries it over from the earlier snapshot.
+- **The rows of the points breakdown are identified by the Hungarian event name** (e.g. the
+  „nem lépett pályára" (did not come on) case comes from the 0 value of the „Játszott perc"
+  (minutes played) row). The API gives no stable key for these, so if the MLSZ renames an
+  event, the page falls back from the more detailed message to the more general one — it
+  causes no error, but the texts become less precise.
+- **Live request from the browser:** on load the page also fetches the fresh results directly
+  (through CORS proxies). If this breaks, it is shown in the status bar (for the texts see
+  chapter 3), and the stored data (refreshed at least every 3 hours) stays visible.
 
 ---
 
-## 5/a4. A Guardiola mutató
+## 5/a4. The Guardiola measure
 
-**Mennyivel hozott többet a keretváltoztatás, mint ha hozzá sem nyúlsz?**
-`guard` = a **mostani** keret pontja mínusz a **múlt heti** kerete **ugyanebben** a
-fordulóban. Negatív érték: a változtatás pontba került.
+**How much more did changing the squad bring than not touching it at all?**
+`guard` = the **current** squad's points minus **last week's** squad's points **in the same**
+round. A negative value: the change cost points.
 
-Az alternatíva szó szerint „mi lett volna, ha hozzá sem nyúlok": ugyanaz a 15 játékos,
-**ugyanazokban a szerepekben** — aki kezdő volt, kezdő marad, aki a padon ült, ott marad,
-a kapitány ugyanaz. **Nem** a régi keretből kihozható legjobb felállítás: azt a KEZD% méri,
-és a kettő keveredne.
+The alternative is literally "what would have happened if I had not touched it": the same 15
+players, **in the same roles** — who was a starter stays a starter, who sat on the bench stays
+there, the captain is the same. It is **not** the best line-up that could be made from the
+old squad: that is what KEZD% measures, and the two would get mixed up.
 
-**Mindkét oldal ugyanazzal a függvénnyel számol** (`keret_osszeg`), tehát a magyarszabály és
-a kerekítés is egyformán játszik — a különbség tisztán a keretváltozás műve. Ez nem
-formaság: a tárolt `week` a pados játékosnál az API már felezve-kerekített értéke
-(0,75 → 0,38), a bontásból számolt nyers pont viszont nem — ha a két oldal máshonnan
-dolgozna, a **változatlan** keret is „+0,01"-et mutatna. Ezért a `teny` egy centtel eltérhet
-a hivatalos fordulóponttól; a **mutató** viszont pontos, és azt írjuk ki.
+**Both sides are computed with the same function** (`squad_total`), so the Hungarian rule and
+the rounding play out the same way — the difference is purely the work of the squad change.
+This is not a formality: the stored `week` for a bench player is the API's already
+halved-and-rounded value (0.75 → 0.38), while the raw points computed from the breakdown are
+not — if the two sides worked from different sources, even an **unchanged** squad would show
+"+0.01". That is why `teny` can differ by one hundredth from the official round score; the
+**measure**, however, is exact, and that is what is shown.
 
-Szándékosan **nem** a hivatalos fordulópontból vonunk: abban egy utólagos MLSZ-korrekció is
-benne lenne, az pedig nem a szakvezető döntése.
+It deliberately does **not** subtract from the official round score: that would include a
+later MLSZ correction as well, and that is not the manager's decision.
 
-Nincs érték az **első** fordulóra (nincs mihez hasonlítani) és a még **le nem zárt**
-fordulóra (nincs meg a `bontasok/<forduló>.json`).
+There is no value for the **first** round (nothing to compare with) and for a round **not yet
+closed** (`bontasok/<round>.json` does not exist yet).
 
-**A bontás a valaha birtokolt játékosokra is kiterjed.** A játékostörzs (`players` végpont)
-csak a *mostani* mezőnyt adja: aki elmegy a bajnokságból, abból kiesik — a keret-előzményben
-viszont ott marad. Ezek a játékosok korábban kimaradtak a bontásból, és 0 ponttal
-szerepeltek a mutatóban, **holott játszottak**: Skribek az 1. és a 3. fordulóban 3,25 nyers
-pontot szerzett. A mutató így annak a javára csúszott, aki éppen megvált tőle (a 2–6.
-fordulóban 94 eladásból 6-ot érintett). Ezért a gyűjtő a `squad_history.json`-ban szereplő
-**összes** játékosra lekéri a bontást, a már meglévő fájlokat pedig **csak kiegészíti** a
-hiányzó néhány játékossal — nem kéri le újra mind a 385-öt. Ha ezután mégis hiányzik valaki,
-az elhasalt kérés, nem hiányzó játékos: a gyűjtő ilyenkor a hibakimenetre írja a nevét.
+**The breakdown covers every player ever owned.** The player master data (`players`
+endpoint) only gives the *current* field: whoever leaves the league drops out of it — but
+stays in the squad history. If such players are left out of the breakdown, they count with 0
+points in the measure, **although they played**: Skribek scored 3.25 raw points in rounds 1
+and 3. The measure then tilts in favour of whoever has just got rid of them (in rounds 2–6 it
+affected 6 of 94 sales). That is why the collector fetches the breakdown for **all** players in
+`squad_history.json`, and **only supplements** the existing files with the few missing players
+— it does not fetch all 385 again. If someone is still missing after that, it is a failed
+request, not a missing player: the collector then writes their name to the error output.
 
-**A mutató a bontás-gyűjtés UTÁN számolódik, nem előtte.** Amíg előtte állt, egy futásban
-frissen pótolt bontás már nem számított bele: a mutató eggyel lemaradt, és csak a következő
-futás hozta helyre. Élesben meg is történt — a pótlás kiment, a `guardiola.json` változatlan
-maradt. A javítás mérete nem elhanyagolható: a 2. fordulóban Bence értéke +3,00-ról −25,50-re
-került (a múlt heti csapatkapitánya volt az a játékos, aki hiányzott a bontásból, tehát a
-pontja duplán számít).
+**The measure is computed AFTER the breakdown collection, not before it.** Computed before,
+a breakdown freshly backfilled in a run would not count in it: the measure would lag one run
+behind, and only the next run would set it right — the backfill would go out, and
+`guardiola.json` would stay unchanged. The size of the difference is not negligible: in round 2
+Bence's value moved from +3.00 to −25.50 (the player missing from the breakdown was last week's
+captain, so their points count double).
 
-Megjelenik a **meccssorok** pontja mellett, a **Fordulók** fülön oszlopként, és a
-**tabellában** kumuláltan — ugyanabból a körből, amiből a tabella is számol.
+It appears next to the points of the **match rows**, as a column on the **Fordulók** (Rounds)
+tab, and cumulatively in the **table** — from the same set the table computes from.
 
-### A PL-en ugyanez, automatikus cserékkel
+### The same on PL, with automatic substitutions
 
-A Draftban nincs kapitány, és a pad pontja nem számít — viszont a forduló végén az FPL
-**automatikus cserét** hajt végre: a pályára sem lépett kezdő helyére beáll az első olyan
-padon ülő, aki játszott **és** akivel a felállás érvényes marad (1 kapus, 3–5 védő, 2–5
-középpályás, 1–3 csatár). Ettől lesz a kapus csak kapussal cserélhető: két kapus nem
-érvényes felállás.
+The Draft has no captain, and bench points do not count — but at the end of the round the FPL
+makes an **automatic substitution**: in place of a starter who did not even come on, the first
+bench player comes in who played **and** with whom the formation stays valid (1 goalkeeper,
+3–5 defenders, 2–5 midfielders, 1–3 forwards). This is why a goalkeeper can only be replaced
+by a goalkeeper: two goalkeepers is not a valid formation.
 
-**Ezt az alternatívára is alkalmazzuk.** A valódi eredményben a cserék benne vannak (a
-tárolt keret már a zárás utáni állapot); ha az alternatívát csere nélkül számolnánk, a múlt
-heti keretet alulmérnénk, és a mutató szisztematikusan a változtatás javára torzulna.
+**This is applied to the alternative too.** The real result includes the substitutions (the
+stored squad is already the post-close state); if the alternative were computed without
+substitutions, last week's squad would be under-measured, and the measure would be
+systematically biased in favour of the change.
 
-A pad **sorrendje** dönt, és azt az FPL-től kapjuk (picks 12–15) — soha nem rendezzük át.
+The bench **order** decides, and it comes from the FPL (picks 12–15) — it is never reordered.
 
-Ha a játékos-poszt adat hiányzik (elhasalt `bootstrap-static`), a gyűjtő **nem számol
-újra**: enélkül a formáció-ellenőrzés mindig hamis lenne, egyetlen csere sem menne végbe,
-és a mutató csendben rossz értéket adna. Ilyenkor a korábbi fájl marad érvényben.
+If the player position data is missing (a failed `bootstrap-static`), the collector **does not
+recompute**: without it the formation check would always be false, not a single substitution
+would happen, and the measure would silently give a wrong value. In that case the earlier file
+stays in force.
 
-Rögzítve: `tests/collector_guardiola.py` (NB1) és `tests/collector_draft_guardiola.py` (PL).
+Pinned by: `tests/collector_guardiola.py` (NB1) and `tests/collector_draft_guardiola.py` (PL).
 
-## 5/a5. A „Változtatások" fül
+## 5/a5. The „Változtatások" (Changes) tab
 
-**A Guardiola mutató levezetése**, tételesen: minden fordulónál ott áll, kit adott el, kit vett
-meg és kinek változott a szerepe a szakvezető — és hogy **melyik mennyit ért**. A blokk alján
-az összeg, ami **pontosan** a forduló GUARD értéke. Ez a fül egész értelme: a tabellában álló
-számot ne kelljen elhinni, hanem le lehessen ellenőrizni.
+**The derivation of the Guardiola measure**, item by item: for every round it shows whom the
+manager sold, whom they bought and whose role changed — and **how much each was worth**. At the
+bottom of the block is the total, which is **exactly** the round's GUARD value. This is the
+whole point of the tab: the number in the table should not have to be taken on trust, but be
+checkable.
 
-Négyféle tétel:
+Four kinds of item:
 
-| Tétel | Mivel számít |
+| Item | Counted with |
 |---|---|
-| **eladva** | a **múlt heti** szerepével (kapitány duplán, pad felezve) — ennyit hozott volna, ha hozzá sem nyúl |
-| **megvéve** | a **mostani** szerepével |
-| **szerepváltás** | végig bent volt, de kezdő ↔ pad ↔ kapitány mozdult: a két érték különbsége |
-| **magyarszabály** | ha a változtatástól megjött vagy elveszett a 10 pont — az nem egy játékoson látszik, hanem a kereten |
+| **eladva** (sold) | their **last week's** role (captain double, bench halved) — this is what they would have brought if left alone |
+| **megvéve** (bought) | their **current** role |
+| **szerepváltás** (role change) | in the squad throughout, but starter ↔ bench ↔ captain moved: the difference of the two values |
+| **magyarszabály** (Hungarian rule) | if the change gained or lost the 10 points — that does not show on one player, but on the squad |
 
-**Elrendezés.** Egy oszlop, a fordulók **növekvő** sorrendben — ugyanúgy, mint a Fordulók
-fülön és mindenütt máshol. Fordulónként egy kártya, azon belül *Eladva / Megvéve /
-Szerepváltás* szakaszok. A két jobb szélső oszlop fix széles, tehát a számok egymás alatt
-állnak. (Az első változat két oszlopba tördelte a blokkokat, a legfrissebbel kezdett, és a
-pontkülönbség minden sorban máshol állt — a szem cikcakkban ugrált, és a sorrend is
-szembement a többi nézettel.) Telefonon a sor két sorra bomlik: fent a poszt, a név és a
-pontkülönbség, alatta a magyarázat és a számítás.
+**Layout.** One column, rounds in **ascending** order — the same as on the Fordulók tab and
+everywhere else. One card per round, inside it *Eladva / Megvéve / Szerepváltás* sections. The
+two rightmost columns have a fixed width, so the numbers stand under each other. (Two columns
+of blocks, newest first, with the points difference at a different place in every row, make
+the eye jump in a zigzag, and the order goes against the other views.) On a phone a row breaks
+into two lines: on top the position, the name and the points difference, below it the
+explanation and the calculation.
 
-A középső oszlop a játékos **nyers** fordulópontja; ahol a szerep módosítja (kapitány duplán,
-pad felezve), ott `nyers → ennyit ért` alakban — különben a kapitányi 28,50 mellett nem
-látszana, honnan jött.
+The middle column is the player's **raw** round points; where the role modifies it (captain
+doubled, bench halved), it is in the form `raw → worth this much` — otherwise next to the
+captain's 28.50 it would not show where it came from.
 
-**A változtatás nélküli forduló is kilátszik**, üresen. Ha kihagynánk, a néző azt hinné, hogy
-hiányzik az adat — pedig épp az a válasz, hogy a szakvezető hozzá sem nyúlt a kerethez, és a
-mutatója ezért 0.
+**A round without changes shows too**, empty. If it were left out, the viewer would think the
+data was missing — when the answer is exactly that the manager did not touch the squad, and so
+their measure is 0.
 
-### A PL-en külön áll, amit az ember csinált, és amit a gép
+### On PL, what the manager did and what the machine did stand apart
 
-A Draftban a forduló végén az FPL **automatikus cserét** hajt végre. Az nem a szakvezető
-érdeme vagy hibája, egyben mutatva viszont úgy tűnne, hogy jól variált — holott a gép tette
-helyre a keretet (vagy fordítva). Ezért a PL-en a számítás kettéválik:
+In the Draft the FPL makes an **automatic substitution** at the end of the round. That is not
+the manager's merit or fault, but shown together it would look as if they had made good
+changes — when the machine put the squad right (or the reverse). So on PL the calculation
+splits in two:
 
-- **ember:** minden játékos a **megnevezett** szerepével számít — a kezdő a pontjával, a padon
-  ülő nullával, akkor is, ha végül beállt;
-- **gép:** a keret tényleges pontja (automatikus cserékkel) mínusz a fenti összeg. Ez pontosan
-  a zárási csere hozadéka, és külön sorban áll: *„Automatikus csere a záráskor"*.
+- **manager:** every player counts with their **named** role — a starter with their points, a
+  bench player with zero, even if they came on in the end;
+- **machine:** the squad's actual points (with automatic substitutions) minus the total above.
+  This is exactly the yield of the closing substitution, and it stands in a separate row:
+  *„Automatikus csere a záráskor"* (automatic substitution at closing).
 
-A kettő összege a keret pontja, tehát a levezetés maradék nélkül kijön. A fül a részösszeget
-is kiírja (*„A te döntéseid"*), hogy egy pillantással látszódjon, mi kinek a műve.
+The sum of the two is the squad's points, so the derivation adds up without remainder. The tab
+also shows the subtotal (*„A te döntéseid"* — your decisions), so it shows at a glance what is
+whose doing.
 
-### A folyamatban lévő forduló pont nélkül szerepel
+### The round in progress is shown without points
 
-A leadási határidő után a keret **rögzített**, tehát a *változtatás* már ismert — a **pontja**
-még nem. Ezt a fül ki is írja: a folyó forduló blokkja ott van, benne minden eladás, vétel és
-szerepváltás, de **egyetlen szám sincs benne** — se a sorokban, se összesenként; a fejlécben
-GUARD helyett az áll, hogy *„még nincs pontszám"*. A `0` hazugság lenne: azt állítaná, hogy a
-változtatás semmit nem ért.
+After the entry deadline the squad is **fixed**, so the *change* is already known — its
+**points** are not yet. The tab says so: the running round's block is there, with every sale,
+purchase and role change in it, but **not a single number** — neither in the rows, nor as a
+total; in the header instead of GUARD it says *„még nincs pontszám"* (no score yet). A `0` would
+be a lie: it would claim that the change was worth nothing.
 
-A gyűjtő ilyenkor `pontok: false` és `guard: null` mellett adja ki a tételeket
-(`keretvaltozas_pont_nelkul`, illetve `draft_keretvaltozas_pont_nelkul`). A PL-en a **gépi
-csere** sora sem kerül bele: az automatikus csere a forduló végén történik, tehát még meg sem
-történt.
+The collector then gives the items with `pontok: false` and `guard: null`
+(`squad_changes_without_points`, and `draft_squad_changes_without_points`). On PL the
+**machine substitution** row is not included either: the automatic substitution happens at the
+end of the round, so it has not even happened yet.
 
-**A Guardiola mutató ettől nem készül el korábban.** A `guardiola.json` továbbra is csak lezárt
-fordulóra tartalmaz értéket, és a tabella sem számol belőle.
+**The Guardiola measure is not produced earlier because of this.** `guardiola.json` still only
+contains values for closed rounds, and the table does not compute from it either.
 
-### Egy kapu dönt, mikor van pontszám
+### One gate decides when there is a score
 
-A fül **ugyanazt a feltételt** használja, mint a Fordulók fül és a tabella: élő vagy még le nem
-zárt fordulóra nincs érték. A feltétel egy helyen él (`FunTasy.guardErtek`), mert három hely
-használja — és amíg külön-külön döntött, elő is állt, hogy a PL 2. fordulója a Fordulók fülön
-még üres volt, a Változtatások fülön viszont már állt benne szám. Ha a gyűjtő fájljában mégis
-állna szám egy le nem zárt fordulóra, a lap azt **szándékosan figyelmen kívül hagyja** — egy
-helyen dőljön el, mikor van érték.
+The tab uses **the same condition** as the Fordulók tab and the table: a live or not yet closed
+round has no value. The condition lives in one place (`guardValue` on the object
+`FunTasy.create` returns, used as `T.guardValue`), because three places use it — and when they
+decided separately, PL round 2 was still empty on the Fordulók tab while the Változtatások tab
+already had a number in it. If the collector's file did contain a number for a round not yet
+closed, the page **deliberately ignores** it — when there is a value is decided in one place.
 
-### Vízszintes görgetésnél a helyezés és a név áll
+### On horizontal scroll, the position and the name stay put
 
-A tabella nem fér ki telefonon, tehát oldalra görgethető — de a **helyezés** és a **név**
-oszlopa a helyén marad (`position: sticky`), különben a szám mellől eltűnik, kihez tartozik.
-A kettő nem állhat ugyanazon a `left: 0`-n: a helyezés (magasabb `z-index`) ráfeküdt a névre,
-és a név eleje eltűnt alatta. Ezért a helyezés rögzített szélességű (34 px), és pont ennyi a
-név eltolása.
+The table does not fit on a phone, so it scrolls sideways — but the **position** and the
+**name** columns stay in place (`position: sticky`), otherwise it would vanish from beside the
+number whom it belongs to. The two cannot both sit at `left: 0`: the position (higher
+`z-index`) lies over the name, and the start of the name disappears under it. So the position
+has a fixed width (34 px), and the name is offset by exactly that much.
 
-A ragadó cellás tábláknak **`border-collapse: separate`** kell: a WebKit (tehát iPhone-on
-minden böngésző, a Chrome is) `collapse` mellett nem ragasztja megbízhatóan a
-táblázat-cellákat. Megmérve: a `separate` + `border-spacing: 0` a rajzolaton semmit nem
-változtat (tábla 310×652 px, sormagasság 35 px mindkét módban) — a keretek a `td`/`th` saját
-`border-bottom`-jából jönnek, felső keret nincs, tehát nincs mit megduplázni.
+Tables with sticky cells need **`border-collapse: separate`**: WebKit (that is, every browser on
+iPhone, Chrome included) does not reliably stick table cells with `collapse`. Measured:
+`separate` + `border-spacing: 0` changes nothing in the drawing (table 310×652 px, row height
+35 px in both modes) — the borders come from the `td`/`th` cells' own `border-bottom`, there is
+no top border, so there is nothing to double.
 
-**A névcellának valódi táblázat-cellának kell maradnia.** Amíg a `td.name` maga volt a flex
-konténer (a monogram védelme miatt), a cella kikerült a táblázat-elrendezésből — a böngésző
-névtelen cellába burkolja —, és **iPhone-on nem ragadt**: görgetésnél a SZAKVEZETŐ fejléc
-állva maradt (azon nincs flex), a nevek viszont elcsúsztak a számok alá. Chromiumban ez nem
-látszik, ott a sticky a flexes cellán is fog. A flex azóta a cellán **belül**, a `.nevsor`
-span-on van. Rögzítve: `tests/tabella.teszt.js` — Safari nélkül is, mert nem a ragadás
-látszatát méri, hanem az okot (a cella `display`-ét és azt, hogy a flex beljebb van).
+**The name cell must remain a real table cell.** While `td.name` itself was the flex container
+(to protect the monogram), the cell dropped out of the table layout — the browser wraps it in an
+anonymous cell —, and **on iPhone it did not stick**: on scrolling the SZAKVEZETŐ (manager)
+header stayed put (it has no flex), but the names slid under the numbers. In Chromium this does
+not show, there sticky holds on the flex cell too. The flex is therefore **inside** the cell, on
+the `.nevsor` span. Pinned by: `tests/tabella.teszt.js` — without Safari too, because it does not
+measure the appearance of sticking, but the cause (the cell's `display`, and that the flex is one
+level further in).
 
-### A közös réteg mindkét adatalakot érti — és ez nem kényelmi kérdés
+### The shared layer understands both data shapes — and this is not a convenience
 
-A `?v=` csak a `funtasy.js`/`funtasy.css` gyorsítótárát töri, a **`nb1/index.html`-t nem** — és
-a kiszolgáló a régi `?v=`-es kérésre is a **mostani** `funtasy.js`-t adja. Élesben elő is állt,
-hogy a böngésző régi lapja (ami még egyben, címkézetlen `sorok`-ként adta át a tételeket) az
-**új** megjelenítővel találkozott: a forduló fejlécében ott állt a GUARD, alatta viszont *„Nem
-változtatott a keretén."* — holott három játékost cserélt.
+The `?v=` only busts the cache of `funtasy.js`/`funtasy.css`, **not of `nb1/index.html`** — and
+the server answers a request with an old `?v=` with the **current** `funtasy.js` too. So an old
+page in the browser (one that still passed the items in one piece, as unlabelled `sorok`) can
+meet the **new** renderer: in the round header the GUARD stands, but under it *„Nem változtatott
+a keretén."* (made no change to the squad) — although three players were changed.
 
-Ezért a `FunTasy.valtoztatasLista` a címkézett `reszek` mellett a **régi, egyben átadott
-`sorok`** alakot is elfogadja. Ugyanez a szabály minden jövőbeli szerződés-változásra: ha a
-közös réteg bemenete változik, a régi alakot addig kell érteni, amíg a lapok gyorsítótára
-kifuthat. Rögzítve a `valtoztatasok.teszt.js` utolsó szakaszában.
+That is why `FunTasy.changesList` accepts, besides the labelled `reszek`, the **old `sorok`
+shape passed in one piece** too. The same rule holds for every future contract change: if the
+input of the shared layer changes, the old shape has to be understood for as long as the pages'
+cache can still run out. Pinned in the last section of `valtoztatasok.teszt.js`.
 
-Rögzítve: `tests/collector_squad_moves.py` (NB1), `tests/collector_draft_squad_moves.py` (PL)
-és `tests/valtoztatasok.teszt.js` — az utóbbi **minden szakvezetőnél és minden fordulónál**
-összeveti a sorok összegét, a blokk „Összesen" sorát, a Fordulók fül GUARD oszlopát és a
-tabella GUA celláját.
+Pinned by: `tests/collector_squad_moves.py` (NB1), `tests/collector_draft_squad_moves.py` (PL)
+and `tests/valtoztatasok.teszt.js` — the latter compares, **for every manager and every round**,
+the sum of the rows, the block's „Összesen" (total) row, the GUARD column of the Fordulók tab
+and the GUA cell of the table.
 
-## 5/a6. A keret már a sípszó előtt látszik
+## 5/a6. The squads are visible before kick-off
 
-A leadási határidő után a keret **rögzített**, és a gyűjtő le is menti (`keretek/<forduló>.json`).
-Az NB1-en a meccs-nézet eddig mégis csak annyit írt ilyenkor, hogy *„A forduló még nem kezdődött
-el."* — pedig épp ez a legizgalmasabb kérdés: **kivel áll ki az ellenfél.** Mostantól kirajzolódik
-mindkét keret, pont helyett kötőjellel.
+After the entry deadline the squad is **fixed**, and the collector saves it
+(`keretek/<round>.json`). On the NB1 the match view would otherwise only say *„A forduló még nem
+kezdődött el."* (the round has not started yet) — although this is the most exciting question:
+**whom the opponent is fielding.** So both squads are drawn, with a dash instead of points.
 
-Titok nem sérül: bármelyik szakvezető neve alatt az **Aktuális keret** amúgy is ugyanezt mutatja,
-és a keret a határidő után már nem változtatható.
+No secret is broken: under any manager's name the **Aktuális keret** (current squad) shows the
+same anyway, and the squad can no longer be changed after the deadline.
 
-**A forduló ilyenkor már ÉL, és a nézet ezt ki is írja.** A leadási határidő lejárt, a keret
-rögzített, és az állás sem 0:0 — a **magyarszabály +10 már pontot ér**, ha jó a felállítás.
-Ezért ez az állapot nem kap külön ágat: a **meglévő élő nézet** rajzolja (`showLiveMatch`),
-„élő" jelzéssel és a keret mostani összegével. Egy korábbi változat külön ágon, „élő" jelzés
-nélkül mutatta — az téves döntés volt, és két majdnem azonos kódot jelentett.
+**At this point the round is already LIVE, and the view says so.** The entry deadline has
+passed, the squad is fixed, and the score is not 0:0 either — **the Hungarian rule's +10 is
+already worth points** if the line-up is right. So this state gets no separate branch: the
+**existing live view** draws it (`showLiveMatch`), with the „élő" (live) marking and the squad's
+current total. A separate branch without the „élő" marking would be a wrong decision, and two
+nearly identical pieces of code.
 
-Az **alcím** követi az állapotot: amíg egyetlen meccs sem kezdődött el, *„a forduló él, de még
-egy meccs sem kezdődött el"*; utána a szokásos *„élő állás — a meccs még tart"*. A hiányzó
-meccsű (start nélküli) játékos **nem** számít elindultnak: az állapota „ismeretlen", és abból
-nem következik, hogy a forduló elkezdődött.
+The **subtitle** follows the state: while not a single match has started, *„a forduló él, de még
+egy meccs sem kezdődött el"* (the round is live, but no match has started yet); after that the
+usual *„élő állás — a meccs még tart"* (live score — the match is still on). A player whose match
+is missing (no start) does **not** count as started: their state is "unknown", and it does not
+follow from it that the round has begun.
 
-A **KEZD% sor** viszont marad rejtve — ahogy minden élő fordulóban: az érték még változik, és a
-gyűjtő úgyis újraszámolja.
+The **KEZD% row**, however, stays hidden — as in every live round: the value still changes, and
+the collector recomputes it anyway.
 
-**A főoldali lista is ezt a számot mutatja.** Az MLSZ ranglistája az első sípszó előtt
-0-t mond, a lista pedig a 0-0-t „el sem kezdődött”-ként dobja el — ezért állt ott sokáig
-`— : —`, holott a keret már rögzített. Ilyenkor a lap a **keretekből** számol
-(`eloKeretbol`), ugyanazzal a `keretOsszeg`-gel, mint a meccs-panel: a két nézet így nem
-mondhat mást. Csak **kitölti**, nem írja felül — amint az MLSZ valódi (nem nulla) pontot
-ad, a `refresh` azt teszi a helyére.
+**The home page list shows this number too.** The MLSZ rankings say 0 before the first whistle,
+and the list drops a 0-0 as "not even started" — so it would show `— : —` although the squad is
+already fixed. In that case the page computes from the **squads** (`fillFromSquads`), with the
+same `squadTotal` as the match panel: this way the two views cannot say different things. It
+only **fills in**, it does not overwrite — as soon as the MLSZ gives real (non-zero) points,
+`refresh` puts those in its place.
 
-**Valódi jövőbeli fordulónál marad az üzenet.** Ahhoz nincs mentett keret, és kitalálni nem
-fogunk semmit. A PL-oldalon ez a kapu sosem volt ott: a `showMatch` mindig kirajzolja a keretet,
-ha a fordulóhoz van tárolt adat.
+**For a real future round the message stays.** There is no saved squad for it, and nothing is
+made up. On the PL side this gate never existed: `showMatch` always draws the squad if there is
+stored data for the round.
 
-Rögzítve: `tests/forduloelott.teszt.js`.
+Pinned by: `tests/forduloelott.teszt.js`.
 
-## 5/a. Miért van fordulónként külön keret-fájl
+## 5/a. Why there is a separate squad file per round
 
-A `squad_history.json` fordulónként ~19 KB-tal nő: 5 forduló után 95 KB, a 33 fordulós
-szezon végére **~630 KB**. Az oldalnak viszont egy meccs megnyitásához **egyetlen forduló**
-keretei kellenek — az egészet letölteni pazarlás, mobilneten érezhetően az.
+`squad_history.json` grows by ~19 KB per round: 95 KB after 5 rounds, **~630 KB** by the end of
+the 33-round season. But to open one match the page needs the squads of **a single round** —
+downloading the whole thing is a waste, noticeably so on mobile data.
 
-Ezért a gyűjtő fordulónként is kiírja a kereteket (`keretek/<forduló>.json`), és a
-meccs-nézet onnan olvas. Most 95 KB helyett 24 KB, a szezon végén 630 KB helyett
-**változatlanul ~24 KB**.
+So the collector also writes the squads per round (`keretek/<round>.json`), and the match view
+reads from there. Now 24 KB instead of 95 KB, at the end of the season **still ~24 KB** instead
+of 630 KB.
 
-Két részlet, ami fontos:
+Two details that matter:
 
-- **A fordulónkénti fájlokban nincs időbélyeg.** Ha benne lenne, minden gyűjtő-futásnál
-  mind a 33 fájl megváltozna, és a repó feleslegesen hízna. Így egy forduló fájlja csak
-  akkor változik, ha a keretek tényleg változtak.
-- **Van visszaesési út.** Ha a fordulónkénti fájl hiányzik (régi commit, elgépelt út), az
-  oldal a teljes előzményre esik vissza — lassabb lesz, de nem romlik el. Teszt fedi
-  mindkét ágat.
+- **The per-round files have no timestamp.** If they had one, all 33 files would change on every
+  collector run, and the repository would grow needlessly. This way a round's file only changes
+  if the squads really changed.
+- **There is a fallback path.** If the per-round file is missing (old commit, mistyped path), the
+  page falls back to the full history — it gets slower, but does not break. A test covers both
+  branches.
 
-A teljes előzmény megmarad: a gyűjtő abból tudja, mi hiányzik, és a „Szezon játékosai" fül
-is az egészet igényli — az viszont ritkán megnyitott, tudatosan nehéz nézet.
+The full history is kept: the collector uses it to know what is missing, and the „Szezon
+játékosai" (Players of the season) tab needs all of it too — but that is a rarely opened,
+deliberately heavy view.
 
-**A PL-oldalon ez még nincs meg:** a `draft_history.json` minden betöltéskor lejön (most
-4 KB, a 38. fordulóra ~159 KB). Kisebb tét, és ott a `HIST` több helyen szinkron használt,
-tehát invazívabb átalakítás — külön körben érdemes.
+**The PL side does not have this yet:** `draft_history.json` is downloaded on every load (now
+4 KB, ~159 KB by round 38). The stakes are lower, and there `HIST` is used synchronously in
+several places, so it is a more invasive change — worth a separate round of work.
 
-**Ami viszont még nyitott az NB1-en is:** a *játékosprofil* továbbra is a teljes
-`squad_history.json`-t tölti le (most 121 KB, a szezon végén ~797 KB), mert minden
-fordulóra szüksége van. Amit ténylegesen használ belőle, az fordulónként öt mező játékosonként
-— abból egy külön index ~162 KB lenne az egész szezonra, vagyis **80%-kal kevesebb**. Ez új
-adatfájl, tehát a formátumot előbb el kell dönteni; addig marad a mostani megoldás.
+**What is still open on the NB1 too:** the *player profile* still downloads the whole
+`squad_history.json` (now 121 KB, ~797 KB at the end of the season), because it needs every
+round. What it actually uses from it is five fields per player per round — a separate index of
+that would be ~162 KB for the whole season, that is **80% less**. This is a new data file, so
+the format has to be decided first; until then the current solution stays.
 
-## 5/a3. A lezárt forduló bontása a repóból jön
+## 5/a3. A closed round's breakdown comes from the repository
 
-A **tételes bontás** („mi adta ki a 9,75 pontot") sokáig kizárólag a böngészőből, kattintásra,
-élő MLSZ-hívással jött. Két baja volt ennek:
+Without a stored copy, the **itemised breakdown** ("what made up the 9.75 points") can only come
+from the browser, on a click, with a live MLSZ call. That has two problems:
 
-- **hálózat-függő**: ha az MLSZ vagy a közvetítő éppen nem válaszolt, a lenyíló hibát írt —
-  pedig a lezárt forduló bontása már sosem változik;
-- **lassú a profilban**: a soha nem birtokolt játékosnál a profil fordulónként egy-egy külön
-  kérést lő ki, sorban (ezért „pótlódnak" a pontok utólag).
+- **network-dependent**: if the MLSZ or the proxy is not answering, the dropdown shows an error —
+  although a closed round's breakdown never changes again;
+- **slow in the profile**: for a player never owned, the profile fires a separate request per
+  round, one after the other (that is why the points "fill in" afterwards).
 
-Mostantól a gyűjtő a forduló **lezárásakor egyszer** lekéri mind a 385 játékos bontását
-(`bontasok/<forduló>.json`), és az oldal lezárt fordulónál onnan olvas — azonnal, hálózattól
-függetlenül. Az **élő forduló marad az élő úton**: ott a bontás még változik.
+So the collector, **once, at the round's close**, fetches the breakdown of all 385 players
+(`bontasok/<round>.json`), and for a closed round the page reads from there — immediately,
+independent of the network. **The live round stays on the live path**: there the breakdown is
+still changing.
 
-Miért a teljes mezőny, és nem csak a birtokolt játékosok: a főoldali listából bárki profilja
-megnyitható. **Ez egyik kvótánkat sem terheli**: a gyűjtő a GitHub szerveréről közvetlenül
-kéri az MLSZ-t (CORS csak böngészőben létezik, közvetítő itt nincs) — az ára fordulónként
-egyszeri ~3 perc futásidő és ~40 KB a repóban.
+Why the whole field, and not only the owned players: anyone's profile can be opened from the home
+page list. **This burdens none of our quotas**: the collector calls the MLSZ directly from the
+GitHub server (CORS only exists in a browser, there is no proxy here) — the cost is a one-off
+~3 minutes of run time per round and ~40 KB in the repository.
 
-**Csak a pontot érő sorokat tároljuk** — plusz a „Játszott perc" sort. Az MLSZ minden
-játszott játékosra mind a **22** statisztika-sort visszaadja, a nullás értékűeket is; 385
-játékossal az 141 KB fordulónként, a szezon végére 4,5 MB. Az oldal viszont csak a pontot
-érő sorokat mutatja, és a „Játszott perc"-et külön (abból dől el a „nem lépett pályára" /
-„lejátszotta, pont nélkül" üzenet is). Szűrve **40 KB** fordulónként, a szezonra 1,3 MB.
-Ez a szűrés **visszafordítható**: a `game-player-stats` a régi fordulókra is válaszol
-(eddig épp ezen múlt az egész bontás), tehát a kihagyott nyers értékek bármikor újra
-lekérhetők — az árnaplónál pont ezért *nem* lehetett szűrni, az árat visszamenőleg senki
-nem adja vissza.
+**Only the rows worth points are stored** — plus the „Játszott perc" (minutes played) row. The
+MLSZ returns all **22** statistic rows for every player who played, the zero ones too; with 385
+players that is 141 KB per round, 4.5 MB by the end of the season. The page, however, only shows
+the rows worth points, and the „Játszott perc" separately (it also decides the „nem lépett
+pályára" (did not come on) / „lejátszotta, pont nélkül" (played, without points) message).
+Filtered it is **40 KB** per round, 1.3 MB for the season. This filtering is **reversible**:
+`game-player-stats` answers for old rounds too (the whole breakdown depends on exactly this), so
+the raw values left out can be fetched again at any time — the price log could *not* be filtered
+for exactly this reason: nobody gives back the price after the fact.
 
-**Mi számít lezártnak:** a **tárolt** állapotból dől el (minden meccs eredményes, és a
-forduló nincs az ideiglenesek közt) — nem abból, hogy a gyűjtő melyik forduló keretét kérte
-le éppen ebben a futásban. Enélkül a bevezetéskor csak az utolsó fordulóhoz készült volna
-bontás, a korábbiakhoz soha.
+**What counts as closed** is decided from the **stored** state (every match has a result, and
+the round is not among the provisional ones) — not from which round's squads the collector
+happened to fetch in this run. Otherwise, on introduction, a breakdown would only have been made
+for the last round, and never for the earlier ones.
 
-Két részlet, ami fontos:
+Two details that matter:
 
-- **Félig kész fájlt nem írunk ki.** Ha a kérések több mint 10%-a elhasal, a fájl nem
-  készül el, és a következő futás újrapróbálja. Egy hiányos fájl rosszabb a hiányzónál —
-  azt sosem próbálnánk újra.
-- **A korrekció itt sem évül el.** Ha a körbeforgó újraellenőrzés egy régi forduló
-  eredményét javítja, annak a bontását is újrahúzza.
+- **A half-finished file is not written.** If more than 10% of the requests fail, the file is not
+  produced, and the next run tries again. An incomplete file is worse than a missing one — it
+  would never be retried.
+- **A correction does not lapse here either.** If the rolling re-check corrects an old round's
+  result, it redraws that round's breakdown too.
 
-Ha a fájl hiányzik (a bevezetés előtti forduló, vagy még nem futott a gyűjtő), az oldal
-csendben visszaesik az élő lekérésre. Rögzítve: `tests/collector_breakdowns.py` és
+If the file is missing (a round before the introduction, or the collector has not run yet), the
+page silently falls back to the live request. Pinned by: `tests/collector_breakdowns.py` and
 `tests/taroltbontas.teszt.js`.
 
-### Az élő pont a tételes bontásból áll össze (PL)
+### Live points are summed from the itemised breakdown (PL)
 
-**Bejelentett hiba (GW2):** egy játékos sora 1 pontot és 9 percet mutatott,
-a pontrészletezője viszont 90 percet, gólt és bónuszt — összesen 8-at. A meccsek addigra
-lementek, tehát a **részletezés** volt a valóság.
+**The failure this prevents (GW2):** a player's row showed 1 point and 9 minutes, while their
+points detail showed 90 minutes, a goal and a bonus — 8 in all. The matches had been played by
+then, so the **detail** was the truth.
 
-Nem a mi hibánk volt: **a hivatalos FPL-app ugyanezt az ellentmondást mutatta** — a pályán
-1 pont, a játékosra kattintva 8. Az FPL a `stats.total_points`-ot és az `explain`
-eseménylistát **külön tartja**, és az összesítő beragadt.
+The fault was not ours: **the official FPL app showed the same contradiction** — 1 point on the
+pitch view, 8 on clicking the player. The FPL keeps `stats.total_points` and the `explain` event
+list **separately**, and the total got stuck.
 
-Hogy az `explain` a hiteles, két dolog mondja meg. Egy: **a meccsek addigra lementek**.
-Kettő: a **90 játszott perc** csak lejátszott meccsből jöhet, a `stats` 9 perce viszont a
-meccs bármely pillanatában előállhat — a percszám monoton nő, tehát a kisebbik a lemaradt.
+Two things tell that `explain` is the authoritative one. One: **the matches had been played by
+then**. Two: **90 minutes played** can only come from a played match, while the 9 minutes of
+`stats` can occur at any moment of the match — the minute count only grows, so the smaller one
+is the one lagging behind.
 
-> **Amivel NEM lehet érvelni: a bónusszal.** Első nekifutásra azt írtam, hogy „bónusz csak
-> lefújás után jár", tehát a bónusz-sor bizonyítja a lement meccset. Ez **téves**: az FPL a
-> bónuszt a meccs alatt is számolja a BPS-táblából, és beteszi az `explain`-be — lásd
-> a fenti „A bónuszpontok három állapota" szakaszt, amit épp ezért írtunk meg.
+> **What is NOT an argument: the bonus.** It is tempting to reason that "the bonus is only
+> awarded after full time", so a bonus row proves a finished match. That is **wrong**: the FPL
+> computes the bonus during the match too from the BPS table, and puts it into `explain` — see
+> the section "The three states of bonus points (PL)" above, which documents exactly this.
 
-Ezért az élő pontot (és a percet) mostantól **mi adjuk össze az `explain`-ből**, nem az
-összesítőt vesszük át. Normális esetben a kettő egyezik, tehát ez semmit nem változtat;
-eltéréskor viszont az esemény-alapú érték nyer — és ez a csapat összegére és az élő
-meccsállásra is átüt. Ha egy játékoshoz nincs `explain` (még nem lépett pályára), marad a
-`stats`.
+So the live points (and the minutes) are **summed by us from `explain`**, not taken over from
+the total. Normally the two agree, so this changes nothing; when they differ, however, the
+event-based value wins — and this carries through to the team's total and the live match score.
+If a player has no `explain` (they have not come on yet), `stats` remains.
 
-**Ugyanez a szabály a gyűjtőben is.** Ez nem szépségkérdés: a lezárt fordulót a gyűjtő
-**soha többé nem kéri le** (`veglegesek`), és az oldal onnantól nem élőben számol, hanem a
-**mentett** számot mutatja. Ami a lezárás pillanatában bekerült, az véglegesen bent marad —
-az FPL a régi fordulót nem adja vissza. Ha csak az oldalt javítottuk volna, ma jó számot
-látnánk, a lezárás után viszont a beragadt érték jönne elő, örökre.
+**The same rule applies in the collector.** This is not cosmetic: the collector **never fetches**
+a closed round **again** (`veglegesek`), and from then on the page does not compute live but
+shows the **saved** number. Whatever went in at the moment of closing stays in for good — the
+FPL does not give back an old round. If only the page were fixed, the right number would show
+today, but after the close the stuck value would come back, forever.
 
-A gyűjtőben ez a `collect_draft.py` → `jatekos_pont`, a lapon a `fetchLivePts` — a kettőnek
-**ugyanazt a számot kell adnia**: amit a látogató lát, azt kell archiválni is. Eltéréskor a
-gyűjtő a futás naplójába **hangosan kiírja**, hány játékosnál tért el a két forrás; ha ez
-rendszeressé válik, onnan derül ki.
+In the collector this is `collect_draft.py` → `player_points`, on the page `fetchLivePts` — the
+two **must give the same number**: what the visitor sees is what has to be archived. When they
+differ, the collector **writes loudly** to the run's log how many players the two sources
+differed for; if this becomes regular, that is where it shows.
 
-**Visszaesés mindkét helyen:** ha az `explain` üres (a játékos nem lépett pályára) vagy az FPL
-átalakítja a szerkezetét, egyetlen sort sem találunk, és marad a `stats` összesítője. Egy
-API-változás így a **régi viselkedést** adja vissza, nem nullákat. A pontot és a percet külön
-tartjuk számon: lehet pontot érő sor perc-sor nélkül, és ott a 0 perc hamis lenne.
+**Fallback in both places:** if `explain` is empty (the player did not come on) or the FPL
+changes its structure, not a single row is found, and the `stats` total remains. An API change
+thus gives back the **old behaviour**, not zeros. Points and minutes are tracked separately:
+there can be a row worth points without a minutes row, and there 0 minutes would be false.
 
-Rögzítve: `tests/eloosszeg.teszt.js` (lap) és `tests/collector_points_source.py` (gyűjtő) —
-beragadt összesítő mellett 8 pont és 90 perc, az élő állás 88 (11 kezdő), a hibás 11 sehol;
-üres vagy ismeretlen szerkezetű bontásnál a `stats` marad; dupla fordulónál a két meccs
-összeadódik. Mindkettő a régi kódon bizonyítottan bukik.
+Pinned by: `tests/eloosszeg.teszt.js` (page) and `tests/collector_points_source.py` (collector)
+— with a stuck total, 8 points and 90 minutes, the live score 88 (11 starters), the wrong 11
+nowhere; for an empty or unknown-structure breakdown `stats` remains; in a double round the two
+matches are added up. Both provably fail on the old code.
 
-### Élő forduló alatt a lap magától frissül
+### During a live round the page refreshes itself
 
-**Bejelentett hiba (PL):** a nyitva hagyott lap a **betöltéskori** állást
-mutatta. A LEE–BRE meccs a 9. percnél állt, amikor az oldal betöltődött, és a sorok ott is
-maradtak — percek, meccsóra, pontok egyaránt. A lenyíló bontás viszont **kattintáskor** saját,
-friss lekérést indít, ezért az már 90 percet mutatott: ugyanazon a képernyőn mondott ellent
-egymásnak a sor (9 perc, 1 pont) és a panelje (90 perc, 2 pont). **A panel volt a helyes.**
+**The failure this prevents (PL):** a page left open showed the standings **from load time**.
+The LEE–BRE match was at the 9th minute when the page loaded, and the rows stayed there —
+minutes, match clock and points alike. The dropdown breakdown, however, starts its own fresh
+request **on a click**, so it already showed 90 minutes: on the same screen the row (9 minutes,
+1 point) and its panel (90 minutes, 2 points) contradicted each other. **The panel was right.**
 
-Az élő réteget eddig csak három dolog frissítette: a betöltés, a lapra való visszaváltás
-(`FunTasy.ujraLathatokor`), és egy meccs vagy keret megnyitása. Időzített frissítés
-**szándékosan** nem volt — és akkor ez helyes döntés is volt: publikus közvetítőkön mentünk,
-és egy nyitva hagyott lap percenkénti lekérésekkel verte volna őket.
+Without a timer only three things refresh the live layer: loading, switching back to the page
+(`FunTasy.onVisibleAgain`), and opening a match or a squad. A timed refresh was **deliberately**
+left out while the live requests went through public proxies: a page left open would have
+hammered them with per-minute requests.
 
-**A saját Cloudflare Workerünk 60 másodperces peremgyorsítótárával ez az indok megszűnt:**
-akárhányan nézik ugyanazt a fordulót, az API felé percenként egy kérés megy ki. Ezért a
-`FunTasy.eloFrissito` mindkét oldalon percenként újrafuttatja az élő lekérést — de **csak
-akkor**, ha van folyó forduló, és **csak** látható lapon. Fordulók között és háttérbe tett
-lapon egyetlen kérés sem megy ki.
+**Our own Cloudflare Worker's 60-second edge cache removes that reason:** however many people
+watch the same round, one request per minute goes out to the API. So `FunTasy.liveRefresher`
+re-runs the live request every minute on both pages — but **only** if there is a round in
+progress, and **only** on a visible page. Between rounds and on a page put in the background not
+a single request goes out.
 
-Rögzítve: `tests/eloora.teszt.js` — élő fordulónál a kiírt állás kattintás nélkül vált
-44-ről 99-re; lezárt fordulónál egyetlen ismételt kérés sem megy ki. A régi kódon
-bizonyítottan bukik.
+Pinned by: `tests/eloora.teszt.js` — in a live round the score shown changes from 44 to 99
+without a click; in a closed round not a single repeated request goes out. It provably fails on
+the old code.
 
-### Írás csak akkor, ha tényleg változott
+### Write only when something really changed
 
-Minden kimeneti fájlra ugyanaz a szabály: **az `updated` mező nem ok az írásra**. Ha csak
-az időbélyeg változna, a fájl nem íródik újra — különben a repó három óránként hízna a
-semmiért, és a git-történetben nem lehetne megtalálni, mikor változott tényleg valami.
+The same rule holds for every output file: **the `updated` field is no reason to write**. If only
+the timestamp would change, the file is not rewritten — otherwise the repository would grow on
+every collector run for nothing, and in the git history it could not be found when something
+really changed.
 
-Ez kétszer csúszott el:
+Two conditions have broken this rule:
 
-- a `results.json` feltétele **listát hasonlított halmazhoz** (`provisional != regi_prov`),
-  ami sosem egyenlő — az utolsó 36 commitjából 30-ban csak az időbélyeg változott;
-- a `squads.json` kiírását a **teljes előzmény** változása nyitotta, pedig a fájl csak az
-  utolsó forduló keretét tartalmazza — egy régi forduló korrekciója így változatlan
-  tartalommal írta újra (14-ből 2 alkalommal).
+- the condition for `results.json` **compared a list with a set** (`provisional != old_prov`),
+  which are never equal — in 30 of its last 36 commits only the timestamp had changed;
+- writing `squads.json` was triggered by a change of the **whole history**, although the file
+  only contains the last round's squads — a correction of an old round thus rewrote it with
+  unchanged content (2 times out of 14).
 
-Mindkettőt teszt fedi (`tests/collector_provisional.py`, C3 és C4): a C3 a gyűjtőt kétszer
-futtatja változatlan adaton, és **egyetlen** kimeneti fájl sem változhat — nem csak a
-`results.json`, hanem minden, amit a futás után talál. A `stamp` helyére számláló kerül,
-különben a másodperc-pontosságú időbélyeg elrejtené a fölösleges írást.
+Both are covered by a test (`tests/collector_provisional.py`, C3 and C4): C3 runs the collector
+twice on unchanged data, and **not a single** output file may change — not only `results.json`,
+but everything it finds after the run. `stamp` is replaced by a counter, otherwise the
+second-precision timestamp would hide the unnecessary write.
 
-### A félbeszakadt írás nem olvasható „nincs előzmény"-ként
+### An interrupted write cannot be read as "no history"
 
-A **halmozódó** fájlokban — árnapló, keret-előzmény, eredmények, meccsek, zárási
-igazítások — olyasmi áll, amit a futás nem tud újraszámolni: a múlt. A gyűjtő minden
-körben beolvassa, hozzáteszi a mait, és visszaírja.
+The **accumulating** files — price log, squad history, results, matches, closing adjustments —
+hold something the run cannot recompute: the past. The collector reads them in on every run, adds
+today's data, and writes them back.
 
-Ez a kör két ponton volt elvágható, és a kettő **együtt** adott adatvesztést:
+This cycle could be cut at two points, and the two **together** caused data loss:
 
-- az írás `open(path, "w")`-vel ment, ami az első bájt előtt kiüríti a fájlt — egy ott
-  megszakadt futás (a workflow hatórás korlátja, újraindítás, betelt lemez) csonka
-  JSON-t hagyott a lemezen;
-- az olvasás `except Exception` alatt **üres alapértelmezésre** esett vissza. A csonka
-  fájlból így „nincs előzmény" lett, a futás a semmihez adta hozzá a mai fordulót, és azt
-  írta vissza.
+- writing with `open(path, "w")` empties the file before the first byte — a run interrupted there
+  (the workflow's six-hour limit, a restart, a full disk) leaves a cut-off JSON on disk;
+- reading under `except Exception` falls back to an **empty default**. From the cut-off file this
+  makes "no history", the run adds today's round to nothing, and writes that back.
 
-Egy megszakadt futás plusz egy tiszta futás tehát **minden korábbi fordulót eltörölt** — a
-kimenet érvényes JSON, csak a múltja hiányzik, tehát semmi nem jelzett volna. Az árnapló a
-legsúlyosabb eset: kimértük, hogy az MLSZ **semmilyen ár-előzményt nem szolgáltat**
-(`naplo/mlsz-price-history.txt`), amit a napló elveszít, az visszamenőleg pótolhatatlan.
+One interrupted run plus one clean run would thus **erase every earlier round** — the output is
+valid JSON, only its past is missing, so nothing would flag it. The price log is the most serious
+case: measurement shows that the MLSZ **provides no price history at all**
+(`naplo/mlsz-price-history.txt`), so whatever the log loses cannot be recovered after the fact.
 
-Azóta az írás `<path>.uj`-ba megy `flush` + `fsync` után, és `os.replace` teszi a helyére:
-ez atomi, tehát az olvasó vagy a régi fájlt látja, vagy az újat, félkészet soha. Az
-olvasás pedig a `read_stored`-on át megy, ami **csak** `FileNotFoundError`-ra adja az
-alapértelmezést (első futás); sérült fájlnál a kivétel felszáll, a futás megáll, és a
-fájlhoz hozzá sem nyúlunk — a következő körben megvan az esély, hogy épen olvassuk.
+So the write goes to a temporary file next to the target (`<path>.tmp`; `results.json` is written
+to `results.json.uj`) with `flush` + `fsync`, and `os.replace` puts it in place: this is atomic,
+so the reader sees either the old file or the new one, never a half-finished one. Reading goes
+through `read_stored`, which gives the default **only** for `FileNotFoundError` (first run); for
+a damaged file the exception propagates, the run stops, and the file is not touched — on the next
+run there is a chance to read it intact. `stamp`, `write_compact` and `read_stored` live in
+`collector_common.py`, in one copy shared by both collectors.
 
-Teszt: `tests/collector_storage.py`, tíz állítással mindkét gyűjtőre. Köztük egy
-**forráskód-szintű**: minden `open(..., "w")` ideiglenes nevet kell hogy kapjon. Enélkül a
-következő új kimenet csendben visszahozná a régi utat.
+Test: `tests/collector_storage.py`, with thirteen assertions covering both collectors and the
+shared module. Among them one at the **source-code level**: every `open(..., "w")` must get a
+temporary name. Without it the next new output would silently bring back the old path.
 
-## 5/a2. Változásnapló („Mi újult meg?")
+## 5/a2. Changelog („Mi újult meg?" — What's new?)
 
-Felhasználói napló, nem technikai: **csak az kerül bele, amit a használó lát vagy
-érzékel**. Ami tisztán háttérmunka (átszervezés, gyűjtő-belső, teszt), az nem.
+A user-facing log, not a technical one: **only what the user sees or notices goes into it**.
+Purely background work (reorganisation, collector internals, tests) does not.
 
-- **Két típus:** *új funkció* és *javítás*.
-- **A liga címke, nem kategória.** Egy bejegyzéshez több liga is tartozhat, és
-  **bármelyikre szűrve előjön**. Ez azért fontos, mert nem mindenki játszik minden
-  ligában — és minél több liga lesz, annál kevésbé.
-- **A ligák külön kapcsolhatók, több is egyszerre.** Aki két ligában játszik, mindkettőt
-  kijelölheti, és akkor mindkettő bejegyzéseit látja (a kijelöltek között VAGY van). A
-  „Mind" gomb nem egy választás a többi mellett, hanem a kijelölések törlése. A típus
-  ezzel szemben egy választás, mert a két típus kizárja egymást.
-- **Egy nap, egy téma, egy bejegyzés.** Ha egy megoldás több nekifutásból állt össze, csak
-  a végső állapot kerül be; a közbenső próbálkozások a használót nem érdeklik. **Ez az
-  utólagos igazításokra is áll:** ami egy frissen élesített funkción még aznap (vagy másnap
-  az első visszajelzésre) igazítás, az nem külön bugfix-bejegyzés — a funkció bejegyzése
-  írja le a végállapotot. (Egyszer már becsúszott egy külön „a panel a helyére állt"
-  bejegyzés; törölni kellett.)
-- **De a funkció bejegyzése nem gyűjtőhely.** Csak az kerül bele, ami MAGÁHOZ A FUNKCIÓHOZ
-  tartozik. Ami mást érint — akkor is, ha ugyanabban a körben készült el —, az **vagy külön
-  javítás-bejegyzés, vagy semmi**: ha olyan apró, hogy a néző nem érzékeli, nem kerül a
-  naplóba egyáltalán. A két szabály együtt: a funkciót nem daraboljuk szét, és nem is
-  aggatunk rá mást.
-- **Dátumozva**, naponként csoportosítva, a legfrissebb elöl. A napló a szezon elején
-  indul, a korábbi változások nincsenek benne.
-- **Összevonáskor a bejegyzést ÚJRA KELL FOGALMAZNI, nem hozzáfűzni.** Ha egy meglévő
-  bejegyzéshez újabb rész kerül, a leírás nem bővül egy odabiggyesztett mondattal: az
-  egészet újra kell írni úgy, hogy egy szövegként olvasható legyen. A hozzáfűzött mondatok
-  sorozatából felsorolás lesz, amiből a használó nem érti, mi a lényeg.
-- **Több szakaszban készülő funkciónál a bejegyzés a VÉGÉN megy ki**, nem szakaszonként.
-  Ellenkező utasítás híján ez az alap. Ha egy funkciót azért bontunk szakaszokra, hogy
-  közben látni lehessen — az még nem kész funkció: a napló szakaszonként átírva
-  félkész állapotot mutatna annak, aki épp megnyitja. A készülő szöveg addig a
-  `valtozasok-vazlat.json`-ban áll (a napló oldala ezt nem olvassa), és amikor az utolsó
-  szakasz is kész, egy mozdulattal átkerül. Ugyanaz az alaki ellenőrzés vonatkozik rá
-  (`tests/doc_checks.py`, D5), tehát nem tud félig megírva elaludni.
+- **Two types:** *new feature* and *fix*.
+- **The league is a tag, not a category.** An entry can belong to several leagues, and it **shows
+  up when filtering for any of them**. This matters because not everyone plays in every league —
+  and the more leagues there are, the less so.
+- **The leagues can be toggled separately, several at once.** Someone who plays in two leagues
+  can select both, and then sees the entries of both (the selected ones are combined with OR).
+  The „Mind" (All) button is not a choice next to the others, but clears the selection. The type,
+  on the other hand, is a single choice, because the two types exclude each other.
+- **One day, one topic, one entry.** If a solution came together in several attempts, only the
+  final state goes in; the intermediate attempts do not interest the user. **This holds for later
+  adjustments too:** an adjustment to a freshly released feature on the same day (or the next day,
+  after the first feedback) is not a separate bugfix entry — the feature's entry describes the
+  final state. (A separate entry such as „a panel a helyére állt" (the panel settled into place)
+  is exactly what this rule excludes.)
+- **But the feature's entry is not a catch-all.** Only what belongs TO THE FEATURE ITSELF goes
+  into it. What affects something else — even if it was finished in the same round of work — is
+  **either a separate fix entry, or nothing**: if it is so small that the viewer does not notice
+  it, it does not go into the log at all. The two rules together: a feature is not split up, and
+  nothing else is hung on it either.
+- **Dated**, grouped by day, newest first. The log starts at the beginning of the season; earlier
+  changes are not in it.
+- **When merging, the entry has to be REWRITTEN, not appended to.** If a new part is added to an
+  existing entry, the description is not extended with a tacked-on sentence: the whole thing has
+  to be rewritten so that it reads as one text. A series of appended sentences becomes a list from
+  which the user cannot tell what matters.
+- **For a feature built in several stages the entry goes out at the END**, not per stage. Unless
+  instructed otherwise, this is the default. If a feature is split into stages so that it can be
+  seen in the meantime — that is not yet a finished feature: a log rewritten per stage would show
+  a half-finished state to whoever happens to open it. Until then the text being written stands in
+  `valtozasok-vazlat.json` (the log page does not read it), and when the last stage is done too,
+  it is moved over in one go. The same formal check applies to it (`tests/doc_checks.py`, D5), so
+  it cannot fall asleep half-written.
 
-Az adat a `valtozasok.json`-ban van, kézzel bővítjük (a még nem publikált szöveg a `valtozasok-vazlat.json`-ban). A szűrők a `LIGAK` listából
-készülnek, tehát egy új liga felvétele itt sem igényel külön munkát.
+The data is in `valtozasok.json`, extended by hand (text not yet published is in
+`valtozasok-vazlat.json`). The filters are built from the `LEAGUES` list, so adding a new league
+needs no separate work here either.
 
-**Hogyan legyen megfogalmazva egy bejegyzés**
+**How to phrase an entry**
 
-- **A cím azt mondja meg, mi igaz mostantól**, a mondat pedig azt, hogy ez mit jelent a
-  használónak és hol látja. Példa: *„Az elmaradt meccs játékosainál kötőjel áll 0 helyett"*.
-- **Nincs benne első személy, és nincs hivatkozás a fejlesztés menetére.** A napló nem
-  arról szól, ki mit mondott vagy hogyan derült ki — csak arról, mi változott az oldalon.
-  (Egy naplóbejegyzés arról, hogy korábban hol hangzott el ugyanez, a használót nem
-  érdekli — őt az érdekli, mi változott az oldalon.)
-- **Tárgyszerű, nem dramatizál.** Nem *„nem kapnak többé hamis 0-t"*, hanem az, ami
-  ténylegesen látszik a soron.
-- **A beszélgetésben elhangzott szavakat nem vesszük át szó szerint.** Az, ahogy egy
-  hibáról beszélünk, nem ugyanaz, ahogy a naplóba le kell írni; a megfogalmazást minden
-  bejegyzésnél újra végig kell gondolni.
+- **The title says what is true from now on**, and the sentence what this means for the user and
+  where they see it. Example: *„Az elmaradt meccs játékosainál kötőjel áll 0 helyett"* (players
+  of a postponed match show a dash instead of 0).
+- **No first person, and no reference to how the development went.** The log is not about who
+  said what or how something came to light — only about what changed on the page. (A log entry
+  about where the same thing was said earlier does not interest the user — what interests them is
+  what changed on the page.)
+- **Matter-of-fact, not dramatic.** Not *„nem kapnak többé hamis 0-t"* (they no longer get a
+  false 0), but what actually shows on the row.
+- **Words used in the conversation are not taken over verbatim.** The way an error is talked about
+  is not the way it has to be written into the log; the wording has to be thought through again
+  for every entry.
 
-Elérés: a kezdőlapról (kártya) és minden oldal **láblécéből** (`FunTasy.renderLablec`).
-A naplón magán nincs lábléc, mert önmagára mutatna.
+Access: from the home page (a card) and from the **footer** of every page
+(`FunTasy.renderFooter`). The log itself has no footer, because it would point to itself.
 
-### A két oldal váza kézzel van kétszer leírva
+### The frame of the two pages is written twice by hand
 
-Nincs build és nincs sablon, tehát a `<head>`, a fejléc, a panel-keretek és a lábléc
-**mindkét liga-oldalon külön ott áll**. Ez tud szétcsúszni — meg is tette: a zárási
-változások panelje egy ideig más címmel, más oszlopban és más elrendezéssel állt a két
-oldalon. Ilyenkor nem elég „figyelni rá": a `tests/ligavaz.teszt.js` géppel nézi, hogy a
-`<head>` mind a négy oldalon azonos (a címen és az útvonal-előtagon kívül), a panelek
-sorrendje és oszlopa gépen és mobilon ugyanaz, és a tabella fejléce is egyezik — csak a
-résztvevő oszlopa fut más néven (Szakvezető / Csapat).
+There is no build and no template, so the `<head>`, the header, the panel frames and the footer
+**stand separately on both league pages**. This can drift apart — and has: the closing changes
+panel stood for a while with a different title, in a different column and with a different layout
+on the two pages. "Paying attention" is not enough here: `tests/ligavaz.teszt.js` checks by machine
+that the `<head>` is identical on all four pages (apart from the title and the path prefix), that
+the order and column of the panels are the same on desktop and mobile, and that the table header
+matches too — only the participant column runs under a different name (Szakvezető / Csapat —
+manager / team).
 
-Ha új panel kerül az egyik oldalra, a teszt addig bukik, amíg a másikra is oda nem kerül.
-Ez a szándék: **ami mindkét ligában van, az nézzen ki ugyanúgy.**
+If a new panel is added to one page, the test fails until it is added to the other as well. This
+is the intent: **what is in both leagues should look the same.**
 
-## 5/a7. A magazin publikációs sorrendben áll
+## 5/a7. The magazine is in publication order
 
-Az újság **nem a fordulóval halad, hanem az idővel**. Ami ma került ki, az van felül,
-akkor is, ha egy régebbi fordulóról szól — és akkor is, ha közben a másik ligában
-lezárult egy újabb forduló. Ez a lapszám logikája: az olvasó azt látja elöl, amit még
-nem olvasott.
+The paper **does not go by round, but by time**. What came out today is on top, even if it is
+about an older round — and even if a newer round has closed in the other league in the meantime.
+This is the logic of an issue: the reader sees in front what they have not read yet.
 
-Korábban a lista fordulónként, ligánként blokkokban állt. Ettől egy frissen kiadott
-beharangozó a lap közepén bukkant fel — a 8. forduló alatt, mert a 9. összefoglalója
-már kint volt —, és a legfrissebb írás olyan helyre került, ahova senki nem néz.
+Listed in blocks per round and per league, a freshly published preview would turn up in the middle
+of the page — under round 8, because round 9's summary was already out —, and the freshest piece
+would land where nobody looks.
 
-A rendezés kulcsa a cikkenkénti `kozzetett` ISO-időbélyeg (`FunTasy.articleList`). A
-korábbi írásokét a `articles.json` **git-történetéből** töltöttük vissza: nem tippeltük,
-hanem megnéztük, melyik commit tette ki őket.
+The sort key is the per-article `kozzetett` ISO timestamp (`FunTasy.articleList`). For the earlier
+pieces it was backfilled from the **git history** of `articles.json`: not guessed, but looked up
+from the commit that published them.
 
-Két dolgot érdemes tudni róla:
+Two things worth knowing about it:
 
-- **Az azonos időbélyeg gyakori**, mert egy commitban több írás is kimegy. A csoporton
-  belül ezért nem a beillesztés sorrendje dönt (az esetleges), hanem: frissebb forduló
-  elöl, azon belül rovat → összefoglaló → beharangozó.
+- **Identical timestamps are common**, because several pieces go out in one commit. Within such a
+  group the order of insertion does not decide (that is accidental), but: newer round first, and
+  within it column → summary → preview.
 
-Gépi őrzés: **D15** (`tests/doc_checks.py`) — kint lévő írás nem lehet `kozzetett` nélkül,
-különben csendben a lap aljára esne.
+Machine guard: **D15** (`tests/doc_checks.py`) — a published piece cannot be without `kozzetett`,
+otherwise it would silently fall to the bottom of the page.
 
-### A heti rovat nem párharchoz tartozik
+### The weekly column does not belong to a pairing
 
-A harmadik rovat — *Kele Janek elemez* — a **fordulóhoz** szól, nem egy meccshez: egy
-külsős újságíró ír a bajnokságunkról. Ezért:
+The third column — *Kele Janek elemez* (Kele Janek analyses) — is written for the **round**, not
+for a match: an outside journalist writes about our league. Therefore:
 
-- a kulcsa a **saját címe**, `|` nélkül — az `articleList` ebből tudja, hogy nincs
-  ellenfele, és nem próbál párharcot bontani belőle;
-- **nincs rajta a lezárás-kapu**. Az összefoglaló azért vár a végleges fordulóra, mert
-  eredményt állít; a rovat nem eredményt állít, tehát előre is nézhet, vissza is;
-- **nincs `short`-ja**. A felütés nála az alcím szerepét venné fel, és megtöri a szöveg
-  ívét; a becsukott sávba és a másolásba az első bekezdés lép a helyére.
+- its key is its **own title**, without `|` — from this `articleList` knows that it has no
+  opponent, and does not try to split a pairing out of it;
+- **it has no closing gate**. The summary waits for the final round because it states results;
+  the column does not state results, so it can look ahead as well as back;
+- **it has no `short`**. With it the lead would take the role of a subtitle and break the arc of
+  the text; in the collapsed strip and in copying, the first paragraph takes its place.
 
-A rovat a meccsek adatlapján nem jelenik meg (nincs hova), csak az újságban — ott viszont
-a fordulón belül a lista elején áll.
+The column does not appear on the match pages (there is nowhere to put it), only in the paper —
+but there it stands at the top of the list within the round.
 
-## 5/b. Tesztek
+## 5/b. Tests
 
 ```bash
 tests/run_all.sh
 ```
 
-Elindít egy helyi kiszolgálót a repó gyökerére, lefuttat mindent — a doksi-konzisztencia
-ellenőrzését, a gyűjtő-teszteket, majd a böngészős teszteket **párhuzamosan** (3 munkás;
-a két időzítést mérő teszt a végén, egyedül fut) —, és összegez; a kilépőkód a bukott
-tesztek száma. `WORKERS=1` a régi soros mód. A tesztek darabszámát szándékosan nem írjuk
-ide: kétszer is elavult. Tesztenkénti bontás: `tests/README.md`.
+It starts a local server on the repository root, runs everything — the documentation consistency
+check (`tests/doc_checks.py`), the data consistency check (`tests/data_consistency.py`), the
+collector tests (`tests/collector_*.py`), then the browser tests **in parallel** (3 workers; the
+two timing-sensitive tests run at the end, alone) —, and sums up; the exit code is the number of
+failed tests. `WORKERS=1` is the serial mode. The number of tests is deliberately not written here:
+it would go stale. Per-test breakdown: `tests/README.md`.
 
-Két elv, amit érdemes megtartani:
+Two principles worth keeping:
 
-- **Nincsenek fixtúra-másolatok** — minden teszt a repóban lévő **valódi** adaton fut.
-  Korábban lemásolt JSON-ok álltak külön könyvtárakban; azok elavultak, és a teszt akkor
-  is zöld maradt, ha közben a valódi adat megváltozott.
-- **A különleges állapotokat a teszt állítja elő menet közben** (a Playwright elfogja a
-  kérést és átírja a választ), nem tárolt fájlból. Így holnap is ugyanazt méri.
+- **No fixture copies** — every test runs on the **real** data in the repository. Copied JSON files
+  in separate directories go stale, and the test stays green even when the real data has changed
+  in the meantime.
+- **Special states are produced by the test on the fly** (Playwright intercepts the request and
+  rewrites the response), not from a stored file. This way it measures the same thing tomorrow too.
 
-A legtöbbet két teszt adja: az `allapotter.teszt.js` a „0 pont" logika **mind az 576
-kombinációját** végigfuttatja öt invariánssal (ez talált meg olyan hibákat, amikre nem
-gondoltunk tesztet írni), a `tabella.teszt.js` pedig **függetlenül újraszámolja** a
-tabellát és a mátrixot a nyers adatból.
+Two tests give the most: `allapotter.teszt.js` runs **all 576 combinations** of the "0 points"
+logic with five invariants (this is what finds errors nobody thought to write a test for), and
+`tabella.teszt.js` **independently recomputes** the table and the matrix from the raw data.
 
-## 6. Ha módosítani kell
+## 6. Making changes
 
-**Mielőtt lezárás-logikához nyúlsz, olvasd el a 3/b szakaszt.** Négy különböző dolgot
-hívunk „lezárásnak", külön jelzőkkel; egyszer már abból lett hiba, hogy az egyiket a
-többi ismerete nélkül írtam át — és a hozzá írt teszt a hibás viselkedést rögzítette,
-nem fogta meg. Ha egy tesztet a kód alá igazítasz, állj meg: valószínűleg az elvárás
-rossz, nem a kód.
+**Before you touch the closing logic, read section 3/b.** Four different things are called
+"closing", with separate flags; rewriting one of them without knowing the others has already
+caused an error — and the test written for it pinned the wrong behaviour instead of catching it.
+If you adjust a test to fit the code, stop: probably the expectation is wrong, not the code.
 
-**A dokumentáció-frissítés nem opcionális lépés, és nem is bizalmi kérdés többé:** a
-`tests/doc_checks.py` a tesztsor részeként ellenőrzi, hogy minden teszt- és adatfájl
-dokumentálva van, a fájl-táblázat nem hivatkozik törölt fájlra, és a változásnapló
-bejegyzései teljesek. (Azért született, mert a doksi-szerkesztés kétszer hasalt el
-csendben.)
+**Updating the documentation is not an optional step, and no longer a matter of trust:**
+`tests/doc_checks.py`, as part of the test suite, checks that every test and data file is
+documented, that the file table does not reference a deleted file, and that the changelog entries
+are complete. (It exists because editing the docs failed silently twice.)
 
-Nincs build lépés, nincs függőség. A kód három rétegben él:
+There is no build step and no dependency. The code lives in three layers:
 
-- **`funtasy.css`** — a közös stíluslap (mindkét oldal ezt tölti; itt van minden szín,
-  rács, táblázat- és modal-stílus).
-- **`funtasy.js`** — a közös réteg. **Ami nem liga-specifikus, ide tartozik**, és ez nem
-  kozmetika: korábban tizenkét azonos nevű függvény élt külön példányban a két
-  liga-oldalon, és emiatt ugyanazt a hibát többször kellett javítani (a
-  gyorsítótár-törést két különböző alakú `apiGet`-be; a „listán 39, ráváltva 38"
-  eltérést előbb a meccs-adatlapon, majd külön a keret-nézetben). Egy harmadik liga ezt
-  megháromszorozta volna. Most **kettő** maradt külön (`bontasHTML`, `nincsPontUzenet`) —
-  azok valóban ligánként mások, mert más API-ból jönnek.
+- **`funtasy.css`** — the shared stylesheet (both pages load it; every colour, grid, table and modal
+  style is here).
+- **`funtasy.js`** — the shared layer. **Whatever is not league-specific belongs here**, and this is
+  not cosmetic: with twelve same-named functions in separate copies on the two league pages, the
+  same error has to be fixed several times (the cache busting in two differently shaped `apiGet`s;
+  the "39 on the list, 38 after switching" discrepancy first on the match page, then separately in
+  the squad view). A third league would triple this. **Two** remain separate now
+  (`breakdownHTML`, `noPointsMessage`) — those really differ per league, because they come from
+  different APIs.
 
-  A közösbe került, ligától független darabok:
+  The league-independent pieces in the shared layer:
 
-  | Hívás | Mit ad |
+  | Call | What it gives |
   |---|---|
-  | `FunTasy.lekero({...})` | lekérés CORS-proxyn át: három útvonal sorban, a bevált megjegyzése, gyorsítótár-törés három rétegben. Beállítható, hogy a **belső** URL is kapjon-e időbélyeget (az FPL tűri, az MLSZ-nél nincs igazolva), mi számít érvényes válasznak, és teljes kudarcnál dobjon-e. |
-  | `FunTasy.nezetVerem({...})` | a modal és a benne lapozás (`mutat` / `vissza` / `nyit` / `zar`). |
-  | `FunTasy.allasHTML(...)` | az eredménysor doboza. |
-  | `FunTasy.eloKereso(LIVE)` | élő állás kikeresése a live rétegből. |
-  | `FunTasy.hibajelzo({...})` | a státuszsáv hibaüzenete; a „van-e élő forduló" kérdést a hívó dönti el. |
-  | `FunTasy.h2hNezo({...})` | az egymás elleni nézet; a névfeloldás beállítható. |
-  | `FunTasy.ujraLathatokor(fn)` | újrafrissítés, amikor a lap ismét látszik. |
-  | `FunTasy.lassuJelzo(cel)` | a „frissítés… N mp" jelző lassú lekérésnél. |
-  | `FunTasy.accToggle/accTable` | a pont-bontás accordion mechanikája. |
+  | `FunTasy.makeFetcher({...})` | fetching through CORS proxies: several routes in order (our own Worker first when configured, then direct, then the public proxies), remembering the one that worked, cache busting in three layers. Configurable: whether the **inner** URL gets a timestamp too (`innerStamp`; the FPL tolerates it, at the MLSZ it is not verified), what counts as a valid response (`isValid`), and whether it throws on total failure (`onFail`). |
+  | `FunTasy.viewStack({...})` | the modal and the paging inside it (`show` / `back` / `open` / `close`). |
+  | `FunTasy.scoreHTML(...)` | the box of the score row. |
+  | `FunTasy.liveLookup(LIVE)` | looking up the live score in the live layer. |
+  | `FunTasy.errorReporter({...})` | the status bar's error message; the caller decides the "is there a live round" question. |
+  | `FunTasy.h2hViewer({...})` | the head-to-head view; the name resolution is configurable. |
+  | `FunTasy.onVisibleAgain(fn)` | refresh when the page is visible again. |
+  | `FunTasy.slowIndicator(target)` | the „frissítés… N mp" (refreshing… N s) indicator for a slow request. |
+  | `FunTasy.accToggle/accTable` | the accordion mechanics of the points breakdown. |
 
-  Emellett `FunTasy.create({...})` kapja a konfigurációt
-  (menetrend, résztvevők, elemazonosítók), és adja a `computeTable`, `renderTable`,
-  `renderMatches`, `renderMatrix` függvényeket, az élő-jelölést és az egymás elleni
-  lista építőjét (`h2hHTML` — a mátrix-cella kattintása nyitja, `onMatrixClick`).
-  A create-en kívül itt él a pont-bontás accordion közös mechanikája is
-  (`FunTasy.accToggle` — nyit/zár/egyszerre egy panel; `FunTasy.accTable` — a bontás
-  táblázata); a tartalmat az oldalak saját `bontasHTML`-je adja, mert a forrás más
-  (NB1: MLSZ `game-player-stats`, PL: FPL `event/{gw}/live` explain). Szintén itt van a
-  `FunTasy.ujraLathatokor(frissites)`: a lapra visszatérve újra lefuttatja az élő
-  lekérést (fojtással, párhuzamos futás nélkül) — enélkül mobilon befagy az állás.
-- **`nb1/index.html` / `pl/index.html`** — csak az oldalspecifikus rész: konfiguráció, betöltés
-  és élő frissítés, meg az oldal saját modalja (a főoldalon `showSquad` / `showMatchRound` /
-  `squadHTML` / `playersHTML`, a PL-en `showTeam` / `showMatch` /
-  `keretHTML` / `fordulokHTML` / `jatekosokHTML`). A modalon belüli lapozást mindkét
-  oldalon ugyanaz a kis nézet-verem viszi (`vShow` / `vBack`): a belépési pont `root`,
-  a fülváltás `replace`, a listából nyíló nézet `push` — a vissza gomb ebből él.
+  In addition `FunTasy.create({...})` takes the configuration (schedule, participants, element
+  ids), and gives the `computeTable`, `renderTable`, `renderMatches`, `renderMatrix` functions, the
+  live marking and the builder of the head-to-head list (`h2hHTML` — opened by a click on a matrix
+  cell, `onMatrixClick`). Outside `create`, the shared accordion mechanics of the points breakdown
+  live here too (`FunTasy.accToggle` — open/close/one panel at a time; `FunTasy.accTable` — the
+  breakdown's table); the content comes from the pages' own `breakdownHTML`, because the source
+  differs (NB1: MLSZ `game-player-stats`, PL: FPL `event/{gw}/live` explain). Also here is
+  `FunTasy.onVisibleAgain(refresh)`: on returning to the page it re-runs the live request
+  (throttled, without parallel runs) — without it the score freezes on mobile.
+- **`nb1/index.html` / `pl/index.html`** — only the page-specific part: configuration, loading and
+  live refresh, plus the page's own modal (on the NB1 page `showSquad` / `showMatchRound` /
+  `squadHTML` / `playersHTML`, on PL `showTeam` / `showMatch` / `squadHTML` / `T.roundsHTML` /
+  `playersHTML`). Paging inside the modal is carried by the same small view stack on both pages
+  (`vShow` / `vBack`): the entry point is `root`, a tab switch is `replace`, a view opened from a
+  list is `push` — the back button lives on this.
 
-### Új liga felvétele
+### Adding a new league
 
-A webhely szerkezete mappánként egy liga, hogy a cím a ligáról szóljon és bővíthető legyen:
+The site's structure is one league per folder, so that the address is about the league and can be
+extended:
 
 ```
 /            index.html      – kezdőlap (ligaválasztó)
@@ -2373,73 +2476,81 @@ A webhely szerkezete mappánként egy liga, hogy a cím a ligáról szóljon és
              *.json          – adatfájlok (a gyökérben, az oldalak ../ úton érik el)
 ```
 
-Új liga hozzáadása:
+(`/` is the home page with the league switcher; `funtasy.css/js` is the shared layer, in the root;
+`*.json` are the data files, in the root, which the pages reach via `../`.)
 
-1. Egy új bejegyzés a `funtasy.js` **`LIGAK`** listájába. Ebből az **egy** listából
-   készül a ligaváltó sáv minden oldal tetején, a kezdőlap kártyája és a liga-oldal
-   alcíme is — máshol nem kell hozzányúlni. Mezők:
+Adding a new league:
 
-   | Mező | Mire való |
+1. A new entry in the **`LEAGUES`** list of `funtasy.js`. From this **one** list are built the
+   league switcher bar at the top of every page, the home page card and the league page's subtitle
+   — nothing else needs touching. Fields:
+
+   | Field | What it is for |
    |---|---|
-   | `id` | rövid azonosító, egyben a body-osztályok és a kártya alapja (`nb1`, `pl`) |
-   | `nev` | rövid név a ligaváltó sávban és a kártya tetején (`NB1`) |
-   | `mappa` | a webhely gyökeréhez képest (`nb1/`) |
-   | `cim` | a liga-oldal alcímének eleje (`NB1 salary cap fantasy`) |
-   | `leiras` | a folytatás: résztvevők, fordulók (`privát head-to-head · 8 csapat · 33 forduló`) |
-   | `tipus` | **játékmód** — `salary-cap` vagy `draft`, lásd lentebb |
-   | `tipusNev` | ennek olvasható neve a kártyán (`Salary cap`) |
-   | `tema` | a `body` osztálya a színvilághoz (`liga-nb1`) |
-   | `eloPontok` | ad-e a forrás pontot **meccs közben** (FPL: igen, MLSZ: csak a meccs után). Ettől függ, mit szabad írni a 0 pontos játékosról a meccs alatt. |
-2. Új mappa a saját `index.html`-lel. A közös fájlokra `../funtasy.css?v=N` és
-   `../funtasy.js?v=N` hivatkozik, az adatra `../valami.json`, a sávot pedig egy sor
-   rajzolja ki: `FunTasy.renderNav('<azonosító>','../')`.
-3. Ha új témaszínek kellenek: egy `body.liga-<azonosító>` blokk a `funtasy.css`-ben
-   (a változónevek maradnak, csak az értékük más), és a kártya színe a
-   `.ligakartya[data-liga="<azonosító>"]` szabályokban.
+   | `id` | short identifier, also the basis of the body classes and the card (`nb1`, `pl`) |
+   | `name` | short name in the league switcher bar and at the top of the card (`NB1`) |
+   | `path` | relative to the site root (`nb1/`) |
+   | `title` | the start of the league page's subtitle (`NB1 salary cap fantasy`) |
+   | `description` | the continuation: participants, rounds (`privát head-to-head · 8 csapat · 33 forduló`) |
+   | `teams` | the number of teams; the table draws this many placeholder rows before the data arrives (`8`) |
+   | `type` | **game mode** — `salary-cap` or `draft`, see below |
+   | `typeName` | its readable name on the card (`Salary cap`) |
+   | `theme` | the `body` class for the colour scheme (`liga-nb1`) |
+   | `livePoints` | whether the source gives points **during a match** (FPL: yes, MLSZ: only after the match). What may be written about a 0-point player during the match depends on this. |
+   | `midnightPlaceholder` | whether a midnight kick-off time means "not scheduled yet" (MLSZ: `true`, FPL: `false`); then no clock time is printed. |
+2. A new folder with its own `index.html`. It references the shared files as `../funtasy.css?v=N`
+   and `../funtasy.js?v=N`, the data as `../something.json`, and one line draws the bar:
+   `FunTasy.renderNav('<id>','../')`.
+3. If new theme colours are needed: a `body.liga-<id>` block in `funtasy.css` (the variable names
+   stay, only their values differ), and the card's colour in the
+   `.ligakartya[data-liga="<id>"]` rules.
 
-A linkek **relatívak** (`../pl/`), mert a GitHub Pages aloldalon szolgál ki
-(`/Funtasy-Liga/`), tehát abszolút `/pl/` út rossz helyre mutatna.
+The links are **relative** (`../pl/`), because GitHub Pages serves from a subpath
+(`/Funtasy-Liga/`), so an absolute `/pl/` path would point to the wrong place.
 
-**A ligatípus nem címke, hanem tulajdonság.** Két játékmód van, és a szabályaik érdemben
-eltérnek — erre az oldalak külön megoldást adhatnak:
+**The league type is not a label, but a property.** There are two game modes, and their rules
+differ substantially — the pages can handle this separately:
 
-| Típus | Mit jelent |
+| Type | What it means |
 |---|---|
-| `salary-cap` | közös játékospiac árkerettel; ugyanaz a játékos több csapatban is lehet; van kapitány (×2) és cserepad-felezés (NB1) |
-| `draft` | kizárólagos tulajdon: egy játékos egy csapatban; nincs kapitány, a pad pontjai nem számítanak (PL) |
+| `salary-cap` | shared player market with a budget; the same player can be in several teams; there is a captain (×2) and bench halving (NB1) |
+| `draft` | exclusive ownership: one player in one team; no captain, bench points do not count (PL) |
 
-A típus két helyen fogható meg: a `body` megkapja a `tipus-<érték>` osztályt (CSS-ből
-használható), JS-ből pedig `FunTasy.liga('nb1').tipus` kérdezhető le. Mindkettőt a
-`FunTasy.renderNav(...)` állítja be, ugyanaz a hívás, ami a ligaváltó sávot kirajzolja.
+The type can be reached in two places: the `body` gets the `tipus-<value>` class (usable from
+CSS), and from JS `FunTasy.leagueById('nb1').type` can be queried. Both are set by
+`FunTasy.renderNav(...)`, the same call that draws the league switcher bar.
 
-**A kezdőlapnak saját, semleges színvilága van** (`body.kezdolap`: grafit alap, ezüstös
-kiemelés). Enélkül az alapértelmezett palettát használná, vagyis úgy nézne ki, mintha az
-NB1 oldala volna. Így a lapon a két ligaszín (zöld / lila) az egyetlen színfolt.
+**The home page has its own, neutral colour scheme** (`body.kezdolap`: graphite base, silvery
+highlight). Without it, it would use the default palette, that is, it would look like the NB1 page.
+This way the two league colours (green / purple) are the only spots of colour on the page.
 
-**Verziójelzés:** a két oldal a közös fájlokat `funtasy.css?v=N` / `funtasy.js?v=N`
-formában tölti. **Ha a `funtasy.css` vagy a `funtasy.js` változik, a `?v=` számot mindkét
-oldalon léptetni kell** — különben a böngészők a régi motort tölthetik az új oldal alá
-(oldal/motor verziócsúszás: az új HTML régi JS-sel fut, nehezen felismerhető hibákkal).
+**Versioning:** the pages load the shared files as `funtasy.css?v=N` / `funtasy.js?v=N`. **If
+`funtasy.css` or `funtasy.js` changes, the `?v=` number has to be raised on every page that loads
+them** (and in `verzio.json`; **D6** and **D6/b** in `tests/doc_checks.py` check this) — otherwise
+browsers may load the old engine under the new page (page/engine version skew: the new HTML runs
+with old JS, with errors that are hard to recognise).
 
-**Vigyázat a CSS-osztálynevekkel:** a `.pos` a *pozitív számok zöld színe*, a poszt-címke
-`.ppos`. Egyszer már ütköztek, és emiatt a GY/V eredmények dobozkaként jelentek meg.
+**Watch the CSS class names:** `.pos` is the *green colour of positive numbers*, the position label
+is `.ppos`. When the two clash, the W/L results show up as little boxes.
 
-**A tartalék könyvjelző módosítása:** szerkeszd a `tartalek/GOMB-forras.js`-t, futtasd a
-mappában a `python3 GOMB-epites.py`-t, majd frissítsd a böngészőben lévő könyvjelzőt az új
-tartalommal. A `GOMB-bookmarklet.txt`-t soha ne szerkeszd kézzel.
+**Changing the fallback bookmarklet:** edit `tartalek/GOMB-forras.js`, run
+`python3 bookmarklet-build.py` in that folder, then update the bookmarklet in the browser with the
+new content. Never edit `GOMB-bookmarklet.txt` by hand (**D18** in `tests/doc_checks.py` checks that
+it is freshly built from the source).
 
 ---
 
-## 7. Tervezett, még nem elkészült
+## 7. Planned, not yet built
 
-- Összesítő oldal a két liga (NB1 + PL) közös követésére — a résztvevők összekötése
-  (`FunTasy.SZEMELYEK` a közös rétegben és a közös monogramok) már megvan
-- Kapitány-hatékonysági toplista
-- „Padon hagyott pontok” toplista
-- Ligán belüli tulajdonlási arányok
-- **Az NB1 következő ellenfelei a profilban.** A PL-oldalon ott a hátralévő fordulók
-  ellenfele, az NB1-en nincs: az MLSZ API-ban nem találtunk jövőbeli menetrendet
-  (~25 végpont-alak, mind 404), pedig a fantasy.mlsz.hu saját játékosoldala mutatja.
-  A következő lépés a frontend-bundle visszafejtése, hogy meglegyen, honnan kéri le.
-- **Az „Ismeretlen játékos" sorok azonosítása** a pontigazítás-panelen (1–3. forduló).
-  A repóból nem visszakereshető; ha valakinek megvan a korabeli képernyőkép, abból igen.
+- A summary page for following the two leagues (NB1 + PL) together — the linking of the
+  participants (`FunTasy.PEOPLE` in the shared layer and the shared monograms) is already there
+- Captain efficiency leaderboard
+- "Points left on the bench" leaderboard
+- Ownership percentages within the league
+- **The NB1 next opponents in the profile.** The PL side has the opponents of the remaining rounds,
+  the NB1 does not: no future schedule has been found in the MLSZ API (~25 endpoint forms, all
+  404), although fantasy.mlsz.hu's own player page shows it. The next step is reverse-engineering
+  the frontend bundle, to find where it fetches it from.
+- **Identifying the „Ismeretlen játékos" (unknown player) rows** on the points adjustment panel
+  (rounds 1–3). They cannot be traced back from the repository; if someone has a screenshot from
+  that time, they can be from that.

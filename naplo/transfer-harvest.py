@@ -3,8 +3,8 @@
 
 WHY: in the NB1 the number of transfers is one of the game's hard limits -
 THREE a week, but UNLIMITED in the winter and the international breaks (from
-the official rules, see the main README, "Amit a hivatalos szabalyzat
-rogzit"). So a squad cannot be rebuilt at any time: a manager who changes
+the official rules, see the main README, "What the official rules
+state"). So a squad cannot be rebuilt at any time: a manager who changes
 eleven players is not keener than the rest, he used a round in which it was
 possible at all. A round's transfer list on its own is therefore misleading -
 without the limit the same number can mean resolve or mere opportunity.

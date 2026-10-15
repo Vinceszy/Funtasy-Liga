@@ -1,28 +1,31 @@
-# A sajat CORS-proxy (Cloudflare Worker) telepitesi leirasa.
+# Deploy description of the site's own CORS proxy (Cloudflare Worker).
 #
-# A Cloudflare a repohoz kotve epiti a workert: minden main-re erkezo push
-# utan lefuttatja az `npx wrangler deploy`-t, ami ezt a fajlt olvassa, es a
-# tartalek/proxy-worker.js-t telepiti. Kezzel soha nem kell kodot masolni -
-# a worker kodja is itt el a repoban, egyutt valtozik az oldallal.
+# Cloudflare builds the worker from this repository: after every push to
+# main it runs `npx wrangler deploy`, which reads this file and deploys
+# tartalek/proxy-worker.js. Code never has to be copied by hand - the
+# worker's code lives in the repository and changes together with the site.
 #
-# Mit csinal a worker es miert kell: lasd tartalek/proxy-worker.js tetejet
-# es a README "Sajat proxy (Cloudflare Worker)" szakaszat.
+# What the worker does and why it is needed: see the top of
+# tartalek/proxy-worker.js and the README paragraph "Own proxy (Cloudflare
+# Worker)".
 
 name = "funtasy-liga"
 main = "tartalek/proxy-worker.js"
 compatibility_date = "2026-08-27"
 workers_dev = true
 
-# ---- "utolso ismert allas" tarolo (Workers KV) ----
-# A Worker megjegyzi a ritkan valtozo valaszokat, es a lap betolteskor
-# egyetlen keresben elkeri oket (/tarolt) - lasd tartalek/proxy-worker.js.
+# ---- "last known standing" store (Workers KV) ----
+# The Worker remembers the rarely changing responses, and the page asks for
+# them in a single request on load (/tarolt) - see tartalek/proxy-worker.js.
 #
-# A kotes NEM titok: a nevter azonositoja onmagaban semmire nem jogosit, a
-# tartalmahoz a fiok kell. Ezert allhat a repoban, ahogy a worker URL-je is.
+# The binding is NOT a secret: the namespace id on its own grants nothing,
+# its content needs the account. So it can stand in the repository, like
+# the worker's URL.
 #
-# Ha a kotes valaha hianyozna (torolt nevter, mas fiok), a Worker pontosan
-# ugy mukodik, mint korabban - a tarolas nema no-op. Ezt a
-# tests/workertarolo.teszt.js kulon meri, hogy ne alljon meg tole semmi.
+# If the binding were ever missing (deleted namespace, other account), the
+# Worker works exactly as without it - storing is a silent no-op.
+# tests/workertarolo.teszt.js measures this separately, so nothing stops
+# because of it.
 [[kv_namespaces]]
 binding = "TAROLT"
 id = "c2289a98dd404344b53d6a6aa7e85e36"

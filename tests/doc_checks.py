@@ -120,9 +120,9 @@ check(not missing, "D2: every data file has a row in the README file table"
       + ("" if not missing else " - MISSING: %s" % ", ".join(missing)))
 
 # ---- D3: the file table does not reference anything missing ----
-# The references in the first column of the rows of the "## 2. Fájlok"
+# The references in the first column of the rows of the "## 2. Files"
 # table. The per-round template paths (keretek/<round>.json) are skipped.
-table = re.search(r"## 2\. Fájlok(.*?)\n## ", readme, re.S)
+table = re.search(r"## 2\. Files(.*?)\n## ", readme, re.S)
 bad = []
 if table:
     for path in re.findall(r"^\| `([^`<]+)` \|", table.group(1), re.M):
@@ -534,7 +534,7 @@ check(not _missing, "D10: every workflow and measurement is documented"
 # with a stale one it is misleading. So the table is NOT manual work: it is
 # rebuilt here from the headings, and if it differs, the test prints the
 # correct text - it can be pasted in.
-_MARKER = "<!-- tartalomjegyzek: a tests/doc_checks.py tartja karban, kezzel ne szerkeszd -->"
+_MARKER = "<!-- table of contents: maintained by tests/doc_checks.py, do not edit by hand -->"
 
 
 def _slug(title):
@@ -561,7 +561,7 @@ def _headings(text):
 
 
 def _toc(text):
-    lines = [_MARKER, "<details>", "<summary><b>Tartalom</b></summary>", ""]
+    lines = [_MARKER, "<details>", "<summary><b>Contents</b></summary>", ""]
     for level, h in _headings(text):
         lines.append("%s- [%s](#%s)" % ("  " * (level - 2), h, _slug(h)))
     return "\n".join(lines + ["", "</details>"])
