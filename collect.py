@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """FunTasy Liga - automatic data collection from the MLSZ Fantasy API.
 
-Collects two things every 3 hours (.github/workflows/archive.yml):
+Collects two things - hourly at :17 UTC from Thursday to Monday (the match
+days), every 3 hours at :17 UTC on Tuesday and Wednesday
+(.github/workflows/archive.yml):
 
 1. H2H RESULTS (results.json) - the official round scores from the rankings
    endpoint. This is the table's only source.
@@ -687,7 +689,8 @@ def set_result(schedule, r, name, value):
 def match_summary(g):
     """The stored form of a match for meccsek.json. A SCORE GOES IN ONLY FOR
     A FINISHED MATCH: during a match the MLSZ may give a partial score, and
-    the collector running every 3 hours would immortalise it as final - the
+    the collector, which runs hourly on match days, would immortalise it as
+    final - the
     same error as the 0-0 in results.json."""
     m = {"id": g.get("id"),
          "h": ((g.get("home_team") or {}).get("short_name")
@@ -1016,8 +1019,9 @@ def update_price_log(roster, today):
     the API gives only the CURRENT price and stores the past nowhere. What
     is not recorded today is lost for good.
 
-    Only a CHANGE is recorded, not every run: the collector runs every 3
-    hours, so the file would grow by eight unchanged entries a day. A
+    Only a CHANGE is recorded, not every run: the collector runs hourly on
+    match days (every 3 hours on Tuesday and Wednesday), so the file would
+    grow by up to 24 unchanged entries a day. A
     player's row is therefore [[date, price], ...], and a new element is
     added only if the price differs from the last recorded one.
 

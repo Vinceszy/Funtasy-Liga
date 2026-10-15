@@ -1,9 +1,9 @@
 ---
 name: FPL Draft frissitese
 
-# Runs every 3 hours and hourly in the morning, always at a minute offset from
-# archive.yml (two collectors pushing at once race on main), and can be
-# started by hand. The endpoints work from a server.
+# Runs every 3 hours (at :47) and also hourly between 07:00 and 13:00 UTC (at
+# :37), always at a minute offset from archive.yml (two collectors pushing at
+# once race on main), and can be started by hand. The endpoints work from a server.
 #
 # Why the morning is dense: a round's close (current_event_finished) is only
 # seen by a run, and the FPL closes a round the morning after its last match

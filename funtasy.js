@@ -1469,12 +1469,13 @@
 
   /* ===== THE CURRENT ROUND'S SQUADS, UNTIL THE COLLECTOR HAS WRITTEN THEM =====
      The failure this prevents (PL round 5): during a live match the page
-     did not update. The collector runs every 3 hours, but the round starts
-     at the entry deadline: the 16:43 UTC run STILL saw round 4 (the log said
-     "fordulonkenti keret: GW4"), the next one was due at 23:47. Meanwhile
-     round 5 started, and the repository had NO squads for it at all. The
-     page went to the API and got the live points - it just had nobody to
-     apply them to, so instead of a live score the status bar said
+     did not update. The collectors run at best hourly (NB1 on match days,
+     PL between 07:00 and 13:00 UTC) and every 3 hours otherwise, but the
+     round starts at the entry deadline: the 16:43 UTC run STILL saw round 4
+     (the log said "fordulonkenti keret: GW4"), the next one was due at
+     23:47. Meanwhile round 5 started, and the repository had NO squads for
+     it at all. The page went to the API and got the live points - it just
+     had nobody to apply them to, so instead of a live score the status bar said
      "Naprakész" (up to date) during a running match.
 
      The backfill is the browser's job: it fetches the missing squads ONCE
@@ -1985,9 +1986,10 @@
   /* ===== THE LAST KNOWN SCORE =====
      The requirement: "if someone has already fetched it, let me see that -
      let me not see data older than the latest fetch". The page's first
-     picture used to come from the repository, which the collector updates
-     every 3 hours; if your phone had fetched the fresh score ten minutes
-     earlier, the computer still showed the old one, and you also had to
+     picture used to come from the repository, which the collectors update
+     at best hourly (NB1 on match days, PL between 07:00 and 13:00 UTC) and
+     every 3 hours otherwise; if your phone had fetched the fresh score ten
+     minutes earlier, the computer still showed the old one, and you also had to
      wait for the fetches to run again.
 
      A cache CANNOT solve this: it expires and discards, so whoever arrives
@@ -2034,7 +2036,7 @@
         cfg.innerStamp + '=' + Date.now() : u;
     };
     /* The route order is MEASURED reliability, not taste
-       (naplo/proxy-meres.txt): on one day corsproxy.io switched to 401 (it
+       (naplo/proxy-probe.txt): on one day corsproxy.io switched to 401 (it
        was tied to registration) and allorigins was overloaded - and since
        every live fetch depended on those two, the live part of BOTH leagues
        died at once. The lesson is built in: several independent routes, and

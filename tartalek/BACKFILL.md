@@ -1,43 +1,46 @@
-# Visszamenőleges keret-gyűjtés — **ELAVULT, nincs rá szükség**
+# Retroactive squad collection — **OBSOLETE, not needed**
 
-Ez a fájl korábban egy kézi konzolszkriptet tartalmazott, amivel a régebbi fordulók
-kereteit lehetett pótolni: bemásolod a böngésző konzoljába, kimásolod a JSON-t, és
-kézzel beilleszted a `squad_history.json`-ba.
+This file used to hold a manual console script for filling in the squads of earlier
+rounds: you pasted it into the browser console, copied out the JSON, and pasted it into
+`squad_history.json` by hand.
 
-**Ez a folyamat megszűnt.** A régi szkriptet azért távolítottuk el, mert mostanra nem
-csak fölösleges, hanem működésképtelen is — és félrevezető lett volna bent hagyni.
+**That process no longer exists.** The old script has been removed because it is not
+only unnecessary but also broken — and leaving it in would have been misleading.
 
-## Miért nem kell többé
+## Why it is not needed any more
 
-Kiderült, hogy a keret-végpont fogad egy `filter[round_id]` paramétert, és hogy
+The squad endpoint accepts a `filter[round_id]` parameter, and
 
 ```
-round_id = 75 + 2 × fordulószám        (1.→77, 2.→79, 3.→81, 4.→83, 5.→85)
+round_id = 75 + 2 × round number      (1.→77, 2.→79, 3.→81, 4.→83, 5.→85)
 ```
 
-Ezzel a **korábbi fordulók kerete is pontosan lekérhető**, nem csak az aktuális — épp
-az a korlát szűnt meg, ami miatt ez a fájl készült.
+With it **the squads of earlier rounds can be fetched
+exactly too**, not only the current one — which removes the very limitation this file
+was made for.
 
-A pótlást ma már a `collect.py` végzi el magától, szerveroldalon: minden futásnál
-megnézi, mely fordulók hiányoznak a `squad_history.json`-ból, és lekéri őket. A
-kimaradt **eredmények** is pótolhatók (a ranglista-végpont is fogad `filter[round_id]`-t).
-Tartaléknak megmaradt a könyvjelző is: [`KERET-MENTES.md`](KERET-MENTES.md).
+The backfill is done by `collect.py` on its own, server-side: on every run it checks
+which rounds are missing from `squad_history.json`, and fetches them. Missed
+**results** can be backfilled too (the rankings endpoint also accepts
+`filter[round_id]`). The bookmarklet also remains as a fallback:
+[`KERET-MENTES.md`](KERET-MENTES.md).
 
-## Miért nem működne a régi szkript
+## Why the old script would not work
 
-Ha valaki egy régi másolatból mégis elővenné, három okból sem adna használható adatot:
+If someone dug it out of an old copy, it would not give usable data, for three reasons:
 
-1. **Nem küldött `filter[round_id]`-t** — a végpont enélkül ma **403 Forbidden**-nel
-   válaszol. (Korábban enélkül is ment, menet közben szigorítottak rajta.)
-2. **Rossz helyről olvasta a nevet.** A `competition_player.player` beágyazott objektumot
-   kérte, pedig a név közvetlenül a `competition_player`-ben van (`first_name` /
-   `last_name`).
-3. **Hiányos rekordokat gyártott:** nem gyűjtött `pos`, `u21`, `hun` és `price` mezőt,
-   amiket az oldal „Aktuális keret” és „Szezon játékosai” füle használ. A vele mentett
-   fordulók poszt- és magyarszabály-információ nélkül maradtak volna.
+1. **It did not send `filter[round_id]`** — without it the endpoint answers
+   **403 Forbidden**.
+2. **It read the name from the wrong place.** It asked for the nested
+   `competition_player.player` object, while the name is directly in
+   `competition_player` (`first_name` / `last_name`).
+3. **It produced incomplete records:** it did not collect the `pos`, `u21`, `hun` and
+   `price` fields, which the page's „Aktuális keret" (Current squad) and „Szezon
+   játékosai" (Players of the season) tabs use. The rounds saved with it would have
+   been left without position and Hungarian-rule information.
 
-## Ha valaha mégis kézzel kell
+## If it ever has to be done by hand after all
 
-A működő, bizonyítottan jó lekérési logika olvasható formában itt van:
-[`GOMB-forras.js`](GOMB-forras.js) — abból kimásolható a `fetch`-hívás a helyes
-`include` listával és `round_id` számítással.
+The working, proven fetch logic is here in readable form:
+[`GOMB-forras.js`](GOMB-forras.js) — the `fetch` call with the correct `include` list
+and `round_id` calculation can be copied from it.

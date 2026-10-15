@@ -185,8 +185,8 @@ def main():
 
     # The claims of the column's first description, measured as density,
     # because they are proportions, not devices. A number says nothing without
-    # a baseline, so the LEFT-OUT pages (the publisher's own podcast trailers)
-    # get the same - that is the neutral journalistic average.
+    # a baseline, so every OTHER page of the corpus gets the same - mostly
+    # the publisher's own podcast trailers, plus the class registers.
     print("\n  CLAIMS OF THE FIRST DESCRIPTION - DENSITY (marks / 1000 characters)")
     print("    %-42s %8s %8s" % ("", "Kele", "control"))
     kele = " ".join(" ".join(body(u)) for u in own)
@@ -212,7 +212,9 @@ def main():
               "(%d sentences)" % ("", b, bn))
         print("    %-9s difference: %+.1f percentage points" % ("", a - b))
 
-    print("\n    The control is the publisher's OWN podcast trailers about the same column.")
+    print("\n    The control is every other downloaded page (%d), mostly the publisher's"
+          % len(others))
+    print("    OWN podcast trailers about the same column, plus the class registers.")
     print("    It is not a neutral measure: a trailer's job is to hype, so it is")
     print("    rich in superlatives and emotion words to begin with. What the number")
     print("    shows for certain: the author is NOT the more grandiloquent of the two.")

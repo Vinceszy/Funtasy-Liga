@@ -258,11 +258,10 @@ it.
 
 ## Where the corpus is, and what in here is measured
 
-Twenty-one texts of his own under `tartalek/kele/`: eighteen fetched by
-`kele-voice-probe.py` (the byline decides which pages are kept - the author
-page also lists the publisher's latest news, and an earlier run came back
-full of weather forecasts while reporting success) plus three supplied by
-hand. Templates are excluded: the publisher's podcast trailers, which he did
+Eighteen texts of his own under `tartalek/kele/`: fifteen fetched by
+`kele-voice-probe.py` (the byline decides which pages are kept, because the
+author page also lists the publisher's latest news) plus three Substack
+essays supplied by hand. Templates are excluded: the publisher's podcast trailers, which he did
 not write, and the player-by-player match grading.
 
 `kele-voice-analysis.py` counts a device across those pieces. Two things recur:

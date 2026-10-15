@@ -554,7 +554,7 @@ function playersHTML(id){
 
 // The `detail` field reads "BHA (A) 4-0" - the OPPONENT, the venue of the
 // PLAYER's team, and the score in HOME-AWAY order. The last part was
-// MEASURED (naplo/fpl-profil.txt): of 25 away matches that were not draws,
+// MEASURED (naplo/fpl-profile.txt): of 25 away matches that were not draws,
 // all 25 confirmed the home-away reading, none the "player's team first"
 // reading. Chosen wrongly, every away result would have been reversed.
 const DETAIL = /^\s*(\S+)\s*\((H|A)\)\s*(\d+)\s*[-–]\s*(\d+)\s*$/;
@@ -823,7 +823,8 @@ function showMatch(h, v, r, mode){
   $('mTabs').innerHTML = '';
   let H = (SQUADS_AT(r) || {})[h], V = (SQUADS_AT(r) || {})[v];
   // for the current round the minute-fresh values are shown instead of the
-  // repository's (refreshed every 3 hours) points, once the live fetch has arrived
+  // repository's points (refreshed every 3 hours, and hourly between 07:00 and
+  // 13:00 UTC - see draft.yml), once the live fetch has arrived
   if (r === LIVEGW && Object.keys(LIVEPTS).length){
     const fresh = x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts });
     if (H) H = H.map(fresh);
@@ -908,7 +909,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
 // points have to be fetched (event/{gw}/live), and every match score can be
 // summed from them.
 // The live score does NOT count in the table. If the fetch fails, the stored
-// data (refreshed every 3 hours) stays, with an error flag.
+// data (refreshed at least every 3 hours) stays, with an error flag.
 // A timestamp on every layer, otherwise the response comes from a shared
 // cache: on iPhone, however many times the page was reloaded, the same
 // player points came back (while another device already had the fresh
@@ -1269,7 +1270,8 @@ function updateLiveScores(gw){
   return true;
 }
 // BACKFILLING THE CURRENT ROUND'S SQUADS. The collector runs every 3
-// hours, but the round starts at the entry deadline - between the two
+// hours (hourly only between 07:00 and 13:00 UTC), but the round starts at
+// the entry deadline - between the two
 // times the repository has no squads for this round, and the page cannot
 // compute a live score (the failure this prevents: during a live match the
 // page did not update). Then the browser fetches them itself; the shared
@@ -1349,8 +1351,9 @@ async function liveRefresh(){
     LIVE_CLOCK.stop();                       // not a single request goes out between rounds
     // "Naprakész" (up to date) is only true when the CLOSED round's result is
     // already in the stored data. The FPL closes the round at the lockdown
-    // (measured: between 08:03-08:23 UTC), but our collector runs every 3
-    // hours - between the two times the table is still the state before the
+    // (measured: between 08:03-08:23 UTC), but our collector runs only hourly
+    // in the morning (:37, 07:00-13:00 UTC) and every 3 hours otherwise -
+    // between the two times the table is still the state before the
     // closing. Without this check that gap would also say "Naprakész ·
     // ellenőrizve <now>", although the time shown would be that of the FETCH,
     // not of the data.
@@ -1393,8 +1396,8 @@ async function liveRefresh(){
 
 // ---------- loading ----------
 // The league data is collected server-side by collect_draft.py every 3
-// hours; missing squad files are not an error (they do not exist before
-// the season starts).
+// hours, and hourly between 07:00 and 13:00 UTC (draft.yml); missing squad
+// files are not an error (they do not exist before the season starts).
 const optional = u => fetch(u + '?t=' + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null);
 // The closing changes are not on the home page's critical path: they load
 // separately and do not hold up the table. With an empty or missing file

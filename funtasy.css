@@ -66,7 +66,8 @@ tr.placeholder .nv{display:inline-block;width:9em;border-radius:3px;background:v
 tr.placeholder .mgr,tr.placeholder .dot{background:none;border-color:transparent}
 #status.err{color:var(--lose)}#status.ok{color:var(--win)}
 /* Not an error, but not up to date either: the round has closed, but the
-   result is not in the stored data yet (the collector runs every 3 hours). */
+   result is not in the stored data yet (no collector run since the close:
+   they run at best hourly, every 3 hours at other times). */
 #status.varakozik{color:var(--amber)}
 .grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:22px}
 .grid>*{min-width:0}

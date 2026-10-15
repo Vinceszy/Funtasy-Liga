@@ -551,7 +551,8 @@ def main():
     # Measured (naplo/fpl-subs.txt): this happens at "lockdown", together
     # with the rest, between 08:03 and 08:23 UTC; its signal is the game
     # endpoint's "current_event_finished" field.
-    # The collector runs every 3 hours, so if current_event moved on before
+    # The collector runs every 3 hours (hourly only between 07:00 and 13:00
+    # UTC, see draft.yml), so if current_event moved on before
     # the round had been fetched once more after the close, the squad would
     # freeze FOR GOOD in its pre-substitution state (wrong "b" flag, wrong
     # "Kezdok" (starters) total). A run landing shortly after the close is

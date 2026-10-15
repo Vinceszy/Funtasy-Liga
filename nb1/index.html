@@ -143,10 +143,11 @@ const ROUNDS = Object.keys(SCHEDULE).map(Number).sort((a,b)=>a-b);
 const LAST_ROUND = ROUNDS[ROUNDS.length-1];
 
 // The live results of the round in progress. Filled from two sources:
-// the "provisional" round of results.json (the collector writes it every
-// 3 hours) and the browser's live fetch (minute-fresh). It does NOT count
-// in the table or the matrix - only closed rounds go there. On the match
-// panel it shows, marked "élő" (live).
+// the "provisional" round of results.json (the collector writes it hourly
+// on match days, every 3 hours on Tuesday and Wednesday) and the browser's
+// live fetch (minute-fresh). It does NOT count in the table or the matrix -
+// only closed rounds go there. On the match panel it shows, marked "élő"
+// (live).
 const LIVE = {};
 // the same by name: the round list and the match page take the live score
 // from here (there the position in the schedule is not at hand)
@@ -303,7 +304,8 @@ function applyLive(got){
 //
 // The requirement: "if someone has already fetched it, let me see that".
 // The page's first picture would otherwise come from the repository, which
-// the collector updates every 3 hours - so if your phone had fetched the
+// the collector updates hourly on match days (Thursday-Monday) and every 3
+// hours on Tuesday and Wednesday - so if your phone had fetched the
 // fresh score ten minutes earlier, the computer still showed the old one,
 // and you also had to wait for the eight fetches to run again. The Worker
 // remembers what it fetched itself (tartalek/proxy-worker.js), and returns
@@ -350,7 +352,7 @@ async function refresh(){
     // route works (the "proven" route of FunTasy.makeFetcher), and the rest
     // start with that one. If all eight started at once, on a bad day all
     // eight would try the whole route list - there has been such a day
-    // (naplo/proxy-meres.txt: two proxies failed at the same time).
+    // (naplo/proxy-probe.txt: two proxies failed at the same time).
     if (await fetchOne(memberList[0], `(1/${n}) ${memberList[0][0]}`)) ok++;
     // THE REST GO AT ONCE. One after the other, waiting for each, that would
     // be eight round trips in a row, every minute, for data that changes 2-4
@@ -705,7 +707,7 @@ function closingInit(){
 // halving; the profile, however, needs the player's OWN points, whoever
 // had them. They are recomputed - but for the BENCH the API ROUNDS to two
 // decimals after halving (0.75 -> 0.38), so plain doubling is off by 0.01.
-// MEASURED (naplo/mlsz-jatekoslista.txt, round 4): a player's base points
+// MEASURED (naplo/mlsz-player-list.txt, round 4): a player's base points
 // are ALWAYS a multiple of 0.25 - over 238 compared rounds without a
 // single exception, and the 16 differences were all bench cases, all
 // exactly 0.01. So rounding to the nearest quarter gives back the original
@@ -983,11 +985,11 @@ const showH2H = FunTasy.h2hViewer({
 });
 
 // A click on a live match brings the two squads, with points per player.
-// Freshness in two steps: at once the stored squad (at most 3 hours old)
-// from squad_history, while in the background the two squads are fetched
-// minute-fresh from the squad endpoint (through the proxy, like every live
-// fetch), and swapped in when they arrive. weekly_points is a finished
-// value here too - no multiplying again.
+// Freshness in two steps: at once the stored squad (as old as the last
+// collector run) from squad_history, while in the background the two
+// squads are fetched minute-fresh from the squad endpoint (through the
+// proxy, like every live fetch), and swapped in when they arrive.
+// weekly_points is a finished value here too - no multiplying again.
 // For a LIVE round current_round is only returned with an explicit include
 // (for a closed one it would come anyway) - it gives is_played, that is
 // the "has played yet?" flag (the "played" field: a dash instead of 0 when shown).
@@ -1612,8 +1614,9 @@ async function boot(){
   // they arrive, they fill in the current round's score - see fillFromSquads.
   loadSquadFile().then(fillFromSquads).catch(()=>{});
   // First the LAST KNOWN score (one round trip), so you do not stare at the
-  // repository data refreshed every 3 hours while the eight live fetches
-  // run. It does not hold up the live route: that starts right after it.
+  // repository data (collected hourly on match days, every 3 hours otherwise)
+  // while the eight live fetches run. It does not hold up the live route:
+  // that starts right after it.
   loadStoredScores().catch(()=>false);
   refresh();
   // On mobile, returning to the page does not reload it, so after the

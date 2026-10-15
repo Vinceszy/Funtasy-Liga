@@ -1,7 +1,7 @@
 /* FunTasy's own CORS proxy - a Cloudflare Worker.
 
    WHY IT EXISTS: the browser cannot reach the MLSZ/FPL API directly
-   (their responses carry no CORS header - measured: naplo/proxy-meres.txt),
+   (their responses carry no CORS header - measured: naplo/proxy-probe.txt),
    so every live fetch goes through an intermediary. The two free proxies
    once failed at the same time (quota/overload) - the live part of both
    leagues stopped. Our own Worker runs under our own account, nobody
@@ -29,7 +29,8 @@
    LAST KNOWN SCORE (the `TAROLT` KV binding): a cache is not enough for
    what the page needs. A cache EXPIRES and discards; arriving after the
    expiry, you have to wait for the full fetch again - and meanwhile you
-   see the repository data, refreshed every 3 hours. The WANTED BEHAVIOUR,
+   see the repository data, refreshed by the collectors at best hourly and
+   every 3 hours at other times. The WANTED BEHAVIOUR,
    however, is "let me not see anything older than what anybody fetched
    last".
 

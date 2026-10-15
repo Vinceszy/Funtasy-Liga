@@ -1,74 +1,84 @@
-# Keret-mentés egy kattintással — TARTALÉK MEGOLDÁS
+# Saving the squads with one click — FALLBACK
 
-**Erre normál esetben nincs szükség.** 2026-08-20 óta a kereteket is a GitHub Actions
-gyűjti automatikusan, 3 óránként (kiderült, hogy a végpont szerverről is működik — a
-korábbi 403-akat nem IP-tiltás, hanem a hiányzó `filter[round_id]` paraméter okozta).
+**Normally this is not needed.** The squads are collected automatically by GitHub
+Actions too (`collect.py`, `.github/workflows/archive.yml`): hourly at :17 UTC from
+Thursday to Monday (the match days), every 3 hours at :17 UTC on Tuesday and
+Wednesday. The squad endpoint works from a server as well — a 403 from it is caused
+not by an IP block but by a missing `filter[round_id]` parameter.
 
-Ez a könyvjelző akkor kell, ha a szerveroldali gyűjtés elromlana (pl. az MLSZ tényleg
-letiltaná az adatközponti IP-ket): a fantasy.mlsz.hu-n futtatva lekéri mind a 8 keretet,
-és egyenesen a repóba menti.
+This bookmarklet is needed if the server-side collection breaks (e.g. the MLSZ really
+blocks data-centre IPs): run on fantasy.mlsz.hu, it fetches all 8 squads and saves them
+straight into the repository.
 
-*Apró különbségek a szerveres gyűjtéshez képest: a könyvjelző nem írja a `squads.json`
-`round` mezőjét (az oldal „Aktuális keret" fülén a felirat forduló-szám nélkül jelenik
-meg), és a játékos-rekordokból hiányzik az `id`, a `played`, a `start` és a `nogame`
-mező (a pont-bontás accordionhoz, a „még nem játszott" kötőjelhez és a meccs-állapot
-üzeneteihez). Működésbeli hibát egyik sem okoz — az oldal e mezők nélkül is működik, a
-bontást név alapján oldja fel —, és a **következő szerveres futás pótolja őket**: a
-gyűjtő külön keresi az olyan fordulót, amelynek a rekordjaiban nincs `played`, és azt
-újra lekéri, a meccslistával együtt.*
+*Small differences from the server-side collection: the bookmarklet does not write the
+`round` field of `squads.json` (the label on the page's „Aktuális keret" (Current squad)
+tab then appears without a round number), and the player records lack the `id`,
+`played`, `start` and `nogame` fields (used by the points-breakdown accordion, the „még
+nem játszott" (not played yet) dash and the match-status messages). None of this breaks
+anything — the page works without these fields and resolves the breakdown by name —,
+and the **next server-side run fills them in**: the collector looks specifically for
+a round whose records have no `played`, and fetches it again, together with the match
+list.*
 
 ---
 
-## 1. Token létrehozása (egyszeri, 2 perc)
+## 1. Creating the token (once, 2 minutes)
 
-1. GitHub → jobb felül a profilkép → **Settings**
-2. Legalul: **Developer settings** → **Personal access tokens** → **Fine-grained tokens**
+1. GitHub → profile picture top right → **Settings**
+2. At the bottom: **Developer settings** → **Personal access tokens** → **Fine-grained tokens**
 3. **Generate new token**
    - **Token name:** `funtasy-keret`
-   - **Expiration:** válaszd a szezon végén túli dátumot (pl. 1 év)
+   - **Expiration:** pick a date beyond the end of the season (e.g. 1 year)
    - **Repository access:** *Only select repositories* → **Funtasy-Liga**
-   - **Permissions → Repository permissions → Contents:** állítsd **Read and write**-ra
-     *(minden más maradjon "No access")*
-4. **Generate token** → másold ki a `github_pat_...` kezdetű értéket
+   - **Permissions → Repository permissions → Contents:** set it to **Read and write**
+     *(everything else stays "No access")*
+4. **Generate token** → copy the value starting with `github_pat_...`
 
-> Ez a token **csak ehhez az egy repóhoz** ad jogot, és csak fájlírásra.
-> Bármikor visszavonható ugyanitt.
+> This token grants rights **only to this one repository**, and only for writing files.
+> It can be revoked at any time in the same place.
 
-## 2. Könyvjelző létrehozása
+## 2. Creating the bookmark
 
-1. Nyisd meg a `GOMB-bookmarklet.txt` fájlt, másold ki a **teljes tartalmát**
-2. A másolt szövegben cseréld ki az `IDE_A_TOKEN` részt a saját tokenedre
-   *(a szöveg elején van, `TOKEN%3D%27IDE_A_TOKEN%27` formában — csak az aposztrófok közötti
-   nagybetűs részt írd át, magukat az aposztrófokat ne)*
-3. Böngészőben: **Ctrl+Shift+O** (könyvjelzőkezelő) → jobb klikk → **Új könyvjelző**
-   - **Név:** `Keret mentés`
-   - **URL:** ide illeszd be a módosított szöveget
-4. Húzd a könyvjelzősávra, hogy kéznél legyen
+1. Open the `GOMB-bookmarklet.txt` file and copy its **entire content**
+2. In the copied text, replace the `IDE_A_TOKEN` part with your own token
+   *(it is near the start, in the form `TOKEN%3D%27IDE_A_TOKEN%27` — rewrite only the
+   upper-case part between the apostrophes, not the apostrophes themselves)*
+3. In the browser: **Ctrl+Shift+O** (bookmark manager) → right click → **New bookmark**
+   - **Name:** `Keret mentés`
+   - **URL:** paste the modified text here
+4. Drag it onto the bookmarks bar so it is at hand
 
-## 3. Használat (amikor tartalékként kell, ~10 másodperc)
+## 3. Use (when it is needed as a fallback, ~10 seconds)
 
-1. Menj a **https://fantasy.mlsz.hu/** oldalra (elég betöltve lennie, bejelentkezve)
-2. Kattints a **Keret mentés** könyvjelzőre
-3. Jobb alul megjelenik a folyamat. A szkript **magától megállapítja**, mely fordulók
-   hiányoznak a `squad_history.json`-ból, és csak azokat kéri le — nem kérdez semmit
-4. Kész: a repóban frissül a `squad_history.json` és a `squads.json`
+1. Go to **https://fantasy.mlsz.hu/** (it is enough for it to be loaded, logged in)
+2. Click the **Keret mentés** bookmark
+3. The progress appears bottom right. The script **works out by itself** which rounds
+   are missing from `squad_history.json`, and fetches only those — it asks nothing
+4. Done: `squad_history.json` and `squads.json` are updated in the repository
 
-Ha már minden forduló megvan, ezt írja ki: *„Minden forduló naprakész (1–N).”* — ilyenkor
-nem nyúl a repóhoz.
+If every round is already there, it prints: *„Minden forduló naprakész (1–N).”*
+(every round up to date) — and then it does not touch the repository.
 
-**Mikor futtasd?** A forduló lezárása után. Nem kell kapkodni: a keret fordulónként
-visszamenőleg is lekérhető, tehát egy kihagyott hét később is pótolható.
+**When to run it?** After the round has closed. There is no hurry: the squad can be
+fetched round by round retroactively too, so a missed week can be filled in later.
 
-**Visszamenőleges pótlás:** automatikus. A keret-végpont fogad egy `filter[round_id]`
-paramétert (`round_id = 75 + 2 × fordulószám`), így a korábbi fordulók kerete is
-pontosan lekérhető, nem csak a mostani. Ha több hetet hagysz ki, a következő kattintás
-egyszerre pótolja mindet.
+**Retroactive backfill:** automatic. The squad endpoint accepts a `filter[round_id]`
+parameter (`round_id = 75 + 2 × round number`), so the squads of earlier rounds can be
+fetched exactly too, not only the current one. If you miss several weeks, the next
+click fills in all of them at once.
 
-## Hibák
+## Errors
 
-- *"Ezt a fantasy.mlsz.hu oldalon kell futtatni!"* → nem a jó oldalon vagy
-- *401/403 a mentésnél* → a token lejárt vagy nincs Contents: write joga
-- *Nem találom: <név>* → változott egy fantasy-felhasználónév. A névsor HÁROM helyen él,
-  mindet át kell írni: `collect.py` (`MEMBERS` — ez az elsődleges, a gyűjtés ezen áll),
-  `nb1/index.html` (`MEMBERS`), és a könyvjelző (`M` konstans, majd újraépítés + csere a
-  böngészőben)
+- *„Ezt a fantasy.mlsz.hu oldalon kell futtatni!”* (this has to run on fantasy.mlsz.hu)
+  → you are not on the right page
+- *401/403 when saving* (`Hiba: squad_history.json: HTTP 401`) → the token has expired
+  or has no Contents: write permission
+- *A fantasy username has changed* → the bookmarklet gives NO error for this: it looks
+  each manager up with the rankings search, and if no row has exactly that username it
+  takes the first hit of the search — so another user's squad may be saved under the
+  manager's name —, and if the search finds nothing, that manager is skipped without a
+  word. The roster lives in THREE places, all of them have to be updated: `collect.py`
+  (`MEMBERS` — this is the primary one, the collection depends on it),
+  `nb1/index.html` (`MEMBERS`), and the bookmarklet (the `M` constant in
+  `GOMB-forras.js`, then rebuild with `bookmarklet-build.py` and replace the bookmark
+  in the browser)
