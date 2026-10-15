@@ -1,24 +1,27 @@
 /* ==========================================================================
-   GOMB-forras.js — a TARTALÉK keret-mentő könyvjelző OLVASHATÓ forráskódja
+   bookmarklet-source.js - the READABLE source of the FALLBACK squad-saving
+   bookmarklet
    ==========================================================================
 
-   Ez a fájl NEM fut sehol. A böngészőbe a GOMB-bookmarklet.txt tartalmát
-   kell beilleszteni; ez itt ugyanannak a kódnak az emberi szemnek szánt
-   változata, hogy módosítani ne a százalékjelekkel kódolt egysoros
-   változatot kelljen.
+   This file does not run anywhere. What goes into the browser is the
+   content of bookmarklet.txt; this is the same code in a form meant for
+   human eyes, so that changes are not made in the percent-encoded one-line
+   version.
 
-   HA MÓDOSÍTANI KELL:
-     1. ezt a fájlt szerkeszd
-     2. futtasd:  python3 bookmarklet-build.py
-     3. a szkript újragenerálja a GOMB-bookmarklet.txt-t
-     4. a böngészőben lévő könyvjelzőt kézzel kell frissíteni az új
-        tartalommal (a bookmarklet a böngésző saját másolatából fut)
+   TO CHANGE IT:
+     1. edit this file
+     2. run:  python3 bookmarklet-build.py
+     3. the script regenerates bookmarklet.txt
+     4. the bookmark in the browser has to be updated by hand with the new
+        content (the bookmarklet runs from the browser's own copy)
 
-   A token itt is helyőrző (IDE_A_TOKEN). Valódi tokent SOHA ne
-   commitolj ebbe a fájlba.
+   The token is a placeholder here too (IDE_A_TOKEN). NEVER commit a real
+   token into this file.
 
-   2026-08-20 óta a kereteket a GitHub Actions gyűjti (collect.py) — ez a
-   könyvjelző csak tartalék arra az esetre, ha a szerveroldali út elromlana.
+   The squads are collected by GitHub Actions (collect.py) - this bookmarklet
+   is only a fallback in case the server-side route breaks.
+   The texts it shows are Hungarian on purpose: it runs in the browser of
+   the league's members.
    ========================================================================== */
 
 // ==BOOKMARKLET-START==

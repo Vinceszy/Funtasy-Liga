@@ -552,7 +552,7 @@ button.
 | `.github/workflows/draft.yml` | Workflow running `collect_draft.py` + commit: **every 3 hours at :47, plus hourly at :37 between 07:00 and 13:00 UTC** (and it can be started by hand) — see *The FPL Draft data*. |
 | `.github/workflows/naplo-meres.yml` | **Manual probe runner**: runs one `naplo/*.py` from Actions (the development environment's network blocks every external source), and commits what the probe wrote to the given branch. Its inputs: `script`, `branch`, `environment` (one `NAME=value` per line, e.g. `HARVEST_EVENT=5`). **This one workflow serves every probe** — no separate file is made per probe: that approach produced fourteen near-identical copies, three of them with a mistyped `git add` path, which silently lost the probe's result. |
 | `wrangler.toml` | The deploy config of the site's own Cloudflare Worker (`tartalek/proxy-worker.js`): Cloudflare runs `npx wrangler deploy` after every push to `main`, which reads this file. It also holds the binding of the Workers KV namespace (`TAROLT`) for the stored responses; the namespace id is not a secret (see "The last known score"). |
-| `tartalek/` | Not a spare-parts drawer only. **`tartalek/proxy-worker.js` is the LIVE Cloudflare Worker**: the site's own CORS proxy (the first route of every live fetch), the store of stored responses (`/tarolt`) and the ratings endpoint (`POST /ertekeles`, `GET /ertekelesek`) — deployed from `wrangler.toml`. `tartalek/kele/` holds the voice corpus of the model writer of the weekly column (the author's own football texts, saved by `naplo/kele-voice-probe.py`). The rest is the fallback: the bookmarklet (`GOMB-bookmarklet.txt`, its source `GOMB-forras.js` and its builder `bookmarklet-build.py`), its guide (`KERET-MENTES.md`) and the description of the obsolete manual backfill (`BACKFILL.md`). The website and the collectors read no data from here. |
+| `tartalek/` | Not a spare-parts drawer only. **`tartalek/proxy-worker.js` is the LIVE Cloudflare Worker**: the site's own CORS proxy (the first route of every live fetch), the store of stored responses (`/tarolt`) and the ratings endpoint (`POST /ertekeles`, `GET /ertekelesek`) — deployed from `wrangler.toml`. `tartalek/kele/` holds the voice corpus of the model writer of the weekly column (the author's own football texts, saved by `naplo/kele-voice-probe.py`). The rest is the fallback: the bookmarklet (`bookmarklet.txt`, its source `bookmarklet-source.js` and its builder `bookmarklet-build.py`), its guide (`SQUAD-SAVE.md`) and the description of the obsolete manual backfill (`BACKFILL.md`). The website and the collectors read no data from here. |
 | `tests/` | The test suite: Python collector tests, browser tests and the documentation checks (`tests/doc_checks.py`), run together by `tests/run_all.sh` — see `tests/README.md` and section 5/b. |
 
 ---
@@ -886,7 +886,7 @@ things.
 
 If server-side collection broke (e.g. the MLSZ really blocked data-centre IPs), the squads can
 be saved from your browser with the `Keret mentés` (Save squad) bookmarklet — its setup:
-[`tartalek/KERET-MENTES.md`](tartalek/KERET-MENTES.md). The bookmarklet uses a fine-grained
+[`tartalek/SQUAD-SAVE.md`](tartalek/SQUAD-SAVE.md). The bookmarklet uses a fine-grained
 token (only for this repository, only `Contents: Read and write`); in the repository the token
 is always a placeholder.
 
@@ -1823,7 +1823,7 @@ the stored, the mixed and the live form.
   (`"AVL (H) 4-0"`) brings the opponent with it.
 
 - **The bookmarklet (fallback) runs from your browser's copy**, not from the repository. If
-  `tartalek/GOMB-bookmarklet.txt` changes, the bookmarklet in the browser has to be updated
+  `tartalek/bookmarklet.txt` changes, the bookmarklet in the browser has to be updated
   by hand.
 - **On the PL, in the first hours of a GW**, until the collector first stores the round's
   squads, the live match score comes from squads the browser backfills (see "The gap between
@@ -2533,9 +2533,9 @@ with old JS, with errors that are hard to recognise).
 **Watch the CSS class names:** `.pos` is the *green colour of positive numbers*, the position label
 is `.ppos`. When the two clash, the W/L results show up as little boxes.
 
-**Changing the fallback bookmarklet:** edit `tartalek/GOMB-forras.js`, run
+**Changing the fallback bookmarklet:** edit `tartalek/bookmarklet-source.js`, run
 `python3 bookmarklet-build.py` in that folder, then update the bookmarklet in the browser with the
-new content. Never edit `GOMB-bookmarklet.txt` by hand (**D18** in `tests/doc_checks.py` checks that
+new content. Never edit `bookmarklet.txt` by hand (**D18** in `tests/doc_checks.py` checks that
 it is freshly built from the source).
 
 ---

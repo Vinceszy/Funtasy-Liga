@@ -10,7 +10,7 @@ days), every 3 hours at :17 UTC on Tuesday and Wednesday
 2. SQUADS (squads.json, squad_history.json) - from the squad endpoint, in a
    format compatible with the browser bookmarklet; the one addition is the
    "round" field of squads.json (which round the squads belong to). The
-   bookmarklet is only a fallback now, see tartalek/KERET-MENTES.md.
+   bookmarklet is only a fallback now, see tartalek/SQUAD-SAVE.md.
 
 THE SQUAD ENDPOINT works from anywhere, without logging in, as long as the
 request carries the filter[round_id] parameter. Without that parameter it

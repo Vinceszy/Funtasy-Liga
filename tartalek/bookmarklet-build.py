@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""GOMB-forras.js  ->  GOMB-bookmarklet.txt
+"""bookmarklet-source.js  ->  bookmarklet.txt
 
-The bookmarklet's source code is edited in GOMB-forras.js, and then this
+The bookmarklet's source code is edited in bookmarklet-source.js, and then this
 script is run. It joins the lines, percent-encodes them, and writes the
 one-line version that can be pasted into the browser.
 
@@ -12,7 +12,7 @@ there, not from the repository.
 """
 import re, sys, urllib.parse
 
-SRC, DST, MARKER = "GOMB-forras.js", "GOMB-bookmarklet.txt", "// ==BOOKMARKLET-START=="
+SRC, DST, MARKER = "bookmarklet-source.js", "bookmarklet.txt", "// ==BOOKMARKLET-START=="
 
 # These characters are left unencoded (this reproduces the existing file bit
 # for bit). Anything not on the list goes in as %XX - so a new character is

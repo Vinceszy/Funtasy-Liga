@@ -39,7 +39,7 @@ list.*
 
 ## 2. Creating the bookmark
 
-1. Open the `GOMB-bookmarklet.txt` file and copy its **entire content**
+1. Open the `bookmarklet.txt` file and copy its **entire content**
 2. In the copied text, replace the `IDE_A_TOKEN` part with your own token
    *(it is near the start, in the form `TOKEN%3D%27IDE_A_TOKEN%27` — rewrite only the
    upper-case part between the apostrophes, not the apostrophes themselves)*
@@ -80,5 +80,5 @@ click fills in all of them at once.
   word. The roster lives in THREE places, all of them have to be updated: `collect.py`
   (`MEMBERS` — this is the primary one, the collection depends on it),
   `nb1/index.html` (`MEMBERS`), and the bookmarklet (the `M` constant in
-  `GOMB-forras.js`, then rebuild with `bookmarklet-build.py` and replace the bookmark
+  `bookmarklet-source.js`, then rebuild with `bookmarklet-build.py` and replace the bookmark
   in the browser)

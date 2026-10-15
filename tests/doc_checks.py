@@ -473,7 +473,7 @@ if _m:
           + ("" if not _bad else " - REJECTED: " + "; ".join(_bad[:3])))
 
 # ---- D18: the bookmarklet is what is built from its source ----
-# tartalek/GOMB-bookmarklet.txt is GENERATED: it is built from GOMB-forras.js
+# tartalek/bookmarklet.txt is GENERATED: it is built from bookmarklet-source.js
 # with bookmarklet-build.py. Two copies of the same code, and the generated one
 # is what has to be pasted into the browser. Whoever fixes the source but
 # forgets to rebuild leaves an OLD bookmarklet in the repository - and that
@@ -483,11 +483,11 @@ _bspec = importlib.util.spec_from_file_location(
     "bookmarklet_build", os.path.join(_bdir, "bookmarklet-build.py"))
 _build = importlib.util.module_from_spec(_bspec)
 _bspec.loader.exec_module(_build)               # main() only runs as __main__
-_bsrc = read(os.path.join("tartalek", "GOMB-forras.js"))
+_bsrc = read(os.path.join("tartalek", "bookmarklet-source.js"))
 _bexpected = "javascript:" + _build.encode(
     " ".join(l.strip() for l in _bsrc.split(_build.MARKER, 1)[1].strip().splitlines()
              if l.strip())) + "\n"
-_bactual = read(os.path.join("tartalek", "GOMB-bookmarklet.txt"))
+_bactual = read(os.path.join("tartalek", "bookmarklet.txt"))
 check(_bexpected == _bactual,
       "D18: the bookmarklet is freshly built from its source (run: cd tartalek && "
       "python3 bookmarklet-build.py)" if _bexpected != _bactual

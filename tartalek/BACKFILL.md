@@ -23,7 +23,7 @@ The backfill is done by `collect.py` on its own, server-side: on every run it ch
 which rounds are missing from `squad_history.json`, and fetches them. Missed
 **results** can be backfilled too (the rankings endpoint also accepts
 `filter[round_id]`). The bookmarklet also remains as a fallback:
-[`KERET-MENTES.md`](KERET-MENTES.md).
+[`SQUAD-SAVE.md`](SQUAD-SAVE.md).
 
 ## Why the old script would not work
 
@@ -42,5 +42,5 @@ If someone dug it out of an old copy, it would not give usable data, for three r
 ## If it ever has to be done by hand after all
 
 The working, proven fetch logic is here in readable form:
-[`GOMB-forras.js`](GOMB-forras.js) — the `fetch` call with the correct `include` list
+[`bookmarklet-source.js`](bookmarklet-source.js) — the `fetch` call with the correct `include` list
 and `round_id` calculation can be copied from it.
