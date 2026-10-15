@@ -1,48 +1,49 @@
 const { BASE, check, section, failures, launch, finish, blockApis, rewriteJson } = require('./common');
-// A "frissítés…" jelzes: lassu lekeresnel latszik, gyorsnal nem villan fel.
+// The "frissítés…" indicator: shown on a slow fetch, does not flash on a fast one.
 
-// Megjelenik-e a jelzes a megadott idon belul? (A vegallapotot nezni keves
-// volna: a jelzes a lekeres vegen eltunik.)
-async function jelzesreVar(p, ms){
+// Does the indicator appear within the given time? (Looking at the final
+// state would not be enough: the indicator disappears at the end of the fetch.)
+async function waitForIndicator(p, ms){
   try {
     const el = await p.waitForSelector('.frissjel', { timeout: ms, state: 'attached' });
-    await p.waitForTimeout(350);                   // hadd ketyegjen egy kicsit
+    await p.waitForTimeout(350);                   // let it tick a little
     return (await el.textContent()) || '';
   } catch (e) { return null; }
 }
 
-async function plMeccs(br, keses){
+async function plMatch(br, delay){
   const p = await br.newPage();
   const perr = []; p.on('pageerror', x => perr.push(x.message));
-  // A sajat proxy (workers.dev) a tesztkornyezetbol nem erheto el, es a
-  // valodi halozati probalkozasa ~300 ms - ennyi kesessel a LIVEGW valasz
-  // MAR A KATTINTAS UTAN erne be, es a nem-elo ag futna le, jelzes nelkul.
-  // (Elesben a sajat ut a leggyorsabb, ott nincs ilyen kesleltetes.)
+  // Our own proxy (workers.dev) cannot be reached from the test environment,
+  // and its real network attempt takes ~300 ms - with that delay the LIVEGW
+  // response would arrive ONLY AFTER THE CLICK, and the non-live branch would
+  // run, without the indicator. (In production our own path is the fastest,
+  // there is no such delay there.)
   await p.route('**workers.dev/**', r => r.abort());
   const hist = require(require('path').join(__dirname,'..','draft_history.json'));
-  // AZ ELOFELTETELT KIMONDJUK: a jelzes csak az ELO fordulo meccsen indul el
-  // (a pl/index.html showMatch-e `r === LIVEGW`-re ker le eloben). Korabban
-  // a teszt a tarolt fordulok KOZUL AZ ELSOT tette elove, es a listabol az
-  // ELSO meccsre kattintott - amig egyetlen fordulo volt, a ketto ugyanaz
-  // volt. A 2. fordulo lezarasaval szetvalt: a lap a 2. fordulot listazta,
-  // a mock az 1.-et tette elove, tehat a nem-elo ag futott, jelzes nelkul.
-  // Mostantol a LEGFRISSEBB tarolt fordulo az elo, es a kattintas is arra
-  // a fordulora megy.
+  // WE STATE THE PRECONDITION: the indicator only starts on a match of the
+  // LIVE round (pl/index.html's showMatch fetches live for `r === LIVEGW`).
+  // Earlier the test made THE FIRST of the stored rounds live, and clicked
+  // the FIRST match of the list - while there was a single round, the two
+  // were the same. With the closing of round 2 they diverged: the page listed
+  // round 2, the mock made round 1 live, so the non-live branch ran, without
+  // the indicator. From now on the MOST RECENT stored round is the live one,
+  // and the click goes to that round too.
   const GW = Object.keys(hist.rounds).map(Number).sort((a, b) => b - a)[0] + '';
-  const elemek = [...new Set(Object.values(hist.rounds[GW]).flat().map(x => x.e))];
-  let elsoKesz = false;
+  const elements = [...new Set(Object.values(hist.rounds[GW]).flat().map(x => x.e))];
+  let firstDone = false;
   await p.route('**premierleague.com/api/**', async route => {
     const u = decodeURIComponent(route.request().url());
     const json = b => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
-    // a napi pontzaras (klasszikus FPL) - a PL-oldal ezt is lekeri
+    // the daily points close (classic FPL) - the PL page fetches this too
     if (/event-status/.test(u)) return json({ status: [] });
     if (/\/api\/game/.test(u)) return json({ current_event: +GW, current_event_finished: false });
     if (/\/live/.test(u)){
-      // a betoltesi lekerest nem lassitjuk, csak a modalbol indulot
-      if (keses && elsoKesz) await new Promise(r => setTimeout(r, keses));
-      elsoKesz = true;
+      // the fetch on load is not slowed down, only the one started from the modal
+      if (delay && firstDone) await new Promise(r => setTimeout(r, delay));
+      firstDone = true;
       const el = {};
-      elemek.forEach(id => { el[id] = { stats: { total_points: 4, minutes: 90 }, explain: [] }; });
+      elements.forEach(id => { el[id] = { stats: { total_points: 4, minutes: 90 }, explain: [] }; });
       return json({ elements: el });
     }
     if (/\/fixtures/.test(u)) return json([]);
@@ -52,44 +53,45 @@ async function plMeccs(br, keses){
   await p.waitForFunction(() => document.querySelector('.match .score') &&
     /\d/.test(document.querySelector('.match .score').textContent), null, { timeout: 40000 });
   await p.locator(`.match[data-r="${GW}"]`).first().click();
-  // A LASSU agon bokezuen varunk: a jelzes a lekeres INDULASA utan 500
-  // ms-mal jelenik meg, de elotte a lap meg betolti a fordulo keretet a
-  // helyi szerverrol - a teljes tesztsor parhuzamos terhelese alatt ez
-  // onmagaban tullephette a 2,5 mp-et, es a teszt "nincs jelzes"-t mert.
-  // (A GYORS ag rovid marad: ott a jelzes HIANYAT allitjuk.)
-  const szoveg = await jelzesreVar(p, keses ? 8000 : 1500);
-  await p.waitForTimeout((keses || 0) + 800);
-  const maradt = await p.locator('.frissjel').count();
+  // On the SLOW branch we wait generously: the indicator appears 500 ms after
+  // the fetch STARTS, but before that the page still loads the round's squad
+  // from the local server - under the parallel load of the full suite that
+  // alone could exceed 2.5 s, and the test measured "no indicator".
+  // (The FAST branch stays short: there we claim the ABSENCE of the indicator.)
+  const text = await waitForIndicator(p, delay ? 8000 : 1500);
+  await p.waitForTimeout((delay || 0) + 800);
+  const remaining = await p.locator('.frissjel').count();
   await p.close();
-  return { szoveg, maradt, perr };
+  return { text, remaining, perr };
 }
 
 (async () => {
   const br = await launch();
 
-  console.log('--- PL: lassú lekérés (3 mp) ---');
-  const lassu = await plMeccs(br, 3000);
-  console.log('   jelzés szövege:', JSON.stringify(lassu.szoveg));
-  check(lassu.szoveg !== null, 'lassú lekérésnél megjelenik a jelzés');
-  check(/^frissítés… \d+,\d mp$/.test(lassu.szoveg || ''), 'a jelzés kiírja az eltelt időt');
-  check(lassu.maradt === 0, 'a lekérés végén eltűnik');
-  check(lassu.perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(lassu.perr.slice(0, 2)));
+  console.log('--- PL: slow fetch (3 s) ---');
+  const slow = await plMatch(br, 3000);
+  console.log('   indicator text:', JSON.stringify(slow.text));
+  check(slow.text !== null, 'on a slow fetch the indicator appears');
+  check(/^frissítés… \d+,\d mp$/.test(slow.text || ''), 'the indicator shows the elapsed time');
+  check(slow.remaining === 0, 'it disappears at the end of the fetch');
+  check(slow.perr.length === 0, 'no JS error: ' + JSON.stringify(slow.perr.slice(0, 2)));
 
-  console.log('\n--- PL: gyors lekérés ---');
-  const gyors = await plMeccs(br, 0);
-  console.log('   jelzés szövege:', JSON.stringify(gyors.szoveg));
-  check(gyors.szoveg === null, 'gyors lekérésnél nem villan fel (nincs zaj)');
+  console.log('\n--- PL: fast fetch ---');
+  const fast = await plMatch(br, 0);
+  console.log('   indicator text:', JSON.stringify(fast.text));
+  check(fast.text === null, 'on a fast fetch it does not flash (no noise)');
 
   // ---------------- NB1 ----------------
-  console.log('\n--- NB1: lassú élő keret-lekérés (3 mp) ---');
+  console.log('\n--- NB1: slow live squad fetch (3 s) ---');
   const p = await br.newPage();
   const perr = []; p.on('pageerror', x => perr.push(x.message));
-  await p.route('**workers.dev/**', r => r.abort());   // lasd fent: plMeccs
-  // Az elofeltetelt KIMONDJUK, nem a betoltesi frissitestol remeljuk: az 5.
-  // fordulo elo volta eddig azon mult, hogy a mockolt ranglista-valaszok a
-  // kattintas ELOTT beertek-e - ha nem, az elo keret-lekeres el se indult,
-  // es a teszt jelzes nelkul, felrevezeto hibaval bukott (flake, kb. minden
-  // harmadik futas). Ugyanigy rogzit a uzenetek.teszt.js is.
+  await p.route('**workers.dev/**', r => r.abort());   // see above: plMatch
+  // We STATE the precondition instead of hoping for it from the refresh on
+  // load: round 5 being live used to depend on whether the mocked ranking
+  // responses arrived BEFORE the click - if not, the live squad fetch did
+  // not even start, and the test failed without the indicator, with a
+  // misleading error (a flake, about every third run).
+  // live-text-and-cache.test.js pins it down the same way.
   await rewriteJson(p, '**/results.json*', j => Object.assign(j, { provisional: [5] }));
   const start = new Date(Date.now() - 1800000).toISOString();
   await p.route('**fantasy-api.mlsz.hu/**', async route => {
@@ -111,24 +113,24 @@ async function plMeccs(br, keses){
   });
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#table tr', { timeout: 30000 });
-  // AZ ELOFELTETELT KIMONDJUK, ahogy az uzenetek.teszt.js-ben is: az eloKeret
-  // a USER_IDS-bol dolgozik ("if(!uid) return null"), amit a betoltesi
-  // frissites tolt fel a ranglista-valaszokbol. Ha a hivas megelozi, az elo
-  // keret-lekeres EL SEM INDUL - nincs mire jelezni, es a teszt "nincs
-  // jelzes"-t mer, mikozben a jelzovel semmi baj. Ez volt a maradek flake:
-  // egyedul futva 6/6 zold, a teljes sor terhelese alatt viszont bukott.
-  // (typeof-fal: a USER_IDS const, nincs a window-on.)
+  // WE STATE THE PRECONDITION, as live-text-and-cache.test.js does too:
+  // liveSquad works from USER_IDS ("if(!uid) return null"), which the refresh on load fills
+  // from the ranking responses. If the call comes before that, the live squad
+  // fetch DOES NOT EVEN START - there is nothing to signal, and the test
+  // measures "no indicator" while nothing is wrong with the indicator. This
+  // was the remaining flake: run alone 6/6 green, but under the load of the
+  // full suite it failed. (With typeof: USER_IDS is a const, not on window.)
   await p.waitForFunction(() => typeof USER_IDS !== 'undefined'
     && USER_IDS['Bazsa'] && USER_IDS['Vince'], null, { timeout: 20000 });
-  // NEM varjuk meg: a showLiveMatch async, es ha az egesz lefutasat
-  // megvarnank, a jelzest mar le is vette volna magarol
+  // NOT awaited: showLiveMatch is async, and if we waited for all of it to
+  // run, it would already have taken the indicator down
   await p.evaluate(() => { showLiveMatch('Bazsa', 'Vince', 5); });
-  const nb1Szoveg = await jelzesreVar(p, 8000);   // lasd fent: terheles alatt kevés volt
-  console.log('   jelzés szövege:', JSON.stringify(nb1Szoveg));
-  check(nb1Szoveg !== null, 'NB1: lassú élő keret-lekérésnél is megjelenik');
+  const nb1Text = await waitForIndicator(p, 8000);   // see above: under load less was not enough
+  console.log('   indicator text:', JSON.stringify(nb1Text));
+  check(nb1Text !== null, 'NB1: it appears on a slow live squad fetch too');
   await p.waitForTimeout(4000);
-  check(await p.locator('.frissjel').count() === 0, 'NB1: a végén eltűnik');
-  check(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr.slice(0, 2)));
+  check(await p.locator('.frissjel').count() === 0, 'NB1: it disappears at the end');
+  check(perr.length === 0, 'no JS error: ' + JSON.stringify(perr.slice(0, 2)));
   await p.close();
 
   await br.close();

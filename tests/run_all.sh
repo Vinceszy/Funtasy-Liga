@@ -4,7 +4,7 @@
 # The browser tests run IN PARALLEL (default: 3 workers), because they are
 # independent of each other - each launches its own browser with its own
 # mocks. This brings the full suite down from ~10 minutes to about 4. The
-# exception is the two TIMING-SENSITIVE tests (frissjelzo, visszateres): under
+# exception is the two TIMING-SENSITIVE tests (refresh-indicator, refresh-on-return): under
 # parallel load they could fail falsely, so they run at the end, alone.
 #
 # Parallel runs depend on rewriteJson reading from disk (tests/common.js):
@@ -60,10 +60,10 @@ for t in "$ROOT"/tests/collector_*.py; do
 done
 
 # ---- 2) browser tests: in parallel, EXCEPT the timing-sensitive ones ----
-TIMING_SENSITIVE=" frissjelzo.teszt.js visszateres.teszt.js "
+TIMING_SENSITIVE=" refresh-indicator.test.js refresh-on-return.test.js "
 PARALLEL=()
 SERIAL=()
-for t in "$ROOT"/tests/*.teszt.js "$ROOT"/tests/*.test.js; do
+for t in "$ROOT"/tests/*.test.js; do
   [ -e "$t" ] || continue
   case "$TIMING_SENSITIVE" in
     *" $(basename "$t") "*) SERIAL+=("$t");;

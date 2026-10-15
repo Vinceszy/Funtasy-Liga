@@ -1,33 +1,35 @@
 const path = require('path');
 const { BASE, check, section, launch, finish, blockApis, rewriteJson } = require('./common');
-// A FOLYO FORDULO KERETEIT A BONGESZO POTOLJA, AMIG A GYUJTO MEG NEM IRTA BE.
+// THE BROWSER BACKFILLS THE SQUADS OF THE CURRENT ROUND UNTIL THE COLLECTOR HAS WRITTEN THEM.
 //
-// MERVE (PL 5. fordulo): elo meccs alatt a lap nem frissult.
-// A gyujto 3 orankent fut, a fordulo viszont a nevezesi hataridovel indul: a
-// 16:43 UTC-s futas MEG a 4. fordulot latta, a kovetkezo 23:47-re volt
-// idozitve - kozben elindult az 5., es a repoban egyaltalan nem letezett
-// hozza keret. A lap kiment az API-ra, meg is kapta az elo pontokat, csak
-// nem volt kire raterite oket: elo allas helyett "Naprakesz" allt a
-// statuszsavban egy futo meccs alatt.
+// MEASURED (PL round 5): during a live match the page did not update.
+// The collector runs every 3 hours, but the round starts with the entry
+// deadline: the run at 16:43 UTC STILL saw round 4, the next one was
+// scheduled for 23:47 - meanwhile round 5 started, and the repository had
+// no squad for it at all. The page went out to the API and did get the live
+// points, but had nobody to spread them over: instead of a live score the
+// status bar said "Naprakész" during a running match.
 //
-// Amit rogzit:
-//  - hianyzo keretnel a bongeszo lekeri a fordulo kereteit, es lesz elo allas;
-//  - a potlas a gyujto adatat NEM irja felul;
-//  - RESZLEGES potlasnal (egy csapat lekerese elhasal) az erintett meccs
-//    NEM kap hamis 0-t, a tobbi viszont igen.
+// What it pins down:
+//  - with a missing squad the browser fetches the round's squads, and there
+//    is a live score;
+//  - the backfill does NOT overwrite the collector's data;
+//  - with a PARTIAL backfill (fetching one team fails) the affected match
+//    does NOT get a false 0, but the others do get a score.
 const HIST = require(path.join(__dirname, '..', 'draft_history.json'));
 const DRAFT = require(path.join(__dirname, '..', 'draft.json'));
 
-// AZ ELO FORDULO a legfrissebb tarolt fordulo. Az elofeltetelt kimondjuk:
-// menet kozben kivesszuk a menetrendbol az eredmenyet (kulonben a lap
-// lezartkent kezelne), a keret-elozmenybol pedig magat a fordulot - EZ a
-// vizsgalt helyzet: fut a fordulo, de a gyujto meg nem irt hozza keretet.
+// THE LIVE ROUND is the most recent stored round. We state the precondition:
+// on the fly we remove its result from the schedule (otherwise the page would
+// treat it as closed), and the round itself from the squad history - THIS is
+// the situation under test: the round is running, but the collector has not
+// written its squads yet.
 const GW = Object.keys(HIST.rounds).map(Number).sort((a, b) => b - a)[0] + '';
-const LIDK = Object.keys(HIST.rounds[GW]);
-const EID = {};                       // liga_id -> kitalalt FPL entry_id
-LIDK.forEach((lid, i) => { EID[lid] = 900001 + i; });
+const LEAGUE_IDS = Object.keys(HIST.rounds[GW]);
+const EID = {};                       // league_id -> made-up FPL entry_id
+LEAGUE_IDS.forEach((lid, i) => { EID[lid] = 900001 + i; });
 
-const elofeltetel = p => Promise.all([
+const precondition = p => Promise.all([
   rewriteJson(p, '**/draft.json*', j => {
     j.schedule[GW] = (j.schedule[GW] || []).map(m => [m[0], m[1], null, null]);
     return j;
@@ -39,11 +41,12 @@ const elofeltetel = p => Promise.all([
   }),
 ]);
 
-// A fordulo osszes jatekosa 1 pontot er, tehat minden csapat elo osszege 11
-// (a pad nem szamit). Igy egyetlen szambol latszik, sikerult-e a potlas.
-const VART = 11;
+// Every player of the round is worth 1 point, so every team's live total is
+// 11 (the bench does not count). That way a single number shows whether the
+// backfill worked.
+const EXPECTED = 11;
 
-function utvonalak(p, bukjon) {       // bukjon: ennek a liga-idnek a kerete nem jon meg
+function routes(p, failFor) {       // failFor: the squad of this league id does not arrive
   return p.route('**premierleague.com/api/**', async route => {
     const u = decodeURIComponent(route.request().url());
     const json = b => route.fulfill({ status: 200, contentType: 'application/json',
@@ -52,18 +55,18 @@ function utvonalak(p, bukjon) {       // bukjon: ennek a liga-idnek a kerete nem
     if (/\/api\/game/.test(u)) return json({ current_event: +GW, current_event_finished: false });
     if (/\/fixtures/.test(u)) return json([]);
     if (/\/league\/\d+\/details/.test(u))
-      return json({ league_entries: LIDK.map(lid => ({ id: +lid, entry_id: EID[lid] })) });
+      return json({ league_entries: LEAGUE_IDS.map(lid => ({ id: +lid, entry_id: EID[lid] })) });
     const m = u.match(/\/entry\/(\d+)\/event\/(\d+)/);
     if (m){
-      const lid = LIDK.find(x => EID[x] === +m[1]);
-      if (!lid || lid === bukjon) return route.fulfill({ status: 404, body: '' });
-      // ugyanaz a szerkezet, amit az FPL ad: position 1-11 kezdo, 12-15 pad
+      const lid = LEAGUE_IDS.find(x => EID[x] === +m[1]);
+      if (!lid || lid === failFor) return route.fulfill({ status: 404, body: '' });
+      // the same structure FPL gives: position 1-11 starters, 12-15 bench
       return json({ picks: (HIST.rounds[GW][lid] || [])
         .map((x, i) => ({ element: x.e, position: i + 1 })) });
     }
     if (/\/live/.test(u)){
       const el = {};
-      for (const lid of LIDK)
+      for (const lid of LEAGUE_IDS)
         for (const x of HIST.rounds[GW][lid])
           el[x.e] = { stats: { total_points: 1, minutes: 90, starts: 1 },
                       explain: [[[{ name: 'Minutes played', points: 1, value: 90,
@@ -74,73 +77,73 @@ function utvonalak(p, bukjon) {       // bukjon: ennek a liga-idnek a kerete nem
   });
 }
 
-const allasok = p => p.evaluate(() => [...document.querySelectorAll('.match .score')]
+const scores = p => p.evaluate(() => [...document.querySelectorAll('.match .score')]
   .map(x => x.textContent.trim()));
 
 (async () => {
   const br = await launch();
 
-  // ---- 1) teljes potlas ----
-  section('PL: a böngésző pótolja a folyó forduló kereteit');
+  // ---- 1) full backfill ----
+  section('PL: the browser backfills the current round\'s squads');
   const p = await br.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   await blockApis(p);
-  await elofeltetel(p);
-  await utvonalak(p, null);
+  await precondition(p);
+  await routes(p, null);
   await p.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
   await p.waitForFunction(g => typeof BACKFILLED !== 'undefined' && !!BACKFILLED[g],
                           GW, { timeout: 30000 });
 
-  const potolt = await p.evaluate(g => Object.keys(BACKFILLED[g] || {}).length, GW);
-  check(potolt === LIDK.length,
-     'mind a ' + LIDK.length + ' keretet pótolta — kapott: ' + potolt);
+  const filled = await p.evaluate(g => Object.keys(BACKFILLED[g] || {}).length, GW);
+  check(filled === LEAGUE_IDS.length,
+     'it backfilled all ' + LEAGUE_IDS.length + ' squads — got: ' + filled);
 
-  const nincsHist = await p.evaluate(g => !HIST[g], GW);
-  check(nincsHist, 'a tárolt adatban tényleg nincs keret ehhez a fordulóhoz (az előfeltétel áll)');
+  const noHist = await p.evaluate(g => !HIST[g], GW);
+  check(noHist, 'the stored data really has no squad for this round (the precondition holds)');
 
-  const a1 = await allasok(p);
-  check(a1.some(x => new RegExp('\\b' + VART + '\\b').test(x)),
-     'az élő meccsállás megjelenik a pótolt keretből (' + VART + '): ' + a1.join(' | '));
+  const a1 = await scores(p);
+  check(a1.some(x => new RegExp('\\b' + EXPECTED + '\\b').test(x)),
+     'the live match score appears from the backfilled squad (' + EXPECTED + '): ' + a1.join(' | '));
 
-  const statusz = await p.evaluate(() => document.getElementById('status').textContent);
-  check(/él/i.test(statusz), 'a státuszsáv élő fordulót jelez: ' + statusz);
-  check(!perr.length, 'nincs JS-hiba: ' + perr.join(' | '));
+  const status = await p.evaluate(() => document.getElementById('status').textContent);
+  check(/él/i.test(status), 'the status bar signals a live round: ' + status);
+  check(!perr.length, 'no JS error: ' + perr.join(' | '));
   await p.close();
 
-  // ---- 2) reszleges potlas: a hianyzo csapat meccse NEM kap hamis 0-t ----
-  section('PL: részleges pótlásnál nincs hamis állás');
+  // ---- 2) partial backfill: the missing team's match does NOT get a false 0 ----
+  section('PL: no false score with a partial backfill');
   const q = await br.newPage();
   const qerr = []; q.on('pageerror', e => qerr.push(e.message));
   await blockApis(q);
-  await elofeltetel(q);
-  const bukott = LIDK[0];
-  await utvonalak(q, bukott);
+  await precondition(q);
+  const failed = LEAGUE_IDS[0];
+  await routes(q, failed);
   await q.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
   await q.waitForFunction(g => typeof BACKFILLED !== 'undefined' && !!BACKFILLED[g],
                           GW, { timeout: 30000 });
 
-  const reszleges = await q.evaluate(g => Object.keys(BACKFILLED[g] || {}).length, GW);
-  check(reszleges === LIDK.length - 1,
-     'egy keret hiányzik, a többi megvan (' + (LIDK.length - 1) + ') — kapott: ' + reszleges);
+  const partial = await q.evaluate(g => Object.keys(BACKFILLED[g] || {}).length, GW);
+  check(partial === LEAGUE_IDS.length - 1,
+     'one squad is missing, the rest are there (' + (LEAGUE_IDS.length - 1) + ') — got: ' + partial);
 
-  // a bukott csapat meccsen a ket fel egyike sem kap elo szamot
-  const ervenyes = await q.evaluate(([g, b]) => {
-    const sor = (SCHEDULE[g] || []).findIndex(m => String(m[0]) === b || String(m[1]) === b);
-    return { sor, meccsek: (SCHEDULE[g] || []).length,
-             elo: (LIVE[g] || [])[sor] || null,
-             masik: (LIVE[g] || []).filter(Boolean).length };
-  }, [GW, bukott]);
-  check(ervenyes.elo === null,
-     'a hiányzó kerethez tartozó meccs NEM kap élő állást (a 0 hamis szám lenne) — kapott: '
-     + JSON.stringify(ervenyes.elo));
-  check(ervenyes.masik === ervenyes.meccsek - 1,
-     'a többi meccs viszont kap élő állást (' + (ervenyes.meccsek - 1) + ') — kapott: '
-     + ervenyes.masik);
+  // in the failed team's match neither side gets a live number
+  const valid = await q.evaluate(([g, b]) => {
+    const row = (SCHEDULE[g] || []).findIndex(m => String(m[0]) === b || String(m[1]) === b);
+    return { row, matches: (SCHEDULE[g] || []).length,
+             live: (LIVE[g] || [])[row] || null,
+             others: (LIVE[g] || []).filter(Boolean).length };
+  }, [GW, failed]);
+  check(valid.live === null,
+     'the match of the missing squad does NOT get a live score (0 would be a false number) — got: '
+     + JSON.stringify(valid.live));
+  check(valid.others === valid.matches - 1,
+     'the other matches do get a live score (' + (valid.matches - 1) + ') — got: '
+     + valid.others);
 
-  const a2 = await allasok(q);
-  check(a2.some(x => new RegExp('\\b' + VART + '\\b').test(x)),
-     'a teljes keretű meccseken ott az élő állás: ' + a2.join(' | '));
-  check(!qerr.length, 'nincs JS-hiba: ' + qerr.join(' | '));
+  const a2 = await scores(q);
+  check(a2.some(x => new RegExp('\\b' + EXPECTED + '\\b').test(x)),
+     'the matches with full squads show the live score: ' + a2.join(' | '));
+  check(!qerr.length, 'no JS error: ' + qerr.join(' | '));
   await q.close();
 
   await finish(br);

@@ -30,7 +30,7 @@ const finish = async br => { if (br) await br.close(); process.exit(failures.len
     The file is read FROM DISK, not through the local test server: under the
     load of the full suite the server sometimes drops the connection, and then
     the test's PRECONDITION was lost - the test failed at a different assertion
-    each time, with a misleading message (the "uzenetek" test failed at three
+    each time, with a misleading message (the "live-text-and-cache" test failed at three
     different places in three runs). A retrying variant with route.fetch was
     not enough either. The network path remains only for a request that does
     not point to a repository file. */
@@ -80,7 +80,7 @@ async function blockApis(page) {
     real case: a round from before stored breakdowns existed, or a player who
     is no longer in the current 385-player roster (there are five such).
 
-    A test that measures the STORED path (taroltbontas.teszt.js) does not call this. */
+    A test that measures the STORED path (stored-breakdown.test.js) does not call this. */
 async function blockStoredBreakdowns(page) {
   // The TRAILING * MUST NOT BE DROPPED: the page requests with a cache buster
   // (bontasok/4.json?t=...), and Playwright matches the glob against the FULL

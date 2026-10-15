@@ -1,27 +1,28 @@
 const { BASE, check, launch, finish, rewriteJson } = require('./common');
-// AZ NB1 NYUGALMI STATUSZSORA.
+// THE NB1 IDLE STATUS LINE.
 //
-// Korabban "Naprakesz · ellenorizve <most>" allt itt: a kiirt ido a
-// LEKERESE volt, nem az adate. A valogatott szunetben harom hetig ez allt a
-// lapon, es nem latszott, hogy a tarolt adat regi-e, vagy csak nem tortent
-// semmi. A sor most az utolso lezart forduloval es a tarolt adat utolso
-// valtozasanak idejevel all.
+// It used to say "Naprakesz · ellenorizve <now>" (up to date · checked
+// <now>): the time shown was that of the FETCH, not of the data. During the
+// international break this stood on the page for three weeks, and one could
+// not tell whether the stored data was old or simply nothing had happened.
+// The line now shows the last closed round and when the stored data last
+// changed.
 //
-// A teszt sajat allapotot allit be (nincs ideiglenes fordulo, az MLSZ egy
-// pontot sem ad), nem a valos adat pillanatnyi tartalmara epul.
-const TAROLT = '2026-08-30T10:00:00Z';
+// The test sets up its own state (no provisional round, the MLSZ gives no
+// points at all), it does not build on the current content of the real data.
+const STORED = '2026-08-30T10:00:00Z';
 
 (async () => {
   const br = await launch();
   const p = await br.newPage({ viewport: { width: 900, height: 800 } });
   const perr = []; p.on('pageerror', e => perr.push(e.message));
-  let utolso = null;
+  let last = null;
   await rewriteJson(p, '**/results.json*', j => {
     j.provisional = [];
-    j.updated = TAROLT;
-    const lejatszott = Object.keys(j.schedule || {}).map(Number)
+    j.updated = STORED;
+    const played = Object.keys(j.schedule || {}).map(Number)
       .filter(r => (j.schedule[r] || []).some(m => m[2] != null));
-    utolso = Math.max(...lejatszott);
+    last = Math.max(...played);
     return j;
   });
   await p.route('**://fantasy-api.mlsz.hu/**', route => {
@@ -38,15 +39,15 @@ const TAROLT = '2026-08-30T10:00:00Z';
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForFunction(() => /ellenőrizve|hiba|nem elérhető/.test(
     document.getElementById('status').textContent), null, { timeout: 30000 });
-  const szoveg = await p.evaluate(() => document.getElementById('status').textContent.trim());
-  console.log('   státusz: ' + JSON.stringify(szoveg));
+  const text = await p.evaluate(() => document.getElementById('status').textContent.trim());
+  console.log('   status: ' + JSON.stringify(text));
 
-  check(/^Naprakész/.test(szoveg), 'nyugalomban „Naprakész"');
-  check(szoveg.includes('utolsó lezárt: ' + utolso + '. forduló'),
-     'kiírja az utolsó lezárt fordulót (' + utolso + '.)');
-  check(/rögzítve: aug\. 30/.test(szoveg),
-     'kiírja a TÁROLT adat utolsó változását, nem a lekérését');
-  check(/ellenőrizve \d{2}:\d{2}$/.test(szoveg), 'és hogy mikor ellenőrizte');
-  check(!perr.length, 'nincs JS-hiba: ' + JSON.stringify(perr));
+  check(/^Naprakész/.test(text), 'at rest it says "Naprakész"');
+  check(text.includes('utolsó lezárt: ' + last + '. forduló'),
+     'it shows the last closed round (' + last + '.)');
+  check(/rögzítve: aug\. 30/.test(text),
+     'it shows the last change of the STORED data, not the time of the fetch');
+  check(/ellenőrizve \d{2}:\d{2}$/.test(text), 'and when it checked');
+  check(!perr.length, 'no JS error: ' + JSON.stringify(perr));
   await finish(br);
 })();

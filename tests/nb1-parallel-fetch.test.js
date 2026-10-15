@@ -1,28 +1,30 @@
 const { BASE, check, section, launch, finish } = require('./common');
-// AZ NB1 ELO LEKERES NEM MEGY EGYMAS UTAN.
+// THE NB1 LIVE FETCH DOES NOT GO ONE AFTER ANOTHER.
 //
-// Az elo allas szakvezetonkent egy kulon MLSZ-lekeresbol all ossze (8 ember
-// = 8 keres), es ez percenkent ujra lefut. Korabban mind a nyolc EGYMAS
-// UTAN ment, egyenkent megvarva: nyolc kor-ut sorban - olyan adatert, ami
-// az NB1-en naponta 2-4-szer valtozik (az MLSZ meccs kozben nem ad pontot).
+// The live score is assembled from one separate MLSZ request per manager
+// (8 people = 8 requests), and this runs again every minute. Earlier all
+// eight went ONE AFTER ANOTHER, each waited for: eight round trips in a row -
+// for data that changes 2-4 times a day in NB1 (MLSZ gives no points
+// during a match).
 //
-// Most az ELSO keres megy egyedul - a lekero abbol tanulja meg, melyik
-// proxy-ut mukodik -, a maradek het pedig egyszerre. Nyolc kor-utbol ketto.
+// Now the FIRST request goes alone - the fetcher learns from it which proxy
+// path works -, and the remaining seven go at once. Two round trips out of
+// eight.
 //
-// Amit rogzit:
-//  - mind a nyolc szakvezeto adata megjon (a gyorsitas nem vesztett el senkit);
-//  - az elso keres BEFEJEZODIK, mielott a masodik elindul (ut-tanulas);
-//  - a maradek het EGYSZERRE indul (nem egymas utan);
-//  - a teljes ido ket korre eleg, nem nyolcra;
-//  - ha a parhuzamos korbol valaki elhasal, egyesevel ujraprobaljuk, es az
-//    allasa megis bekerul.
-const KESES = 250;          // mesterseges valaszido kersenkent (ms)
-const TAGOK = 8;
+// What it pins down:
+//  - the data of all eight managers arrives (the speed-up lost nobody);
+//  - the first request FINISHES before the second starts (path learning);
+//  - the remaining seven start AT ONCE (not one after another);
+//  - the total time is enough for two rounds, not eight;
+//  - if someone from the parallel round fails, we retry one by one, and his
+//    score still gets in.
+const DELAY = 250;          // artificial response time per request (ms)
+const MEMBERS = 8;
 
-function stub(page, naplo, bukjon){
-  const bukott = new Set();
-  // A tobbi utat azonnal elvagjuk, hogy a merest ne a proxy-sorrend zavarja:
-  // igy minden keres ideje pontosan egy KESES.
+function stub(page, log, failFor){
+  const failed = new Set();
+  // The other paths are cut off at once, so that the proxy order does not
+  // disturb the measurement: this way every request takes exactly one DELAY.
   page.route('**workers.dev/**', r => r.abort());
   page.route('**corsproxy.io/**', r => r.abort());
   page.route('**allorigins**', r => r.abort());
@@ -34,11 +36,11 @@ function stub(page, naplo, bukjon){
       return route.fulfill({ json: { data: [] } });
     const uname = decodeURIComponent((u.match(/filter%5Bsearch%5D=([^&]*)/) || [])[1] || '');
     const t0 = Date.now();
-    await new Promise(r => setTimeout(r, KESES));
-    naplo.push({ uname, t0, t1: Date.now() });
-    // a "bukjon" szakvezeto ELSO kerese elhasal, a masodik mar sikerul
-    if (uname === bukjon && !bukott.has(uname)){
-      bukott.add(uname);
+    await new Promise(r => setTimeout(r, DELAY));
+    log.push({ uname, t0, t1: Date.now() });
+    // the FIRST request of the "failFor" manager fails, the second succeeds
+    if (uname === failFor && !failed.has(uname)){
+      failed.add(uname);
       return route.fulfill({ status: 500, body: '' });
     }
     return route.fulfill({ json: { data: [{
@@ -49,7 +51,7 @@ function stub(page, naplo, bukjon){
   });
 }
 
-const keszVar = p => p.waitForFunction(() => {
+const waitDone = p => p.waitForFunction(() => {
   const s = document.getElementById('status');
   return s && s.textContent && !/lekérése/.test(s.textContent);
 }, null, { timeout: 40000 });
@@ -57,60 +59,60 @@ const keszVar = p => p.waitForFunction(() => {
 (async () => {
   const br = await launch();
 
-  // ---- 1) sorrend es ido ----
-  section('NB1: az élő lekérés két körben megy, nem nyolcban');
+  // ---- 1) order and time ----
+  section('NB1: the live fetch goes in two rounds, not eight');
   const p = await br.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
-  const naplo = [];
-  await stub(p, naplo, null);
+  const log = [];
+  await stub(p, log, null);
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
-  await keszVar(p);
+  await waitDone(p);
 
-  check(naplo.length === TAGOK,
-     'mind a ' + TAGOK + ' szakvezető adata lekérődött — kapott: ' + naplo.length);
+  check(log.length === MEMBERS,
+     'the data of all ' + MEMBERS + ' managers was fetched — got: ' + log.length);
 
-  const sorrend = [...naplo].sort((a, b) => a.t0 - b.t0);
-  const elso = sorrend[0], tobbi = sorrend.slice(1);
-  check(elso.t1 <= tobbi[0].t0 + 5,
-     'az első kérés befejeződik, mielőtt a második elindul (út-tanulás) — '
-     + (tobbi[0].t0 - elso.t1) + ' ms különbség');
+  const order = [...log].sort((a, b) => a.t0 - b.t0);
+  const first = order[0], rest = order.slice(1);
+  check(first.t1 <= rest[0].t0 + 5,
+     'the first request finishes before the second starts (path learning) — '
+     + (rest[0].t0 - first.t1) + ' ms difference');
 
-  const szoras = tobbi[tobbi.length - 1].t0 - tobbi[0].t0;
-  check(szoras < KESES,
-     'a maradék ' + tobbi.length + ' egyszerre indul (indulásaik ' + szoras
-     + ' ms-en belül, egy kérés ' + KESES + ' ms)');
+  const spread = rest[rest.length - 1].t0 - rest[0].t0;
+  check(spread < DELAY,
+     'the remaining ' + rest.length + ' start at once (their starts within ' + spread
+     + ' ms, one request is ' + DELAY + ' ms)');
 
-  const teljes = Math.max(...naplo.map(x => x.t1)) - Math.min(...naplo.map(x => x.t0));
-  check(teljes < 4 * KESES,
-     'a teljes lekérés két kör ideje (' + teljes + ' ms), nem nyolcé (~'
-     + TAGOK * KESES + ' ms)');
+  const total = Math.max(...log.map(x => x.t1)) - Math.min(...log.map(x => x.t0));
+  check(total < 4 * DELAY,
+     'the whole fetch takes two rounds (' + total + ' ms), not eight (~'
+     + MEMBERS * DELAY + ' ms)');
 
-  const allas = await p.evaluate(() => {
+  const score = await p.evaluate(() => {
     const r = Object.keys(LIVE).map(Number).sort((a, b) => a - b)[0];
-    return { r, sorok: (LIVE[r] || []).filter(Boolean).length };
+    return { r, rows: (LIVE[r] || []).filter(Boolean).length };
   });
-  check(allas.sorok > 0,
-     'az élő állás ki is töltődött (' + allas.r + '. forduló, ' + allas.sorok + ' meccs)');
-  check(!perr.length, 'nincs JS-hiba: ' + perr.join(' | '));
+  check(score.rows > 0,
+     'the live score was filled in too (round ' + score.r + ', ' + score.rows + ' matches)');
+  check(!perr.length, 'no JS error: ' + perr.join(' | '));
   await p.close();
 
-  // ---- 2) az elhasalt keresst egyesevel ujraprobaljuk ----
-  section('NB1: aki a párhuzamos körből kiesik, azt újrakérjük');
+  // ---- 2) a failed request is retried one by one ----
+  section('NB1: whoever drops out of the parallel round is requested again');
   const q = await br.newPage();
   const qerr = []; q.on('pageerror', e => qerr.push(e.message));
-  const naplo2 = [];
-  const BUKO = 'Hoxha98';                       // Bazsa - nem az elso a sorban
-  await stub(q, naplo2, BUKO);
+  const log2 = [];
+  const FAILING = 'Hoxha98';                    // Bazsa - not the first in line
+  await stub(q, log2, FAILING);
   await q.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
-  await keszVar(q);
+  await waitDone(q);
 
-  const hany = naplo2.filter(x => x.uname === BUKO).length;
-  check(hany === 2, 'a bukott szakvezetőt pontosan egyszer kérjük újra — '
-     + hany + ' kérés ment ki rá');
+  const count = log2.filter(x => x.uname === FAILING).length;
+  check(count === 2, 'the failed manager is requested again exactly once — '
+     + count + ' requests went out for him');
 
-  const megvan = await q.evaluate(() => !!(USER_IDS['Bazsa']));
-  check(megvan, 'az újrakérés után az ő adata is bekerült');
-  check(!qerr.length, 'nincs JS-hiba: ' + qerr.join(' | '));
+  const present = await q.evaluate(() => !!(USER_IDS['Bazsa']));
+  check(present, 'after the retry his data got in too');
+  check(!qerr.length, 'no JS error: ' + qerr.join(' | '));
   await q.close();
 
   await finish(br);

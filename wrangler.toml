@@ -24,7 +24,7 @@ workers_dev = true
 #
 # If the binding were ever missing (deleted namespace, other account), the
 # Worker works exactly as without it - storing is a silent no-op.
-# tests/workertarolo.teszt.js measures this separately, so nothing stops
+# tests/worker-store.test.js measures this separately, so nothing stops
 # because of it.
 [[kv_namespaces]]
 binding = "TAROLT"

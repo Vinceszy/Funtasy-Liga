@@ -1,8 +1,8 @@
 const { BASE, check, section, failures, launch, finish, blockApis } = require('./common');
-// A magyarszabaly (+10) elhelyezese a kulonbseg-nezetben.
-// Ket eset: ha mindket keret ugyanannyit kap, kozos tetel; ha nem, akkor
-// mindket oldalon az eltero csoportba kerul (a masiknal 0-val).
-const szam = t => parseFloat(String(t).replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3}\b)/g, '').replace(',', '.'));
+// Placement of the Hungarian rule (+10) in the difference view.
+// Two cases: if both squads get the same amount, it is a shared item; if
+// not, it goes into the differing group on both sides (with 0 on the other).
+const num = t => parseFloat(String(t).replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3}\b)/g, '').replace(',', '.'));
 
 (async () => {
   const br = await launch();
@@ -13,39 +13,39 @@ const szam = t => parseFloat(String(t).replace(/[^\d,.-]/g, '').replace(/\.(?=\d
   await p.waitForSelector('#table tr');
   const HIST = await p.evaluate(async () => (await (await fetch('../squad_history.json')).json()).rounds || {});
 
-  // Csak azokat a parositasokat nezzuk, amelyekhez van tarolt keret. A
-  // "kozos-e a szabaly" kerdes eldontheto rendereles nelkul is: a
-  // magyarBonus a ket kezdo tizenegybol szamol.
-  const jeloltek = await p.evaluate((HIST) => {
-    const ki = { kozos: null, kulon: null };
+  // We only look at the fixtures that have a stored squad. Whether the rule
+  // is shared can be decided without rendering: hungarianBonus computes from
+  // the two starting elevens.
+  const candidates = await p.evaluate((HIST) => {
+    const out = { shared: null, separate: null };
     for (const [r, ms] of Object.entries(SCHEDULE)) {
-      const keretek = HIST[r];
-      if (!keretek) continue;
+      const squads = HIST[r];
+      if (!squads) continue;
       for (const [h, v] of ms) {
-        const A = keretek[h], B = keretek[v];
+        const A = squads[h], B = squads[v];
         if (!A || !B) continue;
         const mb = l => hungarianBonus(l.filter(x => !x.sub)).pts;
-        const kulcs = mb(A) === mb(B) ? 'kozos' : 'kulon';
-        if (!ki[kulcs]) ki[kulcs] = [h, v, +r];
+        const key = mb(A) === mb(B) ? 'shared' : 'separate';
+        if (!out[key]) out[key] = [h, v, +r];
       }
-      if (ki.kozos && ki.kulon) break;
+      if (out.shared && out.separate) break;
     }
-    return ki;
+    return out;
   }, HIST);
-  console.log('jelöltek:', JSON.stringify(jeloltek));
+  console.log('candidates:', JSON.stringify(candidates));
 
-  let szintetikus = false;
-  for (const kulcs of ['kozos', 'kulon']) {
-    let cel = jeloltek[kulcs];
-    if (!cel) {
-      // A valos adatokban minden keret teljesiti a szabalyt, ezert a "csak az
-      // egyik oldalon jar" esetet szandekosan eloallitjuk: az egyik szakvezeto
-      // keretebol kivesszuk a magyar jelolest.
-      const alap = jeloltek.kozos;
-      if (!alap) { console.log('\n(nincs vizsgalhato meccs)'); continue; }
-      const [h0, v0, r0] = alap;
-      // A meccs-nezet a FORDULONKENTI keret-fajlbol olvas, ezert azt fogjuk
-      // el es irjuk at (a HIST patchelese mar nem hatna).
+  let synthetic = false;
+  for (const key of ['shared', 'separate']) {
+    let target = candidates[key];
+    if (!target) {
+      // In the real data every squad meets the rule, so the "only on one
+      // side" case is produced deliberately: we remove the Hungarian flag
+      // from one manager's squad.
+      const base = candidates.shared;
+      if (!base) { console.log('\n(no match to examine)'); continue; }
+      const [h0, v0, r0] = base;
+      // The match view reads the PER-ROUND squad file, so that is what we
+      // intercept and rewrite (patching HIST would have no effect any more).
       await p.route('**/keretek/*.json*', async route => {
         const j = await (await route.fetch()).json();
         (j.squads[h0] || []).forEach(x => { x.hun = false; x.u21 = false; });
@@ -53,50 +53,51 @@ const szam = t => parseFloat(String(t).replace(/[^\d,.-]/g, '').replace(/\.(?=\d
       });
       await p.goto(BASE + 'nb1/');
       await p.waitForSelector('#table tr td', { timeout: 20000 });
-      szintetikus = true;
-      jeloltek.kulon = alap;
-      console.log(`\n(szintetikus eset: ${h0} keretebol kivettuk a magyar jelolest)`);
+      synthetic = true;
+      candidates.separate = base;
+      console.log(`\n(synthetic case: removed the Hungarian flag from ${h0}'s squad)`);
     }
-    const cel2 = jeloltek[kulcs];
-    if (!cel2) continue;
-    const [h, v, r] = cel2;
-    await p.evaluate(([h, v, r]) => showMatchRound(h, v, r), cel2);
+    const target2 = candidates[key];
+    if (!target2) continue;
+    const [h, v, r] = target2;
+    await p.evaluate(([h, v, r]) => showMatchRound(h, v, r), target2);
     await p.waitForSelector('.sqcol .plr', { timeout: 15000 });
     if ((await p.$$('.szakasz')).length === 0) { await p.click('#elteresGomb'); await p.waitForTimeout(300); }
 
-    const kozosBan = await p.locator('.sqcol .kozosresz .szabalysor').count();
-    const eltBan = await p.locator('.sqcol > .szabalysor').count();
-    const mobil = await p.locator('.mobilkozos .szabalysor').count();
-    console.log(`\n--- ${kulcs === 'kozos' ? 'KÖZÖS szabály' : 'CSAK AZ EGYIK OLDALON'}: ${h} vs ${v}, ${r}. forduló ---`);
-    console.log('   szabálysor — közös részben:', kozosBan, '| eltérők közt:', eltBan, '| mobil blokkban:', mobil);
-    if (kulcs === 'kozos') {
-      check(kozosBan === 2 && eltBan === 0, 'közös szabály: mindkét oszlop közös részében, az eltérők közt sehol');
-      check(mobil === 1, 'a mobil közös blokkban egyszer szerepel');
+    const inShared = await p.locator('.sqcol .kozosresz .szabalysor').count();
+    const inDiffering = await p.locator('.sqcol > .szabalysor').count();
+    const mobile = await p.locator('.mobilkozos .szabalysor').count();
+    console.log(`\n--- ${key === 'shared' ? 'SHARED rule' : 'ONLY ON ONE SIDE'}: ${h} vs ${v}, round ${r} ---`);
+    console.log('   rule row — in the shared part:', inShared, '| among the differing:', inDiffering, '| in the mobile block:', mobile);
+    if (key === 'shared') {
+      check(inShared === 2 && inDiffering === 0, 'shared rule: in the shared part of both columns, nowhere among the differing items');
+      check(mobile === 1, 'it appears once in the mobile shared block');
     } else {
-      check(kozosBan === 0 && eltBan === 2, 'eltérő szabály: mindkét oszlopban az eltérők közt, saját sorként');
-      check(mobil === 0, 'a mobil közös blokkban nem szerepel');
+      check(inShared === 0 && inDiffering === 2, 'differing rule: among the differing items in both columns, as a row of its own');
+      check(mobile === 0, 'it does not appear in the mobile shared block');
     }
 
-    const szamlak = await p.$$eval('.sqcol', cols => cols.map(c => ({
-      fejlec: (c.querySelector('h3 span') || {}).textContent,
-      sorok: [...c.querySelectorAll('.osszesito')].map(o =>
+    const tallies = await p.$$eval('.sqcol', cols => cols.map(c => ({
+      header: (c.querySelector('h3 span') || {}).textContent,
+      rows: [...c.querySelectorAll('.osszesito')].map(o =>
         [o.querySelector('span').textContent.trim(), o.querySelector('b').textContent.trim()]),
     })));
-    szamlak.forEach((c, i) => {
-      const kozos = szam(c.sorok[0][1]), elt = szam(c.sorok[1][1]), ossz = szam(c.sorok[2][1]);
-      // A szintetikus esetben az elso oszlopbol szandekosan kivettuk a +10-et,
-      // a hivatalos pontszam viszont meg tartalmazza - ott ennyi a kulonbseg.
-      const varhato = (szintetikus && i === 0) ? ossz - 10 : ossz;
-      check(Math.abs(kozos + elt - varhato) < 0.005,
-        `${i + 1}. oszlop számlája: ${kozos} + ${elt} = ${varhato}`
-        + (varhato !== ossz ? ` (+10 hivatalos, a szintetikus keretben nem jár)` : ''));
-      check(Math.abs(ossz - szam(c.fejlec)) < 0.005, `${i + 1}. oszlop végösszege = a fejléc pontja (${c.fejlec})`);
+    tallies.forEach((c, i) => {
+      const shared = num(c.rows[0][1]), diff = num(c.rows[1][1]), total = num(c.rows[2][1]);
+      // In the synthetic case the +10 was deliberately removed from the first
+      // column, but the official score still contains it - that is the
+      // difference there.
+      const expected = (synthetic && i === 0) ? total - 10 : total;
+      check(Math.abs(shared + diff - expected) < 0.005,
+        `column ${i + 1} tally: ${shared} + ${diff} = ${expected}`
+        + (expected !== total ? ` (+10 official, not due in the synthetic squad)` : ''));
+      check(Math.abs(total - num(c.header)) < 0.005, `column ${i + 1} total = the header's points (${c.header})`);
     });
     await p.click('.mclose');
     await p.waitForTimeout(150);
   }
 
-  console.log('\npageerror:', perr.length ? perr : 'nincs');
+  console.log('\npageerror:', perr.length ? perr : 'none');
   await br.close();
   process.exit(failures.length ? 1 : 0);
 })();

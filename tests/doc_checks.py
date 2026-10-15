@@ -94,11 +94,9 @@ def read(path):
 
 
 # ---- D1: every test is documented ----
-# Both the old (*.teszt.js) and the new (*.test.js) browser test names count.
 test_readme = read("tests/README.md")
 tests = sorted(os.path.basename(f) for f in
-               glob.glob(os.path.join(ROOT, "tests", "*.teszt.js"))
-               + glob.glob(os.path.join(ROOT, "tests", "*.test.js"))
+               glob.glob(os.path.join(ROOT, "tests", "*.test.js"))
                + glob.glob(os.path.join(ROOT, "tests", "collector_*.py")))
 missing = [t for t in tests if "`%s`" % t not in test_readme]
 check(not missing, "D1: every test file has a row in tests/README"

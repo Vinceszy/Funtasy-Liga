@@ -1,136 +1,137 @@
 const { BASE, check, section, launch, finish } = require('./common');
-// AZ UTOLSO ISMERT ALLAS MAR AZ ELSO KEPEN OTT VAN (NB1).
+// THE LAST KNOWN SCORE IS ALREADY ON THE FIRST PAINT (NB1).
 //
-// A KIZART HIBA: "ha valaki mar lekerdezte, lassam azt -
-// ne lassak regebbi adatot, mint a legutobbi lekerdezes". A lap elso kepe
-// eddig a repobol jott, amit a gyujto 3 orankent frissit: ha a telefon tiz
-// perce mar lekerte a friss allast, a gepen megis a regi latszott, es meg
-// is kellett varni, amig a nyolc elo lekeres lefut.
+// THE EXCLUDED FAULT: "if someone has already fetched it, I want to see that
+// - I must not see older data than the latest fetch". The page's first paint
+// used to come from the repository, which the collector refreshes every 3
+// hours: if the phone had fetched the fresh score ten minutes earlier, the
+// computer still showed the old one, and one had to wait until the eight
+// live fetches had run.
 //
-// Amit rogzit:
-//  - a tarolt allas MAR AZELOTT kirajzolodik, hogy az elo lekeresek
-//    befejezodnenek (ez a lenyeg: nem kell megvarni oket);
-//  - a statuszsav a LEKERES idejet irja ki, nem a mostanit - vagyis nem
-//    allitja magarol, hogy epp most ellenorizte;
-//  - amint az elo lekeres beer, az veszi at a helyet;
-//  - ures tarolonal semmi nem romlik el, a lap a szokasos uton megy.
-const TAROLT_PONT = 77, ELO_PONT = 88;
-const ELO_KESES = 1500;                 // az elo lekeres lassu: legyen ido merni
-const PERCEKKEL_EZELOTT = 90;
+// What it pins:
+//  - the stored score is drawn BEFORE the live fetches finish (this is the
+//    point: there is no need to wait for them);
+//  - the status bar shows the time of the FETCH, not the current time - that
+//    is, it does not claim it has just checked;
+//  - as soon as the live fetch arrives, it takes over;
+//  - with an empty store nothing breaks, the page goes the usual way.
+const STORED_POINTS = 77, LIVE_POINTS = 88;
+const LIVE_DELAY = 1500;                // the live fetch is slow: leave time to measure
+const MINUTES_AGO = 90;
 
-const ketjegy = n => String(n).padStart(2, '0');
+const twoDigit = n => String(n).padStart(2, '0');
 
-function utak(page, tarolo, szamlalo){
+function routes(page, store, counter){
   page.route('**corsproxy.io/**', r => r.abort());
   page.route('**allorigins**', r => r.abort());
   page.route('**cors.sh/**', r => r.abort());
   page.route('**cors.lol/**', r => r.abort());
-  // A sajat Worker: a /tarolt-ot kiszolgaljuk, a proxy-utat elvagjuk, hogy
-  // az elo lekeres a kozvetlen uton (lentebb, keslelteve) menjen.
+  // Our own Worker: /tarolt is served, the proxy path is cut, so that the
+  // live fetch goes the direct way (below, delayed).
   page.route('**workers.dev/**', async route => {
     const u = new URL(route.request().url());
     if (u.pathname.replace(/\/+$/, '') !== '/tarolt') return route.abort();
-    szamlalo.tarolt++;
+    counter.stored++;
     return route.fulfill({ status: 200, contentType: 'application/json',
-                           body: JSON.stringify(tarolo(u)) });
+                           body: JSON.stringify(store(u)) });
   });
   return page.route('**://fantasy-api.mlsz.hu/**', async route => {
     const u = route.request().url();
     if (!u.includes('rankings')) return route.fulfill({ json: { data: [] } });
     const uname = decodeURIComponent((u.match(/filter%5Bsearch%5D=([^&]*)/) || [])[1] || '');
-    await new Promise(r => setTimeout(r, ELO_KESES));
-    szamlalo.elo++;
-    return route.fulfill({ json: { data: [valasz(uname, ELO_PONT)] } });
+    await new Promise(r => setTimeout(r, LIVE_DELAY));
+    counter.live++;
+    return route.fulfill({ json: { data: [answer(uname, LIVE_POINTS)] } });
   });
 }
-const valasz = (uname, pont) => ({
+const answer = (uname, points) => ({
   user_team: { user: { id: 5000, username: uname },
                round_statistics: Array.from({ length: 33 },
-                 (_, i) => ({ round_number: i + 1, points: pont })) },
+                 (_, i) => ({ round_number: i + 1, points: points })) },
   summary_statistics: {}, rounds: [],
 });
 
 (async () => {
   const br = await launch();
 
-  // ---- 1) a tarolt allas megelozi az elo lekerest ----
-  section('NB1: a tárolt állás már az első képen ott van');
+  // ---- 1) the stored score comes before the live fetch ----
+  section('NB1: the stored score is already on the first paint');
   const p = await br.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
-  const sz = { tarolt: 0, elo: 0 };
-  const ido = new Date(Date.now() - PERCEKKEL_EZELOTT * 60000);
-  await utak(p, u => {
-    const ki = {};
-    for (const cel of u.searchParams.getAll('url')){
-      const uname = decodeURIComponent((cel.match(/filter%5Bsearch%5D=([^&]*)/) || [])[1] || '');
-      ki[cel] = { ido: ido.toISOString(),
-                  adat: JSON.stringify({ data: [valasz(uname, TAROLT_PONT)] }) };
+  const cnt = { stored: 0, live: 0 };
+  const when = new Date(Date.now() - MINUTES_AGO * 60000);
+  await routes(p, u => {
+    const out = {};
+    for (const target of u.searchParams.getAll('url')){
+      const uname = decodeURIComponent((target.match(/filter%5Bsearch%5D=([^&]*)/) || [])[1] || '');
+      out[target] = { ido: when.toISOString(),
+                      adat: JSON.stringify({ data: [answer(uname, STORED_POINTS)] }) };
     }
-    return ki;
-  }, sz);
-  // A statuszsav szovegeit VEGIG gyujtjuk, nem egyszer olvassuk le. Amit a
-  // teszt allit - hogy a tarolt allas mellett a LEKERES ideje all -, az egy
-  // ALLAPOT, nem egy pillanat: a kovetkezo elo lekeres ugyanis maga irja
-  // felul a savot. Egyetlen leolvasas ezert terheles alatt mar a kovetkezo
-  // allapotot latta, es a teszt felrevezetoen bukott.
+    return out;
+  }, cnt);
+  // We collect the status bar's texts ALL ALONG instead of reading them once.
+  // What the test claims - that the time of the FETCH stands next to the
+  // stored score - is a STATE, not a moment: the next live fetch overwrites
+  // the bar itself. So a single read under load already saw the next state,
+  // and the test failed misleadingly.
   await p.addInitScript(() => {
-    window.__statuszok = [];
-    const fut = () => {
+    window.__statuses = [];
+    const run = () => {
       const el = document.getElementById('status');
-      if (!el) return setTimeout(fut, 10);
-      const jegyez = () => {
+      if (!el) return setTimeout(run, 10);
+      const note = () => {
         const t = el.textContent;
-        if (t && window.__statuszok[window.__statuszok.length - 1] !== t)
-          window.__statuszok.push(t);
+        if (t && window.__statuses[window.__statuses.length - 1] !== t)
+          window.__statuses.push(t);
       };
-      jegyez();
-      new MutationObserver(jegyez).observe(el, { childList: true, characterData: true,
-                                                 subtree: true });
+      note();
+      new MutationObserver(note).observe(el, { childList: true, characterData: true,
+                                               subtree: true });
     };
-    fut();
+    run();
   });
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
 
-  // A LIVE reteget nezzuk, nem a kiirt szoveget: a "88" veletlenul benne van
-  // egy archiv eredmenyben is ("71,88"), es a szoveges illesztes hamisan
-  // talalt - a teszt zoldet mondott volna arra, hogy az elo lekeres beert.
-  const eloErtekek = () => p.evaluate(() => Object.values(LIVE).flat()
+  // We look at the LIVE layer, not the displayed text: the "88" also happens
+  // to be in an archived result ("71,88"), and the text match found it
+  // falsely - the test would have said green to the live fetch having arrived.
+  const liveValues = () => p.evaluate(() => Object.values(LIVE).flat()
     .filter(Boolean).map(x => x[2]));
   await p.waitForFunction(v => Object.values(LIVE).flat().filter(Boolean)
-    .some(x => x[2] === v), TAROLT_PONT, { timeout: 20000 });
-  const eloKesz = sz.elo;
-  check(eloKesz === 0,
-     'a tárolt állás kirajzolódott, mielőtt bármelyik élő lekérés beért volna — '
-     + eloKesz + ' élő válasz volt eddig');
-  check(sz.tarolt === 1, 'a tárolt állás EGYETLEN kör-útból jött — ' + sz.tarolt + ' kérés');
+    .some(x => x[2] === v), STORED_POINTS, { timeout: 20000 });
+  const liveDone = cnt.live;
+  check(liveDone === 0,
+     'the stored score was drawn before any live fetch arrived — '
+     + liveDone + ' live answers so far');
+  check(cnt.stored === 1, 'the stored score came from a SINGLE round trip — ' + cnt.stored + ' requests');
 
-  const statuszok = await p.evaluate(() => window.__statuszok || []);
-  const vartOra = ketjegy(ido.getHours()) + ':' + ketjegy(ido.getMinutes());
-  const mostOra = ketjegy(new Date().getHours()) + ':' + ketjegy(new Date().getMinutes());
-  check(statuszok.some(t => t.includes(vartOra)),
-     'a státuszsáv a LEKÉRÉS idejét írta ki (' + vartOra + '), nem a mostanit ('
-     + mostOra + '): ' + JSON.stringify(statuszok));
+  const statuses = await p.evaluate(() => window.__statuses || []);
+  const expectedTime = twoDigit(when.getHours()) + ':' + twoDigit(when.getMinutes());
+  const nowTime = twoDigit(new Date().getHours()) + ':' + twoDigit(new Date().getMinutes());
+  check(statuses.some(t => t.includes(expectedTime)),
+     'the status bar showed the time of the FETCH (' + expectedTime + '), not the current one ('
+     + nowTime + '): ' + JSON.stringify(statuses));
 
-  // ---- 2) az elo lekeres atveszi a helyet ----
+  // ---- 2) the live fetch takes over ----
   await p.waitForFunction(v => Object.values(LIVE).flat().filter(Boolean)
-    .some(x => x[2] === v), ELO_PONT, { timeout: 30000 });
-  const vegso = await eloErtekek();
-  check(vegso.length > 0 && vegso.every(x => x === ELO_PONT),
-     'az élő lekérés felülírta a tároltat — élő értékek: ' + vegso.join(', '));
-  check(!perr.length, 'nincs JS-hiba: ' + perr.join(' | '));
+    .some(x => x[2] === v), LIVE_POINTS, { timeout: 30000 });
+  const final = await liveValues();
+  check(final.length > 0 && final.every(x => x === LIVE_POINTS),
+     'the live fetch overwrote the stored one — live values: ' + final.join(', '));
+  check(!perr.length, 'no JS error: ' + perr.join(' | '));
   await p.close();
 
-  // ---- 3) ures tarolo: minden megy a szokasos uton ----
-  section('NB1: üres tárolónál semmi nem romlik el');
+  // ---- 3) empty store: everything goes the usual way ----
+  section('NB1: with an empty store nothing breaks');
   const q = await br.newPage();
   const qerr = []; q.on('pageerror', e => qerr.push(e.message));
-  const sz2 = { tarolt: 0, elo: 0 };
-  await utak(q, () => ({}), sz2);
+  const cnt2 = { stored: 0, live: 0 };
+  await routes(q, () => ({}), cnt2);
   await q.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await q.waitForFunction(v => Object.values(LIVE).flat().filter(Boolean)
-    .some(x => x[2] === v), ELO_PONT, { timeout: 30000 });
-  check(true, 'az élő állás üres tároló mellett is megjelenik');
-  check(!qerr.length, 'nincs JS-hiba: ' + qerr.join(' | '));
+    .some(x => x[2] === v), LIVE_POINTS, { timeout: 30000 });
+  check(true, 'the live score shows with an empty store too');
+  check(!qerr.length, 'no JS error: ' + qerr.join(' | '));
   await q.close();
 
   await finish(br);

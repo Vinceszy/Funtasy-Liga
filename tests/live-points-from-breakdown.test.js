@@ -1,38 +1,39 @@
 const { BASE, check, section, launch, finish, blockApis, rewriteJson } = require('./common');
-// A JATEKOS ELO PONTJA A TETELES BONTASBOL JON, nem az FPL osszesitojebol.
+// A PLAYER'S LIVE POINTS COME FROM THE ITEMISED BREAKDOWN, not from the FPL total.
 //
-// MERVE (GW2): az FPL a ket erteket kulon tartja, es az
-// osszesito beragadt, mikozben az explain mar a lement meccs valos
-// esemenyeit adta. Calvert-Lewinnel a sor 1 pontot es 9 percet mutatott,
-// a bontasa viszont 90 percet, golt es bonuszt (2+4+2 = 8). Ugyanez a
-// HIVATALOS FPL-APPBAN is igy latszott, tehat a forras hibaja - de a
-// reszletezes a hiteles, es mi abbol tudunk szamolni.
+// MEASURED (GW2): the FPL keeps the two values separately, and the total
+// got stuck while the explain already gave the real events of the finished
+// match. For Calvert-Lewin the row showed 1 point and 9 minutes, but his
+// breakdown showed 90 minutes, a goal and bonus (2+4+2 = 8). The OFFICIAL FPL
+// APP showed it the same way, so it is the source's fault - but the
+// itemisation is the credible one, and we can compute from it.
 //
-// Amit rogzit:
-//  - a sor pontja es perce a bontas osszege (nem a total_points/minutes);
-//  - a csapat osszege es az elo meccsallas is ebbol jon;
-//  - ha nincs explain (meg nem jatszott), a stats marad a forras.
-const CSAPAT_MERET = 15, KEZDOK = 11;
+// What it pins:
+//  - the row's points and minutes are the sum of the breakdown (not
+//    total_points/minutes);
+//  - the team total and the live match score come from it too;
+//  - if there is no explain (not played yet), stats stays the source.
+const SQUAD_SIZE = 15, STARTERS = 11;
 
-// AZ ELO FORDULO a LEGFRISSEBB tarolt fordulo - nem egy beirt szam. A teszt
-// fixen a 2.-at tette elove, mert akkor annak meg nem volt eredmenye; a
-// lezarasaval a lap mar nem az elo overlaybe tette, es a teszt semmit nem
-// mert. Az elofeltetelt ezert KIMONDJUK: a menetrendbol menet kozben
-// kivesszuk a fordulo eredmenyet.
+// THE LIVE ROUND is the MOST RECENT stored round - not a hard-coded number.
+// The test used to pick round 2 fixed, because it had no result then; once
+// it closed, the page no longer put it into the live overlay, and the test
+// measured nothing. So we STATE the precondition: we remove the round's
+// result from the schedule on the fly.
 const HIST = require(require('path').join(__dirname, '..', 'draft_history.json'));
 const GW = Object.keys(HIST.rounds).map(Number).sort((a, b) => b - a)[0] + '';
-const eloFordulova = p => rewriteJson(p, '**/draft.json*', j => {
+const makeLiveRound = p => rewriteJson(p, '**/draft.json*', j => {
   j.schedule[GW] = (j.schedule[GW] || []).map(m => [m[0], m[1], null, null]);
   return j;
 });
 
 (async () => {
   const br = await launch();
-  section('PL: az élő pont a bontásból áll össze');
+  section('PL: the live points are built from the breakdown');
   const p = await br.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   await blockApis(p);
-  await eloFordulova(p);
+  await makeLiveRound(p);
 
   await p.route('**premierleague.com/api/**', async route => {
     const u = decodeURIComponent(route.request().url());
@@ -45,8 +46,8 @@ const eloFordulova = p => rewriteJson(p, '**/draft.json*', j => {
       const el = {};
       for (const lid of Object.keys(HIST.rounds[GW] || {}))
         for (const x of HIST.rounds[GW][lid])
-          // A CSAPDA: a stats BERAGADT (1 pont, 9 perc), az explain viszont
-          // a valos esemenyeket adja (90 perc + gol + bonusz = 8 pont).
+          // THE TRAP: stats is STUCK (1 point, 9 minutes), but explain gives
+          // the real events (90 minutes + goal + bonus = 8 points).
           el[x.e] = {
             stats: { total_points: 1, minutes: 9, starts: 1 },
             explain: [[[
@@ -63,29 +64,29 @@ const eloFordulova = p => rewriteJson(p, '**/draft.json*', j => {
   await p.waitForFunction(() => typeof LIVEPTS !== 'undefined'
                              && Object.keys(LIVEPTS).length > 0, null, { timeout: 30000 });
 
-  const egy = await p.evaluate(() => {
+  const one = await p.evaluate(() => {
     const e = Object.keys(LIVEPTS)[0];
-    return { pont: LIVEPTS[e], perc: (LIVE_MINUTES[e] || {}).perc };
+    return { points: LIVEPTS[e], minutes: (LIVE_MINUTES[e] || {}).perc };
   });
-  check(egy.pont === 8, 'a játékos pontja a bontás összege (8), nem a beragadt összesítő (1) '
-     + '— kapott: ' + egy.pont);
-  check(egy.perc === 90, 'a perc is a bontásból jön (90), nem a beragadt 9 — kapott: ' + egy.perc);
+  check(one.points === 8, 'the player\'s points are the breakdown sum (8), not the stuck total (1) '
+     + '— got: ' + one.points);
+  check(one.minutes === 90, 'the minutes come from the breakdown too (90), not the stuck 9 — got: ' + one.minutes);
 
-  // a csapat elo osszege: 11 kezdo x 8 = 88 (a pad nem szamit)
-  const allas = await p.evaluate(() => [...document.querySelectorAll('.match .score')]
+  // the team's live total: 11 starters x 8 = 88 (the bench does not count)
+  const score = await p.evaluate(() => [...document.querySelectorAll('.match .score')]
     .map(x => x.textContent.trim()).join(' '));
-  check(new RegExp('\\b' + (KEZDOK * 8) + '\\b').test(allas),
-     'az élő meccsállás is ebből számol (' + KEZDOK * 8 + '): ' + allas);
-  check(!/\b11\b/.test(allas),
-     'a beragadt összesítőből számolt állás (11) NEM jelenik meg: ' + allas);
-  check(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr.slice(0, 2)));
+  check(new RegExp('\\b' + (STARTERS * 8) + '\\b').test(score),
+     'the live match score is computed from it too (' + STARTERS * 8 + '): ' + score);
+  check(!/\b11\b/.test(score),
+     'a score computed from the stuck total (11) does NOT appear: ' + score);
+  check(perr.length === 0, 'no JS error: ' + JSON.stringify(perr.slice(0, 2)));
   await p.close();
 
-  section('Nincs bontás: marad a stats (még nem játszott)');
+  section('No breakdown: stats stays (not played yet)');
   const q = await br.newPage();
   const qerr = []; q.on('pageerror', e => qerr.push(e.message));
   await blockApis(q);
-  await eloFordulova(q);
+  await makeLiveRound(q);
   await q.route('**premierleague.com/api/**', async route => {
     const u = decodeURIComponent(route.request().url());
     const json = b => route.fulfill({ status: 200, contentType: 'application/json',
@@ -105,14 +106,14 @@ const eloFordulova = p => rewriteJson(p, '**/draft.json*', j => {
   await q.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
   await q.waitForFunction(() => typeof LIVEPTS !== 'undefined'
                              && Object.keys(LIVEPTS).length > 0, null, { timeout: 30000 });
-  const ures = await q.evaluate(() => {
+  const empty = await q.evaluate(() => {
     const e = Object.keys(LIVEPTS)[0];
-    return { pont: LIVEPTS[e], perc: (LIVE_MINUTES[e] || {}).perc };
+    return { points: LIVEPTS[e], minutes: (LIVE_MINUTES[e] || {}).perc };
   });
-  check(ures.pont === 3 && ures.perc === 45,
-     'üres bontásnál a stats marad a forrás (3 pont, 45 perc) — kapott: '
-     + ures.pont + ' pont, ' + ures.perc + ' perc');
-  check(qerr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(qerr.slice(0, 2)));
+  check(empty.points === 3 && empty.minutes === 45,
+     'with an empty breakdown stats stays the source (3 points, 45 minutes) — got: '
+     + empty.points + ' points, ' + empty.minutes + ' minutes');
+  check(qerr.length === 0, 'no JS error: ' + JSON.stringify(qerr.slice(0, 2)));
 
   await finish(br);
 })();

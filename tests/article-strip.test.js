@@ -1,8 +1,8 @@
 const { BASE, check, section, launch, finish, rewriteJson, blockApis } = require('./common');
 
-// Az a fordulo, amelyikre van beharangozonk - itt mondjuk ki egyszer, hogy
-// az elofeltetel (nincs hozza keret) es a megnyitott meccs ne csuszhasson szet.
-const BEHARANGOZO_R = 9;
+// The round we have a preview for - stated here once, so that the
+// precondition (no squad for it) and the opened match cannot drift apart.
+const PREVIEW_R = 9;
 // The round preview / round summary strip on the match page.
 //
 // The one thing this strip must never do is get in the way of the numbers.
@@ -16,17 +16,17 @@ const BEHARANGOZO_R = 9;
 // because there it is the only thing on the page.
 
 // a played round with summaries, and a fixture from it
-const R = 7, HAZAI = 'Bence', VENDEG = 'Csendi';
+const R = 7, HOME = 'Bence', AWAY = 'Csendi';
 // a fixture from the same round that has no article
-const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
+const EMPTY_R = 4, EH = 'Bazsa', EA = 'Csendi';
 
 (async () => {
   const br = await launch();
-  const hibak = [];
+  const errors = [];
 
-  for (const [w, h, cimke] of [[1000, 900, 'GÉP'], [390, 844, 'MOBIL']]) {
+  for (const [w, h, label] of [[1000, 900, 'DESKTOP'], [390, 844, 'MOBILE']]) {
     const p = await br.newPage({ viewport: { width: w, height: h } });
-    p.on('pageerror', e => hibak.push(cimke + ': ' + e.message));
+    p.on('pageerror', e => errors.push(label + ': ' + e.message));
     for (const m of ['**mlsz.hu/**', '**corsproxy.io/**', '**allorigins**'])
       await p.route(m, r => r.abort());
     await p.goto(BASE + 'nb1/');
@@ -35,174 +35,175 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     // beside everything else, so wait for it rather than for a timer
     await p.waitForFunction(() => typeof ARTICLES !== 'undefined' && ARTICLES !== null,
                             null, { timeout: 20000 });
-    await p.evaluate(([a, b, r]) => showMatchRound(a, b, r), [HAZAI, VENDEG, R]);
+    await p.evaluate(([a, b, r]) => showMatchRound(a, b, r), [HOME, AWAY, R]);
     await p.waitForSelector('#mBody .plr');
     await p.waitForSelector('#mBody .artstrip');
 
-    section(cimke);
-    const sav = p.locator('#mBody .artstrip');
-    const meret = async () => p.evaluate(() => {
+    section(label);
+    const strip = p.locator('#mBody .artstrip');
+    const measure = async () => p.evaluate(() => {
       const s = document.querySelector('#mBody .artstrip');
       const q = document.querySelector('#mBody .sqwrap');
-      return { sav: s.getBoundingClientRect().height,
-               fej: s.querySelector('.artstriphead').getBoundingClientRect().height,
-               keretTeteje: q.getBoundingClientRect().top,
-               nyitva: s.open };
+      return { strip: s.getBoundingClientRect().height,
+               head: s.querySelector('.artstriphead').getBoundingClientRect().height,
+               squadTop: q.getBoundingClientRect().top,
+               open: s.open };
     });
 
-    const zart = await meret();
-    check(zart.nyitva === false, 'lezárt forduló: a sáv CSUKVA jön');
-    check(zart.fej < 48, `a csukott fejléc egy sor (${Math.round(zart.fej)} px)`);
-    check(zart.sav < 60, `a csukott sáv nem nyom le semmit (${Math.round(zart.sav)} px)`);
-    check(zart.keretTeteje < h,
-       `a keret-oszlopok a képernyőn maradnak (tetejük ${Math.round(zart.keretTeteje)} px, ` +
-       `ablak ${h} px)`);
+    const closed = await measure();
+    check(closed.open === false, 'closed round: the strip comes COLLAPSED');
+    check(closed.head < 48, `the collapsed header is one line (${Math.round(closed.head)} px)`);
+    check(closed.strip < 60, `the collapsed strip pushes nothing down (${Math.round(closed.strip)} px)`);
+    check(closed.squadTop < h,
+       `the squad columns stay on screen (their top ${Math.round(closed.squadTop)} px, ` +
+       `window ${h} px)`);
     // The lead must stay ONE line however long it is - that is what keeps
     // the collapsed height fixed. A short lead fits on a wide screen, so
     // the clipping is measured with a lead that cannot possibly fit.
-    const csonkolt = await p.evaluate(() => {
+    const clipped = await p.evaluate(() => {
       const l = document.querySelector('#mBody .artstriplead');
-      const eredeti = l.textContent, magas = l.getBoundingClientRect().height;
+      const original = l.textContent, height = l.getBoundingClientRect().height;
       l.textContent = 'sokkal hosszabb felütés '.repeat(40);
-      const r = { egySor: magas < 26,
-                  hosszanIsEgySor: l.getBoundingClientRect().height < 26,
-                  csonk: l.scrollWidth > l.clientWidth };
-      l.textContent = eredeti;
+      const r = { oneLine: height < 26,
+                  longStillOneLine: l.getBoundingClientRect().height < 26,
+                  cut: l.scrollWidth > l.clientWidth };
+      l.textContent = original;
       return r;
     });
-    check(csonkolt.egySor, 'a felütés egyetlen sorban fut');
-    check(csonkolt.hosszanIsEgySor && csonkolt.csonk,
-       'a bármilyen hosszú felütés is egy sor marad, a vége levágva');
+    check(clipped.oneLine, 'the lead runs on a single line');
+    check(clipped.longStillOneLine && clipped.cut,
+       'a lead of any length stays one line, its end cut off');
 
-    // ---- kinyitás ----
-    await sav.locator('.artstriphead').click();
+    // ---- opening ----
+    await strip.locator('.artstriphead').click();
     await p.waitForTimeout(120);
-    const nyitott = await meret();
-    check(nyitott.nyitva === true, 'kattintásra kinyílik');
-    check(nyitott.sav > zart.sav + 40, `a nyitott sáv nagyobb (${Math.round(zart.sav)} → ` +
-       `${Math.round(nyitott.sav)} px)`);
-    check(nyitott.keretTeteje > zart.keretTeteje,
-       'a keret-oszlopok CSAK nyitáskor csúsznak lejjebb');
+    const opened = await measure();
+    check(opened.open === true, 'it opens on click');
+    check(opened.strip > closed.strip + 40, `the open strip is taller (${Math.round(closed.strip)} → ` +
+       `${Math.round(opened.strip)} px)`);
+    check(opened.squadTop > closed.squadTop,
+       'the squad columns slide down ONLY when it opens');
 
     // the text is the file's text, paragraph for paragraph
-    const egyezik = await p.evaluate(async ([a, b, r]) => {
+    const match = await p.evaluate(async ([a, b, r]) => {
       const j = await (await fetch('../articles.json')).json();
       const c = j.leagues.nb1[r].summary[a + '|' + b];
-      const pk = [...document.querySelectorAll('#mBody .artstripbody p')].map(x => x.textContent);
-      return { db: pk.length, vart: c.text.length,
-               elso: pk[0] === c.text[0], utolso: pk[pk.length - 1] === c.text[c.text.length - 1],
-               felutes: document.querySelector('#mBody .artstriplead').textContent === c.short,
-               cimke: document.querySelector('#mBody .artstriptag').textContent };
-    }, [HAZAI, VENDEG, String(R)]);
-    check(egyezik.db === egyezik.vart && egyezik.db > 0,
-       `minden bekezdés kint van (${egyezik.db}/${egyezik.vart})`);
-    check(egyezik.elso && egyezik.utolso, 'a szöveg szó szerint a fájlé');
-    check(egyezik.felutes, 'a csukott sávban a rövid változat áll');
-    check(egyezik.cimke === 'Összefoglaló', `lezárt fordulón „Összefoglaló" a címke (${egyezik.cimke})`);
+      const ps = [...document.querySelectorAll('#mBody .artstripbody p')].map(x => x.textContent);
+      return { count: ps.length, expected: c.text.length,
+               first: ps[0] === c.text[0], last: ps[ps.length - 1] === c.text[c.text.length - 1],
+               lead: document.querySelector('#mBody .artstriplead').textContent === c.short,
+               tag: document.querySelector('#mBody .artstriptag').textContent };
+    }, [HOME, AWAY, String(R)]);
+    check(match.count === match.expected && match.count > 0,
+       `every paragraph is shown (${match.count}/${match.expected})`);
+    check(match.first && match.last, 'the text is the file\'s, word for word');
+    check(match.lead, 'the collapsed strip shows the short version');
+    check(match.tag === 'Összefoglaló', `on a closed round the tag is "Összefoglaló" (${match.tag})`);
 
-    // ---- becsukás: nem marad utána semmi ----
-    await sav.locator('.artstriphead').click();
+    // ---- collapsing: nothing is left behind ----
+    await strip.locator('.artstriphead').click();
     await p.waitForTimeout(120);
-    const ujraZart = await meret();
-    check(Math.abs(ujraZart.keretTeteje - zart.keretTeteje) < 2,
-       'becsukás után a keret-oszlopok visszaállnak a helyükre');
+    const reclosed = await measure();
+    check(Math.abs(reclosed.squadTop - closed.squadTop) < 2,
+       'after collapsing, the squad columns return to their place');
 
-    // ---- az újrarajzolás nem csukja be a nézőre ----
-    await sav.locator('.artstriphead').click();
+    // ---- a redraw does not collapse it on the viewer ----
+    await strip.locator('.artstriphead').click();
     await p.waitForTimeout(120);
     await p.evaluate(() => matchBody());
     await p.waitForSelector('#mBody .artstrip');
     check(await p.evaluate(() => document.querySelector('#mBody .artstrip').open),
-       'újrarajzolás után is nyitva marad (élő fordulón percenként újraépül a test)');
+       'it stays open after a redraw (on a live round the body is rebuilt every minute)');
 
-    // ---- cikk nélküli meccs: NINCS sáv ----
-    await p.evaluate(([a, b, r]) => showMatchRound(a, b, r), [UH, UV, URES_R]);
+    // ---- match without an article: NO strip ----
+    await p.evaluate(([a, b, r]) => showMatchRound(a, b, r), [EH, EA, EMPTY_R]);
     await p.waitForSelector('#mBody .plr');
     check(await p.locator('#mBody .artstrip').count() === 0,
-       'cikk nélküli meccsen nyoma sincs a sávnak');
+       'a match without an article shows no trace of the strip');
     check(await p.evaluate(() => document.querySelector('#mBody').firstElementChild
                               .classList.contains('meccsfej')),
-       'ilyenkor a meccsfej az első elem — a nézet változatlan');
+       'then the match header is the first element — the view is unchanged');
 
     await p.close();
   }
 
-  // ---- beharangozó olyan fordulón, ahol még nincs keret ----
+  // ---- preview on a round that has no squad yet ----
   const p = await br.newPage({ viewport: { width: 1000, height: 900 } });
-  p.on('pageerror', e => hibak.push('BEHARANGOZÓ: ' + e.message));
-  // A KOZOS blockApis-t hasznaljuk, nem sajat listat: a sajat harom hosztot
-  // sorolt fel, a lekero ut-listaja viszont kilencet - a sajat Worker
-  // (/tarolt) kimaradt belole, es azon keresztul mar a 9. fordulo ELO
-  // allasa is bejott. Attol a lap - helyesen - az elo nezetre valtott, ahol
-  // nincs sav, es a teszt ugy bukott, hogy a termekben semmi nem valtozott.
+  p.on('pageerror', e => errors.push('PREVIEW: ' + e.message));
+  // We use the SHARED blockApis, not a list of our own: our own listed three
+  // hosts, but the fetcher's path list has nine - our own Worker (/tarolt)
+  // was missing from it, and through it the LIVE score of round 9 came in.
+  // That made the page - correctly - switch to the live view, which has no
+  // strip, and the test failed while nothing had changed in the product.
   await blockApis(p);
-  // AZ ELOFELTETELT KIMONDJUK, nem a repo pillanatnyi allapotabol orokoljuk:
-  // ebben a fordulóban NINCS keret. A fordulonkenti fajlt elvagjuk, de az
-  // onmagaban keves - a lap onnan a TELJES elozmenyre esik vissza
-  // (loadHistory). Amig a 9. fordulo keretei meg nem erkeztek meg, a teszt
-  // veletlenul zold volt; a piaczaraskor beerkeztek, es ez az allitas bukott,
-  // holott a termekben semmi nem valtozott.
+  // WE STATE THE PRECONDITION instead of inheriting it from the repository's
+  // current state: this round has NO squad. We cut off the per-round file,
+  // but that alone is not enough - the page then falls back to the FULL
+  // history (loadHistory). While the squads of round 9 had not arrived yet,
+  // the test was green by accident; when the market closed they arrived, and
+  // this claim failed, although nothing had changed in the product.
   await p.route('**/keretek/*.json*', r => r.fulfill({ status: 404, body: '' }));
   await rewriteJson(p, '**/squad_history.json*', j => {
-    delete (j.rounds || {})[String(BEHARANGOZO_R)];
+    delete (j.rounds || {})[String(PREVIEW_R)];
     return j;
   });
-  // A MECCSEKET IS kivesszuk: beharangozo = a fordulo meg nem kezdodott el.
-  // Amint a gyujto beirta a 9. fordulo meccseit, az egyik epp ment, es a lap
-  // - helyesen - a "meccs meg tart" uzenetre valtott, ahol nincs sav. A
-  // teszt ettol bukott, holott a termekben semmi nem valtozott: csak a
-  // kimondatlan elofeltetel (nincs meg meccs ehhez a fordulohoz) szunt meg.
+  // WE REMOVE THE MATCHES TOO: preview = the round has not started yet. As
+  // soon as the collector wrote in the matches of round 9, one of them was
+  // in progress, and the page - correctly - switched to the "match still in
+  // progress" message, which has no strip. The test failed from that while
+  // nothing had changed in the product: only the unstated precondition (no
+  // match for this round yet) had stopped holding.
   await rewriteJson(p, '**/meccsek.json*', j => {
-    delete (j.rounds || {})[String(BEHARANGOZO_R)];
+    delete (j.rounds || {})[String(PREVIEW_R)];
     return j;
   });
-  // ES a squads.json-t is: ez a fordulo keret-adatanak HARMADIK forrasa (az
-  // `eloKeretbol` ebbol szamol elo allast, halozat nelkul). Amig a 9.
-  // fordulo keretei meg nem erkeztek meg, ez a fajl a 8. fordulot tartotta,
-  // es a teszt veletlenul zold volt.
+  // AND squads.json too: this is the THIRD source of the round's squad data
+  // (`fillFromSquads` computes a live score from it, without the network).
+  // While the squads of round 9 had not arrived, this file held round 8,
+  // and the test was green by accident.
   await rewriteJson(p, '**/squads.json*', j => ({ ...j, squads: {} }));
-  // ES az EREDMENYT is: beharangozot csak olyan fordulohoz mutatunk, aminek
-  // meg nincs allasa. Amint a fordulo elindult, a menetrendben megjelent az
-  // ideiglenes pontszam, a lap - helyesen - a lejatszott agra ment, ahol
-  // nincs sav. Ugyanaz a fogas, amit a forduloelott-teszt is hasznal.
+  // AND the RESULT too: a preview is only shown for a round that has no
+  // score yet. As soon as the round started, the provisional score appeared
+  // in the schedule, and the page - correctly - went to the played branch,
+  // which has no strip. The same trick the pre-round test uses.
   await rewriteJson(p, '**/results.json*', j => {
-    (j.schedule[String(BEHARANGOZO_R)] || []).forEach(m => { m[2] = null; m[3] = null; });
+    (j.schedule[String(PREVIEW_R)] || []).forEach(m => { m[2] = null; m[3] = null; });
     return j;
   });
   await p.goto(BASE + 'nb1/');
   await p.waitForSelector('#table tr');
   await p.waitForFunction(() => typeof ARTICLES !== 'undefined' && ARTICLES !== null,
                           null, { timeout: 20000 });
-  const [bh, bv] = await p.evaluate(async r => {
+  const [ph, pa] = await p.evaluate(async r => {
     const j = await (await fetch('../articles.json')).json();
     return Object.keys(j.leagues.nb1[r].preview)[0].split('|');
-  }, String(BEHARANGOZO_R));
-  section('BEHARANGOZÓ (nincs még keret)');
-  await p.evaluate(([a, b, r]) => showMatchRound(a, b, +r), [bh, bv, String(BEHARANGOZO_R)]);
+  }, String(PREVIEW_R));
+  section('PREVIEW (no squad yet)');
+  await p.evaluate(([a, b, r]) => showMatchRound(a, b, +r), [ph, pa, String(PREVIEW_R)]);
   await p.waitForSelector('#mBody .artstrip');
   check(await p.evaluate(() => document.querySelector('#mBody .artstrip').open),
-     'keret nélküli fordulón a beharangozó NYITVA jön (nincs mit eltakarnia)');
+     'on a round without squads the preview comes OPEN (there is nothing for it to cover)');
   check(await p.evaluate(() => document.querySelector('#mBody .artstriptag').textContent)
-       === 'Beharangozó', 'a címke „Beharangozó"');
+       === 'Beharangozó', 'the tag is "Beharangozó"');
   check(await p.evaluate(() => !!document.querySelector('#mBody .loading')),
-     'a „még nem kezdődött el" üzenet mellette marad');
+     'the "még nem kezdődött el" (not started yet) message stays beside it');
   // the reader's own click wins over the default
   await p.locator('#mBody .artstriphead').click();
   await p.waitForTimeout(120);
-  await p.evaluate(([a, b]) => showMatchRound(a, b, 9), [bh, bv]);
+  await p.evaluate(([a, b]) => showMatchRound(a, b, 9), [ph, pa]);
   await p.waitForSelector('#mBody .artstrip');
   check(await p.evaluate(() => !document.querySelector('#mBody .artstrip').open),
-     'ha a néző becsukta, becsukva is marad');
+     'if the viewer collapsed it, it stays collapsed');
 
   await p.close();
 
-  // ---- ugyanaz a sav a PL-oldalon ----
-  // A PL-hez meg nincs irott cikk, a bekotest megis meg kell merni: a
-  // ket oldal ugyanazt a FunTasy.matchArticle-t hivja, csak masik
-  // liga-kulccsal es azonosito helyett nevvel. A tarolot a lapon
-  // allitjuk be - igy nem kell hamis fajlt tenni a repoba.
+  // ---- the same strip on the PL page ----
+  // There is no written article for PL yet, but the wiring still has to be
+  // measured: the two pages call the same FunTasy.matchArticle, only with a
+  // different league key and with a name instead of an id. The store is set
+  // up on the page - so no fake file has to go into the repository.
   const q = await br.newPage({ viewport: { width: 1000, height: 900 } });
-  q.on('pageerror', e => hibak.push('PL: ' + e.message));
+  q.on('pageerror', e => errors.push('PL: ' + e.message));
   for (const m of ['**premierleague.com/**', '**corsproxy.io/**', '**allorigins**'])
     await q.route(m, r => r.abort());
   await q.goto(BASE + 'pl/');
@@ -210,7 +211,7 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   await q.waitForFunction(() => Object.keys(SCHEDULE).length > 0, null, { timeout: 20000 });
   section('PL');
   const plm = await q.evaluate(() => {
-    // az utolso olyan fordulo, aminek van lejatszott meccse
+    // the last round that has a played match
     const gw = Object.keys(SCHEDULE).map(Number).sort((a, b) => b - a)
                  .find(g => (SCHEDULE[g] || []).some(played));
     const [h, v] = SCHEDULE[gw][0];
@@ -224,97 +225,99 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
   const pl = await q.evaluate(() => {
     const s = document.querySelector('#mBody .artstrip');
     const w = document.querySelector('#mBody .sqwrap');
-    return { nyitva: s.open, magas: s.getBoundingClientRect().height,
-             cimke: s.querySelector('.artstriptag').textContent,
-             felutes: s.querySelector('.artstriplead').textContent,
-             keretTeteje: w ? w.getBoundingClientRect().top : null };
+    return { open: s.open, height: s.getBoundingClientRect().height,
+             tag: s.querySelector('.artstriptag').textContent,
+             lead: s.querySelector('.artstriplead').textContent,
+             squadTop: w ? w.getBoundingClientRect().top : null };
   });
-  check(pl.nyitva === false, `PL: a sáv csukva jön (${plm.gw}. forduló)`);
-  check(pl.magas < 60, `PL: a csukott sáv egy sor (${Math.round(pl.magas)} px)`);
-  check(pl.cimke === 'Összefoglaló' && pl.felutes === 'Egy mondat a sav szamara.',
-     'PL: a címke és a felütés a tárolóból jön');
-  check(pl.keretTeteje !== null && pl.keretTeteje < 900,
-     `PL: a keret-oszlopok a képernyőn maradnak (${Math.round(pl.keretTeteje)} px)`);
+  check(pl.open === false, `PL: the strip comes collapsed (round ${plm.gw})`);
+  check(pl.height < 60, `PL: the collapsed strip is one line (${Math.round(pl.height)} px)`);
+  check(pl.tag === 'Összefoglaló' && pl.lead === 'Egy mondat a sav szamara.',
+     'PL: the tag and the lead come from the store');
+  check(pl.squadTop !== null && pl.squadTop < 900,
+     `PL: the squad columns stay on screen (${Math.round(pl.squadTop)} px)`);
   await q.locator('#mBody .artstriphead').click();
   await q.waitForTimeout(120);
   check(await q.$$eval('#mBody .artstripbody p', n => n.length) === 2,
-     'PL: kinyitva mindkét bekezdés kint van');
+     'PL: opened, both paragraphs are shown');
   await q.evaluate(([h, v, gw]) => showMatch(h, v, gw, 'root'), [plm.h, plm.v, plm.gw]);
   await q.waitForSelector('#mBody .artstrip');
   check(await q.evaluate(() => document.querySelector('#mBody .artstrip').open),
-     'PL: újrarajzolás után is nyitva marad');
+     'PL: it stays open after a redraw');
 
-  // ---- a lezart fordulon MINDKET szoveg kint marad ----
-  // A lefujas nem avultatja el a beharangozot: az mondja meg, mi volt a kerdes
-  // a meccs elott, az osszefoglalo meg azt, mi lett a valasz - egymas alatt a
-  // ketto tobbet er. A parost a TAROLOBOL keressuk ki, nem beirjuk: igy a
-  // teszt nem avul el azzal, hogy melyik fordulohoz mit irtunk.
-  section('Lezárt forduló: mindkét szöveg');
+  // ---- on a closed round BOTH texts stay ----
+  // The final whistle does not make the preview obsolete: it says what the
+  // question was before the match, the summary says what the answer was -
+  // the two together, one under the other, are worth more. We look the pair
+  // up FROM THE STORE instead of writing it in: so the test does not go
+  // stale with which round we wrote what for.
+  section('Closed round: both texts');
   const mk = await br.newPage({ viewport: { width: 1000, height: 900 } });
-  mk.on('pageerror', e => hibak.push('MINDKETTO: ' + e.message));
+  mk.on('pageerror', e => errors.push('BOTH: ' + e.message));
   for (const m of ['**mlsz.hu/**', '**corsproxy.io/**', '**allorigins**'])
     await mk.route(m, r => r.abort());
   await mk.goto(BASE + 'nb1/');
   await mk.waitForFunction(() => typeof ARTICLES !== 'undefined' && ARTICLES !== null,
                           null, { timeout: 20000 });
-  const par = await mk.evaluate(async () => {
+  const pair = await mk.evaluate(async () => {
     const j = await (await fetch('../articles.json')).json();
     const nb1 = (j.leagues || {}).nb1 || {};
     for (const r of Object.keys(nb1).sort((a, b) => b - a)) {
       const k = nb1[r];
       if (!k.summary || !k.preview) continue;
       const p = Object.keys(k.summary).find(x => k.preview[x]);
-      if (p) return { r: +r, felek: p.split('|') };
+      if (p) return { r: +r, sides: p.split('|') };
     }
     return null;
   });
-  if (!par) {
-    check(false, 'nincs olyan forduló, amihez összefoglaló ÉS beharangozó is van');
+  if (!pair) {
+    check(false, 'there is no round with both a summary AND a preview');
   } else {
     await mk.evaluate(([h, v, r]) => showMatchRound(h, v, r),
-                     [par.felek[0], par.felek[1], par.r]);
+                     [pair.sides[0], pair.sides[1], pair.r]);
     await mk.waitForSelector('#mBody .artstrip');
-    const cimkek = await mk.$$eval('#mBody .artstriptag', n => n.map(x => x.textContent));
-    check(JSON.stringify(cimkek) === JSON.stringify(['Összefoglaló', 'Beharangozó']),
-       `a ${par.r}. fordulón mindkettő ott van, az összefoglaló elöl — ` + cimkek.join(', '));
+    const tags = await mk.$$eval('#mBody .artstriptag', n => n.map(x => x.textContent));
+    check(JSON.stringify(tags) === JSON.stringify(['Összefoglaló', 'Beharangozó']),
+       `on round ${pair.r} both are there, the summary first — ` + tags.join(', '));
     check(await mk.$$eval('#mBody .artstrip', n => n.filter(x => x.open).length) === 0,
-       'és mindkettő csukva jön, nem tolja el a kereteket');
+       'and both come collapsed, they do not push the squads away');
   }
   await mk.close();
 
-  // ---- a ZARAS-KAPU: le nem zart fordulo osszefoglaloja nem latszik ----
-  // Amig a fordulo nem vegleges, a pontok meg elmozdulhatnak (NB1: meccs
-  // utani igazitasok, Draft: kulon veglegesites), tehat egy "X nyert
-  // ennyivel" szoveg hazudhat. A beharangozora ez nem all: az arrol szol,
-  // ami jon. A szoveget a lapon allitjuk be, hogy a repoban ne kelljen
-  // hozza le nem zart fordulos cikket tartani.
+  // ---- the CLOSING GATE: the summary of a round not yet closed does not show ----
+  // Until the round is final, the points can still move (NB1: post-match
+  // adjustments, Draft: separate finalisation), so an "X won by this much"
+  // text could lie. This does not apply to the preview: it is about what is
+  // coming. The text is set up on the page, so the repository does not have
+  // to hold an article for an unclosed round.
   //
   // No URL parameter opens the gate: not even an old `?draft=1` bookmark
   // can bring up an early summary.
-  for (const [ut, cimke] of [['nb1/', 'KAPU — NB1'],
-                             ['nb1/?draft=1', 'KAPU — NB1, ?draft=1'],
-                             ['pl/', 'KAPU — PL'],
-                             ['pl/?draft=1', 'KAPU — PL, ?draft=1']]) {
+  for (const [path, label] of [['nb1/', 'GATE — NB1'],
+                               ['nb1/?draft=1', 'GATE — NB1, ?draft=1'],
+                               ['pl/', 'GATE — PL'],
+                               ['pl/?draft=1', 'GATE — PL, ?draft=1']]) {
     const g = await br.newPage({ viewport: { width: 1000, height: 900 } });
-    g.on('pageerror', e => hibak.push(cimke + ': ' + e.message));
-    // A kozos blockApis, nem sajat lista: a sajat Worker (/tarolt) kimaradt a
-    // kezzel irt negybol, es azon at a tarolt allas a LIVE-ba is beirt - egy
-    // regi fordulo igy "nyitottnak" latszott a kereseskor, aztan lezartnak.
+    g.on('pageerror', e => errors.push(label + ': ' + e.message));
+    // The shared blockApis, not a list of our own: our own Worker (/tarolt)
+    // was missing from the hand-written four, and through it the stored
+    // score was written into LIVE too - so an old round looked "open" during
+    // the search, and closed afterwards.
     await blockApis(g);
-    await g.goto(BASE + ut);
+    await g.goto(BASE + path);
     await g.waitForSelector('#table tr');
-    section(cimke);
-    const nb1 = ut.startsWith('nb1');
-    // AZ ELOFELTETELT KIVARJUK, nem a tablazatra hagyatkozunk: a fejlec-sor
-    // mar a betoltes elott ott all, tehat a '#table tr' akkor is teljesul,
-    // amikor a fordulo-adat meg nincs meg. Igy a kereses ures allapotban
-    // futott le, es a teszt "nincs ilyen fordulo"-val bukott - felrevezetoen,
-    // mert nem a kapuval volt baj.
+    section(label);
+    const nb1 = path.startsWith('nb1');
+    // WE WAIT FOR THE PRECONDITION instead of relying on the table: the
+    // header row is there before loading, so '#table tr' is satisfied even
+    // when the round data is not in yet. The search then ran on the empty
+    // state, and the test failed with "no such round" - misleadingly, since
+    // the gate was not the problem.
     //
-    // Az NB1-en a MENETRENDRE varunk, nem az elo fordulora: a kapu barmelyik
-    // le nem zart fordulon vizsgalhato, es ELO FORDULO NINCS MINDIG. Amikor a
-    // bajnokseg szunetel, a LIVE ures marad, es a teszt ettol allt meg -
-    // holott a vizsgalt viselkedessel semmi baj nem volt.
+    // On NB1 we wait for the SCHEDULE, not for the live round: the gate can
+    // be examined on any unclosed round, and THERE IS NOT ALWAYS A LIVE
+    // ROUND. When the championship pauses, LIVE stays empty, and the test
+    // stopped on that - although the behaviour under test was fine.
     //
     // SCHEDULE on its own is not enough: an old schedule is baked into the
     // page, and results.json overwrites it only afterwards. A search that
@@ -327,50 +330,50 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
                                        : (typeof HIST !== 'undefined'
                                           && Object.keys(HIST).length > 0),
                             nb1, { timeout: 20000 });
-    const nyitott = await g.evaluate(async nb1 => {
-      // ugyanarra a meccsre MINDKET fajta szoveg megvan: igy az is latszik,
-      // hogy a kapu valaszt kozuluk, nem csak elrejt
-      const tarol = (liga, r, h, v) => ({ updated: null, leagues: { [liga]: { [r]: {
+    const opened = await g.evaluate(async nb1 => {
+      // BOTH kinds of text exist for the same match: so it also shows that
+      // the gate chooses between them, not just hides
+      const store = (league, r, h, v) => ({ updated: null, leagues: { [league]: { [r]: {
         summary: { [h + '|' + v]: { text: ['Osszefoglalo bekezdes.'],
                                     short: 'Osszefoglalo.', source: 'manual' } },
         preview: { [h + '|' + v]: { text: ['Beharangozo bekezdes.'],
                                     short: 'Beharangozo.', source: 'manual' } } } } } });
       if (nb1) {
-        // a legkozelebbi MEG NEM LEZART fordulo - fut vagy csak ezutan jon
+        // the nearest round NOT YET CLOSED - running or still to come
         const r = Object.keys(SCHEDULE).map(Number).sort((a, b) => a - b)
                     .find(x => !roundClosed(x) && (SCHEDULE[x] || []).length);
         if (!r) return null;
         const [h, v] = SCHEDULE[r][0];
-        ARTICLES = tarol('nb1', r, h, v);
+        ARTICLES = store('nb1', r, h, v);
         await showMatchRound(h, v, r);
-        return { r, zart: roundClosed(r) };
+        return { r, closed: roundClosed(r) };
       }
-      // A SORSOLASBOL keressuk a kovetkezo le nem zart fordulot, nem az
-      // eddigi fordulok tortenetebol: amint mind lezar, a tortenetben mar
-      // nincs nyitott, es a teszt a szezon allapotatol bukna meg.
+      // We look for the next unclosed round in the FIXTURE LIST, not in the
+      // history of the rounds so far: once they have all closed, the history
+      // has no open one, and the test would fail on the state of the season.
       const gw = Object.keys(SCHEDULE).map(Number).sort((a, b) => a - b)
                    .find(x => !roundClosed(x) && (SCHEDULE[x] || []).length);
       if (!gw) return null;
       const [h, v] = SCHEDULE[gw][0];
-      ARTICLES = tarol('pl', gw, teamName(h), teamName(v));
+      ARTICLES = store('pl', gw, teamName(h), teamName(v));
       showMatch(h, v, gw, 'root');
-      return { r: gw, zart: roundClosed(gw) };
+      return { r: gw, closed: roundClosed(gw) };
     }, nb1);
-    check(!!nyitott && nyitott.zart === false,
-       `van le nem zárt forduló keretekkel (${nyitott && nyitott.r}.)`);
+    check(!!opened && opened.closed === false,
+       `there is an unclosed round with squads (${opened && opened.r}.)`);
     await g.waitForSelector('#mBody .artstrip', { timeout: 15000 });
-    const allapot = await g.evaluate(() => {
+    const state = await g.evaluate(() => {
       const s = document.querySelector('#mBody .artstrip');
-      return { cimke: s.querySelector('.artstriptag').textContent,
-               db: document.querySelectorAll('#mBody .artstrip').length,
-               szoveg: s.querySelector('.artstripbody p').textContent };
+      return { tag: s.querySelector('.artstriptag').textContent,
+               count: document.querySelectorAll('#mBody .artstrip').length,
+               text: s.querySelector('.artstripbody p').textContent };
     });
-    check(allapot.db === 1 && allapot.cimke === 'Beharangozó'
-         && allapot.szoveg === 'Beharangozo bekezdes.',
-       `le nem zárt fordulón CSAK a beharangozó látszik (${allapot.cimke}, ${allapot.db} sáv)`);
+    check(state.count === 1 && state.tag === 'Beharangozó'
+         && state.text === 'Beharangozo bekezdes.',
+       `on an unclosed round ONLY the preview shows (${state.tag}, ${state.count} strip)`);
     await g.close();
   }
 
-  hibak.forEach(x => check(false, 'oldalhiba: ' + x));
+  errors.forEach(x => check(false, 'page error: ' + x));
   await finish(br);
 })();

@@ -1,136 +1,138 @@
 const { check, section, finish } = require('./common');
-// A WORKER "UTOLSO ISMERT ALLAS" TAROLOJA (tartalek/proxy-worker.js).
+// THE WORKER'S "LAST KNOWN SCORE" STORE (tartalek/proxy-worker.js).
 //
-// MIERT KELL: a gyorsitotar lejar es eldob - aki a lejarat utan erkezik,
-// annak megint meg kell varnia a teljes lekerest, kozben pedig a 3 orankent
-// frissulo repo-adatot latja. A kert viselkedes viszont az, hogy "ne lassak
-// regebbit annal, amit barki utoljara lekert".
+// WHY IT IS NEEDED: the cache expires and drops - whoever arrives after the
+// expiry has to wait for the full fetch again, and meanwhile sees the
+// repository data that refreshes every 3 hours. The wanted behaviour is "I
+// must not see anything older than what anybody fetched last".
 //
-// A Workert INNEN nem lehet elerni (a munkakornyezet nem enged ki a
-// workers.dev-re), ezert a logikat itt, hamis KV-vel es hamis halozattal
-// merjuk. A vegpontrol-vegpontig meres kulon, GitHub Actions-bol megy.
+// The Worker CANNOT be reached from here (the work environment does not
+// allow going out to workers.dev), so the logic is measured here, with a
+// fake KV and a fake network. The end-to-end measurement runs separately,
+// from GitHub Actions.
 //
-// Amit rogzit:
-//  - a tarolhato valasz atmegy valtozatlanul, es egyszer el is tarolodik;
-//  - VALTOZATLAN valasz nem ir ujra (a napi 1000 KV-iras miatt kritikus);
-//  - valtozas eseten ir;
-//  - a gyorsan valtozo PL elo pontot NEM tarolja;
-//  - a gyorsitotar-toro belyeg (fpl_) nem csinal uj kulcsot;
-//  - a /tarolt vegpont felfele EGYETLEN kerest sem indit;
-//  - kotes nelkul a Worker pontosan ugy mukodik, mint korabban.
+// What it pins:
+//  - a storable answer passes through unchanged, and is stored once;
+//  - an UNCHANGED answer does not write again (critical because of the
+//    1000 KV writes a day);
+//  - on a change it writes;
+//  - it does NOT store the fast-changing PL live points;
+//  - the cache-busting stamp (fpl_) does not create a new key;
+//  - the /tarolt endpoint does not start a SINGLE upstream request;
+//  - without the binding the Worker works exactly as before.
 const PROXY = 'https://funtasy-liga.swick00.workers.dev';
-const EREDET = 'https://vinceszy.github.io';
+const ORIGIN = 'https://vinceszy.github.io';
 const NB1 = uname => 'https://fantasy-api.mlsz.hu/competitions/3/rankings'
   + '?include=user_team.user.id&page=1&per_page=5&filter%5Bsearch%5D=' + uname;
-const PL_ELO  = 'https://draft.premierleague.com/api/event/5/live';
-const PL_KERET = 'https://draft.premierleague.com/api/entry/900001/event/5';
+const PL_LIVE  = 'https://draft.premierleague.com/api/event/5/live';
+const PL_SQUAD = 'https://draft.premierleague.com/api/entry/900001/event/5';
 
-function ujKV(){
-  const tar = new Map();
+function newKV(){
+  const store = new Map();
   return {
-    irasok: 0, olvasasok: 0, tar,
-    async get(k){ this.olvasasok++; const v = tar.get(k); return v ? v.ertek : null; },
+    writes: 0, reads: 0, store,
+    async get(k){ this.reads++; const v = store.get(k); return v ? v.value : null; },
     async getWithMetadata(k){
-      this.olvasasok++; const v = tar.get(k);
-      return v ? { value: v.ertek, metadata: v.meta } : { value: null, metadata: null };
+      this.reads++; const v = store.get(k);
+      return v ? { value: v.value, metadata: v.meta } : { value: null, metadata: null };
     },
-    async put(k, v, o){ this.irasok++; tar.set(k, { ertek: v, meta: (o || {}).metadata }); },
+    async put(k, v, o){ this.writes++; store.set(k, { value: v, meta: (o || {}).metadata }); },
   };
 }
 
 (async () => {
-  const modul = await import('file://' + require('path').join(__dirname, '..',
-                                                'tartalek', 'proxy-worker.js'));
-  const worker = modul.default;
+  const mod = await import('file://' + require('path').join(__dirname, '..',
+                                              'tartalek', 'proxy-worker.js'));
+  const worker = mod.default;
 
-  // hamis halozat: a valaszt a teszt allitja be, es szamoljuk a hivasokat
-  let valaszTorzs = '{"data":[1]}', felfele = 0, utolsoCel = null;
+  // fake network: the test sets the answer, and we count the calls
+  let answerBody = '{"data":[1]}', upstream = 0, lastTarget = null;
   globalThis.fetch = async (u) => {
-    felfele++; utolsoCel = String(u);
-    return new Response(valaszTorzs, { status: 200,
+    upstream++; lastTarget = String(u);
+    return new Response(answerBody, { status: 200,
       headers: { 'Content-Type': 'application/json' } });
   };
 
-  const varok = [];
-  const ctx = { waitUntil: p => varok.push(p) };
-  const hiv = async (ut, env) => {
+  const pending = [];
+  const ctx = { waitUntil: p => pending.push(p) };
+  const call = async (path, env) => {
     const r = await worker.fetch(
-      new Request(ut, { headers: { Origin: EREDET } }), env, ctx);
-    await Promise.all(varok.splice(0));      // a waitUntil-ok befejezese
+      new Request(path, { headers: { Origin: ORIGIN } }), env, ctx);
+    await Promise.all(pending.splice(0));      // finish the waitUntil calls
     return r;
   };
-  const at = cel => PROXY + '/?url=' + encodeURIComponent(cel);
+  const via = target => PROXY + '/?url=' + encodeURIComponent(target);
 
-  // ---- 1) tarolhato valasz: atmegy es eltarolodik ----
-  section('Worker: a ritkán változó választ megjegyzi');
-  const kv = ujKV();
+  // ---- 1) storable answer: passes through and is stored ----
+  section('Worker: remembers the rarely changing answer');
+  const kv = newKV();
   const env = { TAROLT: kv };
-  let r = await hiv(at(NB1('HolVanSalah')), env);
-  check(r.status === 200, 'a válasz átmegy (HTTP ' + r.status + ')');
-  check((await r.text()) === valaszTorzs, 'a törzs változatlan');
-  check(felfele === 1, 'egy kérés ment felfelé — ' + felfele);
-  check(kv.irasok === 1, 'egyszer tárolt — ' + kv.irasok + ' írás');
-  const kulcs = [...kv.tar.keys()][0];
-  check(!!(kv.tar.get(kulcs).meta || {}).ido, 'az időbélyeg is elmentődött');
+  let r = await call(via(NB1('HolVanSalah')), env);
+  check(r.status === 200, 'the answer passes through (HTTP ' + r.status + ')');
+  check((await r.text()) === answerBody, 'the body is unchanged');
+  check(upstream === 1, 'one request went upstream — ' + upstream);
+  check(kv.writes === 1, 'stored once — ' + kv.writes + ' writes');
+  const key = [...kv.store.keys()][0];
+  check(!!(kv.store.get(key).meta || {}).ido, 'the timestamp was saved too');
 
-  // ---- 2) valtozatlan valasz: NEM ir ujra ----
-  section('Worker: változatlan válaszra nem ír');
-  await hiv(at(NB1('HolVanSalah')), env);
-  check(kv.irasok === 1, 'továbbra is 1 írás — ' + kv.irasok
-     + ' (a napi 1000-es keret miatt ez a lényeg)');
+  // ---- 2) unchanged answer: does NOT write again ----
+  section('Worker: does not write on an unchanged answer');
+  await call(via(NB1('HolVanSalah')), env);
+  check(kv.writes === 1, 'still 1 write — ' + kv.writes
+     + ' (this is the point, because of the 1000-a-day limit)');
 
-  // ---- 3) valtozas: ir ----
-  section('Worker: változásra ír');
-  valaszTorzs = '{"data":[2]}';
-  await hiv(at(NB1('HolVanSalah')), env);
-  check(kv.irasok === 2, 'most már 2 írás — ' + kv.irasok);
-  check(kv.tar.size === 1, 'ugyanaz a kulcs frissült, nem új jött létre — '
-     + kv.tar.size + ' kulcs');
+  // ---- 3) change: writes ----
+  section('Worker: writes on a change');
+  answerBody = '{"data":[2]}';
+  await call(via(NB1('HolVanSalah')), env);
+  check(kv.writes === 2, 'now 2 writes — ' + kv.writes);
+  check(kv.store.size === 1, 'the same key was updated, no new one was created — '
+     + kv.store.size + ' keys');
 
-  // ---- 4) a gyorsitotar-toro belyeg nem csinal uj kulcsot ----
-  section('Worker: az fpl_ bélyeg nem szór szét kulcsokat');
-  const kv2 = ujKV(), env2 = { TAROLT: kv2 };
-  await hiv(at(PL_KERET + '?fpl_=111'), env2);
-  await hiv(at(PL_KERET + '?fpl_=222'), env2);
-  check(kv2.tar.size === 1, 'egyetlen kulcs — ' + kv2.tar.size);
-  check(kv2.irasok === 1, 'a második nem írt újra (ugyanaz az adat) — ' + kv2.irasok);
+  // ---- 4) the cache-busting stamp does not create a new key ----
+  section('Worker: the fpl_ stamp does not scatter keys');
+  const kv2 = newKV(), env2 = { TAROLT: kv2 };
+  await call(via(PL_SQUAD + '?fpl_=111'), env2);
+  await call(via(PL_SQUAD + '?fpl_=222'), env2);
+  check(kv2.store.size === 1, 'a single key — ' + kv2.store.size);
+  check(kv2.writes === 1, 'the second one did not write again (same data) — ' + kv2.writes);
 
-  // ---- 5) a gyorsan valtozo PL elo pontot nem taroljuk ----
-  section('Worker: a percenként változó PL élő pontot nem tárolja');
-  const kv3 = ujKV(), env3 = { TAROLT: kv3 };
-  const r3 = await hiv(at(PL_ELO), env3);
-  check(r3.status === 200, 'a válasz ugyanúgy átmegy');
-  check(kv3.irasok === 0, 'egyetlen írás sem — ' + kv3.irasok);
+  // ---- 5) the fast-changing PL live points are not stored ----
+  section('Worker: does not store the PL live points that change every minute');
+  const kv3 = newKV(), env3 = { TAROLT: kv3 };
+  const r3 = await call(via(PL_LIVE), env3);
+  check(r3.status === 200, 'the answer passes through just the same');
+  check(kv3.writes === 0, 'not a single write — ' + kv3.writes);
 
-  // ---- 6) /tarolt: azonnali valasz, felfele semmi ----
-  section('Worker: a /tarolt nem megy ki a hálózatra');
-  const elotte = felfele;
-  const t = await hiv(PROXY + '/tarolt?url=' + encodeURIComponent(NB1('HolVanSalah'))
-                      + '&url=' + encodeURIComponent(NB1('Hoxha98')), env);
-  check(felfele === elotte, 'egyetlen kérés sem ment felfelé — ' + (felfele - elotte));
+  // ---- 6) /tarolt: immediate answer, nothing upstream ----
+  section('Worker: /tarolt does not go out to the network');
+  const before = upstream;
+  const t = await call(PROXY + '/tarolt?url=' + encodeURIComponent(NB1('HolVanSalah'))
+                       + '&url=' + encodeURIComponent(NB1('Hoxha98')), env);
+  check(upstream === before, 'not a single request went upstream — ' + (upstream - before));
   const j = await t.json();
-  check(!!j[NB1('HolVanSalah')], 'a tárolt állás megjött');
+  check(!!j[NB1('HolVanSalah')], 'the stored score arrived');
   check(j[NB1('HolVanSalah')].adat === '{"data":[2]}',
-     'a LEGUTÓBBI lekérés adata jött, nem a korábbi');
-  check(!!j[NB1('HolVanSalah')].ido, 'időbélyeggel együtt');
-  check(!(NB1('Hoxha98') in j), 'amit még senki nem kért le, arra nincs sor');
+     'the data of the LATEST fetch came, not the earlier one');
+  check(!!j[NB1('HolVanSalah')].ido, 'together with its timestamp');
+  check(!(NB1('Hoxha98') in j), 'what nobody has fetched yet has no entry');
 
-  // ---- 7) kotes nelkul minden marad a regiben ----
-  section('Worker: KV-kötés nélkül a régi viselkedés');
-  const elotte2 = felfele;
-  const r4 = await hiv(at(NB1('samsonp')), {});
-  check(r4.status === 200 && (await r4.text()) === valaszTorzs,
-     'a proxy ugyanúgy szolgál ki');
-  check(felfele === elotte2 + 1, 'a lekérés megtörtént');
-  const t4 = await hiv(PROXY + '/tarolt?url=' + encodeURIComponent(NB1('samsonp')), {});
-  check((await t4.text()) === '{}', 'a /tarolt üres választ ad, nem hibát');
+  // ---- 7) without the binding everything stays as before ----
+  section('Worker: without the KV binding, the old behaviour');
+  const before2 = upstream;
+  const r4 = await call(via(NB1('samsonp')), {});
+  check(r4.status === 200 && (await r4.text()) === answerBody,
+     'the proxy serves just the same');
+  check(upstream === before2 + 1, 'the fetch happened');
+  const t4 = await call(PROXY + '/tarolt?url=' + encodeURIComponent(NB1('samsonp')), {});
+  check((await t4.text()) === '{}', '/tarolt gives an empty answer, not an error');
 
-  // ---- 8) az eredet-ellenorzes a /tarolt-ra is all ----
-  section('Worker: a /tarolt sem szolgál ki idegen eredetet');
+  // ---- 8) the origin check applies to /tarolt too ----
+  section('Worker: /tarolt does not serve a foreign origin either');
   const r5 = await worker.fetch(
     new Request(PROXY + '/tarolt?url=' + encodeURIComponent(NB1('HolVanSalah')),
                 { headers: { Origin: 'https://valaki.mas' } }), env, ctx);
-  check(r5.status === 403, 'idegen eredet elutasítva (HTTP ' + r5.status + ')');
+  check(r5.status === 403, 'foreign origin rejected (HTTP ' + r5.status + ')');
 
   await finish();
 })();

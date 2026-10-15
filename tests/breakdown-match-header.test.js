@@ -1,36 +1,36 @@
 const { BASE, check, launch, finish } = require('./common');
-// A jatekos MECCSE a pont-bontas folott: "ARS 2-1 BRE - 70. perc".
+// The player's MATCH above the points breakdown: "ARS 2-1 BRE - 70. perc".
 //
-// Az allas a fixtures valaszabol jon - ugyanabbol a keresbol, amit az elo
-// fordulohoz amugy is elkuldunk. Lezart fordulora egy kulon (fordulonkent
-// gyorsitotarazott) fixtures-lekeres megy; a bontasHTML amugy is aszinkron,
-// ezert nem kell utantoltes.
+// The score comes from the fixtures answer - from the same request we send
+// for the live round anyway. For a closed round a separate fixtures fetch
+// goes out (cached per round); breakdownHTML is asynchronous anyway, so no
+// fill-in afterwards is needed.
 //
-// Amit rogzit: futo meccsen a meccsora, lefujva "vege", el nem kezdodott
-// meccsnel nincs allas, dupla forduloban ket sor, es hogy a fejlec a
-// tablazat FOLOTT all.
-const GW = 1, REGI = 7;
-const MECCS = (id, t) => ({ id, minutes: 0, ...t });
-const ELO = [
-  // futo meccs, van allas
-  MECCS(11, { started: true,  finished_provisional: false, finished: false,
+// What it pins: on a running match the match clock, once finished "vége"
+// (over), no score for a match that has not started, two rows in a double
+// gameweek, and that the header stands ABOVE the table.
+const GW = 1, OLD = 7;
+const MATCH = (id, t) => ({ id, minutes: 0, ...t });
+const LIVE = [
+  // running match, has a score
+  MATCH(11, { started: true,  finished_provisional: false, finished: false,
               kickoff_time: '2026-08-24T19:00:00Z', team_h: 1, team_a: 4,
               team_h_score: 2, team_a_score: 1 }),
-  // lefujva
-  MECCS(12, { started: true,  finished_provisional: true,  finished: false,
+  // finished
+  MATCH(12, { started: true,  finished_provisional: true,  finished: false,
               kickoff_time: '2026-08-24T16:00:00Z', team_h: 2, team_a: 5,
               team_h_score: 0, team_a_score: 3 }),
-  // meg nem kezdodott: nincs allas
-  MECCS(13, { started: false, finished_provisional: false, finished: false,
+  // not started yet: no score
+  MATCH(13, { started: false, finished_provisional: false, finished: false,
               kickoff_time: '2026-08-25T19:00:00Z', team_h: 3, team_a: 6,
               team_h_score: null, team_a_score: null }),
-  // az 1-es klub MASODIK meccse ugyanebben a forduloban (dupla fordulo)
-  MECCS(14, { started: false, finished_provisional: false, finished: false,
+  // club 1's SECOND match in the same round (double gameweek)
+  MATCH(14, { started: false, finished_provisional: false, finished: false,
               kickoff_time: '2026-08-26T19:00:00Z', team_h: 7, team_a: 1,
               team_h_score: null, team_a_score: null }),
 ];
-const LEZART = [
-  MECCS(71, { started: true, finished_provisional: true, finished: true,
+const CLOSED = [
+  MATCH(71, { started: true, finished_provisional: true, finished: true,
               kickoff_time: '2026-08-01T14:00:00Z', team_h: 1, team_a: 2,
               team_h_score: 4, team_a_score: 0 }),
 ];
@@ -40,25 +40,25 @@ const LEZART = [
   const p = await br.newPage({ viewport: { width: 900, height: 900 } });
   const perr = []; p.on('pageerror', e => perr.push(e.message));
 
-  const adat = require(require('path').join(__dirname, '..', 'draft_players.json'));
-  const klub = { egy: adat.teams['1'], ketto: adat.teams['2'], harom: adat.teams['3'] };
-  const jatekos = {};
-  for (const [k, rov] of Object.entries(klub))
-    jatekos[k] = Object.entries(adat.players).filter(([, v]) => v.t === rov).map(([x]) => +x)[0];
+  const data = require(require('path').join(__dirname, '..', 'draft_players.json'));
+  const club = { one: data.teams['1'], two: data.teams['2'], three: data.teams['3'] };
+  const player = {};
+  for (const [k, short] of Object.entries(club))
+    player[k] = Object.entries(data.players).filter(([, v]) => v.t === short).map(([x]) => +x)[0];
 
-  let fxKeresek = 0;
+  let fxRequests = 0;
   await p.route('**premierleague.com/**', route => {
     const u = decodeURIComponent(route.request().url());
     const json = b => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
     if (/event-status/.test(u)) return json({ status: [] });
     if (/\/api\/game/.test(u)) return json({ current_event: GW, current_event_finished: false });
     if (/\/fixtures/.test(u)) {
-      fxKeresek++;
-      return json(/event\/7\//.test(u) ? LEZART : ELO);
+      fxRequests++;
+      return json(/event\/7\//.test(u) ? CLOSED : LIVE);
     }
     if (/\/live/.test(u)) {
       const el = {};
-      for (const id of Object.values(jatekos))
+      for (const id of Object.values(player))
         el[id] = { stats: { total_points: 5, minutes: 70, starts: 1 },
                    explain: [[[{ stat: 'minutes', value: 70, points: 2 }], 11]] };
       return json({ elements: el });
@@ -69,59 +69,59 @@ const LEZART = [
   await p.waitForFunction(() => typeof LIVE_MATCHES !== 'undefined' && LIVE_MATCHES
     && Object.keys(LIVE_MATCHES).length > 0, null, { timeout: 20000 });
 
-  // a fejlecsorokat szoveggé alakitva kerjuk vissza: [bal, jobb] paronkent
-  const fejek = (e, gw) => p.evaluate(async ([e, gw]) => {
+  // the header rows come back as text: [left, right] pairs
+  const headers = (e, gw) => p.evaluate(async ([e, gw]) => {
     const h = await breakdownHTML(e, gw);
     const d = document.createElement('div');
     d.innerHTML = h || '';
-    const sorok = [...d.querySelectorAll('.bontasmeccs')]
+    const rows = [...d.querySelectorAll('.bontasmeccs')]
       .map(x => [x.children[0].textContent.trim().replace(/\s+/g, ' '),
                  x.children[1].textContent.trim()]);
-    // a fejlec a tablazat FOLOTT all-e?
-    const elso = d.firstElementChild;
-    const tabla = d.querySelector('table, .acctable, .loading');
-    return { sorok, felul: !!elso && elso.classList.contains('bontasmeccs'),
-             vanTabla: !!tabla };
+    // does the header stand ABOVE the table?
+    const first = d.firstElementChild;
+    const table = d.querySelector('table, .acctable, .loading');
+    return { rows, onTop: !!first && first.classList.contains('bontasmeccs'),
+             hasTable: !!table };
   }, [e, gw]);
 
-  console.log('--- élő forduló ---');
-  const futo = await fejek(jatekos.egy, GW);
-  console.log('   ' + JSON.stringify(futo.sorok));
-  check(futo.sorok.length === 2, 'dupla fordulóban mindkét meccs sort kap (' + futo.sorok.length + ')');
-  check(futo.sorok[0][0] === klub.egy + ' 2–1 ' + adat.teams['4'],
-     'a futó meccs állása a hazai–vendég sorrendben: ' + futo.sorok[0][0]);
-  check(futo.sorok[0][1] === '70. perc', 'a meccsóra a játékosok perceiből: ' + futo.sorok[0][1]);
-  check(futo.sorok[1][0] === adat.teams['7'] + '–' + klub.egy && futo.sorok[1][1] === 'még nem kezdődött',
-     'az el nem kezdődött meccsnél nincs állás, csak a két klub');
-  check(futo.felul, 'a meccsfejléc a pont-bontás FÖLÖTT áll');
-  check(futo.vanTabla, 'a pont-bontás maga is ott van alatta');
+  console.log('--- live round ---');
+  const running = await headers(player.one, GW);
+  console.log('   ' + JSON.stringify(running.rows));
+  check(running.rows.length === 2, 'in a double gameweek both matches get a row (' + running.rows.length + ')');
+  check(running.rows[0][0] === club.one + ' 2–1 ' + data.teams['4'],
+     'the running match\'s score in home–away order: ' + running.rows[0][0]);
+  check(running.rows[0][1] === '70. perc', 'the match clock from the players\' minutes: ' + running.rows[0][1]);
+  check(running.rows[1][0] === data.teams['7'] + '–' + club.one && running.rows[1][1] === 'még nem kezdődött',
+     'a match that has not started has no score, only the two clubs');
+  check(running.onTop, 'the match header stands ABOVE the points breakdown');
+  check(running.hasTable, 'the points breakdown itself is there below it');
 
-  const lefujt = await fejek(jatekos.ketto, GW);
-  console.log('   ' + JSON.stringify(lefujt.sorok));
-  check(lefujt.sorok.length === 1 && lefujt.sorok[0][1] === 'vége',
-     'lefújt meccsnél "vége" áll az óra helyén');
-  check(lefujt.sorok[0][0] === klub.ketto + ' 0–3 ' + adat.teams['5'],
-     'a lefújt meccs végeredménye is ott van: ' + lefujt.sorok[0][0]);
+  const finished = await headers(player.two, GW);
+  console.log('   ' + JSON.stringify(finished.rows));
+  check(finished.rows.length === 1 && finished.rows[0][1] === 'vége',
+     'a finished match shows "vége" in place of the clock');
+  check(finished.rows[0][0] === club.two + ' 0–3 ' + data.teams['5'],
+     'the finished match\'s final score is there too: ' + finished.rows[0][0]);
 
-  const elotte = await fejek(jatekos.harom, GW);
-  console.log('   ' + JSON.stringify(elotte.sorok));
-  check(elotte.sorok.length === 1 && !/\d–\d/.test(elotte.sorok[0][0]),
-     'el nem kezdődött meccsnél nem írunk ki 0–0-t');
+  const before = await headers(player.three, GW);
+  console.log('   ' + JSON.stringify(before.rows));
+  check(before.rows.length === 1 && !/\d–\d/.test(before.rows[0][0]),
+     'for a match that has not started we do not show 0–0');
 
-  console.log('\n--- lezárt forduló ---');
-  const elotteDb = fxKeresek;
-  const regi = await fejek(jatekos.egy, REGI);
-  console.log('   ' + JSON.stringify(regi.sorok));
-  check(regi.sorok.length === 1 && regi.sorok[0][0] === klub.egy + ' 4–0 ' + klub.ketto,
-     'lezárt fordulóban a végeredmény jön a saját fordulója fixtures-éből');
-  check(regi.sorok[0][1] === 'vége', 'lezárt fordulóban "vége"');
-  const egyKeres = fxKeresek - elotteDb;
-  await fejek(jatekos.ketto, REGI);
-  const masodik = fxKeresek - elotteDb - egyKeres;
-  console.log('   fixtures-kérés: első megnyitásra ' + egyKeres + ', másodikra ' + masodik);
-  check(egyKeres === 1 && masodik === 0,
-     'a lezárt forduló meccslistája fordulónként EGYSZER töltődik le');
+  console.log('\n--- closed round ---');
+  const countBefore = fxRequests;
+  const old = await headers(player.one, OLD);
+  console.log('   ' + JSON.stringify(old.rows));
+  check(old.rows.length === 1 && old.rows[0][0] === club.one + ' 4–0 ' + club.two,
+     'in a closed round the final score comes from that round\'s own fixtures');
+  check(old.rows[0][1] === 'vége', '"vége" in a closed round');
+  const firstFetch = fxRequests - countBefore;
+  await headers(player.two, OLD);
+  const second = fxRequests - countBefore - firstFetch;
+  console.log('   fixtures requests: ' + firstFetch + ' on the first opening, ' + second + ' on the second');
+  check(firstFetch === 1 && second === 0,
+     'the closed round\'s match list is downloaded ONCE per round');
 
-  check(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr));
+  check(perr.length === 0, 'no JS error: ' + JSON.stringify(perr));
   await finish(br);
 })();

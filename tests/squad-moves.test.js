@@ -1,305 +1,308 @@
 const { BASE, check, section, launch, finish, blockApis, rewriteJson } = require('./common');
-// A "Valtoztatasok" ful. A ful egesz ertelme, hogy a tabellaban allo GUARD
-// szam LEVEZETHETO legyen - ezert a fo allitas nem az, hogy latszik a lista,
-// hanem hogy MINDEN SZAM EGYEZIK MINDENNEL:
+// The "Valtoztatasok" (squad moves) tab. The whole point of the tab is that
+// the GUARD number in the table can be DERIVED - so the main claim is not
+// that the list shows, but that EVERY NUMBER AGREES WITH EVERY OTHER:
 //
-//   a blokk soraiban allo kulonbsegek osszege
-//     = a blokk "Osszesen" sora
-//     = a blokk fejleceben allo GUARD
-//     = a Fordulok fulon allo GUARD ugyanarra a fordulora
-//   es mindezek fordulonkenti osszege
-//     = a tabella GUA oszlopa.
+//   the sum of the differences in a block's rows
+//     = the block's "Osszesen" (total) row
+//     = the GUARD in the block's header
+//     = the GUARD on the Fordulok (rounds) tab for the same round
+//   and the per-round sum of all of these
+//     = the GUA column of the table.
 //
-// Ha barhol elcsuszik, a ful mast mond, mint a tabella - es akkor a ful
-// rosszabb a semminel.
-const sz = t => {                       // "+25,5" / "-4,12" / "0" -> szam
+// If it slips anywhere, the tab says something different from the table -
+// and then the tab is worse than nothing.
+const num = t => {                      // "+25,5" / "-4,12" / "0" -> number
   const s = String(t).replace(/\s/g, '').replace(',', '.');
   return s === '' || s === '—' || s === '–' ? null : parseFloat(s);
 };
 
-// A ket liga UGYANAZT a fulet kapja, ezert ugyanaz a teszt fut mindkettore -
-// csak az azonosito-jelzo, a ful kulcsa es a megnyito fuggveny mas.
-const LIGAK = [
-  { ut: 'nb1/', jelzo: 'member', tab: 'changes',
-    nyit: '(n, t) => showSquad([n], t, "replace")',
-    fulek: 'Aktuális keret|Fordulók|Szezon játékosai|Változtatások' },
-  { ut: 'pl/', jelzo: 'team', tab: 'valtoztatasok',
-    nyit: '(n, t) => showTeam(+n, t, "replace")',
-    fulek: 'Aktuális keret|Fordulók|Szezon játékosai|Változtatások' },
+// The two leagues get THE SAME tab, so the same test runs on both - only the
+// id attribute, the tab's key and the opener function differ.
+const LEAGUES = [
+  { path: 'nb1/', idAttr: 'member', tab: 'changes',
+    open: '(n, t) => showSquad([n], t, "replace")',
+    tabs: 'Aktuális keret|Fordulók|Szezon játékosai|Változtatások' },
+  { path: 'pl/', idAttr: 'team', tab: 'valtoztatasok',
+    open: '(n, t) => showTeam(+n, t, "replace")',
+    tabs: 'Aktuális keret|Fordulók|Szezon játékosai|Változtatások' },
 ];
 
-async function liga(br, L){
+async function league(br, L){
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
   await blockApis(p);
-  await p.goto(BASE + L.ut, { waitUntil: 'domcontentloaded' });
+  await p.goto(BASE + L.path, { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#table tr', { timeout: 20000 });
   await p.waitForFunction(() => document.querySelector('#table td.guard'), null, { timeout: 20000 });
 
-  section('A fül ott van a többi mellett');
-  // A Playwright evaluate EGY argumentumot vesz at, ezert a megnyito
-  // fuggveny szovegkent utazik, es a lapon belul all ossze.
-  const nyit = (n, t) => p.evaluate(a => eval(a.f)(a.n, a.t), { f: L.nyit, n: n, t: t });
-  const nevek = await p.$$eval('#table tr [data-' + L.jelzo + ']',
-                               (a, j) => a.map(x => x.dataset[j]), L.jelzo);
-  check(nevek.length >= 2, 'van legalább két szakvezető a tabellában (' + nevek.length + ')');
-  await nyit(nevek[0], null);
+  section('The tab is there next to the others');
+  // Playwright's evaluate takes ONE argument, so the opener function travels
+  // as text and is assembled inside the page.
+  const open = (n, t) => p.evaluate(a => eval(a.f)(a.n, a.t), { f: L.open, n: n, t: t });
+  const names = await p.$$eval('#table tr [data-' + L.idAttr + ']',
+                               (a, j) => a.map(x => x.dataset[j]), L.idAttr);
+  check(names.length >= 2, 'there are at least two managers in the table (' + names.length + ')');
+  await open(names[0], null);
   await p.waitForSelector('#mTabs .tab', { timeout: 10000 });
-  const fulek = await p.$$eval('#mTabs .tab', a => a.map(x => x.textContent.trim()));
-  check(fulek.join('|') === L.fulek,
-     'a négy fül a várt sorrendben: ' + fulek.join(' | '));
+  const tabs = await p.$$eval('#mTabs .tab', a => a.map(x => x.textContent.trim()));
+  check(tabs.join('|') === L.tabs,
+     'the four tabs in the expected order: ' + tabs.join(' | '));
 
-  section('Minden szám egyezik mindennel');
-  // A tabellabol vett kumulalt ertek szakvezetonkent - ehhez kell a vegen
-  // stimmelnie a fordulonkenti osszegnek.
-  const tabella = await p.$$eval('#table tr', (trs, j) => {
-    const ki = {};
+  section('Every number agrees with every other');
+  // The cumulative value per manager taken from the table - the per-round
+  // sum has to match this at the end.
+  const table = await p.$$eval('#table tr', (trs, j) => {
+    const out = {};
     trs.forEach(tr => {
       const n = tr.querySelector('[data-' + j + ']'), g = tr.querySelector('td.guard');
-      if (n && g) ki[n.dataset[j]] = g.textContent.trim();
+      if (n && g) out[n.dataset[j]] = g.textContent.trim();
     });
-    return ki;
-  }, L.jelzo);
-  let bajok = [], lattunkBlokkot = false;
-  for (const nev of nevek) {
-    // 1) a Fordulok ful GUARD oszlopa fordulonkent
-    await nyit(nev, L.ut === 'pl/' ? 'fordulok' : 'season');
+    return out;
+  }, L.idAttr);
+  let problems = [], sawBlock = false;
+  for (const name of names) {
+    // 1) the GUARD column of the Fordulok tab, per round
+    await open(name, L.path === 'pl/' ? 'fordulok' : 'season');
     await p.waitForSelector('#mBody table tr', { timeout: 10000 });
-    const fordulok = await p.$$eval('#mBody table tr', trs => {
-      const fej = [...trs[0].children].map(x => x.textContent.trim());
-      const gi = fej.indexOf('GUARD'), ki = {};
+    const rounds = await p.$$eval('#mBody table tr', trs => {
+      const head = [...trs[0].children].map(x => x.textContent.trim());
+      const gi = head.indexOf('GUARD'), out = {};
       trs.slice(1).forEach(tr => {
         const c = tr.children;
-        ki[parseInt(c[0].textContent)] = c[gi].textContent.trim();
+        out[parseInt(c[0].textContent)] = c[gi].textContent.trim();
       });
-      return ki;
+      return out;
     });
-    // 2) a Valtoztatasok ful blokkjai
-    await nyit(nev, L.tab);
+    // 2) the blocks of the Valtoztatasok tab
+    await open(name, L.tab);
     await p.waitForFunction(() => {
       const b = document.getElementById('mBody');
       return b && (b.querySelector('.valtlista') || /nincs elmentett|Nincs adat/i.test(b.innerText));
     }, null, { timeout: 10000 });
-    // LEZART FORDULO NELKUL nincs lista - es ez a helyes allapot, nem hiba:
-    // ilyenkor a Fordulok fulon es a tabellaban sem allhat szam.
+    // WITHOUT A CLOSED ROUND there is no list - and that is the correct
+    // state, not an error: then neither the Fordulok tab nor the table may
+    // show a number.
     if (!(await p.$('#mBody .valtlista'))){
-      const vanFordulo = Object.values(fordulok).some(x => sz(x) != null);
-      if (vanFordulo)
-        bajok.push(nev + ': a Fordulók fülön van GUARD, a Változtatások fülön nincs lista');
-      if (sz(tabella[nev]) != null)
-        bajok.push(nev + ': a tabellában ' + tabella[nev] + ', a Változtatások fülön nincs lista');
+      const hasRound = Object.values(rounds).some(x => num(x) != null);
+      if (hasRound)
+        problems.push(name + ': GUARD on the Fordulók tab, but no list on the Változtatások tab');
+      if (num(table[name]) != null)
+        problems.push(name + ': ' + table[name] + ' in the table, but no list on the Változtatások tab');
       continue;
     }
-    const blokkok = await p.$$eval('#mBody .vakor', bs => bs.map(b => ({
-      cim: b.querySelector('.vafej span').textContent.trim(),
-      fejGuard: b.querySelector('.vafej .guardjel')
+    const blocks = await p.$$eval('#mBody .vakor', bs => bs.map(b => ({
+      title: b.querySelector('.vafej span').textContent.trim(),
+      headGuard: b.querySelector('.vafej .guardjel')
         ? b.querySelector('.vafej .guardjel').textContent : null,
-      megj: (b.querySelector('.vafej .vamegj') || {}).textContent,
-      uresDiff: [...b.querySelectorAll('.zdiff')].every(x => !x.textContent.trim()),
-      sorok: [...b.querySelectorAll('.vasor:not(.vaossz):not(.vaures):not(.vareszossz) .zdiff')].map(x => x.textContent.trim()),
-      jatekos: [...b.querySelectorAll('.vasor:not(.vaossz):not(.vaures):not(.vareszossz):not(.vagep) .zdiff')].map(x => x.textContent.trim()),
-      reszossz: (b.querySelector('.vareszossz .zdiff') || {}).textContent,
-      ures: !!b.querySelector('.vaures'),
-      ossz: (b.querySelector('.vaossz .zdiff') || {}).textContent,
+      note: (b.querySelector('.vafej .vamegj') || {}).textContent,
+      emptyDiff: [...b.querySelectorAll('.zdiff')].every(x => !x.textContent.trim()),
+      rows: [...b.querySelectorAll('.vasor:not(.vaossz):not(.vaures):not(.vareszossz) .zdiff')].map(x => x.textContent.trim()),
+      playerRows: [...b.querySelectorAll('.vasor:not(.vaossz):not(.vaures):not(.vareszossz):not(.vagep) .zdiff')].map(x => x.textContent.trim()),
+      subtotal: (b.querySelector('.vareszossz .zdiff') || {}).textContent,
+      empty: !!b.querySelector('.vaures'),
+      total: (b.querySelector('.vaossz .zdiff') || {}).textContent,
     })));
-    check(blokkok.length > 0, nev + ': van legalább egy forduló-blokk (' + blokkok.length + ')');
-    lattunkBlokkot = true;
-    // NOVEKVO SORRENDBEN, mint mindenutt maskor. Az elso valtozat a
-    // legfrissebbel kezdett, es az szembement a Fordulok fullel.
-    const sorrend = blokkok.map(b => parseInt(b.cim));
-    if (sorrend.some((r, i) => i && r < sorrend[i - 1]))
-      bajok.push(nev + ': a fordulók nem növekvő sorrendben állnak (' + sorrend.join(', ') + ')');
-    let kum = 0;
-    for (const b of blokkok) {
-      const r = parseInt(b.cim);
-      // A PONT NELKULI (meg le nem zart) blokk kimarad az osszevetesbol:
-      // ott szandekosan nincs szam. Kulon allitas meri lentebb.
-      if (b.fejGuard == null){
-        if (sz(fordulok[r]) != null)
-          bajok.push(nev + ' ' + r + '.: a Fordulók fülön van GUARD, itt "még nincs pontszám"');
+    check(blocks.length > 0, name + ': there is at least one round block (' + blocks.length + ')');
+    sawBlock = true;
+    // In ASCENDING ORDER, as everywhere else. The first version started with
+    // the most recent one, and that ran against the Fordulok tab.
+    const order = blocks.map(b => parseInt(b.title));
+    if (order.some((r, i) => i && r < order[i - 1]))
+      problems.push(name + ': the rounds are not in ascending order (' + order.join(', ') + ')');
+    let cum = 0;
+    for (const b of blocks) {
+      const r = parseInt(b.title);
+      // A block WITHOUT POINTS (not yet closed) is left out of the
+      // comparison: it deliberately has no number. A separate claim below
+      // measures it.
+      if (b.headGuard == null){
+        if (num(rounds[r]) != null)
+          problems.push(name + ' ' + r + '.: GUARD on the Fordulók tab, "még nincs pontszám" here');
         continue;
       }
-      const fej = sz(b.fejGuard);
-      kum += fej;
-      // a) sorok osszege = fejlec (ures blokknal nincs sor, es a fejlec 0)
-      const sorOssz = Math.round(b.sorok.reduce((s, x) => s + sz(x), 0) * 100) / 100;
-      if (b.ures) {
-        if (fej !== 0) bajok.push(nev + ' ' + r + '.: nincs változtatás, de a GUARD ' + fej);
-      } else if (Math.abs(sorOssz - fej) > 0.005)
-        bajok.push(nev + ' ' + r + '.: a sorok összege ' + sorOssz + ', a fejléc ' + fej);
-      // b) "Osszesen" sor = fejlec
-      if (!b.ures && Math.abs(sz(b.ossz) - fej) > 0.005)
-        bajok.push(nev + ' ' + r + '.: az Összesen ' + sz(b.ossz) + ', a fejléc ' + fej);
-      // b2) a PL-en kulon all, amit az EMBER csinalt - annak a jatekos-sorok
-      //     osszegevel kell egyeznie, kulonben a szetvalasztas hamis
-      if (b.reszossz != null){
-        const jo_ = Math.round(b.jatekos.reduce((s2, x) => s2 + sz(x), 0) * 100) / 100;
-        if (Math.abs(sz(b.reszossz) - jo_) > 0.005)
-          bajok.push(nev + ' ' + r + '.: "A te döntéseid" ' + sz(b.reszossz)
-                     + ', a játékos-sorok összege ' + jo_);
+      const head = num(b.headGuard);
+      cum += head;
+      // a) sum of the rows = header (an empty block has no rows, and its header is 0)
+      const rowSum = Math.round(b.rows.reduce((s, x) => s + num(x), 0) * 100) / 100;
+      if (b.empty) {
+        if (head !== 0) problems.push(name + ' ' + r + '.: no change, but GUARD is ' + head);
+      } else if (Math.abs(rowSum - head) > 0.005)
+        problems.push(name + ' ' + r + '.: row sum ' + rowSum + ', header ' + head);
+      // b) "Osszesen" row = header
+      if (!b.empty && Math.abs(num(b.total) - head) > 0.005)
+        problems.push(name + ' ' + r + '.: Összesen ' + num(b.total) + ', header ' + head);
+      // b2) on PL what the HUMAN did stands separately - it must equal the
+      //     sum of the player rows, otherwise the split is false
+      if (b.subtotal != null){
+        const playerSum = Math.round(b.playerRows.reduce((s2, x) => s2 + num(x), 0) * 100) / 100;
+        if (Math.abs(num(b.subtotal) - playerSum) > 0.005)
+          problems.push(name + ' ' + r + '.: "A te döntéseid" ' + num(b.subtotal)
+                     + ', sum of the player rows ' + playerSum);
       }
-      // c) fejlec = a Fordulok fulon allo GUARD
-      const f = sz(fordulok[r]);
-      if (f == null || Math.abs(f - fej) > 0.005)
-        bajok.push(nev + ' ' + r + '.: a Fordulók fülön ' + fordulok[r] + ', itt ' + fej);
+      // c) header = the GUARD on the Fordulok tab
+      const f = num(rounds[r]);
+      if (f == null || Math.abs(f - head) > 0.005)
+        problems.push(name + ' ' + r + '.: ' + rounds[r] + ' on the Fordulók tab, ' + head + ' here');
     }
-    // d) a fordulonkenti osszeg = a tabella GUA cellaja
-    kum = Math.round(kum * 100) / 100;
-    const t = sz(tabella[nev]);
-    if (t == null || Math.abs(t - kum) > 0.005)
-      bajok.push(nev + ': a tabellában ' + tabella[nev] + ', a fülek összege ' + kum);
+    // d) the per-round sum = the table's GUA cell
+    cum = Math.round(cum * 100) / 100;
+    const t = num(table[name]);
+    if (t == null || Math.abs(t - cum) > 0.005)
+      problems.push(name + ': ' + table[name] + ' in the table, sum of the tabs ' + cum);
   }
-  check(bajok.length === 0, 'minden szám egyezik minden szakvezetőnél és fordulónál'
-     + (bajok.length ? ' — ELTÉRÉS: ' + bajok.join(' ; ') : '')
-     + (lattunkBlokkot ? '' : ' (ebben a ligában még nincs lezárt forduló mutatóval)'));
+  check(problems.length === 0, 'every number agrees for every manager and round'
+     + (problems.length ? ' — MISMATCH: ' + problems.join(' ; ') : '')
+     + (sawBlock ? '' : ' (this league has no closed round with a GUARD yet)'));
 
-  section('A változtatás nélküli forduló is kilátszik');
-  // AZ ADATBOL DERUL KI, hogy VAN-E ilyen fordulo - nem feltetelezzuk.
-  // A PL-en peldaul a GW2-ben minden csapat valtoztatott, tehat ott nincs
-  // mit kilatszania; ha ilyenkor is "kell egy ures blokk"-ot allitanank, a
-  // teszt a VALOSAGOT hibaztatna. Ha viszont az adatban VAN valtozatlan
-  // szakvezeto-fordulo, a fulnek MUTATNIA KELL.
-  const vanAdatban = await p.evaluate(async ut => {
+  section('A round without changes shows too');
+  // THE DATA DECIDES whether such a round EXISTS - we do not assume it.
+  // On PL, for example, every team made changes in GW2, so there is nothing
+  // to show there; if we claimed "there must be an empty block" then too,
+  // the test would blame REALITY. But if the data DOES have an unchanged
+  // manager-round, the tab MUST SHOW it.
+  const inData = await p.evaluate(async url => {
     try {
-      const r = await fetch(ut + '?t=' + Date.now());
+      const r = await fetch(url + '?t=' + Date.now());
       if (!r.ok) return false;
       const j = (await r.json()).rounds || {};
       return Object.values(j).some(f => Object.values(f).some(
         v => !v.ki.length && !v.be.length && !v.szerep.length && !v.bonusz));
     } catch (e) { return false; }
-  }, L.ut === 'pl/' ? '../draft_keretvaltozasok.json' : '../keretvaltozasok.json');
-  // Ez nem diszites: ha kihagynank, a nezo azt hinne, hogy hianyzik az adat -
-  // pedig eppen az a valasz, hogy a szakvezeto hozza sem nyult a kerethez.
-  let vanUres = false;
-  for (const nev of nevek) {
-    await nyit(nev, L.tab);
-    // FIX VARAKOZAS NEM JO: a lista a keretvaltozasok.json beerkezese utan
-    // rajzolodik ki, es ahogy no az adat, ugy csuszik ki egy 120 ms-os
-    // ablakbol - a teszt ilyenkor "nincs ilyen fordulo"-t mer, holott van.
-    // Az ALLAPOTRA varunk: kesz a lista, vagy kimondtuk, hogy nincs adat.
+  }, L.path === 'pl/' ? '../draft_keretvaltozasok.json' : '../keretvaltozasok.json');
+  // This is not decoration: if it were left out, the viewer would think the
+  // data is missing - when the answer is exactly that the manager did not
+  // touch the squad at all.
+  let hasEmpty = false;
+  for (const name of names) {
+    await open(name, L.tab);
+    // A FIXED WAIT DOES NOT WORK: the list is drawn after keretvaltozasok.json
+    // arrives, and as the data grows it slips out of a 120 ms window - the
+    // test then measures "no such round" when there is one. We wait for the
+    // STATE: the list is ready, or we said there is no data.
     await p.waitForFunction(() => {
       const b = document.getElementById('mBody');
       return b && (b.querySelector('.valtlista') || /nincs elmentett|Nincs adat/i.test(b.innerText));
     }, null, { timeout: 10000 }).catch(() => {});
-    if (await p.$('#mBody .vaures')) { vanUres = true; break; }
+    if (await p.$('#mBody .vaures')) { hasEmpty = true; break; }
   }
-  check(vanUres || !vanAdatban || !lattunkBlokkot,
-     !vanAdatban
-       ? 'az adatban most nincs változtatás nélküli forduló — nincs mit kilátszania'
-       : 'van olyan forduló, ahol "Nem változtatott a keretén." áll'
-         + (lattunkBlokkot ? '' : ' (ebben a ligában még nincs lezárt forduló mutatóval)'));
+  check(hasEmpty || !inData || !sawBlock,
+     !inData
+       ? 'the data has no round without changes right now — nothing to show'
+       : 'there is a round that says "Nem változtatott a keretén."'
+         + (sawBlock ? '' : ' (this league has no closed round with a GUARD yet)'));
 
-  section('A folyamatban lévő forduló pont nélkül is ott van');
-  // A keret a leadasi hatarido utan rogzitett, tehat a valtoztatas mar
-  // ismert - a pontja meg nem. Ilyenkor a blokk ott van, de SEMMILYEN szam
-  // nincs benne: se sorokban, se osszesen. A "0" hazugsag lenne.
+  section('The round in progress is there without points');
+  // The squad is locked after the deadline, so the change is already known
+  // - its points are not. Then the block is there, but contains NO number at
+  // all: neither in the rows nor in the total. A "0" would be a lie.
   //
-  // AZ ADATBOL DERUL KI, KIT NYITUNK MEG. A korabbi valtozat az ELSO olyan
-  // szakvezetot vizsgalta, akinek volt pont nelkuli blokkja, es megkovetelte,
-  // hogy legyen benne sor - holott aki hozza sem nyult a kerethez, annak
-  // helyesen NINCS sora. Amint a sorrendben elsonek epp nem volt
-  // valtoztatasa, a teszt a valosagot hibaztatta. Most az adat mondja meg,
-  // kinek KELL sort mutatnia es kinek "Nem valtoztatott"-at.
-  const folyo = await p.evaluate(async ut => {
+  // THE DATA DECIDES WHOM WE OPEN. The earlier version examined the FIRST
+  // manager who had a block without points, and required it to have rows -
+  // although someone who did not touch the squad correctly has NO rows. As
+  // soon as the first one in order happened to have no change, the test
+  // blamed reality. Now the data says who MUST show rows and who must show
+  // "Nem valtoztatott".
+  const current = await p.evaluate(async url => {
     try {
-      const r = await fetch(ut + '?t=' + Date.now());
+      const r = await fetch(url + '?t=' + Date.now());
       if (!r.ok) return null;
       const j = (await r.json()).rounds || {};
-      // a folyamatban levo fordulo: ott MINDENKINEL null a mutato
-      const kulcsok = Object.keys(j).map(Number).sort((a, b) => b - a);
-      for (const r2 of kulcsok){
-        const f = j[r2], ertekek = Object.values(f);
-        if (!ertekek.length || !ertekek.every(v => v.guard == null)) continue;
-        const valt = x => !!((x.ki || []).length || (x.be || []).length
+      // the round in progress: there the GUARD is null for EVERYONE
+      const keys = Object.keys(j).map(Number).sort((a, b) => b - a);
+      for (const r2 of keys){
+        const f = j[r2], values = Object.values(f);
+        if (!values.length || !values.every(v => v.guard == null)) continue;
+        const changed = x => !!((x.ki || []).length || (x.be || []).length
                              || (x.szerep || []).length);
         return {
           r: r2,
-          valtoztatott: Object.keys(f).find(k => valt(f[k])) || null,
-          valtozatlan:  Object.keys(f).find(k => !valt(f[k])) || null,
+          changed:   Object.keys(f).find(k => changed(f[k])) || null,
+          unchanged: Object.keys(f).find(k => !changed(f[k])) || null,
         };
       }
       return null;
     } catch (e) { return null; }
-  }, L.ut === 'pl/' ? '../draft_keretvaltozasok.json' : '../keretvaltozasok.json');
+  }, L.path === 'pl/' ? '../draft_keretvaltozasok.json' : '../keretvaltozasok.json');
 
-  // A pont nelkuli blokk allapota EGY megnyitott szakvezetonel.
-  const pontNelkuliBlokk = async nev => {
-    await nyit(nev, L.tab);
+  // The state of the block without points for ONE opened manager.
+  const blockWithoutPoints = async name => {
+    await open(name, L.tab);
     await p.waitForFunction(() => {
       const b = document.getElementById('mBody');
       return b && (b.querySelector('.valtlista') || /nincs elmentett|Nincs adat/i.test(b.innerText));
     }, null, { timeout: 10000 }).catch(() => {});
     return p.$$eval('#mBody .vakor', bs => {
       const b = bs.find(x => x.querySelector('.vafej .vamegj'));
-      return b ? { cim: b.querySelector('.vafej span').textContent.trim(),
-                   megj: b.querySelector('.vafej .vamegj').textContent.trim(),
-                   guardjel: !!b.querySelector('.vafej .guardjel'),
-                   ossz: !!b.querySelector('.vaossz'),
-                   sorok: b.querySelectorAll('.vasor:not(.vaures)').length,
-                   ures: !!b.querySelector('.vaures'),
-                   uresDiff: [...b.querySelectorAll('.zdiff')].every(x => !x.textContent.trim()),
-                   uresErt: [...b.querySelectorAll('.vaert')].every(x => !x.textContent.trim()) } : null;
+      return b ? { title: b.querySelector('.vafej span').textContent.trim(),
+                   note: b.querySelector('.vafej .vamegj').textContent.trim(),
+                   guardMark: !!b.querySelector('.vafej .guardjel'),
+                   total: !!b.querySelector('.vaossz'),
+                   rows: b.querySelectorAll('.vasor:not(.vaures)').length,
+                   empty: !!b.querySelector('.vaures'),
+                   emptyDiff: [...b.querySelectorAll('.zdiff')].every(x => !x.textContent.trim()),
+                   emptyValue: [...b.querySelectorAll('.vaert')].every(x => !x.textContent.trim()) } : null;
     });
   };
 
-  if (!folyo){
-    check(true, 'kihagyva: most nincs olyan forduló, aminek a kerete rögzített, de pontja még nincs');
+  if (!current){
+    check(true, 'skipped: there is no round right now whose squad is locked but has no points yet');
   } else {
-    if (folyo.valtoztatott){
-      const t = await pontNelkuliBlokk(folyo.valtoztatott);
-      check(!!t, 'aki változtatott (' + folyo.valtoztatott + '), annak ott a pont nélküli blokk');
+    if (current.changed){
+      const t = await blockWithoutPoints(current.changed);
+      check(!!t, 'whoever made changes (' + current.changed + ') has the block without points');
       if (t){
-        check(t.cim.includes(folyo.r), 'a blokk a folyó fordulóé (' + t.cim + ')');
-        check(/nincs pontszám/.test(t.megj),
-           'a fejléc megmondja, hogy még nincs pontszám ("' + t.megj + '")');
-        check(!t.guardjel && !t.ossz, 'nincs GUARD a fejlécben és nincs "Összesen" sor');
-        check(t.sorok > 0, 'a változtatás viszont látszik (' + t.sorok + ' sor)');
-        check(t.uresDiff && t.uresErt, 'egyetlen szám sincs a sorokban — a „0" hazugság lenne');
+        check(t.title.includes(current.r), 'the block belongs to the current round (' + t.title + ')');
+        check(/nincs pontszám/.test(t.note),
+           'the header says there are no points yet ("' + t.note + '")');
+        check(!t.guardMark && !t.total, 'no GUARD in the header and no "Összesen" row');
+        check(t.rows > 0, 'but the change itself shows (' + t.rows + ' rows)');
+        check(t.emptyDiff && t.emptyValue, 'not a single number in the rows — a "0" would be a lie');
       }
     } else {
-      check(true, 'kihagyva: a folyó fordulóban senki nem változtatott');
+      check(true, 'skipped: nobody made changes in the current round');
     }
-    // A MASIK eset, ami korabban hibasan bukast okozott: aki hozza sem nyult
-    // a kerethez, annak nem sorok jarnak, hanem az "Nem valtoztatott" uzenet.
-    if (folyo.valtozatlan){
-      const u = await pontNelkuliBlokk(folyo.valtozatlan);
-      check(!!u, 'aki nem változtatott (' + folyo.valtozatlan + '), annál is ott a blokk');
+    // The OTHER case, which used to cause a false failure: someone who did
+    // not touch the squad gets the "Nem valtoztatott" message, not rows.
+    if (current.unchanged){
+      const u = await blockWithoutPoints(current.unchanged);
+      check(!!u, 'whoever made no changes (' + current.unchanged + ') has the block too');
       if (u){
-        check(/nincs pontszám/.test(u.megj), 'ott is "még nincs pontszám" áll');
-        check(u.sorok === 0 && u.ures,
-           'sorok helyett a „Nem változtatott a keretén." üzenet áll');
+        check(/nincs pontszám/.test(u.note), 'it also says "még nincs pontszám"');
+        check(u.rows === 0 && u.empty,
+           'instead of rows the "Nem változtatott a keretén." message stands');
       }
     } else {
-      check(true, 'kihagyva: a folyó fordulóban mindenki változtatott');
+      check(true, 'skipped: everybody made changes in the current round');
     }
   }
 
-  section('A nevek kattinthatók');
-  await nyit(nevek[0], L.tab);
-  if (!lattunkBlokkot){
-    check(true, 'kihagyva: ebben a ligában még nincs lezárt forduló mutatóval');
-    check(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+  section('The names are clickable');
+  await open(names[0], L.tab);
+  if (!sawBlock){
+    check(true, 'skipped: this league has no closed round with a GUARD yet');
+    check(err.length === 0, 'no JS error' + (err.length ? ': ' + err.join(' | ') : ''));
     await p.close();
     return;
   }
   await p.waitForSelector('#mBody .valtlista .vanev.kattint', { timeout: 10000 });
-  const nev0 = await p.$eval('#mBody .valtlista .vanev.kattint', e => e.textContent.trim());
+  const name0 = await p.$eval('#mBody .valtlista .vanev.kattint', e => e.textContent.trim());
   await p.$eval('#mBody .valtlista .vanev.kattint', e => e.click());
   await p.waitForTimeout(600);
-  const cimSor = await p.$eval('#mTitle', e => e.textContent.trim());
-  check(nev0.indexOf(cimSor) === 0 || cimSor.length > 0 && nev0.indexOf(cimSor.split(' ')[0]) >= 0,
-     'a névre kattintva a játékos profilja nyílik (' + cimSor + ')');
+  const titleLine = await p.$eval('#mTitle', e => e.textContent.trim());
+  check(name0.indexOf(titleLine) === 0 || titleLine.length > 0 && name0.indexOf(titleLine.split(' ')[0]) >= 0,
+     'clicking the name opens the player profile (' + titleLine + ')');
 
-  check(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+  check(err.length === 0, 'no JS error' + (err.length ? ': ' + err.join(' | ') : ''));
   await p.close();
 }
 
-/* A PL-en ma meg EGYETLEN lezart fordulo sincs mutatoval (a GW1-re
-   fogalmilag nincs, a GW2 pedig meg nem zart le), tehat a fenti sor ott
-   csak az URES allapotot meri. A ful mukodeset viszont MOST kell
-   bizonyitani, nem majd - ezert a menetrendbe menet kozben beirjuk a GW2
-   eredmenyet, es ugyanazt a levezetest ellenorizzuk. */
-async function plLezartan(br){
+/* On PL there is not yet a SINGLE closed round with a GUARD (GW1 by
+   definition has none, and GW2 has not closed yet), so the run above only
+   measures the EMPTY state there. But the tab's behaviour has to be proven
+   NOW, not later - so we write the GW2 result into the schedule on the fly
+   and check the same derivation. */
+async function plClosed(br){
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
   await blockApis(p);
@@ -310,63 +313,64 @@ async function plLezartan(br){
   await p.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#table tr', { timeout: 20000 });
   await p.waitForFunction(() => document.querySelector('#table td.guard'), null, { timeout: 20000 });
-  const idk = await p.$$eval('#table tr [data-team]', a => a.map(x => x.dataset.team));
-  const bajok = [];
-  for (const id of idk){
+  const ids = await p.$$eval('#table tr [data-team]', a => a.map(x => x.dataset.team));
+  const problems = [];
+  for (const id of ids){
     await p.evaluate(i => showTeam(+i, 'fordulok', 'replace'), id);
     await p.waitForSelector('#mBody table tr', { timeout: 10000 });
-    const fGuard = await p.$$eval('#mBody table tr', trs => {
-      const fej = [...trs[0].children].map(x => x.textContent.trim());
-      const gi = fej.indexOf('GUARD'), ki = {};
-      trs.slice(1).forEach(tr => { ki[parseInt(tr.children[0].textContent)] = tr.children[gi].textContent.trim(); });
-      return ki;
+    const roundGuard = await p.$$eval('#mBody table tr', trs => {
+      const head = [...trs[0].children].map(x => x.textContent.trim());
+      const gi = head.indexOf('GUARD'), out = {};
+      trs.slice(1).forEach(tr => { out[parseInt(tr.children[0].textContent)] = tr.children[gi].textContent.trim(); });
+      return out;
     });
     await p.evaluate(i => showTeam(+i, 'valtoztatasok', 'replace'), id);
     await p.waitForSelector('#mBody .valtlista', { timeout: 10000 });
     const b = await p.$eval('#mBody .vakor', b => ({
-      cim: b.querySelector('.vafej span').textContent.trim(),
-      fej: (b.querySelector('.vafej .guardjel') || {}).textContent,
-      sorok: [...b.querySelectorAll('.vasor:not(.vaossz):not(.vaures):not(.vareszossz) .zdiff')].map(x => x.textContent.trim()),
-      jatekos: [...b.querySelectorAll('.vasor:not(.vaossz):not(.vaures):not(.vareszossz):not(.vagep) .zdiff')].map(x => x.textContent.trim()),
-      reszossz: (b.querySelector('.vareszossz .zdiff') || {}).textContent,
-      gep: (b.querySelector('.vagep .zdiff') || {}).textContent,
-      ures: !!b.querySelector('.vaures'),
-      ossz: (b.querySelector('.vaossz .zdiff') || {}).textContent,
+      title: b.querySelector('.vafej span').textContent.trim(),
+      head: (b.querySelector('.vafej .guardjel') || {}).textContent,
+      rows: [...b.querySelectorAll('.vasor:not(.vaossz):not(.vaures):not(.vareszossz) .zdiff')].map(x => x.textContent.trim()),
+      playerRows: [...b.querySelectorAll('.vasor:not(.vaossz):not(.vaures):not(.vareszossz):not(.vagep) .zdiff')].map(x => x.textContent.trim()),
+      subtotal: (b.querySelector('.vareszossz .zdiff') || {}).textContent,
+      auto: (b.querySelector('.vagep .zdiff') || {}).textContent,
+      empty: !!b.querySelector('.vaures'),
+      total: (b.querySelector('.vaossz .zdiff') || {}).textContent,
     }));
-    const r = parseInt(b.cim), fej = sz(b.fej);
-    const sorOssz = Math.round(b.sorok.reduce((s, x) => s + sz(x), 0) * 100) / 100;
-    if (!b.ures && Math.abs(sorOssz - fej) > 0.005)
-      bajok.push(id + ': a sorok összege ' + sorOssz + ', a fejléc ' + fej);
-    if (!b.ures && Math.abs(sz(b.ossz) - fej) > 0.005)
-      bajok.push(id + ': az Összesen ' + sz(b.ossz) + ', a fejléc ' + fej);
-    if (Math.abs(sz(fGuard[r]) - fej) > 0.005)
-      bajok.push(id + ': a Fordulók fülön ' + fGuard[r] + ', itt ' + fej);
-    // AMIT AZ EMBER CSINALT + AMIT A GEP: a ketto egyutt a mutato, es a
-    // sajat resz a jatekos-sorok osszege. Ha ez elcsuszik, a ful azt
-    // sugallna, hogy a szakvezeto tette, amit a zarasi automatikus csere.
-    const jo_ = Math.round(b.jatekos.reduce((s2, x) => s2 + sz(x), 0) * 100) / 100;
-    if (b.reszossz == null || Math.abs(sz(b.reszossz) - jo_) > 0.005)
-      bajok.push(id + ': a kezdő átalakításának sora ' + b.reszossz + ', a játékos-sorok összege ' + jo_);
-    if (b.gep == null)
-      bajok.push(id + ': hiányzik az automatikus csere sora');
-    else if (Math.abs(jo_ + sz(b.gep) - fej) > 0.005)
-      bajok.push(id + ': ember ' + jo_ + ' + gép ' + sz(b.gep) + ' ≠ ' + fej);
+    const r = parseInt(b.title), head = num(b.head);
+    const rowSum = Math.round(b.rows.reduce((s, x) => s + num(x), 0) * 100) / 100;
+    if (!b.empty && Math.abs(rowSum - head) > 0.005)
+      problems.push(id + ': row sum ' + rowSum + ', header ' + head);
+    if (!b.empty && Math.abs(num(b.total) - head) > 0.005)
+      problems.push(id + ': Összesen ' + num(b.total) + ', header ' + head);
+    if (Math.abs(num(roundGuard[r]) - head) > 0.005)
+      problems.push(id + ': ' + roundGuard[r] + ' on the Fordulók tab, ' + head + ' here');
+    // WHAT THE HUMAN DID + WHAT THE MACHINE DID: the two together are the
+    // GUARD, and the human's part is the sum of the player rows. If this
+    // slips, the tab would suggest the manager did what the automatic
+    // substitution at closing did.
+    const playerSum = Math.round(b.playerRows.reduce((s2, x) => s2 + num(x), 0) * 100) / 100;
+    if (b.subtotal == null || Math.abs(num(b.subtotal) - playerSum) > 0.005)
+      problems.push(id + ': line-up rework row ' + b.subtotal + ', sum of the player rows ' + playerSum);
+    if (b.auto == null)
+      problems.push(id + ': the automatic substitution row is missing');
+    else if (Math.abs(playerSum + num(b.auto) - head) > 0.005)
+      problems.push(id + ': human ' + playerSum + ' + machine ' + num(b.auto) + ' ≠ ' + head);
   }
-  check(idk.length > 0 && bajok.length === 0,
-     'lezárt fordulóval a PL-en is minden szám egyezik (' + idk.length + ' csapat)'
-     + (bajok.length ? ' — ELTÉRÉS: ' + bajok.join(' ; ') : ''));
-  check(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+  check(ids.length > 0 && problems.length === 0,
+     'with a closed round every number agrees on PL too (' + ids.length + ' teams)'
+     + (problems.length ? ' — MISMATCH: ' + problems.join(' ; ') : ''));
+  check(err.length === 0, 'no JS error' + (err.length ? ': ' + err.join(' | ') : ''));
   await p.close();
 }
 
-/* MERVE: a `?v=` csak a funtasy.js/css gyorsitotarat tori, az
-   nb1/index.html-et NEM - es a kiszolgalo a regi ?v=-es kerésre is a MOSTANI
-   funtasy.js-t adja. Igy a bongeszo REGI lapja (ami meg egyben, cimkezetlen
-   `sorok`-kent adta at a teteleket) az UJ megjelenitovel talalkozott: a
-   fordulo fejleceben ott allt a GUARD, alatta viszont "Nem valtoztatott a
-   kereten." - holott harom jatekost cserelt. A megjelenito azota MINDKET
-   alakot erti; ez a teszt ezt tartja eletben. */
-async function regiAlak(br){
+/* MEASURED: `?v=` only busts the cache of funtasy.js/css, NOT of
+   nb1/index.html - and the server answers the old ?v= request with the
+   CURRENT funtasy.js too. So the browser's OLD page (which still passed the
+   items in one piece, as unlabelled `sorok`) met the NEW renderer: the round
+   header showed the GUARD, but under it "Nem valtoztatott a kereten." - even
+   though three players had been swapped. The renderer has understood BOTH
+   shapes since; this test keeps that alive. */
+async function oldShape(br){
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
   await blockApis(p);
@@ -378,23 +382,23 @@ async function regiAlak(br){
          sorok: [{ poszt: 'ST', nev: 'X', klub: 'K', cimke: 'kapitány', dl: -6 },
                  { poszt: 'MID', nev: 'Y', klub: 'K', ert: 8, dl: 8 }] }], 'nincs');
     const b = document.querySelector('#mBody .vakor');
-    return { sorok: b.querySelectorAll('.vasor:not(.vaossz):not(.vaures)').length,
-             ures: !!b.querySelector('.vaures'),
-             ossz: (b.querySelector('.vaossz .zdiff') || {}).textContent };
+    return { rows: b.querySelectorAll('.vasor:not(.vaossz):not(.vaures)').length,
+             empty: !!b.querySelector('.vaures'),
+             total: (b.querySelector('.vaossz .zdiff') || {}).textContent };
   });
-  check(k.sorok === 2 && !k.ures,
-     'a címkézetlen `sorok` alakból is kirajzolódnak a tételek (' + JSON.stringify(k) + ')');
-  check(k.ossz && k.ossz.replace(',', '.').indexOf('2') >= 0,
-     'és az Összesen sor is ott van (' + k.ossz + ')');
-  check(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+  check(k.rows === 2 && !k.empty,
+     'the items are drawn from the unlabelled `sorok` shape too (' + JSON.stringify(k) + ')');
+  check(k.total && k.total.replace(',', '.').indexOf('2') >= 0,
+     'and the Összesen row is there too (' + k.total + ')');
+  check(err.length === 0, 'no JS error' + (err.length ? ': ' + err.join(' | ') : ''));
   await p.close();
 }
 
-/* A PL-en eppen NINCS olyan fordulo, aminek a kerete rogzitett, de pontja
-   meg nincs - a fenti kor ezert ott kihagyja a merest. A viselkedest viszont
-   MOST kell bizonyitani: a menetrendbol kivesszuk a legutobbi fordulo
-   eredmenyet, amitol a lap "meg nem zart"-kent kezeli. */
-async function plPontNelkul(br){
+/* On PL there is currently NO round whose squad is locked but has no points
+   yet - so the run above skips that measurement there. But the behaviour has
+   to be proven NOW: we remove the latest round's results from the schedule,
+   which makes the page treat it as "not yet closed". */
+async function plWithoutPoints(br){
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
   await blockApis(p);
@@ -412,57 +416,58 @@ async function plPontNelkul(br){
   const id = await p.$eval('#table tr [data-team]', e => e.dataset.team);
   await p.evaluate(i => showTeam(+i, 'valtoztatasok', 'replace'), id);
   await p.waitForSelector('#mBody .valtlista', { timeout: 10000 });
-  // A BLOKKOT A FORDULO SZAMA SZERINT keressuk, nem az elsot vesszuk: a
-  // fordulok NOVEKVO sorrendben allnak, tehat amint tobb lezart fordulo lett,
-  // az elso blokk mar nem a most vizsgalt (pont nelkuli) fordulo volt.
+  // We look the block up BY ROUND NUMBER instead of taking the first one: the
+  // rounds stand in ASCENDING order, so as soon as there were several closed
+  // rounds, the first block was no longer the round under test (without points).
   const t = await p.$$eval('#mBody .vakor', (bs, gw) => {
     const b = bs.find(x => parseInt(x.querySelector('.vafej span').textContent) === +gw);
     if (!b) return null;
     return ({
-    megj: (b.querySelector('.vafej .vamegj') || {}).textContent,
-    guardjel: !!b.querySelector('.vafej .guardjel'),
-    ossz: !!b.querySelector('.vaossz'),
-    gep: !!b.querySelector('.vagep'),
-    sorok: b.querySelectorAll('.vasor:not(.vaures)').length,
-    uresDiff: [...b.querySelectorAll('.zdiff')].every(x => !x.textContent.trim()),
+    note: (b.querySelector('.vafej .vamegj') || {}).textContent,
+    guardMark: !!b.querySelector('.vafej .guardjel'),
+    total: !!b.querySelector('.vaossz'),
+    auto: !!b.querySelector('.vagep'),
+    rows: b.querySelectorAll('.vasor:not(.vaures)').length,
+    emptyDiff: [...b.querySelectorAll('.zdiff')].every(x => !x.textContent.trim()),
   });
   }, GW);
-  check(!!t, 'megvan a ' + GW + '. forduló blokkja');
+  check(!!t, 'the block of round ' + GW + ' is there');
   if (!t){ await p.close(); return; }
-  check(/nincs pontszám/.test(t.megj || ''),
-     'PL: a fejléc megmondja, hogy még nincs pontszám ("' + t.megj + '")');
-  check(!t.guardjel && !t.ossz, 'PL: nincs GUARD és nincs "Összesen" sor');
-  check(!t.gep, 'PL: a gépi csere sora sincs — az automatikus csere még meg sem történt');
-  check(t.sorok > 0 && t.uresDiff,
-     'PL: a változtatás látszik (' + t.sorok + ' sor), szám nélkül');
-  // A FUL NEM A NEZOROL SZOL. Ugyanez a ful barmelyik szakvezeto lapjan
-  // megnyithato, tehat egy "a kezdod atalakitasa" felirat mas emberre
-  // mutat, mint akit a nezo epp olvas. A hiba csendes: minden szam stimmel,
-  // csak a mondat hazudik.
-  // A FELIRATOKAT nezzuk, nem a sorok egesz szoveget: egy sorban a poszt
-  // jelolese es a nev osszeer ("kezdo" + "DEF"), es abbol hamis talalat lesz.
+  check(/nincs pontszám/.test(t.note || ''),
+     'PL: the header says there are no points yet ("' + t.note + '")');
+  check(!t.guardMark && !t.total, 'PL: no GUARD and no "Összesen" row');
+  check(!t.auto, 'PL: no automatic-substitution row either — the automatic substitution has not happened yet');
+  check(t.rows > 0 && t.emptyDiff,
+     'PL: the change shows (' + t.rows + ' rows), without numbers');
+  // THE TAB IS NOT ABOUT THE VIEWER. The same tab can be opened on any
+  // manager's page, so a caption like "a kezdod atalakitasa" (your line-up's
+  // rework) points at a different person than the one the viewer is reading
+  // about. The error is silent: every number is right, only the sentence lies.
+  // We look at the CAPTIONS, not the whole text of the rows: in a row the
+  // position mark and the name run together ("kezdo" + "DEF"), and that gives
+  // a false match.
   const e2 = await p.$$eval('#mBody .vakor .vanev, #mBody .vakor .vacimke, #mBody .note',
     n => n.map(x => x.textContent.trim())
           .join(' | ')
           .match(/(kereted|kezdőd|csapatod|neked|nálad|döntésed|általad)\w{0,8}/gi) || []);
   check(e2.length === 0,
-     'a fül nem szólítja meg a nézőt (egyes szám második személy)'
+     'the tab does not address the viewer (second person singular)'
      + (e2.length ? ' — ' + [...new Set(e2)].join(', ') : ''));
-  check(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+  check(err.length === 0, 'no JS error' + (err.length ? ': ' + err.join(' | ') : ''));
   await p.close();
 }
 
 (async () => {
   const br = await launch();
-  for (const L of LIGAK){
-    section('=== ' + L.ut.replace('/', '').toUpperCase() + ' ===');
-    await liga(br, L);
+  for (const L of LEAGUES){
+    section('=== ' + L.path.replace('/', '').toUpperCase() + ' ===');
+    await league(br, L);
   }
-  section('=== PL, lezárt fordulóval (a menetrend menet közben kiegészítve) ===');
-  await plLezartan(br);
-  section('=== PL, pontszám nélküli (még le nem zárt) forduló ===');
-  await plPontNelkul(br);
-  section('=== A régi, címkézetlen adatalak is megjelenik ===');
-  await regiAlak(br);
+  section('=== PL, with a closed round (schedule completed on the fly) ===');
+  await plClosed(br);
+  section('=== PL, round without points (not yet closed) ===');
+  await plWithoutPoints(br);
+  section('=== The old, unlabelled data shape renders too ===');
+  await oldShape(br);
   await finish(br);
 })();

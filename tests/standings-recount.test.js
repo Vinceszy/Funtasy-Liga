@@ -1,28 +1,30 @@
 const { BASE, check, section, failures, launch, finish, blockApis } = require('./common');
-// A tabellat es a matrixot FUGGETLENUL ujraszamoljuk a results.json-bol, es
-// osszevetjuk azzal, amit az oldal kirajzol. Eddig ezt semmi nem ellenorizte.
+// We recompute the table and the head-to-head matrix INDEPENDENTLY from
+// results.json, and compare them with what the page draws. Nothing checked
+// this before.
 const fs = require('fs');
 
 const res = JSON.parse(fs.readFileSync(require('path').join(__dirname,'..','results.json'), 'utf8'));
-const ideiglenes = new Set((res.provisional || []).map(Number));
+const provisional = new Set((res.provisional || []).map(Number));
 
-const T = {}, be = n => (T[n] = T[n] || { M: 0, GY: 0, D: 0, V: 0, SP: 0, KP: 0 });
-const H2H = {};                                   // "A|B" -> [gy, d, v] A szemszogebol
+// per manager: M played, W won, D drawn, L lost, PF points for, PA points against
+const T = {}, row = n => (T[n] = T[n] || { M: 0, W: 0, D: 0, L: 0, PF: 0, PA: 0 });
+const H2H = {};                                   // "A|B" -> [w, d, l] from A's point of view
 const h2h = (a, b) => (H2H[a + '|' + b] = H2H[a + '|' + b] || [0, 0, 0]);
 for (const [r, ms] of Object.entries(res.schedule)) {
-  if (ideiglenes.has(+r)) continue;
+  if (provisional.has(+r)) continue;
   for (const [h, v, hp, vp] of ms) {
     if (hp == null || vp == null) continue;
-    const a = be(h), b = be(v);
-    a.M++; b.M++; a.SP += hp; b.SP += vp; a.KP += vp; b.KP += hp;
+    const a = row(h), b = row(v);
+    a.M++; b.M++; a.PF += hp; b.PF += vp; a.PA += vp; b.PA += hp;
     const i = hp > vp ? 0 : hp < vp ? 2 : 1;
-    if (i === 0) { a.GY++; b.V++; } else if (i === 2) { b.GY++; a.V++; } else { a.D++; b.D++; }
+    if (i === 0) { a.W++; b.L++; } else if (i === 2) { b.W++; a.L++; } else { a.D++; b.D++; }
     h2h(h, v)[i]++; h2h(v, h)[2 - i]++;
   }
 }
-const ker = x => Math.round(x * 100) / 100;
-const enyem = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.GY * 3 + s.D, KUL: ker(s.SP - s.KP) }))
-  .sort((x, y) => y.P - x.P || y.KUL - x.KUL || y.SP - x.SP);
+const round2 = x => Math.round(x * 100) / 100;
+const ours = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.W * 3 + s.D, DIFF: round2(s.PF - s.PA) }))
+  .sort((x, y) => y.P - x.P || y.DIFF - x.DIFF || y.PF - x.PF);
 
 (async () => {
   const br = await launch();
@@ -33,70 +35,70 @@ const enyem = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.GY * 3 + s.D, K
   // The table is drawn in steps (an earlier state first, then the full
   // results), so wait for the STATE: every expected match counted and the
   // head-to-head matrix drawn - not for the first row.
-  const merkozesek = enyem.reduce((ossz, v) => ossz + v.M, 0);
-  await p.waitForFunction((vart) => {
-    const sorok = [...document.querySelectorAll('#table tr')].filter((tr) => tr.querySelector('td'));
-    const lejatszott = sorok.reduce((ossz, tr) => ossz + (parseFloat(tr.children[2]?.textContent) || 0), 0);
-    return lejatszott === vart && document.querySelectorAll('#matrix tr').length > 1;
-  }, merkozesek, { timeout: 30000 }).catch(() => { /* the checks below report what is missing */ });
+  const matches = ours.reduce((sum, v) => sum + v.M, 0);
+  await p.waitForFunction((expected) => {
+    const rows = [...document.querySelectorAll('#table tr')].filter((tr) => tr.querySelector('td'));
+    const played = rows.reduce((sum, tr) => sum + (parseFloat(tr.children[2]?.textContent) || 0), 0);
+    return played === expected && document.querySelectorAll('#matrix tr').length > 1;
+  }, matches, { timeout: 30000 }).catch(() => { /* the checks below report what is missing */ });
 
-  // csak az adatsorok (a fejlec TH-kbol all)
-  const oldal = await p.$$eval('#table tr', trs => trs
+  // only the data rows (the header consists of THs)
+  const page = await p.$$eval('#table tr', trs => trs
     .filter(tr => tr.querySelector('td'))
     .map(tr => [...tr.children].map(c => c.textContent.trim())));
-  const sz = t => parseFloat(String(t).replace(/\s/g, '').replace(',', '.'));
+  const num = t => parseFloat(String(t).replace(/\s/g, '').replace(',', '.'));
 
-  console.log('--- tabella ---');
-  check(oldal.length === enyem.length, `sorok száma (oldal ${oldal.length}, számolt ${enyem.length})`);
-  enyem.forEach((v, i) => {
-    const o = oldal[i] || [];
-    check((o[1] || '').startsWith(v.n), `${i + 1}. hely ${v.n} (oldalon: "${(o[1] || '').split(' ')[0]}")`);
-    const vart = [v.M, v.GY, v.D, v.V, ker(v.SP), ker(v.KP), v.KUL, v.P];
-    const kap = [2, 3, 4, 5, 6, 7, 8, 9].map(j => sz(o[j]));
-    const ok = vart.every((x, j) => Math.abs(x - kap[j]) < 0.005);
-    if (!ok) console.log(`      várt:   ${vart.join(' | ')}\n      kapott: ${kap.join(' | ')}`);
-    check(ok, `   ${v.n} számai (M/GY/D/V/SP/KP/KÜL/Pont)`);
+  console.log('--- table ---');
+  check(page.length === ours.length, `number of rows (page ${page.length}, computed ${ours.length})`);
+  ours.forEach((v, i) => {
+    const o = page[i] || [];
+    check((o[1] || '').startsWith(v.n), `place ${i + 1} ${v.n} (on the page: "${(o[1] || '').split(' ')[0]}")`);
+    const expected = [v.M, v.W, v.D, v.L, round2(v.PF), round2(v.PA), v.DIFF, v.P];
+    const got = [2, 3, 4, 5, 6, 7, 8, 9].map(j => num(o[j]));
+    const ok = expected.every((x, j) => Math.abs(x - got[j]) < 0.005);
+    if (!ok) console.log(`      expected: ${expected.join(' | ')}\n      got:      ${got.join(' | ')}`);
+    check(ok, `   ${v.n} numbers (M/GY/D/V/SP/KP/KÜL/Pont)`);
   });
 
-  console.log('\n--- egymás elleni mátrix ---');
+  console.log('\n--- head-to-head matrix ---');
   const mx = await p.evaluate(() => {
     const t = document.getElementById('matrix');
-    const sorok = [...t.querySelectorAll('tr')];
-    const fej = [...sorok[0].children].map(c => c.textContent.trim());
-    return sorok.slice(1).map(tr => ({
-      nev: tr.children[0].textContent.trim(),
-      cellak: [...tr.children].slice(1).map((c, i) => ({ oszlop: fej[i + 1], ertek: c.textContent.trim() })),
+    const rows = [...t.querySelectorAll('tr')];
+    const head = [...rows[0].children].map(c => c.textContent.trim());
+    return rows.slice(1).map(tr => ({
+      name: tr.children[0].textContent.trim(),
+      cells: [...tr.children].slice(1).map((c, i) => ({ column: head[i + 1], value: c.textContent.trim() })),
     }));
   });
-  const teljes = n => enyem.find(x => x.n === n).n;
-  let db = 0, elteres = 0;
-  for (const sor of mx) {
-    const a = enyem.find(x => x.n === sor.nev);
-    if (!a) { check(false, 'ismeretlen mátrix-sor: ' + sor.nev); continue; }
-    for (const c of sor.cellak) {
-      const b = enyem.find(x => x.n.toLowerCase().startsWith(c.oszlop.toLowerCase()));
-      if (!b) { check(false, 'ismeretlen mátrix-oszlop: ' + c.oszlop); continue; }
-      if (a.n === b.n) { if (c.ertek !== '—') { elteres++; console.log(`   átló ${a.n}: "${c.ertek}"`); } continue; }
+  const full = n => ours.find(x => x.n === n).n;
+  let count = 0, mismatches = 0;
+  for (const r of mx) {
+    const a = ours.find(x => x.n === r.name);
+    if (!a) { check(false, 'unknown matrix row: ' + r.name); continue; }
+    for (const c of r.cells) {
+      const b = ours.find(x => x.n.toLowerCase().startsWith(c.column.toLowerCase()));
+      if (!b) { check(false, 'unknown matrix column: ' + c.column); continue; }
+      if (a.n === b.n) { if (c.value !== '—') { mismatches++; console.log(`   diagonal ${a.n}: "${c.value}"`); } continue; }
       const m = H2H[a.n + '|' + b.n];
-      const vart = m ? m.join('/') : '·';
-      db++;
-      if (c.ertek.replace(/\s/g, '') !== vart) {
-        elteres++; console.log(`   ${a.n} vs ${b.n}: oldal="${c.ertek}" számolt="${vart}"`);
+      const expected = m ? m.join('/') : '·';
+      count++;
+      if (c.value.replace(/\s/g, '') !== expected) {
+        mismatches++; console.log(`   ${a.n} vs ${b.n}: page="${c.value}" computed="${expected}"`);
       }
     }
   }
-  check(elteres === 0, `mátrix cellái (${db} ellenőrizve, ${elteres} eltérés)`);
+  check(mismatches === 0, `matrix cells (${count} checked, ${mismatches} mismatches)`);
 
-  section('Vízszintes görgetésnél a helyezés ÉS a név is áll');
-  // A KIZART HIBA (iPhone): gorgetesnel a SZAKVEZETO fejlec allva maradt, a
-  // nevek viszont elcsusztak a szamok ala. Ok: a `td.name` maga volt a flex
-  // kontener, es a flexes cella kikerul a tablazat-elrendezesbol - Safari
-  // ott nem ragasztja. A fejlecen (`th`) nincs flex, ezert az allt.
+  section('On horizontal scroll both the place AND the name stay put');
+  // THE EXCLUDED FAULT (iPhone): on scrolling the manager header stayed put,
+  // but the names slid under the numbers. Cause: `td.name` itself was the
+  // flex container, and a flex cell drops out of the table layout - Safari
+  // does not stick it there. The header (`th`) has no flex, so it stayed.
   //
-  // A SAFARI-T ITT NEM TUDJUK FUTTATNI, ezert nem a ragadas latszatat
-  // merjuk, hanem az OKOT: a cella maradjon valodi tablazat-cella, es a
-  // flex a benne levo .nevsor-on legyen. Ha valaki visszateszi a flexet a
-  // cellara, ez a teszt bukik - a telefon nelkul is.
+  // WE CANNOT RUN SAFARI HERE, so we do not measure the look of sticking but
+  // the CAUSE: the cell must stay a real table cell, and the flex must be on
+  // the .nevsor inside it. If someone puts the flex back on the cell, this
+  // test fails - even without the phone.
   const mob = await br.newPage({ viewport: { width: 390, height: 800 } });
   await blockApis(mob);
   await mob.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
@@ -104,28 +106,28 @@ const enyem = Object.entries(T).map(([n, s]) => ({ n, ...s, P: s.GY * 3 + s.D, K
   const st = await mob.evaluate(() => {
     const tr = document.querySelectorAll('#table tr')[1];
     const cs = e => e && getComputedStyle(e);
-    const nev = tr.querySelector('td.name'), rang = tr.querySelector('td.rank');
+    const name = tr.querySelector('td.name'), rank = tr.querySelector('td.rank');
     const th = document.querySelectorAll('#table tr:first-child th')[1];
     return {
-      nevDisplay: cs(nev).display, nevPos: cs(nev).position,
-      rangPos: cs(rang).position, thPos: cs(th).position,
-      nevsor: !!nev.querySelector('.nevsor'),
-      nevsorDisplay: cs(nev.querySelector('.nevsor')) && cs(nev.querySelector('.nevsor')).display,
+      nameDisplay: cs(name).display, namePos: cs(name).position,
+      rankPos: cs(rank).position, thPos: cs(th).position,
+      nameRow: !!name.querySelector('.nevsor'),
+      nameRowDisplay: cs(name.querySelector('.nevsor')) && cs(name.querySelector('.nevsor')).display,
       borderCollapse: cs(document.getElementById('table')).borderCollapse,
     };
   });
-  check(st.nevDisplay === 'table-cell',
-     'a névcella VALÓDI táblázat-cella marad (display: ' + st.nevDisplay + ')');
-  check(st.nevsor && st.nevsorDisplay === 'flex',
-     'a flex a cellán BELÜL, a .nevsor-on van (' + st.nevsorDisplay + ')');
-  check(st.nevPos === 'sticky' && st.rangPos === 'sticky' && st.thPos === 'sticky',
-     'a helyezés, a név és a fejléc mind ragad (' + st.rangPos + ' / ' + st.nevPos
+  check(st.nameDisplay === 'table-cell',
+     'the name cell stays a REAL table cell (display: ' + st.nameDisplay + ')');
+  check(st.nameRow && st.nameRowDisplay === 'flex',
+     'the flex is INSIDE the cell, on .nevsor (' + st.nameRowDisplay + ')');
+  check(st.namePos === 'sticky' && st.rankPos === 'sticky' && st.thPos === 'sticky',
+     'the place, the name and the header all stick (' + st.rankPos + ' / ' + st.namePos
      + ' / ' + st.thPos + ')');
-  // A WebKit (iPhone-on MINDEN bongeszo, a Chrome is) `collapse` mellett nem
-  // ragasztja megbizhatoan a tablazat-cellakat. Megmerve: a `separate` a
-  // rajzolaton semmit nem valtoztat.
+  // WebKit (on iPhone EVERY browser, Chrome too) does not reliably stick
+  // table cells with `collapse`. Measured: `separate` changes nothing in the
+  // rendering.
   check(st.borderCollapse === 'separate',
-     'a ragadó cellás tábla border-collapse-e separate (' + st.borderCollapse + ')');
+     'the sticky-cell table\'s border-collapse is separate (' + st.borderCollapse + ')');
   await mob.close();
 
   await br.close();

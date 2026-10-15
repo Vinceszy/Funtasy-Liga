@@ -1,154 +1,155 @@
 const { BASE, check, failures, launch, finish } = require('./common');
-// A bonusz harom allapota a PL-oldalon.
+// The three states of the bonus on the PL page.
 //
-// MERVE : az FPL a bonuszt a meccs alatt is szamolja a
-// BPS-tablabol, es az explain-be is beteszi (stat: "bonus"). Harom allapot:
-//   megy a meccs                          -> a bonusz percrol percre valtozhat
-//   lefujva, de a NAPZARAS meg hatravan   -> rogzult, de meg valtozhat
-//   napzaras utan                         -> fix, JELOLETLEN
-// A harmadik a FORDULO zarasa. 2026/27-tol a lockdown a fordulo utolso
-// meccse UTANI nap 09:00 UK-kor van (korabban egy oraval a lefujas utan),
-// hogy az Opta felulvizsgalata meg beleszamithasson - NAPI zaras tehat
-// nincs. A jelzes a klasszikus FPL event-status vegpontjabol jon; a Draft
-// frontendjenek forrasabol kiolvasva a ket mezo jelentese:
-//   points:      "" = ures, l = Live, p = Provisional, r = Confirmed
-//   bonus_added: igaz eseten a Bonus Points oszlopban "Added"
-// Vegleges tehat a "r" vagy az "Added" - a "p" NEM az, az a kozbenso.
-// Az explain szerkezete [[stat-lista, meccs_id]] - a bonusz-sor ezert a
-// SAJAT meccsehez, azon at a sajat NAPJAHOZ kotheto.
+// MEASURED: FPL computes the bonus during the match too, from the BPS table,
+// and puts it into the explain as well (stat: "bonus"). Three states:
+//   the match is running                  -> the bonus may change minute by minute
+//   full time, but the DAY CLOSE is ahead -> settled, but may still change
+//   after the day close                   -> fixed, UNMARKED
+// The third is the ROUND close. From 2026/27 the lockdown is at 09:00 UK on
+// the day AFTER the round's last match (earlier one hour after full time),
+// so that Opta's review can still count - so there is NO daily close. The
+// signal comes from the classic FPL event-status endpoint; read from the
+// source of the Draft frontend, the meaning of the two fields:
+//   points:      "" = empty, l = Live, p = Provisional, r = Confirmed
+//   bonus_added: when true, "Added" in the Bonus Points column
+// So final means "r" or "Added" - "p" is NOT final, it is the in-between.
+// The explain has the shape [[stat list, match_id]] - so a bonus row can be
+// tied to ITS OWN match, and through that to its own DAY.
 
 const GW = 1;
-// harom meccs harom allapotban, ket kulonbozo napon
-const NYITOTT_NAP = '2026-08-23', ZART_NAP = '2026-08-22';
-const MECCSEK = [
+// three matches in three states, on two different days
+const OPEN_DAY = '2026-08-23', CLOSED_DAY = '2026-08-22';
+const MATCHES = [
   { id: 11, started: true,  finished_provisional: false, finished: false,
-    kickoff_time: NYITOTT_NAP + 'T13:00:00Z', team_h: 1, team_a: 2 },
+    kickoff_time: OPEN_DAY + 'T13:00:00Z', team_h: 1, team_a: 2 },
   { id: 12, started: true,  finished_provisional: true,  finished: false,
-    kickoff_time: NYITOTT_NAP + 'T15:30:00Z', team_h: 3, team_a: 4 },
-  // lefujt meccs egy MAR LEZART napon - a meccs finished mezoje meg hamis,
-  // tehat ha azt neznenk, tevesen ideiglenesnek jelolnenk
+    kickoff_time: OPEN_DAY + 'T15:30:00Z', team_h: 3, team_a: 4 },
+  // a finished match on an ALREADY CLOSED day - the match's finished field is
+  // still false, so if we looked at that, we would wrongly mark it provisional
   { id: 13, started: true,  finished_provisional: true,  finished: false,
-    kickoff_time: ZART_NAP + 'T14:00:00Z', team_h: 5, team_a: 6 },
+    kickoff_time: CLOSED_DAY + 'T14:00:00Z', team_h: 5, team_a: 6 },
 ];
-// A lezart nap "r" (Confirmed), a masik meg "p" (Provisional). A "p"
-// szandekosan a NYITOTT napon all: ha valaki azt megint veglegesnek venne,
-// ez a teszt bukik.
-const NAPOK = { status: [
-  { date: ZART_NAP,     event: GW, bonus_added: false, points: 'r' },
-  { date: NYITOTT_NAP,  event: GW, bonus_added: false, points: 'p' },
+// The closed day is "r" (Confirmed), the other still "p" (Provisional). The
+// "p" deliberately stands on the OPEN day: if anyone took it as final again,
+// this test fails.
+const DAYS = { status: [
+  { date: CLOSED_DAY, event: GW, bonus_added: false, points: 'r' },
+  { date: OPEN_DAY,   event: GW, bonus_added: false, points: 'p' },
 ] };
-// jatekosonkent: melyik meccs(ek)ben szerepel es mennyi bonuszt kapott
-const JATEKOSOK = {
-  201: [[11, 3]],            // fut a meccse
-  202: [[12, 2]],            // lefujva, meg nem hivatalos
-  203: [[13, 1]],            // hivatalos
-  204: [[13, 1], [11, 2]],   // dupla fordulo: egy kesz + egy futo meccs
+// per player: which match(es) he appears in and how much bonus he got
+const PLAYERS = {
+  201: [[11, 3]],            // his match is running
+  202: [[12, 2]],            // full time, not official yet
+  203: [[13, 1]],            // official
+  204: [[13, 1], [11, 2]],   // double gameweek: one finished + one running match
 };
-const explain = parok => parok.map(([mid, bonusz]) => [[
+const explain = pairs => pairs.map(([mid, bonus]) => [[
   { name: 'Minutes played', points: 2, value: 90, stat: 'minutes' },
   { name: 'Goals scored',   points: 5, value: 1,  stat: 'goals_scored' },
-  { name: 'Bonus',          points: bonusz, value: bonusz, stat: 'bonus' },
+  { name: 'Bonus',          points: bonus, value: bonus, stat: 'bonus' },
 ], mid]);
 
-let napokKi = true;   // a napi zaras adata megjon-e (a tartalek-ag teszteléséhez)
+let serveDays = true;   // whether the daily close data arrives (for testing the fallback branch)
 
 (async () => {
   const br = await launch();
   const p = await br.newPage({ viewport: { width: 1100, height: 900 } });
   const perr = []; p.on('pageerror', e => perr.push(e.message));
 
-  // FIGYELEM: nem eleg a draft.premierleague.com-ot elfogni - a napi zaras a
-  // KLASSZIKUS FPL event-status vegpontjarol jon (fantasy.premierleague.com).
+  // NOTE: catching draft.premierleague.com is not enough - the daily close
+  // comes from the CLASSIC FPL event-status endpoint (fantasy.premierleague.com).
   await p.route('**premierleague.com/**', route => {
     const u = decodeURIComponent(route.request().url());
     const json = b => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
     if (/\/api\/game/.test(u)) return json({ current_event: GW, current_event_finished: false });
-    if (/\/fixtures/.test(u)) return json(MECCSEK);
-    if (/event-status/.test(u)) return json(napokKi ? NAPOK : { status: [] });
+    if (/\/fixtures/.test(u)) return json(MATCHES);
+    if (/event-status/.test(u)) return json(serveDays ? DAYS : { status: [] });
     if (/\/live/.test(u)) {
       const el = {};
-      for (const [id, parok] of Object.entries(JATEKOSOK))
-        el[id] = { stats: { total_points: 10, minutes: 90, bonus: parok[0][1] }, explain: explain(parok) };
+      for (const [id, pairs] of Object.entries(PLAYERS))
+        el[id] = { stats: { total_points: 10, minutes: 90, bonus: pairs[0][1] }, explain: explain(pairs) };
       return json({ elements: el });
     }
     return json({});
   });
   await p.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
-  // A LIVEGW/LIVEMECCS top-level `let`, tehat NINCS a window-on - nevvel kell
-  // hivatkozni rajuk (a waitForFunction torzse global hatokorben fut).
+  // LIVEGW/LIVE_MATCHES are top-level `let`s, so they are NOT on window - they
+  // have to be referred to by name (the body of waitForFunction runs in the
+  // global scope).
   await p.waitForFunction(() => typeof LIVEGW !== 'undefined' && LIVEGW === 1,
     null, { timeout: 20000 });
   await p.waitForFunction(() => typeof LIVE_MATCHES !== 'undefined' && LIVE_MATCHES
     && Object.keys(LIVE_MATCHES).length === 3, null, { timeout: 20000 });
-  // A napi zaras kulon, a fo frissitestol fuggetlenul erkezik (szandekosan
-  // nem varjuk meg ott) - itt viszont meg kell varni, kulonben a teszt a
-  // tartalek-agat merne.
+  // The daily close arrives separately, independently of the main refresh
+  // (deliberately not waited for there) - here, though, it must be waited
+  // for, otherwise the test would measure the fallback branch.
   await p.waitForFunction(() => typeof LIVE_DAYS !== 'undefined' && LIVE_DAYS
     && Object.keys(LIVE_DAYS).length === 2, null, { timeout: 20000 });
 
-  const ki = await p.evaluate(async (GW) => {
+  const html = await p.evaluate(async (GW) => {
     const r = {};
     for (const id of [201, 202, 203, 204]) r[id] = await breakdownHTML(+id, GW);
     return r;
   }, GW);
 
-  const sorok = html => {
-    // a bonusz sorai: nev-cella szovege + a pont-cella osztalya
-    const ki = [];
+  const bonusRows = h => {
+    // the bonus rows: text of the name cell + class of the points cell
+    const out = [];
     const re = /<td class="ev">Bónuszpontok([\s\S]*?)<\/td>[\s\S]*?<td class="([^"]*)">/g;
-    let m; while ((m = re.exec(html))) ki.push({ megj: m[1].replace(/<[^>]*>/g, '').trim(), cls: m[2] });
-    return ki;
+    let m; while ((m = re.exec(h))) out.push({ note: m[1].replace(/<[^>]*>/g, '').trim(), cls: m[2] });
+    return out;
   };
 
-  console.log('--- egy meccses esetek ---');
-  const fut = sorok(ki[201])[0], lefujva = sorok(ki[202])[0], kesz = sorok(ki[203])[0];
-  console.log('   futó meccs      ->', JSON.stringify(fut));
-  console.log('   lefújva         ->', JSON.stringify(lefujva));
-  console.log('   hivatalos       ->', JSON.stringify(kesz));
-  check(/b-valtozik/.test(fut.cls) && /változik/.test(fut.megj),
-    'futó meccs: a bónusz sor jelölt, és megmondja, hogy még változik');
-  check(/b-ideiglenes/.test(lefujva.cls) && /forduló végéig/.test(lefujva.megj),
-    'lefújt meccs, a forduló még nyitva: külön jelölés, és megmondja, mire vár');
-  check(!/b-valtozik|b-ideiglenes/.test(kesz.cls) && kesz.megj === '',
-    'a forduló zárása után: semmilyen jelölés (a jelöletlen = fix)');
-  check(/még változhat/.test(lefujva.megj) && kesz.megj === '',
-    'a "p" (Provisional) jelölést kap, a "r" (Confirmed) nem');
-  check(fut.cls !== lefujva.cls, 'a két jelölt állapot nem ugyanaz');
+  console.log('--- single-match cases ---');
+  const running = bonusRows(html[201])[0], fullTime = bonusRows(html[202])[0], done = bonusRows(html[203])[0];
+  console.log('   running match   ->', JSON.stringify(running));
+  console.log('   full time       ->', JSON.stringify(fullTime));
+  console.log('   official        ->', JSON.stringify(done));
+  check(/b-valtozik/.test(running.cls) && /változik/.test(running.note),
+    'running match: the bonus row is marked, and says that it is still changing');
+  check(/b-ideiglenes/.test(fullTime.cls) && /forduló végéig/.test(fullTime.note),
+    'finished match, round still open: a separate mark, and it says what it is waiting for');
+  check(!/b-valtozik|b-ideiglenes/.test(done.cls) && done.note === '',
+    'after the round close: no mark at all (unmarked = fixed)');
+  check(/még változhat/.test(fullTime.note) && done.note === '',
+    '"p" (Provisional) gets a mark, "r" (Confirmed) does not');
+  check(running.cls !== fullTime.cls, 'the two marked states are not the same');
 
-  console.log('\n--- a bónusz "Added" önmagában is véglegessé tesz ---');
+  console.log('\n--- the bonus "Added" makes it final on its own ---');
   const added = await p.evaluate(() => {
-    // a nyitott nap "p" marad, de a bonusz mar Added
+    // the open day stays "p", but the bonus is already Added
     LIVE_DAYS[Object.keys(LIVE_DAYS).find(d => !LIVE_DAYS[d].lezart)] = { lezart: true };
     return breakdownHTML(202, 1);
   });
-  const addedSor = sorok(added)[0];
-  console.log('   Added esetén:', JSON.stringify(addedSor));
-  check(addedSor.megj === '' && !/b-/.test(addedSor.cls),
-    'ha az FPL szerint a bónusz már Added, nincs jelölés');
+  const addedRow = bonusRows(added)[0];
+  console.log('   with Added:', JSON.stringify(addedRow));
+  check(addedRow.note === '' && !/b-/.test(addedRow.cls),
+    'if according to FPL the bonus is already Added, there is no mark');
 
-  console.log('\n--- dupla forduló: két meccs, két állapot ---');
-  const ketto = sorok(ki[204]);
-  console.log('   sorok:', JSON.stringify(ketto));
-  check(ketto.length === 2, 'két bónusz sor van (meccsenként egy)');
-  check(ketto.some(x => !/b-/.test(x.cls)) && ketto.some(x => /b-valtozik/.test(x.cls)),
-    'a kész meccs sora jelöletlen, a futóé jelölt — nem mossuk össze őket');
+  console.log('\n--- double gameweek: two matches, two states ---');
+  const two = bonusRows(html[204]);
+  console.log('   rows:', JSON.stringify(two));
+  check(two.length === 2, 'there are two bonus rows (one per match)');
+  check(two.some(x => !/b-/.test(x.cls)) && two.some(x => /b-valtozik/.test(x.cls)),
+    'the finished match\'s row is unmarked, the running one\'s is marked — we do not blur them together');
 
-  console.log('\n--- tartalék: ha a napi zárás adata nem jön meg ---');
-  // Ilyenkor a meccs sajat finished mezojere esunk vissza. A 13-as meccs
-  // finished=false, tehat jelolve kell lennie - inkabb jelezzunk feleslegesen,
-  // mint hogy fixnek mondjunk valamit, ami meg valtozhat.
-  napokKi = false;
+  console.log('\n--- fallback: if the daily close data does not arrive ---');
+  // In that case we fall back on the match's own finished field. Match 13
+  // has finished=false, so it must be marked - better to flag needlessly than
+  // to call something fixed that may still change.
+  serveDays = false;
   const p2 = await br.newPage();
   await p2.route('**premierleague.com/**', route => {
     const u = decodeURIComponent(route.request().url());
     const json = b => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
     if (/\/api\/game/.test(u)) return json({ current_event: GW, current_event_finished: false });
-    if (/\/fixtures/.test(u)) return json(MECCSEK);
+    if (/\/fixtures/.test(u)) return json(MATCHES);
     if (/event-status/.test(u)) return json({ status: [] });
     if (/\/live/.test(u)) {
       const el = {};
-      for (const [id, parok] of Object.entries(JATEKOSOK))
-        el[id] = { stats: { total_points: 10, minutes: 90, bonus: parok[0][1] }, explain: explain(parok) };
+      for (const [id, pairs] of Object.entries(PLAYERS))
+        el[id] = { stats: { total_points: 10, minutes: 90, bonus: pairs[0][1] }, explain: explain(pairs) };
       return json({ elements: el });
     }
     return json({});
@@ -156,16 +157,16 @@ let napokKi = true;   // a napi zaras adata megjon-e (a tartalek-ag tesztelésé
   await p2.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
   await p2.waitForFunction(() => typeof LIVE_MATCHES !== 'undefined' && LIVE_MATCHES
     && Object.keys(LIVE_MATCHES).length === 3, null, { timeout: 20000 });
-  const tartalek = sorok(await p2.evaluate(GW => breakdownHTML(203, GW), GW))[0];
-  console.log('   napi adat nélkül, lefújt meccs ->', JSON.stringify(tartalek));
-  check(/b-ideiglenes/.test(tartalek.cls),
-    'napi adat nélkül a lefújt meccs jelölt marad (a meccs finished mezője a tartalék)');
+  const fallback = bonusRows(await p2.evaluate(GW => breakdownHTML(203, GW), GW))[0];
+  console.log('   without day data, finished match ->', JSON.stringify(fallback));
+  check(/b-ideiglenes/.test(fallback.cls),
+    'without day data a finished match stays marked (the match\'s finished field is the fallback)');
 
-  console.log('\n--- a többi sor érintetlen ---');
-  check(!/b-valtozik|b-ideiglenes/.test(ki[201].replace(/Bónuszpontok[\s\S]*?<\/tr>/g, '')),
-    'a gól és a percek sora nem kap jelölést');
+  console.log('\n--- the other rows are untouched ---');
+  check(!/b-valtozik|b-ideiglenes/.test(html[201].replace(/Bónuszpontok[\s\S]*?<\/tr>/g, '')),
+    'the goal and minutes rows get no mark');
 
-  console.log('\npageerror:', perr.length ? perr : 'nincs');
-  check(perr.length === 0, 'nincs JS-hiba');
+  console.log('\npageerror:', perr.length ? perr : 'none');
+  check(perr.length === 0, 'no JS error');
   await finish(br);
 })();

@@ -491,7 +491,7 @@ network, a proxy or a changed API. The reason is shown faintly under the text.
 
 This occurs in several places in both leagues (live squad, minutes refill, live points), so the
 mechanism is in the shared layer — written separately, it would be missing in exactly one
-place. Pinned by: `tests/accordionorzes.teszt.js`.
+place. Pinned by: `tests/accordion-preserve.test.js`.
 
 ### Navigation inside the modal
 The modal works like a small browser: clicking the rows of the lists replaces the content
@@ -701,8 +701,8 @@ also shared by the live and the stored path.
 
 **Measurement.** The Worker cannot be reached from the development environment (the network
 does not let out to `workers.dev`), so its logic is checked with a fake KV
-(`tests/workertarolo.teszt.js`), the page side from a browser
-(`tests/taroltallas.teszt.js`), and the real end-to-end measurement runs from GitHub
+(`tests/worker-store.test.js`), the page side from a browser
+(`tests/stored-score-first.test.js`), and the real end-to-end measurement runs from GitHub
 Actions (`naplo/storage-probe.py` with the shared `.github/workflows/naplo-meres.yml`).
 
 ### The NB1 live fetch runs in two rounds, not eight (measured)
@@ -726,7 +726,7 @@ of requests must not leave a hole in the score (the missing manager's match woul
 without a score in that round).
 
 Measured with the test, with a 250 ms delay per request: **513 ms** instead of ~2000 ms
-sequentially. Pinned by: `parhuzamos.teszt.js`.
+sequentially. Pinned by: `nb1-parallel-fetch.test.js`.
 
 ### The CORS proxies are interchangeable — a free proxy can disappear (measured)
 
@@ -746,7 +746,7 @@ The own Worker comes first, even before `direkt`, because the direct route to th
 never works from a browser (they send no CORS headers) — trying it first would be wasted. The
 order of the public proxies follows the run that measured nine candidates
 (`naplo/proxy-probe.py` → `naplo/proxy-probe.txt`). After the first success the fetcher stays
-on the proven route. The chain is pinned by `tests/lekero.teszt.js` — including exactly this
+on the proven route. The chain is pinned by `tests/fetcher-fallback.test.js` — including exactly this
 failure: with corsproxy 401 + a silent allorigins, cors.sh has to serve.
 
 If every route fails again, the points breakdown's error message lists which one failed and why
@@ -784,7 +784,7 @@ first paint with the browser default (serif Times), with different glyph widths 
 would jump when the web font arrives. The variables also keep the font names in one place
 instead of the **60+ places** they would otherwise be written in.
 
-Pinned by: `tests/betukeszlet.teszt.js`.
+Pinned by: `tests/webfont-fallback.test.js`.
 
 **Without JavaScript** only the empty skeleton would show — panel titles, empty tables,
 without a word of explanation. So every page has a `<noscript>` warning at the top saying
@@ -1429,7 +1429,7 @@ fixtures' `minutes` field. Measured during a live match, that is **always 0**, e
 finished matches. The players' minutes, however, tick together: in 15 samples over half an
 hour every starter on the pitch in the running match showed the same number. This is not an
 estimate: with 11 starters and at most 5 substitutions there is always someone who plays the
-whole match. In the mock of `perccellak.teszt.js` the `minutes` is **deliberately 0** — if
+whole match. In the mock of `minute-cells.test.js` the `minutes` is **deliberately 0** — if
 someone put back the match's own field, the test fails.
 
 **A substituted player's minutes stop** — measured: in a finished match the starters stood
@@ -1528,7 +1528,7 @@ In this gap the status line must not say **„Naprakész · ellenőrizve <most>"
 checked <now>): the time shown would be that of the *request*, not of the *data* — so it
 would claim to be up to date exactly when it provably was not. Instead it says that the round
 has closed, that the result comes with the next data refresh, and it shows the time of the
-**stored** standings. Pinned by: `zarasires.teszt.js`.
+**stored** standings. Pinned by: `closing-gap.test.js`.
 
 On the NB1 this gap does not exist: there the collector itself decides the close, and writes
 the result in the same run.
@@ -1568,7 +1568,7 @@ The routine is **shared** (`FunTasy.backfillSquads`), because the situation is t
 both leagues; the endpoint differs per league, the caller supplies it. On the NB1 it does
 not arise today, because there the collector writes the whole current squad on **every
 run** (`squads.json`), and the page fills the running round's score from that — if that file
-ever lags behind, the same backfill applies there too. Pinned by: `keretpotlas.teszt.js`.
+ever lags behind, the same backfill applies there too. Pinned by: `squad-backfill.test.js`.
 
 ### Name and monogram: the monogram is never cut off
 
@@ -1629,7 +1629,7 @@ round the FPL brings in, in place of a starter who did not play, the first bench
 fits the formation. That is why the bench is **left as it came** — the starters, however, are
 still sorted by position, where the order has no meaning. (Sorting the bench by position
 would throw away exactly the information it is worth looking at. Pinned by
-`padsorrend.teszt.js`.)
+`bench-order.test.js`.)
 
 The data has always been right: the collector writes the squad in the API order of `picks`,
 so `draft_history.json` keeps places 12–15 in the FPL's order. It does not store the
@@ -1739,7 +1739,7 @@ the page (`squadRecord`) — the same rule is needed there. Without it the page 
 says "the club has no match": the stored data is already right, the fresh fetch overwrites
 it. If the rule changes, it has to be changed **in both places**.
 
-Pinned by: `tests/collector_matches.py` M9–M11 (collector) and `tests/forduloelott.teszt.js`
+Pinned by: `tests/collector_matches.py` M9–M11 (collector) and `tests/pre-kickoff-squads.test.js`
 (browser, with the real shape of the measurement).
 
 ### The closing panel goes up to the CLOSED rounds
@@ -1783,7 +1783,7 @@ forth.
 this, because if they drift apart the protection either does not catch, or causes an endless
 reload.
 
-Pinned by: `tests/verzio.teszt.js`.
+Pinned by: `tests/stale-page-reload.test.js`.
 
 ### Shared players are paired by ID, not by name
 
@@ -1795,7 +1795,7 @@ were two. The id (`competition_player.id`) is the same in both sources, so `role
 that. The **role** (captain / bench) is still part of the key: the same player in a different
 role is not shared — their points are not the same either.
 
-Pinned by: `tests/kulonbseg.teszt.js` — it must find the same number of shared players in
+Pinned by: `tests/squad-diff.test.js` — it must find the same number of shared players in
 the stored, the mixed and the live form.
 
 ## 5. Known limitations and pitfalls
@@ -2012,7 +2012,7 @@ no top border, so there is nothing to double.
 anonymous cell —, and **on iPhone it did not stick**: on scrolling the SZAKVEZETŐ (manager)
 header stayed put (it has no flex), but the names slid under the numbers. In Chromium this does
 not show, there sticky holds on the flex cell too. The flex is therefore **inside** the cell, on
-the `.nevsor` span. Pinned by: `tests/tabella.teszt.js` — without Safari too, because it does not
+the `.nevsor` span. Pinned by: `tests/standings-recount.test.js` — without Safari too, because it does not
 measure the appearance of sticking, but the cause (the cell's `display`, and that the flex is one
 level further in).
 
@@ -2027,10 +2027,10 @@ a keretén."* (made no change to the squad) — although three players were chan
 That is why `FunTasy.changesList` accepts, besides the labelled `reszek`, the **old `sorok`
 shape passed in one piece** too. The same rule holds for every future contract change: if the
 input of the shared layer changes, the old shape has to be understood for as long as the pages'
-cache can still run out. Pinned in the last section of `valtoztatasok.teszt.js`.
+cache can still run out. Pinned in the last section of `squad-moves.test.js`.
 
 Pinned by: `tests/collector_squad_moves.py` (NB1), `tests/collector_draft_squad_moves.py` (PL)
-and `tests/valtoztatasok.teszt.js` — the latter compares, **for every manager and every round**,
+and `tests/squad-moves.test.js` — the latter compares, **for every manager and every round**,
 the sum of the rows, the block's „Összesen" (total) row, the GUARD column of the Fordulók tab
 and the GUA cell of the table.
 
@@ -2071,7 +2071,7 @@ only **fills in**, it does not overwrite — as soon as the MLSZ gives real (non
 made up. On the PL side this gate never existed: `showMatch` always draws the squad if there is
 stored data for the round.
 
-Pinned by: `tests/forduloelott.teszt.js`.
+Pinned by: `tests/pre-kickoff-squads.test.js`.
 
 ## 5/a. Why there is a separate squad file per round
 
@@ -2151,7 +2151,7 @@ Two details that matter:
 
 If the file is missing (a round before the introduction, or the collector has not run yet), the
 page silently falls back to the live request. Pinned by: `tests/collector_breakdowns.py` and
-`tests/taroltbontas.teszt.js`.
+`tests/stored-breakdown.test.js`.
 
 ### Live points are summed from the itemised breakdown (PL)
 
@@ -2194,7 +2194,7 @@ changes its structure, not a single row is found, and the `stats` total remains.
 thus gives back the **old behaviour**, not zeros. Points and minutes are tracked separately:
 there can be a row worth points without a minutes row, and there 0 minutes would be false.
 
-Pinned by: `tests/eloosszeg.teszt.js` (page) and `tests/collector_points_source.py` (collector)
+Pinned by: `tests/live-points-from-breakdown.test.js` (page) and `tests/collector_points_source.py` (collector)
 — with a stuck total, 8 points and 90 minutes, the live score 88 (11 starters), the wrong 11
 nowhere; for an empty or unknown-structure breakdown `stats` remains; in a double round the two
 matches are added up. Both provably fail on the old code.
@@ -2218,7 +2218,7 @@ re-runs the live request every minute on both pages — but **only** if there is
 progress, and **only** on a visible page. Between rounds and on a page put in the background not
 a single request goes out.
 
-Pinned by: `tests/eloora.teszt.js` — in a live round the score shown changes from 44 to 99
+Pinned by: `tests/live-auto-refresh.test.js` — in a live round the score shown changes from 44 to 99
 without a click; in a closed round not a single repeated request goes out. It provably fails on
 the old code.
 
@@ -2337,7 +2337,7 @@ Access: from the home page (a card) and from the **footer** of every page
 There is no build and no template, so the `<head>`, the header, the panel frames and the footer
 **stand separately on both league pages**. This can drift apart — and has: the closing changes
 panel stood for a while with a different title, in a different column and with a different layout
-on the two pages. "Paying attention" is not enough here: `tests/ligavaz.teszt.js` checks by machine
+on the two pages. "Paying attention" is not enough here: `tests/league-page-skeleton.test.js` checks by machine
 that the `<head>` is identical on all four pages (apart from the title and the path prefix), that
 the order and column of the panels are the same on desktop and mobile, and that the table header
 matches too — only the participant column runs under a different name (Szakvezető / Csapat —
@@ -2405,9 +2405,9 @@ Two principles worth keeping:
 - **Special states are produced by the test on the fly** (Playwright intercepts the request and
   rewrites the response), not from a stored file. This way it measures the same thing tomorrow too.
 
-Two tests give the most: `allapotter.teszt.js` runs **all 576 combinations** of the "0 points"
+Two tests give the most: `zero-points-state-space.test.js` runs **all 672 combinations** of the "0 points"
 logic with five invariants (this is what finds errors nobody thought to write a test for), and
-`tabella.teszt.js` **independently recomputes** the table and the matrix from the raw data.
+`standings-recount.test.js` **independently recomputes** the table and the matrix from the raw data.
 
 ## 6. Making changes
 

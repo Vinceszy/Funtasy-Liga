@@ -1,42 +1,43 @@
 const { BASE, check, section, launch, finish, blockApis, rewriteJson } = require('./common');
-// A LEZART fordulo teteles bontasa a REPOBOL jon (bontasok/<r>.json), nem az
-// MLSZ-tol. MIERT: a bontas eddig kizarolag elo lekeresbol jott, kattintasra
-// - ha az MLSZ vagy a kozvetito nem valaszolt, a lenyilo hibat irt. A lezart
-// fordulo bontasa viszont mar sosem valtozik.
+// The itemised breakdown of a CLOSED round comes from the REPOSITORY
+// (bontasok/<r>.json), not from the MLSZ. WHY: the breakdown used to come
+// exclusively from a live fetch, on click - if the MLSZ or the relay did not
+// answer, the drop-down showed an error. But the breakdown of a closed round
+// never changes any more.
 //
-// Amit rogzit:
-//   - lezart fordulonal a tarolt fajl az elsodleges, es NINCS elo lekeres;
-//   - hianyzo fajlnal csendben visszaesunk az elo utra (regi fordulok);
-//   - az ELO fordulo marad az elo uton (ott a bontas meg valtozik).
-const TAROLT = { round: 4, bontasok: {
-  // a mockolt tarolt bontas felismerheto sora
+// What it pins:
+//   - for a closed round the stored file is primary, and there is NO live fetch;
+//   - with a missing file we fall back silently to the live path (old rounds);
+//   - the LIVE round stays on the live path (there the breakdown still changes).
+const STORED = { round: 4, bontasok: {
+  // a recognisable row of the mocked stored breakdown
   '@@CP@@': [{ n: 'Játszott perc', v: 90, p: 0 }, { n: 'TÁROLT GÓL', v: 1, p: 5 }] } };
-const ELO = { data: [
+const LIVE = { data: [
   { value: 90, points: 0, competition_stat_config: { name: 'Játszott perc' } },
   { value: 1, points: 7, competition_stat_config: { name: 'ÉLŐ GÓL' } }] };
 
-async function nyit(br, opts){
+async function open(br, opts){
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
   await blockApis(p);
-  const elohivas = [];
+  const liveCalls = [];
   await p.route('**fantasy-api.mlsz.hu/**', r => {
     const u = decodeURIComponent(r.request().url());
     if (!/game-player-stats/.test(u)) return r.abort();
-    elohivas.push(u);
-    return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(ELO) });
+    liveCalls.push(u);
+    return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(LIVE) });
   });
   if (opts.provisional)
     await rewriteJson(p, '**/results.json*', j => Object.assign(j, { provisional: opts.provisional }));
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#table tr', { timeout: 20000 });
   await p.waitForTimeout(1200);
-  await p.evaluate(r => showMatchRound('Bazsa', 'Csendi', r), opts.fordulo);
+  await p.evaluate(r => showMatchRound('Bazsa', 'Csendi', r), opts.round);
   await p.waitForSelector('#mBody .plr[data-acc]', { timeout: 10000 });
-  // a tarolt fajlt a sor SAJAT cp-jere szabjuk, hogy biztosan talaljon
+  // the stored file is tailored to the row's OWN cp, so it is sure to match
   const cp = await p.$eval('#mBody .plr[data-acc]', e => e.dataset.cp);
-  if (opts.tarolt){
-    const test = JSON.parse(JSON.stringify(TAROLT).replace('@@CP@@', cp));
+  if (opts.stored){
+    const test = JSON.parse(JSON.stringify(STORED).replace('@@CP@@', cp));
     await p.route('**/bontasok/*.json*', r => r.fulfill({
       status: 200, contentType: 'application/json', body: JSON.stringify(test) }));
   } else {
@@ -47,36 +48,36 @@ async function nyit(br, opts){
     const a = document.querySelector('.accpanel');
     return a && a.dataset.allapot && a.dataset.allapot !== 'tolt';
   }, null, { timeout: 15000 });
-  const szoveg = await p.evaluate(() => document.querySelector('.accpanel').innerText);
+  const text = await p.evaluate(() => document.querySelector('.accpanel').innerText);
   await p.close();
-  return { szoveg, elohivas, err };
+  return { text, liveCalls, err };
 }
 
 (async () => {
   const br = await launch();
 
-  section('Lezárt forduló: a tárolt bontás jön, élő lekérés nélkül');
-  let x = await nyit(br, { fordulo: 4, tarolt: true });
-  check(/TÁROLT GÓL/.test(x.szoveg), 'a tárolt fájlból jön a bontás ('
-     + x.szoveg.replace(/\n/g, ' | ').slice(0, 70) + ')');
-  check(x.elohivas.length === 0,
-     'NINCS élő MLSZ-lekérés lezárt fordulónál (' + x.elohivas.length + ')');
-  check(x.err.length === 0, 'nincs JS-hiba' + (x.err.length ? ': ' + x.err.join(' | ') : ''));
+  section('Closed round: the stored breakdown comes, without a live fetch');
+  let x = await open(br, { round: 4, stored: true });
+  check(/TÁROLT GÓL/.test(x.text), 'the breakdown comes from the stored file ('
+     + x.text.replace(/\n/g, ' | ').slice(0, 70) + ')');
+  check(x.liveCalls.length === 0,
+     'NO live MLSZ fetch for a closed round (' + x.liveCalls.length + ')');
+  check(x.err.length === 0, 'no JS error' + (x.err.length ? ': ' + x.err.join(' | ') : ''));
 
-  section('Hiányzó fájl: csendes visszaesés az élő útra');
-  x = await nyit(br, { fordulo: 4, tarolt: false });
-  check(/ÉLŐ GÓL/.test(x.szoveg), 'a bontás az élő lekérésből jön ('
-     + x.szoveg.replace(/\n/g, ' | ').slice(0, 70) + ')');
-  check(x.elohivas.length > 0, 'volt élő lekérés (' + x.elohivas.length + ')');
-  check(x.err.length === 0, 'nincs JS-hiba' + (x.err.length ? ': ' + x.err.join(' | ') : ''));
+  section('Missing file: silent fallback to the live path');
+  x = await open(br, { round: 4, stored: false });
+  check(/ÉLŐ GÓL/.test(x.text), 'the breakdown comes from the live fetch ('
+     + x.text.replace(/\n/g, ' | ').slice(0, 70) + ')');
+  check(x.liveCalls.length > 0, 'there was a live fetch (' + x.liveCalls.length + ')');
+  check(x.err.length === 0, 'no JS error' + (x.err.length ? ': ' + x.err.join(' | ') : ''));
 
-  section('Élő forduló: a tárolt fájlt NEM használjuk');
-  // az 5. fordulot elore kimondjuk elonek; ott a bontas meg valtozhat,
-  // tehat a tarolt (esetleg reg mentett) valtozat felrevezetne
-  x = await nyit(br, { fordulo: 5, tarolt: true, provisional: [5] });
-  check(/ÉLŐ GÓL/.test(x.szoveg) && !/TÁROLT/.test(x.szoveg),
-     'élő fordulónál az élő lekérés nyer (' + x.szoveg.replace(/\n/g, ' | ').slice(0, 70) + ')');
-  check(x.err.length === 0, 'nincs JS-hiba' + (x.err.length ? ': ' + x.err.join(' | ') : ''));
+  section('Live round: the stored file is NOT used');
+  // round 5 is declared live up front; there the breakdown can still change,
+  // so the stored (possibly long-saved) version would mislead
+  x = await open(br, { round: 5, stored: true, provisional: [5] });
+  check(/ÉLŐ GÓL/.test(x.text) && !/TÁROLT/.test(x.text),
+     'for a live round the live fetch wins (' + x.text.replace(/\n/g, ' | ').slice(0, 70) + ')');
+  check(x.err.length === 0, 'no JS error' + (x.err.length ? ': ' + x.err.join(' | ') : ''));
 
   await finish(br);
 })();

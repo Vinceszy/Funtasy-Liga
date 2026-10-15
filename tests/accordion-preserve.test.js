@@ -1,31 +1,32 @@
 const { BASE, check, section, launch, finish, blockApis, blockStoredBreakdowns } = require('./common');
-// A NYITOTT pont-bontas nem tunhet el a hatterben beero frissitestol.
+// An OPEN points breakdown must not disappear because of a refresh arriving
+// in the background.
 //
-// A KIZART HIBA: "ha megnyitom a jatekos pontreszletezeset a meccsben, a
-// 'bontas betoltese' utan visszazar az accordion, ujra meg kell nyitni".
-// Nem maga a bontas zarta be: a nezet utolag ujrarajzolodik (beer a percre
-// friss keret, a jatszott percek, az elo pontok), es a teljes #mBody
-// ujraepul - a panel a felhasznalo ala tunt el. Mostantol minden ilyen
-// ujrarajzolas a FunTasy.accPreserve-n megy at, ami a sort ES a panel tartalmat
-// is visszateszi.
-const BONTAS = { data: [
+// THE EXCLUDED BUG: "if I open a player's points breakdown in the match,
+// after 'bontás betöltése' the accordion closes again, I have to reopen it".
+// It was not the breakdown itself that closed it: the view is redrawn
+// afterwards (the up-to-the-minute squad arrives, the minutes played, the
+// live points), and the whole #mBody is rebuilt - the panel vanished from
+// under the user. From now on every such redraw goes through
+// FunTasy.accPreserve, which puts back both the row AND the panel content.
+const BREAKDOWN = { data: [
   { value: 90, points: 2, competition_stat_config: { name: 'Játszott perc' } },
   { value: 1,  points: 5, competition_stat_config: { name: 'Gól' } } ] };
 
 (async () => {
   const br = await launch();
 
-  section('NB1: a meccs-nézet újrarajzolása');
+  section('NB1: redrawing the match view');
   const p = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err = []; p.on('pageerror', e => err.push(e.message));
   await blockApis(p);
-  // A LEKEREST koveto orzest merjuk: a panel a "bontás betöltése" allapoton
-  // at jut el a kesz tartalomig. A tarolt bontas ezt atugorja (a repobol
-  // azonnal megvan), ezert itt szandekosan nincs kiszolgalva - a mockolt
-  // MLSZ-valasz kell hogy ervenyesuljon.
+  // We measure the preservation that follows a FETCH: the panel goes through
+  // the "bontás betöltése" state to the finished content. The stored
+  // breakdown skips that (it is there at once from the repository), so here
+  // it is deliberately not served - the mocked MLSZ response has to apply.
   await blockStoredBreakdowns(p);
   await p.route('**fantasy-api.mlsz.hu/**', r => /game-player-stats/.test(decodeURIComponent(r.request().url()))
-    ? r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BONTAS) })
+    ? r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BREAKDOWN) })
     : r.abort());
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#table tr', { timeout: 20000 });
@@ -37,20 +38,20 @@ const BONTAS = { data: [
     const a = document.querySelector('.accpanel');
     return a && !/betöltése/i.test(a.textContent);
   }, null, { timeout: 10000 });
-  const elotte = await p.evaluate(() => document.querySelector('.accpanel').innerText);
-  check(/Gól/.test(elotte), 'a bontás betöltődött (' + elotte.slice(0, 40).replace(/\n/g, ' ') + ')');
+  const before = await p.evaluate(() => document.querySelector('.accpanel').innerText);
+  check(/Gól/.test(before), 'the breakdown has loaded (' + before.slice(0, 40).replace(/\n/g, ' ') + ')');
 
-  await p.evaluate(() => matchBody());          // ezt hivja az élő frissítés is
+  await p.evaluate(() => matchBody());          // the live refresh calls this too
   await p.waitForTimeout(300);
-  const utana = await p.evaluate(() => {
+  const after = await p.evaluate(() => {
     const a = document.querySelector('.accpanel');
-    return { van: !!a, szoveg: a ? a.innerText : '', nyilt: !!document.querySelector('.plr.open') };
+    return { present: !!a, text: a ? a.innerText : '', open: !!document.querySelector('.plr.open') };
   });
-  check(utana.van, 'az újrarajzolás után is nyitva van a bontás');
-  check(utana.nyilt, 'a sor is nyitottnak látszik (a nyíl nem fordul vissza)');
-  check(utana.szoveg === elotte, 'a panel TARTALMA is ugyanaz — nincs villanás, nincs újabb lekérés');
+  check(after.present, 'the breakdown is still open after the redraw');
+  check(after.open, 'the row looks open too (the arrow does not turn back)');
+  check(after.text === before, 'the panel CONTENT is the same too — no flash, no new request');
 
-  section('NB1: a keret-nézet újrarajzolása');
+  section('NB1: redrawing the squad view');
   await p.evaluate(() => { const b = document.getElementById('ovClose'); if (b) b.click(); });
   await p.waitForTimeout(200);
   await p.evaluate(() => showSquad(['Katyul']));
@@ -61,7 +62,7 @@ const BONTAS = { data: [
     return a && !/betöltése/i.test(a.textContent);
   }, null, { timeout: 10000 });
   const k1 = await p.evaluate(() => document.querySelector('.accpanel').innerText);
-  // ugyanaz a ujrarajzolas, mint amit az elo keret-lekeres valt ki
+  // the same redraw that the live squad fetch triggers
   await p.evaluate(() => {
     const test = document.getElementById('mBody').innerHTML;
     FunTasy.accPreserve(() => { document.getElementById('mBody').innerHTML = test; });
@@ -71,28 +72,28 @@ const BONTAS = { data: [
     const a = document.querySelector('.accpanel');
     return a ? a.innerText : null;
   });
-  check(k2 === k1, 'a keret-nézetben is megmarad a nyitott bontás');
+  check(k2 === k1, 'the open breakdown is kept in the squad view too');
 
-  section('Hibás betöltést NEM őrzünk meg (a megőrzés maga okozott hibát)');
-  // MERVE: az orzes a HIBAUZENETET is visszatette, es a sort nyitva
-  // hagyta - egy atmeneti halozati hiba igy beragadt, es a kovetkezo
-  // kattintas becsukta a sort ahelyett, hogy ujraprobalta volna. A bontas
-  // ket kattintasra jott csak vissza. Most: hibas panel nem orzodik meg,
-  // tehat EGY kattintas ujraprobal.
+  section('A failed load is NOT preserved (the preservation itself caused an error)');
+  // MEASURED: the preservation put back the ERROR MESSAGE too, and left the
+  // row open - a transient network error got stuck this way, and the next
+  // click closed the row instead of retrying. The breakdown came back only
+  // after two clicks. Now: a failed panel is not preserved, so ONE click
+  // retries.
   await p.close();
   var p2 = await br.newPage({ viewport: { width: 1300, height: 1000 } });
   const err2 = []; p2.on('pageerror', e => err2.push(e.message));
   await blockApis(p2);
-  await blockStoredBreakdowns(p2);   // a HIBAS betoltest merjuk - tarolt bontasbol nem lenne hiba
-  // A lekero TOBB uton probalkozik (direkt + proxyk), es a proxys URL-ben is
-  // benne van a cel-URL - tehat "az elso keres" nem egy URL, hanem egy teljes
-  // PROBALKOZAS-KOR. Kapcsoloval vezereljuk: eloszor MINDEN ut elhasal, a
-  // sikeres ujraprobalast a kapcsolo atbillentese engedi.
-  let szolgal = false;
+  await blockStoredBreakdowns(p2);   // we measure a FAILED load - a stored breakdown would not fail
+  // The fetcher tries SEVERAL paths (direct + proxies), and the proxied URL
+  // contains the target URL too - so "the first request" is not one URL but
+  // a whole ROUND OF ATTEMPTS. We control it with a switch: first EVERY path
+  // fails, flipping the switch lets the successful retry through.
+  let serve = false;
   await p2.route('**fantasy-api.mlsz.hu/**', r => {
     if (!/game-player-stats/.test(decodeURIComponent(r.request().url()))) return r.abort();
-    return szolgal
-      ? r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BONTAS) })
+    return serve
+      ? r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BREAKDOWN) })
       : r.abort();
   });
   await p2.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
@@ -105,59 +106,60 @@ const BONTAS = { data: [
     const a = document.querySelector('.accpanel');
     return a && a.dataset.allapot === 'hiba';
   }, null, { timeout: 10000 });
-  check(true, 'az első lekérés elhasalt, a panel hibát mutat');
-  // Az OK is ott van: melyik ut miert nem ment. Enelkul se a felhasznalo, se
-  // a fejleszto nem tudja eldonteni, halozat-e, proxy-e vagy az API valtozott.
+  check(true, 'the first fetch failed, the panel shows an error');
+  // The REASON is there too: which path failed and why. Without it neither
+  // the user nor the developer can tell whether it is the network, a proxy,
+  // or a change in the API.
   check(await p2.$$eval('.accpanel .accmiert', a => a.length) === 1,
-     'a hibaüzenet mellett ott áll az OK is (melyik út mivel bukott)');
+     'next to the error message the REASON stands too (which path failed with what)');
   await p2.evaluate(() => matchBody());
   await p2.waitForTimeout(300);
   check((await p2.$$eval('.accpanel', a => a.length)) === 0,
-     'az újrarajzolás NEM őrzi meg a hibaüzenetet (a sor bezár)');
+     'the redraw does NOT preserve the error message (the row closes)');
   check((await p2.$$eval('.plr.open', a => a.length)) === 0,
-     'a sor sem marad nyitottnak jelölve — különben a kattintás csak becsukná');
-  szolgal = true;                       // mostantol a lekeres sikerulhet
+     'the row does not stay marked as open either — otherwise the click would only close it');
+  serve = true;                       // from now on the fetch may succeed
   await p2.$eval('#mBody .plr[data-acc]', e => e.click());
   await p2.waitForFunction(() => {
     const a = document.querySelector('.accpanel');
     return a && a.dataset.allapot === 'kesz';
   }, null, { timeout: 10000 });
   check(/Gól/.test(await p2.evaluate(() => document.querySelector('.accpanel').innerText)),
-     'EGY kattintás újrapróbálja, és most sikerül');
+     'ONE click retries, and this time it succeeds');
 
-  section('Betöltés közbeni újrarajzolás újraindítja a lekérést');
-  // Ha az ujrarajzolas a "Bontas betoltese..." allapotot kapja el, a regi
-  // keres mar az elavult sorra fut ki - a panel orokre a betoltes-jelzesen
-  // ragadt volna. Ilyenkor ujra kell inditani.
+  section('A redraw during loading restarts the fetch');
+  // If the redraw catches the "Bontás betöltése..." state, the old request
+  // completes onto the stale row - the panel would have stayed stuck on the
+  // loading indicator forever. In that case it must be restarted.
   await p2.evaluate(() => { const s = document.querySelector('.plr.open'); if (s) s.click(); });
   await p2.waitForTimeout(200);
-  // MASIK sor: az elozo jatekos bontasa mar a gyorsitotarban van, tehat ott
-  // sosem latnank "toltes" allapotot.
+  // ANOTHER row: the previous player's breakdown is already in the cache, so
+  // there we would never see a "loading" state.
   await p2.unroute('**fantasy-api.mlsz.hu/**');
   await p2.route('**fantasy-api.mlsz.hu/**', async r => {
     if (!/game-player-stats/.test(decodeURIComponent(r.request().url()))) return r.abort();
-    await new Promise(x => setTimeout(x, 700));         // lassu valasz
-    return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BONTAS) });
+    await new Promise(x => setTimeout(x, 700));         // slow response
+    return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(BREAKDOWN) });
   });
   await p2.$$eval('#mBody .plr[data-acc]', a => a[1].click());
   await p2.waitForFunction(() => {
     const a = document.querySelector('.accpanel');
     return a && a.dataset.allapot === 'tolt';
   }, null, { timeout: 5000 });
-  await p2.evaluate(() => matchBody());                   // EPP a betoltes kozben
+  await p2.evaluate(() => matchBody());                   // RIGHT during the load
   await p2.waitForFunction(() => {
     const a = document.querySelector('.accpanel');
     return a && a.dataset.allapot === 'kesz';
   }, null, { timeout: 10000 }).catch(() => {});
   const t = await p2.evaluate(() => {
     const a = document.querySelector('.accpanel');
-    return a ? { allapot: a.dataset.allapot, szoveg: a.innerText } : null;
+    return a ? { state: a.dataset.allapot, text: a.innerText } : null;
   });
-  check(t && t.allapot === 'kesz' && /Gól/.test(t.szoveg) && !/betöltése/i.test(t.szoveg),
-     'betöltés közbeni újrarajzolás után is megjön a bontás — nem ragad be a jelzésen ('
-     + JSON.stringify(t && { allapot: t.allapot, szoveg: t.szoveg.slice(0, 40) }) + ')');
+  check(t && t.state === 'kesz' && /Gól/.test(t.text) && !/betöltése/i.test(t.text),
+     'after a redraw during loading the breakdown still arrives — it does not get stuck on the indicator ('
+     + JSON.stringify(t && { state: t.state, text: t.text.slice(0, 40) }) + ')');
 
-  section('Zárt állapotban nincs mellékhatás');
+  section('No side effect in the closed state');
   await p2.evaluate(() => { const s = document.querySelector('.plr.open'); if (s) s.click(); });
   await p2.waitForTimeout(200);
   await p2.evaluate(() => {
@@ -166,8 +168,8 @@ const BONTAS = { data: [
   });
   await p2.waitForTimeout(200);
   check((await p2.$$eval('.accpanel', a => a.length)) === 0,
-     'ha semmi nem volt nyitva, az újrarajzolás nem nyit meg semmit');
-  check(err.length === 0 && err2.length === 0, 'nincs JS-hiba'
+     'if nothing was open, the redraw opens nothing');
+  check(err.length === 0 && err2.length === 0, 'no JS error'
      + (err.concat(err2).length ? ': ' + err.concat(err2).join(' | ') : ''));
   await p2.close();
   await finish(br);

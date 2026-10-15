@@ -1,60 +1,60 @@
 const { BASE, check, section, failures, launch, finish } = require('./common');
-// A meccs megnyitasa a FORDULONKENTI keret-fajlt toltse le, ne a teljes
-// elozmenyt - es ha a fordulonkenti fajl hianyzik, essen vissza rá.
+// Opening a match must download the PER-ROUND squad file, not the whole
+// history - and if the per-round file is missing, it must fall back on it.
 
 (async () => {
   const br = await launch();
 
-  // ---------- 1. normal eset: fordulonkenti fajl ----------
-  section('Meccs megnyitasa: melyik fajlt tolti le?');
+  // ---------- 1. normal case: per-round file ----------
+  section('Opening a match: which file does it download?');
   let p = await br.newPage();
-  const kert = [];
+  const requested = [];
   p.on('request', r => {
     const u = r.url();
-    if (/keretek\/\d+\.json/.test(u)) kert.push('keretek/' + u.match(/keretek\/(\d+)\.json/)[1]);
-    if (/squad_history\.json/.test(u)) kert.push('squad_history');
+    if (/keretek\/\d+\.json/.test(u)) requested.push('keretek/' + u.match(/keretek\/(\d+)\.json/)[1]);
+    if (/squad_history\.json/.test(u)) requested.push('squad_history');
   });
   for (const m of ['**mlsz.hu/**', '**corsproxy.io/**', '**allorigins**']) await p.route(m, r => r.abort());
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#table tr td', { timeout: 30000 });
   await p.evaluate(() => showMatchRound('Bazsa', 'Katyul', 1));
   await p.waitForSelector('.sqcol .plr', { timeout: 20000 });
-  const jatekosok = await p.locator('.sqcol .plr').count();
-  console.log('   lekért fájlok: ' + JSON.stringify(kert) + ' | játékos-sor: ' + jatekosok);
-  check(kert.includes('keretek/1'), 'az 1. forduló saját fájlját kéri le');
-  check(!kert.includes('squad_history'), 'a teljes előzményt NEM tölti le');
-  check(jatekosok >= 20, 'a keretek meg is jelennek (' + jatekosok + ' sor)');
+  const players = await p.locator('.sqcol .plr').count();
+  console.log('   files requested: ' + JSON.stringify(requested) + ' | player rows: ' + players);
+  check(requested.includes('keretek/1'), 'it requests round 1\'s own file');
+  check(!requested.includes('squad_history'), 'it does NOT download the whole history');
+  check(players >= 20, 'the squads do appear (' + players + ' rows)');
   await p.close();
 
-  // ---------- 2. visszaeses: nincs fordulonkenti fajl ----------
-  section('Ha a fordulonkenti fajl hianyzik, a teljes elozmeny a tartalek');
+  // ---------- 2. fallback: no per-round file ----------
+  section('If the per-round file is missing, the whole history is the fallback');
   p = await br.newPage();
-  const kert2 = [];
-  p.on('request', r => { if (/squad_history\.json/.test(r.url())) kert2.push('squad_history'); });
+  const requested2 = [];
+  p.on('request', r => { if (/squad_history\.json/.test(r.url())) requested2.push('squad_history'); });
   await p.route('**/keretek/*.json*', r => r.fulfill({ status: 404, body: '' }));
   for (const m of ['**mlsz.hu/**', '**corsproxy.io/**', '**allorigins**']) await p.route(m, r => r.abort());
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#table tr td', { timeout: 30000 });
   await p.evaluate(() => showMatchRound('Bazsa', 'Katyul', 1));
   await p.waitForSelector('.sqcol .plr', { timeout: 20000 });
-  const jatekosok2 = await p.locator('.sqcol .plr').count();
-  console.log('   tartalék lekérés: ' + JSON.stringify(kert2) + ' | játékos-sor: ' + jatekosok2);
-  check(kert2.includes('squad_history'), 'visszaesik a teljes előzményre');
-  check(jatekosok2 >= 20, 'a keretek így is megjelennek (' + jatekosok2 + ' sor)');
+  const players2 = await p.locator('.sqcol .plr').count();
+  console.log('   fallback request: ' + JSON.stringify(requested2) + ' | player rows: ' + players2);
+  check(requested2.includes('squad_history'), 'it falls back on the whole history');
+  check(players2 >= 20, 'the squads appear this way too (' + players2 + ' rows)');
   await p.close();
 
-  // ---------- 3. a ket forras ugyanazt adja ----------
-  section('A fordulonkenti fajl es a teljes elozmeny egyezik');
+  // ---------- 3. the two sources give the same ----------
+  section('The per-round files and the whole history match');
   const fs = require('fs'), path = require('path');
-  const teljes = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'squad_history.json'), 'utf8')).rounds;
-  let elteres = 0;
-  for (const r of Object.keys(teljes)) {
+  const full = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'squad_history.json'), 'utf8')).rounds;
+  let mismatches = 0;
+  for (const r of Object.keys(full)) {
     const f = path.join(__dirname, '..', 'keretek', r + '.json');
-    if (!fs.existsSync(f)) { elteres++; console.log('   hiányzik: keretek/' + r + '.json'); continue; }
-    const egy = JSON.parse(fs.readFileSync(f, 'utf8')).squads;
-    if (JSON.stringify(egy) !== JSON.stringify(teljes[r])) { elteres++; console.log('   eltér: ' + r); }
+    if (!fs.existsSync(f)) { mismatches++; console.log('   missing: keretek/' + r + '.json'); continue; }
+    const one = JSON.parse(fs.readFileSync(f, 'utf8')).squads;
+    if (JSON.stringify(one) !== JSON.stringify(full[r])) { mismatches++; console.log('   differs: ' + r); }
   }
-  check(elteres === 0, 'mind a ' + Object.keys(teljes).length + ' forduló fájlja egyezik az előzménnyel');
+  check(mismatches === 0, 'the files of all ' + Object.keys(full).length + ' rounds match the history');
 
   await finish(br);
 })();

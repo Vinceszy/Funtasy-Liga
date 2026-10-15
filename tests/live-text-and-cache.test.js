@@ -1,11 +1,11 @@
 const { BASE, check, section, failures, launch, finish, blockApis, rewriteJson } = require('./common');
-// A negy bejelentett hiba tesztje.
-//  1-2) gyorsitotar: minden elo lekeres MAS URL-re megy es no-store-ral
-//  3)   meccs kozben nem szabad azt irni, hogy "lejatszotta pont nelkul"
-//  4)   NB1-en a szoveg nem igerhet elo pontot (eloPontok ligatulajdonsag)
+// Test of the four reported bugs.
+//  1-2) cache: every live fetch goes to a DIFFERENT URL and with no-store
+//  3)   during a match the page must not say "played it without points"
+//  4)   on NB1 the text must not promise live points (the league's livePoints property)
 
-// ---- mockolt MLSZ-keret: egy jatekos, allithato jelzokkel
-function keret(opts){
+// ---- mocked MLSZ squad: one player, with adjustable flags
+function squad(opts){
   return { data: [{
     id: 1, is_captain: false, type: 'starter', position: { monogram: 'CS' },
     summary_statistics: { weekly_points: 0, competition_points: 0 },
@@ -18,107 +18,109 @@ function keret(opts){
 (async () => {
   const br = await launch();
 
-  // =============== 3-4) NB1 uzenet meccs kozben ===============
-  console.log('--- NB1: mit ír meccs közben ---');
-  // A kezdes ota eltelt ido szamit: egy meccs 60 perccel a kezdes utan meg
-  // nem erhetett veget, ezert ott a 'completed' jelzest nem hisszuk el.
-  const esetek = [
-    { nev: 'meccs zajlik (is_played MAR igaz)', status: 'scheduled', ora: 1, vart: /A meccs zajlik/ },
-    { nev: 'meccs közben hazug "completed"',    status: 'completed', ora: 0.5, vart: /A meccs zajlik/ },
-    // Lement meccsnel a "lejatszotta pont nelkul" uzenet helyett a Jatszott
-    // perc sora all (tobbet mond) - de ez CSAK a lement meccs kivaltsaga,
-    // a fenti ket eset tovabbra is szoveges uzenetet var (allapot-kapu).
-    { nev: 'meccs véget ért, pont nélkül',      status: 'completed', ora: 2.2, vart: /Játszott perc\s*90/ },
+  // =============== 3-4) NB1 message during a match ===============
+  console.log('--- NB1: what it says during a match ---');
+  // The time elapsed since kick-off counts: a match cannot have ended 60
+  // minutes after kick-off, so there we do not believe the 'completed' flag.
+  const cases = [
+    { name: 'match in progress (is_played ALREADY true)', status: 'scheduled', hours: 1, expected: /A meccs zajlik/ },
+    { name: 'lying "completed" during the match',         status: 'completed', hours: 0.5, expected: /A meccs zajlik/ },
+    // For a finished match the "Jatszott perc" (minutes played) row stands
+    // instead of the "played it without points" message (it says more) - but
+    // that is the privilege of the finished match ONLY, the two cases above
+    // still expect a text message (state gate).
+    { name: 'match over, without points',                 status: 'completed', hours: 2.2, expected: /Játszott perc\s*90/ },
   ];
-  for (const eset of esetek){
+  for (const c of cases){
     const p = await br.newPage();
     const perr = []; p.on('pageerror', x => perr.push(x.message));
-    // A teszt elofeltetele, hogy az 5. fordulo ELO legyen. Ezt kimondjuk, nem
-    // remeljuk: korabban a valodi results.json provisional listajara epult, es
-    // a teszt attol bukott meg, hogy a gyujto kozben lezarta az 5. fordulot.
+    // The test's precondition is that round 5 is LIVE. We state it rather
+    // than hope for it: it used to rely on the real results.json's
+    // provisional list, and the test failed because the collector closed
+    // round 5 in the meantime.
     await rewriteJson(p, '**/results.json*', j => Object.assign(j, { provisional: [5] }));
-    // a meccs 1 oraja tart (mult ideju kezdes)
-    const start = new Date(Date.now() - eset.ora * 3600000).toISOString().replace('Z', '+00:00');
+    // the match has been on for the given hours (kick-off in the past)
+    const start = new Date(Date.now() - c.hours * 3600000).toISOString().replace('Z', '+00:00');
     await p.route('**fantasy-api.mlsz.hu/**', route => {
       const u = decodeURIComponent(route.request().url());
       const json = b => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
-      // Meccs alatt az MLSZ meg nem ad adatot; a lement meccsnel viszont mar igen
-      if (/game-player-stats/.test(u)) return json({ data: eset.ora > 2
+      // During the match the MLSZ gives no data yet; for the finished match it does
+      if (/game-player-stats/.test(u)) return json({ data: c.hours > 2
         ? [{ value: 90, points: 0, competition_stat_config: { name: 'Játszott perc' } }] : [] });
       if (/user-team-players-history/.test(u))
-        return json(keret({ start, games: [{ start_at: start, status: eset.status }] }));
+        return json(squad({ start, games: [{ start_at: start, status: c.status }] }));
       const m = /filter\[search\]=([^&]+)/.exec(u);
       return json({ data: [{ user_team: { user: { id: 1, username: m ? m[1] : '' },
         round_statistics: [{ round_number: 5, points: 30 }] } }] });
     });
-    // a sajat proxy (workers.dev) a tesztkornyezetbol nem erheto el - a valos
-    // halozati probalkozasa csak kesleltetne az elso mock-valaszt
+    // our own proxy (workers.dev) is not reachable from the test environment
+    // - its real network attempt would only delay the first mock answer
     await p.route('**workers.dev/**', r => r.abort());
     await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
     await p.waitForSelector('#table tr', { timeout: 20000 });
-    // AZ ELOFELTETELT KIMONDJUK: az eloKeret a USER_IDS-bol dolgozik, amit a
-    // betoltesi frissites tolt fel a ranglista-valaszokbol. Ha a kattintas
-    // megelozi, az elo keret-lekeres el sem indul, es a teszt a TAROLT
-    // keretet meri (megtortent: a sajat proxy-ut ~300 ms-os kerulovel eppen
-    // eleg keslest adott hozza, es a teszt determinisztikusan bukott).
+    // WE STATE THE PRECONDITION: liveSquad works from USER_IDS, which the
+    // refresh at load fills from the rankings answers. If the click comes
+    // before that, the live squad fetch never starts, and the test measures
+    // the STORED squad (it happened: the detour through our own proxy, ~300
+    // ms, added just enough delay, and the test failed deterministically).
     await p.waitForFunction(() => typeof USER_IDS !== 'undefined'
       && USER_IDS['Bazsa'] && USER_IDS['Vince'], null, { timeout: 20000 });
-    // elo meccs megnyitasa az 5. (ideiglenes) fordulora
+    // open the live match for round 5 (provisional)
     await p.evaluate(() => showLiveMatch('Bazsa', 'Vince', 5));
-    // A teszt elofeltetele a MOCKOLT elo keret. Terheles alatt elofordult,
-    // hogy az elo lekeres nem ert ide, es a lap a TAROLT keretbol rajzolt -
-    // ilyenkor a sor egy hetekkel korabbi kezdesi idot vitt, es a teszt egy
-    // teljesen mas allapotot mert (felrevezeto uzenettel bukott). Ezert nem
-    // az elso sorra kattintunk, hanem megvarjuk azt, amelyik a MOSTANI
-    // kezdessel jott - ha nincs ilyen, a varakozas bukik, es az legalabb
-    // azt mondja meg, hogy az elofeltetel veszett el.
-    // A sort a TELJES kezdesi idobelyeghez kotjuk, nem csak a napjahoz: a
-    // valodi 5. fordulo meccsei ugyanazon a napon vannak, mint a mockolt
-    // kezdes, tehat a nap-egyezes MECCSNAPON a tarolt sort is atengedi - es
-    // akkor a teszt egy hetekkel kesobbi kezdesu meccs uzenetet meri.
-    // (Elo futasban a masodik eset bukott ezzel.)
+    // The test's precondition is the MOCKED live squad. Under load it
+    // happened that the live fetch did not get here, and the page drew from
+    // the STORED squad - then the row carried a kick-off time weeks earlier,
+    // and the test measured an entirely different state (failing with a
+    // misleading message). So we do not click the first row but wait for the
+    // one that came with the CURRENT kick-off - if there is none, the wait
+    // fails, and that at least says the precondition was lost.
+    // The row is tied to the FULL kick-off timestamp, not just its day: the
+    // real round 5's matches are on the same day as the mocked kick-off, so
+    // on a MATCHDAY a day match lets the stored row through too - and then
+    // the test measures the message of a match kicking off weeks later.
+    // (In a live run the second case failed with this.)
     await p.waitForFunction(st => [...document.querySelectorAll('.plr[data-acc]')]
       .some(x => x.dataset.st === st), start, { timeout: 20000 });
-    const kattintott = await p.evaluate(st => {
-      const sor = [...document.querySelectorAll('.plr[data-acc]')]
+    const clicked = await p.evaluate(st => {
+      const row = [...document.querySelectorAll('.plr[data-acc]')]
         .find(x => x.dataset.st === st);
-      sor.click();
-      return { ...sor.dataset };
+      row.click();
+      return { ...row.dataset };
     }, start);
     await p.waitForFunction(() => {
       const el = document.querySelector('.accpanel');
       return el && !/betöltése/i.test(el.textContent);
     }, null, { timeout: 20000 });
-    const szoveg = (await p.locator('.accpanel').innerText()).trim();
-    console.log('   ' + eset.nev + ' -> ' + JSON.stringify(szoveg.slice(0, 70)));
-    if (!eset.vart.test(szoveg))
-      // ha bukik, mondja meg MIERT: mit latott a lap a sajat elofeltetelebol
-      console.log('   DIAG kattintott sor: ' + JSON.stringify(kattintott)),
+    const text = (await p.locator('.accpanel').innerText()).trim();
+    console.log('   ' + c.name + ' -> ' + JSON.stringify(text.slice(0, 70)));
+    if (!c.expected.test(text))
+      // if it fails, say WHY: what the page saw of its own precondition
+      console.log('   DIAG clicked row: ' + JSON.stringify(clicked)),
       console.log('   DIAG: ' + JSON.stringify(await p.evaluate(() => ({
         prov: window.PROVISIONAL, live: Object.keys(LIVE),
-        elo5: isLiveRound(5),
-        sor: { ...(document.querySelector('.plr[data-acc]') || { dataset: {} }).dataset },
+        live5: isLiveRound(5),
+        row: { ...(document.querySelector('.plr[data-acc]') || { dataset: {} }).dataset },
       }))));
-    check(eset.vart.test(szoveg), eset.nev);
-    if (/zajlik/.test(szoveg))
-      check(!/eddig nincs pontot érő/.test(szoveg)
-         && /a pontok csak a meccs végén kerülnek be/.test(szoveg),
-        'a "zajlik" szöveg nem ígér élő pontot, hanem megmondja, mikor jön');
-    check(perr.length === 0, 'nincs JS-hiba (' + eset.nev + ')');
+    check(c.expected.test(text), c.name);
+    if (/zajlik/.test(text))
+      check(!/eddig nincs pontot érő/.test(text)
+         && /a pontok csak a meccs végén kerülnek be/.test(text),
+        'the "zajlik" (in progress) text promises no live points, it says when they come');
+    check(perr.length === 0, 'no JS error (' + c.name + ')');
     await p.close();
   }
 
-  // =============== 1-2) gyorsitotar-tores ===============
-  console.log('\n--- Gyorsítótár: minden lekérés friss URL-re megy ---');
-  for (const [liga, minta] of [['nb1', '**fantasy-api.mlsz.hu/**'], ['pl', '**premierleague.com/**']]){
+  // =============== 1-2) cache busting ===============
+  console.log('\n--- Cache: every fetch goes to a fresh URL ---');
+  for (const [league, pattern] of [['nb1', '**fantasy-api.mlsz.hu/**'], ['pl', '**premierleague.com/**']]){
     const p = await br.newPage();
-    const urlek = [], cacheMod = new Set();
-    await p.route(minta, route => {
+    const urls = [], cacheMode = new Set();
+    await p.route(pattern, route => {
       const req = route.request();
-      urlek.push(req.url());
+      urls.push(req.url());
       const json = b => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
       const u = decodeURIComponent(req.url());
-      if (liga === 'pl'){
+      if (league === 'pl'){
         if (/event-status/.test(u)) return json({ status: [] });
         if (/\/api\/game/.test(u)) return json({ current_event: 1, current_event_finished: false });
         if (/\/live/.test(u)) return json({ elements: {} });
@@ -128,50 +130,50 @@ function keret(opts){
       const m = /filter\[search\]=([^&]+)/.exec(u);
       return json({ data: [{ user_team: { user: { id: 1, username: m ? m[1] : '' }, round_statistics: [] } }] });
     });
-    // a no-store-t a Request objektumbol olvassuk ki
-    p.on('request', r => { if (r.url().match(/mlsz|premierleague|corsproxy|allorigins/)) cacheMod.add(r.resourceType()); });
+    // no-store is read from the Request object
+    p.on('request', r => { if (r.url().match(/mlsz|premierleague|corsproxy|allorigins/)) cacheMode.add(r.resourceType()); });
     await p.addInitScript(() => {
-      window.__cacheMod = [];
-      const eredeti = window.fetch;
-      window.fetch = function (u, o) { window.__cacheMod.push((o || {}).cache || 'default'); return eredeti.apply(this, arguments); };
+      window.__cacheMode = [];
+      const original = window.fetch;
+      window.fetch = function (u, o) { window.__cacheMode.push((o || {}).cache || 'default'); return original.apply(this, arguments); };
     });
-    await p.goto(BASE + liga + '/', { waitUntil: 'domcontentloaded' });
-    for (let i = 0; i < 150 && urlek.length === 0; i++) await p.waitForTimeout(100);
+    await p.goto(BASE + league + '/', { waitUntil: 'domcontentloaded' });
+    for (let i = 0; i < 150 && urls.length === 0; i++) await p.waitForTimeout(100);
     await p.waitForTimeout(1200);
-    const modok = await p.evaluate(() => window.__cacheMod.filter((_, i) => i > 0));
-    const eloModok = await p.evaluate(() => window.__cacheMod);
-    console.log('   ' + liga + ': ' + urlek.length + ' API-kérés, cache-módok: ' +
-      JSON.stringify([...new Set(eloModok)]));
-    check(urlek.length > 0, liga + ': van API-kérés');
-    if (liga === 'pl'){
-      // az FPL belso URL-jere is kerul idobelyeg
-      check(urlek.every(u => /fpl_=\d+/.test(decodeURIComponent(u))),
-        'PL: minden FPL-kérés kap időbélyeget');
-      const egyedi = new Set(urlek.map(u => decodeURIComponent(u)));
-      check(egyedi.size === urlek.length, 'PL: nincs két azonos URL (' + egyedi.size + '/' + urlek.length + ')');
+    const modes = await p.evaluate(() => window.__cacheMode.filter((_, i) => i > 0));
+    const allModes = await p.evaluate(() => window.__cacheMode);
+    console.log('   ' + league + ': ' + urls.length + ' API requests, cache modes: ' +
+      JSON.stringify([...new Set(allModes)]));
+    check(urls.length > 0, league + ': there are API requests');
+    if (league === 'pl'){
+      // the FPL's inner URL gets a timestamp too
+      check(urls.every(u => /fpl_=\d+/.test(decodeURIComponent(u))),
+        'PL: every FPL request gets a timestamp');
+      const unique = new Set(urls.map(u => decodeURIComponent(u)));
+      check(unique.size === urls.length, 'PL: no two identical URLs (' + unique.size + '/' + urls.length + ')');
     }
-    check(eloModok.filter(m => m === 'no-store').length > 0, liga + ': no-store van a lekéréseken');
+    check(allModes.filter(m => m === 'no-store').length > 0, league + ': the fetches carry no-store');
     await p.close();
   }
 
-  // proxy-utvonal: idobelyeg a proxy URL-jen (a direkt utvonal elrontasaval kenyszeritjuk)
-  console.log('\n--- Proxy-útvonal: a proxy URL-je is friss ---');
+  // proxy path: timestamp on the proxy URL (forced by breaking the direct path)
+  console.log('\n--- Proxy path: the proxy URL is fresh too ---');
   {
     const p = await br.newPage();
-    const proxyUrlek = [];
-    await p.route('**fantasy-api.mlsz.hu/**', r => r.abort());            // direkt utvonal bukik
+    const proxyUrls = [];
+    await p.route('**fantasy-api.mlsz.hu/**', r => r.abort());            // the direct path fails
     await p.route('**corsproxy.io/**', route => {
-      proxyUrlek.push(route.request().url());
+      proxyUrls.push(route.request().url());
       route.fulfill({ status: 200, contentType: 'application/json',
         body: JSON.stringify({ data: [{ user_team: { user: { id: 1, username: 'x' }, round_statistics: [] } }] }) });
     });
     await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
-    for (let i = 0; i < 150 && proxyUrlek.length < 2; i++) await p.waitForTimeout(100);
-    console.log('   corsproxy-kérések: ' + proxyUrlek.length);
-    check(proxyUrlek.length > 0 && proxyUrlek.every(u => /&_=\d+/.test(u)),
-      'NB1: a corsproxy URL-je kap időbélyeget');
-    check(new Set(proxyUrlek).size === proxyUrlek.length,
-      'NB1: nincs két azonos proxy-URL (' + new Set(proxyUrlek).size + '/' + proxyUrlek.length + ')');
+    for (let i = 0; i < 150 && proxyUrls.length < 2; i++) await p.waitForTimeout(100);
+    console.log('   corsproxy requests: ' + proxyUrls.length);
+    check(proxyUrls.length > 0 && proxyUrls.every(u => /&_=\d+/.test(u)),
+      'NB1: the corsproxy URL gets a timestamp');
+    check(new Set(proxyUrls).size === proxyUrls.length,
+      'NB1: no two identical proxy URLs (' + new Set(proxyUrls).size + '/' + proxyUrls.length + ')');
     await p.close();
   }
 

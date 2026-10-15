@@ -3,7 +3,7 @@
 
 WHY HERE: the development environment's network does not reach workers.dev
 (measured: immediate connection failure), so there the Worker's logic can
-only be tested with a fake KV (tests/workertarolo.teszt.js). The LIVE
+only be tested with a fake KV (tests/worker-store.test.js). The LIVE
 behaviour - whether the second visitor really gets the stored standing - can
 only be measured from outside; the GitHub Actions runner reaches the
 internet, so it runs from there.

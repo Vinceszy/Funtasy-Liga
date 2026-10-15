@@ -1,91 +1,91 @@
 const { BASE, check, section, failures, launch, finish, blockApis, rewriteJson } = require('./common');
-// Frissites, amikor a lap ismet lathatova valik (FunTasy.onVisibleAgain).
-// 1) egysegteszt a segitore, 2) e2e a PL-oldalon mockolt FPL-API-val:
-//    a fooldal tenyleg ujra lekeri-e az elo pontokat visszatereskor.
+// Refresh when the page becomes visible again (FunTasy.onVisibleAgain).
+// 1) unit test of the helper, 2) e2e on the PL page with a mocked FPL API:
+//    does the home page really fetch the live points again on return.
 
 (async () => {
   const br = await launch();
 
-  // ---------------- 1. egysegteszt ----------------
+  // ---------------- 1. unit test ----------------
   let p = await br.newPage();
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForFunction(() => window.FunTasy && FunTasy.onVisibleAgain);
 
   const e = await p.evaluate(async () => {
-    const var_ = ms => new Promise(r => setTimeout(r, ms));
-    const ki = {};
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const out = {};
     const bfPageshow = () => {
       const ps = new Event('pageshow');
       Object.defineProperty(ps, 'persisted', { value: true });
       window.dispatchEvent(ps);
     };
 
-    // a) mindharom esemenyfajta indit (minKoz=0, kozottuk megvarjuk a futast)
+    // a) all three event kinds trigger (minGap=0, we wait for the run between them)
     let n = 0;
     FunTasy.onVisibleAgain(() => { n++; }, 0);
-    document.dispatchEvent(new Event('visibilitychange')); await var_(40);
-    window.dispatchEvent(new Event('focus'));              await var_(40);
-    bfPageshow();                                          await var_(40);
-    ki.harom = n;
+    document.dispatchEvent(new Event('visibilitychange')); await wait(40);
+    window.dispatchEvent(new Event('focus'));              await wait(40);
+    bfPageshow();                                          await wait(40);
+    out.three = n;
 
-    // b) a sima (nem bfcache-es) pageshow nem indit - az friss betoltes
+    // b) a plain (non-bfcache) pageshow does not trigger - that is a fresh load
     let n2 = 0;
     FunTasy.onVisibleAgain(() => { n2++; }, 0);
-    window.dispatchEvent(new Event('pageshow')); await var_(40);
-    ki.simaPageshow = n2;
+    window.dispatchEvent(new Event('pageshow')); await wait(40);
+    out.plainPageshow = n2;
 
-    // c) a betoltes utani ablakban nem ker le ujra (akkor eppen most kertunk)
+    // c) within the window after loading it does not fetch again (we just fetched)
     let n3 = 0;
     FunTasy.onVisibleAgain(() => { n3++; }, 30000);
-    document.dispatchEvent(new Event('visibilitychange')); await var_(40);
-    ki.frissenBetoltve = n3;
+    document.dispatchEvent(new Event('visibilitychange')); await wait(40);
+    out.freshlyLoaded = n3;
 
-    // d) futo frissites alatt nem indul masik
-    let indult = 0;
-    FunTasy.onVisibleAgain(() => { indult++; return var_(300); }, 0);
-    document.dispatchEvent(new Event('visibilitychange')); await var_(50);
-    document.dispatchEvent(new Event('visibilitychange')); await var_(400);
-    ki.parhuzamos = indult;
+    // d) no second refresh starts while one is running
+    let started = 0;
+    FunTasy.onVisibleAgain(() => { started++; return wait(300); }, 0);
+    document.dispatchEvent(new Event('visibilitychange')); await wait(50);
+    document.dispatchEvent(new Event('visibilitychange')); await wait(400);
+    out.parallel = started;
 
-    // e) hibaba futo frissites nem akasztja meg a kovetkezot
+    // e) a refresh that runs into an error does not block the next one
     let n5 = 0;
-    FunTasy.onVisibleAgain(() => { n5++; throw new Error('teszt'); }, 0);
-    document.dispatchEvent(new Event('visibilitychange')); await var_(40);
-    document.dispatchEvent(new Event('visibilitychange')); await var_(40);
-    ki.hibaUtan = n5;
-    return ki;
+    FunTasy.onVisibleAgain(() => { n5++; throw new Error('test'); }, 0);
+    document.dispatchEvent(new Event('visibilitychange')); await wait(40);
+    document.dispatchEvent(new Event('visibilitychange')); await wait(40);
+    out.afterError = n5;
+    return out;
   });
 
-  console.log('--- egységteszt ---');
-  check(e.harom === 3, 'mindhárom esemény indít (visibilitychange, focus, bfcache-es pageshow): ' + e.harom);
-  check(e.simaPageshow === 0, 'a sima (nem bfcache-es) pageshow nem indít: ' + e.simaPageshow);
-  check(e.frissenBetoltve === 0, 'frissen betöltött lapon nem kér le újra: ' + e.frissenBetoltve);
-  check(e.parhuzamos === 1, 'futó frissítés alatt nem indul másik: ' + e.parhuzamos);
-  check(e.hibaUtan === 2, 'hibába futó frissítés után a következő elindul: ' + e.hibaUtan);
+  console.log('--- unit test ---');
+  check(e.three === 3, 'all three events trigger (visibilitychange, focus, bfcache pageshow): ' + e.three);
+  check(e.plainPageshow === 0, 'a plain (non-bfcache) pageshow does not trigger: ' + e.plainPageshow);
+  check(e.freshlyLoaded === 0, 'a freshly loaded page does not fetch again: ' + e.freshlyLoaded);
+  check(e.parallel === 1, 'no second refresh starts while one is running: ' + e.parallel);
+  check(e.afterError === 2, 'after a refresh that ran into an error the next one starts: ' + e.afterError);
   await p.close();
 
-  // ---------------- 2. e2e a PL-oldalon, mockolt FPL-API-val ----------------
-  console.log('\n--- e2e: PL főoldal ---');
+  // ---------------- 2. e2e on the PL page, with a mocked FPL API ----------------
+  console.log('\n--- e2e: PL home page ---');
   p = await br.newPage();
-  await p.addInitScript(() => {                 // tekerheto ora a fojtas miatt
-    window.__ora = 0;
-    const eredeti = Date.now;
-    Date.now = () => eredeti() + window.__ora;
+  await p.addInitScript(() => {                 // a clock we can wind, because of the throttling
+    window.__clock = 0;
+    const original = Date.now;
+    Date.now = () => original() + window.__clock;
   });
 
-  // A jatekos-pontok minden lekeresnel valtoznak: igy latszik, atjott-e a friss.
-  let liveHivas = 0, pont = 5;
+  // The player points change on every fetch: that shows whether the fresh ones got through.
+  let liveCalls = 0, points = 5;
   const hist = require(require('path').join(__dirname,'..','draft_history.json'));
-  // A LEGFRISSEBB tarolt fordulo, nem az elso: a fooldal a legutobbi
-  // fordulot listazza, tehat csak annak a meccsein latszik az elo atfedes.
-  // Amig egyetlen fordulo volt, a ketto ugyanaz volt; a 2. lezarasaval
-  // szetvalt, es a teszt a NEM LATSZO 1. fordulot tette elove.
+  // The MOST RECENT stored round, not the first: the home page lists the
+  // latest round, so the live overlay only shows on its matches. While there
+  // was only one round, the two were the same; with round 2 closed they
+  // split, and the test picked the round 1 that DOES NOT SHOW.
   const GW = Object.keys(hist.rounds).map(Number).sort((a, b) => b - a)[0] + '';
-  const elemek = [...new Set(Object.values(hist.rounds[GW]).flat().map(x => x.e))];
-  // A forgatokonyv elofeltetele, hogy a fordulo eredmenye MEG NINCS a tarolt
-  // adatban - kimondjuk, nem a repo pillanatnyi allapotabol orokoljuk (a
-  // gyujto barmikor beirhatja az eredmenyt, es akkor az elo reteg mar nem
-  // irna felul semmit - helyesen).
+  const elements = [...new Set(Object.values(hist.rounds[GW]).flat().map(x => x.e))];
+  // The scenario's precondition is that the round's result is NOT YET in the
+  // stored data - we state it rather than inherit it from the repository's
+  // current state (the collector may write the result in at any time, and
+  // then the live layer would - correctly - overwrite nothing any more).
   await rewriteJson(p, '**/draft.json*', j => {
     j.schedule[GW] = (j.schedule[GW] || []).map(m => [m[0], m[1], null, null]);
     return j;
@@ -93,13 +93,13 @@ const { BASE, check, section, failures, launch, finish, blockApis, rewriteJson }
   await p.route('**premierleague.com/api/**', route => {
     const u = route.request().url();
     const json = b => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
-    // a napi pontzaras (klasszikus FPL) - a PL-oldal ezt is lekeri
+    // the daily points closing (classic FPL) - the PL page fetches this too
     if (/event-status/.test(u)) return json({ status: [] });
     if (/\/api\/game/.test(u)) return json({ current_event: +GW, current_event_finished: false });
     if (/\/live/.test(u)){
-      liveHivas++; pont++;
+      liveCalls++; points++;
       const el = {};
-      elemek.forEach(id => { el[id] = { stats: { total_points: pont, minutes: 90 }, explain: [] }; });
+      elements.forEach(id => { el[id] = { stats: { total_points: points, minutes: 90 }, explain: [] }; });
       return json({ elements: el });
     }
     if (/\/fixtures/.test(u)) return json([]);
@@ -108,96 +108,97 @@ const { BASE, check, section, failures, launch, finish, blockApis, rewriteJson }
   const perr = []; p.on('pageerror', x => perr.push(x.message));
 
   await p.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
-  // A statuszsav "lekeres" uzenete is tartalmazza az "Elo allas" szot, ezert
-  // nem arra varunk, hanem magara a lekeresre - es az azt koveto rajzolasra.
-  for (let i = 0; i < 200 && liveHivas === 0; i++) await p.waitForTimeout(100);
+  // The status bar's "fetching" message also contains the word "Elo allas",
+  // so we do not wait for that but for the fetch itself - and the drawing
+  // that follows it.
+  for (let i = 0; i < 200 && liveCalls === 0; i++) await p.waitForTimeout(100);
   await p.waitForTimeout(600);
-  const betolteskor = liveHivas;
-  const allas1 = await p.$$eval('.match .score', ns => ns.map(n => n.textContent.trim()).join(' | '));
-  console.log('   /live lekérés betöltéskor:', betolteskor);
-  console.log('   állás betöltéskor:', allas1.slice(0, 90));
-  check(betolteskor > 0, 'betöltéskor lekéri az élő pontokat');
+  const atLoad = liveCalls;
+  const score1 = await p.$$eval('.match .score', ns => ns.map(n => n.textContent.trim()).join(' | '));
+  console.log('   /live fetches at load:', atLoad);
+  console.log('   score at load:', score1.slice(0, 90));
+  check(atLoad > 0, 'it fetches the live points at load');
 
-  // visszateres a laphoz
-  await p.evaluate(() => { window.__ora = 120000; });
+  // returning to the page
+  await p.evaluate(() => { window.__clock = 120000; });
   await p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await p.waitForTimeout(1200);
-  const allas2 = await p.$$eval('.match .score', ns => ns.map(n => n.textContent.trim()).join(' | '));
-  console.log('   /live lekérés visszatérés után:', liveHivas);
-  console.log('   állás visszatérés után:', allas2.slice(0, 90));
-  check(liveHivas > betolteskor, 'visszatéréskor újra lekéri az élő pontokat');
-  check(allas1 !== allas2, 'a főoldali meccslista állása tényleg frissül (nem fagy be)');
+  const score2 = await p.$$eval('.match .score', ns => ns.map(n => n.textContent.trim()).join(' | '));
+  console.log('   /live fetches after return:', liveCalls);
+  console.log('   score after return:', score2.slice(0, 90));
+  check(liveCalls > atLoad, 'on return it fetches the live points again');
+  check(score1 !== score2, 'the score in the home page match list really updates (does not freeze)');
 
-  // fojtas: azonnali masodik visszateres ne inditson ujabbat
-  const elozo = liveHivas;
+  // throttling: an immediate second return must not start another one
+  const prev = liveCalls;
   await p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await p.waitForTimeout(800);
-  check(liveHivas === elozo, 'közvetlenül utána nem kér le újra (fojtás): ' + liveHivas);
+  check(liveCalls === prev, 'right after that it does not fetch again (throttling): ' + liveCalls);
 
-  // idozitett frissites szandekosan NINCS
-  await p.evaluate(() => { window.__ora = 900000; });
+  // there is deliberately NO timed refresh
+  await p.evaluate(() => { window.__clock = 900000; });
   await p.waitForTimeout(2000);
-  check(liveHivas === elozo, 'nyitva hagyott lapon magától nem kér le: ' + liveHivas);
+  check(liveCalls === prev, 'a page left open does not fetch by itself: ' + liveCalls);
 
-  // Masodik visszateres: mar mindket allas ki van toltve, tehat ez mutatja
-  // igazan, hogy a MAR KIIRT pontszam is kovetni tudja a valtozast (ez volt
-  // a bejelentett hiba: a fooldalon 39 maradt, mikozben mar 38 volt).
-  await p.evaluate(() => { window.__ora = 1800000; });
+  // Second return: both scores are filled in by now, so this is what really
+  // shows that an ALREADY DISPLAYED score can follow the change too (this was
+  // the reported bug: the home page stayed at 39 while it was already 38).
+  await p.evaluate(() => { window.__clock = 1800000; });
   await p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await p.waitForTimeout(1200);
-  const allas3 = await p.$$eval('.match .score', ns => ns.map(n => n.textContent.trim()).join(' | '));
-  console.log('   /live lekérés 2. visszatérés után:', liveHivas);
-  console.log('   állás 2. visszatérés után:', allas3.slice(0, 90));
-  check(liveHivas === elozo + 1, 'a második visszatérés is lekér: ' + liveHivas);
-  check(allas2 !== allas3 && /\d/.test(allas2) && /\d/.test(allas3),
-    'a már kiírt pontszám is követi a változást (' + allas2.slice(0, 12) + ' -> ' + allas3.slice(0, 12) + ')');
+  const score3 = await p.$$eval('.match .score', ns => ns.map(n => n.textContent.trim()).join(' | '));
+  console.log('   /live fetches after the 2nd return:', liveCalls);
+  console.log('   score after the 2nd return:', score3.slice(0, 90));
+  check(liveCalls === prev + 1, 'the second return fetches too: ' + liveCalls);
+  check(score2 !== score3 && /\d/.test(score2) && /\d/.test(score3),
+    'an already displayed score follows the change too (' + score2.slice(0, 12) + ' -> ' + score3.slice(0, 12) + ')');
 
-  console.log('   pageerror:', perr.length ? perr : 'nincs');
-  check(perr.length === 0, 'nincs JS-hiba a PL-oldalon');
+  console.log('   pageerror:', perr.length ? perr : 'none');
+  check(perr.length === 0, 'no JS error on the PL page');
   await p.close();
 
-  // ---------------- 3. e2e az NB1-oldalon ----------------
-  // Ott a ranglista-vegpont az elo forras; ugyanugy visszatereskor kell ujra.
-  console.log('\n--- e2e: NB1 főoldal ---');
+  // ---------------- 3. e2e on the NB1 page ----------------
+  // There the rankings endpoint is the live source; it has to be fetched again on return just the same.
+  console.log('\n--- e2e: NB1 home page ---');
   p = await br.newPage();
   await p.addInitScript(() => {
-    window.__ora = 0;
-    const eredeti = Date.now;
-    Date.now = () => eredeti() + window.__ora;
+    window.__clock = 0;
+    const original = Date.now;
+    Date.now = () => original() + window.__clock;
   });
-  // Egy NB1-frissites 8 szakvezetot ker le egymas utan, tehat sok kerest ad
-  // ki. A frissitesek SZAMAT az elso szakvezeto lekerese meri (fordulonkent
-  // pontosan egyszer szerepel), nem a nyers keresszam.
-  let rankHivas = 0, elsoUname = null;
+  // One NB1 refresh fetches 8 managers one after another, so it issues many
+  // requests. The NUMBER of refreshes is measured by the first manager's
+  // fetch (it occurs exactly once per round), not by the raw request count.
+  let rankCalls = 0, firstUname = null;
   await p.route('**fantasy-api.mlsz.hu/**', route => {
     const u = decodeURIComponent(route.request().url());
     const m = /filter\[search\]=([^&]+)/.exec(u);
     const uname = m ? m[1] : '';
-    if (elsoUname === null) elsoUname = uname;
-    if (uname === elsoUname) rankHivas++;
+    if (firstUname === null) firstUname = uname;
+    if (uname === firstUname) rankCalls++;
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
       data: [{ user_team: { user: { id: 1, username: uname }, round_statistics: [] } }] }) });
   });
   const perr2 = []; p.on('pageerror', x => perr2.push(x.message));
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
-  for (let i = 0; i < 200 && rankHivas === 0; i++) await p.waitForTimeout(100);
+  for (let i = 0; i < 200 && rankCalls === 0; i++) await p.waitForTimeout(100);
   await p.waitForTimeout(1500);
-  const nb1Betoltes = rankHivas;
-  console.log('   ranglista-lekérés betöltéskor:', nb1Betoltes);
-  check(nb1Betoltes > 0, 'betöltéskor lekéri a ranglistát');
+  const nb1AtLoad = rankCalls;
+  console.log('   rankings fetches at load:', nb1AtLoad);
+  check(nb1AtLoad > 0, 'it fetches the rankings at load');
 
-  await p.evaluate(() => { window.__ora = 120000; });
+  await p.evaluate(() => { window.__clock = 120000; });
   await p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await p.waitForTimeout(1500);
-  console.log('   ranglista-lekérés visszatérés után:', rankHivas);
-  check(rankHivas > nb1Betoltes, 'visszatéréskor az NB1-oldal is újra lekér');
+  console.log('   rankings fetches after return:', rankCalls);
+  check(rankCalls > nb1AtLoad, 'on return the NB1 page fetches again too');
 
-  const nb1Elozo = rankHivas;
-  await p.evaluate(() => { window.__ora = 900000; });
+  const nb1Prev = rankCalls;
+  await p.evaluate(() => { window.__clock = 900000; });
   await p.waitForTimeout(2000);
-  check(rankHivas === nb1Elozo, 'nyitva hagyott NB1-lapon magától nem kér le: ' + rankHivas);
-  console.log('   pageerror:', perr2.length ? perr2 : 'nincs');
-  check(perr2.length === 0, 'nincs JS-hiba az NB1-oldalon');
+  check(rankCalls === nb1Prev, 'an NB1 page left open does not fetch by itself: ' + rankCalls);
+  console.log('   pageerror:', perr2.length ? perr2 : 'none');
+  check(perr2.length === 0, 'no JS error on the NB1 page');
   await p.close();
 
   await br.close();

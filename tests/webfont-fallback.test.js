@@ -1,75 +1,76 @@
 const { BASE, check, section, launch, finish, blockApis } = require('./common');
 const fs = require('fs'), path = require('path');
-// A betukeszlet-iv NEM allithatja meg a lap megjeleneset.
+// The font stylesheet must NOT stop the page from appearing.
 //
-// MERT MEGMERTUK: sima <link rel="stylesheet">-tel, amikor a
-// fonts.googleapis.com nem valaszol, a DOMContentLoaded 57 ms helyett
-// 12 640 ms - addig a lapon SEMMI nincs. Mobilon, gyenge halon ez pont az a
-// helyzet, amikor az ember megnezne az allast. A media="print" + onload
-// trukk aszinkronna teszi az ivet; a `display=swap` miatt az elso festes
-// ugyis a tartalek betuvel tortenik.
+// BECAUSE WE MEASURED IT: with a plain <link rel="stylesheet">, when
+// fonts.googleapis.com does not answer, DOMContentLoaded takes 12 640 ms
+// instead of 57 ms - until then there is NOTHING on the page. On a phone, on
+// a weak network, that is exactly the situation in which one wants to check
+// the score. The media="print" + onload trick makes the stylesheet
+// asynchronous; because of `display=swap` the first paint happens with the
+// fallback font anyway.
 //
-// A masik fele: a CSS-ben MINDEN betucsaladnak legyen tartaleka. Enelkul a
-// bongeszo alapertelmezese (talpas Times) allna a helyere, mas
-// betuszelesseggel - a tablazat ugrana egyet a webfont megerkezesekor.
-const OLDALAK = ['', 'nb1/', 'pl/', 'valtozasok/'];
-const GYOKER = path.join(__dirname, '..');
+// The other half: in the CSS EVERY font family must have a fallback.
+// Without it the browser default (serif Times) would take its place, with a
+// different character width - the table would jump when the web font arrives.
+const PAGES = ['', 'nb1/', 'pl/', 'valtozasok/'];
+const ROOT = path.join(__dirname, '..');
 
 (async () => {
   const br = await launch();
 
-  section('A hivatkozas alakja minden oldalon');
-  for (const o of OLDALAK){
-    const h = fs.readFileSync(path.join(GYOKER, o, 'index.html'), 'utf8');
-    const nev = o || '(főoldal)';
-    const ivek = h.match(/<link[^>]*fonts\.googleapis\.com[^>]*>/g) || [];
-    const blokkolo = ivek.filter(x => /rel="stylesheet"/.test(x) && !/media="print"/.test(x));
-    // a <noscript>-beli iv blokkolo LEHET: ott nincs onload, ami visszakapcsolna
-    const noscriptben = (h.match(/<noscript>[\s\S]*?<\/noscript>/g) || []).join('');
-    const igazi = blokkolo.filter(x => noscriptben.indexOf(x) < 0);
-    check(igazi.length === 0, nev + ': nincs renderelést blokkoló betűkészlet-ív'
-       + (igazi.length ? ' — ' + igazi[0].slice(0, 80) : ''));
+  section('The shape of the link on every page');
+  for (const o of PAGES){
+    const h = fs.readFileSync(path.join(ROOT, o, 'index.html'), 'utf8');
+    const name = o || '(home page)';
+    const sheets = h.match(/<link[^>]*fonts\.googleapis\.com[^>]*>/g) || [];
+    const blocking = sheets.filter(x => /rel="stylesheet"/.test(x) && !/media="print"/.test(x));
+    // the stylesheet inside <noscript> MAY block: there is no onload there to switch it back
+    const inNoscript = (h.match(/<noscript>[\s\S]*?<\/noscript>/g) || []).join('');
+    const real = blocking.filter(x => inNoscript.indexOf(x) < 0);
+    check(real.length === 0, name + ': no render-blocking font stylesheet'
+       + (real.length ? ' — ' + real[0].slice(0, 80) : ''));
     check(/media="print"/.test(h) && /this\.media='all'/.test(h),
-       nev + ': az ív aszinkron (media="print" + onload)');
+       name + ': the stylesheet is asynchronous (media="print" + onload)');
     check(/<noscript>[\s\S]*fonts\.googleapis[\s\S]*<\/noscript>/.test(h),
-       nev + ': JavaScript nélkül is megjön a betűkészlet (noscript-ág)');
+       name + ': the font arrives without JavaScript too (noscript branch)');
     check(/preconnect[^>]*fonts\.gstatic\.com/.test(h),
-       nev + ': preconnect a fonts.gstatic.com-ra (onnan jönnek a fájlok)');
+       name + ': preconnect to fonts.gstatic.com (the files come from there)');
   }
 
-  section('Minden betűcsaládnak van tartaléka');
-  const css = fs.readFileSync(path.join(GYOKER, 'funtasy.css'), 'utf8');
-  const beirt = (css.match(/font(-family)?:[^;}]*(Inter|JetBrains|Archivo)[^;}]*/g) || [])
+  section('Every font family has a fallback');
+  const css = fs.readFileSync(path.join(ROOT, 'funtasy.css'), 'utf8');
+  const literal = (css.match(/font(-family)?:[^;}]*(Inter|JetBrains|Archivo)[^;}]*/g) || [])
     .filter(x => !/var\(--/.test(x) && !/^--/.test(x));
-  check(beirt.length === 0,
-     'a CSS sehol nem ír be betűnevet közvetlenül, mindenhol változó áll'
-     + (beirt.length ? ' — pl. ' + beirt[0] : ''));
-  for (const [v, kell] of [['--fo', 'sans-serif'], ['--mono', 'monospace'], ['--cim', 'sans-serif']]){
-    const sor = (css.match(new RegExp(v + ':[^;}]*')) || [''])[0];
-    check(sor.indexOf(kell) > 0, v + ' tartalék-sora ' + kell + '-fel zárul — „' + sor.slice(0, 70) + '”');
+  check(literal.length === 0,
+     'the CSS nowhere writes a font name directly, a variable stands everywhere'
+     + (literal.length ? ' — e.g. ' + literal[0] : ''));
+  for (const [v, needed] of [['--fo', 'sans-serif'], ['--mono', 'monospace'], ['--cim', 'sans-serif']]){
+    const line = (css.match(new RegExp(v + ':[^;}]*')) || [''])[0];
+    check(line.indexOf(needed) > 0, v + ' fallback list ends with ' + needed + ' — "' + line.slice(0, 70) + '"');
   }
 
-  section('Nem válaszoló betűkészlet-szolgáltatás');
-  // A keres SOSEM jon vissza - ez a legrosszabb eset (nem hiba, hanem varakozas)
+  section('Font service that does not answer');
+  // The request NEVER comes back - this is the worst case (not an error, but waiting)
   const p = await br.newPage();
   const err = []; p.on('pageerror', e => err.push(e.message));
   await blockApis(p);
   for (const m of ['**fonts.googleapis.com/**', '**fonts.gstatic.com/**'])
-    await p.route(m, async () => { await new Promise(() => {}); });   // orokre fuggoben
+    await p.route(m, async () => { await new Promise(() => {}); });   // pending forever
   const t0 = Date.now();
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#table tr', { timeout: 15000 });
-  const eltelt = Date.now() - t0;
-  check(eltelt < 8000, 'a tabella kirajzolódik akkor is, ha a betűkészlet nem jön meg ('
-     + eltelt + ' ms)');
+  const elapsed = Date.now() - t0;
+  check(elapsed < 8000, 'the table is drawn even if the font does not arrive ('
+     + elapsed + ' ms)');
   const font = await p.evaluate(() => getComputedStyle(document.body).fontFamily);
-  check(/sans-serif|system-ui/.test(font), 'a tartalék betűcsalád lép életbe — „' + font.slice(0, 50) + '”');
+  check(/sans-serif|system-ui/.test(font), 'the fallback font family takes effect — "' + font.slice(0, 50) + '"');
   check((await p.evaluate(() => document.body.innerText)).length > 500,
-     'a lap tartalma ott van, nem üres');
+     'the page content is there, not empty');
   check((await p.evaluate(() => document.documentElement.scrollWidth
                             - document.documentElement.clientWidth)) <= 1,
-     'tartalék betűvel sincs vízszintes túlcsordulás');
-  check(err.length === 0, 'nincs JS-hiba' + (err.length ? ': ' + err.join(' | ') : ''));
+     'no horizontal overflow with the fallback font either');
+  check(err.length === 0, 'no JS error' + (err.length ? ': ' + err.join(' | ') : ''));
   await p.close();
   await finish(br);
 })();

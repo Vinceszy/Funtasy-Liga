@@ -1,148 +1,149 @@
 const { BASE, check, failures, launch, finish, rewriteJson, blockApis } = require('./common');
-// A valtozasnaplo: ket szuro, es a liga CIMKEKENT viselkedik.
+// The change log page: two filters, and the league behaves as a TAG.
 //
-// A ligacimke azert fontos, mert nem mindenki jatszik minden ligaban: ha egy
-// bejegyzes mindkettot erinti, BARMELYIKRE szurve elo kell jonnie. A valos
-// adatban ma nincs ilyen bejegyzes, ezert a teszt allitja elo - a repo
-// elvei szerint menet kozben, nem tarolt fixturabol.
+// The league tag matters because not everybody plays in every league: if an
+// entry affects both, it must show up when filtering on EITHER. The real
+// data has no such entry today, so the test produces one - following the
+// repository's principles, on the fly, not from a stored fixture.
 
-const cim = t => t.replace(/\s+/g, ' ').trim();
-// A varhato ertekeket a VALODI adatbol szamoljuk, nem irjuk be szamkent:
-// kulonben minden uj naplobejegyzes megbuktatna a tesztet.
-const ADAT = require(require('path').join(__dirname, '..', 'valtozasok.json')).bejegyzesek;
-const PLUSZ = { datum: '2999-01-01', tipus: 'funkcio', ligak: ['nb1', 'pl'],
+const title = t => t.replace(/\s+/g, ' ').trim();
+// The expected values are computed from the REAL data, not written in as
+// numbers: otherwise every new log entry would break the test.
+const DATA = require(require('path').join(__dirname, '..', 'valtozasok.json')).bejegyzesek;
+const EXTRA = { datum: '2999-01-01', tipus: 'funkcio', ligak: ['nb1', 'pl'],
                 cim: 'MINDKETTO', leiras: 'Mindkét ligát érinti.' };
-const OSSZES = [PLUSZ].concat(ADAT);
-const hany = f => OSSZES.filter(f).length;
-const cimekEbbol = f => OSSZES.filter(f).map(b => cim(b.cim));
-const csakPl  = cimekEbbol(b => b.ligak.includes('pl')  && !b.ligak.includes('nb1'));
-const csakNb1 = cimekEbbol(b => b.ligak.includes('nb1') && !b.ligak.includes('pl'));
+const ALL = [EXTRA].concat(DATA);
+const howMany = f => ALL.filter(f).length;
+const titlesOf = f => ALL.filter(f).map(b => title(b.cim));
+const plOnly  = titlesOf(b => b.ligak.includes('pl')  && !b.ligak.includes('nb1'));
+const nb1Only = titlesOf(b => b.ligak.includes('nb1') && !b.ligak.includes('pl'));
 
 (async () => {
   const br = await launch();
   const p = await br.newPage({ viewport: { width: 1000, height: 900 } });
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   await blockApis(p);
-  // egy mindket ligat erinto bejegyzes hozzaadasa
+  // add an entry that affects both leagues
   await rewriteJson(p, '**/valtozasok.json*', j => {
-    j.bejegyzesek.unshift(PLUSZ);
+    j.bejegyzesek.unshift(EXTRA);
     return j;
   });
   await p.goto(BASE + 'valtozasok/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('.vlt-tetel');
 
-  const cimek = async () => (await p.locator('.vlt-tetel h3').allInnerTexts()).map(cim);
-  const chip = async (sor, szoveg) => {
-    await p.locator(`#${sor} .vlt-chip`, { hasText: new RegExp('^' + szoveg + '$') }).first().click();
+  const titles = async () => (await p.locator('.vlt-tetel h3').allInnerTexts()).map(title);
+  const chip = async (row, text) => {
+    await p.locator(`#${row} .vlt-chip`, { hasText: new RegExp('^' + text + '$') }).first().click();
     await p.waitForTimeout(60);
   };
 
-  console.log('--- alapállapot ---');
-  const mind = await cimek();
-  console.log('   ' + mind.length + ' bejegyzés:', JSON.stringify(mind.map(x => x.slice(0, 28))));
-  check(mind.length === OSSZES.length,
-    `szűrés nélkül minden bejegyzés látszik (${OSSZES.length})`);
-  check(mind[0] === 'MINDKETTO', 'a legfrissebb dátum van elöl');
-  // az innerText a CSS text-transform:uppercase-t is visszaadja, ezert /i
-  const datumok = await p.locator('.vlt-datum').allInnerTexts();
-  console.log('   dátumfejlécek:', JSON.stringify(datumok.map(cim)));
-  check(datumok.some(t => /augusztus 24/i.test(t)),
-    'a dátum magyarul, csoportfejlécként jelenik meg');
-  check(datumok.length === new Set(OSSZES.map(b => b.datum)).size,
-    'annyi dátumcsoport van, ahány különböző nap');
+  console.log('--- initial state ---');
+  const all = await titles();
+  console.log('   ' + all.length + ' entries:', JSON.stringify(all.map(x => x.slice(0, 28))));
+  check(all.length === ALL.length,
+    `without filtering every entry is shown (${ALL.length})`);
+  check(all[0] === 'MINDKETTO', 'the most recent date comes first');
+  // innerText also applies the CSS text-transform:uppercase, hence the /i
+  const dates = await p.locator('.vlt-datum').allInnerTexts();
+  console.log('   date headings:', JSON.stringify(dates.map(title)));
+  check(dates.some(t => /augusztus 24/i.test(t)),
+    'the date appears in Hungarian, as a group heading');
+  check(dates.length === new Set(ALL.map(b => b.datum)).size,
+    'there are as many date groups as distinct days');
 
-  // A .panel-nek nincs sajat belso margoja, a gyerekei adjak - ha egy sav
-  // kifelejti, a szoveg a keretnek er. Ezt egyszer mar elrontottam.
-  const margok = await p.evaluate(() => {
-    const bal = s => parseFloat(getComputedStyle(document.querySelector(s)).paddingLeft);
-    return { szuro: bal('.vlt-szurok'), datum: bal('.vlt-datum'), tetel: bal('.vlt-tetel') };
+  // .panel has no inner padding of its own, its children provide it - if a
+  // strip forgets it, the text touches the border. This went wrong once.
+  const paddings = await p.evaluate(() => {
+    const left = s => parseFloat(getComputedStyle(document.querySelector(s)).paddingLeft);
+    return { filters: left('.vlt-szurok'), date: left('.vlt-datum'), item: left('.vlt-tetel') };
   });
-  console.log('   bal belső margók:', JSON.stringify(margok));
-  check(Object.values(margok).every(x => x >= 12),
-    'minden sávnak van belső margója (a szöveg nem ér a kerethez)');
+  console.log('   left inner paddings:', JSON.stringify(paddings));
+  check(Object.values(paddings).every(x => x >= 12),
+    'every strip has inner padding (the text does not touch the border)');
 
-  console.log('\n--- típus szerint ---');
+  console.log('\n--- by type ---');
   await chip('tipusSzuro', 'Javítás');
-  const javitasok = await cimek();
-  console.log('   javítások:', JSON.stringify(javitasok.map(x => x.slice(0, 28))));
-  check(javitasok.length === hany(b => b.tipus === 'bugfix') && !javitasok.includes('MINDKETTO'),
-    'a Javítás szűrő csak a javításokat hagyja meg');
+  const fixes = await titles();
+  console.log('   fixes:', JSON.stringify(fixes.map(x => x.slice(0, 28))));
+  check(fixes.length === howMany(b => b.tipus === 'bugfix') && !fixes.includes('MINDKETTO'),
+    'the Javítás filter keeps only the fixes');
   await chip('tipusSzuro', 'Új funkció');
-  check((await cimek()).includes('MINDKETTO'), 'az Új funkció szűrő az új funkciókat hagyja meg');
+  check((await titles()).includes('MINDKETTO'), 'the Új funkció filter keeps the new features');
   await chip('tipusSzuro', 'Mind');
-  check((await cimek()).length === OSSZES.length, 'a Mind visszaadja az összeset');
+  check((await titles()).length === ALL.length, 'Mind gives back all of them');
 
-  console.log('\n--- liga: CÍMKEKÉNT viselkedik-e ---');
+  console.log('\n--- league: does it behave as a TAG ---');
   await chip('ligaSzuro', 'NB1');
-  const nb1 = await cimek();
+  const nb1 = await titles();
   console.log('   NB1:', JSON.stringify(nb1.map(x => x.slice(0, 28))));
-  check(nb1.includes('MINDKETTO'), 'a mindkét ligát érintő bejegyzés NB1-re szűrve is előjön');
-  // A cimekre illesztes nemán atmenne, ha a szoveg valtozik (meg is tortent):
-  // a varhato cimeket ezert az ADATBOL szedjuk, es megkoveteljuk, hogy legyen
-  // mit ellenoriznie.
-  check(csakPl.length > 0 && !csakPl.some(c => nb1.includes(c)),
-    `a csak PL-es bejegyzések NB1-re szűrve nem jönnek elő (${csakPl.length} ilyen)`);
-  await chip('ligaSzuro', 'NB1');        // kikapcs
+  check(nb1.includes('MINDKETTO'), 'the entry affecting both leagues shows up when filtering on NB1');
+  // Matching on titles would silently pass if the text changed (it did
+  // happen): so the expected titles are taken from the DATA, and we require
+  // that there be something to check.
+  check(plOnly.length > 0 && !plOnly.some(c => nb1.includes(c)),
+    `PL-only entries do not show up when filtering on NB1 (${plOnly.length} of them)`);
+  await chip('ligaSzuro', 'NB1');        // off
   await chip('ligaSzuro', 'PL');
-  const pl = await cimek();
+  const pl = await titles();
   console.log('   PL:', JSON.stringify(pl.map(x => x.slice(0, 28))));
-  check(pl.includes('MINDKETTO'), 'ugyanaz a bejegyzés PL-re szűrve is előjön');
-  check(csakNb1.length > 0 && !csakNb1.some(c => pl.includes(c)),
-    `a csak NB1-es bejegyzések PL-re szűrve nem jönnek elő (${csakNb1.length} ilyen)`);
+  check(pl.includes('MINDKETTO'), 'the same entry shows up when filtering on PL too');
+  check(nb1Only.length > 0 && !nb1Only.some(c => pl.includes(c)),
+    `NB1-only entries do not show up when filtering on PL (${nb1Only.length} of them)`);
 
-  console.log('\n--- a ligák KÜLÖN kapcsolhatók (aki több ligában játszik) ---');
-  await chip('ligaSzuro', 'NB1');        // a PL mellé
-  const ketto = await cimek();
-  console.log('   NB1 + PL:', JSON.stringify(ketto.map(x => x.slice(0, 28))));
-  check(ketto.length === hany(b => b.ligak.some(x => x === 'nb1' || x === 'pl')),
-    'két ligát kijelölve mindkettő bejegyzései látszanak');
-  const aktivak = await p.locator('#ligaSzuro .vlt-chip.on').allInnerTexts();
-  console.log('   kiemelt liga-gombok:', JSON.stringify(aktivak));
-  check(aktivak.length === 2 && !aktivak.some(t => /Mind/.test(t)),
-    'mindkét liga gombja ki van emelve, a Mind nem');
-  await chip('ligaSzuro', 'Mind');       // torles
-  check((await cimek()).length === OSSZES.length, 'a Mind törli a kijelöléseket');
-  const mindAktiv = await p.locator('#ligaSzuro .vlt-chip.on').allInnerTexts();
-  check(mindAktiv.length === 1 && /Mind/.test(mindAktiv[0]),
-    'kijelölés nélkül a Mind van kiemelve');
+  console.log('\n--- the leagues can be toggled SEPARATELY (for those who play in several) ---');
+  await chip('ligaSzuro', 'NB1');        // next to PL
+  const both = await titles();
+  console.log('   NB1 + PL:', JSON.stringify(both.map(x => x.slice(0, 28))));
+  check(both.length === howMany(b => b.ligak.some(x => x === 'nb1' || x === 'pl')),
+    'with two leagues selected the entries of both are shown');
+  const active = await p.locator('#ligaSzuro .vlt-chip.on').allInnerTexts();
+  console.log('   highlighted league buttons:', JSON.stringify(active));
+  check(active.length === 2 && !active.some(t => /Mind/.test(t)),
+    'both league buttons are highlighted, Mind is not');
+  await chip('ligaSzuro', 'Mind');       // clear
+  check((await titles()).length === ALL.length, 'Mind clears the selection');
+  const allActive = await p.locator('#ligaSzuro .vlt-chip.on').allInnerTexts();
+  check(allActive.length === 1 && /Mind/.test(allActive[0]),
+    'without a selection Mind is highlighted');
 
-  console.log('\n--- a két szűrő együtt ---');
+  console.log('\n--- the two filters together ---');
   await chip('ligaSzuro', 'PL');
   await chip('tipusSzuro', 'Javítás');
-  const ures = await cimek();
-  console.log('   PL + Javítás:', JSON.stringify(ures));
-  const plJavitas = hany(b => b.tipus === 'bugfix' && b.ligak.includes('pl'));
-  if (plJavitas === 0)
-    check(ures.length === 0 && /nincs bejegyzés/.test(await p.locator('#lista').innerText()),
-      'PL + Javítás: nincs ilyen, és ezt ki is írja');
+  const none = await titles();
+  console.log('   PL + Javítás:', JSON.stringify(none));
+  const plFixes = howMany(b => b.tipus === 'bugfix' && b.ligak.includes('pl'));
+  if (plFixes === 0)
+    check(none.length === 0 && /nincs bejegyzés/.test(await p.locator('#lista').innerText()),
+      'PL + Javítás: there is none, and it says so');
   else
-    check(ures.length === plJavitas, `PL + Javítás: ${plJavitas} bejegyzés`);
+    check(none.length === plFixes, `PL + Javítás: ${plFixes} entries`);
 
-  await chip('ligaSzuro', 'PL');     // kikapcs
+  await chip('ligaSzuro', 'PL');     // off
   await chip('ligaSzuro', 'NB1');
-  check((await cimek()).length === hany(b => b.tipus === 'bugfix' && b.ligak.includes('nb1')),
-    'NB1 + Javítás: az NB1-es javítások');
+  check((await titles()).length === howMany(b => b.tipus === 'bugfix' && b.ligak.includes('nb1')),
+    'NB1 + Javítás: the NB1 fixes');
 
-  console.log('\n--- elérési pontok ---');
-  check(perr.length === 0, 'nincs JS-hiba a naplón: ' + JSON.stringify(perr));
-  check((await p.locator('.lablec').count()) === 0, 'a naplón nincs lábléc (önmagára mutatna)');
+  console.log('\n--- entry points ---');
+  check(perr.length === 0, 'no JS error on the log page: ' + JSON.stringify(perr));
+  check((await p.locator('.lablec').count()) === 0, 'the log page has no footer (it would point to itself)');
   await p.close();
 
-  for (const [ut, gyoker] of [['', ''], ['nb1/', '../'], ['pl/', '../']]) {
+  for (const [path, root] of [['', ''], ['nb1/', '../'], ['pl/', '../']]) {
     const o = await br.newPage();
     await blockApis(o);
-    await o.goto(BASE + ut, { waitUntil: 'domcontentloaded' });
+    await o.goto(BASE + path, { waitUntil: 'domcontentloaded' });
     await o.waitForSelector('.lablec a', { timeout: 15000 });
-    // A lablecben TOBB link is allhat (a magazin is onnan nyilik), ezert a
-    // naplo linkjet celzottan keressuk - korabban itt egyetlen linket
-    // feltetelezett a teszt, es a masodik megjelenesekor bukott.
-    const hrefek = await o.$$eval('.lablec a', n => n.map(x => x.getAttribute('href')));
-    check(hrefek.indexOf(gyoker + 'valtozasok/') >= 0,
-       `/${ut || ''} láblécében a napló linkje (${JSON.stringify(hrefek)})`);
-    // A kezdolapon TOBB kiemelt sor is allhat (az ujsag is onnan nyilik),
-    // ezert a naplo sorat celzottan keressuk - nem a sorok szamat.
-    if (!ut) check((await o.locator('a.ujdonsagsor[href="valtozasok/"]').count()) === 1,
-      'a kezdőlapon külön sor is mutat rá');
+    // The footer can hold SEVERAL links (the magazine opens from there too),
+    // so the log's link is looked for specifically - earlier the test
+    // assumed a single link here, and failed when the second one appeared.
+    const hrefs = await o.$$eval('.lablec a', n => n.map(x => x.getAttribute('href')));
+    check(hrefs.indexOf(root + 'valtozasok/') >= 0,
+       `the footer of /${path || ''} has the log's link (${JSON.stringify(hrefs)})`);
+    // The home page can have SEVERAL highlighted rows (the paper opens from
+    // there too), so the log's row is looked for specifically - not the
+    // number of rows.
+    if (!path) check((await o.locator('a.ujdonsagsor[href="valtozasok/"]').count()) === 1,
+      'on the home page a separate row points to it too');
     await o.close();
   }
 

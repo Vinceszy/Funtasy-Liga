@@ -1,23 +1,23 @@
 const { BASE, check, launch, finish, rewriteJson } = require('./common');
-// A ZARAS ES A GYUJTES KOZOTTI RES (PL).
+// THE GAP BETWEEN CLOSING AND COLLECTION (PL).
 //
-// Az FPL a fordulot a "lockdown"-kor zarja (merve: 08:03 es 08:23
-// UTC kozott billent at minden), a gyujtonk viszont 3 orankent fut. A ket
-// idopont kozott a game vegpont mar azt mondja, hogy current_event_finished,
-// de a tarolt draft.json-ban meg nincs benne a fordulo eredmenye.
+// The FPL closes the round at "lockdown" (measured: everything flips between
+// 08:03 and 08:23 UTC), but our collector runs every 3 hours. Between the
+// two moments the game endpoint already says current_event_finished, but the
+// stored draft.json does not yet contain the round's result.
 //
-// Ez a res korabban "Naprakesz · ellenorizve <most>"-ot irt ki: a kiirt ido a
-// LEKERESE volt, nem az adate - vagyis pont akkor allitotta magarol, hogy
-// naprakesz, amikor bizonyithatoan nem volt az. Most megmondja, mi hianyzik.
+// This gap used to show "Naprakesz · ellenorizve <now>": the time shown was
+// that of the FETCH, not of the data - so it claimed to be up to date
+// exactly when it provably was not. Now it says what is missing.
 //
-// A teszt mindket allapotot KIMONDJA (nem a valos adatra tamaszkodik), mert
-// a gyujto barmikor behozhatja az eredmenyt.
+// The test STATES both states (it does not rely on the real data), because
+// the collector may bring in the result at any time.
 const GW = 1;
 
-async function statuszSzoveg(br, eredmenyVan){
+async function statusText(br, hasResult){
   const p = await br.newPage({ viewport: { width: 900, height: 800 } });
   const perr = []; p.on('pageerror', e => perr.push(e.message));
-  // a fordulo mar lezarult az FPL szerint
+  // the round has already closed according to the FPL
   await p.route('**premierleague.com/**', route => {
     const u = decodeURIComponent(route.request().url());
     const json = b => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(b) });
@@ -25,10 +25,10 @@ async function statuszSzoveg(br, eredmenyVan){
     if (/event-status/.test(u)) return json({ status: [] });
     return json({});
   });
-  // a tarolt adatban VAN vagy NINCS eredmeny erre a fordulora
+  // the stored data HAS or HAS NO result for this round
   await rewriteJson(p, '**/draft.json*', j => {
     const s = (j.schedule && j.schedule[GW]) || [];
-    j.schedule[GW] = s.map(m => eredmenyVan ? [m[0], m[1], 20, 30] : [m[0], m[1], null, null]);
+    j.schedule[GW] = s.map(m => hasResult ? [m[0], m[1], 20, 30] : [m[0], m[1], null, null]);
     j.updated = '2026-08-25T05:47:00Z';
     return j;
   });
@@ -38,8 +38,8 @@ async function statuszSzoveg(br, eredmenyVan){
     return el && el.textContent && !/lekérése/.test(el.textContent);
   }, null, { timeout: 20000 });
   const st = await p.evaluate(() => ({
-    szoveg: document.getElementById('status').textContent.trim(),
-    osztaly: document.getElementById('status').className,
+    text: document.getElementById('status').textContent.trim(),
+    cls: document.getElementById('status').className,
   }));
   await p.close();
   return { ...st, perr };
@@ -48,26 +48,26 @@ async function statuszSzoveg(br, eredmenyVan){
 (async () => {
   const br = await launch();
 
-  const hianyzik = await statuszSzoveg(br, false);
-  console.log('   eredmény nélkül: ' + JSON.stringify(hianyzik.szoveg) + '  [' + hianyzik.osztaly + ']');
-  check(!/Naprakész/.test(hianyzik.szoveg),
-     'lezárt forduló + hiányzó eredmény: NEM ír „Naprakész"-t');
-  check(/lezárult/.test(hianyzik.szoveg) && /adatfrissítéssel/.test(hianyzik.szoveg),
-     'megmondja, mi hiányzik és mikor pótlódik');
-  check(/tárolt állás/.test(hianyzik.szoveg) && /aug\./.test(hianyzik.szoveg),
-     'kiírja a TÁROLT állás idejét, nem a lekérését: ' + JSON.stringify(hianyzik.szoveg));
-  check(hianyzik.osztaly === 'varakozik',
-     'saját jelölést kap (nem „ok", nem hiba): ' + JSON.stringify(hianyzik.osztaly));
+  const missing = await statusText(br, false);
+  console.log('   without result: ' + JSON.stringify(missing.text) + '  [' + missing.cls + ']');
+  check(!/Naprakész/.test(missing.text),
+     'closed round + missing result: does NOT say "Naprakész"');
+  check(/lezárult/.test(missing.text) && /adatfrissítéssel/.test(missing.text),
+     'it says what is missing and when it will be filled in');
+  check(/tárolt állás/.test(missing.text) && /aug\./.test(missing.text),
+     'it shows the time of the STORED score, not of the fetch: ' + JSON.stringify(missing.text));
+  check(missing.cls === 'varakozik',
+     'it gets its own mark (not "ok", not an error): ' + JSON.stringify(missing.cls));
 
-  const megvan = await statuszSzoveg(br, true);
-  console.log('   eredménnyel:     ' + JSON.stringify(megvan.szoveg) + '  [' + megvan.osztaly + ']');
-  check(/Naprakész/.test(megvan.szoveg) && megvan.osztaly === 'ok',
-     'ha az eredmény már a tárolt adatban van, újra „Naprakész"');
-  check(new RegExp('utolsó lezárt: ' + GW + '\\. forduló \\(rögzítve: ').test(megvan.szoveg),
-     'a nyugalmi sor megmondja az utolsó lezárt fordulót és a rögzítés idejét: '
-     + JSON.stringify(megvan.szoveg));
+  const present = await statusText(br, true);
+  console.log('   with result:    ' + JSON.stringify(present.text) + '  [' + present.cls + ']');
+  check(/Naprakész/.test(present.text) && present.cls === 'ok',
+     'once the result is in the stored data, "Naprakész" again');
+  check(new RegExp('utolsó lezárt: ' + GW + '\\. forduló \\(rögzítve: ').test(present.text),
+     'the idle line states the last closed round and when it was recorded: '
+     + JSON.stringify(present.text));
 
-  check(!hianyzik.perr.length && !megvan.perr.length,
-     'nincs JS-hiba: ' + JSON.stringify([...hianyzik.perr, ...megvan.perr]));
+  check(!missing.perr.length && !present.perr.length,
+     'no JS error: ' + JSON.stringify([...missing.perr, ...present.perr]));
   await finish(br);
 })();

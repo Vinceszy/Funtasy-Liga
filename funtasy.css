@@ -41,7 +41,7 @@ body.liga-nb1 h1 .tag{color:#43E27F}
    its own scroll box, and momentum scrolling breaks: the page does not
    start, shudders, starts, then runs back. Worst on the longest page.
    What it would protect is guarded by a measurement instead
-   (tests/vizszintes.teszt.js): no page sticks out sideways even at 320
+   (tests/no-horizontal-overflow.test.js): no page sticks out sideways even at 320
    pixels, not even with a match page open - so the clipping is not
    needed, only its harm would remain. */
 html,body{max-width:100%}
@@ -349,7 +349,7 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .plr.plrfej{font:700 9px var(--fo);color:var(--dim);opacity:.75;
   padding:2px 4px 3px;border-bottom:1px solid var(--line);cursor:default}
 /* A label cannot be wider than its own column, otherwise the header slips
-   away from the numbers (perccellak.teszt.js measures the centres) - so
+   away from the numbers (minute-cells.test.js measures the centres) - so
    there is no upper-casing or letter spacing, and the .kezd column is 30px. */
 .plrfej .perc,.plrfej .kezd,.plrfej .pts{font:inherit;color:inherit}
 /* The player's match above the points breakdown: "ARS 2-1 BRE - 70. perc".

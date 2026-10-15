@@ -1,25 +1,24 @@
 const { BASE, check, section, launch, finish, blockApis } = require('./common');
-// AZ ELAVULT LAP MAGATOL UJRATOLT.
+// A STALE PAGE RELOADS ITSELF.
 //
-// MIERT: a `?v=` a funtasy.js/css gyorsitotarat tori - a lap SAJAT HTML-jet
-// NEM. Az oldalak HTML-jeben viszont eles logika el (kozos jatekosok
-// parositasa, az elo keret-rekordok epitese, a meccsallapot), es egy regi
-// HTML ezeket a REGI szabaly szerint futtatja. Egy nap alatt ketszer allt
-// elo, hogy a javitas kint volt, a nezo megis a regi viselkedest latta - es
-// semmi nem jelezte.
+// WHY: `?v=` busts the cache of funtasy.js/css - but NOT the page's OWN
+// HTML. The pages' HTML, however, holds live logic (pairing of shared
+// players, building the live squad records, the match state), and an old
+// HTML runs these by the OLD rule. Twice in one day the fix was out, yet the
+// viewer still saw the old behaviour - and nothing signalled it.
 //
-// A lap ezert megkerdezi a verzio.json-t. Harom allitas:
-//   V1: azonos verzio -> NEM tolt ujra (kulonben minden lap kettot toltene)
-//   V2: ujabb verzio  -> EGYSZER ujratolt
-//   V3: ha az ujratoltes utan is regi marad, TOBBSZOR NEM probalja - inkabb
-//       csendben marad, mint hogy oda-vissza toltson (hurok-vedelem)
+// So the page asks verzio.json. Three claims:
+//   V1: same version -> NO reload (otherwise every page would load twice)
+//   V2: newer version -> reloads ONCE
+//   V3: if it is still old after the reload, it does NOT try again - it
+//       rather stays silent than reload back and forth (loop protection)
 //
-// A HURKOT VEDO SZABALY MELLEKHATASA: a `location.reload()` a HTTP-
-// gyorsitotarat nem keruli meg, tehat a lap ugyanazt a regi HTML-t kaphatja
-// vissza - es akkor a vedelem miatt ott is ragad. Ezert az ujratoltes elott
-// frissen lehuzzuk a dokumentumot (`cache: 'reload'`); a navigaciok szama
-// ettol nem valtozik, ezt meri a V2 es a V3.
-async function meres(br, v, ut){
+// SIDE EFFECT OF THE LOOP-PROTECTION RULE: `location.reload()` does not
+// bypass the HTTP cache, so the page may get the same old HTML back - and
+// then the protection makes it stick there. So before reloading, the
+// document is fetched fresh (`cache: 'reload'`); this does not change the
+// number of navigations, which is what V2 and V3 measure.
+async function measure(br, v, path){
   const p = await br.newPage();
   let nav = 0;
   p.on('framenavigated', f => { if (f === p.mainFrame()) nav++; });
@@ -27,7 +26,7 @@ async function meres(br, v, ut){
   await blockApis(p);
   await p.route('**/verzio.json*', r => r.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify({ v: v }) }));
-  await p.goto(BASE + ut, { waitUntil: 'domcontentloaded' });
+  await p.goto(BASE + path, { waitUntil: 'domcontentloaded' });
   await p.waitForTimeout(2500);
   await p.close();
   return { nav: nav, err: err };
@@ -35,34 +34,35 @@ async function meres(br, v, ut){
 
 (async () => {
   const br = await launch();
-  const sajat = +require('fs').readFileSync(
+  const own = +require('fs').readFileSync(
     require('path').join(__dirname, '..', 'verzio.json'), 'utf8').match(/\d+/)[0];
 
-  section('V1: azonos verziónál nincs újratöltés');
-  const a = await meres(br, sajat, 'nb1/');
-  check(a.nav === 1, 'egyetlen betöltés (' + a.nav + ')');
-  check(a.err.length === 0, 'nincs JS-hiba' + (a.err.length ? ': ' + a.err.join(' | ') : ''));
+  section('V1: no reload with the same version');
+  const a = await measure(br, own, 'nb1/');
+  check(a.nav === 1, 'a single load (' + a.nav + ')');
+  check(a.err.length === 0, 'no JS error' + (a.err.length ? ': ' + a.err.join(' | ') : ''));
 
-  section('V2: újabb verziónál EGYSZER újratölt');
-  const b = await meres(br, sajat + 20, 'nb1/');
-  check(b.nav === 2, 'pontosan egy újratöltés (' + b.nav + ' navigáció)');
-  check(b.err.length === 0, 'nincs JS-hiba' + (b.err.length ? ': ' + b.err.join(' | ') : ''));
+  section('V2: with a newer version it reloads ONCE');
+  const b = await measure(br, own + 20, 'nb1/');
+  check(b.nav === 2, 'exactly one reload (' + b.nav + ' navigations)');
+  check(b.err.length === 0, 'no JS error' + (b.err.length ? ': ' + b.err.join(' | ') : ''));
 
-  section('V3: a PL-oldal is ellenőrzi');
-  const c = await meres(br, sajat + 20, 'pl/');
-  check(c.nav === 2, 'a PL-oldal is újratölt (' + c.nav + ' navigáció)');
+  section('V3: the PL page checks too');
+  const c = await measure(br, own + 20, 'pl/');
+  check(c.nav === 2, 'the PL page reloads too (' + c.nav + ' navigations)');
 
-  section('V4: a verzio.json egyezik a lapok ?v= számával');
-  // Ha elcsuszna, a vedelem vagy nem fogna, vagy VEGTELEN ujratoltest
-  // okozna. A doc_checks.py D6/b is nezi; itt a FUTO lapon ellenorizzuk.
+  section('V4: verzio.json matches the pages\' ?v= number');
+  // If they drifted apart, the protection would either not catch it or cause
+  // ENDLESS reloading. doc_checks.py D6/b looks at it too; here we check it
+  // on the RUNNING page.
   const p = await br.newPage();
   await blockApis(p);
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
-  const lapV = await p.evaluate(() => {
+  const pageV = await p.evaluate(() => {
     const sc = document.querySelector('script[src*="funtasy.js?v="]');
     return sc ? +sc.getAttribute('src').split('v=')[1] : null;
   });
-  check(lapV === sajat, 'a lap ?v=' + lapV + ' és a verzio.json v=' + sajat + ' egyezik');
+  check(pageV === own, 'the page\'s ?v=' + pageV + ' and verzio.json\'s v=' + own + ' match');
   await p.close();
   await finish(br);
 })();

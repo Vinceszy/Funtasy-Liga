@@ -1,13 +1,15 @@
 const { BASE, check, launch, finish } = require('./common');
-// A PAD SORRENDJE AZ FPL CSERE-SORRENDJE, es nem rendezheto at.
+// THE BENCH ORDER IS THE FPL SUBSTITUTION ORDER, and it must not be re-sorted.
 //
-// A fordulo vegen az FPL az elso olyan padost allitja be a nem jatszo kezdo
-// helyere, aki formaciolag befer - tehat a pad sorrendje maga az informacio.
-// A tarolt keret az FPL sajat sorrendjet orzi (picks 12-15). Az oldal
-// korabban POSZT szerint rendezte a padot is, es ezzel pont ezt dobta el.
+// At the end of the round the FPL puts the first bench player who fits the
+// formation in place of a starter who did not play - so the bench order is
+// itself the information. The stored squad keeps the FPL's own order (picks
+// 12-15). The page used to sort the bench by POSITION too, and threw exactly
+// this away.
 //
-// A kezdoket viszont TOVABBRA IS poszt szerint rendezzuk: ott a sorrendnek
-// nincs jelentese, es a kapus-vedo-kozeppalyas-csatar felepites olvashatobb.
+// The starters, however, are STILL sorted by position: there the order has
+// no meaning, and the goalkeeper-defender-midfielder-forward build-up is
+// easier to read.
 (async () => {
   const br = await launch();
   const p = await br.newPage({ viewport: { width: 900, height: 900 } });
@@ -18,65 +20,64 @@ const { BASE, check, launch, finish } = require('./common');
   await p.waitForFunction(() => typeof sqcolHTML === 'function' && Object.keys(PLAYERS).length > 0,
     null, { timeout: 20000 });
 
-  // Valodi jatekosokat valasztunk posztonkent, hogy a poszt-rendezes merheto
-  // legyen; a pad SZANDEKOSAN nem poszt-sorrendben all.
-  const valasztas = await p.evaluate(() => {
-    const poszt = {};
+  // We pick real players per position, so that position sorting can be
+  // measured; the bench is DELIBERATELY not in position order.
+  const pick = await p.evaluate(() => {
+    const byPos = {};
     for (const id in PLAYERS){
       const j = PLAYERS[id];
-      (poszt[j.p] = poszt[j.p] || []).push(+id);
+      (byPos[j.p] = byPos[j.p] || []).push(+id);
     }
-    return poszt;
+    return byPos;
   });
-  const [GKP, DEF, MID, FWD] = ['GKP', 'DEF', 'MID', 'FWD'].map(k => valasztas[k] || []);
-  check(GKP.length && DEF.length && MID.length && FWD.length, 'van mind a négy poszt a törzsadatban');
+  const [GKP, DEF, MID, FWD] = ['GKP', 'DEF', 'MID', 'FWD'].map(k => pick[k] || []);
+  check(GKP.length && DEF.length && MID.length && FWD.length, 'all four positions exist in the master data');
 
-  // pad: kapus, csatar, vedo, kozeppalyas - egyetlen poszt-rendezes sem adja
-  // vissza ezt a sorrendet, tehat ha megmarad, akkor tenyleg nem rendezunk
-  const padSorrend = [GKP[1], FWD[1], DEF[2], MID[2]];
-  const kezdok = [MID[0], FWD[0], GKP[0], DEF[0]];   // szandekosan kevert
-  const lista = [
-    ...kezdok.map(e => ({ e, b: false, pts: 1 })),
-    ...padSorrend.map(e => ({ e, b: true, pts: 1 })),
+  // bench: goalkeeper, forward, defender, midfielder - no position sorting
+  // gives back this order, so if it is kept, we really do not sort
+  const benchOrder = [GKP[1], FWD[1], DEF[2], MID[2]];
+  const starters = [MID[0], FWD[0], GKP[0], DEF[0]];   // deliberately mixed
+  const list = [
+    ...starters.map(e => ({ e, b: false, pts: 1 })),
+    ...benchOrder.map(e => ({ e, b: true, pts: 1 })),
   ];
 
-  // gw-t adunk at, hogy a sorok data-e attributumot kapjanak: azonosito
-  // szerint hasonlitunk, nem nev szerint (a nev mellett a klub rovidneve is
-  // ott van a .nm-ben).
-  const dom = await p.evaluate(([lista]) => {
+  // we pass a gw so the rows get a data-e attribute: we compare by id, not
+  // by name (next to the name the club's short name is in .nm too).
+  const dom = await p.evaluate(([list]) => {
     const d = document.createElement('div');
-    d.innerHTML = sqcolHTML('T', lista, 'Teszt', 99);
+    d.innerHTML = sqcolHTML('T', list, 'Teszt', 99);
     const sqcol = d.querySelector('.sqcol');
-    const padE = [], kezdoE = [];
-    let padban = false;
+    const benchE = [], starterE = [];
+    let onBench = false;
     for (const x of sqcol.children){
-      if (x.classList.contains('subhead')) { padban = true; continue; }
+      if (x.classList.contains('subhead')) { onBench = true; continue; }
       if (!x.classList.contains('plr') || x.classList.contains('plrfej')) continue;
-      (padban ? padE : kezdoE).push(+x.dataset.e);
+      (onBench ? benchE : starterE).push(+x.dataset.e);
     }
-    return { padE, kezdoE };
-  }, [lista]);
+    return { benchE, starterE };
+  }, [list]);
 
-  console.log('   pad bemenet:   ' + JSON.stringify(padSorrend));
-  console.log('   pad a DOM-ban: ' + JSON.stringify(dom.padE));
-  check(dom.padE.length === padSorrend.length && dom.kezdoE.length === kezdok.length,
-     'minden sor kirajzolodott (' + dom.kezdoE.length + ' kezdo + ' + dom.padE.length + ' pad)');
-  check(dom.padE.length === padSorrend.length
-     && dom.padE.every((x, i) => x === padSorrend[i]),
-     'a pad pontosan a bemeneti (FPL-) sorrendben all - nincs poszt szerinti rendezes');
-  // ellenorzes az ellenorzesre: poszt szerint rendezve MAS sorrend jonne ki,
-  // tehat az allitas nem trivialisan igaz
-  const rang = { GKP: 0, DEF: 1, MID: 2, FWD: 3 };
-  const poszt = await p.evaluate(([ids]) => ids.map(e => PLAYERS[e].p), [padSorrend]);
-  check(poszt.some((x, i) => i && rang[poszt[i - 1]] > rang[x]),
-     'a teszt pad-sorrendje tenyleg NEM poszt-sorrend: ' + JSON.stringify(poszt));
+  console.log('   bench input:      ' + JSON.stringify(benchOrder));
+  console.log('   bench in the DOM: ' + JSON.stringify(dom.benchE));
+  check(dom.benchE.length === benchOrder.length && dom.starterE.length === starters.length,
+     'every row was drawn (' + dom.starterE.length + ' starters + ' + dom.benchE.length + ' bench)');
+  check(dom.benchE.length === benchOrder.length
+     && dom.benchE.every((x, i) => x === benchOrder[i]),
+     'the bench stands exactly in the input (FPL) order - no sorting by position');
+  // a check of the check: sorted by position a DIFFERENT order would come
+  // out, so the claim is not trivially true
+  const rank = { GKP: 0, DEF: 1, MID: 2, FWD: 3 };
+  const pos = await p.evaluate(([ids]) => ids.map(e => PLAYERS[e].p), [benchOrder]);
+  check(pos.some((x, i) => i && rank[pos[i - 1]] > rank[x]),
+     'the test\'s bench order really is NOT a position order: ' + JSON.stringify(pos));
 
-  const kPoszt = await p.evaluate(([ids]) => ids.map(e => PLAYERS[e].p), [dom.kezdoE]);
-  console.log('   kezdok a DOM-ban: ' + JSON.stringify(kPoszt));
-  check(kPoszt.length === kezdok.length
-     && kPoszt.every((x, i) => !i || rang[kPoszt[i - 1]] <= rang[x]),
-     'a kezdok viszont poszt szerint rendezve maradnak');
+  const sPos = await p.evaluate(([ids]) => ids.map(e => PLAYERS[e].p), [dom.starterE]);
+  console.log('   starters in the DOM: ' + JSON.stringify(sPos));
+  check(sPos.length === starters.length
+     && sPos.every((x, i) => !i || rank[sPos[i - 1]] <= rank[x]),
+     'but the starters stay sorted by position');
 
-  check(perr.length === 0, 'nincs JS-hiba: ' + JSON.stringify(perr));
+  check(perr.length === 0, 'no JS error: ' + JSON.stringify(perr));
   await finish(br);
 })();

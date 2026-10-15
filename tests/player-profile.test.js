@@ -1,53 +1,54 @@
 const { BASE, check, section, launch, finish, blockApis, blockStoredBreakdowns, rewriteJson } = require('./common');
-// Jatekosprofil. Amit rogzit (NB1 + PL):
-//   - a "Szezon jatekosai" sorai megnyitjak a profilt, es viszik a
-//     cp-azonositot (enelkul a bontas nem lenne lekerheto);
-//   - a fordulo sora az ELLENFELET, az ALLAST es a jatekos SAJAT pontjat
-//     mutatja - vagyis a kapitanysag es a pad nelkuli alappontot;
-//   - a PADOS ertekbol visszaszamolt alappont NEM csuszik el 0,01-gyel
-//     (az API a felezes utan ket tizedesre kerekit: 0,75 -> 0,38; a
-//     visszaszorzas 0,76-ot adna) - ez a legkonnyebben elromlo reszlet;
-//   - egy forduloban TOBB szakvezeto is szerepelhet (salary cap liga);
-//   - akinel senki sem volt, arra kiirjuk, hogy senkinel sem volt;
-//   - a sor lenyilasa a game-player-stats bontasat mutatja;
-//   - a vissza gomb a "Szezon jatekosai" fulre ter vissza.
+// Player profile. What it pins down (NB1 + PL):
+//   - the rows of "Szezon játékosai" open the profile, and carry the
+//     cp id (without it the breakdown could not be fetched);
+//   - a round row shows the OPPONENT, the SCORE and the player's OWN points -
+//     that is, the base points without captaincy and bench;
+//   - the base points recomputed from a BENCH value do NOT drift by 0.01
+//     (the API rounds to two decimals after halving: 0.75 -> 0.38; multiplying
+//     back would give 0.76) - this is the detail that breaks most easily;
+//   - SEVERAL managers can appear in one round (salary cap league);
+//   - where nobody had the player, we say that nobody had him;
+//   - expanding a row shows the game-player-stats breakdown;
+//   - the back button returns to the "Szezon játékosai" tab.
 //
-// Az elofeltetelt a teszt ALLITJA ELO (rewriteJson), nem a repo aktualis
-// adatara epit: igy egy fordulo-valtas nem buktatja el.
+// The test BUILDS the precondition itself (rewriteJson) instead of relying on
+// the repository's current data: that way a change of round does not break it.
 const CP = 424242;
-const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: true,
-                  price: 8, total: 30, id: CP, played: true, vege: true };
+const PLAYER = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: true,
+                 price: 8, total: 30, id: CP, played: true, vege: true };
 
 (async () => {
   const br = await launch();
   const p = await br.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   await blockApis(p);
-  // Ez a resz a POTLASOS utat meri: a profil azonnal megjelenik kotojelekkel,
-  // a pontok pedig sorban, egyesevel erkeznek be (parhuzamossag = 1, mert a
-  // proxy az egyszerre kilott kereseket eldobta). Ez az ut a hianyzo tarolt
-  // bontas esete - kitalalt jatekosunk amugy sincs a 385-os torzsben, de a
-  // fordulo-osszesitok tarolt fajlbol is johetnenek, ezert kimondjuk.
+  // This part measures the BACKFILL path: the profile appears at once with
+  // dashes, and the points arrive one by one, in order (concurrency = 1,
+  // because the proxy dropped requests fired at the same time). This path is
+  // the case of a missing stored breakdown - our made-up player is not in the
+  // 385-player roster anyway, but the round totals could also come from a
+  // stored file, so we state it explicitly.
   await blockStoredBreakdowns(p);
 
-  // ---- elofeltetel: egy kitalalt jatekos ismert szerepekkel ----
-  //  1. f: senkinel sem volt
-  //  2. f: Katyul PADJAN, week=0,38  -> alappont 0,75 (nem 0,76!)
-  //  3. f: Katyul KAPITANYA (week=19) es Bence kezdoje (week=9,5) -> 9,5
+  // ---- precondition: a made-up player with known roles ----
+  //  round 1: nobody had him
+  //  round 2: on Katyul's BENCH, week=0.38  -> base points 0.75 (not 0.76!)
+  //  round 3: Katyul's CAPTAIN (week=19) and Bence's starter (week=9.5) -> 9.5
   await rewriteJson(p, '**/squad_history.json*', j => {
     const R = j.rounds;
     for (const r of Object.keys(R))
       for (const mgr of Object.keys(R[r]))
         R[r][mgr] = R[r][mgr].filter(x => x.id !== CP);
-    R['2'].Katyul.push(Object.assign({}, JATEKOS, { cap: false, sub: true,  week: 0.38 }));
-    R['3'].Katyul.push(Object.assign({}, JATEKOS, { cap: true,  sub: false, week: 19 }));
-    R['3'].Bence .push(Object.assign({}, JATEKOS, { cap: false, sub: false, week: 9.5 }));
+    R['2'].Katyul.push(Object.assign({}, PLAYER, { cap: false, sub: true,  week: 0.38 }));
+    R['3'].Katyul.push(Object.assign({}, PLAYER, { cap: true,  sub: false, week: 19 }));
+    R['3'].Bence .push(Object.assign({}, PLAYER, { cap: false, sub: false, week: 9.5 }));
     return j;
   });
-  // a PAKS meccsei, hogy az ellenfel es az allas determinisztikus legyen
-  // A KEZDES IS KELL: a fordulonkenti ar ahhoz kotodik, hogy mikor jatszottak
-  // a fordulo elso meccset - enelkul nem lehet eldonteni, melyik arfeljegyzes
-  // volt akkor ervenyben.
+  // PAKS's matches, so that the opponent and the score are deterministic.
+  // The KICK-OFF is needed too: the per-round price is tied to when the
+  // round's first match was played - without it there is no telling which
+  // price record was in force at the time.
   await rewriteJson(p, '**/meccsek.json*', j => {
     j.rounds['1'] = [{ id: 1, h: 'PAKS', v: 'FTC', hp: 1, vp: 3, vege: true,
                        start: '2026-08-01T19:00:00+02:00' }];
@@ -57,27 +58,27 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
                        start: '2026-08-15T19:00:00+02:00' }];
     return j;
   });
-  // Az ELSODLEGES arforras a jatekos-adatlap: fordulonkent ad arat, a szezon
-  // elejere is. A sor a FORDULO azonositojat viszi (75 + 2 x fordulo), nem a
-  // sajat id-jet - ha a ketto felcserelodne, minden ar rossz fordulohoz
-  // kerulne, es a lap attol meg hihetonek latszana.
-  // A keres a sajat proxynkon at megy, ott a cel URL KODOLVA all a
-  // lekerdezesben - egy sima mintaillesztes ezert nem talalna el. Ezert
-  // fuggveny donti el, hogy ez-e az adatlap kerese.
+  // The PRIMARY price source is the player data sheet: it gives a price per
+  // round, including the start of the season. A row carries the ROUND's id
+  // (75 + 2 x round), not its own id - if the two were swapped, every price
+  // would land in the wrong round, and the page would still look plausible.
+  // The request goes through our own proxy, where the target URL is ENCODED
+  // in the query string - a plain glob would therefore not match it. So a
+  // function decides whether this is the data-sheet request.
   await p.route(u => /players(\/|%2F)424242/.test(u.href), route => route.fulfill({
     status: 200, contentType: 'application/json',
     body: JSON.stringify({ id: CP, rounds: [
       { id: 32499, round_id: 77, market_price: 7.5, is_played: true },
       { id: 33435, round_id: 79, market_price: 7.5, is_played: true },
       { id: 34365, round_id: 81, market_price: 8.4, is_played: true }] }) }));
-  // Tartalek: a sajat arnaplonk, ha az adatlap nem jon meg. Csak a VALTOZAS
-  // all benne, tehat a masodik fordulora meg az elso feljegyzes ervenyes.
+  // Fallback: our own price log, if the data sheet does not arrive. It holds
+  // only the CHANGES, so for round 2 the first record is still in force.
   await rewriteJson(p, '**/arak.json*', j => {
     j.arak = j.arak || {};
     j.arak[String(CP)] = [['2026-07-20', 8], ['2026-08-12', 8.4]];
     return j;
   });
-  // a bontas-vegpont: az blockApis utan allitjuk be, ezert ez nyer
+  // the breakdown endpoint: set up after blockApis, so this one wins
   await p.route('**game-player-stats**', route => route.fulfill({
     status: 200, contentType: 'application/json',
     body: JSON.stringify({ data: [
@@ -87,233 +88,234 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
 
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForFunction(() => typeof showProfile === 'function', null, { timeout: 20000 });
-  // A meccsek.json NEM blokkolo uton tolt be, es a profil sorai egyszer
-  // rajzolodnak ki: aki elobb nyitja meg a profilt, annal az ellenfel es az
-  // allas meg nincs a sorban, es a teszt ezen bukik - meresben minden
-  // masodik futasban. A fenti rewriteJson determinisztikussa tette az ADATOT,
-  // de az IDOZITEST nem; ezert megvarjuk, hogy megjojjon.
+  // meccsek.json loads on a NON-blocking path, and the profile rows are drawn
+  // once: whoever opens the profile too early does not yet have the opponent
+  // and the score in the row, and the test fails on that - in measurements,
+  // every second run. The rewriteJson above made the DATA deterministic, but
+  // not the TIMING; so we wait for it to arrive.
   await p.waitForFunction(() => typeof GAMES !== 'undefined' && GAMES !== null,
                           null, { timeout: 20000 });
   await p.waitForFunction(() => typeof PRICES !== 'undefined' && PRICES !== null,
                           null, { timeout: 20000 });
 
-  // ---- a belepesi pont: "Szezon jatekosai" ----
-  section('Belépési pont');
+  // ---- the entry point: "Szezon játékosai" ----
+  section('Entry point');
   await p.evaluate(() => showSquad(['Katyul'], 'players'));
   await p.waitForSelector('[data-prof]', { timeout: 20000 });
-  const sor = await p.$(`[data-prof="Teszt Elek"]`);
-  check(!!sor, 'a kitalált játékos sora ott van a "Szezon játékosai" listában');
+  const row = await p.$(`[data-prof="Teszt Elek"]`);
+  check(!!row, 'the made-up player\'s row is in the "Szezon játékosai" list');
   check(await p.$eval(`[data-prof="Teszt Elek"]`, e => e.dataset.pcp) === String(CP),
-     'a sor viszi a cp-azonosítót (enélkül nem lenne lekérhető a bontás)');
+     'the row carries the cp id (without it the breakdown could not be fetched)');
 
-  await sor.click();
+  await row.click();
   await p.waitForSelector('.proflista', { timeout: 20000 });
 
-  // ---- fejlec ----
-  section('Fejléc');
-  const fej = await p.$eval('.proffej', e => e.innerText);
-  check(/Teszt Elek/.test(fej) && /PAKS/.test(fej), 'a fejléc a nevet és a klubot mutatja');
+  // ---- header ----
+  section('Header');
+  const head = await p.$eval('.proffej', e => e.innerText);
+  check(/Teszt Elek/.test(head) && /PAKS/.test(head), 'the header shows the name and the club');
   check(await p.$$eval('.proffej .flag', a => a.length) === 1,
-     'a magyar játékost zászló jelzi (nem kék címke)');
+     'a Hungarian player is marked by a flag (not a blue tag)');
 
-  // ---- a fordulo-sorok ----
-  section('Fordulónkénti sorok');
-  const sorok = await p.$$eval('.profsor', a => a.map(x => ({
+  // ---- the round rows ----
+  section('Per-round rows');
+  const rows = await p.$$eval('.profsor', a => a.map(x => ({
     r: x.querySelector('.ppos').textContent.trim(),
     nm: x.querySelector('.nm').textContent.trim(),
-    allas: (x.querySelector('.pallas') || {}).textContent || '',
+    score: (x.querySelector('.pallas') || {}).textContent || '',
     pts: x.querySelector('.pts').textContent.trim(),
-    tul: (x.querySelector('.ptulajok') || {}).innerText || '',
-    ar: (x.querySelector('.parany') || {}).textContent || '',
-    arSor: (x.querySelector('.par') || {}).textContent || ''
+    owners: (x.querySelector('.ptulajok') || {}).innerText || '',
+    ratio: (x.querySelector('.parany') || {}).textContent || '',
+    priceRow: (x.querySelector('.par') || {}).textContent || ''
   })));
-  const f = n => sorok.find(s => s.r === n + '.');
+  const f = n => rows.find(s => s.r === n + '.');
 
-  check(f('1') && /–/.test(f('1').tul), '1. forduló: rövid jel jelzi, hogy senkinél sem volt');
+  check(f('1') && /–/.test(f('1').owners), 'round 1: a short mark shows that nobody had him');
   check(f('1') && /FTC/.test(f('1').nm) && /idegenben|otthon/.test(f('1').nm),
-     '1. forduló: az ellenfél és a pálya látszik');
-  check(f('1') && f('1').allas.replace(/\s/g, '') === '1–3',
-     '1. forduló: az állás hazai–vendég sorrendben (1–3), nem megforgatva');
+     'round 1: the opponent and the venue are shown');
+  check(f('1') && f('1').score.replace(/\s/g, '') === '1–3',
+     'round 1: the score in home–away order (1–3), not reversed');
 
   check(f('2') && f('2').pts === '0,75',
-     'PAD: a 0,38-as heti értékből 0,75 alappont lesz — nem 0,76 '
-     + '(a felezés utáni kerekítést a negyedre kerekítés hozza vissza)'
-     + (f('2') ? ' — kapott: ' + f('2').pts : ''));
-  check(f('2') && /Katyul/.test(f('2').tul) && /pad/.test(f('2').tul),
-     '2. forduló: Katyul padján volt');
+     'BENCH: the weekly value 0.38 gives 0.75 base points — not 0.76 '
+     + '(rounding to the quarter undoes the rounding after halving)'
+     + (f('2') ? ' — got: ' + f('2').pts : ''));
+  check(f('2') && /Katyul/.test(f('2').owners) && /pad/.test(f('2').owners),
+     'round 2: he was on Katyul\'s bench');
 
-  // ---- fordulonkenti ar ----
-  section('Fordulónkénti ár');
-  // Az adatlap 7,5-et ad az 1-2. fordulora, az arnaplo 8-at: a kiirt szam
-  // mondja meg, melyik forras nyert. Ha a round_id helyett a sor sajat
-  // id-jebol szamolnank fordulot, itt egyaltalan nem allna ar.
-  check(f('1') && f('1').arSor.replace(/\s/g, '') === '7,5',
-     '1. forduló: az ADATLAP fordulónkénti ára áll ott, nem az árnaplóé'
-     + (f('1') ? ' — kapott: ' + JSON.stringify(f('1').arSor) : ''));
-  check(f('2') && f('2').arSor.replace(/\s/g, '') === '7,5',
-     '2. forduló: változatlan ár mellett nincs kiírt különbség');
-  check(f('3') && /^8,4/.test(f('3').arSor.replace(/\s/g, '')),
-     '3. forduló: az emelt ár látszik'
-     + (f('3') ? ' — kapott: ' + JSON.stringify(f('3').arSor) : ''));
-  check(f('3') && /\+0,9/.test(f('3').arSor.replace(/\s/g, '')),
-     '3. forduló: az előző fordulóhoz képesti változás is ki van írva (+0,9)');
+  // ---- per-round price ----
+  section('Per-round price');
+  // The data sheet gives 7.5 for rounds 1-2, the price log gives 8: the number
+  // shown tells which source won. If we computed the round from the row's own
+  // id instead of round_id, there would be no price here at all.
+  check(f('1') && f('1').priceRow.replace(/\s/g, '') === '7,5',
+     'round 1: the per-round price of the DATA SHEET is shown, not the price log\'s'
+     + (f('1') ? ' — got: ' + JSON.stringify(f('1').priceRow) : ''));
+  check(f('2') && f('2').priceRow.replace(/\s/g, '') === '7,5',
+     'round 2: with an unchanged price no difference is shown');
+  check(f('3') && /^8,4/.test(f('3').priceRow.replace(/\s/g, '')),
+     'round 3: the raised price is shown'
+     + (f('3') ? ' — got: ' + JSON.stringify(f('3').priceRow) : ''));
+  check(f('3') && /\+0,9/.test(f('3').priceRow.replace(/\s/g, '')),
+     'round 3: the change against the previous round is shown too (+0.9)');
 
   check(f('3') && f('3').pts === '9,5',
-     'KAPITÁNY: a 19-es heti értékből 9,5 alappont lesz (a duplázás nélkül)');
-  check(f('3') && /Katyul/.test(f('3').tul) && /kapitány/.test(f('3').tul)
-            && /Bence/.test(f('3').tul) && /kezdő/.test(f('3').tul),
-     '3. forduló: MINDKÉT szakvezető szerepel, a saját szerepével');
+     'CAPTAIN: the weekly value 19 gives 9.5 base points (without the doubling)');
+  check(f('3') && /Katyul/.test(f('3').owners) && /kapitány/.test(f('3').owners)
+            && /Bence/.test(f('3').owners) && /kezdő/.test(f('3').owners),
+     'round 3: BOTH managers appear, each with his own role');
 
-  // ---- a ligara vetitett aranyok ----
-  // A liga 8 kerete a nevezo. A 2. forduloban egyedul Katyul padjan volt
-  // (1/8 = 13%, kezdo 0), a 3.-ban Katyul kapitanya ES Bence kezdoje
-  // (2/8 = 25%) - ez utobbi rogziti, hogy a KAPITANY IS KEZDONEK szamit,
-  // kulonben itt 13% jonne ki.
-  section('NB1: csak a lejátszott fordulók');
-  // Az MLSZ-nel nincs menetrend-vegpont, tehat a jovobeli sorban se
-  // ellenfelet, se idopontot nem tudnank kiirni - ures sorokat pedig nem
-  // teszunk ki. (A PL-profil ezzel szemben elore is megy: ott van adat.)
+  // ---- ratios across the league ----
+  // The league's 8 squads are the denominator. In round 2 he was only on
+  // Katyul's bench (1/8 = 13%, starter 0), in round 3 Katyul's captain AND
+  // Bence's starter (2/8 = 25%) - the latter pins down that the CAPTAIN ALSO
+  // COUNTS AS A STARTER, otherwise 13% would come out here.
+  section('NB1: only the rounds played');
+  // MLSZ has no fixtures endpoint, so for a future row we could show neither
+  // an opponent nor a time - and we do not put out empty rows. (The PL
+  // profile, by contrast, goes ahead too: the data is there.)
   check(!f('10') && !f('33'),
-     'nincsenek jövőbeli, üres fordulósorok (' + sorok.length + ' sor, az utolsó a '
-     + (sorok.length ? sorok[sorok.length - 1].r : '?') + ')');
+     'no future, empty round rows (' + rows.length + ' rows, the last is '
+     + (rows.length ? rows[rows.length - 1].r : '?') + ')');
 
-  section('A ligára vetített arányok');
-  check(f('2') && /keret\s*13%/.test(f('2').ar) && /kezdő\s*0%/.test(f('2').ar)
-            && /kapitány\s*0%/.test(f('2').ar),
-     '2. forduló: 1 keret a 8-ból, padon — keret 13%, kezdő 0%, kapitány 0%'
-     + (f('2') ? ' — kapott: ' + f('2').ar : ''));
-  check(f('3') && /keret\s*25%/.test(f('3').ar) && /kezdő\s*25%/.test(f('3').ar)
-            && /kapitány\s*13%/.test(f('3').ar),
-     '3. forduló: a kapitány is kezdő — keret 25%, kezdő 25%, kapitány 13%'
-     + (f('3') ? ' — kapott: ' + f('3').ar : ''));
-  check(f('1') && !f('1').ar, '1. forduló: akinél senki sem volt, ott nincs arány-blokk');
+  section('Ratios across the league');
+  check(f('2') && /keret\s*13%/.test(f('2').ratio) && /kezdő\s*0%/.test(f('2').ratio)
+            && /kapitány\s*0%/.test(f('2').ratio),
+     'round 2: 1 squad of the 8, on the bench — squad 13%, starter 0%, captain 0%'
+     + (f('2') ? ' — got: ' + f('2').ratio : ''));
+  check(f('3') && /keret\s*25%/.test(f('3').ratio) && /kezdő\s*25%/.test(f('3').ratio)
+            && /kapitány\s*13%/.test(f('3').ratio),
+     'round 3: the captain is a starter too — squad 25%, starter 25%, captain 13%'
+     + (f('3') ? ' — got: ' + f('3').ratio : ''));
+  check(f('1') && !f('1').ratio, 'round 1: where nobody had him, there is no ratio block');
 
-  // ---- lenyilo bontas ----
-  section('Lenyíló bontás');
+  // ---- expanding breakdown ----
+  section('Expanding breakdown');
   await p.click('.profsor[data-pr="3"]');
   await p.waitForSelector('.accpanel .acctable', { timeout: 20000 });
   const acc = await p.$eval('.accpanel', e => e.innerText);
-  check(/Gól/.test(acc) && /Győzelem/.test(acc), 'a bontás a pontot érő eseményeket mutatja');
-  check(/Játszott perc/.test(acc), 'a játszott perc a 0 pont ellenére is látszik');
-  check(/PAKS/.test(acc) && /DVSC/.test(acc), 'a bontás fölött ott a klub meccse');
+  check(/Gól/.test(acc) && /Győzelem/.test(acc), 'the breakdown shows the events worth points');
+  check(/Játszott perc/.test(acc), 'minutes played are shown despite the 0 points');
+  check(/PAKS/.test(acc) && /DVSC/.test(acc), 'the club\'s match is above the breakdown');
 
-  // ---- vissza ----
-  section('Visszalépés');
+  // ---- back ----
+  section('Going back');
   await p.click('#ovBack');
   await p.waitForSelector('[data-prof]', { timeout: 20000 });
-  check(await p.$('.proflista') === null, 'a vissza gomb a "Szezon játékosai" listára tér vissza');
+  check(await p.$('.proflista') === null, 'the back button returns to the "Szezon játékosai" list');
 
-  // ---- draft liga: ott az arany ertelmetlen ----
-  // Nem az NB1/PL kulonbsegen mulik, hanem a liga TIPUSAN: draftban egy
-  // jatekos pontosan egy szakvezetonel lehet, tehat a "keret %" mindig 1/N
-  // vagy 0 lenne. Ugyanazt az adatot rajzoltatjuk ki ketfele ligaval.
-  section('Draft liga: nincs arány');
-  const ketfele = await p.evaluate(() => {
-    const sor = { r: 1, ellenfel: 'ARS', hazai: true, hp: 2, vp: 1, pont: 7,
+  // ---- draft league: the ratio is meaningless there ----
+  // It does not depend on NB1 vs PL, but on the league TYPE: in a draft a
+  // player can be with exactly one manager, so "squad %" would always be 1/N
+  // or 0. We have the same data drawn with both kinds of league.
+  section('Draft league: no ratio');
+  const twoKinds = await p.evaluate(() => {
+    const row = { r: 1, ellenfel: 'ARS', hazai: true, hp: 2, vp: 1, pont: 7,
                   keretszam: 8,
                   tulajok: [{ nev: 'A', kezdo: true, kapitany: true },
                             { nev: 'B', kezdo: false, kapitany: false }] };
-    const rajz = l => FunTasy.profileHTML({ liga: l, nev: 'X', sorok: [sor] });
-    return { nb1: rajz('nb1'), pl: rajz('pl') };
+    const draw = l => FunTasy.profileHTML({ liga: l, nev: 'X', sorok: [row] });
+    return { nb1: draw('nb1'), pl: draw('pl') };
   });
-  check(/class="parany"/.test(ketfele.nb1), 'salary cap ligában ott az arány-blokk');
-  check(!/class="parany"/.test(ketfele.pl), 'DRAFT ligában nincs arány-blokk (mindig 1 vagy 0 keret)');
-  check(/kapitány/.test(ketfele.pl) && /pad/.test(ketfele.pl),
-     'a szerep neve draft ligában is látszik (csak az arány marad el)');
+  check(/class="parany"/.test(twoKinds.nb1), 'in a salary cap league the ratio block is there');
+  check(!/class="parany"/.test(twoKinds.pl), 'in a DRAFT league there is no ratio block (always 1 or 0 squads)');
+  check(/kapitány/.test(twoKinds.pl) && /pad/.test(twoKinds.pl),
+     'the role name is shown in a draft league too (only the ratio is left out)');
 
-  // ---- fooldali jatekoslista + kereso ----
-  section('NB1: főoldali lista és kereső');
+  // ---- home page player list + search ----
+  section('NB1: home page list and search');
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('.jlsor', { timeout: 20000 });
-  const db = await p.$$eval('.jlsor', a => a.length);
-  check(db > 0 && db <= 40, 'a lista a legjobbakat mutatja, nem a teljes mezőnyt (' + db + ' sor)');
-  // EKEZET NELKUL is talaljon: a mezony tele van ekezetes es delszlav
-  // nevekkel, es senki nem fog kalapos c-t irni a keresobe. Olyan JATEKOS-
-  // nevet keresunk a listaban, amiben van ekezet, es az ekezet nelkuli
-  // alakjara keresunk ra.
-  const cel = await p.$$eval('.jlsor .nm', a => {
+  const count = await p.$$eval('.jlsor', a => a.length);
+  check(count > 0 && count <= 40, 'the list shows the best, not the whole field (' + count + ' rows)');
+  // It must find WITHOUT ACCENTS too: the field is full of accented and South
+  // Slavic names, and nobody will type a c with a caron into the search. We
+  // look for a PLAYER name in the list that has an accent, and search for its
+  // unaccented form.
+  const target = await p.$$eval('.jlsor .nm', a => {
     for (const x of a) {
-      const nev = x.childNodes[0].textContent.trim();      // a klub kulon span
-      const szo = nev.split(/\s+/).filter(w => w.normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') !== w)[0];
-      if (szo) return szo;
+      const name = x.childNodes[0].textContent.trim();      // the club is a separate span
+      const word = name.split(/\s+/).filter(w => w.normalize('NFD')
+        .replace(/[̀-ͯ]/g, '') !== w)[0];
+      if (word) return word;
     }
     return null;
   });
-  if (cel){
-    const celEk = cel.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    await p.fill('#jlDoboz .kereso', celEk);
+  if (target){
+    const targetPlain = target.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    await p.fill('#jlDoboz .kereso', targetPlain);
     await p.waitForFunction(n => document.querySelectorAll('.jlsor').length < n,
-                            db, { timeout: 5000 }).catch(() => {});
-    const talalt = await p.$$eval('.jlsor .nm', a => a.map(x => x.textContent));
-    check(celEk !== cel.toLowerCase() && talalt.some(x => x.includes(cel)),
-       'ékezet nélkül írva is megtalálja („' + celEk + '” → „' + cel + '”)');
+                            count, { timeout: 5000 }).catch(() => {});
+    const found = await p.$$eval('.jlsor .nm', a => a.map(x => x.textContent));
+    check(targetPlain !== target.toLowerCase() && found.some(x => x.includes(target)),
+       'it finds the name typed without accents too („' + targetPlain + '” → „' + target + '”)');
   } else {
-    check(false, 'nem találtam ékezetes nevet a listában — az ékezet-teszt nem futott le');
+    check(false, 'found no accented name in the list — the accent test did not run');
   }
-  // a kereses a TELJES mezonyben fusson, ne csak a kirajzolt sorokban:
-  // olyanra keresunk, aki a lista vegen sincs benne
+  // the search must run over the WHOLE field, not only the rendered rows:
+  // we search for someone who is not even at the end of the list
   await p.fill('#jlDoboz .kereso', 'zzzznincsilyen');
   await p.waitForSelector('#jlDoboz .jllista .loading', { timeout: 5000 });
   check(/Nincs találat/.test(await p.$eval('#jlDoboz .jllista', e => e.innerText)),
-     'nem létező névre saját üzenet jön, nem üres doboz');
+     'a non-existent name gets its own message, not an empty box');
   await p.fill('#jlDoboz .kereso', '');
   await p.waitForSelector('.jlsor', { timeout: 5000 });
 
-  // A "+N" SOSEM vagodhat le: a nevek rovidulnek helyette. (Elobb egyben
-  // volt a ket resz, es a CSS pont a darabszamot nyelte el.)
-  section('NB1: a „kinél van” oszlop');
-  const tobbek = await p.$$eval('.jltobb', a => a.map(x => x.textContent));
-  check(!tobbek.length || tobbek.every(x => /^\+\d+$/.test(x)),
-     'ahol többen birtokolják, a „+N” külön áll és teljes egészében látszik'
-     + (tobbek.length ? ' — pl. ' + tobbek[0] : ' (most nincs ilyen sor)'));
-  const levagott = await p.$$eval('.jltobb', a => a.some(x => x.scrollWidth > x.clientWidth + 1));
-  check(!levagott, 'a „+N” nincs elvágva');
+  // The "+N" must NEVER be cut off: the names get shorter instead. (Earlier
+  // the two parts were one, and the CSS swallowed exactly the count.)
+  section('NB1: the „kinél van” column');
+  const multi = await p.$$eval('.jltobb', a => a.map(x => x.textContent));
+  check(!multi.length || multi.every(x => /^\+\d+$/.test(x)),
+     'where several own him, the „+N” stands apart and is shown in full'
+     + (multi.length ? ' — e.g. ' + multi[0] : ' (no such row right now)'));
+  const clipped = await p.$$eval('.jltobb', a => a.some(x => x.scrollWidth > x.clientWidth + 1));
+  check(!clipped, 'the „+N” is not cut off');
 
-  // ---- szurok, rendezes, lapozas ----
-  section('NB1: szűrés, rendezés, lapozás');
-  const szurok = await p.$$eval('.jlszuro,.jlszam', a => a.map(x => x.dataset.szuro));
-  check(['poszt','klub','tulaj','kpc','ar','pts'].every(k => szurok.includes(k)),
-     'minden oszlopnak van szűrője (' + szurok.join(', ') + ')');
+  // ---- filters, sorting, paging ----
+  section('NB1: filtering, sorting, paging');
+  const filters = await p.$$eval('.jlszuro,.jlszam', a => a.map(x => x.dataset.szuro));
+  check(['poszt','klub','tulaj','kpc','ar','pts'].every(k => filters.includes(k)),
+     'every column has a filter (' + filters.join(', ') + ')');
 
-  // "Valakinél": a jeloloerteknek NEM szabad vezerlokaraktert tartalmaznia -
-  // a HTML-elemzo kicsereli, es a szuro nemán ures listat adna (igy is volt)
+  // "Valakinél": the option value must NOT contain a control character - the
+  // HTML parser replaces it, and the filter silently returns an empty list
+  // (that is what happened)
   await p.selectOption('[data-szuro="tulaj"]', { label: 'Valakinél' });
   await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 0,
                           null, { timeout: 5000 }).catch(() => {});
-  const gazdatlan = await p.$$eval('.jlsor .jltulaj', a => a.filter(x => /nincs/.test(x.className)).length);
-  const gazdas = await p.$$eval('.jlsor', a => a.length);
-  check(gazdas > 0 && gazdatlan === 0,
-     '„Valakinél”: csak akiknek van gazdájuk (' + gazdas + ' sor, ' + gazdatlan + ' gazdátlan)');
+  const ownerless = await p.$$eval('.jlsor .jltulaj', a => a.filter(x => /nincs/.test(x.className)).length);
+  const owned = await p.$$eval('.jlsor', a => a.length);
+  check(owned > 0 && ownerless === 0,
+     '„Valakinél”: only those who have an owner (' + owned + ' rows, ' + ownerless + ' without owner)');
   await p.selectOption('[data-szuro="tulaj"]', { label: 'Senkinél' });
   await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 0,
                           null, { timeout: 5000 }).catch(() => {});
   check((await p.$$eval('.jlsor .jltulaj', a => a.every(x => /nincs/.test(x.className)))),
-     '„Senkinél”: csak a gazdátlanok');
+     '„Senkinél”: only those without an owner');
   await p.click('.jltorol');
   await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 1, null, { timeout: 5000 });
 
   check((await p.$$eval('.jlsor .jlkpc', a => a.every(x => /^\d+%$/.test(x.textContent)))),
-     'a Keret% oszlop százalékot mutat');
+     'the Keret% column shows a percentage');
 
-  const lab1 = await p.$eval('.jllab', e => e.textContent);
-  check(/^1–\d+ \/ \d+/.test(lab1), 'a lábléc az aktuális tartományt mutatja (' + lab1 + ')');
-  const lapGombok = await p.$$eval('.jllapozo > *', a => a.map(x => x.textContent));
-  check(lapGombok[0] === '‹' && lapGombok[lapGombok.length - 1] === '›'
-     && lapGombok.includes('1') && lapGombok.some(x => /^\d+$/.test(x) && +x > 2),
-     'a lapozóban OLDALSZÁMOK vannak, nem csak nyilak (' + lapGombok.join(' ') + ')');
+  const footer1 = await p.$eval('.jllab', e => e.textContent);
+  check(/^1–\d+ \/ \d+/.test(footer1), 'the footer shows the current range (' + footer1 + ')');
+  const pageButtons = await p.$$eval('.jllapozo > *', a => a.map(x => x.textContent));
+  check(pageButtons[0] === '‹' && pageButtons[pageButtons.length - 1] === '›'
+     && pageButtons.includes('1') && pageButtons.some(x => /^\d+$/.test(x) && +x > 2),
+     'the pager has PAGE NUMBERS, not only arrows (' + pageButtons.join(' ') + ')');
   check(await p.$eval('.jllapozo > button', e => e.disabled),
-     'az első oldalon a vissza nyíl tiltott');
-  // az UTOLSO oldal mindig elerheto egy kattintassal - tiz oldalt egyesevel
-  // vegiglapozni nem hasznalhato
-  const utolsoSzam = Math.max(...lapGombok.filter(x => /^\d+$/.test(x)).map(Number));
-  await p.click('[data-ugras="' + (utolsoSzam - 1) + '"]');
+     'on the first page the back arrow is disabled');
+  // the LAST page is always reachable with one click - paging through ten
+  // pages one by one is not usable
+  const lastNumber = Math.max(...pageButtons.filter(x => /^\d+$/.test(x)).map(Number));
+  await p.click('[data-ugras="' + (lastNumber - 1) + '"]');
   await p.waitForFunction(() => /\/ \d+ játékos$/.test(document.querySelector('.jllab').textContent),
                           null, { timeout: 5000 });
   check(await p.$eval('.jllapozo > button:last-child', e => e.disabled),
-     'az utolsó oldal egy kattintással elérhető, ott az előre nyíl tiltott');
-  // az utolso oldalrol a 2. oldal gombja mar nincs kint (csak a szomszedok
-  // es az elso/utolso) - eloszor vissza az elsore, onnan tovabb
+     'the last page is reachable with one click, and there the forward arrow is disabled');
+  // from the last page the button of page 2 is no longer shown (only the
+  // neighbours and the first/last) - first back to the first, then on
   await p.click('[data-ugras="0"]');
   await p.waitForFunction(() => /^1–/.test(document.querySelector('.jllab').textContent),
                           null, { timeout: 5000 });
@@ -321,107 +323,109 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   await p.waitForFunction(() => /^41–/.test(document.querySelector('.jllab').textContent),
                           null, { timeout: 5000 });
   check((await p.$eval('.jlsor .rank', e => e.textContent)) === '41.',
-     'a 2. oldal a 41. sorral kezdődik (a sorszám folytatódik, nem nullázódik)');
+     'page 2 starts with row 41 (the row number continues, it does not reset)');
 
-  // oldalmeret: a "mind" eltunteti a lapozot
+  // page size: "mind" removes the pager
   await p.selectOption('.jlmeret', '0');
   await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 100,
                           null, { timeout: 8000 });
   check((await p.$$eval('.jllapozo > *', a => a.length)) === 0,
-     '„mind” oldalméretnél nincs lapozó (nincs mit lapozni)');
+     'with the „mind” page size there is no pager (nothing to page)');
   await p.selectOption('.jlmeret', '40');
   await p.waitForFunction(() => document.querySelectorAll('.jlsor').length === 40,
                           null, { timeout: 8000 });
-  // szures/kereses utan NEM maradhatunk egy nem letezo oldalon
+  // after filtering/searching we must NOT stay on a page that does not exist
   await p.fill('#jlDoboz .kereso', 'a');
   await p.waitForFunction(() => /^1–/.test(document.querySelector('.jllab').textContent),
                           null, { timeout: 5000 });
-  check(true, 'keresésre visszaugrik az első oldalra');
+  check(true, 'a search jumps back to the first page');
   await p.click('.jltorol');
   await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 1, null, { timeout: 5000 });
 
-  section('NB1: a listából megnyílik a profil');
+  section('NB1: the profile opens from the list');
   await p.click('.jlsor');
   await p.waitForSelector('.proflista', { timeout: 20000 });
-  check(true, 'a lista sorára kattintva megnyílik a profil');
+  check(true, 'clicking a list row opens the profile');
   await p.click('#ovClose');
 
-  // ---- soha nem birtokolt jatekos: a profil nem varhat az API-ra ----
-  // A KIZART HIBA: az ilyen jatekosnal fordulonkent egy
-  // proxys keres ment ki, mind EGYSZERRE - a proxy eldobta oket, a profil
-  // percekig toltott, a lenyilo bontas elhasalt. A szabaly azota: a profil
-  // AZONNAL megjelenik kotojelekkel, a pontok SORBAN potladnak.
-  section('NB1: soha nem birtokolt játékos profilja');
-  let egyszerre = 0, csucs = 0;
+  // ---- a never-owned player: the profile must not wait for the API ----
+  // THE EXCLUDED BUG: for such a player one proxied request per round went
+  // out, all AT ONCE - the proxy dropped them, the profile loaded for minutes,
+  // the expanding breakdown failed. The rule since then: the profile appears
+  // AT ONCE with dashes, the points are backfilled IN ORDER.
+  section('NB1: profile of a never-owned player');
+  let inFlight = 0, peak = 0;
   await p.route('**game-player-stats**', async route => {
-    egyszerre++; csucs = Math.max(csucs, egyszerre);
-    await new Promise(r => setTimeout(r, 400));       // lassu proxy
-    egyszerre--;
+    inFlight++; peak = Math.max(peak, inFlight);
+    await new Promise(r => setTimeout(r, 400));       // slow proxy
+    inFlight--;
     route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ data: [{ value: 1, points: 2,
         competition_stat_config: { name: 'Gól' } }] }) });
   });
   await p.selectOption('[data-szuro="tulaj"]', { label: 'Senkinél' });
   await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 0, null, { timeout: 5000 });
-  // AZ ELOFELTETELT KIMONDJUK, nem a lista sorrendjere bizzuk: a "Senkinél"
-  // szuro a JELENLEGI tulajdonost nezi, ez a teszt viszont a SOHA nem
-  // birtokolt jatekosra szol - akinek egyetlen fordulobol sincs tarolt
-  // pontja, tehat mindet az API-bol kell potolni. A ketto nem ugyanaz, es a
-  // kulonbseg elo is jott: a 6. fordulos keret bekerulesevel a lista elso
-  // "Senkinél" jatekosa mar volt valakinel korabban, igy a pontja azonnal
-  // ott allt, es a teszt NULLA lekerest mert (mindket allitasa bukott).
-  const sohaSem = await p.evaluate(async () => {
+  // WE STATE THE PRECONDITION instead of trusting the order of the list: the
+  // "Senkinél" filter looks at the CURRENT owner, while this test is about
+  // the NEVER-owned player - who has no stored points from any round, so all
+  // of them have to be backfilled from the API. The two are not the same, and
+  // the difference did show up: once the round-6 squad came in, the first
+  // "Senkinél" player in the list had already been with someone earlier, so
+  // his points were there at once, and the test measured ZERO requests (both
+  // of its assertions failed).
+  const neverOwned = await p.evaluate(async () => {
     const h = await (await fetch('../squad_history.json?t=' + Date.now())).json();
-    const valaha = new Set();
+    const ever = new Set();
     for (const per of Object.values(h.rounds || {}))
-      for (const keret of Object.values(per))
-        for (const x of keret) valaha.add(String(x.id));
-    const sor = [...document.querySelectorAll('.jlsor')]
-      .find(s => !valaha.has(s.dataset.jl));
-    return sor ? sor.dataset.jl : null;
+      for (const squad of Object.values(per))
+        for (const x of squad) ever.add(String(x.id));
+    const row = [...document.querySelectorAll('.jlsor')]
+      .find(s => !ever.has(s.dataset.jl));
+    return row ? row.dataset.jl : null;
   });
-  check(!!sohaSem, 'van a listában soha nem birtokolt játékos (a teszt előfeltétele)');
+  check(!!neverOwned, 'the list has a never-owned player (the test\'s precondition)');
   const t0 = Date.now();
-  await p.click('.jlsor[data-jl="' + sohaSem + '"]');
+  await p.click('.jlsor[data-jl="' + neverOwned + '"]');
   await p.waitForSelector('.proflista', { timeout: 20000 });
   check(Date.now() - t0 < 3000,
-     'a profil a lassú API bevárása NÉLKÜL megjelenik (' + (Date.now() - t0) + ' ms)');
-  // ahol volt meccs, ott kotojel; ahol nem (elmaradt fordulo), ott a sajat
-  // felirata - szam viszont meg sehol sem lehet
+     'the profile appears WITHOUT waiting for the slow API (' + (Date.now() - t0) + ' ms)');
+  // where there was a match, a dash; where not (postponed round), its own
+  // label - but there may not be a number anywhere yet
   check((await p.$$eval('.profsor .pts', a => a.every(x => !/\d/.test(x.textContent)))),
-     'a még le nem kért pontok helyén nem áll szám (kötőjel vagy „nincs meccs”)');
+     'no number stands in place of the points not yet fetched (a dash or „nincs meccs”)');
   await p.waitForFunction(() => [...document.querySelectorAll('.profsor .pts')]
     .every(x => x.textContent.trim() !== '—'), null, { timeout: 20000 });
-  check(true, 'a pontok a háttérben pótlódnak');
-  check(csucs === 1, 'a kérések SORBAN mennek, nem egyszerre (csúcs: ' + csucs + ')');
-  // az unroute a teszt ELEJEN beallitott mockot is levenne - a kesleltetett
-  // valasz marad, a tovabbi szakaszoknak az is jo
+  check(true, 'the points are backfilled in the background');
+  check(peak === 1, 'the requests go IN ORDER, not at once (peak: ' + peak + ')');
+  // unroute would also remove the mock set up at the START of the test - the
+  // delayed response stays, that is fine for the later sections too
   await p.click('#ovClose');
   await p.click('.jltorol');
   await p.waitForFunction(() => document.querySelectorAll('.jlsor').length > 1, null, { timeout: 5000 });
 
-  // ---- belepes a pont-bontas aljarol ----
-  section('NB1: belépés a lenyíló aljáról');
+  // ---- entry from the bottom of the points breakdown ----
+  section('NB1: entry from the bottom of the expanding panel');
   await p.evaluate(() => showSquad(['Katyul']));
   await p.waitForSelector('.plr[data-acc]', { timeout: 20000 });
   await p.click('.plr[data-acc]');
   await p.waitForSelector('.accpanel .profnyito', { timeout: 20000 });
   check(/Teljes játékosprofil/.test(await p.$eval('.accpanel .profnyito', e => e.innerText)),
-     'a bontás alján ott a „Teljes játékosprofil” sor');
+     'at the bottom of the breakdown there is the „Teljes játékosprofil” row');
   await p.click('.accpanel .profnyito');
   await p.waitForSelector('.proflista', { timeout: 20000 });
-  const fej2 = await p.$eval('.proffej', e => e.innerText);
-  check(/[A-ZÁÉÍÓÖŐÚÜŰ]/.test(fej2.split('\n')[0]),
-     'a lenyílóból nyitott profil fejléce is kitöltött (a posztot a keret-előzményből pótoljuk)');
+  const head2 = await p.$eval('.proffej', e => e.innerText);
+  check(/[A-ZÁÉÍÓÖŐÚÜŰ]/.test(head2.split('\n')[0]),
+     'the header of a profile opened from the panel is filled in too (the position is taken from the squad history)');
   check(await p.$('.accpanel .profnyito') === null,
-     'a profilon BELÜL már nincs „Teljes játékosprofil” sor');
+     'INSIDE the profile there is no „Teljes játékosprofil” row any more');
 
   await p.close();
 
-  // ================= PL (draft liga) =================
-  // Az element-summary valaszat mi adjuk: a konteneres gepbol az FPL nem
-  // erheto el, es a teszt igy determinisztikus is. A KESOBB regisztralt
-  // route nyer, ezert eloszor vagunk el mindent, utana jon a celzott mock.
+  // ================= PL (draft league) =================
+  // We supply the element-summary response: FPL cannot be reached from the
+  // container, and this way the test is deterministic too. The route
+  // registered LATER wins, so first we cut off everything, then comes the
+  // targeted mock.
   const q = await br.newPage();
   const qerr = []; q.on('pageerror', x => qerr.push(x.message));
   for (const m of ['**mlsz.hu/**', '**premierleague.com/**',
@@ -430,21 +434,21 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
     status: 200, contentType: 'application/json',
     body: JSON.stringify({ history: [
       { event: 1, total_points: 17, detail: 'AVL (H) 4-0', minutes: 77 },
-      // DUPLA FORDULO: ugyanaz a fordulo ket meccsel
+      // DOUBLE GAMEWEEK: the same round with two matches
       { event: 2, total_points: 3,  detail: 'FUL (A) 2-3', minutes: 90 },
       { event: 2, total_points: 6,  detail: 'BRE (H) 1-0', minutes: 90 }
     ], fixtures: [
-      // hatralevo meccsek: ellenfel-azonositoval es palya-jelzessel
+      // remaining matches: with opponent id and home/away flag
       { event: 3, opponent: 1, is_home: true,  kickoff_time: '2026-09-01T13:00:00Z' },
       { event: 4, opponent: 6, is_home: false, kickoff_time: '2026-09-08T13:00:00Z' }
     ] }) }));
 
-  // AZ ELOFELTETELT KIMONDJUK: a 3. fordulo itt JOVOBELI - a mock is annak
-  // adja (fixtures: event 3). A gyujto viszont a FOLYO fordulo kereteit is
-  // eltarolja, amint az FPL tovabblep, es akkor a 3. fordulohoz mar VAN
-  // tulajdonos - a "jovobelinel ures a tulajdonos" allitas ettol bukott,
-  // holott a termekkel semmi baj. Ezert a tarolt elozmenybol menet kozben
-  // kivesszuk a 3. fordulot es az utana kovetkezoket.
+  // WE STATE THE PRECONDITION: round 3 is in the FUTURE here - the mock gives
+  // it as such too (fixtures: event 3). The collector, however, also stores
+  // the squads of the CURRENT round as soon as FPL moves on, and then round 3
+  // already HAS an owner - the claim "a future round has no owner" failed
+  // because of that, although nothing was wrong with the product. So we drop
+  // round 3 and the ones after it from the stored history on the fly.
   await rewriteJson(q, '**/draft_history.json*', j => {
     for (const k of Object.keys(j.rounds || {})) if (+k >= 3) delete j.rounds[k];
     j.veglegesek = (j.veglegesek || []).filter(x => +x < 3);
@@ -454,122 +458,123 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   await q.waitForFunction(() => typeof showProfile === 'function'
     && Object.keys(HIST).length > 0, null, { timeout: 20000 });
 
-  section('PL: belépési pont');
-  const csapat = await q.evaluate(() => Object.keys(HIST[Object.keys(HIST)[0]])[0]);
-  await q.evaluate(id => showTeam(+id, 'jatekosok'), csapat);
+  section('PL: entry point');
+  const team = await q.evaluate(() => Object.keys(HIST[Object.keys(HIST)[0]])[0]);
+  await q.evaluate(id => showTeam(+id, 'jatekosok'), team);
   await q.waitForSelector('#mBody [data-prof]', { timeout: 20000 });
   check(/^\d+$/.test(await q.$eval('#mBody [data-prof]', e => e.dataset.prof)),
-     'a "Szezon játékosai" sora viszi a játékos azonosítóját');
+     'the "Szezon játékosai" row carries the player\'s id');
   await q.click('#mBody [data-prof]');
   await q.waitForSelector('.proflista', { timeout: 20000 });
 
-  const psorok = await q.$$eval('.profsor', a => a.map(x => ({
+  const plRows = await q.$$eval('.profsor', a => a.map(x => ({
     r: x.querySelector('.ppos').textContent.trim(),
     nm: x.querySelector('.nm').textContent.trim(),
-    allas: (x.querySelector('.pallas') || {}).textContent || '',
+    score: (x.querySelector('.pallas') || {}).textContent || '',
     pts: x.querySelector('.pts').textContent.trim(),
-    tul: (x.querySelector('.ptulajok') || {}).innerText || ''
+    owners: (x.querySelector('.ptulajok') || {}).innerText || ''
   })));
-  const g = n => psorok.find(x => x.r === n + '.');
+  const g = n => plRows.find(x => x.r === n + '.');
 
-  section('PL: az eredmény sorrendje');
-  // A `detail` allasa HAZAI-VENDEG sorrendben all (kimerve: naplo/fpl-profile.txt,
-  // 25 idegenbeli meccsbol 25). Idegenbeli meccsen valik el a ket olvasat:
-  // "FUL (A) 2-3" annyit tesz, hogy a HAZAI FUL 2, a jatekos csapata 3 -
-  // ha megforditva ertelmeznenk, itt 3-2 allna.
+  section('PL: the order of the result');
+  // The score in `detail` is in HOME-AWAY order (measured: naplo/fpl-profile.txt,
+  // 25 of 25 away matches). The two readings differ on an away match:
+  // "FUL (A) 2-3" means the HOME side FUL scored 2, the player's team 3 -
+  // read the other way round, 3-2 would stand here.
   check(g('2') && /FUL \(i\) 2–3/.test(g('2').nm),
-     'idegenbeli meccs: "FUL (A) 2-3" -> FUL (i) 2–3, nem megfordítva'
-     + (g('2') ? ' — kapott: ' + g('2').nm : ''));
+     'away match: "FUL (A) 2-3" -> FUL (i) 2–3, not reversed'
+     + (g('2') ? ' — got: ' + g('2').nm : ''));
   check(g('1') && /AVL/.test(g('1').nm) && /otthon/.test(g('1').nm)
-            && g('1').allas.replace(/\s/g, '') === '4–0',
-     'egy meccsnél az állás a saját oszlopában áll (4–0)');
+            && g('1').score.replace(/\s/g, '') === '4–0',
+     'with one match the score stands in its own column (4–0)');
 
-  section('PL: dupla forduló');
+  section('PL: double gameweek');
   check(g('2') && /FUL/.test(g('2').nm) && /BRE/.test(g('2').nm),
-     'dupla fordulóban MINDKÉT meccs látszik (a második nem tűnik el)');
+     'in a double gameweek BOTH matches are shown (the second does not vanish)');
   check(g('2') && g('2').pts === '9',
-     'dupla fordulóban a pontok összeadódnak (3 + 6 = 9)'
-     + (g('2') ? ' — kapott: ' + g('2').pts : ''));
-  check(g('2') && !g('2').allas,
-     'dupla fordulóban az állás-oszlop üres (az állások a meccsek mellett állnak)');
+     'in a double gameweek the points add up (3 + 6 = 9)'
+     + (g('2') ? ' — got: ' + g('2').pts : ''));
+  check(g('2') && !g('2').score,
+     'in a double gameweek the score column is empty (the scores stand next to the matches)');
 
-  section('PL: előre is felsorolja a fordulókat');
-  check(psorok.length >= 38,
-     'a profil MINDEN fordulót felsorol, nem csak a lejátszottakat (' + psorok.length + ')');
+  section('PL: lists the rounds ahead too');
+  check(plRows.length >= 38,
+     'the profile lists EVERY round, not only the ones played (' + plRows.length + ')');
   check(g('3') && /ARS/.test(g('3').nm) && /otthon/.test(g('3').nm),
-     'jövőbeli fordulónál is ott az ellenfél (a hátralévő meccsekből)'
-     + (g('3') ? ' — kapott: ' + g('3').nm : ''));
-  check(g('3') && !g('3').allas && g('3').pts === '—',
-     'jövőbeli fordulónál nincs állás és nincs pont, csak az ellenfél');
-  check(g('3') && !g('3').tul.trim(),
-     'jövőbeli fordulónál a tulajdonos ÜRES — nem tudjuk, kinél lesz, tehát '
-     + '„szabadügynök”-öt sem írunk oda'
-     + (g('3') ? ' — kapott: ' + JSON.stringify(g('3').tul) : ''));
+     'a future round shows the opponent too (from the remaining fixtures)'
+     + (g('3') ? ' — got: ' + g('3').nm : ''));
+  check(g('3') && !g('3').score && g('3').pts === '—',
+     'a future round has no score and no points, only the opponent');
+  check(g('3') && !g('3').owners.trim(),
+     'for a future round the owner is EMPTY — we do not know who will have him, so '
+     + 'we do not write „szabadügynök” there either'
+     + (g('3') ? ' — got: ' + JSON.stringify(g('3').owners) : ''));
   check(g('38') && !/nincs meccs/.test(g('38').pts + g('38').nm),
-     'a távoli fordulóra nem írunk „nincs meccs”-et (az elmaradást jelentene)');
+     'a distant round does not get „nincs meccs” (that would mean a postponement)');
 
-  section('PL: tulajdonos');
-  check(g('1') && /kezdő/.test(g('1').tul), '1. forduló: a szakvezető és a szerep látszik');
-  // A "szabadugynok" csak akkor allitas, ha TUDJUK, hogy senkinel sem volt -
-  // vagyis van keret-elozmenyunk arrol a fordulorol. A kozos retegen merjuk,
-  // mert ott allithatjuk be mindket esetet.
-  const gazdatlanSor = await q.evaluate(() => {
-    const alap = { r: 1, ellenfel: 'ARS', hazai: true, hp: 2, vp: 1, tulajok: [] };
-    const rajz = x => FunTasy.profileHTML(
-      { liga: 'pl', nev: 'X', senkinel: '–', sorok: [Object.assign({}, alap, x)] });
-    return { mult: rajz({ pont: 0 }), jovo: rajz({ jovo: true }) };
+  section('PL: owner');
+  check(g('1') && /kezdő/.test(g('1').owners), 'round 1: the manager and the role are shown');
+  // "szabadügynök" is a claim only when we KNOW that nobody had him - that
+  // is, we have a squad history for that round. We measure it on the shared
+  // layer, because there we can set up both cases.
+  const ownerlessRow = await q.evaluate(() => {
+    const base = { r: 1, ellenfel: 'ARS', hazai: true, hp: 2, vp: 1, tulajok: [] };
+    const draw = x => FunTasy.profileHTML(
+      { liga: 'pl', nev: 'X', senkinel: '–', sorok: [Object.assign({}, base, x)] });
+    return { past: draw({ pont: 0 }), future: draw({ jovo: true }) };
   });
-  check(/ptul nincs/.test(gazdatlanSor.mult),
-     'lejátszott fordulónál, ahol tudjuk, hogy senkié sem volt: rövid jel áll ott');
-  check(!/ptul nincs/.test(gazdatlanSor.jovo),
-     'jövőbeli fordulónál viszont semmi — azt nem tudhatjuk előre');
+  check(/ptul nincs/.test(ownerlessRow.past),
+     'for a played round where we know he was nobody\'s: a short mark stands there');
+  check(!/ptul nincs/.test(ownerlessRow.future),
+     'for a future round, though, nothing — that cannot be known in advance');
   check(await q.$$eval('.parany', a => a.length) === 0,
-     'draft ligában nincs arány-blokk a valódi oldalon sem');
+     'in a draft league there is no ratio block on the real page either');
 
-  section('PL: főoldali lista');
-  // a szuro-legordulo is monogramot mutasson, mint az oszlop
+  section('PL: home page list');
+  // the filter drop-down must show monograms too, like the column
   await q.waitForSelector('.jlsor', { timeout: 20000 });
-  const opciok = await q.$$eval('[data-szuro="tulaj"] option',
-    a => a.slice(3).map(x => ({ ertek: x.value, felirat: x.textContent, cim: x.title })));
-  check(opciok.length > 0 && opciok.every(x => x.felirat.length <= 4 && x.cim.length > x.felirat.length),
-     'a „Kinél van” szűrő monogramot mutat, a teljes név a title-ben van'
-     + (opciok.length ? ' — pl. ' + JSON.stringify(opciok[0]) : ''));
-  check(opciok.every(x => x.ertek === x.cim),
-     'a szűrt érték a teljes név marad (az azonosít, nem a monogram)');
+  const options = await q.$$eval('[data-szuro="tulaj"] option',
+    a => a.slice(3).map(x => ({ value: x.value, label: x.textContent, title: x.title })));
+  check(options.length > 0 && options.every(x => x.label.length <= 4 && x.title.length > x.label.length),
+     'the „Kinél van” filter shows monograms, the full name is in the title'
+     + (options.length ? ' — e.g. ' + JSON.stringify(options[0]) : ''));
+  check(options.every(x => x.value === x.title),
+     'the filtered value stays the full name (that identifies, not the monogram)');
   await q.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
   await q.waitForSelector('.jlsor', { timeout: 20000 });
-  check((await q.$$eval('.jlsor', a => a.length)) > 0, 'a PL-főoldalon is ott a játékoslista');
+  check((await q.$$eval('.jlsor', a => a.length)) > 0, 'the PL home page has the player list too');
   check((await q.$$eval('.jltobb', a => a.length)) === 0,
-     'draft ligában sosincs „+N”: egy játékos legfeljebb egy keretben van');
-  // A kereses NEVRE ES KLUBRA is talal - "ars" tehat az Arsenal jatekosait
-  // ES a nevukben "ars"-t tartalmazokat is hozza. Ez szandekos: a talalat
-  // legyen bo, ne kelljen elore tudni, mire keresel.
+     'a draft league never has a „+N”: a player is in at most one squad');
+  // The search matches NAME AND CLUB - so "ars" brings Arsenal's players AND
+  // those with "ars" in their name. This is deliberate: the hits should be
+  // generous, you should not need to know in advance what you are searching.
   await q.fill('#jlDoboz .kereso', 'ars');
   await q.waitForFunction(() => document.querySelectorAll('.jlsor').length > 0, null, { timeout: 5000 });
-  const arsSorok = await q.$$eval('.jlsor', a => a.map(x => x.innerText.replace(/\n/g, ' ')));
-  check(arsSorok.length > 0 && arsSorok.every(x => /ars/i.test(x)),
-     'klubra keresve minden találat tartalmazza a keresett szót (névben vagy klubban)');
-  check(arsSorok.some(x => /\bARS\b/.test(x)), 'az ARS klub játékosai köztük vannak');
+  const arsRows = await q.$$eval('.jlsor', a => a.map(x => x.innerText.replace(/\n/g, ' ')));
+  check(arsRows.length > 0 && arsRows.every(x => /ars/i.test(x)),
+     'searching for a club, every hit contains the searched word (in the name or the club)');
+  check(arsRows.some(x => /\bARS\b/.test(x)), 'the ARS club\'s players are among them');
   await q.click('.jlsor');
   await q.waitForSelector('.proflista', { timeout: 20000 });
-  check(true, 'a PL-listából is megnyílik a profil');
+  check(true, 'the profile opens from the PL list too');
 
-  check(qerr.length === 0, 'nincs JS-hiba a PL-oldalon'
+  check(qerr.length === 0, 'no JS error on the PL page'
      + (qerr.length ? ': ' + qerr.join(' | ') : ''));
 
-  // ---- PL: az FPL-lekeres elhasal, de a TAROLT pont akkor is latszik ----
-  // Korabban ilyenkor a profil minden sora kotojel volt, es a "Pont osszesen"
-  // 0 - pedig a fordulonkenti pont ott van a draft_history.json-ban. Az
-  // ellenfelet tovabbra sem tudjuk (az csak az element-summary-bol jon).
-  section('PL: FPL-kimaradásnál a tárolt pont látszik');
+  // ---- PL: the FPL request fails, but the STORED points are shown anyway ----
+  // Earlier every row of the profile was a dash in this case, and "Pont
+  // összesen" was 0 - although the per-round points are in
+  // draft_history.json. The opponent we still do not know (that only comes
+  // from element-summary).
+  section('PL: on an FPL outage the stored points are shown');
   const off = await br.newPage();
   const oerr = []; off.on('pageerror', e => oerr.push(e.message));
   await blockApis(off);
   await off.route('**draft.premierleague.com/**', r => r.abort());
   await off.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
   await off.waitForSelector('.jlsor', { timeout: 20000 });
-  // olyan jatekost keresunk, akinek van tarolt fordulo-pontja
-  const celPont = await off.evaluate(async () => {
+  // we look for a player who has stored round points
+  const targetPts = await off.evaluate(async () => {
     const h = await (await fetch('../draft_history.json')).json();
     for (const gw of Object.keys(h.rounds || {}))
       for (const lid of Object.keys(h.rounds[gw]))
@@ -577,40 +582,40 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
           if (x.pts) return { e: x.e, pts: x.pts, gw: +gw };
     return null;
   });
-  if (!celPont) {
-    check(false, 'nem találtam tárolt pontot a draft_history.json-ban — a teszt nem futott le');
+  if (!targetPts) {
+    check(false, 'found no stored points in draft_history.json — the test did not run');
   } else {
-    // Elobb NEVRE szurunk, hogy a keresett jatekos biztosan az elso lapon
-    // legyen; a kattintas evaluate-bol megy, hogy semmi ne fogja el.
-    const nev = await off.evaluate(async e => {
+    // First we filter by NAME, so that the player is surely on the first
+    // page; the click goes from evaluate, so that nothing intercepts it.
+    const name = await off.evaluate(async e => {
       const j = await (await fetch('../draft_players.json')).json();
       return (j.players[e] || {}).n || '';
-    }, celPont.e);
-    await off.fill('#jlDoboz .kereso', nev);
+    }, targetPts.e);
+    await off.fill('#jlDoboz .kereso', name);
     await off.waitForFunction(() => document.querySelectorAll('.jlsor').length > 0,
                               null, { timeout: 5000 });
-    const megvan = await off.evaluate(e => {
+    const found = await off.evaluate(e => {
       const s = [...document.querySelectorAll('.jlsor')].find(x => +x.dataset.jl === e);
       if (s) { s.click(); return true; }
       return false;
-    }, celPont.e);
-    check(megvan, 'a keresett játékos ott van a listában (id=' + celPont.e + ', „' + nev + '”)');
+    }, targetPts.e);
+    check(found, 'the player searched for is in the list (id=' + targetPts.e + ', „' + name + '”)');
     await off.waitForSelector('.proflista', { timeout: 20000 });
-    const sor = await off.$$eval('.profsor', (a, gw) => {
+    const shown = await off.$$eval('.profsor', (a, gw) => {
       const x = a.find(y => y.querySelector('.ppos').textContent.trim() === gw + '.');
       return x ? x.querySelector('.pts').textContent.trim() : null;
-    }, celPont.gw);
-    check(sor === String(celPont.pts),
-       'FPL-kimaradásnál is a tárolt pont áll a sorban (' + celPont.gw + '. forduló: '
-       + sor + ', tárolt: ' + celPont.pts + ')');
-    const ossz = await off.$eval('.ptenyek', e => e.innerText.replace(/\n/g, ' ')).catch(() => '');
-    check(/Pont összesen/.test(ossz) && !/Pont összesen\s*0\b/.test(ossz),
-       'a „Pont összesen” nem 0, amikor van tárolt pont (' + ossz.slice(0, 60) + ')');
+    }, targetPts.gw);
+    check(shown === String(targetPts.pts),
+       'on an FPL outage the row still shows the stored points (round ' + targetPts.gw + ': '
+       + shown + ', stored: ' + targetPts.pts + ')');
+    const total = await off.$eval('.ptenyek', e => e.innerText.replace(/\n/g, ' ')).catch(() => '');
+    check(/Pont összesen/.test(total) && !/Pont összesen\s*0\b/.test(total),
+       '„Pont összesen” is not 0 when there are stored points (' + total.slice(0, 60) + ')');
   }
-  check(oerr.length === 0, 'FPL-kimaradásnál sincs JS-hiba'
+  check(oerr.length === 0, 'no JS error on an FPL outage either'
      + (oerr.length ? ': ' + oerr.join(' | ') : ''));
   await off.close();
 
-  check(perr.length === 0, 'nincs JS-hiba' + (perr.length ? ': ' + perr.join(' | ') : ''));
+  check(perr.length === 0, 'no JS error' + (perr.length ? ': ' + perr.join(' | ') : ''));
   await finish(br);
 })();

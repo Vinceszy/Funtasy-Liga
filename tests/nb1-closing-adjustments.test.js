@@ -1,18 +1,20 @@
 const { BASE, check, section, launch, finish, blockApis } = require('./common');
-// Meccs utani pontigazitas panel (NB1). Amit rogzit:
-//   - a panel CSAK akkor latszik, ha van adat (elesben ez ritka esemeny,
-//     es egy allandoan ures doboz azt sugallna, hogy valami hianyzik);
-//   - a legordulo MINDEN lejatszott fordulot felsorol: ahol nem volt
-//     valtozas, ott az a hir, hogy nem volt;
-//   - alapbol a LEGUTOLSO fordulon all (akkor is, ha abban nem volt
-//     valtozas), es lapozni lehet;
-//   - a valtozas iranya latszik (elojel es szin), a jatekos SAJAT pontjaval;
-//   - a megjelenites UGYANAZ, mint a PL "Zarasi valtozasok" panelje:
-//     szakvezeto szerint csoportositva, kattinthato nevekkel.
-const ADAT = { updated: 'x', rounds: {
+// Post-match points adjustment panel (NB1). What it pins down:
+//   - the panel is shown ONLY when there is data (in production this is a
+//     rare event, and a box that is always empty would suggest that
+//     something is missing);
+//   - the drop-down lists EVERY round played: where there was no change,
+//     the news is that there was none;
+//   - by default it stands on the LATEST round (even if there was no change
+//     in it), and it can be paged;
+//   - the direction of the change is shown (sign and colour), with the
+//     player's OWN points;
+//   - the display is THE SAME as the PL "Zárási változások" panel: grouped
+//     by manager, with clickable names.
+const DATA = { updated: 'x', rounds: {
   '2': { Bazsa: { pont: [
           { n: 'Egyik Elek', cp: 1, pos: 'MF', tm: 'MTK', elott: 5, utan: 6, d: '2026-08-20' }] } },
-  // Ismeretlen jatekos: csak a valtozas merteke tudott, a jatekos nem
+  // Unknown player: only the size of the change is known, not the player
   '3': { Csendi: { pont: [
           { n: '', cp: null, pos: '', tm: '', elott: null, utan: null, dl: -2.5, d: '2026-08-20', nk: 1 }] } },
   '4': { Bazsa: { pont: [
@@ -23,113 +25,114 @@ const ADAT = { updated: 'x', rounds: {
 (async () => {
   const br = await launch();
 
-  // ---- nincs adat: a panel rejtve marad ----
-  section('Adat nélkül nincs panel');
-  const ures = await br.newPage();
-  await blockApis(ures);
-  await ures.route('**/zarasok_nb1.json*', r => r.fulfill({
+  // ---- no data: the panel stays hidden ----
+  section('No panel without data');
+  const empty = await br.newPage();
+  await blockApis(empty);
+  await empty.route('**/zarasok_nb1.json*', r => r.fulfill({
     status: 200, contentType: 'application/json',
     body: JSON.stringify({ updated: 'x', rounds: {} }) }));
-  await ures.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
-  await ures.waitForSelector('#table tr', { timeout: 20000 });
-  check(await ures.locator('#znPanel').isVisible() === false,
-     'üres adatnál a panel nem jelenik meg');
-  await ures.close();
+  await empty.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
+  await empty.waitForSelector('#table tr', { timeout: 20000 });
+  check(await empty.locator('#znPanel').isVisible() === false,
+     'with empty data the panel does not appear');
+  await empty.close();
 
-  // ---- hianyzo fajl sem torhet el semmit ----
-  const nincs = await br.newPage();
-  const nerr = []; nincs.on('pageerror', e => nerr.push(e.message));
-  await blockApis(nincs);
-  await nincs.route('**/zarasok_nb1.json*', r => r.fulfill({ status: 404, body: '' }));
-  await nincs.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
-  await nincs.waitForSelector('#table tr', { timeout: 20000 });
-  check(await nincs.locator('#znPanel').isVisible() === false && nerr.length === 0,
-     'hiányzó fájlnál sincs panel és nincs JS-hiba' + (nerr.length ? ': ' + nerr.join(' | ') : ''));
-  await nincs.close();
+  // ---- a missing file must not break anything either ----
+  const missing = await br.newPage();
+  const nerr = []; missing.on('pageerror', e => nerr.push(e.message));
+  await blockApis(missing);
+  await missing.route('**/zarasok_nb1.json*', r => r.fulfill({ status: 404, body: '' }));
+  await missing.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
+  await missing.waitForSelector('#table tr', { timeout: 20000 });
+  check(await missing.locator('#znPanel').isVisible() === false && nerr.length === 0,
+     'with a missing file there is no panel and no JS error either' + (nerr.length ? ': ' + nerr.join(' | ') : ''));
+  await missing.close();
 
-  // ---- adattal ----
+  // ---- with data ----
   const p = await br.newPage();
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   await blockApis(p);
   await p.route('**/zarasok_nb1.json*', r => r.fulfill({
-    status: 200, contentType: 'application/json', body: JSON.stringify(ADAT) }));
+    status: 200, contentType: 'application/json', body: JSON.stringify(DATA) }));
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#znPanel:not([style*="none"])', { timeout: 20000 });
 
-  section('Tartalom');
-  // AZ ELVART FORDULOT AZ ADATBOL SZAMOLJUK, nem beegetve. Korabban itt "5"
-  // allt - az volt akkor az utolso lejatszott fordulo -, es a 6. lezarasaval
-  // a teszt bukni kezdett, holott a termekkel semmi baj nem volt. A
-  // naptartol fuggo allando elobb-utobb mindig elavul.
-  const utolso = await p.evaluate(() => T.lastPlayedRound());
-  // Az utolso lejatszott forduloban NINCS valtozas a mockolt adatban: a
-  // lapozo akkor is ott all, mert az is hir, hogy nem tortent semmi.
-  check((await p.$eval('#selZaras', e => e.value)) === String(utolso),
-     'alapból az utolsó fordulón áll a lapozó (' + utolso + '.)');
+  section('Content');
+  // THE EXPECTED ROUND IS COMPUTED FROM THE DATA, not hard-coded. Earlier "5"
+  // stood here - that was the last round played at the time -, and with the
+  // closing of round 6 the test started to fail, although nothing was wrong
+  // with the product. A constant that depends on the calendar always goes
+  // stale sooner or later.
+  const last = await p.evaluate(() => T.lastPlayedRound());
+  // In the mocked data there is NO change in the last round played: the
+  // pager still stands there, because it is news too that nothing happened.
+  check((await p.$eval('#selZaras', e => e.value)) === String(last),
+     'by default the pager stands on the last round (' + last + '.)');
   check(/Nem történt változás/.test(await p.$eval('#znBody', e => e.innerText)),
-     'változás nélküli fordulónál ezt meg is mondja');
+     'for a round without changes it says so');
   await p.selectOption('#selZaras', '4'); await p.waitForTimeout(200);
-  const fejek = await p.$$eval('#znBody .zcsapat h3', a => a.map(x => x.textContent.trim()));
-  check(JSON.stringify(fejek) === JSON.stringify(['Bazsa', 'Csendi']),
-     'szakvezető szerint csoportosít, névsorban (' + fejek.join(', ') + ')');
-  const sorok = await p.$$eval('#znBody .zsor', a => a.map(x => x.innerText.replace(/\n/g, ' ')));
-  check(sorok.length === 2, 'a forduló minden változása látszik (' + sorok.length + ')');
-  check(/Teszt Elek/.test(sorok[0]) && /FTC/.test(sorok[0]),
-     'a konkrét játékos neve és klubja ott van (' + sorok[0] + ')');
-  check(/9,25\s*→\s*6,75/.test(sorok[0]) && /-2,5/.test(sorok[0]),
-     'a régi és az új érték, valamint az előjeles különbség is ott van (' + sorok[0] + ')');
+  const heads = await p.$$eval('#znBody .zcsapat h3', a => a.map(x => x.textContent.trim()));
+  check(JSON.stringify(heads) === JSON.stringify(['Bazsa', 'Csendi']),
+     'grouped by manager, in alphabetical order (' + heads.join(', ') + ')');
+  const rows = await p.$$eval('#znBody .zsor', a => a.map(x => x.innerText.replace(/\n/g, ' ')));
+  check(rows.length === 2, 'every change of the round is shown (' + rows.length + ')');
+  check(/Teszt Elek/.test(rows[0]) && /FTC/.test(rows[0]),
+     'the specific player\'s name and club are there (' + rows[0] + ')');
+  check(/9,25\s*→\s*6,75/.test(rows[0]) && /-2,5/.test(rows[0]),
+     'the old and the new value, and the signed difference too, are there (' + rows[0] + ')');
   check((await p.$$eval('#znBody .zdiff.neg', a => a.length)) === 1
      && (await p.$$eval('#znBody .zdiff.pos', a => a.length)) === 1,
-     'a csökkenés és a növekedés külön színt kap');
+     'a decrease and an increase get separate colours');
   check((await p.$$eval('#znBody .ppos', a => a.map(x => x.textContent.trim()))).length === 2,
-     'minden sor elején ott a poszt-címke');
+     'every row starts with the position tag');
 
-  section('Kattintható nevek');
-  // A jatekos neve profilt nyit, a szakvezeto neve a keretet - ugyanugy,
-  // mint a PL panelen (ott data-team, itt data-member).
+  section('Clickable names');
+  // The player's name opens the profile, the manager's name the squad - the
+  // same as on the PL panel (data-team there, data-member here).
   check((await p.$eval('#znBody .zsor .znev', e => e.dataset.prof)) === 'Teszt Elek'
      && (await p.$eval('#znBody .zsor .znev', e => e.dataset.pcp)) === '2',
-     'a játékos neve a profilra mutat');
+     'the player\'s name points to the profile');
   check((await p.$eval('#znBody .zcsapat h3', e => e.dataset.member)) === 'Bazsa',
-     'a szakvezető neve a keretre mutat');
+     'the manager\'s name points to the squad');
   await p.click('#znBody .zsor .znev');
   await p.waitForSelector('#ov.open', { timeout: 5000 });
   check(/Teszt Elek/.test(await p.$eval('#mTitle', e => e.textContent)),
-     'a játékos nevére kattintva a profilja nyílik');
+     'clicking the player\'s name opens his profile');
   await p.click('#ovClose'); await p.waitForTimeout(200);
 
-  section('Lapozás');
-  const fordulok = await p.$$eval('#selZaras option', a => a.map(o => +o.value));
-  // Ugyanaz: a VART lista is az oldal sajat adatabol jon - minden olyan
-  // fordulo, aminek mar van eredmenye.
-  const vart = await p.evaluate(() => ROUNDS.filter(r => (SCHEDULE[r] || []).some(m => m[2] != null)));
-  check(JSON.stringify(fordulok) === JSON.stringify(vart),
-     'minden lejátszott forduló ott van a legördülőben (' + fordulok.join(', ')
-     + (JSON.stringify(fordulok) === JSON.stringify(vart) ? '' : ' — várt: ' + vart.join(', ')) + ')');
+  section('Paging');
+  const rounds = await p.$$eval('#selZaras option', a => a.map(o => +o.value));
+  // The same: the EXPECTED list also comes from the page's own data - every
+  // round that already has a result.
+  const expected = await p.evaluate(() => ROUNDS.filter(r => (SCHEDULE[r] || []).some(m => m[2] != null)));
+  check(JSON.stringify(rounds) === JSON.stringify(expected),
+     'every round played is in the drop-down (' + rounds.join(', ')
+     + (JSON.stringify(rounds) === JSON.stringify(expected) ? '' : ' — expected: ' + expected.join(', ')) + ')');
   await p.selectOption('#selZaras', '3'); await p.waitForTimeout(200);
   await p.click('[data-znav="-1"]');
   await p.waitForFunction(() => document.querySelector('#selZaras').value === '2',
                           null, { timeout: 5000 });
   check(/Egyik Elek/.test(await p.$eval('#znBody', e => e.innerText)),
-     'a nyíllal a korábbi fordulóra lehet lépni');
-  // az 1. az elso fordulo: onnan a visszalepes nem vihet sehova
+     'the arrow steps to the earlier round');
+  // round 1 is the first round: stepping back from there may lead nowhere
   await p.selectOption('#selZaras', '1'); await p.waitForTimeout(200);
   await p.click('[data-znav="-1"]');
   check((await p.$eval('#selZaras', e => e.value)) === '1',
-     'az első fordulónál a visszalépés nem visz sehova (nem esik ki a listából)');
+     'at the first round stepping back leads nowhere (it does not fall off the list)');
 
-  section('Ismeretlen játékos');
-  // Ahol csak a valtozas MERTEKE ismert: nincs "elotte -> utana", a nev nem
-  // kattinthato, es kiirt magyarazat all alatta.
+  section('Unknown player');
+  // Where only the SIZE of the change is known: there is no "before -> after",
+  // the name is not clickable, and a written explanation stands below it.
   await p.selectOption('#selZaras', '3'); await p.waitForTimeout(200);
-  const isor = await p.$eval('#znBody .zsor', e => e.innerText.replace(/\n/g, ' '));
-  check(/Ismeretlen játékos/.test(isor) && /-2,5/.test(isor) && !/→/.test(isor),
-     'csak a változás mértéke áll ott, nincs előtte → utána (' + isor + ')');
+  const unknownRow = await p.$eval('#znBody .zsor', e => e.innerText.replace(/\n/g, ' '));
+  check(/Ismeretlen játékos/.test(unknownRow) && /-2,5/.test(unknownRow) && !/→/.test(unknownRow),
+     'only the size of the change stands there, no before → after (' + unknownRow + ')');
   check((await p.$$eval('#znBody .zsor .znev.kattint', a => a.length)) === 0,
-     'az ismeretlen játékos neve nem kattintható');
+     'the unknown player\'s name is not clickable');
   check(/nem gyűjtött játékos-szintű adatot/.test(await p.$eval('#znBody', e => e.innerText)),
-     'kiírt magyarázat áll alatta');
+     'a written explanation stands below it');
 
-  check(perr.length === 0, 'nincs JS-hiba' + (perr.length ? ': ' + perr.join(' | ') : ''));
+  check(perr.length === 0, 'no JS error' + (perr.length ? ': ' + perr.join(' | ') : ''));
   await finish(br);
 })();

@@ -27,14 +27,14 @@ async function page(br, viewport) {
   {
     const p = await page(br);
     await p.goto(BASE + 'nemzethy/', { waitUntil: 'domcontentloaded' });
-    const gomb = p.locator('.artrate button[data-pont="2"]').first();
-    await gomb.waitFor({ timeout: 15000 }).catch(() => {});
-    const van = await gomb.count();
-    check(van > 0, 'there is a rating bar on the magazine');
-    if (van) {
-      await gomb.click({ force: true });
-      const doboz = await p.waitForSelector('.artreasont', { timeout: 5000 }).catch(() => null);
-      check(!!doboz, 'a 2 opens the reason box');
+    const button = p.locator('.artrate button[data-pont="2"]').first();
+    await button.waitFor({ timeout: 15000 }).catch(() => {});
+    const found = await button.count();
+    check(found > 0, 'there is a rating bar on the magazine');
+    if (found) {
+      await button.click({ force: true });
+      const box = await p.waitForSelector('.artreasont', { timeout: 5000 }).catch(() => null);
+      check(!!box, 'a 2 opens the reason box');
     }
     await p.close();
   }
@@ -42,12 +42,12 @@ async function page(br, viewport) {
   section('subpage: verzio.json is found next to funtasy.js');
   {
     const p = await page(br);
-    const kert = [];
-    p.on('response', r => { if (r.url().includes('verzio.json')) kert.push([r.url(), r.status()]); });
+    const requested = [];
+    p.on('response', r => { if (r.url().includes('verzio.json')) requested.push([r.url(), r.status()]); });
     await p.goto(BASE + 'nb1/', { waitUntil: 'load' });
     await p.waitForTimeout(800);
-    check(kert.length > 0 && kert.every(([, st]) => st === 200),
-       'every verzio.json request answered 200: ' + JSON.stringify(kert));
+    check(requested.length > 0 && requested.every(([, st]) => st === 200),
+       'every verzio.json request answered 200: ' + JSON.stringify(requested));
     await p.close();
   }
 
@@ -56,8 +56,8 @@ async function page(br, viewport) {
     const p = await page(br);
     await p.goto(BASE, { waitUntil: 'load' });
     await p.waitForSelector('.ligakartya h2', { timeout: 10000 });
-    const meret = await p.$$eval('.ligakartya h2', hs => hs.map(h => getComputedStyle(h).fontSize));
-    check(meret.length && meret.every(m => m === '22px'), 'every card title is 22px: ' + JSON.stringify(meret));
+    const sizes = await p.$$eval('.ligakartya h2', hs => hs.map(h => getComputedStyle(h).fontSize));
+    check(sizes.length && sizes.every(m => m === '22px'), 'every card title is 22px: ' + JSON.stringify(sizes));
     await p.close();
   }
 
@@ -65,20 +65,20 @@ async function page(br, viewport) {
   {
     const p = await page(br);
     await rewriteJson(p, '**/results.json*', j => j);
-    let engedd;
-    const kapu = new Promise(r => { engedd = r; });
-    await p.route('**/results.json*', async route => { await kapu; route.fallback(); });
+    let release;
+    const gate = new Promise(r => { release = r; });
+    await p.route('**/results.json*', async route => { await gate; route.fallback(); });
     await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
     await p.waitForSelector('#table tr', { timeout: 10000 });
-    const elotte = await p.$$eval('#table tr', trs => trs.slice(1).map(tr => tr.className + '|' +
+    const before = await p.$$eval('#table tr', trs => trs.slice(1).map(tr => tr.className + '|' +
       [...tr.cells].slice(2).map(c => c.textContent.trim()).join('')));
-    check(elotte.length === 8 && elotte.every(s => s.startsWith('placeholder|') && !/\d/.test(s.split('|')[1])),
-       'eight placeholder rows, no digits: ' + JSON.stringify(elotte.slice(0, 2)));
-    engedd();
+    check(before.length === 8 && before.every(s => s.startsWith('placeholder|') && !/\d/.test(s.split('|')[1])),
+       'eight placeholder rows, no digits: ' + JSON.stringify(before.slice(0, 2)));
+    release();
     await p.waitForFunction(() => document.querySelectorAll('#table tr.placeholder').length === 0,
                             null, { timeout: 15000 }).catch(() => {});
-    const utana = await p.$$eval('#table tr', trs => trs.length - 1);
-    check(utana === 8, 'after the results: eight real rows (' + utana + ')');
+    const after = await p.$$eval('#table tr', trs => trs.length - 1);
+    check(after === 8, 'after the results: eight real rows (' + after + ')');
     await p.close();
   }
 

@@ -1,7 +1,7 @@
 const { BASE, check, section, launch, finish, blockApis } = require('./common');
-// A "mit irjunk a 0 pontos jatekosrol" logika TELJES allapottere.
-// Nem talalgatott esetek: minden ertelmes kombinacio lefut, es a kimenetre
-// invarianseket ellenorzunk. Ami serti oket, azt kilistazzuk.
+// The FULL state space of the "what to write about a player with 0 points" logic.
+// No guessed cases: every meaningful combination runs, and invariants are
+// checked on the output. Whatever violates them is listed.
 
 (async () => {
   const br = await launch();
@@ -10,114 +10,115 @@ const { BASE, check, section, launch, finish, blockApis } = require('./common');
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForFunction(() => typeof noPointsMessage === 'function' && typeof pointsCellHTML === 'function');
 
-  const ki = await p.evaluate(() => {
-    LIVE[900] = [];                       // 900 = elo fordulo, 901 = lezart
-    const perc = m => new Date(Date.now() - m * 60000).toISOString();
-    // Az ejfeles helyorzot KET valtozatban visszuk be: az MLSZ ejfelt ir, ha a
-    // kezdes nincs kituzve, es annak a napja el is mulhat. A ket eset mast
-    // jelent, tehat mast is kell irni rola. A datumok a MAI naphoz kepest
-    // keszulnek - bedrotozva egy nap alatt elavulnanak (meg is tettek).
-    const ejfel = nap => new Date(Date.now() + nap * 864e5).toISOString().slice(0, 10)
+  const out = await p.evaluate(() => {
+    LIVE[900] = [];                       // 900 = live round, 901 = closed
+    const minutesAgo = m => new Date(Date.now() - m * 60000).toISOString();
+    // The midnight placeholder goes in in TWO variants: MLSZ writes midnight
+    // when the kick-off is not fixed, and that day can also pass. The two
+    // cases mean different things, so different things must be written about
+    // them. The dates are built relative to TODAY - hard-coded they would go
+    // stale within a day (and they did).
+    const midnight = day => new Date(Date.now() + day * 864e5).toISOString().slice(0, 10)
       + 'T00:00:00+02:00';
-    const STARTOK = {
-      'nincs':        null,
-      'ejfelJovo':    ejfel(2),
-      'ejfelLejart':  ejfel(-5),
-      'jovo':       new Date(Date.now() + 90 * 60000).toISOString(),
-      'fut30':      perc(30),
-      'fut110':     perc(110),
-      'regi240':    perc(240),
+    const STARTS = {
+      'none':         null,
+      'midnightFut':  midnight(2),
+      'midnightPast': midnight(-5),
+      'future':     new Date(Date.now() + 90 * 60000).toISOString(),
+      'running30':  minutesAgo(30),
+      'running110': minutesAgo(110),
+      'old240':     minutesAgo(240),
     };
-    const BONTASOK = {
-      'ures':       [],
-      'perc0':      [{ name: 'Játszott perc', value: 0, points: 0 }],
-      'perc90':     [{ name: 'Játszott perc', value: 90, points: 0 }],
-      'pontos':     [{ name: 'Győzelem', value: 1, points: 3 }],
+    const BREAKDOWNS = {
+      'empty':      [],
+      'min0':       [{ name: 'Játszott perc', value: 0, points: 0 }],
+      'min90':      [{ name: 'Játszott perc', value: 90, points: 0 }],
+      'scoring':    [{ name: 'Győzelem', value: 1, points: 3 }],
     };
-    const sorok = [];
+    const rows = [];
     for (const nogame of [false, true])
-    for (const [sn, start] of Object.entries(STARTOK))
+    for (const [sn, start] of Object.entries(STARTS))
     for (const vege of [undefined, true])
     for (const played of [true, false, undefined])
-    for (const [bn, nyers] of Object.entries(BONTASOK))
-    for (const elo of [true, false]) {
-      const round = elo ? 900 : 901;
-      const uzenet = noPointsMessage(played, start, nyers, nogame, vege, elo);
-      const cella = pointsCellHTML({ week: 0, start, vege, played, nogame }, round);
-      const kotojel = cella.indexOf('–') >= 0;
-      sorok.push({ nogame, sn, vege: !!vege, played: String(played), bn, elo, uzenet, kotojel,
-                   allapot: matchState(start, vege) });
+    for (const [bn, raw] of Object.entries(BREAKDOWNS))
+    for (const live of [true, false]) {
+      const round = live ? 900 : 901;
+      const message = noPointsMessage(played, start, raw, nogame, vege, live);
+      const cell = pointsCellHTML({ week: 0, start, vege, played, nogame }, round);
+      const dash = cell.indexOf('–') >= 0;
+      rows.push({ nogame, sn, vege: !!vege, played: String(played), bn, live, message, dash,
+                  state: matchState(start, vege) });
     }
-    return sorok;
+    return rows;
   });
 
-  console.log('összes kombináció: ' + ki.length);
+  console.log('all combinations: ' + out.length);
 
-  // ---- invariansok ----
-  const sertesek = {};
-  const sert = (nev, s) => (sertesek[nev] = sertesek[nev] || []).push(s);
-  for (const s of ki) {
-    const kulcs = `nogame=${s.nogame} start=${s.sn} vege=${s.vege} played=${s.played} bontás=${s.bn} élő=${s.elo}`;
-    // I1: elo forduloban futo meccsnel tilos azt allitani, hogy vege
-    if (s.elo && !s.nogame && s.allapot === 'fut' && /Lejátszotta|véget ért/.test(s.uzenet))
-      sert('I1 — futó meccsre azt írja, hogy vége', kulcs + '  ->  ' + s.uzenet);
-    // I2: jovobeli vagy kituzetlen kezdes = meg nem kezdodott
-    if (!s.nogame && (s.sn === 'jovo' || s.sn === 'ejfelJovo') && !/még nem kezdődött/.test(s.uzenet))
-      sert('I2 — jövőbeli/kitűzetlen kezdésre nem azt írja, hogy még nem kezdődött', kulcs + '  ->  ' + s.uzenet);
-    // I2b: a LEJART ejfeles helyorzo mar nem kezdesi idopont - nem szabad
-    // tole kezdest igerni, mert a datum a multban van
-    if (!s.nogame && s.sn === 'ejfelLejart' && !/elmaradt/.test(s.uzenet))
-      sert('I2b — lejárt helyőrzőnél kezdést ígér', kulcs + '  ->  ' + s.uzenet);
-    // I3: lezart forduloban nem allithatjuk, hogy zajlik
-    if (!s.elo && /A meccs zajlik/.test(s.uzenet))
-      sert('I3 — lezárt fordulóban azt írja, hogy zajlik', kulcs + '  ->  ' + s.uzenet);
-    // I4: nincs meccse -> mindig azt mondja, hogy a klubnak nincs/nem volt
-    // meccse (elo forduloban jelen, lezartban mult idoben)
-    if (s.nogame && !/nem játszik|nem volt meccse/.test(s.uzenet))
-      sert('I4 — nincs meccse, mégis mást ír', kulcs + '  ->  ' + s.uzenet);
-    // I5: a sor kotojele es az uzenet nem mondhat mast. "Nincs adat" minden
-    // olyan uzenet, ami NEM allitja, hogy a jatekos pontszama vegleges.
-    const uzenetSzerintNincsAdat = /nem játszik|nem volt meccse|még nem kezdődött|elmaradt|A meccs zajlik|nincs rögzített esemény|feldolgozása még tart/.test(s.uzenet);
-    if (s.kotojel !== uzenetSzerintNincsAdat) {
-      // ELFOGADOTT KIVETEL (N3): a meccs lement, de az MLSZ meg
-      // nem tette be a pontokat -> a sor 0-t mutat, a bontas megmondja az
-      // igazat. A sor nem tudhatja, megjott-e mar a bontas, es kideritni csak
-      // jatekosonkenti lekeressel lehetne. Barmi MAS elteres viszont hiba.
-      // ELFOGADOTT: a sor a tarolt 0-t mutatja, az uzenet meg azt mondja, hogy
-      // magarol az esemenyrol nincs adat. Ket kulonbozo dologrol szolnak, es a
-      // sor szama ilyenkor is a helyes ertek.
-      const n3 = !s.kotojel && !s.nogame &&
-                 /nincs rögzített esemény|feldolgozása még tart/.test(s.uzenet);
-      if (!n3) sert('I5 — a kötőjel és az üzenet ellentmond', kulcs + '  ->  ' +
-        (s.kotojel ? 'KÖTŐJEL' : 'szám') + ' / ' + s.uzenet);
-      else (sertesek['(elfogadott N3)'] = sertesek['(elfogadott N3)'] || []).push(kulcs);
+  // ---- invariants ----
+  const violations = {};
+  const violate = (name, s) => (violations[name] = violations[name] || []).push(s);
+  for (const s of out) {
+    const key = `nogame=${s.nogame} start=${s.sn} vege=${s.vege} played=${s.played} breakdown=${s.bn} live=${s.live}`;
+    // I1: in a live round, for a running match it must not claim that it is over
+    if (s.live && !s.nogame && s.state === 'fut' && /Lejátszotta|véget ért/.test(s.message))
+      violate('I1 — says a running match is over', key + '  ->  ' + s.message);
+    // I2: a future or unscheduled kick-off = not started yet
+    if (!s.nogame && (s.sn === 'future' || s.sn === 'midnightFut') && !/még nem kezdődött/.test(s.message))
+      violate('I2 — for a future/unscheduled kick-off it does not say not started yet', key + '  ->  ' + s.message);
+    // I2b: an EXPIRED midnight placeholder is no longer a kick-off time - it
+    // must not promise a kick-off, because the date is in the past
+    if (!s.nogame && s.sn === 'midnightPast' && !/elmaradt/.test(s.message))
+      violate('I2b — promises a kick-off for an expired placeholder', key + '  ->  ' + s.message);
+    // I3: in a closed round we cannot claim it is in progress
+    if (!s.live && /A meccs zajlik/.test(s.message))
+      violate('I3 — says in progress in a closed round', key + '  ->  ' + s.message);
+    // I4: no match -> it always says that the club has/had no match
+    // (present tense in a live round, past tense in a closed one)
+    if (s.nogame && !/nem játszik|nem volt meccse/.test(s.message))
+      violate('I4 — no match, yet it writes something else', key + '  ->  ' + s.message);
+    // I5: the row's dash and the message must not disagree. "No data" is
+    // every message that does NOT claim the player's score is final.
+    const noDataByMessage = /nem játszik|nem volt meccse|még nem kezdődött|elmaradt|A meccs zajlik|nincs rögzített esemény|feldolgozása még tart/.test(s.message);
+    if (s.dash !== noDataByMessage) {
+      // ACCEPTED EXCEPTION (N3): the match is over, but MLSZ has not put in
+      // the points yet -> the row shows 0, the breakdown tells the truth. The
+      // row cannot know whether the breakdown has arrived yet, and finding
+      // out would take a fetch per player. Any OTHER mismatch is an error.
+      // ACCEPTED: the row shows the stored 0, while the message says there is
+      // no data about the event itself. They speak about two different
+      // things, and the row's number is the correct value in this case too.
+      const n3 = !s.dash && !s.nogame &&
+                 /nincs rögzített esemény|feldolgozása még tart/.test(s.message);
+      if (!n3) violate('I5 — the dash and the message contradict each other', key + '  ->  ' +
+        (s.dash ? 'DASH' : 'number') + ' / ' + s.message);
+      else (violations['(accepted N3)'] = violations['(accepted N3)'] || []).push(key);
     }
   }
 
-  const nevek = Object.keys(sertesek);
-  const valodi = nevek.filter(n => n[0] !== '(');
-  if (!valodi.length) console.log('\nMinden invariáns teljesül'
-    + (sertesek['(elfogadott N3)'] ? ' (az elfogadott N3-kivételen kívül: '
-       + sertesek['(elfogadott N3)'].length + ' eset).' : '.'));
-  for (const n of valodi) {
-    const l = sertesek[n];
-    console.log('\n### ' + n + '  (' + l.length + ' eset)');
-    // csak a kulonbozo kimeneteket mutatjuk, hogy attekintheto legyen
-    const latott = new Set();
+  const names = Object.keys(violations);
+  const real = names.filter(n => n[0] !== '(');
+  if (!real.length) console.log('\nEvery invariant holds'
+    + (violations['(accepted N3)'] ? ' (apart from the accepted N3 exception: '
+       + violations['(accepted N3)'].length + ' cases).' : '.'));
+  for (const n of real) {
+    const l = violations[n];
+    console.log('\n### ' + n + '  (' + l.length + ' cases)');
+    // only the distinct outputs are shown, to keep it readable
+    const seen = new Set();
     for (const x of l) {
       const v = x.split('->')[1];
-      if (latott.has(v)) continue;
-      latott.add(v);
+      if (seen.has(v)) continue;
+      seen.add(v);
       console.log('   ' + x);
     }
   }
 
-  // ---- attekinto tabla: elo forduloban mi jon ki ----
-  console.log('\n=== ÉLŐ forduló, nincs pontja, bontás=üres ===');
-  ki.filter(s => s.elo && !s.nogame && s.bn === 'ures')
+  // ---- overview table: what comes out in a live round ----
+  console.log('\n=== LIVE round, no points, breakdown=empty ===');
+  out.filter(s => s.live && !s.nogame && s.bn === 'empty')
     .forEach(s => console.log(`  start=${s.sn.padEnd(8)} vege=${String(s.vege).padEnd(5)} played=${s.played.padEnd(9)} `
-      + `[${s.allapot.padEnd(10)}] ${s.kotojel ? '–' : '0'}  ${s.uzenet}`));
+      + `[${s.state.padEnd(10)}] ${s.dash ? '–' : '0'}  ${s.message}`));
 
   await br.close();
-  process.exit(valodi.length ? 1 : 0);
+  process.exit(real.length ? 1 : 0);
 })();
