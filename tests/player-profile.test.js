@@ -346,6 +346,14 @@ const PLAYER = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: t
   await p.click('.jlsor');
   await p.waitForSelector('.proflista', { timeout: 20000 });
   check(true, 'clicking a list row opens the profile');
+  // The price log starts later than the season, so the early rounds have no
+  // price. Their rows still need the price cell (empty), otherwise the
+  // match score column jumps sideways between the rounds with and without one.
+  const scoreRight = await p.$$eval('.profsor .pallas', a => a.map(x =>
+    Math.round(x.getBoundingClientRect().right)));
+  check(scoreRight.length > 1 && new Set(scoreRight).size === 1,
+     'the match score column is aligned in every round row: '
+     + JSON.stringify([...new Set(scoreRight)]));
   await p.click('#ovClose');
 
   // ---- a never-owned player: the profile must not wait for the API ----

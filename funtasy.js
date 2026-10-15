@@ -1007,8 +1007,13 @@
      know it: the price log started during the season, there is no
      observation for earlier rounds, and the nearest later price is NOT
      theirs. So nothing instead of an empty slot. */
-  function priceHTML(s, prevPrice, salaryCap) {
-    if (!salaryCap || s.ar == null) return '';
+  /* `column`: whether the profile has a price column at all. The price log
+     starts later than the season, so the early rounds have no price - those
+     rows get an EMPTY cell of the same width, otherwise the points column
+     would jump sideways between rows. */
+  function priceHTML(s, prevPrice, column) {
+    if (!column) return '';
+    if (s.ar == null) return '<span class="par"></span>';
     var d = prevPrice == null ? null : Math.round((s.ar - prevPrice) * 10) / 10;
     return '<span class="par">' + fmt(s.ar)
       + (d ? '<span class="pardl ' + (d > 0 ? 'pos' : 'neg') + '">'
@@ -1016,7 +1021,7 @@
       + '</span>';
   }
 
-  function profileRowHTML(s, nobody, salaryCap, prevPrice) {
+  function profileRowHTML(s, nobody, salaryCap, prevPrice, priceColumn) {
     var games = s.meccsek || [];
     var m = profileGamesHTML(games);
     // For a FUTURE round the owner line stays EMPTY: who will have the player
@@ -1035,7 +1040,7 @@
       '<span class="ppos">' + s.r + '.</span>' +
       '<span class="nm">' + m.nev + '<span class="accarr">▼</span></span>' +
       m.allas +
-      priceHTML(s, prevPrice, salaryCap) +
+      priceHTML(s, prevPrice, priceColumn) +
       '<span class="pts">' + pts + '</span>' +
       '<span class="ptulajok">' + owners + share + '</span>' +
     '</div>';
@@ -1048,9 +1053,10 @@
         '<div class="loading">Ehhez a játékoshoz még nincs fordulónkénti adat.</div>';
     var l = leagueById(data.liga), salaryCap = !!l && l.type === 'salary-cap';
     var prevPrice = null;
+    var priceColumn = salaryCap && rows.some(function (s) { return s.ar != null; });
     return profileHeaderHTML(data) +
       '<div class="proflista">' + rows.map(function (s) {
-        var out = profileRowHTML(s, data.senkinel, salaryCap, prevPrice);
+        var out = profileRowHTML(s, data.senkinel, salaryCap, prevPrice, priceColumn);
         if (s.ar != null) prevPrice = s.ar;
         return out;
       }).join('') + '</div>';
