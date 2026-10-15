@@ -20,3 +20,8 @@ LEKERES: 2026-09-25 06:55 UTC | cikk-ertekelesek
 LEKERES: 2026-10-01 00:00 UTC | cikk-ertekelesek
   ertekeles osszesen: 0
   meg nem ertekelt senki
+
+======================================================================
+FETCH: 2026-10-15 00:41 UTC | article ratings
+  ratings in total: 0
+  nobody has rated yet
