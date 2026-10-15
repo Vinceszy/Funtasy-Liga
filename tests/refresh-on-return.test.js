@@ -141,8 +141,8 @@ const { BASE, check, section, failures, launch, finish, blockApis, rewriteJson }
   check(liveCalls === prev, 'a page left open does not fetch by itself: ' + liveCalls);
 
   // Second return: both scores are filled in by now, so this is what really
-  // shows that an ALREADY DISPLAYED score can follow the change too (this was
-  // the reported bug: the home page stayed at 39 while it was already 38).
+  // shows that an ALREADY DISPLAYED score can follow the change too (without
+  // it the home page would stay at 39 while the score is already 38).
   await p.evaluate(() => { window.__clock = 1800000; });
   await p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await p.waitForTimeout(1200);

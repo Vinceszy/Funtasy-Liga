@@ -133,10 +133,9 @@ const expectStart = (label, got, expected) =>
   check(/Játszott perc\t90/.test(played) && !/Lejátszotta a meccset/.test(played),
      'played it, 0 -> the Játszott perc row stands, not a message: ' + JSON.stringify(played.slice(0, 60)));
   expectStart('no match          ', await clickRow('Nincs Meccse'), 'Ebben a fordulóban nem játszik');
-  // Regression test of the reported bug: is_played=true, but the match is
-  // still running. During the match a dash stands in place of 0 (MLSZ does
-  // not give points yet), but for someone who has already scored points the
-  // number is shown.
+  // Regression guard: is_played=true, but the match is still running.
+  // During the match a dash stands in place of 0 (MLSZ does not give points
+  // yet), but for someone who has already scored points the number is shown.
   const runningPts = await page.locator('.plr', { hasText: 'Futó Meccsű' }).first()
     .locator('.pts').innerText();
   const runningTitle = await page.locator('.plr', { hasText: 'Futó Meccsű' }).first()

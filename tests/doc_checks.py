@@ -596,7 +596,8 @@ else:
 # date, wrangler's compatibility_date), that must not be touched.
 # The naplo/ directory is an exception: there the measurements have a TIME,
 # which is part of the data.
-# The patterns stay Hungarian as long as the docs they read are Hungarian.
+# The comments and the docs are English; the Hungarian patterns stay too,
+# because a note pasted from a Hungarian conversation is the likeliest leak.
 FORBIDDEN = [
     (re.compile(r"\b\d{4}-\d{2}-\d{2}\b"), "date"),
     (re.compile(r"\b\d{4}\.\s*(janu|febru|marci|april|maju|juni|juli|augusz|"
@@ -607,6 +608,16 @@ FORBIDDEN = [
     (re.compile(r"Vince\s+(k[eé]r|d[oö]nt|fogalmaz|szerint)", re.I), "name"),
     (re.compile(r"BEJELENTETT|BEJELENTVE|MEGTORTENT|MEGTÖRTÉNT"), "log-marker"),
     (re.compile(r"kiderült|kiderult", re.I), "log-marker"),
+    (re.compile(r"\b(January|February|March|April|May|June|July|August|September|"
+                r"October|November|December)\s+\d{1,2},?\s+\d{4}\b"), "date"),
+    (re.compile(r"\b\d{1,2}\s+(January|February|March|April|May|June|July|August|"
+                r"September|October|November|December)\s+\d{4}\b"), "date"),
+    (re.compile(r"Vince\s+(asked|wanted|decided|said|requested|prefers)|"
+                r"Vince's\s+(request|decision|idea)", re.I), "name"),
+    (re.compile(r"\b(it\s+turned\s+out|we\s+found\s+out|we\s+discovered|"
+                r"we\s+(?:used\s+to\s+)?thought|we\s+decided|"
+                r"(?:was|were)\s+reported\s+(?:by|in)|reported\s+bug)\b", re.I),
+     "log-marker"),
 ]
 EXEMPT_FOLDER = ("tartalek/",)
 # Under naplo/ stands the OUTPUT of the measurements, those have a time - but
