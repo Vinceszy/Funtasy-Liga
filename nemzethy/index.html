@@ -6,17 +6,17 @@
 <title>Nemzethy Sport — Heti Funtasy Magazin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- A betukeszlet-ivet NEM blokkolokent toltjuk. Egy sima <link rel=stylesheet>
-     megallitja a lap megjeleneset, amig a Google valaszol: kimerve DOMContentLoaded
-     57 ms helyett 12,6 MASODPERC, ha a fonts.googleapis.com nem elerheto - addig
-     a lapon SEMMI nincs. A media="print" + onload trukk aszinkronna teszi: a
-     tartalom azonnal latszik a tartalek betuvel (a `display=swap` miatt ugyis az
-     lenne az elso festes), es a webfont akkor lep be, amikor megjott. -->
+<!-- The font stylesheet is NOT loaded as render-blocking. A plain <link rel=stylesheet>
+     holds back the page until Google answers: measured DOMContentLoaded at
+     12.6 SECONDS instead of 57 ms when fonts.googleapis.com is unreachable - until
+     then there is NOTHING on the page. The media="print" + onload trick makes it
+     asynchronous: the content shows at once in the fallback font (with `display=swap`
+     that would be the first paint anyway), and the web font steps in when it arrives. -->
 <link rel="stylesheet" media="print" onload="this.media='all';this.onload=null"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=119">
+<link rel="stylesheet" href="../funtasy.css?v=120">
 </head>
 <body class="kezdolap">
 <div class="wrap">
@@ -40,41 +40,43 @@
 </div>
 <div class="lablec" id="lablec"></div>
 
-<script src="../funtasy.js?v=119"></script>
+<script src="../funtasy.js?v=120"></script>
 <script>
 // ======= NEMZETHY SPORT =======
-// Egy helyen az osszes iras, fordulonkent visszafele. A meccs adatlapjan a
-// sav arra valaszol, mi tortent AZON a meccsen; ide az jon, aki hetfon
-// egyben olvasna vegig az egeszet.
+// Every piece of writing in one place, round by round backwards. On the
+// match page the strip answers what happened in THAT match; this page is
+// for someone who wants to read the lot in one go on a Monday.
 //
-// KET UZEMMOD. `?liga=nb1` eseten AZ ADOTT LIGA ujsagja: a liga sajat
-// szineivel, a liga nevevel a fejlecben, es csak az o irasaival - a felso
-// savban innen nyilik, tehat a nezo nem esik ki a liga vilagabol. Parameter
-// nelkul a kozos kiadas, liga-szurovel; erre a kezdolap mutat.
+// TWO MODES. With `?liga=nb1` it is THE GIVEN LEAGUE's magazine: in the
+// league's own colours, with the league's name in the header, and only its
+// pieces - it is opened from the top bar, so the viewer does not drop out
+// of the league's world. Without a parameter it is the joint edition, with
+// a league filter; the home page points there.
 //
-// A KAPU UGYANAZ, mint a meccs adatlapjan: le nem zart fordulonak csak a
-// beharangozoja latszik. A valasztast a FunTasy.articleList vegzi - ha itt
-// ujra megirodna, a ket nezet elcsuszhatna abban, mit szabad mutatni.
+// THE GATE IS THE SAME as on the match page: a round not closed yet only
+// shows its preview. The selection is done by FunTasy.articleList - written
+// again here, the two views could drift apart on what may be shown.
 const $ = id => document.getElementById(id);
-const LIGA = (new URLSearchParams(location.search).get('liga') || '').toLowerCase();
-const LIGAOBJ = FunTasy.liga(LIGA);
-FunTasy.renderNav(LIGAOBJ ? LIGA : null, '../', { szakasz: 'ujsag' });
-FunTasy.renderLablec('../', 'nemzethy');
-FunTasy.verzioOr();
+const LEAGUE = (new URLSearchParams(location.search).get('liga') || '').toLowerCase();
+const LEAGUE_OBJ = FunTasy.leagueById(LEAGUE);
+FunTasy.renderNav(LEAGUE_OBJ ? LEAGUE : null, '../', { section: 'ujsag' });
+FunTasy.renderFooter('../', 'nemzethy');
+FunTasy.reloadIfStale();
 FunTasy.watchMagazine();
 
-// Liga-uzemmodban az oldal atveszi a liga temajat es nevet: ez a liga sajat
-// ujsagja, nem egy szuro egy kozos lapon.
-if (LIGAOBJ){
-  document.body.className = LIGAOBJ.tema;
-  document.title = `${FunTasy.UJSAG_NEV} ${LIGAOBJ.nev} — ${FunTasy.UJSAG_MOTTO}`;
-  $('magCim').innerHTML = `${FunTasy.esc(FunTasy.UJSAG_NEV)} <span class="tag">${
-    FunTasy.esc(LIGAOBJ.nev)}</span>`;
+// In league mode the page takes over the league's theme and name: this is
+// the league's own magazine, not a filter on a shared page.
+if (LEAGUE_OBJ){
+  document.body.className = LEAGUE_OBJ.theme;
+  document.title = `${FunTasy.MAGAZINE_NAME} ${LEAGUE_OBJ.name} — ${FunTasy.MAGAZINE_MOTTO}`;
+  $('magCim').innerHTML = `${FunTasy.esc(FunTasy.MAGAZINE_NAME)} <span class="tag">${
+    FunTasy.esc(LEAGUE_OBJ.name)}</span>`;
 
   $('magSzuroSav').style.display = 'none';
 }
-// A masik kiadasra mutato sor: ligabol a kozosre, kozosbol nincs mire.
-if (LIGAOBJ){
+// The row pointing to the other edition: from a league to the joint one;
+// from the joint one there is nowhere to point.
+if (LEAGUE_OBJ){
   const a = $('magMasik');
   a.href = './';
   a.querySelector('.cim').textContent = 'Mindkét liga egyben';
@@ -82,179 +84,179 @@ if (LIGAOBJ){
   a.style.display = '';
 }
 
-let CIKKEK = null, ZART = { nb1: new Set(), pl: new Set() };
-// Nev -> ember. A ket liga mas neven ismeri ugyanazt a szakvezetot (NB1-ben
-// becenev, PL-ben csapatnev), es a kozos kiadasban EGY emberkent kell
-// megjelennie - a tabla a kozos retegben all. A PL-oldali nevet a draft.json
-// adja: amig az meg nem jott, mindenki a sajat neven all, es mivel a szurot
-// ugyis a betoltes utan rajzoljuk, ez sehol nem latszik.
-let SZEMELY = FunTasy.szemelyTar(null);
-// Negy szempont, egymastol fuggetlenul. Mindegyik "Mind"-del indul, es
-// mindegyik CSAK azokat az ertekeket kinalja, amik a tobbi szuro mellett
-// tenylegesen leteznek - kulonben ures talalati listara lehetne kattintani.
-const SZURO = { liga: 'mind', ki: 'mind', fordulo: 'mind', fajta: 'mind' };
-// A rovat neve a kozos retegbol jon: a cikk kartyajan es itt a szuroben
-// ugyanannak kell allnia.
-const FAJTANEV = FunTasy.rovatNev;
+let ARTICLE_STORE = null, CLOSED = { nb1: new Set(), pl: new Set() };
+// Name -> person. The two leagues know the same manager by different names
+// (a nickname in NB1, a team name in PL), and in the joint edition they
+// must appear as ONE person - the table lives in the shared layer. The PL
+// side's names come from draft.json: until it arrives everyone stands
+// under their own name, and since the filter is drawn after loading
+// anyway, this shows nowhere.
+let PERSON = FunTasy.personLookup(null);
+// Four criteria, independent of each other. Each starts with "Mind" (all),
+// and each offers ONLY the values that actually exist alongside the other
+// filters - otherwise one could click into an empty result list.
+const FILTER = { liga: 'mind', ki: 'mind', fordulo: 'mind', fajta: 'mind' };
+// The column name comes from the shared layer: the article card and this
+// filter must show the same.
+const KIND_NAME = FunTasy.articleKindName;
 
-const opcional = u => fetch(u + '?t=' + Date.now())
+const optional = u => fetch(u + '?t=' + Date.now())
   .then(r => r.ok ? r.json() : null).catch(() => null);
 
-// Melyik fordulo vegleges? Ugyanabbol, amibol a ket liga-oldal tudja:
-// az NB1-nel az eredmeny mar a menetrendben all (a folyamatban levot a
-// gyujto "provisional"-kent jeloli), a Draftnal a kulon veglegesitett lista.
-function zarasBetolt(res, hist){
+// Which round is final? From the same data the two league pages know it
+// from: on NB1 the result is already in the schedule (the collector marks
+// the one in progress as "provisional"), on the Draft the separately
+// finalised list.
+function loadClosed(res, hist){
   if (res && res.schedule){
-    const ideiglenes = new Set((res.provisional || []).map(Number));
+    const provisional = new Set((res.provisional || []).map(Number));
     for (const r in res.schedule){
-      if (ideiglenes.has(+r)) continue;
-      if ((res.schedule[r] || []).some(m => FunTasy.played(m))) ZART.nb1.add(+r);
+      if (provisional.has(+r)) continue;
+      if ((res.schedule[r] || []).some(m => FunTasy.played(m))) CLOSED.nb1.add(+r);
     }
   }
-  if (hist) for (const r of (hist.veglegesek || [])) ZART.pl.add(+r);
+  if (hist) for (const r of (hist.veglegesek || [])) CLOSED.pl.add(+r);
 }
-const zartE = (liga, fordulo) => (ZART[liga] || new Set()).has(+fordulo);
+const isClosed = (league, round) => (CLOSED[league] || new Set()).has(+round);
 
-// Egy cikk atmegy-e a szuron, egy szempontot kihagyva. A kihagyas kell
-// ahhoz, hogy az adott szempont valasztekat a TOBBI szuro mellett letezo
-// ertekekbol allitsuk ossze: a sajat ertekere szurve ugyanis mindig csak
-// egy ertek maradna, es nem lehetne atvaltani rola.
-// A heti rovatnak nincs ellenfele, es nincs szakvezetoje sem: a cime all a
-// `hazai` helyen. Az emberre szuresbol ezert kimarad - nem senkihez tartozik,
-// hanem mindenkihez.
-const emberE = (be, kulcs) => !!be.vendeg
-  && (SZEMELY(be.hazai).kulcs === kulcs || SZEMELY(be.vendeg).kulcs === kulcs);
-const atmegy = (be, kiveve) => {
-  const k = [].concat(kiveve || []);
-  const ki = n => k.indexOf(n) >= 0;
-  return (ki('liga')    || SZURO.liga    === 'mind' || be.liga === SZURO.liga) &&
-         (ki('ki')      || SZURO.ki      === 'mind' || emberE(be, SZURO.ki)) &&
-         (ki('fordulo') || SZURO.fordulo === 'mind' || String(be.fordulo) === SZURO.fordulo) &&
-         (ki('fajta')   || SZURO.fajta   === 'mind' || be.fajta === SZURO.fajta);
+// Whether an article passes the filter, leaving out one criterion. Leaving
+// it out is needed so that a criterion's choices are built from the values
+// existing alongside the OTHER filters: filtered on its own value there
+// would always be just one value left, and one could not switch away from it.
+// The weekly column has no opponent and no manager either: its title stands
+// in the `hazai` (home) slot. So it is left out of filtering by person - it
+// belongs not to nobody but to everybody.
+const isPerson = (entry, key) => !!entry.vendeg
+  && (PERSON(entry.hazai).key === key || PERSON(entry.vendeg).key === key);
+const passes = (entry, except) => {
+  const k = [].concat(except || []);
+  const skip = n => k.indexOf(n) >= 0;
+  return (skip('liga')    || FILTER.liga    === 'mind' || entry.liga === FILTER.liga) &&
+         (skip('ki')      || FILTER.ki      === 'mind' || isPerson(entry, FILTER.ki)) &&
+         (skip('fordulo') || FILTER.fordulo === 'mind' || String(entry.fordulo) === FILTER.fordulo) &&
+         (skip('fajta')   || FILTER.fajta   === 'mind' || entry.fajta === FILTER.fajta);
 };
 
-// Legordulo, nem gombsor. Tizennyolc szakvezeto-gomb harom sorban tobb
-// helyet vett el, mint amennyi cikk latszott alatta; a legordulo egy sor,
-// es telefonon a rendszer sajat valasztojat nyitja meg.
-const opcio = (ertek, felirat, kivalasztott) =>
-  `<option value="${FunTasy.esc(ertek)}"${kivalasztott ? ' selected' : ''}>${
-    FunTasy.esc(felirat)}</option>`;
+// A dropdown, not a row of buttons. Eighteen manager buttons in three rows
+// took more room than the articles visible under them; the dropdown is one
+// line, and on a phone it opens the system's own picker.
+const option = (value, label, selected) =>
+  `<option value="${FunTasy.esc(value)}"${selected ? ' selected' : ''}>${
+    FunTasy.esc(label)}</option>`;
 
-function gombsor(nev, cim, ertekek){
-  if (ertekek.length < 2) return '';
-  const o = [['mind', cim]].concat(ertekek)
-    .map(([e, f]) => opcio(e, f, SZURO[nev] === e)).join('');
-  return `<select class="magszuro${SZURO[nev] === 'mind' ? '' : ' on'}" ` +
-         `data-szuro="${nev}" aria-label="${FunTasy.esc(cim)}">${o}</select>`;
+function filterSelect(name, title, values){
+  if (values.length < 2) return '';
+  const o = [['mind', title]].concat(values)
+    .map(([e, f]) => option(e, f, FILTER[name] === e)).join('');
+  return `<select class="magszuro${FILTER[name] === 'mind' ? '' : ' on'}" ` +
+         `data-szuro="${name}" aria-label="${FunTasy.esc(title)}">${o}</select>`;
 }
 
-// Kik szerepelnek a szuresben - EMBERENKENT, nem nevenkent. Aki mindket
-// ligaban jatszik, EGY sor: a ket neve egyben all a feliratban, es rea
-// szurve mindket liga irasai eljonnek - kulonben ketszer szerepelne, ket
-// kulon szakvezetokent, pedig egy ember.
-function emberek(mind, kiveve){
-  // Ha ugyis egy ligat nezunk, a masik liganev nem mond semmit: ott
-  // mindenki az ITTENI neven all.
-  const egyLiga = LIGAOBJ || SZURO.liga !== 'mind';
-  const nep = new Map();
-  for (const be of mind) if (atmegy(be, kiveve))
-    for (const n of [be.hazai, be.vendeg].filter(x => be.vendeg && x)){
-      const sz = SZEMELY(n);
-      if (!nep.has(sz.kulcs)) nep.set(sz.kulcs, egyLiga ? n : sz.felirat);
+// Who appears in the filter - BY PERSON, not by name. Someone who plays in
+// both leagues is ONE row: both names stand together in the label, and
+// filtering on it brings the pieces of both leagues - otherwise they would
+// appear twice, as two separate managers, though they are one person.
+function people(allItems, except){
+  // When looking at one league anyway, the other league's name says nothing:
+  // there everyone stands under the name used HERE.
+  const oneLeague = LEAGUE_OBJ || FILTER.liga !== 'mind';
+  const byPerson = new Map();
+  for (const entry of allItems) if (passes(entry, except))
+    for (const n of [entry.hazai, entry.vendeg].filter(x => entry.vendeg && x)){
+      const person = PERSON(n);
+      if (!byPerson.has(person.key)) byPerson.set(person.key, oneLeague ? n : person.label);
     }
-  return [...nep.entries()].sort((a, b) => a[1].localeCompare(b[1], 'hu'));
+  return [...byPerson.entries()].sort((a, b) => a[1].localeCompare(b[1], 'hu'));
 }
 
-function szuroRajz(mind){
-  const egyedi = (kiveve, kulcs) => {
+function drawFilters(allItems){
+  const distinct = (except, key) => {
     const k = [];
-    for (const be of mind) if (atmegy(be, kiveve)) for (const x of [].concat(kulcs(be)))
+    for (const entry of allItems) if (passes(entry, except)) for (const x of [].concat(key(entry)))
       if (!k.includes(x)) k.push(x);
     return k;
   };
   let h = '';
-  // Negy KULON szuro. A liga es a szakvezeto egy ideig egy vezerlon osztozott,
-  // azzal az indokkal, hogy egy szakvezeto ugyis egy ligahoz tartozik - ez nem
-  // igaz: aki mindket ligaban jatszik, egy ember, es a ket szempont fuggetlen.
-  // Igy "Vince + NB1" is kerdezheto, es egyik lista sem rejti el a masikat.
-  // A liga-szuro a liga sajat ujsagjaban magatol elmarad: ott egy liga van,
-  // egy ertek mellett pedig a gombsor ures marad.
-  h += gombsor('liga', 'Liga',
-    FunTasy.LIGAK.filter(l => mind.some(be => be.liga === l.id && atmegy(be, 'liga')))
-      .map(l => [l.id, l.nev]));
-  h += gombsor('ki', 'Szakvezető', emberek(mind, 'ki'));
-  h += gombsor('fordulo', 'Forduló',
-    egyedi('fordulo', b => String(b.fordulo)).sort((a, b) => b - a)
+  // Four SEPARATE filters. League and manager are not one control on the
+  // grounds that a manager belongs to one league anyway - that is not true:
+  // someone who plays in both leagues is one person, and the two criteria
+  // are independent. So "Vince + NB1" can be asked too, and neither list
+  // hides the other.
+  // In a league's own magazine the league filter drops out by itself: there
+  // is one league, and with a single value the select stays empty.
+  h += filterSelect('liga', 'Liga',
+    FunTasy.LEAGUES.filter(l => allItems.some(entry => entry.liga === l.id && passes(entry, 'liga')))
+      .map(l => [l.id, l.name]));
+  h += filterSelect('ki', 'Szakvezető', people(allItems, 'ki'));
+  h += filterSelect('fordulo', 'Forduló',
+    distinct('fordulo', b => String(b.fordulo)).sort((a, b) => b - a)
       .map(r => [r, r + '.']));
-  h += gombsor('fajta', 'Típus',
-    egyedi('fajta', b => b.fajta).map(f => [f, FAJTANEV(f)]));
-  // A szamlalo a szurok MELLE kerul, nem alajuk: egy sorral kevesebb.
-  const lathato = FunTasy.articleList(CIKKEK, zartE)
-    .filter(x => (!LIGAOBJ || x.liga === LIGA) && atmegy(x, null)).length;
-  const szur = Object.values(SZURO).some(x => x !== 'mind');
+  h += filterSelect('fajta', 'Típus',
+    distinct('fajta', b => b.fajta).map(f => [f, KIND_NAME(f)]));
+  // The counter goes NEXT TO the filters, not under them: one line less.
+  const visible = FunTasy.articleList(ARTICLE_STORE, isClosed)
+    .filter(x => (!LEAGUE_OBJ || x.liga === LEAGUE) && passes(x, null)).length;
+  const filtered = Object.values(FILTER).some(x => x !== 'mind');
   $('magSzuroSav').innerHTML = h +
-    `<span class="magszam">${lathato}${szur ? ' / ' + mind.length : ''} írás</span>` +
-    (szur ? '<button class="magtorol" data-szuro="mind">Szűrők törlése</button>' : '');
-  $('magSzuroSav').style.display = (h || szur) ? '' : 'none';
+    `<span class="magszam">${visible}${filtered ? ' / ' + allItems.length : ''} írás</span>` +
+    (filtered ? '<button class="magtorol" data-szuro="mind">Szűrők törlése</button>' : '');
+  $('magSzuroSav').style.display = (h || filtered) ? '' : 'none';
 }
 
-function rajzol(){
-  const mind = FunTasy.articleList(CIKKEK, zartE)
-    .filter(x => !LIGAOBJ || x.liga === LIGA);
-  szuroRajz(mind);
-  const lista = mind.filter(x => atmegy(x, null));
-  if (!lista.length){
+function draw(){
+  const allItems = FunTasy.articleList(ARTICLE_STORE, isClosed)
+    .filter(x => !LEAGUE_OBJ || x.liga === LEAGUE);
+  drawFilters(allItems);
+  const items = allItems.filter(x => passes(x, null));
+  if (!items.length){
     $('lista').innerHTML = '<div class="vlt-ures">Erre a szűrésre nincs írás.</div>';
     return;
   }
-  // Liganként egy cim, alatta a fordulok visszafele - az articleList mar
-  // ebben a sorrendben adja vissza. A liga sajat ujsagjaban a cim felesleges:
-  // a fejlecben ugyis az all.
-  // MEGJELENESI SORRENDBEN, ligakeveredve - ezert nincs liga-cimsor. Amig a
-  // lista ligankent allt blokkokban, egy cimsor elvalasztotta oket; idorendben
-  // viszont majdnem minden cikk fole kerulne egy. A liga neve ezert a cikk
-  // sajat fejlecebe kerult, a rovat es a fordulo melle.
+  // In ORDER OF PUBLICATION, leagues mixed - so there is no league heading:
+  // in time order nearly every article would get one above it. The league's
+  // name is in each article's own header instead, next to the column and
+  // the round.
   let h = '';
-  for (const be of lista) h += FunTasy.articleCardHTML(be);
+  for (const entry of items) h += FunTasy.articleCardHTML(entry);
   $('lista').innerHTML = h;
-  // A hivatkozassal erkezot odavisszuk, ahova jott (a "Masolom" ilyet ad).
-  // KETSZER: a kepernyon kivuli cikkek magassaga eloszor csak BECSLES
-  // (content-visibility), tehat az elso ugras melle mehet; mire a masodik
-  // fut, a kozbeeso cikkek valodi merete mar megvan.
+  // Someone arriving by a link is taken to where they came for ("Másolom"
+  // gives such links). TWICE: the height of off-screen articles is first
+  // only an ESTIMATE (content-visibility), so the first jump can miss; by the
+  // time the second one runs, the real size of the articles in between is known.
   if (location.hash){
-    const ugras = () => {
-      const cel = document.getElementById(location.hash.slice(1));
-      if (cel) cel.scrollIntoView();
+    const jump = () => {
+      const target = document.getElementById(location.hash.slice(1));
+      if (target) target.scrollIntoView();
     };
-    ugras();
-    requestAnimationFrame(() => requestAnimationFrame(ugras));
+    jump();
+    requestAnimationFrame(() => requestAnimationFrame(jump));
   }
 }
 
 document.addEventListener('change', e => {
   const g = e.target.closest('select[data-szuro]');
   if (!g) return;
-  SZURO[g.getAttribute('data-szuro')] = g.value;
-  rajzol();
+  FILTER[g.getAttribute('data-szuro')] = g.value;
+  draw();
 });
 document.addEventListener('click', e => {
   if (!e.target.closest('.magtorol')) return;
-  for (const k in SZURO) SZURO[k] = 'mind';
-  rajzol();
+  for (const k in FILTER) FILTER[k] = 'mind';
+  draw();
 });
 
-Promise.all([opcional('../articles.json'),
-             opcional('../results.json'), opcional('../draft_history.json'),
-             // Csak a kozos kiadasnak kell: ebbol derul ki, melyik csapatnev
-             // melyik azonositohoz tartozik, vagyis kit kell egy emberkent
-             // mutatni a ket ligabol. A liga sajat ujsagjaban nincs mit
-             // osszekotni, ott ez a keres el is marad.
-             LIGAOBJ ? null : opcional('../draft.json')])
-  .then(([kint, res, hist, draft]) => {
-    zarasBetolt(res, hist);
-    SZEMELY = FunTasy.szemelyTar(draft && draft.entries);
-    CIKKEK = kint || { leagues: {} };
-    rajzol();
+Promise.all([optional('../articles.json'),
+             optional('../results.json'), optional('../draft_history.json'),
+             // Only the joint edition needs it: it tells which team name belongs to
+             // which id, that is, who has to be shown as one person across the two
+             // leagues. In a league's own magazine there is nothing to link, and this
+             // request is skipped.
+             LEAGUE_OBJ ? null : optional('../draft.json')])
+  .then(([published, res, hist, draft]) => {
+    loadClosed(res, hist);
+    PERSON = FunTasy.personLookup(draft && draft.entries);
+    ARTICLE_STORE = published || { leagues: {} };
+    draw();
   })
   .catch(() => { $('lista').innerHTML =
     '<div class="vlt-ures">Az írásokat most nem sikerült betölteni.</div>'; });

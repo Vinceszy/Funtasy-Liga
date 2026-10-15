@@ -65,7 +65,7 @@ const eloFordulova = p => jsonAtir(p, '**/draft.json*', j => {
 
   const egy = await p.evaluate(() => {
     const e = Object.keys(LIVEPTS)[0];
-    return { pont: LIVEPTS[e], perc: (LIVEPERC[e] || {}).perc };
+    return { pont: LIVEPTS[e], perc: (LIVE_MINUTES[e] || {}).perc };
   });
   jo(egy.pont === 8, 'a játékos pontja a bontás összege (8), nem a beragadt összesítő (1) '
      + '— kapott: ' + egy.pont);
@@ -107,7 +107,7 @@ const eloFordulova = p => jsonAtir(p, '**/draft.json*', j => {
                              && Object.keys(LIVEPTS).length > 0, null, { timeout: 30000 });
   const ures = await q.evaluate(() => {
     const e = Object.keys(LIVEPTS)[0];
-    return { pont: LIVEPTS[e], perc: (LIVEPERC[e] || {}).perc };
+    return { pont: LIVEPTS[e], perc: (LIVE_MINUTES[e] || {}).perc };
   });
   jo(ures.pont === 3 && ures.perc === 45,
      'üres bontásnál a stats marad a forrás (3 pont, 45 perc) — kapott: '

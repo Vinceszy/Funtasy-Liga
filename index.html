@@ -6,17 +6,17 @@
 <title>FunTasy — ligák</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- A betukeszlet-ivet NEM blokkolokent toltjuk. Egy sima <link rel=stylesheet>
-     megallitja a lap megjeleneset, amig a Google valaszol: kimerve DOMContentLoaded
-     57 ms helyett 12,6 MASODPERC, ha a fonts.googleapis.com nem elerheto - addig
-     a lapon SEMMI nincs. A media="print" + onload trukk aszinkronna teszi: a
-     tartalom azonnal latszik a tartalek betuvel (a `display=swap` miatt ugyis az
-     lenne az elso festes), es a webfont akkor lep be, amikor megjott. -->
+<!-- The font stylesheet is NOT loaded as render-blocking. A plain <link rel=stylesheet>
+     holds back the page until Google answers: measured DOMContentLoaded at
+     12.6 SECONDS instead of 57 ms when fonts.googleapis.com is unreachable - until
+     then there is NOTHING on the page. The media="print" + onload trick makes it
+     asynchronous: the content shows at once in the fallback font (with `display=swap`
+     that would be the first paint anyway), and the web font steps in when it arrives. -->
 <link rel="stylesheet" media="print" onload="this.media='all';this.onload=null"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="funtasy.css?v=119">
+<link rel="stylesheet" href="funtasy.css?v=120">
 </head>
 <body class="kezdolap">
 <div class="wrap">
@@ -47,24 +47,24 @@
 <div class="lablec" id="lablec"></div>
 </div>
 
-<script src="funtasy.js?v=119"></script>
+<script src="funtasy.js?v=120"></script>
 <script>
-// A kartyak ugyanabbol a listabol keszulnek, mint a liga-oldalak valtosavja
-// (funtasy.js -> LIGAK), tehat uj liga felvetele ott egyetlen sor.
-// A kartyan a liga neve mellett a JATEKMODJA is ott van (salary cap / draft),
-// mert az mondja meg, milyen szabalyok szerint megy. Ha egyszer sok liga lesz,
-// ugyanez a mezo (l.tipus) adja majd a csoportositast is.
-document.getElementById('ligak').innerHTML = FunTasy.LIGAK.map(l =>
-  `<a class="ligakartya" data-liga="${FunTasy.esc(l.id)}" data-tipus="${FunTasy.esc(l.tipus)}" href="${FunTasy.esc(l.mappa)}">
+// The cards are built from the same list as the league pages' switcher bar
+// (funtasy.js -> LEAGUES), so adding a league is a single line there.
+// Next to the league's name the card also shows its GAME MODE (salary cap /
+// draft), because that says what rules it runs by. If there are ever many
+// leagues, the same field (l.type) will give the grouping too.
+document.getElementById('ligak').innerHTML = FunTasy.LEAGUES.map(l =>
+  `<a class="ligakartya" data-liga="${FunTasy.esc(l.id)}" data-tipus="${FunTasy.esc(l.type)}" href="${FunTasy.esc(l.path)}">
      <div class="fejsor">
-       <h2>${FunTasy.esc(l.nev)}</h2>
-       <span class="tipuscimke">${FunTasy.esc(l.tipusNev)}</span>
+       <h2>${FunTasy.esc(l.name)}</h2>
+       <span class="tipuscimke">${FunTasy.esc(l.typeName)}</span>
      </div>
-     <div class="kartyaleiras">${FunTasy.esc(l.leiras)}</div>
+     <div class="kartyaleiras">${FunTasy.esc(l.description)}</div>
      <span class="tovabb">Megnyitás →</span>
    </a>`).join('');
-FunTasy.renderLablec('');
-FunTasy.verzioOr();   // elavult lap -> egyszeri ujratoltes
+FunTasy.renderFooter('');
+FunTasy.reloadIfStale();   // stale page -> reload once
 </script>
 </body>
 </html>

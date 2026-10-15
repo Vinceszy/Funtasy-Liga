@@ -86,15 +86,15 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
       { value: 1,  points: 3, competition_stat_config: { name: 'Győzelem' } }] }) }));
 
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
-  await p.waitForFunction(() => typeof showProfil === 'function', null, { timeout: 20000 });
+  await p.waitForFunction(() => typeof showProfile === 'function', null, { timeout: 20000 });
   // A meccsek.json NEM blokkolo uton tolt be, es a profil sorai egyszer
   // rajzolodnak ki: aki elobb nyitja meg a profilt, annal az ellenfel es az
   // allas meg nincs a sorban, es a teszt ezen bukik - meresben minden
   // masodik futasban. A fenti jsonAtir determinisztikussa tette az ADATOT,
   // de az IDOZITEST nem; ezert megvarjuk, hogy megjojjon.
-  await p.waitForFunction(() => typeof MECCSEK !== 'undefined' && MECCSEK !== null,
+  await p.waitForFunction(() => typeof GAMES !== 'undefined' && GAMES !== null,
                           null, { timeout: 20000 });
-  await p.waitForFunction(() => typeof ARAK !== 'undefined' && ARAK !== null,
+  await p.waitForFunction(() => typeof PRICES !== 'undefined' && PRICES !== null,
                           null, { timeout: 20000 });
 
   // ---- a belepesi pont: "Szezon jatekosai" ----
@@ -213,7 +213,7 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
                   keretszam: 8,
                   tulajok: [{ nev: 'A', kezdo: true, kapitany: true },
                             { nev: 'B', kezdo: false, kapitany: false }] };
-    const rajz = l => FunTasy.profilHTML({ liga: l, nev: 'X', sorok: [sor] });
+    const rajz = l => FunTasy.profileHTML({ liga: l, nev: 'X', sorok: [sor] });
     return { nb1: rajz('nb1'), pl: rajz('pl') };
   });
   jo(/class="parany"/.test(ketfele.nb1), 'salary cap ligában ott az arány-blokk');
@@ -451,7 +451,7 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
     return j;
   });
   await q.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
-  await q.waitForFunction(() => typeof showProfil === 'function'
+  await q.waitForFunction(() => typeof showProfile === 'function'
     && Object.keys(HIST).length > 0, null, { timeout: 20000 });
 
   cim('PL: belépési pont');
@@ -515,7 +515,7 @@ const JATEKOS = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: 
   // mert ott allithatjuk be mindket esetet.
   const gazdatlanSor = await q.evaluate(() => {
     const alap = { r: 1, ellenfel: 'ARS', hazai: true, hp: 2, vp: 1, tulajok: [] };
-    const rajz = x => FunTasy.profilHTML(
+    const rajz = x => FunTasy.profileHTML(
       { liga: 'pl', nev: 'X', senkinel: '–', sorok: [Object.assign({}, alap, x)] });
     return { mult: rajz({ pont: 0 }), jovo: rajz({ jovo: true }) };
   });

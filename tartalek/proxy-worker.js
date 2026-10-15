@@ -1,90 +1,96 @@
-/* FunTasy sajat CORS-proxy - Cloudflare Worker.
+/* FunTasy's own CORS proxy - a Cloudflare Worker.
 
-   MIERT LETEZIK: a bongeszo az MLSZ/FPL API-t kozvetlenul nem erheti el
-   (nincs CORS-fejlec a valaszukban - merve: naplo/proxy-meres.txt), ezert
-   minden elo lekeres kozvetiton megy at. 2026-08-27-en a ket ingyenes
-   kozvetito egyszerre esett ki (kvota/tulterheles) - mindket liga elo resze
-   leallt. A sajat Worker a sajat fiokunk alatt fut, senki nem kapcsolja le,
-   es az ingyenes keret (100 000 keres/nap) a forgalmunk sokszorosa.
+   WHY IT EXISTS: the browser cannot reach the MLSZ/FPL API directly
+   (their responses carry no CORS header - measured: naplo/proxy-meres.txt),
+   so every live fetch goes through an intermediary. The two free proxies
+   once failed at the same time (quota/overload) - the live part of both
+   leagues stopped. Our own Worker runs under our own account, nobody
+   switches it off, and the free allowance (100,000 requests/day) is a
+   multiple of our traffic.
 
-   TELEPITES: a worker a REPOHOZ kotve epul (Cloudflare "connect to git"),
-   a beallitasokat a gyokerbeli wrangler.toml adja - minden main-re erkezo
-   push utan a Cloudflare ujratelepiti. Kezzel nem kell kodot masolni; a
-   worker URL-je a funtasy.js SAJAT_PROXY konstansaban all.
+   DEPLOYMENT: the worker is built tied to the REPOSITORY (Cloudflare
+   "connect to git"), the settings come from wrangler.toml in the root -
+   Cloudflare redeploys it after every push to main. No code has to be
+   copied by hand; the worker's URL is in the OWN_PROXY constant of
+   funtasy.js.
 
-   MIT CSINAL: ?url=<kodolt cel-URL> alaku GET keresre lekeri a celt, es a
-   valaszt CORS-fejleccel adja vissza. Csak a ket ismert API-t szolgalja ki,
-   es csak a sajat oldalunknak - masnak nem proxy, nem lehet visszaelni vele.
+   WHAT IT DOES: for a GET request of the form ?url=<encoded target URL> it
+   fetches the target and returns the response with a CORS header. It only
+   serves the two known APIs, and only for our own site - it is not a
+   proxy for anyone else, it cannot be abused.
 
-   EDGE-CACHE: az MLSZ-valaszokat 60 masodpercig a Cloudflare peremhaloja
-   tarolja, tehat ha nyolcan nezik ugyanazt a meccset, az MLSZ fele EGY
-   keres megy ki percenkent, nem nyolc. Az FPL elo lekereseit a lap sajat
-   fpl_= belyege szandekosan kihagyja ebbol (percre friss kell). A bongeszo
-   fele no-store megy - a "beragadt pontszam" hibat okozo bongeszo/proxy-
-   gyorsitotarazas tehat itt sem johet vissza.
+   EDGE CACHE: MLSZ responses are kept for 60 seconds by Cloudflare's edge
+   network, so if eight people watch the same match, ONE request a minute
+   goes out to the MLSZ, not eight. The FPL live fetches deliberately skip
+   this through the page's own fpl_= stamp (they have to be minute-fresh).
+   Towards the browser no-store is sent - so the browser/proxy caching that
+   caused the "stuck score" error cannot come back here either.
 
-   UTOLSO ISMERT ALLAS (a `TAROLT` KV-kotes): a gyorsitotar keves ahhoz,
-   amit a lapnak kell. A gyorsitotar LEJAR es eldob; ha a lejarat utan
-   erkezel, megint neked kell megvarnod a teljes lekerest - kozben pedig a
-   3 orankent frissulo repo-adatot latod. A KERT VISELKEDES viszont az,
-   hogy "ne lassak regebbit annal, amit barki utoljara lekert".
+   LAST KNOWN SCORE (the `TAROLT` KV binding): a cache is not enough for
+   what the page needs. A cache EXPIRES and discards; arriving after the
+   expiry, you have to wait for the full fetch again - and meanwhile you
+   see the repository data, refreshed every 3 hours. The WANTED BEHAVIOUR,
+   however, is "let me not see anything older than what anybody fetched
+   last".
 
-   Ezert amit ritkan valtozik, azt MEG IS JEGYEZZUK (TAROLHATO lista), es a
-   lap betolteskor egyetlen keresben elkeri (`/tarolt?url=..&url=..`). Nem
-   a bongeszo kuldi fel az adatot - a Worker azt jegyzi meg, amit o maga
-   kert le -, tehat nincs mit meghamisitani.
+   So what rarely changes IS REMEMBERED (the STORABLE list), and the page
+   asks for it in a single request on load (`/tarolt?url=..&url=..`). The
+   browser does not send the data up - the Worker remembers what it
+   fetched itself -, so there is nothing to forge.
 
-   IRAS CSAK VALTOZASKOR. A KV ingyenes kerete napi 1000 iras; az NB1 elo
-   pontja naponta 2-4-szer valtozik (az MLSZ meccs kozben nem ad pontot),
-   a PL keretek fordulonkent egyszer. Igy napi par tucat iras a teljes
-   koltseg. A gyorsan valtozo PL elo pontok SZANDEKOSAN nincsenek a
-   listan: ott a legutobbi lekeres egy perc mulva ugyis ertektelen.
+   WRITE ONLY ON CHANGE. The KV free allowance is 1000 writes a day; NB1's
+   live points change 2-4 times a day (the MLSZ gives no points during a
+   match), PL squads once per round. So the whole cost is a few dozen
+   writes a day. The fast-changing PL live points are DELIBERATELY not on
+   the list: there the latest fetch is worthless a minute later anyway.
 
-   A kotes HIANYOZHAT (pl. amig a KV-nevter nincs meg): olyankor a Worker
-   pontosan ugy viselkedik, mint korabban - a tarolas nema no-op.
+   The binding MAY BE MISSING (e.g. while the KV namespace does not exist):
+   then the Worker behaves exactly as it does without storage - storing is
+   a silent no-op.
 
-   CIKK-ERTEKELES (`/ertekeles`): a lapon minden irashoz jar egy egytol
-   negyig tarto ertekeles. A ket also fokozathoz indokot is kerunk, a nezo
-   SAJAT SZAVAIVAL, mert az a fajta visszajelzes, amibol a kovetkezo szoveg
-   jobb lesz - a puszta "ketto" abbol semmit nem mond meg. Egy eszkoz egy irast egyszer ertekel:
-   a kulcsban benne van az eszkoz azonositoja, tehat az ujraertekeles a
-   sajat korabbit irja felul, nem halmoz. A tartalom a mienk, nem szemelyes
-   adat - eszkoz-azonositon kivul semmit nem kerunk es nem tarolunk. */
+   ARTICLE RATING (`/ertekeles`): every piece on the page can be rated from
+   one to four. For the two lower scores a reason is asked for too, IN THE
+   VIEWER'S OWN WORDS, because that is the kind of feedback that makes the
+   next text better - a bare "two" says nothing about that. One device
+   rates one piece once: the key contains the device id, so a re-rating
+   overwrites one's own earlier rating instead of piling up. The content
+   is ours, not personal data - apart from the device id nothing is asked
+   for or stored. */
 
-const CEL_HOSZTOK = ['fantasy-api.mlsz.hu', 'draft.premierleague.com'];
-// Az ertekeles kulcsa a cikk azonositoja: liga|fordulo|fajta|hazai|vendeg.
-// Szigoru minta, mert ebbol KV-kulcs lesz: amit nem ismerunk fel, azt nem
-// irjuk be.
+const TARGET_HOSTS = ['fantasy-api.mlsz.hu', 'draft.premierleague.com'];
+// The rating's key is the article id: league|round|kind|home|away.
+// A strict pattern, because it becomes a KV key: what is not recognised is
+// not written.
 //
-// A HETI ROVAT (`elemzes`) is ertekelheto, es nala az utolso mezo nem egy
-// parharc, hanem a cikk cime. A mintabol sokaig hianyzott a fajta, igy a
-// Worker minden rovat-ertekelest 400-zal utasitott el - a nezo ebbol semmit
-// nem latott, a naplo pedig nulla ertekelest mutatott, mintha senki nem irt
-// volna. Uj cikkfajta felvetelekor EZT a sort is bovitani kell.
-export const CIKK_MINTA =
+// The WEEKLY COLUMN (`elemzes`) can be rated too, and for it the last field
+// is not a fixture but the article's title. Without the kind in this
+// pattern the Worker rejects every column rating with 400 - the viewer
+// sees nothing of it, and the log shows zero ratings, as if nobody had
+// written. When a new article kind is added, THIS line has to be extended too.
+export const ARTICLE_KEY_PATTERN =
   /^(nb1|pl)\|\d{1,3}\|(summary|preview|elemzes)\|[^\n\r/]{1,120}$/;
-export const ESZKOZ_MINTA = /^[a-z0-9]{8,32}$/;
-export const MAX_INDOK = 600;
-const EREDETEK = ['https://vinceszy.github.io',
+export const DEVICE_PATTERN = /^[a-z0-9]{8,32}$/;
+export const MAX_REASON = 600;
+const ORIGINS = ['https://vinceszy.github.io',
                   'http://localhost:8910', 'http://127.0.0.1:8910'];
 
-// Mit jegyzunk meg: ami RITKAN valtozik, es amire a kovetkezo latogatonak
-// is szuksege lesz. Ami percenkent valtozik, annak a megjegyzese csak a
-// kvotat enne - a legutobbi valasz addigra ugyis elavult.
-export const TAROLHATO = [
-  /^\/competitions\/\d+\/rankings$/,        // NB1 elo pont - naponta 2-4x
-  /^\/api\/entry\/\d+\/event\/\d+$/,       // PL keret - fordulon belul fix
-  /^\/api\/league\/\d+\/details$/,          // PL liga-adat - fordulon belul fix
+// What is remembered: what changes RARELY and the next visitor will need
+// too. Remembering what changes every minute would only eat the quota -
+// the latest response is stale by then anyway.
+export const STORABLE = [
+  /^\/competitions\/\d+\/rankings$/,        // NB1 live points - 2-4x a day
+  /^\/api\/entry\/\d+\/event\/\d+$/,       // PL squad - fixed within a round
+  /^\/api\/league\/\d+\/details$/,          // PL league data - fixed within a round
 ];
-export const tarolhatoE = cel =>
-  TAROLHATO.some(r => r.test(cel.pathname.replace(/\/+$/, '')));
+export const isStorable = target =>
+  STORABLE.some(r => r.test(target.pathname.replace(/\/+$/, '')));
 
-// A TAROLO KULCSA a cel-URL, megtisztitva a gyorsitotar-toro belyegektol
-// (`fpl_`, `_`). Enelkul minden lekeres uj kulcsot kapna, es a tarolo
-// percenkent hizna ahelyett, hogy ugyanazt frissitene. A lap ugyanezt a
-// tisztitast vegzi a keresesnel (funtasy.js: taroltKulcs).
-export function taroltKulcs(celUrl) {
-  const u = new URL(celUrl);
+// THE STORE'S KEY is the target URL, cleaned of the cache-busting stamps
+// (`fpl_`, `_`). Without it every fetch would get a new key, and the store
+// would grow every minute instead of updating the same entry. The page
+// does the same cleaning when looking up (funtasy.js: storedResponses).
+export function storedKey(targetUrl) {
+  const u = new URL(targetUrl);
   u.searchParams.delete('fpl_');
   u.searchParams.delete('_');
   return u.toString();
@@ -92,10 +98,10 @@ export function taroltKulcs(celUrl) {
 
 export default {
   async fetch(request, env, ctx) {
-    const eredet = request.headers.get('Origin');
+    const origin = request.headers.get('Origin');
     const cors = {
       'Access-Control-Allow-Origin':
-        (eredet && EREDETEK.indexOf(eredet) >= 0) ? eredet : EREDETEK[0],
+        (origin && ORIGINS.indexOf(origin) >= 0) ? origin : ORIGINS[0],
       'Vary': 'Origin',
     };
     if (request.method === 'OPTIONS')
@@ -105,136 +111,138 @@ export default {
         'Access-Control-Allow-Headers': 'Accept, Content-Type',
         'Access-Control-Max-Age': '86400',
       } });
-    const sajatUt = new URL(request.url).pathname.replace(/\/+$/, '');
-    if (request.method !== 'GET' && !(request.method === 'POST' && sajatUt === '/ertekeles'))
+    const ownPath = new URL(request.url).pathname.replace(/\/+$/, '');
+    if (request.method !== 'GET' && !(request.method === 'POST' && ownPath === '/ertekeles'))
       return new Response('csak GET', { status: 405, headers: cors });
-    // Bongeszobol jovo keresnel az Origin kotelezoen a mienk; Origin nelkuli
-    // kerest (pl. curl, meres) atengedunk - a cel-korlatozas ugyanugy vedi.
-    if (eredet && EREDETEK.indexOf(eredet) < 0)
+    // For a request from a browser the Origin must be ours; a request without
+    // Origin (e.g. curl, a measurement) is let through - the target
+    // restriction protects it just the same.
+    if (origin && ORIGINS.indexOf(origin) < 0)
       return new Response('ismeretlen eredet', { status: 403, headers: cors });
-    // IRASNAL viszont kotelezo az Origin. A GET-eket az vedi, hogy csak a ket
-    // ismert API-ra mennek - az ertekeles ezzel szemben a MI tarolonkba ir,
-    // es az eszkoz-azonositot a hivo adja, tehat Origin nelkul barhonnan
-    // korlatlan sok kulcs keletkezhetne benne.
-    if (request.method === 'POST' && !eredet)
+    // For WRITING, however, the Origin is mandatory. The GETs are protected by
+    // only going to the two known APIs - the rating, on the other hand, writes
+    // into OUR store, and the device id is supplied by the caller, so without
+    // an Origin any number of keys could be created in it from anywhere.
+    if (request.method === 'POST' && !origin)
       return new Response('ismeretlen eredet', { status: 403, headers: cors });
-    const sajat = new URL(request.url);
-    // ---- /ertekeles: egy iras ertekelese (1-4), indokkal ----
-    // Az ERTEK a valasz, nem a keres: ha nincs KV-kotes, ezt meg is mondjuk,
-    // kulonben a lap azt hinne, elment - es a nezo hiaba irt volna.
-    if (sajatUt === '/ertekeles') {
-      const fej = new Headers(cors);
-      fej.set('Content-Type', 'application/json');
-      fej.set('Cache-Control', 'no-store');
+    const ownUrl = new URL(request.url);
+    // ---- /ertekeles: rating one piece (1-4), with a reason ----
+    // The VALUE is the response, not the request: when there is no KV binding,
+    // that is said too, otherwise the page would believe it was saved - and the
+    // viewer would have written in vain.
+    if (ownPath === '/ertekeles') {
+      const respHeaders = new Headers(cors);
+      respHeaders.set('Content-Type', 'application/json');
+      respHeaders.set('Cache-Control', 'no-store');
       if (!env || !env.TAROLT)
         return new Response('{"ok":false,"ok_nelkul":"nincs tarolo"}',
-                            { status: 503, headers: fej });
-      let be;
-      try { be = await request.json(); } catch (e) { be = null; }
-      const pont = be && Number(be.pont);
-      if (!be || !CIKK_MINTA.test(String(be.cikk || '')) ||
-          !ESZKOZ_MINTA.test(String(be.eszkoz || '')) ||
-          !(pont >= 1 && pont <= 4) || pont !== Math.round(pont))
-        return new Response('{"ok":false}', { status: 400, headers: fej });
-      const ertek = {
-        pont: pont,
-        // A nezo SAJAT SZAVAI. Keszre valaszthato okok szandekosan nincsenek:
-        // azok a mi kategoriainkat adnak vissza, es epp az a mondat maradna
-        // ki, amire nem gondoltunk. Vagjuk, hogy egy elszallt kliens se
-        // tolthesse tele a tarolot.
-        indok: String(be.indok == null ? '' : be.indok).slice(0, MAX_INDOK),
+                            { status: 503, headers: respHeaders });
+      let input;
+      try { input = await request.json(); } catch (e) { input = null; }
+      const score = input && Number(input.pont);
+      if (!input || !ARTICLE_KEY_PATTERN.test(String(input.cikk || '')) ||
+          !DEVICE_PATTERN.test(String(input.eszkoz || '')) ||
+          !(score >= 1 && score <= 4) || score !== Math.round(score))
+        return new Response('{"ok":false}', { status: 400, headers: respHeaders });
+      const record = {
+        pont: score,
+        // The viewer's OWN WORDS. There are deliberately no ready-made reasons to
+        // pick: those give back our own categories, and exactly the sentence we
+        // had not thought of would be left out. Cut, so that a runaway client
+        // cannot fill up the store either.
+        indok: String(input.indok == null ? '' : input.indok).slice(0, MAX_REASON),
         ido: new Date().toISOString(),
       };
-      await env.TAROLT.put('ert/' + be.cikk + '/' + be.eszkoz, JSON.stringify(ertek));
-      return new Response('{"ok":true}', { headers: fej });
+      await env.TAROLT.put('ert/' + input.cikk + '/' + input.eszkoz, JSON.stringify(record));
+      return new Response('{"ok":true}', { headers: respHeaders });
     }
-    // ---- /ertekelesek: amit eddig kaptunk ----
-    // Nem titok: a sajat irasainkrol szol, es a liga sajat kozonsegenek.
-    if (sajatUt === '/ertekelesek') {
-      const fej = new Headers(cors);
-      fej.set('Content-Type', 'application/json');
-      fej.set('Cache-Control', 'no-store');
-      // Ures lista es "nincs tarolo" NEM ugyanaz: az elso azt jelenti, hogy
-      // meg senki nem ertekelt, a masodik azt, hogy minden ertekeles elveszik.
-      // Ugyanaz a valasz mindkettore azt jelentette volna, hogy a hiba
-      // nulla ertekeleskent latszik - eppen akkor, amikor baj van.
+    // ---- /ertekelesek: what has been received so far ----
+    // Not a secret: it is about our own writing, and for the league's own audience.
+    if (ownPath === '/ertekelesek') {
+      const respHeaders = new Headers(cors);
+      respHeaders.set('Content-Type', 'application/json');
+      respHeaders.set('Cache-Control', 'no-store');
+      // An empty list and "no store" are NOT the same: the first means nobody
+      // has rated yet, the second that every rating gets lost. The same answer
+      // to both would make the failure look like zero ratings - exactly when
+      // something is wrong.
       if (!env || !env.TAROLT)
-        return new Response('[]', { status: 503, headers: fej });
-      const lista = await env.TAROLT.list({ prefix: 'ert/', limit: 1000 });
-      const ki = [];
-      await Promise.all((lista.keys || []).map(async k => {
+        return new Response('[]', { status: 503, headers: respHeaders });
+      const listing = await env.TAROLT.list({ prefix: 'ert/', limit: 1000 });
+      const out = [];
+      await Promise.all((listing.keys || []).map(async k => {
         const v = await env.TAROLT.get(k.name, { type: 'text' });
         if (!v) return;
-        // a kulcs vege az eszkoz, elotte a cikk azonositoja
+        // the end of the key is the device, before it the article id
         const t = k.name.slice(4);
         const i = t.lastIndexOf('/');
-        try { ki.push({ cikk: t.slice(0, i), ...JSON.parse(v) }); } catch (e) {}
+        try { out.push({ cikk: t.slice(0, i), ...JSON.parse(v) }); } catch (e) {}
       }));
-      ki.sort((a, b) => String(b.ido).localeCompare(String(a.ido)));
-      return new Response(JSON.stringify(ki), { headers: fej });
+      out.sort((a, b) => String(b.ido).localeCompare(String(a.ido)));
+      return new Response(JSON.stringify(out), { headers: respHeaders });
     }
-    // ---- /tarolt: az UTOLSO ISMERT allas, azonnal ----
-    // Egyetlen keresben tobb cel-URL is kerheto (?url=..&url=..): a lap igy
-    // EGY kor-utbol megkapja mind a nyolc szakvezeto legutobbi allasat.
-    // Felfele semmi nem megy ki - ha nincs meg tarolva, ures a valasz, es a
-    // lap a szokasos elo lekeresre tamaszkodik.
-    if (sajat.pathname.replace(/\/+$/, '') === '/tarolt') {
-      const fej = new Headers(cors);
-      fej.set('Content-Type', 'application/json');
-      fej.set('Cache-Control', 'no-store');
-      if (!env || !env.TAROLT) return new Response('{}', { headers: fej });
-      const kertek = sajat.searchParams.getAll('url').slice(0, 20);
-      const ki = {};
-      await Promise.all(kertek.map(async u => {
-        let kulcs;
+    // ---- /tarolt: the LAST KNOWN score, at once ----
+    // Several target URLs can be asked for in one request (?url=..&url=..): so
+    // the page gets the latest score of all eight managers in ONE round trip.
+    // Nothing goes out upstream - if it is not stored yet, the response is
+    // empty, and the page relies on the usual live fetch.
+    if (ownUrl.pathname.replace(/\/+$/, '') === '/tarolt') {
+      const respHeaders = new Headers(cors);
+      respHeaders.set('Content-Type', 'application/json');
+      respHeaders.set('Cache-Control', 'no-store');
+      if (!env || !env.TAROLT) return new Response('{}', { headers: respHeaders });
+      const wanted = ownUrl.searchParams.getAll('url').slice(0, 20);
+      const out = {};
+      await Promise.all(wanted.map(async u => {
+        let key;
         try {
           const c = new URL(u);
-          if (CEL_HOSZTOK.indexOf(c.hostname) < 0) return;
-          kulcs = taroltKulcs(c.toString());
+          if (TARGET_HOSTS.indexOf(c.hostname) < 0) return;
+          key = storedKey(c.toString());
         } catch (e) { return; }
-        const t = await env.TAROLT.getWithMetadata(kulcs, { type: 'text' });
+        const t = await env.TAROLT.getWithMetadata(key, { type: 'text' });
         if (t && t.value != null)
-          ki[u] = { ido: (t.metadata && t.metadata.ido) || null, adat: t.value };
+          out[u] = { ido: (t.metadata && t.metadata.ido) || null, adat: t.value };
       }));
-      return new Response(JSON.stringify(ki), { headers: fej });
+      return new Response(JSON.stringify(out), { headers: respHeaders });
     }
-    let cel;
-    try { cel = new URL(sajat.searchParams.get('url')); }
+    let target;
+    try { target = new URL(ownUrl.searchParams.get('url')); }
     catch (e) {
       return new Response('hianyzo vagy rossz ?url= parameter',
                           { status: 400, headers: cors });
     }
-    if (CEL_HOSZTOK.indexOf(cel.hostname) < 0 || cel.protocol !== 'https:')
-      return new Response('nem engedett cel: ' + cel.hostname,
+    if (TARGET_HOSTS.indexOf(target.hostname) < 0 || target.protocol !== 'https:')
+      return new Response('nem engedett cel: ' + target.hostname,
                           { status: 403, headers: cors });
-    const valasz = await fetch(cel.toString(), {
+    const upstream = await fetch(target.toString(), {
       headers: { 'Accept': 'application/json',
                  'User-Agent': 'FunTasy-proxy (github.com/Vinceszy/Funtasy-Liga)' },
       cf: { cacheTtl: 60, cacheEverything: true },
     });
-    const fej = new Headers(cors);
-    fej.set('Content-Type',
-            valasz.headers.get('Content-Type') || 'application/json');
-    fej.set('Cache-Control', 'no-store');
-    // A gyorsan valtozo (nem tarolhato) valaszokat tovabbra is ATFOLYATJUK:
-    // a torzset el sem olvassuk, tehat a nagy PL elo-valasz sem kerul
-    // memoriaba. Csak a tarolhatokat pufferoljuk, mert azokat ossze kell
-    // hasonlitani a mar eltarolttal.
-    if (!env || !env.TAROLT || valasz.status !== 200 || !tarolhatoE(cel))
-      return new Response(valasz.body, { status: valasz.status, headers: fej });
-    const torzs = await valasz.text();
-    // IRAS CSAK VALTOZASKOR - lasd a fejlecben a kvota-indoklast. Az
-    // osszehasonlitashoz egy KV-olvasas kell (napi 100 000 a keret, ez
-    // nagysagrendekkel alatta marad), az iras viszont ritka.
+    const respHeaders = new Headers(cors);
+    respHeaders.set('Content-Type',
+            upstream.headers.get('Content-Type') || 'application/json');
+    respHeaders.set('Cache-Control', 'no-store');
+    // Fast-changing (not storable) responses are still STREAMED THROUGH: the
+    // body is not even read, so the large PL live response does not end up in
+    // memory either. Only the storable ones are buffered, because they have
+    // to be compared with what is already stored.
+    if (!env || !env.TAROLT || upstream.status !== 200 || !isStorable(target))
+      return new Response(upstream.body, { status: upstream.status, headers: respHeaders });
+    const text = await upstream.text();
+    // WRITE ONLY ON CHANGE - see the quota reasoning in the header. The
+    // comparison takes one KV read (the allowance is 100,000 a day, this stays
+    // orders of magnitude below it), while writing is rare.
     ctx.waitUntil((async () => {
-      const kulcs = taroltKulcs(cel.toString());
+      const key = storedKey(target.toString());
       try {
-        const regi = await env.TAROLT.get(kulcs, { type: 'text' });
-        if (regi === torzs) return;
-        await env.TAROLT.put(kulcs, torzs,
+        const previous = await env.TAROLT.get(key, { type: 'text' });
+        if (previous === text) return;
+        await env.TAROLT.put(key, text,
                              { metadata: { ido: new Date().toISOString() } });
-      } catch (e) { /* a tarolas sosem ronthatja el a valaszt */ }
+      } catch (e) { /* storing can never spoil the response */ }
     })());
-    return new Response(torzs, { status: valasz.status, headers: fej });
+    return new Response(text, { status: upstream.status, headers: respHeaders });
   }
 };

@@ -95,7 +95,7 @@ function ujKV(){
   const lapFajtak = [...fajtak.matchAll(/(\w+):/g)].map(m => m[1]).sort();
   const minta = (require('fs').readFileSync(
     require('path').join(__dirname, '..', 'tartalek', 'proxy-worker.js'), 'utf8')
-      .match(/CIKK_MINTA\s*=\s*\n?\s*\/\^\(nb1\|pl\)[^;]*?\(([a-z|]+)\)/) || [])[1] || '';
+      .match(/ARTICLE_KEY_PATTERN\s*=\s*\n?\s*\/\^\(nb1\|pl\)[^;]*?\(([a-z|]+)\)/) || [])[1] || '';
   const workerFajtak = minta.split('|').sort();
   jo(JSON.stringify(lapFajtak) === JSON.stringify(workerFajtak),
      'a Worker minden lapon létező cikkfajtát elfogad — lap: ['
@@ -134,7 +134,7 @@ function ujKV(){
   await kuld({ cikk: CIKK, eszkoz: ESZKOZ, pont: 1, indok: 'x'.repeat(5000),
                okok: new Array(50).fill('y'.repeat(200)) }, env2);
   const m2 = JSON.parse(kv2.tar.get('ert/' + CIKK + '/' + ESZKOZ));
-  jo(m2.indok.length === modul.MAX_INDOK, 'az indok ' + m2.indok.length + ' karakter');
+  jo(m2.indok.length === modul.MAX_REASON, 'az indok ' + m2.indok.length + ' karakter');
   jo(!('okok' in m2), 'a kívülről küldött okokat el sem tároljuk');
 
   // ---- 5) GET-tel nem lehet ertekelni, kotes nelkul pedig szol ----

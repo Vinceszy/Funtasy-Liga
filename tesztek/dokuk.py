@@ -234,7 +234,7 @@ allit(len(_verziok) == 1,
 # A ?v= a funtasy.js/css gyorsitotarat tori - a LAP SAJAT HTML-jet NEM. Az
 # oldalak HTML-jeben viszont eles logika van, es egy regi HTML a regi szabaly
 # szerint fut. Ezert a lap megkerdezi a verzio.json-t, es ha o regebbi,
-# EGYSZER ujratolt (FunTasy.verzioOr). Ha a ket szam elcsuszik, ez a vedelem
+# EGYSZER ujratolt (FunTasy.reloadIfStale). Ha a ket szam elcsuszik, ez a vedelem
 # vagy nem fog, vagy vegtelen ujratoltest okozna - gepnek kell nezni.
 try:
     _vj = json.loads(olvas("verzio.json")).get("v")
@@ -452,7 +452,7 @@ allit(not _belyegtelen, "D15: minden megjelent irasnak van kozzetetel-ideje"
 # minden ertekelese elveszett. A minta a worker forrasabol jon, nem ide
 # masolva - kulonben ez az allitas csuszna el csendben.
 _wsrc = olvas(os.path.join("tartalek", "proxy-worker.js"))
-_m = re.search(r"export const CIKK_MINTA\s*=\s*/(.+?)/;", _wsrc, re.S)
+_m = re.search(r"export const ARTICLE_KEY_PATTERN\s*=\s*/(.+?)/;", _wsrc, re.S)
 allit(bool(_m), "D17: a Worker cikk-mintaja megtalalhato a forrasban")
 if _m:
     _minta = re.compile(_m.group(1).strip())

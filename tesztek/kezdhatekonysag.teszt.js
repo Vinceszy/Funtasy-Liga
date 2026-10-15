@@ -18,7 +18,7 @@ const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   await apiKi(p);
   await p.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
-  await p.waitForFunction(() => typeof plHatekonysag === 'function'
+  await p.waitForFunction(() => typeof plEfficiency === 'function'
     && Object.keys(PLAYERS).length > 0, null, { timeout: 20000 });
 
   const szamol = (osszetetel) => p.evaluate(([osszetetel]) => {
@@ -31,7 +31,7 @@ const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
       for (let i = 0; i < db; i++)
         sq.push({ e: poszt[pz][sq.filter(x => PLAYERS[x.e].p === pz).length],
                   b: pad, pts: pts[i] });
-    return plHatekonysag(sq);
+    return plEfficiency(sq);
   }, [osszetetel]);
 
   // 2 GKP (8,2), 5 DEF (6,5,4,1,0), 5 MID (9,7,3,2,0), 3 FWD (10,4,1)
@@ -81,7 +81,7 @@ const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
   // szovegcsomopontot - a regi alakot is elfogadva, ha valahol meg ugy all.
   const koz = await p.evaluate(([id]) => {
     const d = document.createElement('div');
-    d.innerHTML = jatekosokHTML(+id);
+    d.innerHTML = playersHTML(+id);
     document.body.appendChild(d);
     const cella = d.querySelector('td.name .nevsor') || d.querySelector('td.name');
     const szoveg = [...cella.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
@@ -147,7 +147,7 @@ const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
   // ott a KEZD% oszlop, fordulonkent (1.: 40/50=80%, 2.: 50/50=100%)
   const fordulok = await p2.evaluate(([nev]) => {
     const d = document.createElement('div');
-    d.innerHTML = T.fordulokHTML(nev);
+    d.innerHTML = T.roundsHTML(nev);
     return { fej: !!d.querySelector('th[title*="Kezdőállítási"]'),
              cellak: [...d.querySelectorAll('td.kezdpc')].map(x => x.textContent).slice(0, 4) };
   }, [nevek[0]]);
@@ -161,7 +161,7 @@ const { BASE, jo, inditas, vege, apiKi, jsonAtir } = require('./kozos');
   const igazitas = await p2.evaluate(() => {
     const d = document.createElement('div');
     d.style.cssText = 'width:400px';
-    d.innerHTML = FunTasy.kezdParHTML({ sz: 40, le: 50 }, { sz: 45, le: 50 }, false);
+    d.innerHTML = FunTasy.lineupPairHTML({ sz: 40, le: 50 }, { sz: 45, le: 50 }, false);
     document.body.appendChild(d);
     const k = d.querySelector('.kezdsor').getBoundingClientRect();
     const bal = d.querySelector('.kezdbal').getBoundingClientRect();

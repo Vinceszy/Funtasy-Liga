@@ -373,7 +373,7 @@ async function regiAlak(br){
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('#table tr', { timeout: 20000 });
   const k = await p.evaluate(() => {
-    document.getElementById('mBody').innerHTML = FunTasy.valtoztatasLista(
+    document.getElementById('mBody').innerHTML = FunTasy.changesList(
       [{ nev: '2. forduló', guard: 2,
          sorok: [{ poszt: 'ST', nev: 'X', klub: 'K', cimke: 'kapitány', dl: -6 },
                  { poszt: 'MID', nev: 'Y', klub: 'K', ert: 8, dl: 8 }] }], 'nincs');

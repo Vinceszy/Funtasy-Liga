@@ -1,5 +1,5 @@
 const { BASE, jo, cim, inditas, vege, apiKi, bontasKi } = require('./kozos');
-// A lekero (FunTasy.lekero) tartalek-utjai. MIERT LETEZIK: egyszer a
+// A lekero (FunTasy.makeFetcher) tartalek-utjai. MIERT LETEZIK: egyszer a
 // ket akkori proxy (corsproxy.io, allorigins) egyszerre halt meg - a
 // corsproxy 401-re valtott, az allorigins tulterhelt volt -, es ezzel
 // MINDKET liga minden elo lekerese (pont-bontas, elo pontok) leallt. A

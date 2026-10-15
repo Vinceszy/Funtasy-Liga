@@ -24,7 +24,7 @@ const szam = t => parseFloat(String(t).replace(/[^\d,.-]/g, '').replace(/\.(?=\d
       for (const [h, v] of ms) {
         const A = keretek[h], B = keretek[v];
         if (!A || !B) continue;
-        const mb = l => magyarBonus(l.filter(x => !x.sub)).pts;
+        const mb = l => hungarianBonus(l.filter(x => !x.sub)).pts;
         const kulcs = mb(A) === mb(B) ? 'kozos' : 'kulon';
         if (!ki[kulcs]) ki[kulcs] = [h, v, +r];
       }

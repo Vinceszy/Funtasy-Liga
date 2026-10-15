@@ -1,5 +1,5 @@
 const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozos');
-// Frissites, amikor a lap ismet lathatova valik (FunTasy.ujraLathatokor).
+// Frissites, amikor a lap ismet lathatova valik (FunTasy.onVisibleAgain).
 // 1) egysegteszt a segitore, 2) e2e a PL-oldalon mockolt FPL-API-val:
 //    a fooldal tenyleg ujra lekeri-e az elo pontokat visszatereskor.
 
@@ -9,7 +9,7 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
   // ---------------- 1. egysegteszt ----------------
   let p = await br.newPage();
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
-  await p.waitForFunction(() => window.FunTasy && FunTasy.ujraLathatokor);
+  await p.waitForFunction(() => window.FunTasy && FunTasy.onVisibleAgain);
 
   const e = await p.evaluate(async () => {
     const var_ = ms => new Promise(r => setTimeout(r, ms));
@@ -22,7 +22,7 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
 
     // a) mindharom esemenyfajta indit (minKoz=0, kozottuk megvarjuk a futast)
     let n = 0;
-    FunTasy.ujraLathatokor(() => { n++; }, 0);
+    FunTasy.onVisibleAgain(() => { n++; }, 0);
     document.dispatchEvent(new Event('visibilitychange')); await var_(40);
     window.dispatchEvent(new Event('focus'));              await var_(40);
     bfPageshow();                                          await var_(40);
@@ -30,26 +30,26 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
 
     // b) a sima (nem bfcache-es) pageshow nem indit - az friss betoltes
     let n2 = 0;
-    FunTasy.ujraLathatokor(() => { n2++; }, 0);
+    FunTasy.onVisibleAgain(() => { n2++; }, 0);
     window.dispatchEvent(new Event('pageshow')); await var_(40);
     ki.simaPageshow = n2;
 
     // c) a betoltes utani ablakban nem ker le ujra (akkor eppen most kertunk)
     let n3 = 0;
-    FunTasy.ujraLathatokor(() => { n3++; }, 30000);
+    FunTasy.onVisibleAgain(() => { n3++; }, 30000);
     document.dispatchEvent(new Event('visibilitychange')); await var_(40);
     ki.frissenBetoltve = n3;
 
     // d) futo frissites alatt nem indul masik
     let indult = 0;
-    FunTasy.ujraLathatokor(() => { indult++; return var_(300); }, 0);
+    FunTasy.onVisibleAgain(() => { indult++; return var_(300); }, 0);
     document.dispatchEvent(new Event('visibilitychange')); await var_(50);
     document.dispatchEvent(new Event('visibilitychange')); await var_(400);
     ki.parhuzamos = indult;
 
     // e) hibaba futo frissites nem akasztja meg a kovetkezot
     let n5 = 0;
-    FunTasy.ujraLathatokor(() => { n5++; throw new Error('teszt'); }, 0);
+    FunTasy.onVisibleAgain(() => { n5++; throw new Error('teszt'); }, 0);
     document.dispatchEvent(new Event('visibilitychange')); await var_(40);
     document.dispatchEvent(new Event('visibilitychange')); await var_(40);
     ki.hibaUtan = n5;

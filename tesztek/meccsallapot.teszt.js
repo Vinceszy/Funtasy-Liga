@@ -9,19 +9,19 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
   const p = await br.newPage();
   await p.route('**fantasy-api.mlsz.hu/**', r => r.abort());
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
-  await p.waitForFunction(() => typeof meccsFut === 'function');
+  await p.waitForFunction(() => typeof isMatchRunning === 'function');
   const e = await p.evaluate(() => {
     const perc = m => new Date(Date.now() - m * 60000).toISOString();
     const jovo  = m => new Date(Date.now() + m * 60000).toISOString();
     return {
-      jovobeli:        meccsFut(jovo(60), undefined),
-      fut30:           meccsFut(perc(30), undefined),
-      fut30VegeHazug:  meccsFut(perc(30), true),     // 'completed' 30 percnel: NEM hihető
-      fut110:          meccsFut(perc(110), undefined),
-      veget110:        meccsFut(perc(110), true),    // 110 percnel mar hihető
-      lejart200:       meccsFut(perc(200), undefined),
-      ejfel:           meccsFut('2026-08-22T00:00:00+02:00', undefined),
-      nincsStart:      meccsFut(null, undefined),
+      jovobeli:        isMatchRunning(jovo(60), undefined),
+      fut30:           isMatchRunning(perc(30), undefined),
+      fut30VegeHazug:  isMatchRunning(perc(30), true),     // 'completed' 30 percnel: NEM hihető
+      fut110:          isMatchRunning(perc(110), undefined),
+      veget110:        isMatchRunning(perc(110), true),    // 110 percnel mar hihető
+      lejart200:       isMatchRunning(perc(200), undefined),
+      ejfel:           isMatchRunning('2026-08-22T00:00:00+02:00', undefined),
+      nincsStart:      isMatchRunning(null, undefined),
     };
   });
   jo(e.jovobeli === false, 'jövőbeli kezdés: még nem fut');
@@ -40,18 +40,18 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
     const bontas = [{ name: 'Játszott perc', value: 90, points: 0 }];
     return {
       // elo fordulo, is_played igaz, meccs fut, bontas meg nincs
-      futKozben:   nincsPontUzenet(true, perc(30), [], false, false, true),
+      futKozben:   noPointsMessage(true, perc(30), [], false, false, true),
       // Elo fordulo, is_played igaz, a meccs 4 oraja kezdodott, ures bontas.
       // MEGMERT teny: az MLSZ a 0 pontos jatekosra URES bontast ad (Heitor
       // 0 ponttal ures listat kapott, klubtarsa Ljujic ugyanabbol a meccsbol
       // 1,75-ot). Az ures lista tehat NEM jelent feldolgozatlant.
-      regenNincs:  nincsPontUzenet(true, perc(240), [], false, false, true),
+      regenNincs:  noPointsMessage(true, perc(240), [], false, false, true),
       // ugyanaz, de mar megjott a bontas -> van bizonyitek
-      regenVan:    nincsPontUzenet(true, perc(240), bontas, false, false, true),
+      regenVan:    noPointsMessage(true, perc(240), bontas, false, false, true),
       // lezart fordulo (elo=false): a regi viselkedes marad
-      lezart:      nincsPontUzenet(true, perc(240), [], false, true, false),
+      lezart:      noPointsMessage(true, perc(240), [], false, true, false),
       // kezdesi ido nelkul, elo forduloban: nem allitunk semmit
-      nincsIdo:    nincsPontUzenet(true, null, [], false, false, true),
+      nincsIdo:    noPointsMessage(true, null, [], false, false, true),
     };
   });
   Object.entries(u).forEach(([k, v]) => console.log('   ' + k.padEnd(12) + ' -> ' + JSON.stringify(v)));
@@ -68,12 +68,12 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
     return {
       // Ez volt a 3. fordulos ETO-eset: az MLSZ helyorzoje aug. 15., a
       // fordulo viszont ket hete lezarult - kezdesi idot igerni hazugsag.
-      lejart:  nincsPontUzenet(true, nap(-20), [], false, false, false),
+      lejart:  noPointsMessage(true, nap(-20), [], false, false, false),
       // ha a helyorzo napja meg hatravan, a datum hasznos informacio
-      jovobeli: nincsPontUzenet(true, nap(+7), [], false, false, true),
+      jovobeli: noPointsMessage(true, nap(+7), [], false, false, true),
       // "nincs meccse": elo forduloban jelen ido, lezartban mult
-      ngElo:   nincsPontUzenet(true, null, null, true, false, true),
-      ngLezart: nincsPontUzenet(true, null, null, true, false, false),
+      ngElo:   noPointsMessage(true, null, null, true, false, true),
+      ngLezart: noPointsMessage(true, null, null, true, false, false),
     };
   });
   Object.entries(h).forEach(([k, v]) => console.log('   ' + k.padEnd(9) + ' -> ' + JSON.stringify(v)));
@@ -85,7 +85,7 @@ const { BASE, jo, cim, hibak, inditas, vege, apiKi, jsonAtir } = require('./kozo
 
   console.log('\n--- a meccs round_number-e árulja el, hogy másik fordulóé ---');
   const k = await p.evaluate(() => {
-    const rek = (round_number, status) => keretRekord({
+    const rek = (round_number, status) => squadRecord({
       competition_player: { id: 1, first_name: 'A', last_name: 'B', team: { short_name: 'ETO' },
         current_round: { is_played: true, first_played_at: '2026-08-15T00:00:00+02:00',
           games: [{ start_at: '2026-08-23T17:30:00+02:00', status: status, round_number: round_number }] } },

@@ -6,17 +6,17 @@
 <title>FunTasy — mi újult meg?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- A betukeszlet-ivet NEM blokkolokent toltjuk. Egy sima <link rel=stylesheet>
-     megallitja a lap megjeleneset, amig a Google valaszol: kimerve DOMContentLoaded
-     57 ms helyett 12,6 MASODPERC, ha a fonts.googleapis.com nem elerheto - addig
-     a lapon SEMMI nincs. A media="print" + onload trukk aszinkronna teszi: a
-     tartalom azonnal latszik a tartalek betuvel (a `display=swap` miatt ugyis az
-     lenne az elso festes), es a webfont akkor lep be, amikor megjott. -->
+<!-- The font stylesheet is NOT loaded as render-blocking. A plain <link rel=stylesheet>
+     holds back the page until Google answers: measured DOMContentLoaded at
+     12.6 SECONDS instead of 57 ms when fonts.googleapis.com is unreachable - until
+     then there is NOTHING on the page. The media="print" + onload trick makes it
+     asynchronous: the content shows at once in the fallback font (with `display=swap`
+     that would be the first paint anyway), and the web font steps in when it arrives. -->
 <link rel="stylesheet" media="print" onload="this.media='all';this.onload=null"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=119">
+<link rel="stylesheet" href="../funtasy.css?v=120">
 </head>
 <body class="kezdolap">
 <div class="wrap">
@@ -44,134 +44,135 @@
 </div>
 </div>
 
-<script src="../funtasy.js?v=119"></script>
+<script src="../funtasy.js?v=120"></script>
 <script>
-// ======= VÁLTOZÁSNAPLÓ =======
-// Felhasznaloi naplo, nem technikai: csak az kerul bele, amit a hasznalo lat
-// vagy erzekel. Ket tipus van (uj funkcio / javitas), es a ligak CIMKEKENT
-// mukodnek: egy bejegyzeshez tobb liga is tartozhat, es barmelyikre szurve
-// elojon. Ez azert szamit, mert nem mindenki jatszik minden ligaban.
+// ======= CHANGELOG =======
+// A log for users, not a technical one: only what the user sees or notices
+// goes in. There are two types (new feature / fix), and the leagues work
+// AS TAGS: an entry can belong to several leagues, and shows when filtering
+// on any of them. That matters because not everyone plays in every league.
 //
-// Az adat a ../valtozasok.json-ban van, kezzel irjuk. Egy nap egy temarol
-// EGY bejegyzes keszul: ha egy megoldas tobb nekifutasbol allt ossze, csak a
-// vegso allapot kerul be - a hasznalot a kozbenso probalkozasok nem erdeklik.
-FunTasy.renderNav(null, '../');   // ligavalto sav; lablec itt nincs, mert
-FunTasy.verzioOr();   // elavult lap -> egyszeri ujratoltes
-                                  // onmagara mutatna
+// The data is in ../valtozasok.json, written by hand. One topic on one day
+// gets ONE entry: if a solution took several attempts, only the final state
+// goes in - the user does not care about the attempts in between.
+FunTasy.renderNav(null, '../');   // league switcher bar; no footer here, because it
+FunTasy.reloadIfStale();   // stale page -> reload once
+                                  // would point to itself
 
-const TIPUSOK = [
-  { id: 'funkcio', nev: 'Új funkció' },
-  { id: 'bugfix',  nev: 'Javítás' },
+const TYPES = [
+  { id: 'funkcio', name: 'Új funkció' },
+  { id: 'bugfix',  name: 'Javítás' },
 ];
-const tipusNev = t => (TIPUSOK.find(x => x.id === t) || {}).nev || t;
+const typeName = t => (TYPES.find(x => x.id === t) || {}).name || t;
 
-let BEJEGYZESEK = [];
-let tipusSzuro = null;      // null = mind (a ket tipus egymast kizarja)
-// A ligak KULON kapcsolhatok: aki tobb ligaban jatszik, tobbet is kijelolhet.
-// Ures halmaz = mind. A kivalasztottak kozott VAGY van: egy bejegyzes akkor
-// latszik, ha barmelyik kijelolt ligat erinti.
-const ligaSzuro = new Set();
+let ENTRIES = [];
+let typeFilter = null;      // null = all (the two types exclude each other)
+// The leagues can be switched SEPARATELY: someone who plays in several
+// leagues can select several. An empty set = all. Between the selected
+// ones it is OR: an entry shows when it touches any selected league.
+const leagueFilter = new Set();
 
-const HONAP = ['január','február','március','április','május','június',
+const MONTHS = ['január','február','március','április','május','június',
                'július','augusztus','szeptember','október','november','december'];
-// A datumot a szovegbol olvassuk ki, nem Date-bol: az UTC-s ejfel a
-// bongeszo zonajaban elozo napra csuszhatna at.
-function datumFmt(s){
+// The date is read from the text, not from a Date: the UTC midnight could
+// slip into the previous day in the browser's time zone.
+function formatDate(s){
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
   if (!m) return s || '';
-  return `${+m[1]}. ${HONAP[+m[2] - 1]} ${+m[3]}.`;
+  return `${+m[1]}. ${MONTHS[+m[2] - 1]} ${+m[3]}.`;
 }
 
-// Egy szurosor. A gombok a MOSTANI allapotbol keszulnek, ezert valasztas utan
-// ujra kell rajzolni oket - ezt a szurokRajzol intezi, egy helyen.
-// aktivE(id) mondja meg, ki van-e emelve; a "Mind" gomb id-je null.
-function chipSor(azon, elemek, aktivE, kivalaszt){
-  const elem = document.getElementById(azon);
-  const gomb = (id, nev) =>
-    `<button class="vlt-chip${aktivE(id) ? ' on' : ''}" data-ert="${FunTasy.esc(id == null ? '' : id)}"`
-    + ` aria-pressed="${aktivE(id)}">` + FunTasy.esc(nev) + '</button>';
-  elem.innerHTML = gomb(null, 'Mind') + elemek.map(x => gomb(x.id, x.nev)).join('');
-  elem.querySelectorAll('.vlt-chip').forEach(b => b.addEventListener('click', () => {
-    kivalaszt(b.dataset.ert || null);
-    szurokRajzol();
-    rajzol();
+// One filter row. The buttons are built from the CURRENT state, so they
+// have to be redrawn after a choice - drawFilters does that, in one place.
+// isActive(id) says whether a button is highlighted; the "Mind" button's id is null.
+function chipRow(elId, items, isActive, select){
+  const box = document.getElementById(elId);
+  const chip = (id, name) =>
+    `<button class="vlt-chip${isActive(id) ? ' on' : ''}" data-ert="${FunTasy.esc(id == null ? '' : id)}"`
+    + ` aria-pressed="${isActive(id)}">` + FunTasy.esc(name) + '</button>';
+  box.innerHTML = chip(null, 'Mind') + items.map(x => chip(x.id, x.name)).join('');
+  box.querySelectorAll('.vlt-chip').forEach(b => b.addEventListener('click', () => {
+    select(b.dataset.ert || null);
+    drawFilters();
+    draw();
   }));
 }
-function szurokRajzol(){
-  // tipus: a ketto egymast kizarja, tehat egyszerre egy lehet aktiv
-  chipSor('tipusSzuro', TIPUSOK, id => tipusSzuro === id, v => { tipusSzuro = v; });
-  // liga: KULON kapcsolhatok, tobb is lehet egyszerre. A "Mind" nem egy
-  // valasztas a tobbi mellett, hanem a kijelolesek torlese.
-  chipSor('ligaSzuro', FunTasy.LIGAK.map(l => ({ id: l.id, nev: l.nev })),
-          id => (id === null ? ligaSzuro.size === 0 : ligaSzuro.has(id)),
+function drawFilters(){
+  // type: the two exclude each other, so only one can be active at a time
+  chipRow('tipusSzuro', TYPES, id => typeFilter === id, v => { typeFilter = v; });
+  // league: can be switched SEPARATELY, several at once. "Mind" (all) is not
+  // a choice beside the others, but clearing the selection.
+  chipRow('ligaSzuro', FunTasy.LEAGUES.map(l => ({ id: l.id, name: l.name })),
+          id => (id === null ? leagueFilter.size === 0 : leagueFilter.has(id)),
           v => {
-            if (v === null) ligaSzuro.clear();
-            else if (ligaSzuro.has(v)) ligaSzuro.delete(v);
-            else ligaSzuro.add(v);
+            if (v === null) leagueFilter.clear();
+            else if (leagueFilter.has(v)) leagueFilter.delete(v);
+            else leagueFilter.add(v);
           });
 }
 
-function szurt(){
-  return BEJEGYZESEK.filter(b =>
-    (!tipusSzuro || b.tipus === tipusSzuro) &&
-    // A liga CIMKE, es tobbet is ki lehet jelolni: eleg, ha a bejegyzes
-    // BARMELYIK kijelolt ligat erinti. Ures kijeloles = mind.
-    (ligaSzuro.size === 0 || (b.ligak || []).some(x => ligaSzuro.has(x))));
+function filtered(){
+  return ENTRIES.filter(b =>
+    (!typeFilter || b.tipus === typeFilter) &&
+    // The league is a TAG, and several can be selected: it is enough if the
+    // entry touches ANY selected league. An empty selection = all.
+    (leagueFilter.size === 0 || (b.ligak || []).some(x => leagueFilter.has(x))));
 }
 
-// Ures sorral elvalasztott bekezdesek. Egy bejegyzes EGY funkciorol szol,
-// de egy funkcionak tobb resze lehet - egyetlen tomb szovegben az elveszne.
-const bekezdesek = t => String(t || '').split(/\n\s*\n/)
+// Paragraphs separated by an empty line. An entry is about ONE feature, but
+// a feature can have several parts - in a single block of text they would
+// get lost.
+const paragraphs = t => String(t || '').split(/\n\s*\n/)
   .map(x => x.trim()).filter(Boolean)
   .map(x => `<p>${FunTasy.esc(x)}</p>`).join('');
 
-function tetelHTML(b){
-  const cimkek = (b.ligak || []).map(id => {
-    const l = FunTasy.liga(id);
-    return `<span class="vlt-liga" data-liga="${FunTasy.esc(id)}">${FunTasy.esc(l ? l.nev : id)}</span>`;
+function entryHTML(b){
+  const tags = (b.ligak || []).map(id => {
+    const l = FunTasy.leagueById(id);
+    return `<span class="vlt-liga" data-liga="${FunTasy.esc(id)}">${FunTasy.esc(l ? l.name : id)}</span>`;
   }).join('');
   return `<div class="vlt-tetel" data-tipus="${FunTasy.esc(b.tipus)}">
     <div class="vlt-fejsor">
-      <span class="vlt-tipus t-${FunTasy.esc(b.tipus)}">${FunTasy.esc(tipusNev(b.tipus))}</span>
-      ${cimkek}
+      <span class="vlt-tipus t-${FunTasy.esc(b.tipus)}">${FunTasy.esc(typeName(b.tipus))}</span>
+      ${tags}
     </div>
     <h3>${FunTasy.esc(b.cim)}</h3>
-    ${bekezdesek(b.leiras)}
+    ${paragraphs(b.leiras)}
   </div>`;
 }
 
-function rajzol(){
-  const lista = szurt();
+function draw(){
+  const items = filtered();
   const el = document.getElementById('lista');
-  if (!lista.length){
+  if (!items.length){
     el.innerHTML = '<div class="vlt-ures">Ehhez a szűréshez nincs bejegyzés.</div>';
     return;
   }
-  // datum szerint csoportositva, a legfrissebb elol
-  const napok = [];
-  lista.forEach(b => {
-    const utolso = napok[napok.length - 1];
-    if (utolso && utolso.datum === b.datum) utolso.tetelek.push(b);
-    else napok.push({ datum: b.datum, tetelek: [b] });
+  // grouped by date, newest first
+  const days = [];
+  items.forEach(b => {
+    const last = days[days.length - 1];
+    if (last && last.date === b.datum) last.items.push(b);
+    else days.push({ date: b.datum, items: [b] });
   });
-  el.innerHTML = napok.map(n =>
-    `<div class="vlt-nap"><div class="vlt-datum">${FunTasy.esc(datumFmt(n.datum))}</div>`
-    + n.tetelek.map(tetelHTML).join('') + '</div>').join('');
+  el.innerHTML = days.map(n =>
+    `<div class="vlt-nap"><div class="vlt-datum">${FunTasy.esc(formatDate(n.date))}</div>`
+    + n.items.map(entryHTML).join('') + '</div>').join('');
 }
 
 (async () => {
   try {
     const r = await fetch('../valtozasok.json?t=' + Date.now(), { cache: 'no-store' });
     const j = await r.json();
-    BEJEGYZESEK = (j.bejegyzesek || []).slice()
+    ENTRIES = (j.bejegyzesek || []).slice()
       .sort((a, b) => (a.datum < b.datum ? 1 : a.datum > b.datum ? -1 : 0));
   } catch (e) {
     document.getElementById('lista').innerHTML =
       '<div class="vlt-ures">A változásnapló most nem elérhető.</div>';
     return;
   }
-  szurokRajzol();
-  rajzol();
+  drawFilters();
+  draw();
 })();
 </script>
 </body>

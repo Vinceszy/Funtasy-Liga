@@ -8,7 +8,7 @@ const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
   const p = await br.newPage();
   await p.route('**fantasy-api.mlsz.hu/**', r => r.abort());
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
-  await p.waitForFunction(() => typeof nincsPontUzenet === 'function' && typeof pontCellaHTML === 'function');
+  await p.waitForFunction(() => typeof noPointsMessage === 'function' && typeof pointsCellHTML === 'function');
 
   const ki = await p.evaluate(() => {
     LIVE[900] = [];                       // 900 = elo fordulo, 901 = lezart
@@ -42,11 +42,11 @@ const { BASE, jo, cim, inditas, vege, apiKi } = require('./kozos');
     for (const [bn, nyers] of Object.entries(BONTASOK))
     for (const elo of [true, false]) {
       const round = elo ? 900 : 901;
-      const uzenet = nincsPontUzenet(played, start, nyers, nogame, vege, elo);
-      const cella = pontCellaHTML({ week: 0, start, vege, played, nogame }, round);
+      const uzenet = noPointsMessage(played, start, nyers, nogame, vege, elo);
+      const cella = pointsCellHTML({ week: 0, start, vege, played, nogame }, round);
       const kotojel = cella.indexOf('–') >= 0;
       sorok.push({ nogame, sn, vege: !!vege, played: String(played), bn, elo, uzenet, kotojel,
-                   allapot: meccsAllapot(start, vege) });
+                   allapot: matchState(start, vege) });
     }
     return sorok;
   });

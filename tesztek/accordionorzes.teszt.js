@@ -6,7 +6,7 @@ const { BASE, jo, cim, inditas, vege, apiKi, bontasKi } = require('./kozos');
 // Nem maga a bontas zarta be: a nezet utolag ujrarajzolodik (beer a percre
 // friss keret, a jatszott percek, az elo pontok), es a teljes #mBody
 // ujraepul - a panel a felhasznalo ala tunt el. Mostantol minden ilyen
-// ujrarajzolas a FunTasy.accOrzo-n megy at, ami a sort ES a panel tartalmat
+// ujrarajzolas a FunTasy.accPreserve-n megy at, ami a sort ES a panel tartalmat
 // is visszateszi.
 const BONTAS = { data: [
   { value: 90, points: 2, competition_stat_config: { name: 'Játszott perc' } },
@@ -40,7 +40,7 @@ const BONTAS = { data: [
   const elotte = await p.evaluate(() => document.querySelector('.accpanel').innerText);
   jo(/Gól/.test(elotte), 'a bontás betöltődött (' + elotte.slice(0, 40).replace(/\n/g, ' ') + ')');
 
-  await p.evaluate(() => meccsTest());          // ezt hivja az élő frissítés is
+  await p.evaluate(() => matchBody());          // ezt hivja az élő frissítés is
   await p.waitForTimeout(300);
   const utana = await p.evaluate(() => {
     const a = document.querySelector('.accpanel');
@@ -64,7 +64,7 @@ const BONTAS = { data: [
   // ugyanaz a ujrarajzolas, mint amit az elo keret-lekeres valt ki
   await p.evaluate(() => {
     const test = document.getElementById('mBody').innerHTML;
-    FunTasy.accOrzo(() => { document.getElementById('mBody').innerHTML = test; });
+    FunTasy.accPreserve(() => { document.getElementById('mBody').innerHTML = test; });
   });
   await p.waitForTimeout(250);
   const k2 = await p.evaluate(() => {
@@ -110,7 +110,7 @@ const BONTAS = { data: [
   // a fejleszto nem tudja eldonteni, halozat-e, proxy-e vagy az API valtozott.
   jo(await p2.$$eval('.accpanel .accmiert', a => a.length) === 1,
      'a hibaüzenet mellett ott áll az OK is (melyik út mivel bukott)');
-  await p2.evaluate(() => meccsTest());
+  await p2.evaluate(() => matchBody());
   await p2.waitForTimeout(300);
   jo((await p2.$$eval('.accpanel', a => a.length)) === 0,
      'az újrarajzolás NEM őrzi meg a hibaüzenetet (a sor bezár)');
@@ -144,7 +144,7 @@ const BONTAS = { data: [
     const a = document.querySelector('.accpanel');
     return a && a.dataset.allapot === 'tolt';
   }, null, { timeout: 5000 });
-  await p2.evaluate(() => meccsTest());                   // EPP a betoltes kozben
+  await p2.evaluate(() => matchBody());                   // EPP a betoltes kozben
   await p2.waitForFunction(() => {
     const a = document.querySelector('.accpanel');
     return a && a.dataset.allapot === 'kesz';
@@ -162,7 +162,7 @@ const BONTAS = { data: [
   await p2.waitForTimeout(200);
   await p2.evaluate(() => {
     const test = document.getElementById('mBody').innerHTML;
-    FunTasy.accOrzo(() => { document.getElementById('mBody').innerHTML = test; });
+    FunTasy.accPreserve(() => { document.getElementById('mBody').innerHTML = test; });
   });
   await p2.waitForTimeout(200);
   jo((await p2.$$eval('.accpanel', a => a.length)) === 0,

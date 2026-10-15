@@ -88,10 +88,10 @@ const allasok = p => p.evaluate(() => [...document.querySelectorAll('.match .sco
   await elofeltetel(p);
   await utvonalak(p, null);
   await p.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
-  await p.waitForFunction(g => typeof POTKER !== 'undefined' && !!POTKER[g],
+  await p.waitForFunction(g => typeof BACKFILLED !== 'undefined' && !!BACKFILLED[g],
                           GW, { timeout: 30000 });
 
-  const potolt = await p.evaluate(g => Object.keys(POTKER[g] || {}).length, GW);
+  const potolt = await p.evaluate(g => Object.keys(BACKFILLED[g] || {}).length, GW);
   jo(potolt === LIDK.length,
      'mind a ' + LIDK.length + ' keretet pótolta — kapott: ' + potolt);
 
@@ -116,10 +116,10 @@ const allasok = p => p.evaluate(() => [...document.querySelectorAll('.match .sco
   const bukott = LIDK[0];
   await utvonalak(q, bukott);
   await q.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
-  await q.waitForFunction(g => typeof POTKER !== 'undefined' && !!POTKER[g],
+  await q.waitForFunction(g => typeof BACKFILLED !== 'undefined' && !!BACKFILLED[g],
                           GW, { timeout: 30000 });
 
-  const reszleges = await q.evaluate(g => Object.keys(POTKER[g] || {}).length, GW);
+  const reszleges = await q.evaluate(g => Object.keys(BACKFILLED[g] || {}).length, GW);
   jo(reszleges === LIDK.length - 1,
      'egy keret hiányzik, a többi megvan (' + (LIDK.length - 1) + ') — kapott: ' + reszleges);
 

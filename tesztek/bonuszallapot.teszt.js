@@ -78,17 +78,17 @@ let napokKi = true;   // a napi zaras adata megjon-e (a tartalek-ag tesztelésé
   // hivatkozni rajuk (a waitForFunction torzse global hatokorben fut).
   await p.waitForFunction(() => typeof LIVEGW !== 'undefined' && LIVEGW === 1,
     null, { timeout: 20000 });
-  await p.waitForFunction(() => typeof LIVEMECCS !== 'undefined' && LIVEMECCS
-    && Object.keys(LIVEMECCS).length === 3, null, { timeout: 20000 });
+  await p.waitForFunction(() => typeof LIVE_MATCHES !== 'undefined' && LIVE_MATCHES
+    && Object.keys(LIVE_MATCHES).length === 3, null, { timeout: 20000 });
   // A napi zaras kulon, a fo frissitestol fuggetlenul erkezik (szandekosan
   // nem varjuk meg ott) - itt viszont meg kell varni, kulonben a teszt a
   // tartalek-agat merne.
-  await p.waitForFunction(() => typeof LIVENAP !== 'undefined' && LIVENAP
-    && Object.keys(LIVENAP).length === 2, null, { timeout: 20000 });
+  await p.waitForFunction(() => typeof LIVE_DAYS !== 'undefined' && LIVE_DAYS
+    && Object.keys(LIVE_DAYS).length === 2, null, { timeout: 20000 });
 
   const ki = await p.evaluate(async (GW) => {
     const r = {};
-    for (const id of [201, 202, 203, 204]) r[id] = await bontasHTML(+id, GW);
+    for (const id of [201, 202, 203, 204]) r[id] = await breakdownHTML(+id, GW);
     return r;
   }, GW);
 
@@ -118,8 +118,8 @@ let napokKi = true;   // a napi zaras adata megjon-e (a tartalek-ag tesztelésé
   console.log('\n--- a bónusz "Added" önmagában is véglegessé tesz ---');
   const added = await p.evaluate(() => {
     // a nyitott nap "p" marad, de a bonusz mar Added
-    LIVENAP[Object.keys(LIVENAP).find(d => !LIVENAP[d].lezart)] = { lezart: true };
-    return bontasHTML(202, 1);
+    LIVE_DAYS[Object.keys(LIVE_DAYS).find(d => !LIVE_DAYS[d].lezart)] = { lezart: true };
+    return breakdownHTML(202, 1);
   });
   const addedSor = sorok(added)[0];
   console.log('   Added esetén:', JSON.stringify(addedSor));
@@ -154,9 +154,9 @@ let napokKi = true;   // a napi zaras adata megjon-e (a tartalek-ag tesztelésé
     return json({});
   });
   await p2.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
-  await p2.waitForFunction(() => typeof LIVEMECCS !== 'undefined' && LIVEMECCS
-    && Object.keys(LIVEMECCS).length === 3, null, { timeout: 20000 });
-  const tartalek = sorok(await p2.evaluate(GW => bontasHTML(203, GW), GW))[0];
+  await p2.waitForFunction(() => typeof LIVE_MATCHES !== 'undefined' && LIVE_MATCHES
+    && Object.keys(LIVE_MATCHES).length === 3, null, { timeout: 20000 });
+  const tartalek = sorok(await p2.evaluate(GW => breakdownHTML(203, GW), GW))[0];
   console.log('   napi adat nélkül, lefújt meccs ->', JSON.stringify(tartalek));
   jo(/b-ideiglenes/.test(tartalek.cls),
     'napi adat nélkül a lefújt meccs jelölt marad (a meccs finished mezője a tartalék)');

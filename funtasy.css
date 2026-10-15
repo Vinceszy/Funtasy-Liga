@@ -1,79 +1,80 @@
-/* FunTasy Liga - kozos stiluslap.
-   Hasznalja: index.html, draft.html.
-   Korabban ez a blokk minden oldalban kulon szerepelt; azert kerult kulon
-   fajlba, hogy a lapok ne tudjanak elcsuszni egymastol. Nincs build lepes:
-   ez egy sima statikus fajl, amit a bongeszo <link>-kel tolt be. */
+/* FunTasy Liga - the shared stylesheet.
+   Used by every page of the site. It is a separate file so that the pages
+   cannot drift apart from each other. There is no build step: it is a
+   plain static file that the browser loads with a <link>. */
 :root{--bg:#0B1F16;--panel:#12291D;--panel2:#0E2418;--line:#2E4A38;--ink:#F2EFE6;--dim:#9DB3A4;
 --amber:#FFB020;--magenta:#E5378B;--win:#3DDC84;--lose:#E5533D;--draw:#9DB3A4;
 --valtozo:#FFC24B;--ideiglenes:#FF8A3D;
-/* Betukeszletek EGY helyen, tartalek-sorral. Ket ok:
-   1. A Google Fonts kulso szolgaltatas - ha lassu vagy nem elerheto, a
-      `display=swap` miatt a tartalek betuvel indul a lap. Tartalek nelkul az
-      a bongeszo alapertelmezese (tipikusan talpas Times), vagyis a szamok
-      hirtelen mas szelesseggel allnak: a tablazat ugral egyet.
-   2. A harom csalad korabban 60+ helyen volt beirva; egy csere 60 helyen
-      jelentett szerkesztest. */
+/* Fonts in ONE place, with a fallback list. Two reasons:
+   1. Google Fonts is an external service - when it is slow or unreachable,
+      `display=swap` makes the page start in the fallback font. Without a
+      fallback that is the browser default (typically a serif Times), so the
+      numbers suddenly have a different width: the table jumps.
+   2. Written out in 60+ places, the three families would mean editing 60
+      places for one change. */
 --fo:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 --cim:"Archivo Black",Impact,system-ui,sans-serif}
-/* ===== Liga-temak =====
-   Az alapertelmezett (a :root fenti szinei) az NB1-oldal. A PL-oldal a
-   body.liga-pl osztallyal a Premier League szinvilagara valt: lila alap,
-   PL-zold kiemeles, cian cimke. A valtozonevek tortenetiek (--amber a fo
-   kiemeles, --magenta a masodlagos), az ertekuk temankent mas. */
+/* ===== League themes =====
+   The default (the :root colours above) is the NB1 page. The PL page
+   switches to the Premier League palette with the body.liga-pl class:
+   purple base, PL green accent, cyan label. The variable names are
+   historical (--amber is the main accent, --magenta the secondary one),
+   their values differ per theme. */
 body.liga-pl{--bg:#150B22;--panel:#1F1233;--panel2:#180D29;--line:#3C2B5E;
   --amber:#00E08C;--magenta:#3EDBE0}
-/* A kezdolap egyik ligahoz sem tartozik, ezert sajat, SEMLEGES palettat kap
-   (grafit alap, ezustos kiemeles). Enelkul az alapertelmezett :root szineit
-   hasznalna, vagyis ugy nezne ki, mintha az NB1 oldala volna. Igy a lapon a
-   ket ligaszin (zold / lila) az egyetlen szinfolt - epp azt kell nezni. */
+/* The home page belongs to neither league, so it gets its own NEUTRAL
+   palette (graphite base, silvery accent). Without it, it would use the
+   default :root colours, that is, it would look like the NB1 page. This
+   way the two league colours (green / purple) are the only colour on the
+   page - exactly what one should look at. */
 body.kezdolap{--bg:#0E1114;--panel:#171B20;--panel2:#12161A;--line:#2A3138;
   --ink:#F2EFE6;--dim:#95A1AC;--amber:#C3CBD3;--magenta:#8B98A5}
-/* Az NB1-oldal cime trikolor: FUN piros, TASY feher (alapszin), NB1 zold.
-   Csak a cim harom betucsoportja - kiemelesre a piros szandekosan nincs
-   hasznalva, hogy ne hasson felszolitasnak. */
+/* The NB1 page's title is tricolour: FUN red, TASY white (base colour),
+   NB1 green. Only the title's three letter groups - red is deliberately
+   not used for emphasis, so that it does not read as a call to action. */
 body.liga-nb1 h1 .fun{color:#E0433D}
 body.liga-nb1 h1 .tag{color:#43E27F}
 *{box-sizing:border-box;margin:0;padding:0}
-/* NINCS overflow-x:hidden. Egy ideig itt allt, hogy semmi ne tudjon
-   oldalra kilogni - csakhogy az iOS Safari a html-re tett vizszintes
-   vagastol sajat gorgeto-dobozza teszi az elemet, es a lendulettel valo
-   gorgetes elromlik: a lap nem indul el, megremeg, elindul, majd
-   visszaszalad. A leghosszabb lapon a legrosszabb.
-   Amit vedett volna, azt most meres orzi (tesztek/vizszintes.teszt.js):
-   egyetlen oldal sem log ki oldalra 320 pixelen sem, nyitott meccs-
-   adatlappal sem - tehat a vagasra nem volt szukseg, csak a kara volt meg. */
+/* NO overflow-x:hidden. It would stop anything from sticking out sideways -
+   but iOS Safari turns an element with horizontal clipping on html into
+   its own scroll box, and momentum scrolling breaks: the page does not
+   start, shudders, starts, then runs back. Worst on the longest page.
+   What it would protect is guarded by a measurement instead
+   (tesztek/vizszintes.teszt.js): no page sticks out sideways even at 320
+   pixels, not even with a match page open - so the clipping is not
+   needed, only its harm would remain. */
 html,body{max-width:100%}
 img,table{max-width:100%}
 body{background:var(--bg);color:var(--ink);font-family:var(--fo);min-height:100vh}
 .wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
-/* JS nelkul a lapon csak az ures vaz all (a tablazatokat a bongeszo tolti
-   fel a mentett adatbol). Ne ugy nezzen ki, mintha elromlott volna: mondjuk
-   meg. Csak <noscript>-ben latszik, tehat a rendes latogatot nem zavarja. */
+/* Without JS the page has only the empty skeleton (the browser fills in
+   the tables from the saved data). It should not look broken: say so. It
+   only shows inside <noscript>, so it does not bother a regular visitor. */
 .nojs{margin:0 0 18px;border-left:3px solid var(--amber);padding-left:10px}
 header{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px 20px;border-bottom:3px solid var(--amber);padding-bottom:14px;margin-bottom:22px}
 h1{font-family:var(--cim);font-size:clamp(26px,5vw,40px);letter-spacing:.5px}
 h1 .fun{color:var(--amber)}h1 .tag{color:var(--magenta)}
 .sub{color:var(--dim);font-size:13px}
-/* A sor magassaga rogzitett: betolteskor elobb ures, aztan "Elo allas
-   lekerese...", vegul a vegleges allapot - ha mindegyik mas magas, a lap
-   minden valtasnal ugrik. Telefonon a vegleges sor ket sorba tor, ezert ott
-   ket sornyi helyet tartunk. */
+/* The line height is fixed: on load it is first empty, then "Élő állás
+   lekérése…", finally the final state - if each had a different height,
+   the page would jump at every change. On a phone the final line breaks
+   into two, so two lines of room are kept there. */
 #status{font:500 12px/16px var(--mono);color:var(--dim);width:100%;min-height:16px}
 tr.placeholder td{color:transparent}
 tr.placeholder .nv{display:inline-block;width:9em;border-radius:3px;background:var(--line)}
 tr.placeholder .mgr,tr.placeholder .dot{background:none;border-color:transparent}
 #status.err{color:var(--lose)}#status.ok{color:var(--win)}
-/* Nem hiba, de nem is naprakesz: a fordulo lezarult, a tarolt adatban meg
-   nincs benne az eredmeny (a gyujto 3 orankent fut). */
+/* Not an error, but not up to date either: the round has closed, but the
+   result is not in the stored data yet (the collector runs every 3 hours). */
 #status.varakozik{color:var(--amber)}
 .grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:22px}
 .grid>*{min-width:0}
 @media(max-width:900px){
-  /* Egy oszlop: a ket burkolo div `display:contents`-szel eltunik a
-     layoutbol, igy a panelek KOZVETLEN flex-elemek lesznek, es az `order`
-     rajuk hat. Enelkul a bal oszlop egesze elozne meg a jobbat, es a
-     jatekoslista a lap kozepere kerulne. */
+  /* One column: the two wrapper divs drop out of the layout with
+     `display:contents`, so the panels become DIRECT flex items and `order`
+     applies to them. Without it the whole left column would come before the
+     right one, and the player list would land in the middle of the page. */
   .grid{display:flex;flex-direction:column}
   .grid>div{display:contents}
   #jlPanel{order:9}
@@ -86,52 +87,55 @@ th{font:600 11px var(--fo);letter-spacing:1px;text-transform:uppercase;color:var
 th:first-child,th:nth-child(2){text-align:left}
 td{padding:9px 10px;border-bottom:1px solid var(--panel2);text-align:right;font-family:var(--mono);font-size:13.5px}
 td.name{font-family:var(--fo);font-weight:700;text-align:left;font-size:14px}
-/* A flex a monogram vedelme miatt kell (kulonben a sor vegi ellipszis
-   eppen azt vagja le) - DE flex konteneren a szoveg es a span kozotti
-   szokoz elveszik, ezert a tavolsagot gap adja. E nelkul "WhiteARS" allt
-   a "White ARS" helyett.
+/* The flex is needed to protect the monogram (otherwise the ellipsis at
+   the end of the line cuts exactly that) - BUT in a flex container the
+   space between the text and the span is lost, so gap provides the
+   distance. Without it "WhiteARS" stood instead of "White ARS".
 
-   A FLEX A CELLAN BELUL VAN, NEM A CELLAN. Amig a `td.name` maga volt a
-   flex kontener, a cella kikerult a tablazat-elrendezesbol (a bongeszo
-   nevtelen tablazat-cellaba burkolja), es IPHONE-ON A RAGADAS NEM MUKODOTT
-   rajta: vizszintes gorgetesnel a SZAKVEZETO fejlec allva maradt (azon
-   nincs flex), a nevek viszont elcsusztak a szamok ala. Chromiumban ez nem
-   latszott - ott a sticky a flexes cellan is fog. */
+   THE FLEX IS INSIDE THE CELL, NOT ON THE CELL. With `td.name` itself as
+   the flex container, the cell drops out of the table layout (the browser
+   wraps it in an anonymous table cell), and ON IPHONE STICKY POSITIONING
+   DID NOT WORK on it: when scrolling sideways the MANAGER header stayed
+   put (it has no flex), but the names slid under the numbers. Chromium
+   did not show it - there sticky works on a flex cell too. */
 td.name .nevsor{display:flex;align-items:center;min-width:0;gap:6px}
-/* a poszt-chip sajat margoja a gap-pel duplazna */
+/* the position chip's own margin would double up with the gap */
 td.name .ppos{margin-right:0}
 td.rank{text-align:left;color:var(--dim);width:30px}
 tr.leader td.rank{color:var(--amber)}
 td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .pos{color:var(--win)}.neg{color:var(--lose)}
-/* A pont-bontas egy sora kaphat allapot-jelzest. Ma egy hasznalja: a PL
-   bonusz-sora. Az FPL a bonuszt a meccs alatt is szamolja a BPS-tablabol
-   (tehat percrol percre valtozhat), lefujaskor rogzul, es csak kesobb, az
-   atnezes utan lesz hivatalos. A HARMADIK allapot - a mar hivatalos bonusz -
-   szandekosan JELOLETLEN: a szezon nagy reszeben minden bonusz vegleges,
-   igy a jeloles ritka, es ezert feltuno.
-   A ket szin temafuggetlen (az --amber ligankent mast jelent), es sosem all
-   magaban: a sor neve melle mindig kerul rovid magyarazo szoveg is. */
+/* A row of the points breakdown can carry a state flag. One user today:
+   the PL bonus row. The FPL computes the bonus during the match too from
+   the BPS table (so it can change minute by minute), it is fixed at the
+   final whistle, and only becomes official later, after the review. The
+   THIRD state - a bonus already official - is deliberately UNMARKED: for
+   most of the season every bonus is final, so the marking is rare, and
+   therefore noticeable.
+   The two colours do not depend on the theme (--amber means something
+   different per league), and never stand alone: a short explanatory text
+   always goes next to the row's name too. */
 .acctable td.b-valtozik,.acctable .sormegj.b-valtozik{color:var(--valtozo)}
 .acctable td.b-ideiglenes,.acctable .sormegj.b-ideiglenes{color:var(--ideiglenes)}
 .acctable .sormegj{font-size:11px;font-weight:500}
-/* ===== Lablec (mindharom oldalon + a valtozasnaplon) ===== */
+/* ===== Footer (on all three pages + the changelog) ===== */
 .lablec{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);
   font-size:12px;color:var(--dim);text-align:center}
 .lablec a{color:var(--dim);text-decoration:none;border-bottom:1px solid var(--line)}
 .lablec a:hover{color:var(--ink);border-bottom-color:var(--dim)}
 .lablec a + a{margin-left:18px}
 
-/* ===== Valtozasnaplo =====
-   Felhasznaloi naplo, ket szurosorral: tipus es liga. A liga CIMKE, tehat
-   egy bejegyzes tobbhoz is tartozhat, es barmelyikre szurve elojon.
-   A .panel-nek nincs sajat belso margoja (a gyerekei adjak), ezert itt
-   minden sav maga gondoskodik rola - kulonben a szoveg a keretnek er. */
+/* ===== Changelog =====
+   A user-facing log with two filter rows: type and league. The league is a
+   TAG, so an entry can belong to several, and shows when filtering on any
+   of them.
+   .panel has no inner padding of its own (its children provide it), so
+   every bar takes care of it here - otherwise the text touches the frame. */
 .vlt-szurok{display:flex;flex-wrap:wrap;gap:14px 32px;padding:16px 20px;
   border-bottom:1px solid var(--line)}
 .vlt-szurocsoport{display:flex;align-items:center;gap:10px}
-/* A ket szurosor kulon-kulon "Mind" gombbal indul; felirat nelkul nem
-   derulne ki, melyik mihez tartozik. */
+/* Both filter rows start with their own "Mind" (all) button; without a
+   label it would not be clear which belongs to what. */
 .vlt-szurocim{font:700 10px var(--fo);letter-spacing:1.5px;text-transform:uppercase;
   color:var(--dim);white-space:nowrap}
 .vlt-szurosor{display:flex;flex-wrap:wrap;gap:6px}
@@ -139,9 +143,10 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
   padding:5px 13px;border-radius:999px;cursor:pointer;font:600 12px var(--fo)}
 .vlt-chip:hover{color:var(--ink);border-color:var(--dim)}
 .vlt-chip.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
-/* A ligak kulon-kulon kapcsolhatok (tobb is lehet egyszerre), a tipus viszont
-   egy valasztas. A pipa teszi lathatova, hogy itt tobbet is be lehet jelolni;
-   a "Mind" gomb (az elso) nem kap pipat, mert az a kijelolesek torlese. */
+/* The leagues can be switched separately (several at once), the type is
+   a single choice. The tick makes visible that several can be selected
+   here; the "Mind" button (the first) gets no tick, because it clears the
+   selection. */
 #ligaSzuro .vlt-chip.on:not(:first-child)::before{content:'✓ ';font-weight:700}
 .vlt-ures{color:var(--dim);font-size:13px;padding:22px 20px;line-height:1.5}
 .vlt-datum{font:700 10px var(--mono);letter-spacing:1.5px;text-transform:uppercase;
@@ -159,9 +164,9 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
   padding:3px 8px;border-radius:999px}
 .vlt-tetel h3{font:700 15px var(--fo);margin:0 0 5px;line-height:1.35}
 .vlt-tetel p{font-size:13px;color:var(--dim);line-height:1.6;margin:0;max-width:68ch}
-/* A kezdolapi sor a naplohoz. Szandekosan NEM liga-kartya: a ligak a fo
-   dolog a lapon, ez csak egy melleklet - ugyanakkora kartyakent elvinne a
-   figyelmet. */
+/* The home page row to the changelog. Deliberately NOT a league card: the
+   leagues are the main thing on the page, this is only an extra - as a
+   card of the same size it would draw the attention away. */
 .ujdonsagsor{display:flex;align-items:baseline;gap:12px;margin-top:14px;
   padding:12px 16px;background:var(--panel);border:1px solid var(--line);
   border-radius:10px;text-decoration:none;color:var(--dim)}
@@ -189,8 +194,9 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .roundnav select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:5px 8px;border-radius:6px;font:600 13px var(--fo)}
 .match{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--panel2);cursor:pointer}
 .match:hover{background:var(--panel2)}
-/* A nev+monogram par: a NEV rovidul (.nv), a monogram sosem - szuk helyen
-   eppen az azonositja a csapatot. Ezert flex, nem text-align. */
+/* The name+monogram pair: the NAME shortens (.nv), the monogram never -
+   in a narrow space it is exactly what identifies the team. Hence flex,
+   not text-align. */
 .match .h,.match .v{display:flex;align-items:center;gap:0;font-weight:700;min-width:0}
 .match .h{justify-content:flex-end}
 .match .v{justify-content:flex-start}
@@ -207,23 +213,23 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
    scrolls, as before. */
 @media(min-width:641px){#table th,#table td{padding-left:5px;padding-right:5px}}
 .tablewrap table{min-width:100%}
-/* A RAGADO CELLAKHOZ `separate` KELL. A WebKit (tehat iPhone-on MINDEN
-   bongeszo, a Chrome is) `border-collapse:collapse` mellett nem ragasztja
-   megbizhatoan a tablazat-cellakat. Megmerve: a `separate` +
-   `border-spacing:0` a rajzolaton semmit nem valtoztat (tabla 310x652 px,
-   sormagassag 35 px mindket modban) - a keretek a td/th sajat
-   border-bottom-jabol jonnek, felso keret nincs, tehat nincs mit
-   megdupláznia. */
+/* STICKY CELLS NEED `separate`. WebKit (so EVERY browser on iPhone, Chrome
+   too) does not reliably stick table cells with
+   `border-collapse:collapse`. Measured: `separate` + `border-spacing:0`
+   changes nothing in the drawing (table 310x652 px, row height 35 px in
+   both modes) - the borders come from the td/th's own border-bottom, there
+   is no top border, so there is nothing to double. */
 .tablewrap table,.matrix table{border-collapse:separate;border-spacing:0}
-/* Vizszintes gorgetesnel a HELYEZES es a NEV all - a tobbi oszlop csuszik
-   alattuk. A ket ragadt oszlop nem allhat ugyanazon a `left:0`-n: a helyezes
-   (magasabb z-index) rafeklidt a nevre, es a nev eleje eltunt alatta. Ezert
-   kap a helyezes ROGZITETT szelesseget, es pont ennyi a nev eltolasa.
-   A jobb szeli vonal mutatja, hol vegzodik az allo resz. */
+/* When scrolling sideways the RANK and the NAME stay - the other columns
+   slide under them. The two sticky columns cannot both sit at `left:0`:
+   the rank (higher z-index) would lie over the name, and the start of the
+   name would vanish under it. So the rank gets a FIXED width, and the name
+   is offset by exactly that much.
+   The line on the right shows where the fixed part ends. */
 .tablewrap td.rank,.tablewrap th:first-child{position:sticky;left:0;background:var(--panel);z-index:2;width:34px;min-width:34px;max-width:34px;box-sizing:border-box}
 .tablewrap td.name,.tablewrap th:nth-child(2){position:sticky;left:34px;background:var(--panel);z-index:1;box-shadow:1px 0 0 var(--line)}
 .matrix table{font-size:11px}
-/* Ugyanaz a gorgetes az EGYMAS ELLEN tablaban: a sor eleji nev all. */
+/* The same scrolling in the HEAD-TO-HEAD table: the name at the row start stays. */
 .matrix tr>th:first-child{position:sticky;left:0;background:var(--panel);z-index:1;box-shadow:1px 0 0 var(--line)}
 .matrix td,.matrix th{padding:5px 6px;text-align:center;font-family:var(--mono)}
 .matrix td.w{color:var(--win)}.matrix td.l{color:var(--lose)}.matrix td.d{color:var(--draw)}.matrix td.x{color:#3a5245}
@@ -231,15 +237,16 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .matrix td.mx:hover{background:var(--panel2);outline:1px solid var(--line)}
 .note{color:var(--dim);font-size:12px;padding:12px 16px;line-height:1.5}
 
-/* ===== Ligavalto sav (minden liga-oldal tetejen) es a kezdolap =====
-   A sav tartalma a funtasy.js LIGAK listajabol keszul, tehat uj liga
-   felvetelehez itt nincs teendo. Az aktiv ful az adott liga sajat
-   kiemelo szinet kapja (--amber temankent mas). */
-/* EGY SOR, mindig. Korabban flex-wrap:wrap allt itt, es keskeny kepernyon az
-   ujsag gombja onallo, harmadik sorba esett - nem oda tervezve, hanem mert
-   nem fert ki. A ligafulek sava zsugorodhat es gorgethet, a gomb nem. */
-/* A sav tartalmat a JS irja: a helye mar az elso kepen foglalt, kulonben a
-   megjeleneskor az egesz lap lejjebb ugrik. */
+/* ===== League switcher bar (at the top of every league page) and the home page =====
+   The bar's content is built from the LEAGUES list of funtasy.js, so
+   adding a league needs nothing here. The active tab gets the given
+   league's own accent colour (--amber differs per theme). */
+/* ONE LINE, always. With flex-wrap:wrap the magazine button fell onto a
+   third line of its own on a narrow screen - not by design, but because it
+   did not fit. The bar of league tabs may shrink and scroll, the button
+   may not. */
+/* The bar's content is written by JS: its space is already reserved in the
+   first paint, otherwise the whole page would jump down when it appears. */
 .liganav{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:nowrap;min-height:26px}
 .liganav .markanev{font-family:var(--cim);font-size:12px;letter-spacing:2px;
   color:var(--dim);text-decoration:none;text-transform:uppercase}
@@ -251,15 +258,17 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
   text-decoration:none;font:600 12px var(--fo);white-space:nowrap;transition:color .12s,border-color .12s}
 .ligalink:hover{color:var(--ink);border-color:var(--dim)}
 .ligalink.on{background:var(--amber);border-color:var(--amber);color:#12140F;font-weight:700}
-/* Az ujsag a felso sav jobb szelen: nem ligaful, hanem sajat belepesi pont,
-   ezert masik forma - kitoltott helyett keretes, a liga kiemelo szinevel. */
+/* The magazine at the right edge of the top bar: not a league tab but its
+   own entry point, so a different shape - outlined instead of filled, in
+   the league's accent colour. */
 .ujsaglink{margin-left:auto;flex:none;padding:5px 14px;border:1px solid var(--amber);
   border-radius:999px;color:var(--amber);text-decoration:none;font:700 12px var(--fo);
   white-space:nowrap;transition:background .12s,color .12s}
 .ujsaglink:hover{background:var(--amber);color:#12140F}
 .ujsaglink.on{background:var(--amber);color:#12140F}
-/* Keskeny kepernyon a liga neve lemarad a gombrol (ugyis azon a liga oldalan
-   allsz), es a markanev is zsugorodik - igy a sav egy sor marad 320 pixelen is. */
+/* On a narrow screen the league name drops off the button (you are on
+   that league's page anyway), and the brand name shrinks too - so the bar
+   stays one line even at 320 pixels. */
 @media(max-width:430px){
   .liganav{gap:9px}
   .ujsaglink{padding:5px 11px;font-size:11.5px}
@@ -268,8 +277,9 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
   .ligalink{padding:5px 10px;font-size:11.5px}
 }
 
-/* Kezdolap: ligavalaszto kartyak. A bal szeli sav az adott liga szine -
-   ezek a temak fo kiemelo szinei (a kezdolapnak nincs sajat ligateamaja). */
+/* Home page: league picker cards. The bar on the left is the given
+   league's colour - the main accent colours of the themes (the home page
+   has no league theme of its own). */
 .ligakartyak{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
 .ligakartya{display:block;text-decoration:none;color:inherit;background:var(--panel);
   border:1px solid var(--line);border-left:4px solid var(--dim);border-radius:10px;
@@ -278,8 +288,9 @@ td.pont{color:var(--amber);font-weight:700;font-size:15px}
 .ligakartya .fejsor{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
 /* a.ligakartya: a narrow-screen .panel h2 rule comes later and would win */
 a.ligakartya h2{font-family:var(--cim);font-size:22px;letter-spacing:1px;border:0;padding:0}
-/* A ligatipus (salary cap / draft) nem dísz: ez mondja meg, milyen szabalyok
-   szerint megy a liga. Ezert a kartyan is ott a helye, nem csak az alcimben. */
+/* The league type (salary cap / draft) is not decoration: it says what
+   rules the league runs by. So it belongs on the card too, not only in the
+   subtitle. */
 .tipuscimke{font:700 9px var(--fo);letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
   border:1px solid var(--line);border-radius:999px;padding:4px 9px;white-space:nowrap}
 .ligakartya .kartyaleiras{font-size:12px;color:var(--dim);line-height:1.5}
@@ -306,8 +317,8 @@ a.ligakartya h2{font-family:var(--cim);font-size:22px;letter-spacing:1px;border:
 .mback:hover{border-color:var(--amber)}
 .mtitle{font-family:var(--cim);color:var(--amber);font-size:17px;margin-bottom:3px;padding-right:96px}
 .msub{font-size:12px;color:var(--dim);margin-bottom:14px}
-/* "frissítés… 1,2 mp" a modal alcime mellett, amig a percre friss lekeres
-   tart. Csak lassu valasznal jelenik meg (lasd FunTasy.lassuJelzo). */
+/* "frissítés… 1,2 mp" next to the modal subtitle while the minute-fresh
+   fetch runs. Only appears for a slow response (see FunTasy.slowIndicator). */
 .frissjel{margin-left:8px;padding:1px 7px;border-radius:999px;
   background:var(--panel2);border:1px solid var(--line);
   font:500 11px var(--mono);color:var(--amber);white-space:nowrap}
@@ -324,39 +335,40 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .plr{display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid var(--panel2);font-size:13px}
 .plr .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .plr .tm{color:var(--dim);font-size:11px}
-/* A jatekos harom szama elo forduloban (PL): jatszott perc, a meccs oraja,
-   kezdo volt-e. Nyers ertekek - a ketto osszehasonlitasabol latszik, hogy
-   palyan van-e; nem ertelmezunk helyette. */
+/* The player's three numbers in a live round (PL): minutes played, the
+   match clock, whether they started. Raw values - comparing the two shows
+   whether the player is on the pitch; nothing is interpreted for the viewer. */
 .plr .perc{font-family:var(--mono);font-size:11.5px;color:var(--dim);
   text-align:right;white-space:nowrap;min-width:30px}
 .plr .perc.mora{min-width:34px}
 .plr .kezd{font:700 9px var(--fo);color:var(--dim);min-width:30px;text-align:center}
-/* A perc-oszlopok fejlecsora: ugyanaz a racs, de cimkevel. Nem kattinthato,
-   es halvanyabb a jatekossoroknal, hogy ne vigye el a figyelmet. */
+/* The header row of the minute columns: the same grid, but with labels.
+   Not clickable, and fainter than the player rows, so it does not draw
+   the attention. */
 .plr.plrfej{font:700 9px var(--fo);color:var(--dim);opacity:.75;
   padding:2px 4px 3px;border-bottom:1px solid var(--line);cursor:default}
-/* A cimke nem lehet szelesebb a maga oszlopanal, kulonben elcsuszik a fejlec
-   a szamoktol (a perccellak.teszt.js kozeppontra meri) - ezert nincs
-   nagybetusites es betukoz, es ezert 30px a .kezd oszlop. */
+/* A label cannot be wider than its own column, otherwise the header slips
+   away from the numbers (perccellak.teszt.js measures the centres) - so
+   there is no upper-casing or letter spacing, and the .kezd column is 30px. */
 .plrfej .perc,.plrfej .kezd,.plrfej .pts{font:inherit;color:inherit}
-/* A jatekos meccse a pont-bontas folott: "ARS 2-1 BRE - 70. perc".
-   Dupla forduloban ket sor kerul egymas ala. A nev NEM lehet .meccsfej:
-   az a meccs-modal allas-doboza (lentebb), es a hatteres-lekerekitett
-   stilusa rakaszkadolt erre a sorra - ugyanaz az utkozesfajta, mint
-   egykor a .pos/.ppos. */
+/* The player's match above the points breakdown: "ARS 2-1 BRE - 70. perc".
+   In a double round two rows go under each other. The class can NOT be
+   .meccsfej: that is the match modal's score box (below), and its
+   background-and-rounded style cascaded onto this row - the same kind of
+   clash as .pos/.ppos. */
 .bontasmeccs{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
   font:600 11px var(--fo);color:var(--dim);padding:4px 6px;
   border-bottom:1px solid var(--line)}
 .bontasmeccs b{font-family:var(--mono);font-weight:700;font-size:12.5px;color:var(--ink)}
 .bontasmeccs .ora{font-family:var(--mono);color:var(--dim);white-space:nowrap}
 .plr .pts{font-family:var(--mono);font-weight:700;min-width:52px;text-align:right}
-/* ===== Zarasi valtozasok panel (PL fooldal) ===== */
-/* A belso margokat a savok adjak (a .panel-nek nincs sajatja - ez a
-   changelognal mar egyszer elcsuszott). */
+/* ===== Closing changes panel (PL home page) ===== */
+/* The bars provide the inner margins (.panel has none of its own - this
+   already went wrong once on the changelog). */
 #zarasSzuro{display:flex;gap:6px;flex-wrap:wrap;margin:2px 16px 4px}
 #zarasBody{padding:0 16px 12px}
-/* kattinthato nev a zarasi listaban: a jatekos a profiljat, a szakvezeto a
-   keretet nyitja - ugyanaz a viselkedes, mint az oldal tobbi listajaban */
+/* a clickable name in the closing list: a player opens their profile, a
+   manager their squad - the same behaviour as in the page's other lists */
 .kattint{cursor:pointer}
 .kattint:hover{text-decoration:underline}
 .zlista{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 22px}
@@ -369,13 +381,13 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .zsor .zdiff{font-family:var(--mono);font-weight:700;min-width:34px;text-align:right}
 .zsor .zirany{font:600 11px var(--fo);color:var(--dim)}
 .zsor .zirany.pos{color:var(--win)}
-/* ---- "Valtoztatasok" ful ----
-   EGY OSZLOP, novekvo fordulo-sorrendben - ugyanugy, mint a Fordulok fulon.
-   Az elso valtozat ket oszlopba tordelte a blokkokat es a legfrissebbel
-   kezdett: a szem cikcakkban ugralt, es a sorrend is szembement a tobbi
-   nezettel.
-   A ket jobb szeli oszlop FIX SZELES, tehat a szamok egymas alatt allnak.
-   Enelkul minden sorban mashol volt a pontkulonbseg. */
+/* ---- "Változtatások" (changes) tab ----
+   ONE COLUMN, in ascending round order - the same as on the Rounds tab.
+   Two columns of blocks starting with the newest made the eye zigzag, and
+   the order went against every other view.
+   The two right-hand columns have a FIXED WIDTH, so the numbers stand
+   under each other. Without it the points difference was somewhere else
+   in every row. */
 .valtlista{display:block}
 .vakor{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
   padding:8px 12px 10px;margin-bottom:12px}
@@ -383,7 +395,7 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
   font-family:var(--cim);font-size:13px;letter-spacing:1px;color:var(--amber);
   padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:4px}
 .vafej .guardjel{font-size:13px;margin-left:0}
-/* a meg le nem zart fordulo fejlecben: nincs szam, csak az ok */
+/* in the header of a round not closed yet: no number, only the reason */
 .vafej .vamegj{font:600 11px var(--fo);letter-spacing:0;color:var(--dim);text-transform:none}
 .varescim{font:600 10px var(--fo);letter-spacing:1.4px;text-transform:uppercase;
   color:var(--dim);margin:8px 0 2px}
@@ -401,23 +413,24 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
 .vasor.vaures .vanev{color:var(--dim);font-style:italic}
 .vasor.vaossz{border-top:1px solid var(--line);margin-top:6px;padding-top:6px}
 .vasor.vaossz .vanev{font-family:var(--cim);font-size:11px;letter-spacing:1px;color:var(--dim)}
-/* A PL-en kulon sor az, amit a ZARASI AUTOMATIKUS CSERE hozott: az nem a
-   szakvezeto dontese, tehat nem is allhat a sajat tetelei kozott. */
+/* On PL what the CLOSING'S AUTOMATIC SUBSTITUTION brought is a separate
+   row: it is not the manager's decision, so it cannot stand among their
+   own items either. */
 .vasor.vagep .vanev,.vasor.vareszossz .vanev{font-family:var(--cim);font-size:11px;
   letter-spacing:1px;color:var(--dim);
-  /* Ezek a sorok nem jatekosnevet visznek, hanem mondatot: harom pontra
-     vagva ertelmetlenek ("Amit a gep a regi kereteden me..."). Toressel
-     kifernek, a szam pedig a sor tetejehez igazodik. */
+  /* These rows carry a sentence, not a player name: cut with an ellipsis
+     they are meaningless ("Amit a gép a régi kereteden me..."). Wrapped they
+     fit, and the number aligns to the top of the row. */
   white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
 .vasor.vagep,.vasor.vareszossz{align-items:flex-start}
 .vasor.vareszossz{border-top:1px dashed var(--line);margin-top:6px;padding-top:6px}
 @media(max-width:640px){
-  /* Telefonon KET SOR, racsban: fent a poszt + nev + a lenyeg (a
-     pontkulonbseg), alatta a magyarazat es a szamitas. Sima
-     sortoresre bizva a szamok osszevissza csusztak - a nev ala kerultek,
-     jobbra igazitas nelkul, es a sor olvashatatlan lett. Az ures cellak
-     display:none-nal esnek ki, igy a masodik sor magassaga nulla, ha
-     nincs mit oda irni. */
+  /* On a phone TWO LINES, in a grid: on top the position + name + the main
+     thing (the points difference), under it the explanation and the
+     calculation. Left to plain line wrapping, the numbers slid around - under
+     the name, without right alignment, and the row became unreadable. The
+     empty cells drop out with display:none, so the second line has zero
+     height when there is nothing to put there. */
   .vasor{display:grid;grid-template-columns:34px minmax(0,1fr) auto;
     column-gap:8px;align-items:center;
     grid-template-areas:"pos nev dl" "pos cim ert"}
@@ -429,17 +442,17 @@ margin-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-conte
   .vasor .vacimke:empty,.vasor .vaert:empty{display:none}
   .vakor{padding:8px 10px 10px}
 }
-/* kezdoallitasi hatekonysag: tabella-cella, h2h-jel, meccsfej-sor */
+/* line-up efficiency: table cell, h2h badge, match header row */
 td.kezdpc{font-family:var(--mono);color:var(--dim)}
-/* A Guardiola mutato jelzese a meccs-pont mellett. Ugyanaz a halvany,
-   kisebb alak, mint a KEZD%-nal - a szin a .pos/.neg-bol jon, tehat a
-   nulla ertek szandekosan szintelen. */
+/* The Guardiola measure's badge next to the match points. The same faint,
+   smaller form as for KEZD% - the colour comes from .pos/.neg, so a zero
+   value is deliberately colourless. */
 .guardjel{font-size:11px;margin-left:4px;opacity:.85}
 td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:nowrap;
   padding-left:6px;padding-right:6px}
 .kezdjel{font:500 10.5px var(--mono);color:var(--dim);margin-left:4px}
-/* A ket ertek a SAJAT terfelehez igazodik (bal/jobb), ahogy a fejlec
-   minden mas adata; kozepen a halvany cimke. */
+/* The two values align with their OWN half (left/right), like every other
+   datum of the header; the faint label in the middle. */
 .kezdsor{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
   font:600 12px var(--fo);color:var(--ink);margin-top:9px}
 .kezdsor .kezdbal{text-align:left}
@@ -447,7 +460,7 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .kezdsor .kezdcim{font:600 10.5px var(--fo);letter-spacing:.5px;text-transform:uppercase;
   color:var(--dim);white-space:nowrap}
 .kezdsor .kezdresz{font:500 11px var(--mono);color:var(--dim)}
-/* a PL meccs-modaljaban az allas-doboz alatt kulon sorkent all */
+/* in the PL match modal it stands as a separate row under the score box */
 #mBody > .kezdsor{margin:-4px 0 10px}
 .flag{display:inline-block;width:14px;height:9px;margin-left:6px;vertical-align:middle;border-radius:1px;
   background:linear-gradient(to bottom,#CE2939 0 33.3%,#fff 33.3% 66.6%,#477050 66.6% 100%);border:1px solid rgba(0,0,0,.35)}
@@ -458,11 +471,11 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .sumline{display:flex;justify-content:space-between;padding:6px 4px;border-top:1px solid var(--line);margin-top:6px;font-size:12px;color:var(--dim)}
 .u21{background:#2E6BE5;color:#fff;font:700 9px var(--fo);border-radius:3px;padding:1px 4px}
 
-/* ===== Fooldali jatekoslista + kereso =====
-   A sor ugyanaz a .plr flex-sor, mint mindenhol maskul: sorszam, poszt, nev
-   + klub, a jelenlegi tulajdonos, es a szezonpont. A tulajdonos-oszlop fix
-   szeles es levagodik, mert a teljes kep ugyis a profilban van - a lista
-   dolga az, hogy egy pillantasra lehessen benne keresni. */
+/* ===== Home page player list + search =====
+   The row is the same .plr flex row as everywhere else: rank, position,
+   name + club, the current owner, and the season points. The owner column
+   has a fixed width and gets clipped, because the full picture is in the
+   profile anyway - the list's job is to be searchable at a glance. */
 .jlvezerlo{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
 .kereso{flex:1 1 100%;box-sizing:border-box;padding:7px 10px;
   background:var(--panel2);border:1px solid var(--line);border-radius:6px;
@@ -476,15 +489,15 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .jlszuro:focus,.jlszam:focus{outline:none;border-color:var(--accent)}
 .jltorol{cursor:pointer;color:var(--dim)}
 .jltorol:hover{color:var(--fg);border-color:var(--accent)}
-/* kattinthato fejlec: a nyil jelzi, mi szerint all a sorrend */
+/* clickable header: the arrow shows what the order is by */
 .jlfej{border-bottom:1px solid var(--line)}
 .jlfejcella{cursor:pointer;user-select:none}
 .jlfejcella:hover{color:var(--fg)}
 .jlfejcella.rendez{color:var(--accent)}
 .jlfejcella i{font-style:normal;font-size:8px;margin-left:3px}
-/* A fejleccellak ugyanazt a layout-osztalyt viselik, mint az adatcellak,
-   csak a diszitest vesszuk le roluk (a .ppos chip-kerete, a monospace szam),
-   kulonben a fejlec nem az oszlopok folott allna. */
+/* The header cells carry the same layout class as the data cells, only
+   the decoration is taken off them (the .ppos chip frame, the monospace
+   number), otherwise the header would not stand above the columns. */
 .jlar,.jlkpc{min-width:38px;text-align:right;font-family:var(--mono);
   font-size:11.5px;color:var(--dim)}
 .jlfej .jlar,.jlfej .jlkpc{font:inherit;color:inherit}
@@ -520,24 +533,25 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .jltores{display:none}
 @media(max-width:720px){
-  /* Telefonon het oszlop nem fer egy sorba: a nev vagodna le, pedig az a
-     legfontosabb. Oszlopot viszont NEM rejtunk el - akkor szurhetetlen es
-     rendezhetetlen lenne -, hanem KET SORRA bontjuk:
-       1. sor: sorszam, poszt, nev, pont
-       2. sor: klub, keret%, ar, kinel van (kiirt felirattal, mert magukban
-               a szamok nem mondanak semmit)
-     A tordelest a .jltores vegzi: az `order` maga NEM tor sort, ahhoz kell
-     egy teljes szelessegu elem a ket csoport kozott. A fejleccellak ugyanigy
-     tordelnek, tehat a rendezes mindegyik oszlopra megmarad. */
+  /* On a phone seven columns do not fit on one line: the name would be cut,
+     though it is the most important. But columns are NOT hidden - they
+     would then be unfilterable and unsortable -, the row is split into TWO
+     LINES instead:
+       line 1: rank, position, name, points
+       line 2: club, squad%, price, owner (with written labels, because the
+               numbers say nothing on their own)
+     The break is done by .jltores: `order` itself does NOT break a line,
+     that needs a full-width element between the two groups. The header
+     cells wrap the same way, so sorting stays available for every column. */
   .jlsor,.jlfej{flex-wrap:wrap;row-gap:3px}
   .jltores{display:block;order:1;flex-basis:100%;height:0;margin:0}
   .jlsor .rank,.jlsor .ppos,.jlsor .nm,.jlsor .pts,
   .jlfej .rank,.jlfej .ppos,.jlfej .nm,.jlfej .pts{order:0}
   .jlsor .jlklub,.jlsor .jlkpc,.jlsor .jlar,.jlsor .jltulaj,
   .jlfej .jlklub,.jlfej .jlkpc,.jlfej .jlar,.jlfej .jltulaj{font-size:10.5px}
-  /* a masodik sor olvasasi rendje: klub - keret% - ar, es a vegen jobbra
-     zarva a "kinel van" (a DOM-ban a tulajdonos elobb all, mert szeles
-     kepernyon ott a helye) */
+  /* the reading order of the second line: club - squad% - price, and at the
+     end, pushed right, "kinél van" (owner) (in the DOM the owner comes
+     earlier, because that is its place on a wide screen) */
   .jlsor .jlklub,.jlsor .jlkpc,.jlsor .jlar,
   .jlfej .jlklub,.jlfej .jlkpc,.jlfej .jlar{order:2}
   .jlsor .jltulaj,.jlfej .jltulaj{order:3}
@@ -550,16 +564,17 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   .jlsor .jltulaj::before{content:'kinél van: ';color:var(--dim);white-space:pre}
 }
 
-/* ===== Jatekosprofil =====
-   A fejlec a jatekos alapadatai, alatta fordulonkenti sorok. A sor ugyanaz
-   a .plr flex-sor, mint a keretben (igy az accordion CSS-e valtozatlanul
-   mukodik), egyetlen kulonbseggel: TORDELHET, es a "kinel volt" resz egy
-   teljes szelessegu masodik sorba kerul. Ez azert kell, mert az NB1-ben
-   ugyanaz a jatekos EGY forduloban tobb szakvezetonel is lehetett - egy
-   sorba zsufolva vagy levagodna, vagy szetlokne az oszlopokat. */
-/* A bontas aljan allo "Teljes jatekosprofil" sor. Linknek latszik, nem
-   sornak: a szoveg es a nyil EGYUTT all (a ket vegre huzva ugy nezett ki,
-   mint ket kulon dolog), es a hover alahuzza. */
+/* ===== Player profile =====
+   The header is the player's basic data, under it the rows per round. The
+   row is the same .plr flex row as in the squad (so the accordion's CSS
+   works unchanged), with one difference: it MAY WRAP, and the "who had the
+   player" part goes onto a full-width second line. This is needed because
+   in NB1 the same player could be with several managers in ONE round -
+   crammed into one line it would either be cut or push the columns apart. */
+/* The "Teljes játékosprofil" (full player profile) row at the bottom of
+   the breakdown. It looks like a link, not a row: the text and the arrow
+   stand TOGETHER (pulled to the two ends they looked like two separate
+   things), and hover underlines it. */
 .profnyito{margin-top:4px;padding:6px 0 2px;border-top:1px solid var(--line);
   font:600 12px var(--fo);color:var(--accent);cursor:pointer;
   display:flex;align-items:center;gap:4px}
@@ -580,13 +595,14 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   font-size:11px;color:var(--dim);padding-left:2px}
 .ptul b{color:var(--fg);font-weight:600}
 .ptul.nincs{font-style:italic}
-/* a liga egeszere vetitett aranyok a tulajdonos-felsorolas VEGEN. Sajat
-   sorvegre tolva (margin-left:auto), hogy a nevek es a szazalekok ne
-   folyjanak ossze; ha nem fer ki, a flexbox amugy is uj sorba teszi. */
+/* the shares across the whole league at the END of the owner list. Pushed
+   to the end of its own line (margin-left:auto), so the names and the
+   percentages do not run together; if it does not fit, flexbox puts it on
+   a new line anyway. */
 .pelval{color:var(--dim);opacity:.6;margin:0 2px}
-/* A fordulo ara a profil soraban: a pontszam elott all, monoban, hogy a
-   fordulok egymas alatt osszehasonlithatok legyenek. A valtozas csak akkor
-   jelenik meg, ha volt - az allando ar mellett a "+0" csak zaj. */
+/* The round's price in the profile row: it stands before the points, in
+   mono, so the rounds can be compared under each other. The change only
+   appears when there was one - next to a constant price a "+0" is just noise. */
 .plr .par{font-family:var(--mono);font-size:11.5px;color:var(--dim);
           min-width:56px;text-align:right;white-space:nowrap}
 .plr .par .pardl{margin-left:4px;font-size:10px;font-weight:700}
@@ -597,12 +613,13 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .parany{margin-left:auto;white-space:nowrap;font-size:11px;color:var(--dim)}
 .parany b{font-family:var(--mono);color:var(--fg);font-weight:700}
 
-/* pont-bontas accordion: a data-acc jelolt jatekos-sor kattinthato, alatta
-   nyilik a panel (FunTasy.accToggle). A "meg nem jatszott" jelzes a .pts
-   helyen kotojelkent jelenik meg, kulon stilust nem kivan.
-   A kattinthatosagot a nev utani nyil (.accarr) jelzi - azert ott, es nem a
-   sor vegen, mert a nev utani hely a legvedettebb: az ellipszis eloszor a
-   klub-cimket vagja le. Hover csak egerrel van, a nyil telefonon is latszik. */
+/* points breakdown accordion: a player row marked data-acc is clickable,
+   the panel opens under it (FunTasy.accToggle). The "has not played yet"
+   marking appears as a dash in the .pts slot and needs no style of its own.
+   Clickability is shown by the arrow after the name (.accarr) - there, not
+   at the end of the row, because the place after the name is the safest:
+   the ellipsis cuts the club label first. Hover only exists with a mouse,
+   the arrow shows on a phone too. */
 .plr[data-acc]{cursor:pointer}
 .plr[data-acc]:hover{background:rgba(255,255,255,.045)}
 .plr.open{background:rgba(255,255,255,.07)}
@@ -632,10 +649,11 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .artstripbody p{margin:12px 0 0;font-size:13.5px;line-height:1.65;color:var(--ink)}
 @media(max-width:560px){.artstripbody p{font-size:13px}}
 
-/* ===== Az iras ertekelese =====
-   A ket felso fokozat egy koppintas: aki elegedett, ne dolgozzon erte. A ket
-   also indokot ker - ott jelennek meg a gyorsvalasztok es a szovegdoboz. A
-   kiut mindig a kepernyon van, csak halkabban, es kimondja, mit jelent. */
+/* ===== Rating a piece =====
+   The top two scores are one tap: someone who is pleased should not have
+   to work for it. The lower two ask for a reason - that is where the
+   text box appears. The way out is always on screen, only quieter, and
+   says out loud what it means. */
 .artrate{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 .artratekerdes{font-size:12px;color:var(--dim);font-weight:700}
@@ -648,8 +666,9 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .artrateagain{background:none;border:0;padding:0;cursor:pointer;
   font:inherit;font-size:11.5px;color:var(--dim);text-decoration:underline}
 .artrateagain:hover{color:var(--amber)}
-/* A panel a savon BELUL nyilik: a meccs adatlapja maga is modal, es modalba
-   nem nyitunk modalt (lasd nezetVerem) - a nezo igy nem veszti el, hol jar. */
+/* The panel opens INSIDE the bar: the match page itself is a modal, and
+   no modal is opened inside a modal (see viewStack) - so the viewer does
+   not lose track of where they are. */
 .artreason{width:100%}
 .artreasonq{font-size:12.5px;color:var(--ink);margin-bottom:9px;font-weight:700}
 .artreasont{width:100%;box-sizing:border-box;resize:vertical;
@@ -665,11 +684,11 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .artskip:hover{color:var(--ink)}
 .artskip:disabled{opacity:.5;cursor:default}
 
-/* ===== Nemzethy Sport: a magazin-oldal =====
-   Ujsagfejlec, alatta a cikkek egyben, fordulonkent visszafele. Itt nincs
-   becsukott sav: aki ide jon, olvasni jott. A cikk sorrendje ujsagszeru -
-   rovat, cim, felutes, torzs -, mert vegiggorgetve igy lehet eldonteni,
-   mit akar elolvasni az ember. */
+/* ===== Nemzethy Sport: the magazine page =====
+   A newspaper header, under it the articles in one go, round by round
+   backwards. There is no collapsed strip here: whoever comes here came to
+   read. The article order is newspaper-like - column, headline, lead,
+   body -, because scrolling down, that is how one can decide what to read. */
 .maghead{text-align:center;margin:6px 0 20px;padding-bottom:16px;
   border-bottom:3px double var(--line)}
 .magcim{font-family:var(--cim);font-size:clamp(28px,8vw,54px);letter-spacing:.02em;
@@ -677,11 +696,11 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .magcim .tag{font-size:.42em;vertical-align:.4em;margin-left:8px}
 .magszlogen{font-size:11px;letter-spacing:.24em;text-transform:uppercase;
   color:var(--dim);margin-top:8px}
-/* A .panel-nek nincs sajat belso margoja - a gyerekei adjak. */
+/* .panel has no inner padding of its own - its children provide it. */
 .maglista{padding:2px 20px 20px}
-/* Szurosav: legordulok egy sorban. Korabban gombsorok alltak itt, es tizennyolc
-   szakvezeto-gomb harom sorban tobb helyet vett el, mint amennyi cikk latszott
-   alatta. A legordulo telefonon a rendszer sajat valasztojat nyitja meg. */
+/* Filter bar: dropdowns on one line. Eighteen manager buttons in three
+   rows would take more room than the articles visible under them. On a
+   phone the dropdown opens the system's own picker. */
 .magszurok{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   padding:11px 20px;border-bottom:1px solid var(--line)}
 .magszuro{background:var(--panel2);border:1px solid var(--line);color:var(--dim);
@@ -698,23 +717,22 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   color:var(--dim);text-decoration:underline}
 .magtorol:hover{color:var(--amber)}
 
-/* A szovegoszlop szelessege PIXELBEN all, nem ch-ban: a ch a betukeszlet
-   meretebol szamol, tehat amikor a webfont kesobb beer, az egesz lap
-   ujratordelne magat - pont az a rangatas, ami hosszu lapon a legrosszabbul
-   erzodik.
+/* The text column's width is in PIXELS, not ch: ch is computed from the
+   font size, so when the web font arrives later the whole page would
+   re-wrap itself - exactly the jerking that feels worst on a long page.
 
-   CONTENT-VISIBILITY NINCS, es szandekosan nincs. Egy ideig itt allt, hogy
-   a kepernyon kivuli cikkek ne keruljenek elrendezesre - csakhogy a becsult
-   magassag helyere gorgetes kozben lep be a valodi, es ezzel a LAP MAGASSAGA
-   valtozik meg alattad. Megmerve: egyetlen vegiggorgetes alatt nyolcszor,
-   egyszerre akar 361 pixelt. Lendulettel gorgetve ez pontosan az a
-   rangatas, amit meg akart oldani. Egy statikus, hosszu szoveglapot a
-   bongeszo enelkul kezel jol. */
+   There is NO content-visibility, deliberately. It would keep off-screen
+   articles out of layout - but the real height then takes the place of
+   the estimated one during scrolling, and with it THE PAGE HEIGHT changes
+   under you. Measured: eight times during a single scroll to the bottom,
+   up to 361 pixels at once. With momentum scrolling that is exactly the
+   jerking it was meant to solve. The browser handles a static, long text
+   page well without it. */
 .magcikk{border-bottom:1px solid var(--line);padding:22px 0 20px}
 .magcikk:last-child{border-bottom:0}
-/* A .panel alap overflow:hidden-je a tablazatos lapok kerekitett sarkaert
-   van; itt nincs tablazat, viszont egy tizezer pixeles vagodobozt hagyna
-   maga utan. */
+/* The .panel's default overflow:hidden is there for the rounded corners
+   of the table pages; here there is no table, but it would leave a
+   ten-thousand-pixel clipping box behind. */
 .magpanel{overflow:visible}
 
 .magkicker{display:flex;align-items:center;gap:10px;margin-bottom:7px}
@@ -728,7 +746,7 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .magpar{font-family:var(--cim);font-size:clamp(19px,4.4vw,26px);line-height:1.15;
   margin:0 0 9px;color:var(--ink);font-weight:400;max-width:640px}
 .magpar .magvs{color:var(--dim);margin:0 .32em;font-family:var(--fo);font-weight:400}
-/* Felutes: ugyanaz a mondat, ami a meccs adatlapjan a becsukott savban all. */
+/* Lead: the same sentence that stands in the collapsed strip on the match page. */
 .maglead{margin:0 0 13px;max-width:640px;font-size:14.5px;line-height:1.55;
   color:var(--dim);border-left:2px solid var(--line);padding-left:12px}
 .magtest p{margin:0 0 11px;font-size:14px;line-height:1.68;color:var(--ink);
@@ -743,16 +761,16 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   .magszam{margin-left:0}
 }
 
-/* eredmenysor a meccs-adatlap tetejen - ugyanaz a .score doboz, mint a
-   fooldali meccspaneleken, hogy az allas ott is egy pillantasra lathato
-   legyen (elo meccsnel szaggatott keret + "elo" jelvennyel) */
+/* score line at the top of the match page - the same .score box as on the
+   home page match panels, so the score is visible at a glance there too
+   (for a live match a dashed frame + "élő" badge) */
 .mscore{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 14px;flex-wrap:wrap}
 .mscore .csapat{font-weight:700;font-size:14px}
 .mscore.elo .score{border-color:var(--amber);border-style:dashed}
 
-/* ===== Meccsfej: az allas es a "Kulonbsegek" kapcsolo EGY dobozban =====
-   Korabban harom kulon kozepre zart sor lebegett egymas alatt (allas, gomb,
-   sugosor), sok ures terrel; igy egy egysegkent olvashato blokk. */
+/* ===== Match header: the score and the "Különbségek" toggle in ONE box =====
+   Instead of three separate centred lines floating under each other (score,
+   button, hint line) with a lot of empty space, it reads as one block. */
 .meccsfej{background:var(--panel2);border:1px solid var(--line);border-radius:10px;
   padding:12px 14px;margin-bottom:14px}
 .meccsfej .mscore{margin:0}
@@ -766,24 +784,26 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .szurogomb.on{background:var(--amber);border-color:var(--amber);color:#12140F}
 .szuroinfo{font-size:11.5px;color:var(--dim);text-align:center}
 
-/* A kulonbseg-nezet szakaszai a keret-oszlopon belul. A ket oszlop vegig
-   ugyanaz marad (bal/jobb szakvezeto), csak csoportokra bomlik. */
-/* A kozos jatekosok halvanyak: mindket keretben ugyanazt hozzak, tehat a
-   meccs szempontjabol semlegesek - a szem igy elsore az elteroket latja. */
+/* The sections of the differences view inside the squad column. The two
+   columns stay the same throughout (left/right manager), they are only
+   split into groups. */
+/* The shared players are faint: they bring the same in both squads, so
+   they are neutral for the match - the eye sees the differing ones first. */
 .kozosresz .plr,.kozosresz .nm,.kozosresz .pts,
 .mobilkozos .plr,.mobilkozos .nm,.mobilkozos .pts{color:var(--dim)}
 .szakasz{font:700 10px var(--fo);letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
   margin:14px 0 4px;padding:0 2px}
 .sqcol .szakasz:first-of-type{margin-top:10px}
-/* Osszesito sor - a keret-fejleccel azonos megjelenes, hogy jol lathato legyen. */
+/* Total row - looks the same as the squad header, so it is easy to see. */
 .osszesito{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
   margin-top:6px;padding:8px 2px 2px;border-top:1px solid var(--line);
   font-family:var(--cim);font-size:12px;letter-spacing:.6px;color:var(--amber)}
 .osszesito b{font:700 15px var(--mono);color:var(--ink)}
 .osszesito.vegso{border-top-width:2px;margin-top:10px}
-/* Gepen a kozos jatekosok mindket oszlopban ott vannak (a bal/jobb szerkezet
-   megmarad); mobilon viszont az oszlopok egymas ala kerulnek, ott eleg
-   egyszer, kulon blokkban - kulonben ugyanaz a nevsor ketszer futna le. */
+/* On desktop the shared players are in both columns (the left/right
+   structure stays); on mobile, however, the columns go under each other,
+   and there once is enough, in a separate block - otherwise the same list
+   of names would run twice. */
 .mobilkozos{display:none}
 @media(max-width:760px){
   .mobilkozos{display:block;border:1px solid var(--line);border-radius:10px;
@@ -792,7 +812,7 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   .sqcol .kozosresz{display:none}
 }
 .osszesito.vegso b{color:var(--amber)}
-/* a magyarszabaly sora: nem jatekos, ezert sajat jelolese van */
+/* the Hungarian rule's row: not a player, so it has its own marking */
 .szabalysor{cursor:default;border-top:1px solid var(--line);margin-top:6px}
 .szabalysor .ppos{color:var(--win);border-color:var(--win)}
 .szabalysor.nincs .ppos{color:var(--dim);border-color:var(--line)}
@@ -800,7 +820,7 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .ureseltares{font-size:12px;color:var(--dim);padding:10px 4px;font-style:italic}
 .accpanel{margin:0 0 6px 24px;border-left:2px solid var(--line);padding:4px 10px 6px;background:var(--panel2);border-radius:0 0 6px 6px}
 .accload{font-size:12px;color:var(--dim);padding:4px 0}
-/* A bontas-hiba OKA: halvanyan, kisebben - informacio, nem riasztas. */
+/* The REASON for a breakdown error: faint, smaller - information, not an alarm. */
 .accmiert{display:inline-block;margin-top:4px;font-size:11px;color:var(--dim);opacity:.85;word-break:break-word}
 .acctable{width:100%;border-collapse:collapse;font-size:12px}
 .acctable th{text-align:right;color:var(--dim);font-weight:600;padding:3px 6px;border-bottom:1px solid var(--line);font-size:11px}
@@ -816,7 +836,7 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 .subhead{font:700 10px var(--fo);letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:12px 0 4px}
 .loading{color:var(--dim);padding:26px;text-align:center}
 
-/* ================= MOBIL ================= */
+/* ================= MOBILE ================= */
 @media(max-width:640px){
   .wrap{padding:12px 10px 40px}
   header{gap:8px 12px;padding-bottom:10px;margin-bottom:14px}
@@ -833,7 +853,7 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   table{font-size:13px}
   th,td{padding:8px 6px}
   .dot{width:7px;height:7px}
-  /* semmi ne kényszerítsen szélességet */
+  /* nothing should force a width */
   .panel{overflow:visible}
   .score{min-width:0}
   .pts,.raw{min-width:0}
@@ -841,23 +861,23 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
   .match{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);padding:11px 8px;gap:6px}
   .match .h,.match .v{min-width:0}
   .nm{min-width:0}
-  /* A korlat a NEVEN van, nem a cellan: a td max-width-je table-layout
-     alatt nem korlatoz megbizhatoan, es a nev a monogramot tolta ki. */
+  /* The limit is on the NAME, not on the cell: a td's max-width does not
+     limit reliably under table layout, and the name pushed the monogram out. */
   td.name,td.name .nevsor{min-width:0}
   td.name .nv{max-width:42vw}
   .sqcol h3{font-size:13px}
 
-  /* meccsek */
+  /* matches */
   .match{padding:11px 10px;gap:6px}
   .match .h,.match .v{font-size:13px}
   .score{min-width:0;font-size:14px;padding:4px 7px}
 
-  /* mátrix: vízszintesen görgethető, ragadós első oszlop */
+  /* matrix: scrolls sideways, sticky first column */
   .matrix{padding:8px}
   .matrix table{font-size:10px}
   .matrix th:first-child{position:sticky;left:0;background:var(--panel);z-index:1}
 
-  /* modal: majdnem teljes képernyő */
+  /* modal: almost full screen */
   .ov{padding:0;align-items:flex-start}
   .modal{border-radius:0;border-left:0;border-right:0;min-height:100vh;height:auto;
          padding:16px 12px calc(64px + env(safe-area-inset-bottom));max-width:none}
@@ -879,10 +899,10 @@ td.guard,th[title^='Guardiola']{font-variant-numeric:tabular-nums;white-space:no
 }
 
 
-/* ===== elo (meg le nem zart) eredmeny =====
-   A meg le nem zart fordulo eredmenye NEM szamit bele a tabellaba es a
-   matrixba - csak a meccspanelen jelenik meg, lathatoan megjelolve, hogy
-   ne latsszon veglegesnek. */
+/* ===== live (not yet closed) result =====
+   The result of a round not closed yet does NOT count in the table or the
+   matrix - it only shows on the match panel, visibly marked, so that it
+   does not look final. */
 .match.elo .score{border-color:var(--amber);border-style:dashed}
 .match.elo .h,.match.elo .v{opacity:.85}
 .elojel{display:block;font:700 9px var(--fo);letter-spacing:1px;text-transform:uppercase;color:var(--amber);margin-top:2px}

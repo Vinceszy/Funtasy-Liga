@@ -80,10 +80,10 @@ const nyit = async (p,w,h) => {
     await p.waitForTimeout(1000);
     const m = await p.evaluate(async () => {
       const r = T.lastPlayedRound();
-      const kt = await keretFordulo(r);
+      const kt = await roundSquads(r);
       const nevek = Object.keys(kt);
       // olyan par kell, akiknek VAN kozos jatekosuk
-      const kulcs = x => szerepKulcs(x);
+      const kulcs = x => roleKey(x);
       let A = null, B = null;
       for (let i = 0; i < nevek.length && !A; i++)
         for (let j = i + 1; j < nevek.length; j++) {
@@ -97,8 +97,8 @@ const nyit = async (p,w,h) => {
         return q.length > 1 ? q.slice(1).concat(q[0]).join(' ') : n; };
       const elo = l => l.map(x => ({ ...x, name: nyugati(x.name) }));
       const db = (X, Y) => {
-        MECCS = { h: A, v: B, A: X, B: Y, hp: null, vp: null, r: r, elo: true };
-        meccsTest();
+        MATCH = { h: A, v: B, A: X, B: Y, hp: null, vp: null, r: r, live: true };
+        matchBody();
         const s = document.querySelector('.szuroinfo');
         return s ? parseInt(s.textContent) : 0;
       };

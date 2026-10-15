@@ -1,5 +1,5 @@
 const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
-// ELO FORDULO ALATT A LAP MAGATOL FRISSUL (FunTasy.eloFrissito).
+// ELO FORDULO ALATT A LAP MAGATOL FRISSUL (FunTasy.liveRefresher).
 //
 // A KIZART HIBA (PL): a nyitva hagyott lap a BETOLTESKORI
 // allast mutatta - a meccs a 9. percnel allt, es a sorok ott is maradtak.
@@ -14,7 +14,7 @@ const { BASE, jo, cim, inditas, vege, apiKi, jsonAtir } = require('./kozos');
 //  - rejtett lapon all az ora (nem verjuk a kozvetitot a hatterben).
 //
 // Az idozito a tesztben 400 ms, hogy a sor ne varjon perceket: a keszlet a
-// FunTasy.eloFrissito masodik parametere.
+// FunTasy.liveRefresher masodik parametere.
 const KOZ = 400;
 // CSAK AZ ELO SOROK. A `.match .score` az ARCHIV eredmenyeket is visszaadja,
 // azokban pedig ott all barmilyen szam - a 9. fordulo beerkezesevel az egyik
@@ -32,7 +32,7 @@ const allas = p => p.evaluate(() => [...document.querySelectorAll('.match.elo .s
   const perr = []; p.on('pageerror', e => perr.push(e.message));
   await apiKi(p);
   // az ora kozet a lapba injektaljuk, mielott a sajat szkript lefutna
-  await p.addInitScript(k => { window.ELO_ORA_KOZ = k; }, KOZ);
+  await p.addInitScript(k => { window.LIVE_INTERVAL = k; }, KOZ);
 
   let liveKeres = 0, pont = 4;
   // AZ ELO FORDULO a LEGFRISSEBB tarolt fordulo - nem egy beirt szam. A
@@ -93,7 +93,7 @@ const allas = p => p.evaluate(() => [...document.querySelectorAll('.match.elo .s
   const q = await br.newPage();
   const qerr = []; q.on('pageerror', e => qerr.push(e.message));
   await apiKi(q);
-  await q.addInitScript(k => { window.ELO_ORA_KOZ = k; }, KOZ);
+  await q.addInitScript(k => { window.LIVE_INTERVAL = k; }, KOZ);
   let qLive = 0;
   await q.route('**premierleague.com/api/**', async route => {
     const u = decodeURIComponent(route.request().url());

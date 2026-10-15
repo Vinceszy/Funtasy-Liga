@@ -6,17 +6,17 @@
 <title>FunTasy PL — H2H</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- A betukeszlet-ivet NEM blokkolokent toltjuk. Egy sima <link rel=stylesheet>
-     megallitja a lap megjeleneset, amig a Google valaszol: kimerve DOMContentLoaded
-     57 ms helyett 12,6 MASODPERC, ha a fonts.googleapis.com nem elerheto - addig
-     a lapon SEMMI nincs. A media="print" + onload trukk aszinkronna teszi: a
-     tartalom azonnal latszik a tartalek betuvel (a `display=swap` miatt ugyis az
-     lenne az elso festes), es a webfont akkor lep be, amikor megjott. -->
+<!-- The font stylesheet is NOT loaded as render-blocking. A plain <link rel=stylesheet>
+     holds back the page until Google answers: measured DOMContentLoaded at
+     12.6 SECONDS instead of 57 ms when fonts.googleapis.com is unreachable - until
+     then there is NOTHING on the page. The media="print" + onload trick makes it
+     asynchronous: the content shows at once in the fallback font (with `display=swap`
+     that would be the first paint anyway), and the web font steps in when it arrives. -->
 <link rel="stylesheet" media="print" onload="this.media='all';this.onload=null"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <noscript><link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap"></noscript>
-<link rel="stylesheet" href="../funtasy.css?v=119">
+<link rel="stylesheet" href="../funtasy.css?v=120">
 </head>
 <body class="liga-pl">
 <div class="wrap">
@@ -25,8 +25,8 @@
 <nav class="liganav" id="liganav"></nav>
 <header>
   <h1><span class="fun">FUN</span>TASY <span class="tag">PL</span></h1>
-  <!-- Az alcímet a FunTasy.renderNav írja a közös LIGAK listából, majd a
-       betöltés után a valós csapat- és fordulószámmal frissül. -->
+  <!-- The subtitle is written by FunTasy.renderNav from the shared LEAGUES list,
+       then after loading it is updated with the real number of teams and rounds. -->
   <div class="sub" id="sub">PL draft fantasy · privát head-to-head</div>
   <div id="status"></div>
 </header>
@@ -73,9 +73,9 @@
       <div class="note">Kattints egy meccsre a két keret összehasonlításához.</div>
     </div>
 
-    <!-- Amit a fordulo zarasa valtoztatott. Csak akkor latszik, ha mar van
-         zarasi adat (zarasok.json). A GRIDBEN el, a tobbi panellel azonos
-         szelessegben - teljes szelessegu kulonallokent torzitotta az oldalt. -->
+    <!-- What the round's closing changed. Only shown once there is closing
+         data (zarasok.json). It lives IN THE GRID, as wide as the other panels -
+         as a separate full-width block it distorted the page. -->
     <div class="panel" id="zarasPanel" style="display:none">
       <h2>Zárási változások
         <span class="roundnav">
@@ -106,147 +106,150 @@
   </div>
 </div>
 
-<script src="../funtasy.js?v=119"></script>
+<script src="../funtasy.js?v=120"></script>
 <script>
-// ======= KONFIGURÁCIÓ =======
-// A két liga résztvevőinek összekötése a KÖZÖS rétegben áll
-// (FunTasy.SZEMELYEK): ugyanarra a táblára épül a Nemzethy Sport közös
-// kiadásának szűrője is, két másolatból két igazság lenne. Itt csak az
-// azonosító → NB1-es becenév irány kell, a csapatlap alcíméhez; a
-// megjelenítés egyébként csapatnevet és monogramot használ.
-const NEVEK = {};
-FunTasy.SZEMELYEK.forEach(sz => { NEVEK[sz.pl] = sz.nb1; });
+// ======= CONFIGURATION =======
+// Linking the participants of the two leagues lives in the SHARED layer
+// (FunTasy.PEOPLE): the filter of the Nemzethy Sport joint edition is built
+// on the same table, and two copies would make two truths. Here only the
+// id → NB1 nickname direction is needed, for the team page's subtitle;
+// otherwise the display uses team names and monograms.
+const NB1_NAMES = {};
+FunTasy.PEOPLE.forEach(p => { NB1_NAMES[p.pl] = p.nb1; });
 // ============================
 
-FunTasy.renderNav('pl','../');   // ligavalto sav a kozos listabol
-FunTasy.verzioOr();   // elavult lap -> egyszeri ujratoltes
-FunTasy.renderLablec('../');       // lablec ugyanonnan
+FunTasy.renderNav('pl','../');   // league switcher bar from the shared list
+FunTasy.reloadIfStale();   // stale page -> reload once
+FunTasy.renderFooter('../');       // footer from the same place
 
 const $ = id => document.getElementById(id);
-// A modal es a nezet-verem a kozos retegbol jon (funtasy.js). Korai
-// deklaracio: a lentebbi nezetek (pl. showH2H) mar hivatkoznak ra.
-const NEZET = FunTasy.nezetVerem({ov:'ov', vissza:'ovBack'});
-const vShow=NEZET.mutat, vBack=NEZET.vissza, openModal=NEZET.nyit, closeModal=NEZET.zar;
+// The modal and the view stack come from the shared layer (funtasy.js).
+// Declared early: the views further down (e.g. showH2H) already refer to it.
+const VIEW = FunTasy.viewStack({overlay:'ov', back:'ovBack'});
+const vShow=VIEW.show, vBack=VIEW.back, openModal=VIEW.open, closeModal=VIEW.close;
 const esc = FunTasy.esc, fmt = FunTasy.fmt, played = FunTasy.played;
 const ENTRIES = {};
 const SCHEDULE = {};
-let liga = {};
-let PLAYERS = {};   // jatekos-torzs: {id: {n,t,p}}
-let SQUADS = {};    // jelenlegi keretek: {liga_id: [element,...]}
-let HIST = {};      // fordulonkenti keretek: {gw: {liga_id: [{e,b,pts},...]}}
-let POTKER = {};    // ugyanaz, a bongeszo potlasaval kiegeszitve - lasd keretPotlas
+let league = {};
+let PLAYERS = {};   // player roster: {id: {n,t,p}}
+let SQUADS = {};    // current squads: {league_id: [element,...]}
+let HIST = {};      // squads per round: {gw: {league_id: [{e,b,pts},...]}}
+let BACKFILLED = {};    // the same, completed with the browser's backfill - see backfillRound
 let ARTICLES = null;   // articles.json: round preview / round summary
 // A round is CLOSED when the Draft has finalised it (draft_history
 // veglegesek). Until then its points can still move - see the gate in
 // FunTasy.matchArticle.
-const roundClosed = gw => VEGLEGESEK.map(Number).includes(Number(gw));
-// A FORDULO KERETEI. Ket forrasa van: a gyujto (HIST) es - amig az meg nem
-// irta be oket - a bongeszo sajat lekerese (keretPotlas). A gyujtoe az
-// erosebb: az mar a zaras utani, automatikus cserekkel javitott allapot
-// lehet, a bongeszoe mindig a zaras elotti pillanatkep. A POTKER ezert MAR
-// osszefesulve all elo (lasd keretPotlas), itt csak valasztunk kozuluk.
-const KER = gw => POTKER[gw] || HIST[gw];
-// Amelyik fordulorol egyaltalan van keretunk - barmelyik forrasbol.
-const KERGWK = () => {
+const roundClosed = gw => FINAL_ROUNDS.map(Number).includes(Number(gw));
+// THE ROUND'S SQUADS. They have two sources: the collector (HIST) and -
+// until it has written them - the browser's own fetch (backfillRound). The
+// collector's wins: it can already be the state after the closing,
+// corrected by automatic substitutions, while the browser's is always the
+// snapshot before the closing. BACKFILLED is therefore ALREADY merged
+// (see backfillRound), here we only choose between them.
+const SQUADS_AT = gw => BACKFILLED[gw] || HIST[gw];
+// The rounds we have any squads for - from either source.
+const SQUAD_GWS = () => {
   const s = new Set(Object.keys(HIST));
-  for (const k in POTKER) s.add(k);
+  for (const k in BACKFILLED) s.add(k);
   return [...s].map(Number).filter(Boolean);
 };
-let VEGLEGESEK = [];// a MAR LEZART fordulok (draft_history.json veglegesek)
-const LIVE = {};    // elo eredmenyek a folyo fordulora - tabellaba NEM szamit
-let LIVEGW = null;  // a most zajlo fordulo szama (ha van)
-let LIVEPTS = {};   // percre friss jatekos-pontok: {element: pont}
-let TEAMS = {};     // csapat-id -> rovidnev (draft_players.json "teams")
-let TAROLT_IDO = null;  // a draft.json mentesenek ideje (statuszsav-hibauzenet)
-let LIVEFX = null;  // az elo fordulo meccs-allapotai klub-rovidnev szerint:
-                    // {rovidnev: {indult, kesz, kezdes}}; null = nincs adat
-let LIVEMECCS = null;  // ugyanaz MECCSENKENT: {meccs_id: {indult, lefujva,
-                    // hivatalos, nap}}. A bonusz-sor allapotahoz kell: a klub
-                    // szerinti osszevonas dupla fordulonal elmosna, hogy a
-                    // ket meccs kulon allapotban lehet.
-let LIVEPERC = {};  // jatekosonkent {perc, kezdo}: hany percet jatszott, es
-                    // kezdo volt-e. Az elo lekeres ugyanabbol a valaszbol adja,
-                    // amibol a pontokat - nem kell hozza kulon keres.
-const REGIPERC = {}; // ugyanez a LEZART fordulokra: {gw: {element: {perc,
-                    // kezdo}}}. Forrasa a gwElems(gw) valasza - ugyanaz a
-                    // (fordulonkent gyorsitotarazott) keres, amibol a
-                    // pont-bontas is jon, tehat nincs miatta plusz lekeres.
-let LIVENAP = null; // a NAPI pontzaras allapota: {"<nap>": {lezart}}.
-                    // Az FPL naponta zarja a pontokat, es a bonuszt is akkor
-                    // veglegesiti - a sajat felulete is naponkent irja ki,
-                    // hogy PROVISIONAL. Ez a jelzes nem a Draft API-bol jon,
-                    // lasd EVENT_STATUS.
+let FINAL_ROUNDS = [];// the rounds ALREADY CLOSED (draft_history.json veglegesek)
+const LIVE = {};    // live results for the current round - do NOT count in the table
+let LIVEGW = null;  // the number of the round in progress (if any)
+let LIVEPTS = {};   // minute-fresh player points: {element: points}
+let TEAMS = {};     // team id -> short name (draft_players.json "teams")
+let STORED_AT = null;  // when draft.json was saved (status bar error message)
+let LIVEFX = null;  // the live round's match states by club short name:
+                    // {short_name: {indult, kesz, kezdes}}; null = no data
+let LIVE_MATCHES = null;  // the same PER MATCH: {match_id: {indult, lefujva,
+                    // hivatalos, nap}}. Needed for the bonus row's state:
+                    // merging by club would blur, in a double round, that
+                    // the two matches can be in different states.
+let LIVE_MINUTES = {};  // per player {perc, kezdo}: how many minutes they played,
+                    // and whether they started. The live fetch gives it from
+                    // the same response as the points - no extra request.
+const PAST_MINUTES = {}; // the same for CLOSED rounds: {gw: {element: {perc,
+                    // kezdo}}}. Its source is the gwElems(gw) response - the
+                    // same (per-round cached) request the points breakdown
+                    // comes from, so it costs no extra fetch.
+let LIVE_DAYS = null; // the state of the DAILY points close: {"<day>": {lezart}}.
+                    // The FPL closes the points daily and finalises the bonus
+                    // then too - its own interface also says PROVISIONAL
+                    // day by day. This signal does not come from the Draft
+                    // API, see EVENT_STATUS.
 
-const nev = id => (ENTRIES[id] && ENTRIES[id].name) || ('#' + id);
-const jat = e => PLAYERS[e] || { n: '#' + e, t: '', p: '' };
+const teamName = id => (ENTRIES[id] && ENTRIES[id].name) || ('#' + id);
+const player = e => PLAYERS[e] || { n: '#' + e, t: '', p: '' };
 const posRank = p => ({ GKP: 0, DEF: 1, MID: 2, FWD: 3 }[p] ?? 9);
 
-// ---------- kezdoallitasi hatekonysag (PL) ----------
-// leheto: a legjobb ERVENYES kezdo 11 pontszama a 15-bol. FPL-formaciok:
-// pontosan 1 kapus, 3-5 vedo, 1-3 csatar, a kozeppalyas a maradek (2-5).
-// A Draftban nincs kapitany, a pad pontja nem szamit - a szerzett tehat a
-// kezdok osszege, a leheto a legjobb formacio osszege.
-function plLeheto(sq){
-  const poszt = { GKP: [], DEF: [], MID: [], FWD: [] };
+// ---------- line-up efficiency (PL) ----------
+// possible: the score of the best VALID starting 11 out of the 15.
+// FPL formations: exactly 1 goalkeeper, 3-5 defenders, 1-3 forwards,
+// midfielders the rest (2-5).
+// The Draft has no captain and bench points do not count - so the scored
+// value is the starters' total, the possible one the best formation's total.
+function plBest(sq){
+  const byPos = { GKP: [], DEF: [], MID: [], FWD: [] };
   for (const x of sq){
-    const p = jat(x.e).p;
-    if (poszt[p]) poszt[p].push(x.pts || 0);
+    const p = player(x.e).p;
+    if (byPos[p]) byPos[p].push(x.pts || 0);
   }
-  for (const k in poszt) poszt[k].sort((a, b) => b - a);
-  // prefix-osszegek: elo[k][n] = a legjobb n jatekos osszege
-  const elo = a => a.reduce((s, v) => (s.push(s[s.length - 1] + v), s), [0]);
-  const G = elo(poszt.GKP), D = elo(poszt.DEF), M = elo(poszt.MID), F = elo(poszt.FWD);
-  let legjobb = null;
+  for (const k in byPos) byPos[k].sort((a, b) => b - a);
+  // prefix sums: prefix(k)[n] = the total of the best n players
+  const prefix = a => a.reduce((s, v) => (s.push(s[s.length - 1] + v), s), [0]);
+  const G = prefix(byPos.GKP), D = prefix(byPos.DEF), M = prefix(byPos.MID), F = prefix(byPos.FWD);
+  let best = null;
   for (let d = 3; d <= 5; d++)
     for (let f = 1; f <= 3; f++){
       const m = 10 - d - f;
       if (m < 2 || m > 5) continue;
-      if (poszt.GKP.length < 1 || poszt.DEF.length < d
-          || poszt.MID.length < m || poszt.FWD.length < f) continue;
+      if (byPos.GKP.length < 1 || byPos.DEF.length < d
+          || byPos.MID.length < m || byPos.FWD.length < f) continue;
       const s = G[1] + D[d] + M[m] + F[f];
-      if (legjobb == null || s > legjobb) legjobb = s;
+      if (best == null || s > best) best = s;
     }
-  return legjobb;
+  return best;
 }
-function plHatekonysag(sq){
+function plEfficiency(sq){
   if (!sq || sq.length < 15) return null;
-  const le = plLeheto(sq);
+  const le = plBest(sq);
   if (le == null) return null;
   return { sz: sq.filter(x => !x.b).reduce((s, x) => s + (x.pts || 0), 0), le };
 }
-// a hook a TAROLT keretbol szamol, fordulonkent memozva; elo fordulora a
-// tabella ugysem hasznalja (csak played meccsekre aggregal)
-const KEZD_MEMO = new Map();
-function kezdErtek(id, r){
+// the hook computes from the STORED squad, memoised per round; for a live
+// round the table does not use it anyway (it only aggregates played matches)
+const LINEUP_MEMO = new Map();
+function lineupValue(id, r){
   const k = id + '|' + r;
-  if (!KEZD_MEMO.has(k))
-    KEZD_MEMO.set(k, plHatekonysag(((KER(r) || {})[id]) || null));
-  return KEZD_MEMO.get(k);
+  if (!LINEUP_MEMO.has(k))
+    LINEUP_MEMO.set(k, plEfficiency(((SQUADS_AT(r) || {})[id]) || null));
+  return LINEUP_MEMO.get(k);
 }
 
-// ---------- Guardiola mutato (PL) ----------
-// A SZAMITAS a gyujtoben el (collect_draft.py draft_guardiola), mert a mult
-// heti kerethez a fordulo OSSZES jatekosanak pontja ES perce kell (az
-// automatikus cserekhez) - GW1->GW2-ben 11 olyan jatekos volt, aki mar
-// senkinel sincs, tehat a bongeszo sehonnan nem tudna. A lap a kesz fajlt
-// olvassa. A kulcs a liga_id, ezert szam -> szoveg konverzio kell.
+// ---------- Guardiola measure (PL) ----------
+// The CALCULATION lives in the collector (collect_draft.py draft_guardiola),
+// because last week's squad needs the points AND minutes of ALL the
+// round's players (for the automatic substitutions) - in GW1->GW2 there
+// were 11 players nobody owned any more, so the browser could not know
+// them from anywhere. The page reads the finished file. The key is the
+// league_id, so a number -> string conversion is needed.
 let GUARD = null;
 fetch('../draft_guardiola.json?t=' + Date.now()).then(r => r.ok ? r.json() : null)
   .then(j => { if (j && j.rounds){ GUARD = j.rounds; T.renderTable(); } }).catch(() => {});
-const guardErtek = (id, r) => ((GUARD || {})[r] || {})[String(id)] || null;
+const guardValue = (id, r) => ((GUARD || {})[r] || {})[String(id)] || null;
 
 const T = FunTasy.create({
-  kezd: kezdErtek,
-  guard: guardErtek,
+  lineup: lineupValue,
+  guard: guardValue,
   entries:    () => Object.keys(ENTRIES).map(Number),
   schedule:   SCHEDULE,
-  firstRound: () => liga.start_event || 1,
-  lastRound:  () => liga.stop_event  || 38,
+  firstRound: () => league.start_event || 1,
+  lastRound:  () => league.stop_event  || 38,
   nameHeader: 'Csapat',
-  placeholderRows: FunTasy.liga('pl').teams,
+  placeholderRows: FunTasy.leagueById('pl').teams,
   live:       LIVE,
-  tiebreak:   'rg',       // FPL-alappontozas: holtversenynel a szerzett pont dont
-  label:       id => nev(id),
+  tiebreak:   'rg',       // FPL base scoring: on a tie the points scored decide
+  label:       id => teamName(id),
   tag:         id => (ENTRIES[id] && ENTRIES[id].short) || '',
   matrixLabel: id => (ENTRIES[id] && ENTRIES[id].short) || ('#' + id),
   nameAttr:    id => `data-team="${id}"`,
@@ -258,131 +261,137 @@ const T = FunTasy.create({
 T.bindNav();
 
 // ---------- modal ----------
-// ---------- nezet-verem: egy modal, amiben lapozni lehet ----------
-// (ugyanaz a minta, mint az index.html-en: tartalomcsere + vissza gomb;
-// az x / felrekattintas / Escape mindent zar)
+// ---------- view stack: one modal that can be navigated ----------
+// (the same pattern as on the NB1 page: content swap + back button;
+// the x / a click outside / Escape closes everything)
 
-// A folyo fordulo allasa nem a menetrendben van, hanem az elo retegben
-// (hogy a tabellaba ne szamitson) - a fordulo-listanak es a meccs-adatlapnak
-// viszont onnan kell elovennie.
-const eloAllas = FunTasy.eloKereso(LIVE);
-// Eredmenysor a meccs-adatlap tetejere - ugyanaz a doboz, mint a fooldali
-// meccspanelen (az NB1-oldalon is igy nez ki).
-// kozos doboz; itt azonositobol kell nevet oldani, ezert a nev burkolat
-const allasHTML = (h, v, hp, vp, elo) => FunTasy.allasHTML(nev(h), nev(v), hp, vp, elo);
+// The current round's score is not in the schedule but in the live layer
+// (so that it does not count in the table) - the round list and the match
+// page, however, have to take it from there.
+const liveScore = FunTasy.liveLookup(LIVE);
+// Score line at the top of the match page - the same box as on the home
+// page match panel (it looks the same on the NB1 page).
+// the shared box; here a name has to be resolved from an id, hence the name wrapper
+const scoreHTML = (h, v, hp, vp, live) => FunTasy.scoreHTML(teamName(h), teamName(v), hp, vp, live);
 
-// Az NB1-oldal meccs-nezeteben van "Kulonbsegek" szuro (az azonos sorok
-// elrejtese). Itt szandekosan NINCS: a draft ligaban egy jatekos egy
-// csapatban lehet, tehat azonos sor nem is fordulhat elo.
-// Sugosor a keret fole - ugyanaz a szoveg, mint az NB1-oldalon.
+// The NB1 page's match view has a "Különbségek" (differences) filter
+// (hiding identical rows). Here there is deliberately NONE: in a draft
+// league a player can be in only one team, so identical rows cannot occur.
+// Hint line above the squad - the same text as on the NB1 page.
 const ACCHINT = '<div class="acchint">Kattints egy játékosra a pontjai részletezéséhez.</div>';
 
-// Egy keret-oszlop. A lista {e,b,pts} rekordokbol all (fordulonkenti keret,
-// pontokkal), VAGY sima element-id-kbol (jelenlegi keret, pont nelkul).
-// A gw-vel hivott (fordulohoz kotott) valtozatban a jatekos-sorra kattintva
-// accordion nyilik a pont-bontassal, es az elo fordulo meg nem jatszott
-// jatekosainal a 0 helyett kotojel all (a meccse meg el sem kezdodott).
-// A jatekos harom szama az elo forduloban: hany percet jatszott, hol jar a
-// meccse, kezdo volt-e. Szandekosan NYERS ertekek: nem ertelmezunk helyette
-// ("lecserelve"), mert ahhoz tureshatar kellene, es egy egyperces csuszas a
-// ket vegpont kozott hamis allitast szulne. A ket szambol a nezo maga latja,
-// hogy palyan van-e: ha egyeznek, igen.
+// One squad column. The list consists of {e,b,pts} records (squad per
+// round, with points), OR plain element ids (current squad, without points).
+// In the version called with gw (bound to a round) clicking a player row
+// opens the accordion with the points breakdown, and for the live round's
+// players who have not played yet a dash stands instead of 0 (their match
+// has not even started).
+// The player's three numbers in the live round: how many minutes they
+// played, where their match is, whether they started. Deliberately RAW
+// values: nothing is interpreted on the viewer's behalf ("substituted"),
+// because that would need a tolerance, and a one-minute lag between the
+// two endpoints would produce a false claim. From the two numbers the
+// viewer can see whether the player is on the pitch: if they match, yes.
 //
-// A meccsora 45-nel es 90-nel megall, ezert a 90 onmagaban nem arulja el,
-// hogy vege van-e - ott a cella "vege"-t ir.
-const percHTML = (p, mora) =>
+// The match clock stops at 45 and 90, so 90 alone does not tell whether
+// it is over - there the cell says "vége" (over).
+const minuteHTML = (p, clock) =>
   `<span class="perc">${fmt(p.perc)}'</span>`
-  + (mora == null ? '' : `<span class="perc mora">${esc(mora)}</span>`)
+  + (clock == null ? '' : `<span class="perc mora">${esc(clock)}</span>`)
   + `<span class="kezd" title="${p.kezdo ? 'kezdőként lépett pályára' : 'nem kezdőként'}">`
   + (p.kezdo ? 'K' : '–') + '</span>';
 
-function percCellakHTML(e, gw){
+function minuteCellsHTML(e, gw){
   if (gw == null) return '';
-  // Lezart fordulo: a percek ugyanugy erdekesek (ki mennyit jatszott), de a
-  // meccsora ott mar mindenkinel "vege" lenne - azt az oszlopot elhagyjuk.
+  // Closed round: the minutes are just as interesting (who played how much),
+  // but the match clock would say "vége" for everyone there - that column is
+  // left out.
   if (gw !== LIVEGW){
-    const t = REGIPERC[gw];
+    const t = PAST_MINUTES[gw];
     if (!t) return '';
     const p = t[e] || t[String(e)];
-    return p ? percHTML(p, null) : '';
+    return p ? minuteHTML(p, null) : '';
   }
-  if (!LIVEMECCS || !LIVEFX) return '';
-  const fx = LIVEFX[jat(e).t];
+  if (!LIVE_MATCHES || !LIVEFX) return '';
+  const fx = LIVEFX[player(e).t];
   if (!fx || !fx.meccsek || !fx.meccsek.length) return '';
-  const p = LIVEPERC[e] || LIVEPERC[String(e)];
+  const p = LIVE_MINUTES[e] || LIVE_MINUTES[String(e)];
   if (!p) return '';
-  const meccsek = fx.meccsek.map(mid => LIVEMECCS[mid]).filter(Boolean);
-  if (!meccsek.length || !meccsek.some(m => m.indult)) return '';
-  const mora = meccsek.map(m => m.lefujva ? 'vége' : (m.perc == null ? '?' : m.perc + "'")).join('|');
-  return percHTML(p, mora);
+  const games = fx.meccsek.map(mid => LIVE_MATCHES[mid]).filter(Boolean);
+  if (!games.length || !games.some(m => m.indult)) return '';
+  const clock = games.map(m => m.lefujva ? 'vége' : (m.perc == null ? '?' : m.perc + "'")).join('|');
+  return minuteHTML(p, clock);
 }
-// A harom perc-oszlop fejlece. Ugyanaz a .plr racs, csak cimkekkel, hogy a
-// felirat pontosan a maga oszlopa fole essen. Csak ott jelenik meg, ahol
-// van is perc-cella - lezart forduloban vagy meccs elott nincs mit cimkezni.
-const PERCFEJ = mora => '<div class="plr plrfej"><span class="nm"></span>'
+// The header of the three minute columns. The same .plr grid, only with
+// labels, so each label falls exactly above its own column. It only appears
+// where there is a minute cell at all - in a closed round or before the
+// match there is nothing to label.
+const MINUTE_HEAD = clock => '<div class="plr plrfej"><span class="nm"></span>'
   + '<span class="perc">perc</span>'
-  + (mora ? '<span class="perc mora">meccs</span>' : '')
+  + (clock ? '<span class="perc mora">meccs</span>' : '')
   + '<span class="kezd">kezdő</span><span class="pts">pont</span></div>';
-const vanPercOszlop = (lista, gw) =>
-  lista.some(x => x && typeof x === 'object' && percCellakHTML(x.e, gw));
-const percFejHTML = (lista, gw) =>
-  vanPercOszlop(lista, gw) ? PERCFEJ(gw === LIVEGW) : '';
+const hasMinuteColumn = (items, gw) =>
+  items.some(x => x && typeof x === 'object' && minuteCellsHTML(x.e, gw));
+const minuteHeadHTML = (items, gw) =>
+  hasMinuteColumn(items, gw) ? MINUTE_HEAD(gw === LIVEGW) : '';
 
-function sqcolHTML(id, lista, cim, gw){
-  const gazdag = lista.length && typeof lista[0] === 'object';
-  const sor = x => {
-    const r = gazdag ? x : { e: x, b: false, pts: null };
-    const j = jat(r.e);
-    const acc = (gazdag && gw) ? ` data-acc="1" data-e="${r.e}" data-gw="${gw}"` : '';
+function sqcolHTML(id, items, title, gw){
+  const rich = items.length && typeof items[0] === 'object';
+  const row = x => {
+    const r = rich ? x : { e: x, b: false, pts: null };
+    const j = player(r.e);
+    const acc = (rich && gw) ? ` data-acc="1" data-e="${r.e}" data-gw="${gw}"` : '';
     const fx = (gw === LIVEGW && LIVEFX) ? LIVEFX[j.t] : null;
-    // ha a fordulo meccsei kozott a klub egyaltalan nem szerepel, akkor
-    // ures fordulója van (blank gameweek) - o sem fog pontot szerezni
-    const nincsMeccs = gw === LIVEGW && LIVEFX && j.t && !fx;
-    const nemJatszott = ((fx && !fx.indult) || nincsMeccs) && !(r.pts || 0);
+    // if the club is not among the round's matches at all, it has a blank
+    // gameweek - the player will not score either
+    const noGame = gw === LIVEGW && LIVEFX && j.t && !fx;
+    const notPlayed = ((fx && !fx.indult) || noGame) && !(r.pts || 0);
     const pts = r.pts == null ? ''
-      : nemJatszott ? '<span class="pts" title="még nem játszott">–</span>'
+      : notPlayed ? '<span class="pts" title="még nem játszott">–</span>'
       : `<span class="pts">${fmt(r.pts)}</span>`;
     return `<div class="plr"${acc}><span class="ppos">${esc(j.p)}</span>
       <span class="nm">${esc(j.n)}${acc ? '<span class="accarr">▼</span>' : ''}${j.t ? ` <span class="tm">${esc(j.t)}</span>` : ''}</span>
-      ${percCellakHTML(r.e, gw)}${pts}</div>`;
+      ${minuteCellsHTML(r.e, gw)}${pts}</div>`;
   };
-  const rendez = a => [...a].sort((x, y) =>
-    posRank(jat(gazdag ? x.e : x).p) - posRank(jat(gazdag ? y.e : y).p));
-  if (!gazdag)
-    return `<div class="sqcol"><h3>${esc(cim || nev(id))}</h3>${rendez(lista).map(sor).join('')}</div>`;
-  const st = lista.filter(x => !x.b), pad = lista.filter(x => x.b);
+  const sortByPos = a => [...a].sort((x, y) =>
+    posRank(player(rich ? x.e : x).p) - posRank(player(rich ? y.e : y).p));
+  if (!rich)
+    return `<div class="sqcol"><h3>${esc(title || teamName(id))}</h3>${sortByPos(items).map(row).join('')}</div>`;
+  const st = items.filter(x => !x.b), bench = items.filter(x => x.b);
   const S = a => a.reduce((s, x) => s + (x.pts || 0), 0);
-  const fejSt = percFejHTML(st, gw), fejPad = percFejHTML(pad, gw);
-  // A PAD SORRENDJE NEM RENDEZHETO AT. Az FPL-ben ez a csere-sorrend: a
-  // fordulo vegen az elso olyan padost allitja be a nem jatszo kezdo helyere,
-  // aki formaciolag befer. A tarolt lista az FPL sajat sorrendjet orzi
-  // (picks 12-15), ezert a padot ugy hagyjuk, ahogy jott - poszt szerint
-  // rendezve pont azt az informaciot dobnank el, amiert nezik.
-  return `<div class="sqcol"><h3>${esc(cim || nev(id))}<span>${fmt(S(st))}</span></h3>
-    ${fejSt}${rendez(st).map(sor).join('')}
+  const headStart = minuteHeadHTML(st, gw), headBench = minuteHeadHTML(bench, gw);
+  // THE BENCH ORDER CANNOT BE REARRANGED. In the FPL it is the substitution
+  // order: at the end of the round it brings on the first bench player who
+  // fits the formation in place of a starter who did not play. The stored
+  // list keeps the FPL's own order (picks 12-15), so the bench is left as it
+  // came - sorted by position, exactly the information people look at it
+  // for would be thrown away.
+  return `<div class="sqcol"><h3>${esc(title || teamName(id))}<span>${fmt(S(st))}</span></h3>
+    ${headStart}${sortByPos(st).map(row).join('')}
     <div class="sumline"><span>Kezdők</span><b>${fmt(S(st))}</b></div>
     <div class="subhead">Pad — a pontjaik nem számítanak a csapatnak</div>
-    ${fejPad}${pad.map(sor).join('')}</div>`;
+    ${headBench}${bench.map(row).join('')}</div>`;
 }
 
-// Melyik fordulot mutatja a "keret" ful? A percek utantoltesehez kell
-// tudni - a keretHTML-lel EGYUTT kell modositani.
-function keretGW(id){
-  if (LIVEGW && ((KER(LIVEGW) || {})[id] || []).length) return LIVEGW;
-  if ((SQUADS[id] || []).length) return null;   // a jelenlegi keret nem fordulohoz kotott
-  const gwk = KERGWK().sort((a, b) => b - a);
-  for (const gw of gwk) if (((KER(gw) || {})[id] || []).length) return gw;
+// Which round does the "keret" (squad) tab show? Needed to backfill the
+// minutes - it has to be changed TOGETHER with squadHTML.
+function squadGw(id){
+  if (LIVEGW && ((SQUADS_AT(LIVEGW) || {})[id] || []).length) return LIVEGW;
+  if ((SQUADS[id] || []).length) return null;   // the current squad is not bound to a round
+  const gwk = SQUAD_GWS().sort((a, b) => b - a);
+  for (const gw of gwk) if (((SQUADS_AT(gw) || {})[id] || []).length) return gw;
   return null;
 }
 
-function keretHTML(id){
-  // Folyo fordulo kozben az elo meccskeret jar, percre friss pontokkal -
-  // ugyanabbol a logikabol, mint a meccs-modal. Fordulok kozott a jelenlegi
-  // tulajdon (draft + igazolasok utani allapot) a helyes valasz.
-  const eloSq = LIVEGW && (KER(LIVEGW) || {})[id];
-  if (eloSq && eloSq.length){
+function squadHTML(id){
+  // During a round in progress the live match squad applies, with
+  // minute-fresh points - from the same logic as the match modal. Between
+  // rounds the current ownership (the state after the draft + transfers) is
+  // the right answer.
+  const liveSq = LIVEGW && (SQUADS_AT(LIVEGW) || {})[id];
+  if (liveSq && liveSq.length){
     const sq = Object.keys(LIVEPTS).length
-      ? eloSq.map(x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts })) : eloSq;
+      ? liveSq.map(x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts })) : liveSq;
     return `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">${LIVEGW}. forduló · élő állás — a forduló még tart</div>`
            + ACCHINT + `<div class="sqwrap one">${sqcolHTML(id, sq, null, LIVEGW)}</div>`;
   }
@@ -390,9 +399,9 @@ function keretHTML(id){
   if (sq && sq.length)
     return `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">A jelenlegi keret (draft és igazolások utáni állapot) — a heti pontok a fordulók nézetében</div>`
            + `<div class="sqwrap one">${sqcolHTML(id, sq)}</div>`;
-  const gwk = KERGWK().sort((a, b) => b - a);
+  const gwk = SQUAD_GWS().sort((a, b) => b - a);
   for (const gw of gwk){
-    const h = (KER(gw) || {})[id];
+    const h = (SQUADS_AT(gw) || {})[id];
     if (h && h.length)
       return `<div style="font-size:12px;color:var(--dim);margin-bottom:8px">${gw}. forduló</div>`
              + ACCHINT + `<div class="sqwrap one">${sqcolHTML(id, h, null, gw)}</div>`;
@@ -400,93 +409,97 @@ function keretHTML(id){
   return '<div class="loading">A keret még nem került be az adatgyűjtésbe.</div>';
 }
 
-// ---------- "Valtoztatasok" ful (draft_keretvaltozasok.json) ----------
-// A SZAMITAS a gyujtoben van (collect_draft.py draft_keretvaltozas), ugyanabbol
-// a korbol, mint a Guardiola mutato - eppen azt vezeti le. A jatekos neve nem
-// a fajlbol jon, hanem a mar betoltott mezonybol (jat).
-let KVALT = null;
+// ---------- "Változtatások" (changes) tab (draft_keretvaltozasok.json) ----------
+// The CALCULATION is in the collector (collect_draft.py draft_squad_changes),
+// from the same range as the Guardiola measure - it is exactly its
+// derivation. The player's name does not come from the file but from the
+// field already loaded (player).
+let CHANGES = null;
 fetch('../draft_keretvaltozasok.json?t=' + Date.now()).then(r => r.ok ? r.json() : null)
-  .then(j => { if (j && j.rounds){ KVALT = j.rounds; ujraRajzol('valtoztatasok'); } })
+  .then(j => { if (j && j.rounds){ CHANGES = j.rounds; redrawTab('valtoztatasok'); } })
   .catch(() => {});
-const SZLABEL = { kezdo: 'kezdő', pad: 'pad' };
-// A ful ujrarajzolasa, ha az adat kesobb er be, mint a megnyitas.
-function ujraRajzol(tab){
+const ROLE_LABEL = { kezdo: 'kezdő', pad: 'pad' };
+// Redrawing the tab when the data arrives later than the tab was opened.
+function redrawTab(tab){
   const on = document.querySelector('#mTabs .tab.on');
   if (mTeam != null && $('ov').classList.contains('open') && on && on.dataset.tab === tab)
-    $('mBody').innerHTML = valtoztatasokHTML(mTeam);
+    $('mBody').innerHTML = changesHTML(mTeam);
 }
-function valtoztatasokHTML(id){
-  if (!KVALT) return '<div class="loading">Változtatások betöltése…</div>';
-  // NOVEKVO sorrend - ugyanugy, mint a Fordulok fulon es mindenutt mashol
-  const gwk = Object.keys(KVALT).map(Number).sort((a, b) => a - b);
-  const alap = x => ({ poszt: jat(x.e).p, nev: jat(x.e).n, klub: jat(x.e).t,
+function changesHTML(id){
+  if (!CHANGES) return '<div class="loading">Változtatások betöltése…</div>';
+  // ASCENDING order - just as on the Rounds tab and everywhere else
+  const gwk = Object.keys(CHANGES).map(Number).sort((a, b) => a - b);
+  const baseRow = x => ({ poszt: player(x.e).p, nev: player(x.e).n, klub: player(x.e).t,
                        prof: { 'data-prof': x.e } });
-  const csoportok = [];
+  const groups = [];
   for (const gw of gwk){
-    const v = (KVALT[gw] || {})[id];
+    const v = (CHANGES[gw] || {})[id];
     if (!v) continue;
-    // Ugyanaz a kapu, mint a tabellan es a Fordulok fulon: elo vagy meg le
-    // nem zart fordulora nincs ertek. A VALTOZTATAS viszont mar ismert - a
-    // keret a hatarido utan rogzitett -, ezert azt kiirjuk, pont nelkul.
-    const g = T.guardErtek(id, gw);
-    const pontos = !!g && v.pontok !== false;
-    // A kozepso oszlop a jatekos fordulopontja. NYIL NINCS rajta: a
-    // szerepvaltas soraiban a nyil azt jelenti, hogy mennyit ert a REGI
-    // keretben es mennyit a MOSTANIBAN, itt viszont azt jelentette volna,
-    // hogy mennyit szerzett es mennyit ert - ket kulonbozo dolog ugyanabban
-    // a tablazatban. Az elengedett padosnal a "12 -> 0" ugy nezett ki,
-    // mintha most vesztett volna rajta tizenkettot, holott a hatas nulla, es
-    // a jobb szelen a nulla ott is allt. A szerep-cimke ("elengedve · pad")
-    // amugy is megmondja, miert nulla a hatas.
-    const ertek = x => ({ ert: x.pont });
-    const sor = (x, cimke) => ({ ...alap(x), cimke: cimke });
-    const reszek = [
-      { cim: 'Elengedve', sorok: v.ki.map(x => pontos
-          ? { ...sor(x, 'elengedve · ' + SZLABEL[x.sz]), ...ertek(x), dl: -x.ert }
-          : sor(x, 'elengedve · ' + SZLABEL[x.sz])) },
-      { cim: 'Megszerezve', sorok: v.be.map(x => pontos
-          ? { ...sor(x, 'megszerezve · ' + SZLABEL[x.sz]), ...ertek(x), dl: x.ert }
-          : sor(x, 'megszerezve · ' + SZLABEL[x.sz])) },
-      { cim: 'Szerepváltás', sorok: v.szerep.map(x => pontos
-          ? { ...sor(x, SZLABEL[x.szE] + ' → ' + SZLABEL[x.szU]),
+    // The same gate as for the table and the Rounds tab: a live or not yet
+    // closed round has no value. The CHANGE, however, is already known - the
+    // squad is fixed after the deadline -, so it is shown, without points.
+    const g = T.guardValue(id, gw);
+    const scored = !!g && v.pontok !== false;
+    // The middle column is the player's round points. There is NO ARROW on
+    // it: in the role change rows the arrow means how much it was worth in
+    // the OLD squad and how much in the CURRENT one, while here it would have
+    // meant how much was scored and how much it was worth - two different
+    // things in the same table. For a released bench player "12 -> 0" looked
+    // as if twelve had just been lost on him, although the effect is zero,
+    // and the zero also stood on the right edge. The role label ("elengedve ·
+    // pad", released · bench) says anyway why the effect is zero.
+    const valueCell = x => ({ ert: x.pont });
+    const rowOf = (x, label) => ({ ...baseRow(x), cimke: label });
+    const sections = [
+      { cim: 'Elengedve', sorok: v.ki.map(x => scored
+          ? { ...rowOf(x, 'elengedve · ' + ROLE_LABEL[x.sz]), ...valueCell(x), dl: -x.ert }
+          : rowOf(x, 'elengedve · ' + ROLE_LABEL[x.sz])) },
+      { cim: 'Megszerezve', sorok: v.be.map(x => scored
+          ? { ...rowOf(x, 'megszerezve · ' + ROLE_LABEL[x.sz]), ...valueCell(x), dl: x.ert }
+          : rowOf(x, 'megszerezve · ' + ROLE_LABEL[x.sz])) },
+      { cim: 'Szerepváltás', sorok: v.szerep.map(x => scored
+          ? { ...rowOf(x, ROLE_LABEL[x.szE] + ' → ' + ROLE_LABEL[x.szU]),
               elott: x.ertE, utan: x.ertU, dl: +(x.ertU - x.ertE).toFixed(2) }
-          : sor(x, SZLABEL[x.szE] + ' → ' + SZLABEL[x.szU])) },
+          : rowOf(x, ROLE_LABEL[x.szE] + ' → ' + ROLE_LABEL[x.szU])) },
     ];
-    // AMIT AZ EMBER CSINALT, ES AMIT A GEP JAVITOTT RAJTA - kulon.
-    // A Draftban a forduló végén az FPL automatikus cserét hajt végre; az nem
-    // a szakvezető érdeme. Egyben mutatva úgy tűnne, hogy jól variált, holott
-    // a gép tette helyre a keretet (vagy fordítva). A gyűjtő ezért két részre
-    // bontva adja (collect_draft.py draft_keretvaltozas). A meg le nem zart
-    // fordulonal ez a sor NINCS: az automatikus csere meg meg sem tortent.
-    let zaro = [];
-    if (pontos){
-      const gep = +(v.gepU - v.gepE).toFixed(2);
-      const ember = +(v.guard - gep).toFixed(2);
-      const db = reszek.reduce((n, r) => n + r.sorok.length, 0);
-      // A gep-sor SZOVEGE az elojeltol fugg, mert a ket eset mast jelent: a
-      // mutato a MOSTANI keretet a MULT HETIVEL veti ossze, es mindkettore
-      // lefut a zaraskori csere. Negativ ertek azt mondja, hogy amit a
-      // szakvezeto kezzel megszerzett, azt a regi kereten a gep is megtette
-      // volna; pozitiv azt, hogy a mostani keret kimarado kezdojet a gep
-      // potolta. A regi "8 -> 0" alak egy meg nem tortent cseret mutatott.
-      // A ket sor OSSZEADODIK, nem egymast utik ki - ezert nem "ebbol". A
-      // masodik elojele mas-mas esetet ir le: ha negativ, a REGI kereten
-      // tett volna hozza a gep annyit, amit a valtoztatas elvett tole;
-      // ha pozitiv, a MOSTANI keret kimarado kezdojet potolta.
-      const gepNev = gep < 0 ? 'Amit a gép a régi kereten is hozzátett volna'
-                   : gep > 0 ? 'Amit a gép a mostani kereten tett hozzá'
+    // WHAT THE PERSON DID, AND WHAT THE MACHINE FIXED ON IT - separately.
+    // At the end of a round in the Draft the FPL makes automatic substitutions;
+    // that is not the manager's merit. Shown together, it would look as if
+    // they had rotated well, while it was the machine that put the squad right
+    // (or the other way round). So the collector gives it in two parts
+    // (collect_draft.py draft_squad_changes). For a round not closed yet this
+    // row is NOT there: the automatic substitution has not even happened.
+    let closingRows = [];
+    if (scored){
+      const auto = +(v.gepU - v.gepE).toFixed(2);
+      const manual = +(v.guard - auto).toFixed(2);
+      const count = sections.reduce((n, r) => n + r.sorok.length, 0);
+      // The TEXT of the machine row depends on the sign, because the two cases
+      // mean different things: the measure compares the CURRENT squad with LAST
+      // WEEK's, and the closing substitution runs on both. A negative value says
+      // that what the manager got by hand, the machine would have done on the
+      // old squad too; a positive one says that the machine filled in for a
+      // starter of the current squad who did not play. A "8 -> 0" form would
+      // show a substitution that never happened.
+      // The two rows ADD UP, they do not cancel each other - so not "of which".
+      // The sign of the second describes different cases: when negative, the
+      // machine would have added that much on the OLD squad, which the change
+      // took away from it; when positive, it filled in for a starter of the
+      // CURRENT squad who did not play.
+      const autoLabel = auto < 0 ? 'Amit a gép a régi kereten is hozzátett volna'
+                   : auto > 0 ? 'Amit a gép a mostani kereten tett hozzá'
                    : 'Az automatikus csere ezen nem változtatott';
-      if (db || gep) zaro = [
-        { nev: 'Amit a kezdő átalakítása ért', dl: ember, oszt: 'vareszossz' },
-        { nev: gepNev, dl: gep, oszt: 'vagep' },
+      if (count || auto) closingRows = [
+        { nev: 'Amit a kezdő átalakítása ért', dl: manual, oszt: 'vareszossz' },
+        { nev: autoLabel, dl: auto, oszt: 'vagep' },
       ];
     }
-    csoportok.push({ nev: gw + '. forduló', guard: pontos ? v.guard : null,
-                     megj: pontos ? '' : 'még nincs pontszám',
+    groups.push({ nev: gw + '. forduló', guard: scored ? v.guard : null,
+                     megj: scored ? '' : 'még nincs pontszám',
                      osszCim: 'A forduló mérlege',
-                     reszek: reszek, zaro: zaro });
+                     reszek: sections, zaro: closingRows });
   }
-  if (!csoportok.length)
+  if (!groups.length)
     return '<div class="loading">Ehhez a csapathoz még nincs elmentett változtatás.</div>';
   return '<div class="note" style="padding:0 0 10px">A jobb szélső szám nem azt mutatja, '
     + 'mennyit hozott a keret, hanem hogy <b>mennyivel hozott többet a múlt hetinél</b>. '
@@ -498,14 +511,14 @@ function valtoztatasokHTML(id){
     + 'A blokk alján az összeg a forduló <b>GUARD</b> értéke, ugyanaz, ami a Fordulók fülön és '
     + 'a tabellában áll. A <b>folyamatban lévő</b> fordulónál a változtatás már látszik, '
     + 'pontszám még nincs hozzá.</div>'
-    + FunTasy.valtoztatasLista(csoportok, 'Nincs adat.');
+    + FunTasy.changesList(groups, 'Nincs adat.');
 }
 
-function jatekosokHTML(id){
+function playersHTML(id){
   const agg = {};
-  const gwk = KERGWK().sort((a, b) => a - b);
+  const gwk = SQUAD_GWS().sort((a, b) => a - b);
   for (const gw of gwk){
-    const sq = (KER(gw) || {})[id];
+    const sq = (SQUADS_AT(gw) || {})[id];
     if (!sq) continue;
     for (const x of sq){
       const a = agg[x.e] || (agg[x.e] = { e: x.e, pts: 0, rounds: 0, st: 0, pad: 0 });
@@ -518,7 +531,7 @@ function jatekosokHTML(id){
   let h = `<div style="font-size:13px;color:var(--dim);margin-bottom:10px">${rows.length} játékos · ${gwk.length} forduló · a Pont oszlop a kezdőként szerzett pontokat összegzi</div>
     <table><tr><th></th><th>Játékos</th><th>F</th><th>Kezdő</th><th>Pad</th><th>Pont</th></tr>`;
   rows.forEach((r, i) => {
-    const j = jat(r.e);
+    const j = player(r.e);
     h += `<tr class="clickable" data-prof="${r.e}"><td class="rank">${i + 1}.</td>
       <td class="name"><span class="nevsor"><span class="ppos">${esc(j.p)}</span>${esc(j.n)}${j.t ? ` <span class="tm">${esc(j.t)}</span>` : ''}</span></td>
       <td>${r.rounds}</td><td>${r.st}</td><td>${r.pad}</td><td class="pont">${fmt(r.pts)}</td></tr>`;
@@ -526,330 +539,331 @@ function jatekosokHTML(id){
   return '<div class="tablewrap">' + h + '</table></div>';
 }
 
-// ---------- játékosprofil (PL) ----------
-// A MEGJELENITES kozos (funtasy.js -> FunTasy.profilHTML), itt csak az ADAT
-// all ossze. Ket forrasbol:
-//   1) draft_history.json - kinel volt a jatekos az adott forduloban, es
-//      kezdo volt-e vagy pados. Draft ligaban ez legfeljebb EGY szakvezeto;
-//      ha senkinel sem volt, szabadugynok volt.
-//   2) a Draft element-summary vegpontja - egy jatekos EGESZ szezonja EGY
-//      keresbol: fordulonkent a pont, az ellenfel, a palya es az allas.
-//      A gyujtonek ez semmibe nem kerul, mert a bongeszo keri le, akkor,
-//      amikor a profil megnyilik.
-// A teteles bontast a mar meglevo bontasHTML adja (event/{gw}/live explain),
-// ugyanaz a hivas es gyorsitotar, mint a keret-nezetben.
+// ---------- player profile (PL) ----------
+// The RENDERING is shared (funtasy.js -> FunTasy.profileHTML), only the
+// DATA is put together here. From two sources:
+//   1) draft_history.json - who had the player in a given round, and
+//      whether as a starter or on the bench. In a draft league that is at
+//      most ONE manager; with nobody, the player was a free agent.
+//   2) the Draft element-summary endpoint - a player's WHOLE season in ONE
+//      request: per round the points, the opponent, the venue and the
+//      score. It costs the collector nothing, because the browser fetches
+//      it, when the profile opens.
+// The itemised breakdown comes from the existing breakdownHTML (event/{gw}/live
+// explain), the same call and cache as in the squad view.
 
-// A `detail` mezo alakja: "BHA (A) 4-0" - az ELLENFEL, a JATEKOS csapatanak
-// palyaja, es az allas HAZAI-VENDEG sorrendben. Az utolsot KIMERTUK
-// (naplo/fpl-profil.txt): 25 idegenbeli, nem dontetlen meccsbol mind a 25 a
-// hazai-vendeg olvasatot igazolta, a "jatekos csapata eloszor" olvasatot
-// egy sem. Rosszul valasztva minden idegenbeli eredmeny megfordult volna.
+// The `detail` field reads "BHA (A) 4-0" - the OPPONENT, the venue of the
+// PLAYER's team, and the score in HOME-AWAY order. The last part was
+// MEASURED (naplo/fpl-profil.txt): of 25 away matches that were not draws,
+// all 25 confirmed the home-away reading, none the "player's team first"
+// reading. Chosen wrongly, every away result would have been reversed.
 const DETAIL = /^\s*(\S+)\s*\((H|A)\)\s*(\d+)\s*[-–]\s*(\d+)\s*$/;
-function detailMeccs(d){
+function detailMatch(d){
   const m = DETAIL.exec(d || '');
   return m ? { ellenfel: m[1], hazai: m[2] === 'H', hp: +m[3], vp: +m[4] } : null;
 }
 
-let PROFIL_AKT = null;               // az eppen nyitott profil elem-azonositoja
-const PROFILTORT = new Map();        // element -> Promise(history | null)
-function profilTortenet(e){
-  if (!PROFILTORT.has(e))
-    PROFILTORT.set(e, apiGet('https://draft.premierleague.com/api/element-summary/' + e)
+let OPEN_PROFILE = null;               // the element id of the profile currently open
+const PROFILE_HISTORY = new Map();        // element -> Promise(history | null)
+function profileHistory(e){
+  if (!PROFILE_HISTORY.has(e))
+    PROFILE_HISTORY.set(e, apiGet('https://draft.premierleague.com/api/element-summary/' + e)
       .then(j => j ? { hist: j.history || [], jovo: j.fixtures || [] } : null)
-      .catch(() => null));           // null = nem sikerult; a sorok kotojelet kapnak
-  return PROFILTORT.get(e);
+      .catch(() => null));           // null = failed; the rows get a dash
+  return PROFILE_HISTORY.get(e);
 }
 
-async function profilAdat(e){
-  const valasz = await profilTortenet(e);
-  const hist = valasz && valasz.hist;
-  const j = jat(e);
-  // A fordulok halmaza: amirol keret-elozmenyunk van, ES amiben a jatekos
-  // palyan volt. A ketto nem ugyanaz: szabadugynokkent is szerezhetett
-  // pontot, es lehetett valakinel ugy, hogy a klubjanak nem volt meccse.
-  // MINDEN fordulo szerepel, nem csak a lejatszottak - ugyanugy, mint a
-  // szakvezeto "Fordulok" fulen. A jovobeli sorokban a pont ures, az
-  // ELLENFEL viszont megvan: az element-summary a hatralevo meccseket is
-  // adja (`fixtures`), csapat-azonositoval es palya-jelzessel.
-  const utolso = liga.stop_event || 38;   // a `lastRound` csak a T beallitasa, nem metodusa
+async function profileData(e){
+  const resp = await profileHistory(e);
+  const hist = resp && resp.hist;
+  const j = player(e);
+  // The set of rounds: those we have squad history for, AND those the player
+  // played in. The two are not the same: as a free agent they could still
+  // score, and they could be in someone's squad while their club had no match.
+  // EVERY round is listed, not only the played ones - just as on the
+  // manager's "Fordulók" (rounds) tab. In future rows the points are empty,
+  // but the OPPONENT is there: element-summary gives the remaining matches
+  // too (`fixtures`), with a team id and a venue flag.
+  const last = league.stop_event || 38;   // `lastRound` is only a setting of T, not a method
   const gwk = new Set();
-  for (let r = 1; r <= utolso; r++) gwk.add(r);
-  KERGWK().forEach(r => gwk.add(r));
+  for (let r = 1; r <= last; r++) gwk.add(r);
+  SQUAD_GWS().forEach(r => gwk.add(r));
   (hist || []).forEach(h => { if (h.event) gwk.add(+h.event); });
-  // fordulo -> a hatralevo meccsek (dupla forduloban tobb is)
-  const jovoGw = {};
-  ((valasz && valasz.jovo) || []).forEach(f => {
+  // round -> the remaining matches (several in a double round)
+  const upcomingByGw = {};
+  ((resp && resp.jovo) || []).forEach(f => {
     if (!f || !f.event) return;
-    (jovoGw[f.event] = jovoGw[f.event] || []).push({
+    (upcomingByGw[f.event] = upcomingByGw[f.event] || []).push({
       ellenfel: TEAMS[f.opponent] || '', hazai: !!f.is_home, hp: null, vp: null });
   });
 
   const sorok = [];
   for (const gw of [...gwk].sort((a, b) => a - b)){
-    const per = KER(gw) || {};
+    const per = SQUADS_AT(gw) || {};
     const tulajok = [];
-    let tarolt = null;             // a fordulo TAROLT pontja (draft_history)
+    let stored = null;             // the round's STORED points (draft_history)
     for (const id of Object.keys(per)){
       const x = (per[id] || []).find(p => p.e === e);
-      // draftban egy jatekos egy keretben lehet; kapitany nincs a jatekban
-      if (x){ tulajok.push({ nev: nev(+id), kezdo: !x.b, kapitany: false });
-              if (x.pts != null) tarolt = x.pts; }
+      // in a draft a player can be in only one squad; there is no captain in the game
+      if (x){ tulajok.push({ nev: teamName(+id), kezdo: !x.b, kapitany: false });
+              if (x.pts != null) stored = x.pts; }
     }
-    // dupla forduloban ket sor tartozik ugyanahhoz a fordulohoz
+    // in a double round two rows belong to the same round
     const hs = (hist || []).filter(h => +h.event === gw);
-    const lejatszott = hs.map(h => detailMeccs(h.detail)).filter(Boolean);
-    const jovobeli = jovoGw[gw] || [];
+    const playedGames = hs.map(h => detailMatch(h.detail)).filter(Boolean);
+    const upcoming = upcomingByGw[gw] || [];
     sorok.push({
       r: gw,
       tulajok,
-      // a fordulo meg nem indult el: nincs rola keret-elozmeny
-      jovo: !KER(gw),
+      // the round has not started yet: there is no squad history for it
+      jovo: !SQUADS_AT(gw),
       keretszam: Object.keys(per).length,
-      meccsek: lejatszott.length ? lejatszott : jovobeli,
-      // Ha az FPL-lekeres elhasal, NEM kotojel jon: a fordulonkenti pont ott
-      // van a tarolt keret-elozmenyben (draft_history.json), es azt ki tudjuk
-      // irni. Az ellenfelet nem - az csak az element-summary-bol jon -, de a
-      // pont es a szerep megjelenik. (Enelkul FPL-kimaradaskor az egesz profil
-      // csupa kotojel volt, es a "Pont osszesen" 0 - miközben az adat itt
-      // hevert a repoban. Az NB1-profil mindig is a tarolt adatbol epult.)
+      meccsek: playedGames.length ? playedGames : upcoming,
+      // If the FPL fetch fails, NOT a dash: the per-round points are in the
+      // stored squad history (draft_history.json), and can be shown. The
+      // opponent cannot - that only comes from element-summary -, but the points
+      // and the role show. (Without this, during an FPL outage the whole profile
+      // was dashes and "Pont összesen" 0 - while the data was right there in the
+      // repository. The NB1 profile has always been built from stored data.)
       pont: (hist && hs.length) ? hs.reduce((s, h) => s + (h.total_points || 0), 0)
-          : (!hist && tarolt != null) ? tarolt
+          : (!hist && stored != null) ? stored
           : null,
-      // "nincs meccs" CSAK akkor, ha a fordulo mar lement, de a klub nem
-      // jatszott (ures fordulo). A jovobeli sor egyszeruen ures.
-      jegyzet: !hist ? (tarolt != null ? undefined : '—')
-        : (hs.length || jovobeli.length) ? undefined
-        : (KER(gw) ? 'nincs meccs' : '')
+      // "nincs meccs" (no match) ONLY when the round has already been played but
+      // the club did not play (a blank round). A future row is simply empty.
+      jegyzet: !hist ? (stored != null ? undefined : '—')
+        : (hs.length || upcoming.length) ? undefined
+        : (SQUADS_AT(gw) ? 'nincs meccs' : '')
     });
   }
-  const osszes = sorok.reduce((x, s) => x + (s.pont || 0), 0);
-  const keretben = sorok.filter(s => s.tulajok.length).length;
+  const totalPts = sorok.reduce((x, s) => x + (s.pont || 0), 0);
+  const inSquad = sorok.filter(s => s.tulajok.length).length;
   return {
     liga: 'pl',
     nev: j.n, klub: j.t, poszt: j.p,
     tenyek: [
-      { cimke: 'Pont összesen', ertek: osszes },
+      { cimke: 'Pont összesen', ertek: totalPts },
       // rounds already played, as on the NB1 profile - not the 38 to come
       { cimke: 'Fordulók', ertek: sorok.filter(s => !s.jovo).length },
-      { cimke: 'Ebből keretben', ertek: keretben }
+      { cimke: 'Ebből keretben', ertek: inSquad }
     ],
     sorok, senkinel: '–'
   };
 }
 
-// A mezony osszes jatekosa a fooldali listahoz es kereseshez. A torzs
-// (draft_players.json) mar betoltodik az oldal indulasakor, a szezonpont
-// pedig benne van - plusz lekeres nem kell hozza.
-// Draft ligaban egy jatekos legfeljebb EGY keretben van, tehat a
-// "kinel van most" itt egyetlen nev vagy semmi.
-function jatekosPanel(){
-  const idk = Object.keys(PLAYERS);
-  if (!idk.length) return;
-  const tulaj = {};
+// Every player in the field for the home page list and search. The roster
+// (draft_players.json) is already loaded when the page starts, and the
+// season points are in it - no extra request is needed.
+// In a draft league a player is in at most ONE squad, so "who has the
+// player now" is a single name or nothing here.
+function playerPanel(){
+  const ids = Object.keys(PLAYERS);
+  if (!ids.length) return;
+  const ownerOf = {};
   for (const id of Object.keys(SQUADS))
     for (const e of (SQUADS[id] || []))
-      tulaj[e] = { nev: nev(+id), jel: (ENTRIES[id] && ENTRIES[id].short) || '' };
-  const lista = idk.map(id => ({
+      ownerOf[e] = { nev: teamName(+id), jel: (ENTRIES[id] && ENTRIES[id].short) || '' };
+  const items = ids.map(id => ({
     id, nev: PLAYERS[id].n, klub: PLAYERS[id].t, poszt: PLAYERS[id].p,
     pts: PLAYERS[id].pts || 0,
-    tulajok: tulaj[id] ? [tulaj[id]] : []
+    tulajok: ownerOf[id] ? [ownerOf[id]] : []
   })).sort((a, b) => b.pts - a.pts || a.nev.localeCompare(b.nev, 'hu'));
   $('jlPanel').style.display = '';
-  FunTasy.jatekosKereso({
-    doboz: 'jlDoboz', szabad: '–',
-    // draft ligaban nincs ar - az oszlop sem kell
-    oszlopok: ['poszt', 'nev', 'klub', 'tulaj', 'pts'],
-    adat: () => lista,
-    nyit: id => showProfil(+id, 'push')
+  FunTasy.playerSearch({
+    box: 'jlDoboz', nobodyText: '–',
+    // a draft league has no price - so no price column either
+    columns: ['poszt', 'nev', 'klub', 'tulaj', 'pts'],
+    data: () => items,
+    open: id => showProfile(+id, 'push')
   });
 }
 
-// A vaz (cim, felirat, betoltes-jelzes, elavultsag-vedelem, hibauzenet) a
-// kozos retegbol jon - ugyanaz, mint az NB1-en. Itt csak az van, ami
-// ligankent mas: honnan a nev es honnan az adat. Potlas nincs: a Draft
-// element-summary egy keresben adja az egesz szezont.
-const showProfil = FunTasy.profilNezo({
-  nezet: NEZET,
-  jelol: e => { PROFIL_AKT = e; },     // a lenyilo bontas ebbol dolgozik
-  nev:   e => jat(e).n,
-  adat:  e => profilAdat(e),
+// The skeleton (title, subtitle, loading indicator, staleness guard, error
+// message) comes from the shared layer - the same as on NB1. Only what
+// differs by league is here: where the name and the data come from. There
+// is no backfill: the Draft element-summary gives the whole season in one
+// request.
+const showProfile = FunTasy.profileViewer({
+  view: VIEW,
+  mark: e => { OPEN_PROFILE = e; },     // the expanding breakdown works from this
+  name:   e => player(e).n,
+  data:  e => profileData(e),
 });
 
 let mTeam = null;
 function showTeam(id, tab, mode){
   vShow(()=>showTeam(id, tab, 'noop'), mode);
   mTeam = id; openModal();
-  $('mTitle').textContent = nev(id) + ((ENTRIES[id] || {}).short ? ' · ' + ENTRIES[id].short : '');
-  $('mSub').textContent = NEVEK[id] ? NEVEK[id] : '';
+  $('mTitle').textContent = teamName(id) + ((ENTRIES[id] || {}).short ? ' · ' + ENTRIES[id].short : '');
+  $('mSub').textContent = NB1_NAMES[id] ? NB1_NAMES[id] : '';
   tab = tab || 'keret';
   $('mTabs').innerHTML =
     `<button class="tab ${tab === 'keret' ? 'on' : ''}" data-tab="keret">Aktuális keret</button>
      <button class="tab ${tab === 'fordulok' ? 'on' : ''}" data-tab="fordulok">Fordulók</button>
      <button class="tab ${tab === 'jatekosok' ? 'on' : ''}" data-tab="jatekosok">Szezon játékosai</button>
      <button class="tab ${tab === 'valtoztatasok' ? 'on' : ''}" data-tab="valtoztatasok">Változtatások</button>`;
-  $('mBody').innerHTML = tab === 'keret' ? keretHTML(id)
-                       : tab === 'fordulok' ? T.fordulokHTML(id)
-                       : tab === 'valtoztatasok' ? valtoztatasokHTML(id) : jatekosokHTML(id);
-  const keretLatszik = () => {
+  $('mBody').innerHTML = tab === 'keret' ? squadHTML(id)
+                       : tab === 'fordulok' ? T.roundsHTML(id)
+                       : tab === 'valtoztatasok' ? changesHTML(id) : playersHTML(id);
+  const squadVisible = () => {
     const on = document.querySelector('#mTabs .tab.on');
     return mTeam === id && $('ov').classList.contains('open')
            && on && on.dataset.tab === 'keret';
   };
   if (tab === 'keret')
-    // a nyitott pont-bontas maradjon nyitva (lasd FunTasy.accOrzo)
-    percUtantoltes(keretGW(id), () => { if (keretLatszik())
-      FunTasy.accOrzo(() => { $('mBody').innerHTML = keretHTML(id); }); });
-  if (tab === 'keret' && LIVEGW && (KER(LIVEGW) || {})[id]){
+    // the open points breakdown stays open (see FunTasy.accPreserve)
+    backfillMinutes(squadGw(id), () => { if (squadVisible())
+      FunTasy.accPreserve(() => { $('mBody').innerHTML = squadHTML(id); }); });
+  if (tab === 'keret' && LIVEGW && (SQUADS_AT(LIVEGW) || {})[id]){
     fetchLivePts().catch(() => false).then(ok => {
-      // amit itt lekertunk, azzal a mogottes fooldali lista is frissul -
-      // kulonben ugyanaz a "listan 39, ravaltva 38" elteres allna elo, mint
-      // a meccs-adatlapnal
-      if (ok) eloAllasFrissit(LIVEGW);
-      if (ok && keretLatszik()) FunTasy.accOrzo(() => { $('mBody').innerHTML = keretHTML(id); });
+      // what was fetched here also updates the home page list behind it -
+      // otherwise the same "39 on the list, 38 once opened" mismatch would arise
+      // as on the match page
+      if (ok) updateLiveScores(LIVEGW);
+      if (ok && squadVisible()) FunTasy.accPreserve(() => { $('mBody').innerHTML = squadHTML(id); });
     });
   }
 }
 
-// ---------- zarasi valtozasok (fooldali panel) ----------
-// Az adat a zarasok.json-bol jon (a gyujto a veglegesito futasban irja,
-// lasd collect_draft.py zarasi_kulonbseg). A panel csak akkor latszik, ha
-// mar van legalabb egy fordulonyi adat.
+// ---------- closing changes (home page panel) ----------
+// The data comes from zarasok.json (the collector writes it in the
+// finalising run, see collect_draft.py closing_diff). The panel only shows
+// once there is at least one round of data.
 //
-// A "ki"/"be" kulon sorokban all, NEM parban: a pad-jelzo valtozasabol nem
-// tudhato, melyik pados kinek a helyere allt be, es hamis parositast nem
-// allitunk.
-let ZARASOK = null, zarasNezet = 'mind';
-const ZNEZETEK = [['mind', 'Mind'], ['pont', 'Pontváltozás'], ['csere', 'Cserék']];
+// "ki"/"be" (out/in) are in separate rows, NOT in pairs: from the change of
+// the bench flag it cannot be known which bench player came on in whose
+// place, and no false pairing is claimed.
+let CLOSINGS = null, closingView = 'mind';
+const CLOSING_VIEWS = [['mind', 'Mind'], ['pont', 'Pontváltozás'], ['csere', 'Cserék']];
 
-function zarasHTML(r, nezet){
-  // A HTML-t a kozos reteg rakja ossze (FunTasy.zarasLista) - ugyanaz, mint
-  // az NB1 paneljen. Itt csak a sorok allnak ossze a draft-adatbol.
-  const csapatok = ZARASOK[r] || {};
-  const csoportok = Object.keys(csapatok)
-    .sort((a, b) => nev(+a).localeCompare(nev(+b), 'hu'))
+function closingHTML(r, view){
+  // The HTML is built by the shared layer (FunTasy.closingList) - the same
+  // as on the NB1 panel. Only the rows are put together here from the draft data.
+  const teams = CLOSINGS[r] || {};
+  const groups = Object.keys(teams)
+    .sort((a, b) => teamName(+a).localeCompare(teamName(+b), 'hu'))
     .map(lid => {
-      const v = csapatok[lid], sorok = [];
-      const alap = e => ({ poszt: jat(e).p, nev: jat(e).n, klub: jat(e).t,
+      const v = teams[lid], sorok = [];
+      const baseRow = e => ({ poszt: player(e).p, nev: player(e).n, klub: player(e).t,
                            prof: { 'data-prof': e } });
-      if (nezet !== 'csere')
-        (v.pont || []).forEach(x => sorok.push({ ...alap(x.e), elott: x.elott, utan: x.utan }));
-      if (nezet !== 'pont'){
-        // A bekerult jatekos PONTJA mondja meg, mit hozott a csere. A regi
-        // (pont nelkuli) formatumot is elfogadjuk: ott csak azonosito allt.
-        const csere = (x, irany) => {
+      if (view !== 'csere')
+        (v.pont || []).forEach(x => sorok.push({ ...baseRow(x.e), elott: x.elott, utan: x.utan }));
+      if (view !== 'pont'){
+        // The POINTS of the player brought in say what the substitution brought.
+        // The old format (without points) is accepted too: there only an id stood.
+        const subRow = (x, irany) => {
           const e = (typeof x === 'object') ? x.e : x;
           const pts = (typeof x === 'object') ? x.pts : null;
-          return { ...alap(e), tip: 'csere', irany, ert: irany === 'be' ? pts : null };
+          return { ...baseRow(e), tip: 'csere', irany, ert: irany === 'be' ? pts : null };
         };
-        (v.ki || []).forEach(x => sorok.push(csere(x, 'ki')));
-        (v.be || []).forEach(x => sorok.push(csere(x, 'be')));
+        (v.ki || []).forEach(x => sorok.push(subRow(x, 'ki')));
+        (v.be || []).forEach(x => sorok.push(subRow(x, 'be')));
       }
-      return { nev: nev(+lid), jelzok: { 'data-team': lid }, sorok };
+      return { nev: teamName(+lid), jelzok: { 'data-team': lid }, sorok };
     });
-  return FunTasy.zarasLista(csoportok, nezet === 'pont'
+  return FunTasy.closingList(groups, view === 'pont'
     ? 'A zárás nem hozott pontváltozást ebben a fordulóban.'
-    : nezet === 'csere'
+    : view === 'csere'
     ? 'A zárásnál nem történt automatikus csere ebben a fordulóban.'
-    : FunTasy.UZENET.nincsValtozas);
+    : FunTasy.MESSAGES.noChange);
 }
 
-// A legordulot es a ket nyilat a kozos lapozo viszi (FunTasy.forduloLapozo)
-// - ugyanaz a vezerlo, mint az NB1 zarasi panelje folott.
-let ZARASLAPOZO = null;
-function zarasRajzol(){
-  const r = ZARASLAPOZO ? ZARASLAPOZO.ertek() : $('selZaras').value;
-  $('zarasSzuro').innerHTML = ZNEZETEK.map(([k, cim]) =>
-    `<button class="vlt-chip${zarasNezet === k ? ' on' : ''}" data-znezet="${k}">${cim}</button>`).join('');
-  $('zarasBody').innerHTML = zarasHTML(r, zarasNezet);
+// The dropdown and the two arrows are run by the shared pager
+// (FunTasy.roundPager) - the same control as above the NB1 closing panel.
+let CLOSING_PAGER = null;
+function drawClosing(){
+  const r = CLOSING_PAGER ? CLOSING_PAGER.value() : $('selZaras').value;
+  $('zarasSzuro').innerHTML = CLOSING_VIEWS.map(([k, title]) =>
+    `<button class="vlt-chip${closingView === k ? ' on' : ''}" data-znezet="${k}">${title}</button>`).join('');
+  $('zarasBody').innerHTML = closingHTML(r, closingView);
 }
 
-// A panel csak akkor rajzolhato, ha a NEVEK is megvannak (draft.json,
-// draft_players.json) - a zarasok.json kulon uton toltodik, es siman
-// megelozheti oket. E nelkul a jatekosok "#512"-kent jelennenek meg.
-function zarasInit(){
-  if (!ZARASOK || !Object.keys(PLAYERS).length || !Object.keys(ENTRIES).length) return;
-  // MINDEN lejatszott fordulo szerepel, nem csak az, amelyikben volt valtozas:
-  // ahol nem volt, ott az a hir, hogy nem volt. Novekvo sorrend, es a lapozo
-  // az UTOLSO fordulon all - ugyanugy, mint az NB1 paneljen (korabban a ket
-  // panelen a nyilak ellenkezo iranyba vittek).
-  const van = Object.keys(ZARASOK).map(Number);
-  if (!van.length) return;
-  // A LEZART fordulokig megyunk, nem a tarolt keretekig. A gyujto a FOLYO
-  // fordulo kereteit is elmenti, tehat a HIST elo fordulo alatt eggyel
-  // tovabb tart - a panel emiatt egy MEG LE SEM ZART fordulon nyilt meg,
-  // uresen ("nem tortent valtozas"), holott a zaras meg meg sem tortent.
-  // A `veglegesek` pontosan azt mondja meg, mit zart le a gyujto.
-  const utolso = Math.max(...van, ...VEGLEGESEK.map(Number).filter(Boolean));
-  const fordulok = [];
-  for (let r = 1; r <= utolso; r++) fordulok.push(r);
-  ZARASLAPOZO = FunTasy.forduloLapozo({ sel: 'selZaras', valt: zarasRajzol });
-  ZARASLAPOZO.tolt(fordulok, utolso);
+// The panel can only be drawn when the NAMES are there too (draft.json,
+// draft_players.json) - zarasok.json loads on a separate path and can
+// easily get there first. Without them the players would show as "#512".
+function closingInit(){
+  if (!CLOSINGS || !Object.keys(PLAYERS).length || !Object.keys(ENTRIES).length) return;
+  // EVERY played round is listed, not only those with a change: where there
+  // was none, the news is that there was none. Ascending order, and the
+  // pager stands on the LAST round - the same as on the NB1 panel (so the
+  // arrows go the same way on both panels).
+  const withData = Object.keys(CLOSINGS).map(Number);
+  if (!withData.length) return;
+  // It goes up to the CLOSED rounds, not the stored squads. The collector
+  // also saves the CURRENT round's squads, so during a live round HIST
+  // reaches one round further - and the panel would open on a round NOT EVEN
+  // CLOSED, empty ("nem történt változás", no change), although the closing
+  // has not happened yet. `veglegesek` says exactly what the collector closed.
+  const last = Math.max(...withData, ...FINAL_ROUNDS.map(Number).filter(Boolean));
+  const rounds = [];
+  for (let r = 1; r <= last; r++) rounds.push(r);
+  CLOSING_PAGER = FunTasy.roundPager({ sel: 'selZaras', onChange: drawClosing });
+  CLOSING_PAGER.fill(rounds, last);
   $('zarasPanel').style.display = '';
-  zarasRajzol();
+  drawClosing();
 }
 
 document.addEventListener('click', e => {
   const chip = e.target.closest('[data-znezet]');
-  if (chip){ zarasNezet = chip.dataset.znezet; zarasRajzol(); }
+  if (chip){ closingView = chip.dataset.znezet; drawClosing(); }
 });
 
-// Matrix-cellara kattintva a ket csapat egymas elleni meccsei.
-const showH2H = FunTasy.h2hNezo({
-  nezet: NEZET,
-  nev: id => nev(id),
-  tartalom: (a,b) => T.h2hHTML(a,b),
-  elokeszit: () => { mTeam = null; },
+// A click on a matrix cell: the two teams' matches against each other.
+const showH2H = FunTasy.h2hViewer({
+  view: VIEW,
+  name: id => teamName(id),
+  content: (a,b) => T.h2hHTML(a,b),
+  prepare: () => { mTeam = null; },
 });
 
 function showMatch(h, v, r, mode){
   vShow(()=>showMatch(h, v, r, 'noop'), mode);
   openModal();
-  $('mTitle').textContent = nev(h) + '  vs  ' + nev(v);
+  $('mTitle').textContent = teamName(h) + '  vs  ' + teamName(v);
   $('mSub').textContent = r + '. forduló';
   $('mTabs').innerHTML = '';
-  let H = (KER(r) || {})[h], V = (KER(r) || {})[v];
-  // a folyo fordulon a repobeli (3 orankent frissulo) pontok helyett a
-  // percre friss ertekeket mutatjuk, ha az elo lekeres mar megjott
+  let H = (SQUADS_AT(r) || {})[h], V = (SQUADS_AT(r) || {})[v];
+  // for the current round the minute-fresh values are shown instead of the
+  // repository's (refreshed every 3 hours) points, once the live fetch has arrived
   if (r === LIVEGW && Object.keys(LIVEPTS).length){
-    const friss = x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts });
-    if (H) H = H.map(friss);
-    if (V) V = V.map(friss);
+    const fresh = x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts });
+    if (H) H = H.map(fresh);
+    if (V) V = V.map(fresh);
     $('mSub').textContent += ' · élő állás';
   }
   if (H && V){
-    const S = a => a.filter(x => !x.b).reduce((s, x) => s + (x.pts || 0), 0);   // a pad nem szamit
-    const fej = (A, B) => allasHTML(h, v, S(A), S(B), r === LIVEGW);
-    // elo meccsen a FRISS listakbol szamolunk (a hook a tarolt keretet nezi)
-    const kezdSor = (A, B) =>
-      FunTasy.kezdParHTML(plHatekonysag(A), plHatekonysag(B), r === LIVEGW);
+    const S = a => a.filter(x => !x.b).reduce((s, x) => s + (x.pts || 0), 0);   // the bench does not count
+    const head = (A, B) => scoreHTML(h, v, S(A), S(B), r === LIVEGW);
+    // for a live match it computes from the FRESH lists (the hook looks at the stored squad)
+    const lineupRow = (A, B) =>
+      FunTasy.lineupPairHTML(plEfficiency(A), plEfficiency(B), r === LIVEGW);
     // Recomputed on every draw, not captured once: the strip remembers
     // whether the reader opened it, and a live round redraws the body.
-    const article = () => FunTasy.matchArticle(ARTICLES, 'pl', r, nev(h), nev(v),
+    const article = () => FunTasy.matchArticle(ARTICLES, 'pl', r, teamName(h), teamName(v),
                                                {closed: roundClosed(r)});
-    const test = (A, B) => fej(A, B) + kezdSor(A, B) + article() + ACCHINT +
+    const body = (A, B) => head(A, B) + lineupRow(A, B) + article() + ACCHINT +
       `<div class="sqwrap">${sqcolHTML(h, A, null, r)}${sqcolHTML(v, B, null, r)}</div>`;
-    $('mBody').innerHTML = test(H, V);
-    // Lezart fordulonal a percek utolag jonnek meg (egy keres, fordulonkent
-    // gyorsitotarazva) - akkor ujrarajzoljuk, ha meg ugyanez a meccs latszik.
-    const cim = $('mTitle').textContent, alcim = $('mSub').textContent;
-    percUtantoltes(r, () => {
-      if ($('mTitle').textContent === cim && $('mSub').textContent === alcim)
-        FunTasy.accOrzo(() => { $('mBody').innerHTML = test(H, V); });
+    $('mBody').innerHTML = body(H, V);
+    // For a closed round the minutes arrive afterwards (one request, cached per
+    // round) - then it is redrawn, if the same match is still on screen.
+    const title = $('mTitle').textContent, subtitle = $('mSub').textContent;
+    backfillMinutes(r, () => {
+      if ($('mTitle').textContent === title && $('mSub').textContent === subtitle)
+        FunTasy.accPreserve(() => { $('mBody').innerHTML = body(H, V); });
     });
     if (r === LIVEGW){
-      const kert = $('mTitle').textContent;
-      // amig a percre friss lekeres tart, jelzest kap - kulonben a szamok
-      // szo nelkul ugranak at (lassu halon ez zavaro)
-      const jel = FunTasy.lassuJelzo($('mSub'));
-      // .catch: a jelzest hibas agon is le KELL venni, kulonben orokke ketyeg
+      const requested = $('mTitle').textContent;
+      // while the minute-fresh fetch runs, it gets an indicator - otherwise the
+      // numbers would jump without a word (on a slow network this is confusing)
+      const stopIndicator = FunTasy.slowIndicator($('mSub'));
+      // .catch: the indicator MUST be removed on the error path too, otherwise it ticks forever
       fetchLivePts().catch(() => false).then(ok => {
-        jel();
+        stopIndicator();
         if (!ok) return;
-        // amit itt lekertunk, azzal a mogottes fooldali lista is frissul
-        eloAllasFrissit(r);
-        if (!$('ov').classList.contains('open') || $('mTitle').textContent !== kert) return;
-        const friss = x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts });
-        FunTasy.accOrzo(() => { $('mBody').innerHTML = test(H.map(friss), V.map(friss)); });
+        // what was fetched here also updates the home page list behind it
+        updateLiveScores(r);
+        if (!$('ov').classList.contains('open') || $('mTitle').textContent !== requested) return;
+        const fresh = x => ({ ...x, pts: LIVEPTS[x.e] ?? x.pts });
+        FunTasy.accPreserve(() => { $('mBody').innerHTML = body(H.map(fresh), V.map(fresh)); });
       });
     }
     return;
@@ -857,7 +871,7 @@ function showMatch(h, v, r, mode){
   const m = (SCHEDULE[r] || []).find(x => x[0] === h && x[1] === v);
   // No squads yet - but this is exactly when a preview is worth reading,
   // and here it has nothing to cover, so it comes open.
-  $('mBody').innerHTML = FunTasy.matchArticle(ARTICLES, 'pl', r, nev(h), nev(v),
+  $('mBody').innerHTML = FunTasy.matchArticle(ARTICLES, 'pl', r, teamName(h), teamName(v),
                                               {closed: roundClosed(r), defaultOpen: true})
     + '<div class="loading">' + (played(m)
     ? 'Ehhez a fordulóhoz nincs elmentett keret-adat.'
@@ -867,13 +881,13 @@ function showMatch(h, v, r, mode){
 document.addEventListener('click', e => {
   if (e.target === $('ovBack')){ vBack(); return; }
   const pr = e.target.closest('.plr[data-acc]');
-  // ugyanaz az accordion ket helyen: a keret-nezetben a sor sajat adataibol,
-  // a jatekosprofilban a nyitott jatekosbol es a fordulo szamabol (data-pr)
+  // the same accordion in two places: in the squad view from the row's own
+  // data, in the player profile from the open player and the round number (data-pr)
   if (pr){ FunTasy.accToggle(pr, () => pr.dataset.pr !== undefined
-             ? bontasHTML(PROFIL_AKT, +pr.dataset.pr, true)
-             : bontasHTML(+pr.dataset.e, +pr.dataset.gw)); return; }
+             ? breakdownHTML(OPEN_PROFILE, +pr.dataset.pr, true)
+             : breakdownHTML(+pr.dataset.e, +pr.dataset.gw)); return; }
   const pf = e.target.closest('[data-prof]');
-  if (pf){ showProfil(+pf.dataset.prof, 'push'); return; }
+  if (pf){ showProfile(+pf.dataset.prof, 'push'); return; }
   const t = e.target.closest('[data-team]');
   if (t){ showTeam(+t.dataset.team); return; }
   const tab = e.target.closest('#mTabs .tab');
@@ -886,96 +900,102 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-// ---------- élő frissítés ----------
-// A draft.premierleague.com közvetlenül CORS miatt nem hívható böngészőből,
-// de CORS-proxykon át igen — ugyanazokon, amiket az NB1-oldal is használ.
-// A trükk: a kezdőcsapatok a forduló indulásakor RÖGZÜLNEK (a repóban vannak,
-// draft_history.json), ezért élőben csak a nyilvános, játékosonkénti pontokat
-// kell lekérni (event/{gw}/live), és abból összegezhető minden meccs állása.
-// A tabellába az élő állás NEM számít bele. Ha a lekérés elhasal, a tárolt
-// (3 óránként frissülő) adat marad, hibajelzéssel.
-// Idobelyeg minden retegre, kulonben megosztott gyorsitotarbol jon a valasz:
-// iPhone-on ugy alltunk, hogy akarhanyszor toltottuk ujra a lapot, ugyanaz a
-// jatekos-pont jott vissza (mas keszuleken kozben mar a friss). A `_` a
-// proxyt, az `fpl_` magat az FPL-kerest torli - az FPL az ismeretlen
-// parametert figyelmen kivul hagyja, tehat itt a belso URL-t is bontjuk.
-// A proxys lekeres a kozos retegben el (funtasy.js -> FunTasy.lekero).
-// Az FPL figyelmen kivul hagyja az ismeretlen parametert, ezert itt a BELSO
-// URL is kap idobelyeget - igy a proxy upstream-gyorsitotara sem szolgalhat
-// ki regi valaszt. (Az MLSZ-nel ez nincs igazolva, ott nem csinaljuk.)
-const apiGet = FunTasy.lekero({ belsoBelyeg: 'fpl_' });
-const lekeresHiba = FunTasy.hibajelzo({
-  eloE: () => !!LIVEGW,
-  taroltIdo: () => TAROLT_IDO,
+// ---------- live refresh ----------
+// draft.premierleague.com cannot be called directly from a browser because
+// of CORS, but it can through CORS proxies — the same ones the NB1 page uses.
+// The trick: the starting line-ups are FIXED when the round starts (they are
+// in the repository, draft_history.json), so live only the public per-player
+// points have to be fetched (event/{gw}/live), and every match score can be
+// summed from them.
+// The live score does NOT count in the table. If the fetch fails, the stored
+// data (refreshed every 3 hours) stays, with an error flag.
+// A timestamp on every layer, otherwise the response comes from a shared
+// cache: on iPhone, however many times the page was reloaded, the same
+// player points came back (while another device already had the fresh
+// ones). `_` busts the proxy, `fpl_` the FPL request itself - the FPL
+// ignores an unknown parameter, so here the inner URL is busted too.
+// Fetching through the proxies lives in the shared layer (funtasy.js ->
+// FunTasy.makeFetcher).
+// The FPL ignores an unknown parameter, so here the INNER URL gets a
+// timestamp too - so the proxy's upstream cache cannot serve an old
+// response either. (For the MLSZ this is not verified, it is not done there.)
+const apiGet = FunTasy.makeFetcher({ innerStamp: 'fpl_' });
+const fetchError = FunTasy.errorReporter({
+  isLive: () => !!LIVEGW,
+  storedAt: () => STORED_AT,
 });
-// A fordulo allapota naponkenti bontasban. A Draft API-ban NINCS ilyen
-// vegpont (event-status ott 404), a klasszikus FPL-ben viszont van, es
-// pontosan ezt rajzolja ki a Draft sajat "Current team" lapja is:
-//   {"bonus_added": false, "date": "<nap>", "event": 1, "points": "p"}
+// The round's state broken down by day. The Draft API has NO such
+// endpoint (event-status gives 404 there), but the classic FPL has one, and
+// this is exactly what the Draft's own "Current team" page draws:
+//   {"bonus_added": false, "date": "<day>", "event": 1, "points": "p"}
 //
-// A Draft frontendjenek forrasabol kiolvasva  a ket oszlop:
-//   Match Points <- points:  "" = ures, l = Live, p = Provisional, r = Confirmed
-//   Bonus Points <- bonus_added:  igaz eseten "Added"
+// Read from the Draft frontend's source, the two columns:
+//   Match Points <- points:  "" = empty, l = Live, p = Provisional, r = Confirmed
+//   Bonus Points <- bonus_added:  "Added" when true
 //
-// FONTOS: a "p" (Provisional) NEM a veglegesites jele, hanem az elotte levo
-// allapot. 2026/27-tol a fordulo "lockdown"-ja az utolso meccs UTANI nap
-// 09:00 UK-kor van (korabban egy oraval a lefujas utan), hogy az Opta
-// utolagos felulvizsgalata meg beleszamithasson a bonuszba. Napi zaras
-// tehat NINCS - ezert all a jelolesen az, hogy a FORDULO vegeig valtozhat.
+// IMPORTANT: "p" (Provisional) is NOT the sign of finalisation but the
+// state before it. From 2026/27 a round's "lockdown" is at 09:00 UK time
+// on the day AFTER its last match, so that Opta's later review can still
+// count towards the bonus. So there is NO daily close - which is why the
+// marking says it can change until the end of the ROUND.
 const EVENT_STATUS = 'https://fantasy.premierleague.com/api/event-status/';
-// A napi pontzaras allapota. A Draft API nem adja (event-status ott 404), a
-// KLASSZIKUS FPL viszont igen - ugyanarrol a bajnoksagrol van szo, a bonuszt
-// egyszer veglegesitik, mindket jatek ugyanabbol el.
+// The state of the daily points close. The Draft API does not give it
+// (event-status gives 404 there), but the CLASSIC FPL does - it is the same
+// league, the bonus is finalised once, and both games run from it.
 //
-// Ezt NEM varjuk meg a pontfrissitesnel: masodlagos jelzes, csak a bonusz-sor
-// jelolesehez kell, amit a felhasznalo kattintasra lat. Ha megvarnank, egy
-// lassu vagy elhasalt lekeres a fo frissitest is lassitana - a "frissites..."
-// jelzes akkor is felvillanna, amikor a pontok mar reg megjottek.
-async function napiZarasFrissit(){
+// It is NOT awaited for the points refresh: it is a secondary signal, only
+// needed for marking the bonus row, which the user sees on a click. If it
+// were awaited, a slow or failed fetch would slow the main refresh too -
+// the "frissítés…" indicator would flash even when the points had long
+// arrived.
+async function refreshDailyClose(){
   const gw = LIVEGW;
   const j = await apiGet(EVENT_STATUS).catch(() => null);
-  if (gw !== LIVEGW) return;                 // kozben fordulot valtottunk
-  if (!j || !Array.isArray(j.status)) return;   // marad az elozo (vagy null)
-  const uj = {};
-  // Vegleges a nap, ha az FPL BARMELYIK jelzoje kimondja: a pont "Confirmed"
-  // (r), vagy a bonusz "Added". Mindketto pozitiv allitas a veglegessegrol -
-  // a "p" (Provisional) viszont nem az, az meg a kozbenso allapot.
+  if (gw !== LIVEGW) return;                 // the round changed meanwhile
+  if (!j || !Array.isArray(j.status)) return;   // the previous one stays (or null)
+  const fresh = {};
+  // A day is final when ANY of the FPL's flags says so: the points are
+  // "Confirmed" (r), or the bonus is "Added". Both are positive statements
+  // of finality - "p" (Provisional), however, is not; that is the state in
+  // between.
   j.status.forEach(n => {
-    if (n && n.date) uj[n.date] = { lezart: n.points === 'r' || !!n.bonus_added };
+    if (n && n.date) fresh[n.date] = { lezart: n.points === 'r' || !!n.bonus_added };
   });
-  LIVENAP = uj;
+  LIVE_DAYS = fresh;
 }
-// A MECCSORAT a jatekosok perceibol szamoljuk, nem a meccs sajat mezojebol.
-// MERVE (elo meccs alatt): a fixtures "minutes" mezoje MINDIG 0 -
-// meg a mar lement meccseknel is. A jatekosok percei viszont egyutt ketyegnek:
-// a futo meccsen minden palyan levo kezdo ugyanazt a szamot mutatta (40').
+// The MATCH CLOCK is computed from the players' minutes, not from the
+// match's own field. MEASURED (during a live match): the fixtures
+// "minutes" field is ALWAYS 0 - even for matches already over. The
+// players' minutes, however, tick together: in the running match every
+// starter on the pitch showed the same number (40').
 //
-// A legnagyobb ertek a meccs oraja. Ez nem becsles: 11 kezdo es legfeljebb 5
-// csere mellett mindig marad olyan jatekos a palyan, aki a kezdes ota ott van,
-// es a ket klub jatekosai egyutt kerulnek a mezonybe.
-function meccsoraFrissit(){
-  if (!LIVEMECCS) return;
-  const percKlub = {};                       // klub -> a legnagyobb percszam
-  for (const e in LIVEPERC){
-    const t = jat(e).t; if (!t) continue;
-    const p = LIVEPERC[e].perc || 0;
-    if (p > (percKlub[t] || 0)) percKlub[t] = p;
+// The largest value is the match clock. This is not an estimate: with 11
+// starters and at most 5 substitutions there is always a player on the
+// pitch who has been there since kick-off, and the players of both clubs
+// enter the field together.
+function updateMatchClock(){
+  if (!LIVE_MATCHES) return;
+  const clubMinutes = {};                       // club -> the largest number of minutes
+  for (const e in LIVE_MINUTES){
+    const t = player(e).t; if (!t) continue;
+    const p = LIVE_MINUTES[e].perc || 0;
+    if (p > (clubMinutes[t] || 0)) clubMinutes[t] = p;
   }
-  for (const id in LIVEMECCS){
-    const m = LIVEMECCS[id];
-    const ertekek = (m.klubok || []).map(k => percKlub[k]).filter(x => x != null);
-    m.perc = ertekek.length ? Math.max(...ertekek) : null;
+  for (const id in LIVE_MATCHES){
+    const m = LIVE_MATCHES[id];
+    const values = (m.klubok || []).map(k => clubMinutes[k]).filter(x => x != null);
+    m.perc = values.length ? Math.max(...values) : null;
   }
 }
-// Egy meccs a fixtures valaszabol. Az elo es a lezart fordulo UGYANEZT
-// hasznalja, hogy a ket helyen ne csusszon el az ertelmezes.
-function meccsRekord(m){
+// One match from the fixtures response. The live and the closed round use
+// THE SAME, so the interpretation cannot drift apart in the two places.
+function fixtureRecord(m){
   return {
     indult: !!m.started,
     lefujva: !!(m.finished_provisional || m.finished),
     hivatalos: !!m.finished,
     nap: (m.kickoff_time || '').slice(0, 10),
-    // a ket klub, hogy a meccsorat a jatekosok perceibol szamolhassuk
+    // the two clubs, so the match clock can be computed from the players' minutes
     klubok: [TEAMS[m.team_h], TEAMS[m.team_a]].filter(Boolean),
     hazai: TEAMS[m.team_h] || null, vendeg: TEAMS[m.team_a] || null,
     hp: m.team_h_score, vp: m.team_a_score,
@@ -984,137 +1004,140 @@ function meccsRekord(m){
 }
 
 async function fetchLivePts(){
-  // a folyo fordulo percre friss jatekos-pontjai; true, ha sikerult.
-  // Mellette a fordulo meccs-allapotai (fixtures) is jonnek: ebbol tudjuk,
-  // kinek kezdodott mar el a meccse ("jatszott mar?" jelzes, kotojel vs 0).
+  // the current round's minute-fresh player points; true on success.
+  // The round's match states (fixtures) come along too: from them we know
+  // whose match has already started (the "has played yet?" flag, dash vs 0).
   if (!LIVEGW) return false;
-  napiZarasFrissit();          // szandekosan NEM varjuk meg - lasd ott
-  const [elo, fx] = await Promise.all([
+  refreshDailyClose();          // deliberately NOT awaited - see there
+  const [live, fx] = await Promise.all([
     apiGet('https://draft.premierleague.com/api/event/' + LIVEGW + '/live'),
     apiGet('https://draft.premierleague.com/api/event/' + LIVEGW + '/fixtures'),
   ]);
   if (Array.isArray(fx) && fx.length && Object.keys(TEAMS).length){
-    // Klubonkent osszevonva, mert dupla fordulon egy klubnak ket meccse van:
-    // "indult", ha barmelyik elkezdodott; "kesz", ha MINDEGYIK lement; a
-    // "kezdes" a legkozelebbi meg el nem kezdodott meccse.
+    // Merged per club, because in a double round a club has two matches:
+    // "indult" (started) if any of them has started; "kesz" (done) if ALL of
+    // them are over; "kezdes" (kick-off) is its nearest match not started yet.
     LIVEFX = {};
-    // MERVE : a meccsnek harom allapota van. started, de meg nem
-    // finished_provisional = megy; finished_provisional, de meg nem finished
-    // = lefujva, a bonusz rogzult, de az FPL meg atnezi; finished =
-    // hivatalos. A bonusz-sor jelzese ebbol jon.
-    LIVEMECCS = {};
-    fx.forEach(m => { LIVEMECCS[m.id] = meccsRekord(m); });
+    // MEASURED: a match has three states. started but not yet
+    // finished_provisional = running; finished_provisional but not yet finished
+    // = whistled off, the bonus is fixed, but the FPL still reviews it;
+    // finished = official. The bonus row's marking comes from this.
+    LIVE_MATCHES = {};
+    fx.forEach(m => { LIVE_MATCHES[m.id] = fixtureRecord(m); });
     fx.forEach(m => [m.team_h, m.team_a].forEach(t => {
-      const rov = TEAMS[t]; if (!rov) return;
-      const a = LIVEFX[rov] || (LIVEFX[rov] = { indult:false, kesz:true, kezdes:null, meccsek:[] });
+      const short = TEAMS[t]; if (!short) return;
+      const a = LIVEFX[short] || (LIVEFX[short] = { indult:false, kesz:true, kezdes:null, meccsek:[] });
       a.meccsek.push(m.id);
       a.indult = a.indult || !!m.started;
-      // A meccs KET lepesben zarul: a 'finished_provisional' a lefujaskor
-      // igaz, a 'finished' csak kesobb, a bonuszpontok veglegesitesekor.
-      // Csak az utobbit nezni azt jelentette, hogy a mar lejatszott meccsre
-      // is azt irtuk: "a meccs zajlik".
+      // A match closes in TWO steps: 'finished_provisional' is true at the final
+      // whistle, 'finished' only later, when the bonus points are finalised.
+      // Looking at the latter only meant saying "a meccs zajlik" (the match is
+      // under way) about a match already played.
       a.kesz   = a.kesz   && !!(m.finished || m.finished_provisional);
       if (!m.started && m.kickoff_time && (!a.kezdes || m.kickoff_time < a.kezdes))
         a.kezdes = m.kickoff_time;
     }));
   }
-  if (!elo) return false;
-  LIVEPTS = {}; LIVEPERC = {};
-  const el = elo.elements || {};
-  // Ugyanabbol a valaszbol, amibol a pontok: a percek es a "kezdo volt-e".
-  // Eddig eldobtuk oket.
-  // A PONT ES A PERC A TETELES BONTASBOL JON, nem a stats osszesitojebol.
+  if (!live) return false;
+  LIVEPTS = {}; LIVE_MINUTES = {};
+  const el = live.elements || {};
+  // From the same response as the points: the minutes and "started or not".
+  // THE POINTS AND THE MINUTES COME FROM THE ITEMISED BREAKDOWN, not from
+  // the stats summary.
   //
-  // MERVE (GW2): az FPL a ket erteket KULON tartja, es az
-  // osszesito beragadt, mikozben az explain mar a lement meccs valos
-  // esemenyeit adta. Calvert-Lewinnel a sor 1 pontot es 9 percet mondott,
-  // a bontasa viszont 90 percet, golt es bonuszt (2+4+2 = 8). A HIVATALOS
-  // FPL-APP UGYANEZT AZ ELLENTMONDAST MUTATTA: a palyan 1, a jatekosra
-  // kattintva 8 - tehat nem a mi hibank volt, de mi ki tudjuk javitani.
+  // MEASURED (GW2): the FPL keeps the two values SEPARATELY, and the summary
+  // got stuck while the explain already gave the real events of the
+  // finished match. For Calvert-Lewin the row said 1 point and 9 minutes,
+  // his breakdown 90 minutes, a goal and a bonus (2+4+2 = 8). THE OFFICIAL
+  // FPL APP SHOWED THE SAME CONTRADICTION: 1 on the pitch view, 8 when
+  // clicking the player - so it was not our error, but we can correct it.
   //
-  // Hogy az explain a hiteles: a meccsek addigra LEMENTEK, es a 90 jatszott
-  // perc csak lejatszott meccsbol johet, mig a stats 9 perce barmikor - a
-  // percszam monoton no, tehat a kisebbik a lemaradt. A BONUSSZAL NEM lehet
-  // ervelni (elsore tevesen azzal erveltem): az FPL a bonuszt a meccs
-  // alatt is szamolja es beteszi az explain-be - lasd a README "A
-  // bonuszpontok harom allapota" szakaszat es a bonuszAllapot-ot.
+  // Why the explain is the reliable one: the matches were OVER by then, and
+  // 90 minutes played can only come from a played match, while the stats'
+  // 9 minutes can come at any time - the minute count only grows, so the
+  // smaller one is the one lagging behind. The BONUS is NOT an argument: the
+  // FPL computes the bonus during the match too and puts it into the
+  // explain - see the README section "A bónuszpontok három állapota" and
+  // bonusState.
   //
-  // Normalis esetben a ketto egyezik, tehat ez semmit nem valtoztat.
-  // Elteresnel viszont a RESZLETEZES a hiteles: az konkret esemenyekbol all
-  // ossze, az osszesito meg egy kulon szamolt, most hibas ertek. Dupla
-  // fordulonal az explain mindket meccset hozza, ezert osszeadjuk.
-  // A pontot es a percet KULON kell szamon tartani: lehet a bontasban pontot
-  // ero sor perc-sor NELKUL, es olyankor a 0 perc hamis lenne - ott a stats
-  // marad. (Ma nem fordul elo, de a visszaeses nem all meg felutig.)
-  const bontasbol = v => {
-    var vanPont = false, vanPerc = false, pont = 0, perc = 0;
+  // Normally the two match, so this changes nothing. On a mismatch, however,
+  // the BREAKDOWN is the reliable one: it is built from concrete events,
+  // while the summary is a separately computed, now wrong value. In a double
+  // round the explain brings both matches, so they are added up.
+  // The points and the minutes have to be tracked SEPARATELY: the breakdown
+  // can have a scoring row WITHOUT a minutes row, and then 0 minutes would be
+  // false - there the stats value stays. (It does not happen today, but the
+  // fallback must not stop halfway.)
+  const fromBreakdown = v => {
+    var hasPoints = false, hasMinutes = false, points = 0, minutes = 0;
     (v.explain || []).forEach(fx => (fx && fx[0] || []).forEach(t => {
-      vanPont = true;
-      pont += t.points || 0;
-      if (t.stat === 'minutes'){ vanPerc = true; perc += t.value || 0; }
+      hasPoints = true;
+      points += t.points || 0;
+      if (t.stat === 'minutes'){ hasMinutes = true; minutes += t.value || 0; }
     }));
-    return { vanPont: vanPont, vanPerc: vanPerc, pont: pont, perc: perc };
+    return { hasPoints: hasPoints, hasMinutes: hasMinutes, points: points, minutes: minutes };
   };
-  const be = (id, v) => {
-    const st = v.stats || {}, b = bontasbol(v);
-    LIVEPTS[id] = b.vanPont ? b.pont : (st.total_points || 0);
-    LIVEPERC[id] = { perc: b.vanPerc ? b.perc : (st.minutes || 0), kezdo: !!st.starts };
+  const put = (id, v) => {
+    const st = v.stats || {}, b = fromBreakdown(v);
+    LIVEPTS[id] = b.hasPoints ? b.points : (st.total_points || 0);
+    LIVE_MINUTES[id] = { perc: b.hasMinutes ? b.minutes : (st.minutes || 0), kezdo: !!st.starts };
   };
-  if (Array.isArray(el)) el.forEach(v => be(v.id, v || {}));
-  else for (const k in el) be(k, el[k] || {});
-  meccsoraFrissit();
+  if (Array.isArray(el)) el.forEach(v => put(v.id, v || {}));
+  else for (const k in el) put(k, el[k] || {});
+  updateMatchClock();
   return true;
 }
-// ---------- pont-bontas (accordion a jatekos-sorok alatt) ----------
-// Forrasa az event/{gw}/live "explain" mezoje: esemenyenkent nev, darab es
-// pont. A nevek angolul jonnek, a stat-kulcs alapjan forditjuk; ismeretlen
-// kulcsnal az angol nev marad. Csak a pontot ero sorok latszanak, mint az
-// NB1-oldalon. A pad pontjai itt sem szamitanak a csapatnak - ezt a keret-
-// nezet felirata mondja, a bontas a nyers ertekeket mutatja.
-const STATNEV = { minutes:'Játszott percek', goals_scored:'Gólok', assists:'Gólpasszok',
+// ---------- points breakdown (accordion under the player rows) ----------
+// Its source is the "explain" field of event/{gw}/live: per event a name,
+// a count and points. The names come in English and are translated by the
+// stat key; for an unknown key the English name stays. Only scoring rows
+// show, as on the NB1 page. Bench points do not count for the team here
+// either - the squad view's label says so, the breakdown shows the raw values.
+const STAT_NAMES = { minutes:'Játszott percek', goals_scored:'Gólok', assists:'Gólpasszok',
   clean_sheets:'Kapott gól nélkül', goals_conceded:'Kapott gólok', own_goals:'Öngól',
   penalties_saved:'Kivédett büntetők', penalties_missed:'Kihagyott büntetők',
   yellow_cards:'Sárga lap', red_cards:'Piros lap', saves:'Védések',
   bonus:'Bónuszpontok', defensive_contribution:'Védekező munka' };
-const BONTASGW = new Map();   // gw -> {t, p}; az elo fordulot percenkent frissitjuk
+const GW_ELEMENTS = new Map();   // gw -> {t, p}; the live round is refreshed every minute
 function gwElems(gw){
-  const most = Date.now(), rec = BONTASGW.get(gw);
-  if (rec && (gw !== LIVEGW || most - rec.t < 60000)) return rec.p;
+  const now = Date.now(), rec = GW_ELEMENTS.get(gw);
+  if (rec && (gw !== LIVEGW || now - rec.t < 60000)) return rec.p;
   const p = apiGet('https://draft.premierleague.com/api/event/' + gw + '/live')
     .then(j => (j && j.elements) || null);
-  BONTASGW.set(gw, { t: most, p });
+  GW_ELEMENTS.set(gw, { t: now, p });
   return p;
 }
-// Egy fordulo meccsei, klub-rovidnev szerint csoportositva. Elo forduloban a
-// mar meglevo LIVEMECCS-bol, lezart forduloban egy fordulonkent
-// gyorsitotarazott fixtures-lekeresbol. A hivo (bontasHTML) amugy is aszinkron,
-// ezert itt nem kell utantoltes: mire a lenyilo tartalma elkeszul, ez is megvan.
-const REGIFX = {};   // gw -> {meccs_id: meccsRekord}
-async function forduloMeccsei(gw){
+// One round's matches, grouped by club short name. For a live round from
+// the existing LIVE_MATCHES, for a closed round from a fixtures fetch cached
+// per round. The caller (breakdownHTML) is asynchronous anyway, so no
+// backfill is needed here: by the time the expanding row's content is
+// ready, this is there too.
+const PAST_FIXTURES = {};   // gw -> {match_id: fixtureRecord}
+async function gamesOfRound(gw){
   if (gw == null) return null;
-  if (gw === LIVEGW && LIVEMECCS) return LIVEMECCS;
-  if (REGIFX[gw]) return REGIFX[gw];
+  if (gw === LIVEGW && LIVE_MATCHES) return LIVE_MATCHES;
+  if (PAST_FIXTURES[gw]) return PAST_FIXTURES[gw];
   if (!Object.keys(TEAMS).length) return null;
   const fx = await apiGet('https://draft.premierleague.com/api/event/' + gw + '/fixtures');
   if (!Array.isArray(fx) || !fx.length) return null;
   const t = {};
-  fx.forEach(m => { t[m.id] = meccsRekord(m); });
-  REGIFX[gw] = t;
+  fx.forEach(m => { t[m.id] = fixtureRecord(m); });
+  PAST_FIXTURES[gw] = t;
   return t;
 }
 
-// A jatekos meccse(i) a pont-bontas folott: "ARS 2-1 BRE - 70. perc".
-// Dupla forduloban ket sor. Az allas a fixtures valaszabol jon, tehat lezart
-// forduloban a vegeredmenyt mutatja.
-function meccsFejHTML(e, meccsek){
-  if (!meccsek) return '';
-  const klub = jat(e).t;
-  if (!klub) return '';
-  const sajat = Object.values(meccsek)
-    .filter(m => m.hazai === klub || m.vendeg === klub);
-  // a sor kirajzolasa kozos (FunTasy.bontasMeccsSor) - itt csak az adat
-  // all ossze: a jobb oldali cimke az FPL elo meccsorajabol jon
-  return sajat.map(m => FunTasy.bontasMeccsSor({
+// The player's match(es) above the points breakdown: "ARS 2-1 BRE - 70. perc".
+// Two rows in a double round. The score comes from the fixtures response,
+// so for a closed round it shows the final result.
+function gameHeaderHTML(e, games){
+  if (!games) return '';
+  const club = player(e).t;
+  if (!club) return '';
+  const mine = Object.values(games)
+    .filter(m => m.hazai === club || m.vendeg === club);
+  // drawing the row is shared (FunTasy.breakdownMatchRow) - only the data is
+  // put together here: the right-hand label comes from the FPL live match clock
+  return mine.map(m => FunTasy.breakdownMatchRow({
     hazai: m.hazai, vendeg: m.vendeg, hp: m.hp, vp: m.vp,
     jobb: !m.indult ? 'még nem kezdődött'
         : m.lefujva ? 'vége'
@@ -1122,288 +1145,301 @@ function meccsFejHTML(e, meccsek){
   })).join('');
 }
 
-// A lezart fordulo perceit menet kozben toltjuk be. Aszinkron, tehat a modal
-// eloszor perc-oszlopok nelkul jelenik meg, es amikor megjon az adat,
-// ujrarajzoljuk - ugyanaz a minta, mint a percre friss pontoknal.
-// Igazzal ter vissza, ha ujra kell rajzolni; null, ha nincs mit tolteni.
-function regiPercBetolt(gw){
-  if (gw == null || gw === LIVEGW || REGIPERC[gw]) return null;
+// The closed round's minutes are loaded on the fly. It is asynchronous, so
+// the modal first appears without the minute columns, and is redrawn when
+// the data arrives - the same pattern as for the minute-fresh points.
+// Returns true when a redraw is needed; null when there is nothing to load.
+function loadPastMinutes(gw){
+  if (gw == null || gw === LIVEGW || PAST_MINUTES[gw]) return null;
   return gwElems(gw).then(el => {
     if (!el) return false;
     const t = {};
-    const be = (id, st) => { t[id] = { perc: st.minutes || 0, kezdo: !!st.starts }; };
-    if (Array.isArray(el)) el.forEach(v => be(v.id, v.stats || {}));
-    else for (const k in el) be(k, ((el[k] || {}).stats) || {});
-    REGIPERC[gw] = t;
+    const put = (id, st) => { t[id] = { perc: st.minutes || 0, kezdo: !!st.starts }; };
+    if (Array.isArray(el)) el.forEach(v => put(v.id, v.stats || {}));
+    else for (const k in el) put(k, ((el[k] || {}).stats) || {});
+    PAST_MINUTES[gw] = t;
     return true;
   }).catch(() => false);
 }
-// A visszateres percekkel telhet, kozben a nezo mashova lephet - az
-// ujrarajzolo fuggveny sajat maga ellenorzi, hogy meg ugyanaz latszik-e.
-function percUtantoltes(gw, ujrarajzol){
-  const p = regiPercBetolt(gw);
-  if (p) p.then(ok => { if (ok && $('ov').classList.contains('open')) ujrarajzol(); });
+// The return can take minutes, and meanwhile the viewer may go elsewhere -
+// the redraw function itself checks whether the same thing is still shown.
+function backfillMinutes(gw, redraw){
+  const p = loadPastMinutes(gw);
+  if (p) p.then(ok => { if (ok && $('ov').classList.contains('open')) redraw(); });
 }
 
-// A kozos retegbol: egy formazo, ket liga. A korabbi sajat valtozat
-// ures vagy hibas ertekre "Invalid Date"-et, null-ra pedig kitalalt
-// datumot irt ki.
-const idoFmt = s => FunTasy.idoFmt(s, 'pl');
-// Ha egyetlen pontot ero esemeny sincs, a 0-nak negy oka lehet. A meccs
-// allapotat az elo fordulonal a fixtures adja (indult / kesz), a lezart
-// fordulokra minden meccs kesz; hogy palyara lepett-e, a live 'minutes'
-// mutatja - ez 0 percnel is megjon, tehat megbizhato jelzes.
-// Ugyanaz a mondat, mint az NB1-oldalon: a kozos retegbol jon, es a liga
-// eloPontok tulajdonsaga dont rola. Az FPL percrol percre adja a pontot,
-// tehat itt a meccs alatti 0 tenyleg azt jelenti, hogy eddig nem volt
-// pontot ero esemenye.
-const MECCS_KOZBEN = FunTasy.UZENET.meccsKozben('pl');
-function nincsPontUzenet(e, gw, perc){
-  const klub = jat(e).t;
-  const elo = gw === LIVEGW && LIVEFX;
-  const fx = elo ? LIVEFX[klub] : null;
-  if (elo && klub && !fx)
+// From the shared layer: one formatter, two leagues. It prints neither
+// "Invalid Date" for an empty or bad value, nor a made-up date for null.
+const formatKickoff = s => FunTasy.formatKickoff(s, 'pl');
+// When there is not a single scoring event, a 0 can have four reasons.
+// For the live round the match state comes from the fixtures (indult /
+// kesz), for closed rounds every match is done; whether the player took
+// the field is shown by the live 'minutes' - it arrives at 0 minutes too,
+// so it is a reliable signal.
+// The same sentence as on the NB1 page: it comes from the shared layer, and
+// the league's livePoints property decides it. The FPL gives points minute
+// by minute, so here a 0 during the match really means there has been no
+// scoring event so far.
+const DURING_MATCH = FunTasy.MESSAGES.duringMatch('pl');
+function noPointsMessage(e, gw, minutes){
+  const club = player(e).t;
+  const live = gw === LIVEGW && LIVEFX;
+  const fx = live ? LIVEFX[club] : null;
+  if (live && club && !fx)
     return 'Ebben a fordulóban nem játszik — a klubnak nincs meccse (üres forduló).';
   if (fx && !fx.indult)
-    return 'A meccs még nem kezdődött el' + (fx.kezdes ? ' — kezdés: ' + idoFmt(fx.kezdes) : '.');
-  if (fx && !fx.kesz) return MECCS_KOZBEN;
-  if (perc === 0) return FunTasy.UZENET.nemLepettPalyara;
-  return FunTasy.UZENET.esemenyNelkul;
+    return 'A meccs még nem kezdődött el' + (fx.kezdes ? ' — kezdés: ' + formatKickoff(fx.kezdes) : '.');
+  if (fx && !fx.kesz) return DURING_MATCH;
+  if (minutes === 0) return FunTasy.MESSAGES.didNotPlay;
+  return FunTasy.MESSAGES.noScoringEvent;
 }
-// A bonusz nem ugy vegleges, mint a tobbi pont. Az FPL a meccs alatt is
-// szamolja a BPS-tablabol, tehat a kiirt ertek meg valtozhat; lefujaskor
-// rogzul, de hivatalossa csak a NAPI PONTZARASKOR valik. Harom allapot,
-// ebbol kettot jelolunk - a hivatalos a jeloletlen alap.
+// The bonus is not final the way the other points are. The FPL computes it
+// during the match too from the BPS table, so the value shown can still
+// change; it is fixed at the final whistle, but only becomes official at
+// the DAILY POINTS CLOSE. Three states, two of which are marked - the
+// official one is the unmarked default.
 //
-// A veglegesseget a fordulo zarasa adja, nem a meccs vege es nem a nap vege:
-// 2026/27-tol a lockdown a fordulo utolso meccse UTANI nap 09:00 UK-kor van.
-// Addig az Opta felulvizsgalata meg modosithatja a bonuszt, tehat a lefujt
-// meccs pontja is valtozhat meg - ezert szol a jeloles a FORDULO vegeig.
+// Finality comes from the round's closing, not the end of the match nor
+// the end of the day: from 2026/27 the lockdown is at 09:00 UK time on the
+// day AFTER the round's last match. Until then Opta's review can still
+// change the bonus, so the points of a match already whistled off can
+// change too - which is why the marking lasts until the end of the ROUND.
 //
-// Ha a napi adat nem jon meg, a meccs finished mezojere esunk vissza:
-// pontatlanabb (tovabb hagyja kint a jelolest), de nem allit valotlant.
+// If the daily data does not arrive, it falls back to the match's finished
+// field: less precise (it leaves the marking up longer), but it claims
+// nothing untrue.
 //
-// Regi fordulora nincs elo adatunk, de ott nincs is mit jelolni: az mar reg
-// lezarult.
-function bonuszAllapot(gw, meccsId){
-  if (gw !== LIVEGW || !LIVEMECCS || meccsId == null) return null;
-  const m = LIVEMECCS[meccsId];
+// For an old round there is no live data, but there is nothing to mark
+// either: it closed long ago.
+function bonusState(gw, matchId){
+  if (gw !== LIVEGW || !LIVE_MATCHES || matchId == null) return null;
+  const m = LIVE_MATCHES[matchId];
   if (!m) return null;
   if (!m.lefujva)
     return { jelzes: 'valtozik', megjegyzes: 'a meccs alatt még változik' };
-  const nap = LIVENAP && m.nap ? LIVENAP[m.nap] : null;
-  const hivatalos = nap ? nap.lezart : m.hivatalos;
-  return hivatalos ? null
+  const day = LIVE_DAYS && m.nap ? LIVE_DAYS[m.nap] : null;
+  const official = day ? day.lezart : m.hivatalos;
+  return official ? null
     : { jelzes: 'ideiglenes', megjegyzes: 'lefújva — a forduló végéig még változhat' };
 }
-async function bontasHTML(e, gw, profilban){
-  const [el, meccsek] = await Promise.all([gwElems(gw), forduloMeccsei(gw)]);
+async function breakdownHTML(e, gw, inProfile){
+  const [el, games] = await Promise.all([gwElems(gw), gamesOfRound(gw)]);
   const v = el && (el[e] || el[String(e)]);
   if (!v) return null;
-  const fej = meccsFejHTML(e, meccsek);
-  const sorok = [];
-  let perc = null;
-  // Az explain fordulonkent MECCSEKRE bontva jon: [[stat-lista, meccs_id]].
-  // A meccs azonositoja kell, hogy a bonusz-sort a sajat meccsehez kossuk -
-  // dupla fordulonal a ket sor kulon allapotban lehet.
+  const head = gameHeaderHTML(e, games);
+  const rows = [];
+  let minutes = null;
+  // The explain comes split by MATCH per round: [[stat list, match_id]].
+  // The match id is needed to tie the bonus row to its own match - in a
+  // double round the two rows can be in different states.
   (v.explain || []).forEach(fx => {
-    const meccsId = fx && fx[1];
+    const matchId = fx && fx[1];
     (fx && fx[0] || []).forEach(t => {
-      if (t.stat === 'minutes') perc = (perc || 0) + (t.value || 0);   // dupla fordulonal osszead
+      if (t.stat === 'minutes') minutes = (minutes || 0) + (t.value || 0);   // adds up in a double round
       if (!t.points) return;
-      const sor = { name: STATNEV[t.stat] || t.name || '?', value: t.value, points: t.points };
-      if (t.stat === 'bonus') Object.assign(sor, bonuszAllapot(gw, meccsId) || {});
-      sorok.push(sor);
+      const row = { name: STAT_NAMES[t.stat] || t.name || '?', value: t.value, points: t.points };
+      if (t.stat === 'bonus') Object.assign(row, bonusState(gw, matchId) || {});
+      rows.push(row);
     });
   });
-  // A lenyilo aljan a teljes profil. A profilon BELUL nem tesszuk ki (ott
-  // mar ott vagy) - onnan a hivo `profilban` jelzessel jon.
-  return fej + FunTasy.accTable(sorok, nincsPontUzenet(e, gw, perc))
-             + (profilban ? '' : FunTasy.profilNyitoHTML(` data-prof="${e}"`));
+  // At the bottom of the expanding row the full profile. It is not shown
+  // INSIDE the profile (you are already there) - from there the caller comes
+  // with the `inProfile` flag.
+  return head + FunTasy.accTable(rows, noPointsMessage(e, gw, minutes))
+             + (inProfile ? '' : FunTasy.profileLinkHTML(` data-prof="${e}"`));
 }
-// A fooldali meccslista allasa a LIVE retegben el (hogy a tabellaba ne
-// szamitson bele). Barki frissiti a LIVEPTS-t, ezt is at kell szamolni -
-// kulonben a lista es a meccs-adatlap mast mutat ugyanarrol a meccsrol
-// (a bejelentett eset: a listan 39, ravaltva 38).
-function eloAllasFrissit(gw){
-  const keretek = KER(gw);
-  if (!keretek) return false;
-  const osszeg = id => (keretek[id] || []).filter(x => !x.b)
+// The home page match list's score lives in the LIVE layer (so it does not
+// count in the table). Whoever updates LIVEPTS has to recompute this too -
+// otherwise the list and the match page show different things about the
+// same match (the case: 39 on the list, 38 once opened).
+function updateLiveScores(gw){
+  const squads = SQUADS_AT(gw);
+  if (!squads) return false;
+  const sumOf = id => (squads[id] || []).filter(x => !x.b)
     .reduce((s, x) => s + (LIVEPTS[x.e] ?? x.pts ?? 0), 0);
-  // Akinek a kerete nincs meg, arrol NEM allitunk allast. A keret hianyozhat
-  // reszlegesen is: a gyujto egy elhasalt csapat-lekerest atlep (continue), a
-  // bongeszo potlasa meg reszleges lehet. Osszegkent ilyenkor 0 jonne ki -
-  // ami futo meccsen nem "meg nincs pont", hanem hamis allas.
-  const van = id => ((keretek[id] || []).length > 0);
+  // For someone whose squad is missing, NO score is claimed. A squad can be
+  // partly missing too: the collector skips a failed team fetch (continue),
+  // and the browser's backfill can be partial. As a sum this would come out
+  // as 0 - which on a running match is not "no points yet" but a false score.
+  const hasSquad = id => ((squads[id] || []).length > 0);
   LIVE[gw] = (SCHEDULE[gw] || []).map(m =>
-    (played(m) || !van(m[0]) || !van(m[1])) ? null
-      : [m[0], m[1], osszeg(m[0]), osszeg(m[1])]);
+    (played(m) || !hasSquad(m[0]) || !hasSquad(m[1])) ? null
+      : [m[0], m[1], sumOf(m[0]), sumOf(m[1])]);
   T.renderMatches('past'); T.renderMatches('next');
   return true;
 }
-// A FOLYO FORDULO KERETEINEK POTLASA. A gyujto 3 orankent fut, a fordulo
-// viszont a nevezesi hataridovel indul - a ket idopont kozott a repoban
-// nincs keret ehhez a fordulohoz, es a lap nem tud elo allast szamolni
-// (a KIZART HIBA: elo meccs alatt a lap nem frissult). Ilyenkor a
-// bongeszo maga keri le oket; a kozos resz a FunTasy.potKeretek, a vegpont
-// ligankent mas.
+// BACKFILLING THE CURRENT ROUND'S SQUADS. The collector runs every 3
+// hours, but the round starts at the entry deadline - between the two
+// times the repository has no squads for this round, and the page cannot
+// compute a live score (the failure this prevents: during a live match the
+// page did not update). Then the browser fetches them itself; the shared
+// part is FunTasy.backfillSquads, the endpoint differs by league.
 //
-// Az `entry/{eid}/event/{gw}` a fordulo INDULASAIG 404-et ad, utana picks-et.
-// Mi csak ELO fordulora hivjuk (LIVEGW), tehat mar van mit adnia.
+// `entry/{eid}/event/{gw}` gives 404 UNTIL the round STARTS, picks after.
+// It is only called for a LIVE round (LIVEGW), so it already has something
+// to give.
 //
-// A draft.json a ligan BELULI azonositot tarolja (league_entry "id"), a
-// vegpont viszont az FPL entry_id-t keri - a kettot a league details koti
-// ossze, azt egyszer kerjuk le.
-let EIDK = null;                    // liga_id -> FPL entry_id
-async function entryIdk(){
-  if (EIDK) return EIDK;
-  if (!liga || !liga.id) return null;
-  const j = await apiGet('https://draft.premierleague.com/api/league/' + liga.id + '/details');
+// draft.json stores the id WITHIN the league (league_entry "id"), but the
+// endpoint wants the FPL entry_id - the league details link the two, and
+// that is fetched once.
+let ENTRY_IDS = null;                    // league_id -> FPL entry_id
+async function entryIds(){
+  if (ENTRY_IDS) return ENTRY_IDS;
+  if (!league || !league.id) return null;
+  const j = await apiGet('https://draft.premierleague.com/api/league/' + league.id + '/details');
   const t = {};
   (((j || {}).league_entries) || []).forEach(e => {
     if (e.id != null && e.entry_id != null) t[e.id] = e.entry_id;
   });
-  EIDK = Object.keys(t).length ? t : null;
-  return EIDK;
+  ENTRY_IDS = Object.keys(t).length ? t : null;
+  return ENTRY_IDS;
 }
-async function keretPotlas(gw){
-  // `meglevo` = amit MAR tudunk: a gyujtoe es a korabbi potlas egyutt. Ha ezt
-  // csak a HIST-bol neznenk, a potlas minden percben "ujnak" latszana, es
-  // feleslegesen rajzoltatna ujra az egesz lapot.
-  const meglevo = KER(gw) || {};
-  const hianyzik = Object.keys(ENTRIES).filter(id => !(meglevo[id] || []).length);
-  if (!hianyzik.length) return false;
-  const eid = await entryIdk().catch(() => null);
+async function backfillRound(gw){
+  // `existing` = what we ALREADY know: the collector's and the earlier
+  // backfill together. Looking only at HIST, the backfill would look "new"
+  // every minute and needlessly redraw the whole page.
+  const existing = SQUADS_AT(gw) || {};
+  const missing = Object.keys(ENTRIES).filter(id => !(existing[id] || []).length);
+  if (!missing.length) return false;
+  const eid = await entryIds().catch(() => null);
   if (!eid) return false;
-  const kesz = await FunTasy.potKeretek(gw, hianyzik.filter(id => eid[id]), async id => {
+  const have = await FunTasy.backfillSquads(gw, missing.filter(id => eid[id]), async id => {
     const j = await apiGet('https://draft.premierleague.com/api/entry/' + eid[id] + '/event/' + gw);
     const picks = ((j || {}).picks) || [];
-    // ures vagy ismeretlen szerkezetu valasz: inkabb semmi, mint rossz keret
+    // an empty response or one of unknown structure: better nothing than a wrong squad
     if (!picks.length || picks[0].element == null) return null;
-    // ugyanaz a rekord, amit a gyujto ir (collect_draft.py): a pad a 12-15.
-    // hely, a pontot a LIVEPTS adja - ide 0 kerul.
+    // the same record the collector writes (collect_draft.py): the bench is
+    // places 12-15, the points come from LIVEPTS - 0 goes here.
     return picks.map(x => ({ e: x.element, b: (x.position || 0) > 11, pts: 0 }));
   });
-  if (!kesz) return false;
-  // A gyujtoe az erosebb: a mar beirt keretet NEM irjuk felul.
-  const uj = Object.assign({}, kesz, HIST[gw] || {});
-  if (Object.keys(uj).length === Object.keys(meglevo).length) return false;
-  POTKER[gw] = uj;
-  KEZD_MEMO.clear();                // a kezdohatekonysag memoja keretbol szamol
+  if (!have) return false;
+  // The collector's wins: a squad already written is NOT overwritten.
+  const merged = Object.assign({}, have, HIST[gw] || {});
+  if (Object.keys(merged).length === Object.keys(existing).length) return false;
+  BACKFILLED[gw] = merged;
+  LINEUP_MEMO.clear();                // the line-up efficiency memo computes from squads
   return true;
 }
-// Elo fordulo alatt percenkent ujra lekerjuk az allast - lasd
-// FunTasy.eloFrissito. Csak akkor jar, ha van folyo fordulo ES lathato a lap.
-// A masodik parameter az ora koze. Elesben nincs megadva (60 mp az
-// alapertelmezes); a bongeszos teszt allitja at, hogy ne kelljen perceket
-// varnia - ez az EGYETLEN celja, mas nem irja.
-const ELOORA = FunTasy.eloFrissito(() => liveRefresh(), window.ELO_ORA_KOZ);
+// During a live round the score is fetched again every minute - see
+// FunTasy.liveRefresher. It only runs when a round is in progress AND the
+// page is visible.
+// The second parameter is the clock interval. In production it is not set
+// (60 s is the default); the browser test sets it so it does not have to
+// wait minutes - that is its ONLY purpose, nothing else writes it.
+const LIVE_CLOCK = FunTasy.liveRefresher(() => liveRefresh(), window.LIVE_INTERVAL);
 async function liveRefresh(){
   const st = $('status');
   const game = await apiGet('https://draft.premierleague.com/api/game');
-  if (!game){ lekeresHiba(); return; }
+  if (!game){ fetchError(); return; }
   const gw = game.current_event;
-  if (!gw || game.current_event_finished){              // nincs folyo fordulo
-    // Ha a fordulo azota zarult le, hogy a lapot betoltottuk (pl. hatterben
-    // volt a ful), az elo reteget el kell dobni. Kulonben a listaban a
-    // legutolso lekeres szamai ragadnanak bent "élő" jelolessel, holott mar
-    // vegleges eredmeny jar oda - azt a gyujto irja be a kovetkezo korben.
+  if (!gw || game.current_event_finished){              // no round in progress
+    // If the round has closed since the page was loaded (e.g. the tab was in
+    // the background), the live layer must be dropped. Otherwise the list
+    // would keep the last fetch's numbers marked "élő" (live), although a
+    // final result belongs there - the collector writes it in its next run.
     if (LIVEGW && LIVE[LIVEGW]){
       delete LIVE[LIVEGW];
       T.renderMatches('past'); T.renderMatches('next');
     }
-    // a potolt keret ugyanugy elavul, mint az elo reteg: a zaras utani
-    // (automatikus cserekkel javitott) keretet mar a gyujto adja
-    if (LIVEGW){ delete POTKER[LIVEGW]; FunTasy.potKeretekUrit(LIVEGW); }
+    // the backfilled squad goes stale just like the live layer: the squad
+    // after the closing (corrected by automatic substitutions) now comes from
+    // the collector
+    if (LIVEGW){ delete BACKFILLED[LIVEGW]; FunTasy.clearBackfill(LIVEGW); }
     LIVEGW = null;
-    ELOORA.allj();                       // fordulok kozott egy keres sem megy ki
-    // "Naprakesz" csak akkor igaz, ha a LEZART fordulo eredmenye mar a tarolt
-    // adatban van. Az FPL a fordulot a lockdownkor zarja (merve:
-    // 08:03-08:23 UTC kozott), a gyujtonk viszont 3 orankent fut - a ket
-    // idopont kozott a tabella meg a zaras elotti allapot. Korabban ez a
-    // res is "Naprakesz · ellenorizve <most>"-ot irt, holott a kiirt ido a
-    // LEKERESE volt, nem az adate.
-    const hianyzo = (SCHEDULE[gw] || []).length && !SCHEDULE[gw].some(played);
-    st.className = hianyzo ? 'varakozik' : 'ok';
-    st.textContent = hianyzo
-      ? FunTasy.statusz.lezartHianyzik(gw, TAROLT_IDO)
-      : FunTasy.statusz.naprakesz(Date.now(), gw, TAROLT_IDO && Date.parse(TAROLT_IDO));
+    LIVE_CLOCK.stop();                       // not a single request goes out between rounds
+    // "Naprakész" (up to date) is only true when the CLOSED round's result is
+    // already in the stored data. The FPL closes the round at the lockdown
+    // (measured: between 08:03-08:23 UTC), but our collector runs every 3
+    // hours - between the two times the table is still the state before the
+    // closing. Without this check that gap would also say "Naprakész ·
+    // ellenőrizve <now>", although the time shown would be that of the FETCH,
+    // not of the data.
+    const missing = (SCHEDULE[gw] || []).length && !SCHEDULE[gw].some(played);
+    st.className = missing ? 'varakozik' : 'ok';
+    st.textContent = missing
+      ? FunTasy.statusLine.closedRoundMissing(gw, STORED_AT)
+      : FunTasy.statusLine.upToDate(Date.now(), gw, STORED_AT && Date.parse(STORED_AT));
     return;
   }
-  // Fordulohataron az elozo fordulo elo adatait el kell dobni. Kulonben (a)
-  // a regi fordulo panelja "elo" jelolessel ragadna bent, es (b) ha az uj
-  // fordulo elso lekerese elhasal, az ELOZO fordulo pontjai jelennenek meg az
-  // uje gyanant - a LIVEPTS/LIVEFX ugyanis csak sikeres lekereskor frissul.
+  // At a round boundary the previous round's live data must be dropped.
+  // Otherwise (a) the old round's panel would stay stuck with the "live"
+  // mark, and (b) if the new round's first fetch failed, the PREVIOUS round's
+  // points would appear as the new one's - LIVEPTS/LIVEFX are only updated
+  // on a successful fetch.
   if (LIVEGW && LIVEGW !== gw){
     delete LIVE[LIVEGW];
-    // a potolt keret a zaras ELOTTI pillanatkep: a lezarult fordulora mar
-    // nem az ervenyes (a lockdown automatikus csereket is vegrehajt), tehat
-    // eldobjuk, es a kovetkezo betoltes a gyujtoetol veszi at
-    delete POTKER[LIVEGW]; FunTasy.potKeretekUrit(LIVEGW);
-    LIVEPTS = {}; LIVEPERC = {}; LIVEFX = null; LIVEMECCS = null; LIVENAP = null;
+    // the backfilled squad is the snapshot BEFORE the closing: it is no longer
+    // valid for the closed round (the lockdown also makes automatic
+    // substitutions), so it is dropped, and the next load takes over from the
+    // collector's
+    delete BACKFILLED[LIVEGW]; FunTasy.clearBackfill(LIVEGW);
+    LIVEPTS = {}; LIVE_MINUTES = {}; LIVEFX = null; LIVE_MATCHES = null; LIVE_DAYS = null;
     T.renderMatches('past'); T.renderMatches('next');
   }
   LIVEGW = gw;
-  if (!await fetchLivePts()){ lekeresHiba(); return; }
-  // Ha a gyujto meg nem irta be a fordulo kereteit, a bongeszo potolja. Csak
-  // a hianyzokat keri le, es csak egyszer (FunTasy.potKeretek); ha kozben
-  // megjon a gyujto adata, a kovetkezo betolteskor az veszi at a helyet.
-  if (await keretPotlas(gw).catch(() => false)) T.renderAll();
-  // meccsallasok a kezdok pontjaibol - csak ha a fordulo keretei megvannak
-  const keretek = eloAllasFrissit(gw);
-  ELOORA.indit();                        // innentol percenkent frissul magatol
+  if (!await fetchLivePts()){ fetchError(); return; }
+  // If the collector has not written the round's squads yet, the browser
+  // backfills them. It only fetches the missing ones, and only once
+  // (FunTasy.backfillSquads); if the collector's data arrives meanwhile, it
+  // takes over on the next load.
+  if (await backfillRound(gw).catch(() => false)) T.renderAll();
+  // match scores from the starters' points - only if the round's squads are there
+  const squads = updateLiveScores(gw);
+  LIVE_CLOCK.start();                        // from here on it refreshes itself every minute
   st.className = 'ok';
-  st.textContent = keretek ? FunTasy.statusz.elo(gw, Date.now())
-                           : FunTasy.statusz.naprakesz(Date.now());
+  st.textContent = squads ? FunTasy.statusLine.live(gw, Date.now())
+                           : FunTasy.statusLine.upToDate(Date.now());
 }
 
-// ---------- betöltés ----------
-// A liga-adatokat a collect_draft.py gyűjti szerveroldalon 3 óránként; a
-// keret-fájlok hiánya nem hiba (a szezon eleje előtt még nem léteznek).
-const opcional = u => fetch(u + '?t=' + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null);
-// A zarasi valtozasok nem a fooldal kritikus utja: kulon toltjuk, nem
-// varakoztatjak a tabellat. Ures vagy hianyzo fajlnal a panel rejtve marad.
-opcional('../zarasok.json').then(j => {
-  if (j && j.rounds && Object.keys(j.rounds).length){ ZARASOK = j.rounds; zarasInit(); }
+// ---------- loading ----------
+// The league data is collected server-side by collect_draft.py every 3
+// hours; missing squad files are not an error (they do not exist before
+// the season starts).
+const optional = u => fetch(u + '?t=' + Date.now()).then(r => r.ok ? r.json() : null).catch(() => null);
+// The closing changes are not on the home page's critical path: they load
+// separately and do not hold up the table. With an empty or missing file
+// the panel stays hidden.
+optional('../zarasok.json').then(j => {
+  if (j && j.rounds && Object.keys(j.rounds).length){ CLOSINGS = j.rounds; closingInit(); }
 });
 // Round preview / round summary for the match page. A missing or empty
 // file is not an error - then there is simply no strip.
-opcional('../articles.json').then(j => { if (j) ARTICLES = j; });
+optional('../articles.json').then(j => { if (j) ARTICLES = j; });
 // The table stands with placeholder rows until the league data arrives, so
 // the page does not jump when it does.
 T.renderTable();
-// mindket betoltesi ut vegen probalkozunk: amelyik kesobb er ide, az rajzol
+// tried at the end of both loading paths: whichever arrives later draws
 Promise.all([
   fetch('../draft.json?t=' + Date.now()).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
-  opcional('../draft_players.json'),
-  opcional('../draft_squads.json'),
-  opcional('../draft_history.json')
+  optional('../draft_players.json'),
+  optional('../draft_squads.json'),
+  optional('../draft_history.json')
 ]).then(([j, pl, sq, hi]) => {
     (j.entries || []).forEach(e => { ENTRIES[e.id] = e; });
     for (const k in (j.schedule || {})) SCHEDULE[k] = j.schedule[k];
-    liga = j.league || {};
+    league = j.league || {};
     PLAYERS = (pl && pl.players) || {};
-    TEAMS = (pl && pl.teams) || {};   // regi fajlban meg nincs: akkor nincs kotojel-jelzes sem
+    TEAMS = (pl && pl.teams) || {};   // not in an old file yet: then there is no dash marking either
     SQUADS = (sq && sq.squads) || {};
     HIST = (hi && hi.rounds) || {};
-    VEGLEGESEK = (hi && hi.veglegesek) || [];
+    FINAL_ROUNDS = (hi && hi.veglegesek) || [];
 
-    jatekosPanel();
+    playerPanel();
     T.rPast = T.lastPlayedRound();
     T.rNext = T.nextRound();
-    $('sub').textContent = `${FunTasy.liga('pl').cim} · privát head-to-head · ${Object.keys(ENTRIES).length} csapat · ${liga.stop_event || 38} forduló`;
-    TAROLT_IDO = j.updated || null;          // a statuszsav hibauzenetehez
-    $('status').textContent = FunTasy.statusz.keres();
+    $('sub').textContent = `${FunTasy.leagueById('pl').title} · privát head-to-head · ${Object.keys(ENTRIES).length} csapat · ${league.stop_event || 38} forduló`;
+    STORED_AT = j.updated || null;          // for the status bar's error message
+    $('status').textContent = FunTasy.statusLine.fetching();
     $('status').className = '';
     T.renderAll();
     liveRefresh();
-    zarasInit();          // ha a zarasok.json elobb ert ide, most mar nev is van hozza
-    // Mobilon a lapra visszaterve nincs ujratoltes, tehat a fenti egyszeri
-    // lekeres utan az allas befagyna - ezert visszatereskor ujra lekerjuk.
-    FunTasy.ujraLathatokor(liveRefresh);
+    closingInit();          // if zarasok.json got here first, now there are names for it too
+    // On mobile, returning to the page does not reload it, so after the
+    // one-off fetch above the score would freeze - so it is fetched again on return.
+    FunTasy.onVisibleAgain(liveRefresh);
   })
   .catch(e => {
-    $('status').textContent = FunTasy.statusz.betoltesHiba('draft.json', e.message);
+    $('status').textContent = FunTasy.statusLine.loadError('draft.json', e.message);
     $('status').className = 'err';
   });
 </script>

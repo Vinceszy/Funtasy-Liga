@@ -96,7 +96,7 @@ function keret(opts){
       console.log('   DIAG kattintott sor: ' + JSON.stringify(kattintott)),
       console.log('   DIAG: ' + JSON.stringify(await p.evaluate(() => ({
         prov: window.PROVISIONAL, live: Object.keys(LIVE),
-        elo5: eloFordulo(5),
+        elo5: isLiveRound(5),
         sor: { ...(document.querySelector('.plr[data-acc]') || { dataset: {} }).dataset },
       }))));
     jo(eset.vart.test(szoveg), eset.nev);

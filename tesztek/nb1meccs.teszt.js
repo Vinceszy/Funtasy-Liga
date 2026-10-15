@@ -23,19 +23,19 @@ const { BASE, jo, inditas, vege } = require('./kozos');
     return route.fulfill({ status: 200, contentType: 'application/json', body: '{"data":[]}' });
   });
   await p.goto(BASE + 'nb1/', { waitUntil: 'domcontentloaded' });
-  await p.waitForFunction(() => typeof meccsSorokHTML === 'function', null, { timeout: 20000 });
+  await p.waitForFunction(() => typeof gameRowsHTML === 'function', null, { timeout: 20000 });
   // AZ ELOFELTETELT KIMONDJUK: a lap a meccsek.json-t NEM blokkolva tolti, es a
   // valasz beerkezesekor FELULIRJA a MECCSEK-et (nb1/index.html: MECCSEK=null,
   // majd a fetch .then-je allitja be). Ha a teszt elobb teszi be a sajat 7.
   // fordulojat, a keson beero valasz eltunteti - a teszt ilyenkor ures
   // listakat mer, es mind az ot meccs-allitas bukik. Terheles alatt jott elo.
-  await p.waitForFunction(() => typeof MECCSEK !== 'undefined' && MECCSEK !== null,
+  await p.waitForFunction(() => typeof GAMES !== 'undefined' && GAMES !== null,
                           null, { timeout: 20000 });
 
   const m = await p.evaluate(async () => {
     const ora = 3600e3, nap = 24 * ora;
     const iso = t => new Date(t).toISOString().replace(/\.\d+Z$/, '+00:00');
-    MECCSEK = { 7: [
+    GAMES = { 7: [
       { h: 'VASAS', v: 'ETO', hp: 2, vp: 2, vege: true, start: iso(Date.now() - 3 * nap) },
       { h: 'PAFC',  v: 'MTK', start: iso(Date.now() + 2 * nap) },          // meg elotte
       { h: 'ZTE',   v: 'ETO', start: iso(Date.now() - 1 * ora) },          // most zajlik
@@ -49,19 +49,19 @@ const { BASE, jo, inditas, vege } = require('./kozos');
                    x.children[1].textContent.trim()]);
     };
     // integracio: a bontasHTML a meccs-sort a tablazat FOLE teszi
-    const teljes = await bontasHTML({ own: 'X', nm: 'Y', r: '7', cp: '555',
+    const teljes = await breakdownHTML({ own: 'X', nm: 'Y', r: '7', cp: '555',
                                       tm: 'VASAS', pl: '1', vg: '1' });
     const d2 = document.createElement('div'); d2.innerHTML = teljes;
-    const nogame = await bontasHTML({ own: 'X', nm: 'Y', r: '7', cp: '556',
+    const nogame = await breakdownHTML({ own: 'X', nm: 'Y', r: '7', cp: '556',
                                       tm: 'VASAS', pl: '0', ng: '1' });
     return {
-      lezart: sorok(meccsSorokHTML('VASAS', 7)),
-      elotte: sorok(meccsSorokHTML('PAFC', 7)),
-      zajlik: sorok(meccsSorokHTML('ZTE', 7)),
-      lement: sorok(meccsSorokHTML('DVSC', 7)),
-      dupla:  sorok(meccsSorokHTML('ETO', 7)),
-      idegen: meccsSorokHTML('FTC', 7),
-      uresen: meccsSorokHTML('VASAS', 8),
+      lezart: sorok(gameRowsHTML('VASAS', 7)),
+      elotte: sorok(gameRowsHTML('PAFC', 7)),
+      zajlik: sorok(gameRowsHTML('ZTE', 7)),
+      lement: sorok(gameRowsHTML('DVSC', 7)),
+      dupla:  sorok(gameRowsHTML('ETO', 7)),
+      idegen: gameRowsHTML('FTC', 7),
+      uresen: gameRowsHTML('VASAS', 8),
       integHelyes: !!d2.firstElementChild && d2.firstElementChild.classList.contains('bontasmeccs')
                    && !!d2.querySelector('.acctable'),
       integPerc: /Játszott perc/.test(d2.querySelector('.acctable').textContent),

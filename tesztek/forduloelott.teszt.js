@@ -153,13 +153,13 @@ const JOVOBELI = 20;     // ehhez nincs mentett keret
                       position: {}, summary_statistics: {} });
     const ki = x => ({ nogame: !!x.nogame, start: x.start, vege: !!x.vege });
     return {
-      potolt: ki(keretRekord(d(ETO), 7)),
-      kozben: ki(keretRekord(d([{ ...ETO[0], status: 'completed' }, ETO[1]]), 7)),
-      mind: ki(keretRekord(d([{ ...ETO[0], status: 'completed' },
+      potolt: ki(squadRecord(d(ETO), 7)),
+      kozben: ki(squadRecord(d([{ ...ETO[0], status: 'completed' }, ETO[1]]), 7)),
+      mind: ki(squadRecord(d([{ ...ETO[0], status: 'completed' },
                               { ...ETO[1], status: 'completed' }]), 7)),
-      visszaeso: ki(keretRekord(d([{ start_at: '2026-09-20T18:00:00+02:00',
+      visszaeso: ki(squadRecord(d([{ start_at: '2026-09-20T18:00:00+02:00',
                                      status: 'scheduled', round_number: '9F' }]), 3)),
-      ures: ki(keretRekord(d([]), 7)),
+      ures: ki(squadRecord(d([]), 7)),
     };
   });
   jo(!kr.potolt.nogame && kr.potolt.start === '2026-09-03T19:30:00+02:00',

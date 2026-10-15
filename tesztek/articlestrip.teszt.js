@@ -110,7 +110,7 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     // ---- az újrarajzolás nem csukja be a nézőre ----
     await sav.locator('.artstriphead').click();
     await p.waitForTimeout(120);
-    await p.evaluate(() => meccsTest());
+    await p.evaluate(() => matchBody());
     await p.waitForSelector('#mBody .artstrip');
     jo(await p.evaluate(() => document.querySelector('#mBody .artstrip').open),
        'újrarajzolás után is nyitva marad (élő fordulón percenként újraépül a test)');
@@ -215,7 +215,7 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
                  .find(g => (SCHEDULE[g] || []).some(played));
     const [h, v] = SCHEDULE[gw][0];
     ARTICLES = { updated: null, leagues: { pl: { [gw]: { summary: {
-      [nev(h) + '|' + nev(v)]: { text: ['Elso bekezdes.', 'Masodik bekezdes.'],
+      [teamName(h) + '|' + teamName(v)]: { text: ['Elso bekezdes.', 'Masodik bekezdes.'],
                                  short: 'Egy mondat a sav szamara.', source: 'manual' } } } } } };
     showMatch(h, v, gw, 'root');
     return { gw, h, v };
@@ -319,11 +319,11 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
     // SCHEDULE on its own is not enough: an old schedule is baked into the
     // page, and results.json overwrites it only afterwards. A search that
     // runs in between sees a long-closed round as open. The page sets
-    // TAROLT_IDO when results.json arrives, in the same step in which it
+    // STORED_AT when results.json arrives, in the same step in which it
     // overwrites the schedule.
     await g.waitForFunction(nb1 => nb1 ? (typeof SCHEDULE !== 'undefined'
                                           && Object.keys(SCHEDULE).length > 0
-                                          && window.TAROLT_IDO !== undefined)
+                                          && window.STORED_AT !== undefined)
                                        : (typeof HIST !== 'undefined'
                                           && Object.keys(HIST).length > 0),
                             nb1, { timeout: 20000 });
@@ -352,7 +352,7 @@ const URES_R = 4, UH = 'Bazsa', UV = 'Csendi';
                    .find(x => !roundClosed(x) && (SCHEDULE[x] || []).length);
       if (!gw) return null;
       const [h, v] = SCHEDULE[gw][0];
-      ARTICLES = tarol('pl', gw, nev(h), nev(v));
+      ARTICLES = tarol('pl', gw, teamName(h), teamName(v));
       showMatch(h, v, gw, 'root');
       return { r: gw, zart: roundClosed(gw) };
     }, nb1);

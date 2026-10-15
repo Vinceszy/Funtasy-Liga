@@ -60,12 +60,12 @@ const MECCSEK = [
     return json({});
   });
   await p.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
-  await p.waitForFunction(() => typeof LIVEPERC !== 'undefined' && Object.keys(LIVEPERC).length > 0,
+  await p.waitForFunction(() => typeof LIVE_MINUTES !== 'undefined' && Object.keys(LIVE_MINUTES).length > 0,
     null, { timeout: 20000 });
 
   const cellak = async e => p.evaluate(([e, GW]) => {
     const d = document.createElement('div');
-    d.innerHTML = percCellakHTML(e, GW);
+    d.innerHTML = minuteCellsHTML(e, GW);
     return [...d.children].map(x => x.textContent);
   }, [e, GW]);
 
@@ -93,7 +93,7 @@ const MECCSEK = [
   jo(elotte.length === 0, 'el nem kezdődött meccsnél nincs cella');
 
   console.log('\n--- a meccsóra a JÁTÉKOSOK perceiből jön ---');
-  const ora = await p.evaluate(() => LIVEMECCS[11].perc);
+  const ora = await p.evaluate(() => LIVE_MATCHES[11].perc);
   console.log('   a 11-es meccs órája: ' + ora + " (a fixtures minutes mezoje 0 volt)");
   jo(ora === 70, 'a meccsóra a pályán lévő kezdők percszáma, nem a fixtures mezője');
 
@@ -149,13 +149,13 @@ const MECCSEK = [
   // minden meccs lement, tehat mindenkinel "vege" allna. Az adat nem az elo
   // lekeresbol jon, hanem a fordulo sajat /live valaszabol - amig az meg nem
   // erkezett meg, nincs cella.
-  const elotte2 = await p.evaluate(e => percCellakHTML(e, 99), jatekos.fut[0]);
+  const elotte2 = await p.evaluate(e => minuteCellsHTML(e, 99), jatekos.fut[0]);
   jo(elotte2 === '', 'betöltés előtt nincs cella a lezárt fordulóhoz');
-  const betoltve = await p.evaluate(() => regiPercBetolt(99));
+  const betoltve = await p.evaluate(() => loadPastMinutes(99));
   jo(betoltve === true, 'a lezárt forduló percei betölthetők');
   const zartC = await p.evaluate(e => {
     const d = document.createElement('div');
-    d.innerHTML = percCellakHTML(e, 99);
+    d.innerHTML = minuteCellsHTML(e, 99);
     return [...d.children].map(x => x.textContent);
   }, jatekos.fut[1]);
   console.log('   lezárt forduló cellái: ' + JSON.stringify(zartC));
@@ -188,8 +188,8 @@ const MECCSEK = [
   // amikor a fordulo /live valasza megjon, magatol ujrarajzolja magat.
   const e2e = await p.evaluate(async () => {
     LIVEGW = 99;                                  // az 1. fordulo igy "lezart"
-    for (const k in REGIPERC) delete REGIPERC[k];
-    BONTASGW.clear();
+    for (const k in PAST_MINUTES) delete PAST_MINUTES[k];
+    GW_ELEMENTS.clear();
     const gw = Object.keys(HIST).map(Number).sort((a, b) => a - b)[0];
     const csapatok = Object.keys(HIST[gw] || {}).map(Number);
     if (csapatok.length < 2) return { kihagy: true };

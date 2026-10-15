@@ -150,7 +150,7 @@ const { BASE, jo, cim, inditas, vege } = require('./kozos');
       });
     });
     return { nevek: nevek.size,
-             emberek: new Set([...nevek].map(n => SZEMELY(n).kulcs)).size };
+             emberek: new Set([...nevek].map(n => PERSON(n).key)).size };
   });
   jo(nep.length === szam.emberek && szam.emberek < szam.nevek,
      `${szam.nevek} név, de ${nep.length} sor a szűrőben — aki mindkét ligában `

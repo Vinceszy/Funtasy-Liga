@@ -66,12 +66,12 @@ const LEZART = [
     return json({});
   });
   await p.goto(BASE + 'pl/', { waitUntil: 'domcontentloaded' });
-  await p.waitForFunction(() => typeof LIVEMECCS !== 'undefined' && LIVEMECCS
-    && Object.keys(LIVEMECCS).length > 0, null, { timeout: 20000 });
+  await p.waitForFunction(() => typeof LIVE_MATCHES !== 'undefined' && LIVE_MATCHES
+    && Object.keys(LIVE_MATCHES).length > 0, null, { timeout: 20000 });
 
   // a fejlecsorokat szoveggé alakitva kerjuk vissza: [bal, jobb] paronkent
   const fejek = (e, gw) => p.evaluate(async ([e, gw]) => {
-    const h = await bontasHTML(e, gw);
+    const h = await breakdownHTML(e, gw);
     const d = document.createElement('div');
     d.innerHTML = h || '';
     const sorok = [...d.querySelectorAll('.bontasmeccs')]

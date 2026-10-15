@@ -17,9 +17,9 @@ const { jo, cim, hibak, inditas, vege, BASE } = require('./kozos');
   for (const m of ['**fonts.googleapis.com/**', '**fonts.gstatic.com/**'])
     await p.route(m, r => r.abort());
   await p.goto(BASE + 'nb1/');
-  await p.waitForFunction(() => window.FunTasy && FunTasy.idoFmt, null, { timeout: 20000 });
+  await p.waitForFunction(() => window.FunTasy && FunTasy.formatKickoff, null, { timeout: 20000 });
 
-  const f = (s, lg) => p.evaluate(([s, lg]) => FunTasy.idoFmt(s, lg), [s, lg]);
+  const f = (s, lg) => p.evaluate(([s, lg]) => FunTasy.formatKickoff(s, lg), [s, lg]);
 
   cim('Rendes időpont');
   jo(await f('2026-09-27T17:30:00Z', 'nb1') === await f('2026-09-27T17:30:00Z', 'pl'),
