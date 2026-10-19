@@ -429,3 +429,30 @@ PROBE: 2026-10-19 10:26 UTC | nemzetisport report content
     /labdarugo-nb-i/2026/10/komaromi-bombagolja-harom-pontot-ert-az-mtk-nak-a-vasas-emberelonyben-sem-tu
     /labdarugo-nb-i/2026/10/noi-nb-i-ikszelt-a-ferencvaros-nyert-a-dvtk-az-ujpest-es-a-puskas-akademia-i
     /labdarugo-nb-i/2026/10/szelesi-zoltan-bosszanto-hogy-egyetlen-kaput-eltalalo-lovesbol-nyert-a-puska
+
+======================================================================
+PROBE: 2026-10-19 10:29 UTC | nemzetisport report content
+  sitemapindex: HTTP 200, 304 maps
+  maps matching 202610: 10
+    https://www.nemzetisport.hu/202605_sitemap.xml
+    https://www.nemzetisport.hu/202606_sitemap.xml
+    https://www.nemzetisport.hu/202607_sitemap.xml
+    https://www.nemzetisport.hu/202608_sitemap.xml
+    https://www.nemzetisport.hu/202609_sitemap.xml
+    https://www.nemzetisport.hu/202610_sitemap.xml
+  since 2026-10-17: 23 urls (of 117)
+  of these, report-like: 13
+  labdarugo-nb-i articles in 2026/10: 13
+    /labdarugo-nb-i/2026/10/a-felso-kapufan-csattant-a-11-es-a-kisvarda-fradi-meccs-legjobb-kepei
+    /labdarugo-nb-i/2026/10/a-honved-nyiregyhazi-gyozelme-kepekben
+    /labdarugo-nb-i/2026/10/az-oltozoben-osszetortek-a-jatekosok-ez-jo-jel-bodog-tamas-a-honvedtol-elsze
+    /labdarugo-nb-i/2026/10/denes-vilmos-mindig-fontos-lesz-nekem-a-zalaegerszeg
+    /labdarugo-nb-i/2026/10/djukanovics-duplazott-az-eto-fc-pakson-ugrott-fel-a-dobogora
+    /labdarugo-nb-i/2026/10/korabbi-bajnoka-szerint-az-nb-i-ben-sokkal-tobb-kreativitas-kell-a-ferencvar
+    /labdarugo-nb-i/2026/10/nb-i-debrecen-zalaegerszeg-4
+    /labdarugo-nb-i/2026/10/noi-nb-i-ikszelt-a-ferencvaros-nyert-a-dvtk-az-ujpest-es-a-puskas-akademia-i
+    /labdarugo-nb-i/2026/10/nyiregyhaza-kispest-honved-az-utolso-elotti-jatszik-az-utolsoval
+    /labdarugo-nb-i/2026/10/sorozatban-negyedik-bajnokijat-sem-tudta-megnyerni-a-kisvardan-ikszelo-ftc
+    /labdarugo-nb-i/2026/10/toth-milan-mellbe-vagott-a-diagnozis-nem-ereztem-sulyosnak-a-serulest
+    /labdarugo-nb-i/2026/10/volt-e-valaha-jobb-kulfoldi-labdarugoja-a-ferencvarosnak-mint-kristoffer-zac
+    /labdarugo-nb-i/2026/10/zachariassen-megerte-a-penzet-olvasoink-szerint-a-norveg-minden-idok-legjobb
