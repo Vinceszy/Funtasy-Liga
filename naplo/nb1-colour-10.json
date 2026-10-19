@@ -40,6 +40,79 @@
      "team": "PAFC"
     }
    ]
+  },
+  "NYÍREGY 0-1 HONVÉD": {
+   "venue": "Nyíregyháza, Városi Stadion",
+   "attendance": 4511,
+   "referee": "Berke Balázs",
+   "goals": [
+    {
+     "minute": 74,
+     "player": "Kántor Kevin Sydney",
+     "team": "HONVÉD"
+    }
+   ]
+  },
+  "PAKS 1-2 ETO": {
+   "venue": "Paks, Fehérvári úti Stadion",
+   "attendance": 3023,
+   "referee": "Rúsz Márton",
+   "goals": [
+    {
+     "minute": 39,
+     "player": "Đukanović Viktor",
+     "team": "ETO"
+    },
+    {
+     "minute": 42,
+     "player": "Đukanović Viktor",
+     "team": "ETO"
+    },
+    {
+     "minute": 47,
+     "player": "Pető Milán",
+     "team": "PAKS"
+    }
+   ]
+  },
+  "DVSC 3-0 ZTE": {
+   "venue": "Debrecen, Nagyerdei Stadion",
+   "attendance": 6019,
+   "referee": "Antal Péter",
+   "goals": [
+    {
+     "minute": 43,
+     "player": "Szendrei Ákos",
+     "team": "DVSC"
+    },
+    {
+     "minute": 62,
+     "player": "Baldoni Sohan Roger Franck Loic",
+     "team": "DVSC"
+    },
+    {
+     "minute": "90+4",
+     "player": "Baldoni Sohan Roger Franck Loic",
+     "team": "DVSC"
+    }
+   ]
+  },
+  "VÁRDA 1-1 FTC": {
+   "venue": "Kisvárda, Várkerti Stadion",
+   "attendance": 2971,
+   "referee": "Bogár Gergő",
+   "goals": [
+    {
+     "minute": 32,
+     "player": "Melnik",
+     "team": "VÁRDA"
+    },
+    {
+     "minute": 75,
+     "player": "O'Dowda Callum Joshua Ryan",
+     "team": "FTC"
+    }
+   ]
   }
  },
  "claims": [
@@ -130,6 +203,142 @@
    "sentence": "a lila-fehérek másfél éve gólt sem tudtak rúgni a felcsútiaknak; az Újpest mindeddig nem veszített hazai pályán",
    "anchor": "article_only",
    "match": "ÚJPEST 0-1 PAFC"
+  },
+  {
+   "player": "Kántor Kevin Sydney",
+   "minute": 74,
+   "tag": "goal",
+   "sentence": "Kántor Kevin góljával legyőzte a Nyíregyházát",
+   "anchor": "record",
+   "match": "NYÍREGY 0-1 HONVÉD"
+  },
+  {
+   "player": "Kántor Kevin Sydney",
+   "minute": 74,
+   "tag": "milestone",
+   "sentence": "Két cserejátékos hozta össze a győztes gólt a második félidőben",
+   "anchor": "article_only",
+   "match": "NYÍREGY 0-1 HONVÉD"
+  },
+  {
+   "player": "Kovács Milán",
+   "minute": 30,
+   "tag": "keeper_save",
+   "sentence": "Kovács Milán tette próbára Osman Hadzikicet, akinek nagyot nyújtózva kellett kitolnia a labdát",
+   "anchor": "article_only",
+   "match": "NYÍREGY 0-1 HONVÉD"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "Pontosan olyan színvonalú mérkőzést hozott, amilyet a két csapat tabellán elfoglalt helyezése ígért; rengeteg technikai malőr",
+   "anchor": "article_only",
+   "match": "NYÍREGY 0-1 HONVÉD"
+  },
+  {
+   "player": "Đukanović Viktor",
+   "minute": 39,
+   "tag": "goal",
+   "sentence": "Djukanovics duplázott az első félidőben",
+   "anchor": "event",
+   "match": "PAKS 1-2 ETO"
+  },
+  {
+   "player": "Đukanović Viktor",
+   "minute": 42,
+   "tag": "goal",
+   "sentence": "Djukanovics duplázott az első félidőben",
+   "anchor": "event",
+   "match": "PAKS 1-2 ETO"
+  },
+  {
+   "player": "Szalai József",
+   "minute": 45,
+   "tag": "sub",
+   "sentence": "Némi meglepetésre Szalai József nem került be a paksiak kezdő tizenegyébe, a héten kisebb sérüléssel bajlódott; a szünetben állt be",
+   "anchor": "article_only",
+   "match": "PAKS 1-2 ETO"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "luck",
+   "sentence": "Az első negyvenöt percben kétszer is eltalálták a kapufát (Paks)",
+   "anchor": "article_only",
+   "match": "PAKS 1-2 ETO"
+  },
+  {
+   "player": "Umathum Ádám",
+   "minute": 65,
+   "tag": "sub",
+   "sentence": "Huszár (Umathum, 65.)",
+   "anchor": "article_only",
+   "match": "PAKS 1-2 ETO"
+  },
+  {
+   "player": "Njie Nfansu",
+   "minute": null,
+   "tag": "sub",
+   "sentence": "nem szerepel az ETO pályára lépett játékosai között",
+   "anchor": "article_only",
+   "match": "PAKS 1-2 ETO"
+  },
+  {
+   "player": "Szendrei Ákos",
+   "minute": 43,
+   "tag": "goal_manner",
+   "sentence": "Egri Imre beadását követően fejelte szép mozdulattal a labdát a kapu jobb oldalába",
+   "anchor": "record",
+   "match": "DVSC 3-0 ZTE"
+  },
+  {
+   "player": "Baldoni Sohan Roger Franck Loic",
+   "minute": 62,
+   "tag": "goal",
+   "sentence": "Baldoni duplázott; a cserepadról beszállva alkotott maradandót",
+   "anchor": "record",
+   "match": "DVSC 3-0 ZTE"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "history",
+   "sentence": "a zalaiak az előző hat debreceni meccsüket elveszítették",
+   "anchor": "article_only",
+   "match": "DVSC 3-0 ZTE"
+  },
+  {
+   "player": "Novothny Soma Zsombor",
+   "minute": 3,
+   "tag": "big_miss",
+   "sentence": "Novothny Soma a léc érintésével fölé lőtte a tizenegyest; Radnóti buktatta Christián Hercet",
+   "anchor": "article_only",
+   "match": "VÁRDA 1-1 FTC"
+  },
+  {
+   "player": "Popovych Illia",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "Szinte végig Popovics kapuja előtt zajlott a játék",
+   "anchor": "article_only",
+   "match": "VÁRDA 1-1 FTC"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "milestone",
+   "sentence": "Sorozatban negyedik bajnokiját sem tudta megnyerni az FTC; Radnóti Dániel élete első NB I-es mérkőzése",
+   "anchor": "article_only",
+   "match": "VÁRDA 1-1 FTC"
+  },
+  {
+   "player": "Tóth Milán László",
+   "minute": 67,
+   "tag": "sub",
+   "sentence": "az MTK Budapest elleni bajnoki hatvanhetedik percében le kellett cserélni; elszakadt az elülső keresztszalag, mintegy nyolc hónapos kihagyás",
+   "anchor": "article_only",
+   "match": "MTK 1-0 VASAS"
   }
  ]
 }
