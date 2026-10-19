@@ -347,6 +347,22 @@
    "sentence": "Egy rossz kitámasztásnál fájdalom hasított a bal térdembe, de az ápolás után még folytattam a játékot, hét-nyolc percig a pályán maradtam; a saját lábán sétált le a pályáról; másnap MR: elszakadt az elülső keresztszalag",
    "anchor": "article_only",
    "match": "MTK 1-0 VASAS"
+  },
+  {
+   "player": "Osagie Iyinbor Patrick",
+   "minute": null,
+   "tag": "sub",
+   "sentence": "sokáig kérdéses volt, hogy az alapembernek számító Iyinbor Patrick vállalja-e a játékot a kisebb sérülése miatt – végül ki kellett hagynia a bajnokit, helyére Baráth Botond került",
+   "anchor": "article_only",
+   "match": "MTK 1-0 VASAS"
+  },
+  {
+   "player": "Orján Roland",
+   "minute": null,
+   "tag": "sub",
+   "sentence": "nem szerepel a Puskás Akadémia pályára lépett játékosai között",
+   "anchor": "article_only",
+   "match": "ÚJPEST 0-1 PAFC"
   }
  ]
 }
