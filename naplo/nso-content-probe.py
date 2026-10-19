@@ -22,6 +22,10 @@ input, one NAME=value per line):
   PROBE_LIMIT    how many articles to print (default 6) - the number of
                  matches in the round.
   PROBE_SECTION  the url section (default labdarugo-nb-i).
+  PROBE_MATCH    comma-separated url fragments (e.g. paks,kisvarda); when
+                 set, an article is kept if its url carries any of them,
+                 instead of the report-word guess - for the matches the
+                 guess missed ("ikszelt", "megnyerni" carry no result word).
 """
 import os
 import re
@@ -41,6 +45,7 @@ SECTION = os.environ.get("PROBE_SECTION") or "labdarugo-nb-i"
 # list, old rounds among them.
 SINCE = os.environ.get("PROBE_SINCE") or ""
 LIMIT = int(os.environ.get("PROBE_LIMIT") or "6")
+MATCH = [w.strip() for w in (os.environ.get("PROBE_MATCH") or "").split(",") if w.strip()]
 
 
 def fetch(url):
@@ -100,8 +105,9 @@ def main():
               "hajra", "gol", "fordit", "vezetes", "pont")
     SKIP = ("kepgaleria", "galeria", "hivatalos", "szerzodest", "igazol",
             "helyzetjelentest", "tavozik", "kolcsonadta")
+    wanted = MATCH or REPORT
     reports = [u for u in urls
-               if any(w in u for w in REPORT) and not any(w in u for w in SKIP)]
+               if any(w in u for w in wanted) and not any(w in u for w in SKIP)]
     out.append("  of these, report-like: %d" % len(reports))
     urls = reports or urls
     out.append("  %s articles in %s: %d" % (SECTION, MONTH, len(urls)))

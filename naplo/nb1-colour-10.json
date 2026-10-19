@@ -1,0 +1,135 @@
+{
+ "round": 10,
+ "league": "nb1",
+ "source": "nemzetisport.hu meccsbeszamolok (naplo/nso-content-probe.py, futasi naplo)",
+ "matches": {
+  "MTK 1-0 VASAS": {
+   "venue": "Budapest, Új Hidegkuti Nándor Stadion",
+   "attendance": 4212,
+   "referee": "Hanyecz Bence",
+   "goals": [
+    {
+     "minute": 26,
+     "player": "Komáromi György",
+     "team": "MTK"
+    }
+   ],
+   "sent_off": [
+    {
+     "minute": 76,
+     "player": "Kovács P.",
+     "team": "MTK"
+    }
+   ]
+  },
+  "ÚJPEST 0-1 PAFC": {
+   "venue": "Budapest, Szusza Ferenc Stadion",
+   "attendance": 5207,
+   "referee": "Zierkelbach Péter",
+   "goals": [
+    {
+     "minute": 61,
+     "player": "Németh András",
+     "team": "PAFC"
+    }
+   ],
+   "sent_off": [
+    {
+     "minute": 84,
+     "player": "Colley",
+     "team": "PAFC"
+    }
+   ]
+  }
+ },
+ "claims": [
+  {
+   "player": "Komáromi György",
+   "minute": 26,
+   "tag": "goal",
+   "sentence": "Komáromi György bombagóljával 1–0-ra legyőzte",
+   "anchor": "record",
+   "match": "MTK 1-0 VASAS"
+  },
+  {
+   "player": "Komáromi György",
+   "minute": 26,
+   "tag": "goal_manner",
+   "sentence": "a gyengébbik lábával bombázott a kapuba",
+   "anchor": "record",
+   "match": "MTK 1-0 VASAS"
+  },
+  {
+   "player": null,
+   "minute": 76,
+   "tag": "match_picture",
+   "sentence": "a hajrában emberelőnyben futballozó Vasast ... a Vasas emberelőnyben is pont nélkül maradt",
+   "anchor": "article_only",
+   "match": "MTK 1-0 VASAS"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "milestone",
+   "sentence": "a kék-fehérek négy nyeretlenül megvívott bajnoki után újra három pontnak örülhettek",
+   "anchor": "article_only",
+   "match": "MTK 1-0 VASAS"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "history",
+   "sentence": "az NB I-ben kilenc és fél éves szünet után találkoznak újra",
+   "anchor": "article_only",
+   "match": "MTK 1-0 VASAS"
+  },
+  {
+   "player": "Németh András",
+   "minute": 61,
+   "tag": "goal",
+   "sentence": "Németh András remek lövésével 1–0-s győzelmet aratott az Újpest vendégeként",
+   "anchor": "event",
+   "match": "ÚJPEST 0-1 PAFC"
+  },
+  {
+   "player": "Németh András",
+   "minute": 61,
+   "tag": "milestone",
+   "sentence": "újra eredményes volt és már öt gólnál jár a bajnokságban",
+   "anchor": "article_only",
+   "match": "ÚJPEST 0-1 PAFC"
+  },
+  {
+   "player": "Lehoczki Bendegúz",
+   "minute": 15,
+   "tag": "keeper_save",
+   "sentence": "Horváth Krisztofer lövését remek vetődéssel védte a 19 éves Lehoczki Bendegúz",
+   "anchor": "article_only",
+   "match": "ÚJPEST 0-1 PAFC"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "egyetlen kaput eltaláló lövésből nyert a Puskás Akadémia; szinte végig egykapuztunk (Szélesi Zoltán)",
+   "anchor": "article_only",
+   "match": "ÚJPEST 0-1 PAFC"
+  },
+  {
+   "player": null,
+   "minute": 84,
+   "tag": "card",
+   "sentence": "A csereként beállt Lamin Colley két perc alatt összeszedett két sárga lapot",
+   "anchor": "record",
+   "match": "ÚJPEST 0-1 PAFC"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "history",
+   "sentence": "a lila-fehérek másfél éve gólt sem tudtak rúgni a felcsútiaknak; az Újpest mindeddig nem veszített hazai pályán",
+   "anchor": "article_only",
+   "match": "ÚJPEST 0-1 PAFC"
+  }
+ ]
+}
