@@ -174,8 +174,14 @@ const PLAYER = { name: 'Teszt Elek', team: 'PAKS', pos: 'CS', u21: false, hun: t
   // MLSZ has no fixtures endpoint, so for a future row we could show neither
   // an opponent nor a time - and we do not put out empty rows. (The PL
   // profile, by contrast, goes ahead too: the data is there.)
-  check(!f('10') && !f('33'),
-     'no future, empty round rows (' + rows.length + ' rows, the last is '
+  // The first unplayed round comes from the data, not from a fixed number:
+  // the season moves on, and a hard-coded "future" round becomes a played one.
+  const nextRound = await p.evaluate(async () => {
+    const s = (await (await fetch('../results.json?t=' + Date.now())).json()).schedule;
+    return 1 + Math.max(...Object.keys(s).filter(r => s[r].some(m => m[2] != null)).map(Number));
+  });
+  check(!f(String(nextRound)) && !f('33'),
+     'no future, empty round rows (next round ' + nextRound + '; ' + rows.length + ' rows, the last is '
      + (rows.length ? rows[rows.length - 1].r : '?') + ')');
 
   section('Ratios across the league');
