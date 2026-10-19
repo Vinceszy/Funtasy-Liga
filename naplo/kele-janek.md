@@ -149,6 +149,13 @@ Large numbers are spelled out in letters. Match statistics belong in the
 match pieces; "pont" and its forms are capped at seven per piece for every
 article (D14), and the column should stay well under it.
 
+**Every figure carries its unit: pont, millió forint, perc.** The cap is
+met by cutting figures, never by dropping the word after them. "Matko
+harmincnyolcat hozott", "tizenhárom és felet", "öt és negyed jött tőle" are
+sentences with a hole in them - the reader has to work out what was counted,
+and it reads worse than the repetition it was meant to avoid. If a paragraph
+needs more figures than the cap allows units for, it has too many figures.
+
 ## A fact that is not in our data is looked up, or it is not written
 
 The column holds exactly four kinds of fact about a footballer: what he
