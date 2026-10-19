@@ -1,0 +1,18 @@
+NB I, round 11 (24-25 October 2026) - the real pairings
+Pairings only; kick-off times are not needed.
+
+Source 1 (nb1.hu, the MLSZ autumn schedule from round 11, read by
+naplo/fixtures-probe.py):
+  Honvéd - DVSC
+  ETO - Újpest
+  ZTE - Kisvárda
+  Vasas - Paks
+  Puskás Akadémia - Nyíregyháza
+  Ferencváros - MTK
+
+Source 2 (csakfoci.hu, the full 2026 programme, same probe run): the same six
+pairings, all six agree.
+
+A third page (magyarnemzet.hu) was read too; its extract covers later rounds
+only. A web search summary placed Ferencváros-ETO in round 11 - both sources
+above have it in round 14, so that summary is wrong.
