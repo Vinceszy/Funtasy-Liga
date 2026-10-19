@@ -339,6 +339,14 @@
    "sentence": "az MTK Budapest elleni bajnoki hatvanhetedik percében le kellett cserélni; elszakadt az elülső keresztszalag, mintegy nyolc hónapos kihagyás",
    "anchor": "article_only",
    "match": "MTK 1-0 VASAS"
+  },
+  {
+   "player": "Tóth Milán László",
+   "minute": 67,
+   "tag": "milestone",
+   "sentence": "Egy rossz kitámasztásnál fájdalom hasított a bal térdembe, de az ápolás után még folytattam a játékot, hét-nyolc percig a pályán maradtam; a saját lábán sétált le a pályáról; másnap MR: elszakadt az elülső keresztszalag",
+   "anchor": "article_only",
+   "match": "MTK 1-0 VASAS"
   }
  ]
 }
