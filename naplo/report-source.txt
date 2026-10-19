@@ -409,3 +409,23 @@ PROBE: 2026-10-12 10:21 UTC | nemzetisport report content
     /labdarugo-nb-i/2026/10/lukacs-goljaval-rangadot-nyert-gyorben-a-puskas-akademia-es-harom-pont-elonn
     /labdarugo-nb-i/2026/10/nb-i-egyenlites-forditas-ket-tizenegyes-es-ot-gol-a-zte-szpari-masodik-felid
     /labdarugo-nb-i/2026/10/nem-volt-kerdes-a-paks-harom-gollal-legyozte-a-merkozest-emberhatranyban-bef
+
+======================================================================
+PROBE: 2026-10-19 10:26 UTC | nemzetisport report content
+  sitemapindex: HTTP 200, 304 maps
+  maps matching 202610: 10
+    https://www.nemzetisport.hu/202605_sitemap.xml
+    https://www.nemzetisport.hu/202606_sitemap.xml
+    https://www.nemzetisport.hu/202607_sitemap.xml
+    https://www.nemzetisport.hu/202608_sitemap.xml
+    https://www.nemzetisport.hu/202609_sitemap.xml
+    https://www.nemzetisport.hu/202610_sitemap.xml
+  since 2026-10-16: 31 urls (of 117)
+  of these, report-like: 6
+  labdarugo-nb-i articles in 2026/10: 6
+    /labdarugo-nb-i/2026/10/a-honved-nyiregyhazi-gyozelme-kepekben
+    /labdarugo-nb-i/2026/10/az-ujpest-harom-meccse-golt-sem-lott-a-pafc-nak-a-fradi-meg-sosem-kapott-ki-
+    /labdarugo-nb-i/2026/10/colley-ket-percen-belul-kiallittatta-magat-de-igy-is-nyert-a-puskas-akademia
+    /labdarugo-nb-i/2026/10/komaromi-bombagolja-harom-pontot-ert-az-mtk-nak-a-vasas-emberelonyben-sem-tu
+    /labdarugo-nb-i/2026/10/noi-nb-i-ikszelt-a-ferencvaros-nyert-a-dvtk-az-ujpest-es-a-puskas-akademia-i
+    /labdarugo-nb-i/2026/10/szelesi-zoltan-bosszanto-hogy-egyetlen-kaput-eltalalo-lovesbol-nyert-a-puska
