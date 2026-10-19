@@ -379,6 +379,30 @@
    "sentence": "A Kispest-Honvéd legyőzte a Nyíregyházát, és elmozdult az utolsó helyről; a kispestiek megelőzték a Szparit a tabellán",
    "anchor": "article_only",
    "match": "NYÍREGY 0-1 HONVÉD"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "history",
+   "sentence": "„Nagyon nehéz úgy játszani, hogy a szakmai stábnak minden egyes alkalommal más kezdőcsapatot kell összeállítania csütörtökön és vasárnap” – Czéh László, az FTC örökös bajnoka, az MTI-nek (nemzetisport.hu, október 18.)",
+   "anchor": "article_only",
+   "match": "VÁRDA 1-1 FTC"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "history",
+   "sentence": "Az FTC az Európa-liga ligaszakaszában veretlen, két győzelemnél jár; Kristoffer Zachariassen három góllal Alphadjo Cisse társaságában a főtábla góllövőlistájának élén áll (nemzetisport.hu)",
+   "anchor": "article_only",
+   "match": "VÁRDA 1-1 FTC"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "history",
+   "sentence": "Az FTC a hatodik helyről, sorozatban három döntetlennel várta a kisvárdai meccset; az 1–1-gyel sorozatban negyedik bajnokiját sem nyerte meg; az 5. fordulóból elhalasztott Honvéd elleni meccsét december 3-án pótolja",
+   "anchor": "article_only",
+   "match": "VÁRDA 1-1 FTC"
   }
  ]
 }
