@@ -456,3 +456,18 @@ PROBE: 2026-10-19 10:29 UTC | nemzetisport report content
     /labdarugo-nb-i/2026/10/toth-milan-mellbe-vagott-a-diagnozis-nem-ereztem-sulyosnak-a-serulest
     /labdarugo-nb-i/2026/10/volt-e-valaha-jobb-kulfoldi-labdarugoja-a-ferencvarosnak-mint-kristoffer-zac
     /labdarugo-nb-i/2026/10/zachariassen-megerte-a-penzet-olvasoink-szerint-a-norveg-minden-idok-legjobb
+
+======================================================================
+PROBE: 2026-10-19 17:58 UTC | nemzetisport report content
+  sitemapindex: HTTP 200, 304 maps
+  maps matching 202610: 10
+    https://www.nemzetisport.hu/202605_sitemap.xml
+    https://www.nemzetisport.hu/202606_sitemap.xml
+    https://www.nemzetisport.hu/202607_sitemap.xml
+    https://www.nemzetisport.hu/202608_sitemap.xml
+    https://www.nemzetisport.hu/202609_sitemap.xml
+    https://www.nemzetisport.hu/202610_sitemap.xml
+  since 2026-10-19: 7 urls (of 151)
+  of these, report-like: 1
+  egyeb-egyeni articles in 2026/10: 1
+    /egyeb-egyeni/2026/10/megmarad-a-sport-tamogatasa-de-az-eddigi-taorendszer-megszunik-jelentette-be-m
