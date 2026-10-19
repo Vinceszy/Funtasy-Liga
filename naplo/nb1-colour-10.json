@@ -371,6 +371,14 @@
    "sentence": "Herc (T. Balogun, a szünetben)",
    "anchor": "article_only",
    "match": "VÁRDA 1-1 FTC"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "history",
+   "sentence": "A Kispest-Honvéd legyőzte a Nyíregyházát, és elmozdult az utolsó helyről; a kispestiek megelőzték a Szparit a tabellán",
+   "anchor": "article_only",
+   "match": "NYÍREGY 0-1 HONVÉD"
   }
  ]
 }
