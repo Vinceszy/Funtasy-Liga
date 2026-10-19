@@ -363,6 +363,14 @@
    "sentence": "nem szerepel a Puskás Akadémia pályára lépett játékosai között",
    "anchor": "article_only",
    "match": "ÚJPEST 0-1 PAFC"
+  },
+  {
+   "player": "Herc Christián",
+   "minute": 45,
+   "tag": "sub",
+   "sentence": "Herc (T. Balogun, a szünetben)",
+   "anchor": "article_only",
+   "match": "VÁRDA 1-1 FTC"
   }
  ]
 }
