@@ -1,6 +1,11 @@
 {
  "facts": [
   {
+   "fact": "A liga saját szabálya: ferencvárosi játékos nem kerülhet a keretekbe. Ha egy cikk a fradisták hiányáról szólna, az a szabály következménye, nem a szakvezetők döntése.",
+   "from_round": 1,
+   "used_in": []
+  },
+  {
    "manager": "Ádám",
    "fact": "Ádám felhúzta magát Kele Janek írásain, és a szünetben mindent beleadott, hogy javítson a csapatán.",
    "from_round": 9,

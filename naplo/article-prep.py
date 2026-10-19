@@ -275,7 +275,12 @@ def pl_story_material(rnd):
 
 
 def print_background(league):
-    """What the editor told about the managers: facts no harvest can find.
+    """What the editor told about the managers and the league: facts no harvest can find.
+
+    A fact without `manager` or `team` is a rule of the league itself (a
+    house rule the data cannot show, e.g. a club whose players cannot be
+    picked) - it is printed for every piece, so no piece reads a rule as a
+    choice.
 
     They live in naplo/<league>-background.json, not in a round's colour
     table, because they belong to the season rather than to a round - in a
@@ -283,12 +288,12 @@ def print_background(league):
     pieces a fact has carried; a used fact is spent like any other material.
     """
     path = os.path.join(HERE, "%s-background.json" % league)
-    heading("BACKGROUND - what the editor told about the managers")
+    heading("BACKGROUND - what the editor told about the managers and the league")
     if not os.path.exists(path):
         print("(none recorded)")
         return
     for fact in load(path).get("facts", []):
-        who = fact.get("manager") or fact.get("team")
+        who = fact.get("manager") or fact.get("team") or "LEAGUE RULE"
         used = fact.get("used_in") or []
         print("- %s (from round %s): %s" % (who, fact.get("from_round"), fact["fact"]))
         print("    %s" % ("SPENT in: " + "; ".join(used) if used else "not used yet"))

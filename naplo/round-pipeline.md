@@ -221,6 +221,11 @@ reads it again. The first step prints the file for every piece. A fact that
 carried a published piece is listed in its `used_in` and is spent from then
 on. In the Draft the fact names the team, never the person behind it.
 
+A fact with neither `manager` nor `team` is a rule of the league itself, one
+the data cannot show - the NB1 league, for one, does not allow Ferencváros
+players at all. It is printed for every piece, because an absence the rules
+cause reads exactly like a choice in the squads.
+
 ## A measurement that is not written down did not happen
 
 The prose sources print to the run log and nowhere else, so a round's colour
