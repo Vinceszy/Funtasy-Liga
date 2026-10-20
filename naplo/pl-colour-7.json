@@ -737,6 +737,86 @@
    "anchor": "event",
    "match": "Spurs - Coventry City",
    "source_name": "James Maddison"
+  },
+  {
+   "player": "Suzuki",
+   "club": "AVL",
+   "minute": 49,
+   "tag": "keeper_save",
+   "sentence": "hárította Botman lövését, a Villa kapott gól nélkül nyert Newcastle-ben",
+   "anchor": "article_only",
+   "match": "Newcastle - Aston Villa",
+   "source_name": "Zion Suzuki"
+  },
+  {
+   "player": "Donnarumma",
+   "club": "MCI",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "két gólt kapott az Ipswichtől",
+   "anchor": "article_only",
+   "match": "Man City - Ipswich Town",
+   "source_name": "Gianluigi Donnarumma"
+  },
+  {
+   "player": "Verbruggen",
+   "club": "BHA",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "kapott gól nélkül hozta le a Brighton 5–0-s győzelmét",
+   "anchor": "article_only",
+   "match": "Brighton - Crystal Palace",
+   "source_name": "Bart Verbruggen"
+  },
+  {
+   "player": "Kinsky",
+   "club": "TOT",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "gólt kapott a Coventrytől",
+   "anchor": "article_only",
+   "match": "Spurs - Coventry City",
+   "source_name": "Antonín Kinsky"
+  },
+  {
+   "player": "Tavernier",
+   "club": "BOU",
+   "minute": 6,
+   "tag": "goal_manner",
+   "sentence": "fejjel",
+   "anchor": "event",
+   "match": "Bournemouth - Sunderland",
+   "source_name": "Marcus Tavernier"
+  },
+  {
+   "player": "Calvert-Lewin",
+   "club": "LEE",
+   "minute": 51,
+   "tag": "goal_manner",
+   "sentence": "egy szöglet után egyenlített a Manchester United ellen",
+   "anchor": "event",
+   "match": "Leeds - Man Utd",
+   "source_name": "Dominic Calvert-Lewin"
+  },
+  {
+   "player": "Robertson",
+   "club": "TOT",
+   "minute": 58,
+   "tag": "assist",
+   "sentence": "gólpasszt adott Marmoushnak",
+   "anchor": "event",
+   "match": "Spurs - Coventry City",
+   "source_name": "Andrew Robertson"
+  },
+  {
+   "player": "Solanke",
+   "club": "TOT",
+   "minute": "90+6",
+   "tag": "assist",
+   "sentence": "a kilencvenhatodik percben Ben Davies gólját készítette elő, a forduló utolsó gólja",
+   "anchor": "event",
+   "match": "Spurs - Coventry City",
+   "source_name": "Dominic Solanke"
   }
  ],
  "source": "FotMob structured block; Premier League minute-by-minute commentary (run log)"
