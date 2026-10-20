@@ -627,6 +627,56 @@
    "anchor": "article_only",
    "match": "Nott'm Forest - Arsenal",
    "source_name": "David Raya"
+  },
+  {
+   "player": "Vuskovic",
+   "club": "BHA",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "a hajrában kétszer fejelt kapura, egyszer Benítez védett; a Brighton nem kapott gólt",
+   "anchor": "article_only",
+   "match": "Brighton - Crystal Palace",
+   "source_name": "Luka Vuskovic"
+  },
+  {
+   "player": "Manzambi",
+   "club": "AVL",
+   "minute": 36,
+   "tag": "goal_manner",
+   "sentence": "fejjel, közelről, João Gomes beadásából; a meccs egyetlen gólja",
+   "anchor": "event",
+   "match": "Newcastle - Aston Villa",
+   "source_name": "Johan Manzambi"
+  },
+  {
+   "player": "Penders",
+   "club": "CHE",
+   "minute": 88,
+   "tag": "keeper_save",
+   "sentence": "beállt csereként a Chelsea kapujába, és hárította Barry fejesét",
+   "anchor": "article_only",
+   "match": "Everton - Chelsea",
+   "source_name": "Mike Penders"
+  },
+  {
+   "player": "Marmoush",
+   "club": "TOT",
+   "minute": 58,
+   "tag": "goal_manner",
+   "sentence": "a tizenhatoson kívülről, jobb lábbal",
+   "anchor": "event",
+   "match": "Spurs - Coventry City",
+   "source_name": "Omar Marmoush"
+  },
+  {
+   "player": "Thomas-Asante",
+   "club": "COV",
+   "minute": 49,
+   "tag": "assist",
+   "sentence": "gólpasszt adott Rudoni góljához",
+   "anchor": "event",
+   "match": "Spurs - Coventry City",
+   "source_name": "Brandon Thomas-Asante"
   }
  ],
  "source": "FotMob structured block; Premier League minute-by-minute commentary (run log)"
