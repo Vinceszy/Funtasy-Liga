@@ -475,5 +475,100 @@
    "shots": 28
   }
  },
- "claims": []
+ "claims": [
+  {
+   "player": "Neto",
+   "club": "CHE",
+   "minute": 46,
+   "tag": "goal_manner",
+   "sentence": "bal lábbal, rögtön a szünet után, a tizenhatos közepéről",
+   "anchor": "event",
+   "match": "Everton - Chelsea",
+   "source_name": "Pedro Neto"
+  },
+  {
+   "player": "Neto",
+   "club": "CHE",
+   "minute": 90,
+   "tag": "goal_manner",
+   "sentence": "bal lábbal, egy rögzített helyzet után",
+   "anchor": "event",
+   "match": "Everton - Chelsea",
+   "source_name": "Pedro Neto"
+  },
+  {
+   "player": "Martinez",
+   "club": "CHE",
+   "minute": null,
+   "tag": "keeper_save",
+   "sentence": "az első félidőben négy everton lövést hárított",
+   "anchor": "article_only",
+   "match": "Everton - Chelsea",
+   "source_name": "Emiliano Martínez"
+  },
+  {
+   "player": "Foden",
+   "club": "MCI",
+   "minute": 19,
+   "tag": "goal",
+   "sentence": "gólt lőtt az Ipswichnek",
+   "anchor": "event",
+   "match": "Man City - Ipswich Town"
+  },
+  {
+   "player": "Isak",
+   "club": "LIV",
+   "minute": 70,
+   "tag": "goal_manner",
+   "sentence": "közelről, Barcola fejes passzából, a Liverpool győztes gólja",
+   "anchor": "event",
+   "match": "Brentford - Liverpool"
+  },
+  {
+   "player": "Barcola",
+   "club": "LIV",
+   "minute": 70,
+   "tag": "assist",
+   "sentence": "fejes passzal készítette elő Isak győztes gólját",
+   "anchor": "event",
+   "match": "Brentford - Liverpool"
+  },
+  {
+   "player": "Yarmoliuk",
+   "club": "BRE",
+   "minute": "45+8",
+   "tag": "card",
+   "sentence": "a VAR után piros lapot kapott durvaságért, a Brentford tíz emberrel maradt",
+   "anchor": "record",
+   "match": "Brentford - Liverpool"
+  },
+  {
+   "player": "Boscagli",
+   "club": "BHA",
+   "minute": 7,
+   "tag": "assist",
+   "sentence": "gólpasszt adott Diego Gómez góljához",
+   "anchor": "event",
+   "match": "Brighton - Crystal Palace"
+  },
+  {
+   "player": "Kostoulas",
+   "club": "BHA",
+   "minute": 10,
+   "tag": "assist",
+   "sentence": "előkészítette Ayari gólját, a harmadikat",
+   "anchor": "event",
+   "match": "Brighton - Crystal Palace"
+  },
+  {
+   "player": "Kostoulas",
+   "club": "BHA",
+   "minute": 49,
+   "tag": "disputed",
+   "sentence": "a negyedik gólt lőtte, VAR-ellenőrzés után adták meg",
+   "anchor": "event",
+   "match": "Brighton - Crystal Palace"
+  }
+ ],
+ "source": "FotMob structured block; Premier League minute-by-minute commentary (run log)"
 }
