@@ -568,6 +568,65 @@
    "sentence": "a negyedik gólt lőtte, VAR-ellenőrzés után adták meg",
    "anchor": "event",
    "match": "Brighton - Crystal Palace"
+  },
+  {
+   "player": "Hill",
+   "club": "BOU",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "kapott gól nélkül hozta le a Sunderland elleni 2–0-t",
+   "anchor": "article_only",
+   "match": "Bournemouth - Sunderland"
+  },
+  {
+   "player": "Gomez",
+   "club": "BHA",
+   "minute": 7,
+   "tag": "goal_manner",
+   "sentence": "több mint harminc méterről, a kapu közepébe, magasan",
+   "anchor": "event",
+   "match": "Brighton - Crystal Palace",
+   "source_name": "Diego Gómez"
+  },
+  {
+   "player": "Ayari",
+   "club": "BHA",
+   "minute": 10,
+   "tag": "goal_manner",
+   "sentence": "Kostoulas passzából, a tizenhatos közepéről",
+   "anchor": "event",
+   "match": "Brighton - Crystal Palace",
+   "source_name": "Yasin Ayari"
+  },
+  {
+   "player": "Madueke",
+   "club": "ARS",
+   "minute": 80,
+   "tag": "goal",
+   "sentence": "a félidőben lépett pályára, a nyolcvanadik percben az egyetlen gólt lőtte",
+   "anchor": "event",
+   "match": "Nott'm Forest - Arsenal",
+   "source_name": "Noni Madueke"
+  },
+  {
+   "player": "Rice",
+   "club": "ARS",
+   "minute": 80,
+   "tag": "assist",
+   "sentence": "gólpasszt adott Madueke győztes góljához",
+   "anchor": "event",
+   "match": "Nott'm Forest - Arsenal",
+   "source_name": "Declan Rice"
+  },
+  {
+   "player": "Raya",
+   "club": "ARS",
+   "minute": null,
+   "tag": "keeper_save",
+   "sentence": "hárította Murillo fejesét és Delap lövését",
+   "anchor": "article_only",
+   "match": "Nott'm Forest - Arsenal",
+   "source_name": "David Raya"
   }
  ],
  "source": "FotMob structured block; Premier League minute-by-minute commentary (run log)"
