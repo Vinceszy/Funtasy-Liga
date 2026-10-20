@@ -411,6 +411,14 @@
    "sentence": "Magyar Péter miniszterelnök az Országgyűlés előtt, a jövő évi költségvetés ismertetésekor (2026. október 19.): „Olyan támogatási rendszer kell, amelyben követhető, hova kerül a pénz, és számon kérhető (...) Megtartják a sport állami támogatását 453 milliárd forint értékben. De a sport-taotámogatás megszűnik, helyette 150 milliárd forint közvetlen állami támogatás lesz” (nemzetisport.hu, utanpotlassport.hu nyomán)",
    "anchor": "article_only",
    "match": "VÁRDA 1-1 FTC"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "ahogy a játékot, az idei szereplésüket sem bonyolítják túl: vagy nyernek, vagy veszítenek, a döntetlent nem ismerik (a Puskás Akadémiáról)",
+   "anchor": "article_only",
+   "match": "ÚJPEST 0-1 PAFC"
   }
  ]
 }
