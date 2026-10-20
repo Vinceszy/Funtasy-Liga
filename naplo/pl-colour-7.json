@@ -677,6 +677,66 @@
    "anchor": "event",
    "match": "Spurs - Coventry City",
    "source_name": "Brandon Thomas-Asante"
+  },
+  {
+   "player": "Haaland",
+   "club": "MCI",
+   "minute": 34,
+   "tag": "goal_manner",
+   "sentence": "fejjel, Kovačić beadásából",
+   "anchor": "event",
+   "match": "Man City - Ipswich Town",
+   "source_name": "Erling Haaland"
+  },
+  {
+   "player": "Haaland",
+   "club": "MCI",
+   "minute": 69,
+   "tag": "goal_manner",
+   "sentence": "egy gyors ellentámadás végén, Ndiaye passzából",
+   "anchor": "event",
+   "match": "Man City - Ipswich Town",
+   "source_name": "Erling Haaland"
+  },
+  {
+   "player": "Haaland",
+   "club": "MCI",
+   "minute": 85,
+   "tag": "disputed",
+   "sentence": "a hajrában a harmadikat is belőtte, a VAR elvette",
+   "anchor": "event",
+   "match": "Man City - Ipswich Town",
+   "source_name": "Erling Haaland"
+  },
+  {
+   "player": "Evanilson",
+   "club": "BOU",
+   "minute": 6,
+   "tag": "assist",
+   "sentence": "gólpasszt adott Tavernier fejeséhez",
+   "anchor": "event",
+   "match": "Bournemouth - Sunderland",
+   "source_name": "Evanilson"
+  },
+  {
+   "player": "Evanilson",
+   "club": "BOU",
+   "minute": 48,
+   "tag": "goal",
+   "sentence": "a második félidő elején maga is betalált",
+   "anchor": "event",
+   "match": "Bournemouth - Sunderland",
+   "source_name": "Evanilson"
+  },
+  {
+   "player": "Maddison",
+   "club": "TOT",
+   "minute": 14,
+   "tag": "goal_manner",
+   "sentence": "a tizenhatoson kívülről a bal felső sarokba, Kudus passzából",
+   "anchor": "event",
+   "match": "Spurs - Coventry City",
+   "source_name": "James Maddison"
   }
  ],
  "source": "FotMob structured block; Premier League minute-by-minute commentary (run log)"
