@@ -419,6 +419,14 @@
    "sentence": "ahogy a játékot, az idei szereplésüket sem bonyolítják túl: vagy nyernek, vagy veszítenek, a döntetlent nem ismerik (a Puskás Akadémiáról)",
    "anchor": "article_only",
    "match": "ÚJPEST 0-1 PAFC"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "history",
+   "sentence": "Az Állami Számvevőszék szeptemberben a taorendszer felülvizsgálatát javasolta; az ellenőrzés számos visszaélésre, szabálytalanságra rávilágított, több szervezetnél céltól eltérő, jogszabályellenes felhasználást tárt fel; az igénybe vevő szervezetek többsége nagymértékben kitett ennek a forrásnak, főként erre alapozzák a működésüket (nemzetisport.hu, október 19.)",
+   "anchor": "article_only",
+   "match": "VÁRDA 1-1 FTC"
   }
  ]
 }
