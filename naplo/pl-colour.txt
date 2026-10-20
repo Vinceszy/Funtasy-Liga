@@ -72,3 +72,9 @@ TEXTSTREAM: 2026-10-13 17:18 UTC | Premier League perces kommentar, 6. fordulo
   a(z) 6. fordulo meccsei: 10
   pulselive lezart meccs: 40
   parositott meccs: 10 / 10
+
+======================================================================
+TEXTSTREAM: 2026-10-20 19:25 UTC | Premier League minute-by-minute commentary, gameweek 7
+  matches of gameweek 7: 10
+  pulselive completed matches: 40
+  matches matched: 10 / 10
