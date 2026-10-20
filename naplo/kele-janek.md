@@ -218,6 +218,38 @@ a third per three thousand characters, so this is roughly three times his,
 which is the parody concentration. One per paragraph would be ten times and
 reads as fancy dress.
 
+## When the editor brings a fresh post of his
+
+Two of his own posts were supplied for the PL round-8 column (October 2026):
+a podcast blurb ("tabukat döntögettünk": the data revolution "fölfalta
+gyermekeit", "üres, felszínes xG-zés", "újhullámosnak hazudott szakértés",
+"fából vaskarika", "otrombán kevés") and a long piece on the sports
+secretariat that does not answer him ("KÁOSZ JÖN A MAGYAR SPORTBAN, VAGY
+RENDSZERVÁLTÁS?").
+
+The first draft only name-dropped the podcast into an unchanged text, and was
+sent back. **A fresh post is a voice to write in, not a source to cite.**
+Take its moves and rebuild the piece around them:
+
+- the opening hearsay he then checks: "Úgy hírlik…", "Mielőtt azonban …
+  érdemes vetni néhány pillantást arra…", "Én most leellenőriztem:";
+- the walk-through: "No, de hogy lássuk sorjában";
+- the question answered by one word: "Mit kell ezen titkolni vajon?
+  Rejtély.";
+- the sarcastic hinges: "A sors furcsa fintora", "Potom öt hónap alatt
+  eljutottunk tehát oda, hogy…", "A rossz hír az, hogy…", "És van még egy
+  rossz hírem:";
+- the shrugged concession: "lehet nyugodtan, persze… túléltem, köszönöm";
+- the plea and the capitals: "könyörgöm", "egészen pontosan NULLA";
+- a title that is a question between two options.
+
+His stance on data is a sceptic's: the public's stat-talk is shallow, chance
+decides more than the experts admit. A column that uses a count should use
+the plainest one and say so, not dress it up as a model.
+
+Like every device, these are spent for the league whose column used them
+(PL round 8) and are read off the previous piece before the next one.
+
 ## His readers
 
 The league reads him, and two of its managers have become recurring
