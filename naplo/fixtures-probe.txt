@@ -5,3 +5,9 @@ PROBE: 2026-10-19 17:27 UTC | NB I round 11 programme
   https://nb1.hu/hir/nb1-2026-2027-idei-fordulok-derbi-idopontok-magyar-kupa-4-fordulo/  HTTP 200, 1 mentions of round 11
   https://www.csakfoci.hu/magyar-foci/nb-i-megvan-mikor-es-hova-mehetunk-meg-meccsre-2026-ban-a-teljes-menetrend  HTTP 200, 1 mentions of round 11
   https://magyarnemzet.hu/sport/2026/09/fradi-ujpest-derbi-karacsony-mlsz-nb-i-oszi-program  HTTP 200, 2 mentions of round 11
+
+======================================================================
+PROBE: 2026-10-26 17:51 UTC | NB I round 12 programme
+  https://nb1.hu/hir/nb1-2026-2027-idei-fordulok-derbi-idopontok-magyar-kupa-4-fordulo/  HTTP 200, 1 mentions of round 12
+  https://www.csakfoci.hu/magyar-foci/nb-i-megvan-mikor-es-hova-mehetunk-meg-meccsre-2026-ban-a-teljes-menetrend  HTTP 200, 1 mentions of round 12
+  https://magyarnemzet.hu/sport/2026/09/fradi-ujpest-derbi-karacsony-mlsz-nb-i-oszi-program  HTTP 200, 0 mentions of round 12
