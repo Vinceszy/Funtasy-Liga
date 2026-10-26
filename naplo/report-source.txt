@@ -471,3 +471,27 @@ PROBE: 2026-10-19 17:58 UTC | nemzetisport report content
   of these, report-like: 1
   egyeb-egyeni articles in 2026/10: 1
     /egyeb-egyeni/2026/10/megmarad-a-sport-tamogatasa-de-az-eddigi-taorendszer-megszunik-jelentette-be-m
+
+======================================================================
+PROBE: 2026-10-26 09:13 UTC | nemzetisport report content
+  sitemapindex: HTTP 200, 304 maps
+  maps matching 202610: 10
+    https://www.nemzetisport.hu/202605_sitemap.xml
+    https://www.nemzetisport.hu/202606_sitemap.xml
+    https://www.nemzetisport.hu/202607_sitemap.xml
+    https://www.nemzetisport.hu/202608_sitemap.xml
+    https://www.nemzetisport.hu/202609_sitemap.xml
+    https://www.nemzetisport.hu/202610_sitemap.xml
+  since 2026-10-24: 24 urls (of 152)
+  of these, report-like: 10
+  labdarugo-nb-i articles in 2026/10: 10
+    /labdarugo-nb-i/2026/10/a-debrecen-magabiztos-gyozelmet-aratott-kispesten
+    /labdarugo-nb-i/2026/10/a-hajraban-szerzett-ket-gollal-a-paks-legyozte-idegenben-a-vasast
+    /labdarugo-nb-i/2026/10/a-rebrov-era-ota-nem-lattunk-ilyen-sorozatot-a-fraditol-20-ev-utan-gyozne-gy
+    /labdarugo-nb-i/2026/10/bognar-egy-percig-sem-ereztem-hogy-kikaphatunk-eros-talan-a-dontetlen-realis
+    /labdarugo-nb-i/2026/10/borbely-balazs-rengeteg-nagyon-jo-teljesitmenynek-orult-az-mtk-legyozese-uta
+    /labdarugo-nb-i/2026/10/golokkal-tisztelegtek-a-hosok-elott-a-fradi-elso-hazai-bajnoki-sikere-kepekb
+    /labdarugo-nb-i/2026/10/idegenben-nyert-vezeti-a-noi-nb-i-tabellajat-az-ujpest
+    /labdarugo-nb-i/2026/10/legyozte-az-ujpestet-megerositette-masodik-helyet-az-eto-fc
+    /labdarugo-nb-i/2026/10/meglepetes-felcsuton-a-szpari-legyozte-az-elen-allo-puskas-akademiat
+    /labdarugo-nb-i/2026/10/noi-nb-i-a-puskas-akademia-otgolos-sikerrel-allt-az-elre
