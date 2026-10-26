@@ -1,0 +1,243 @@
+{
+ "round": 11,
+ "league": "nb1",
+ "source": "nemzetisport.hu meccsbeszamolok (naplo/nso-content-probe.py, futasi naplo)",
+ "matches": {
+  "HONVÉD 0-2 DVSC": {
+   "venue": "Budapest, Bozsik Aréna",
+   "attendance": 3992,
+   "referee": "Kovács Imre",
+   "goals": [
+    {
+     "minute": 54,
+     "player": "Boskovic",
+     "team": "DVSC"
+    },
+    {
+     "minute": 87,
+     "player": "Dénes V.",
+     "team": "DVSC"
+    }
+   ],
+   "sent_off": []
+  },
+  "ETO 1-0 ÚJPEST": {
+   "venue": "Győr, ETO Stadion",
+   "attendance": 6556,
+   "referee": "Derdák Marcell",
+   "goals": [
+    {
+     "minute": 25,
+     "player": "Kulenovic",
+     "team": "ETO"
+    }
+   ],
+   "sent_off": []
+  },
+  "VASAS 0-2 PAKS": {
+   "venue": "Budapest, Illovszky Rudolf Stadion",
+   "attendance": 3056,
+   "referee": "Karakó",
+   "goals": [
+    {
+     "minute": 80,
+     "player": "Vécsei",
+     "team": "PAKS"
+    },
+    {
+     "minute": "90+3",
+     "player": "Horváth Kevin",
+     "team": "PAKS"
+    }
+   ],
+   "sent_off": []
+  },
+  "PAFC 1-2 NYÍREGY": {
+   "venue": "Felcsút, Pancho Aréna",
+   "attendance": 1263,
+   "referee": "Antal Péter",
+   "goals": [
+    {
+     "minute": 20,
+     "player": "Dárdai P.",
+     "team": "PAFC"
+    },
+    {
+     "minute": 32,
+     "player": "Manner Balázs",
+     "team": "NYÍREGY"
+    },
+    {
+     "minute": 53,
+     "player": "Kvasina Marko",
+     "team": "NYÍREGY"
+    }
+   ],
+   "sent_off": []
+  },
+  "FTC 5-0 MTK": {
+   "venue": "Budapest, Groupama Aréna",
+   "attendance": 8237,
+   "referee": "Rúsz",
+   "goals": [
+    {
+     "minute": 15,
+     "player": "Maiga",
+     "team": "FTC"
+    },
+    {
+     "minute": 17,
+     "player": "Yusuf",
+     "team": "FTC"
+    },
+    {
+     "minute": 20,
+     "player": "Maiga",
+     "team": "FTC"
+    },
+    {
+     "minute": 52,
+     "player": "Zachariassen",
+     "team": "FTC",
+     "manner": "11-es"
+    },
+    {
+     "minute": 68,
+     "player": "Corbu",
+     "team": "FTC"
+    }
+   ],
+   "sent_off": []
+  }
+ },
+ "claims": [
+  {
+   "player": "Amenyido Etienne",
+   "minute": 21,
+   "tag": "big_miss",
+   "sentence": "Krajcsovics hozta helyzetbe, a lövésére Petrás könnyen leért",
+   "anchor": "article_only",
+   "match": "ETO 1-0 ÚJPEST"
+  },
+  {
+   "player": "Kulenovic",
+   "minute": 25,
+   "tag": "goal",
+   "sentence": "Kulenovic első győri góljával nyert az ETO",
+   "anchor": "record",
+   "match": "ETO 1-0 ÚJPEST"
+  },
+  {
+   "player": "Jurek Gábor",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "végigjátszotta az MTK 5–0-s vereségét; a fordulás után az MTK egyetlen kaput eltaláló lövést sem jegyzett",
+   "anchor": "article_only",
+   "match": "FTC 5-0 MTK"
+  },
+  {
+   "player": "Maiga",
+   "minute": 15,
+   "tag": "goal",
+   "sentence": "húsz perc után hárommal vezetett a Fradi, Maiga duplázott",
+   "anchor": "record",
+   "match": "FTC 5-0 MTK"
+  },
+  {
+   "player": "Boskovic",
+   "minute": 54,
+   "tag": "goal_manner",
+   "sentence": "Dzsudzsák Balázs beadása után a kapuba bólintotta a labdát",
+   "anchor": "record",
+   "match": "HONVÉD 0-2 DVSC"
+  },
+  {
+   "player": "Dzsudzsák Balázs",
+   "minute": 54,
+   "tag": "assist",
+   "sentence": "az ő beadására fejelt gólt Boskovic",
+   "anchor": "article_only",
+   "match": "HONVÉD 0-2 DVSC"
+  },
+  {
+   "player": "Szendrei Ákos",
+   "minute": 13,
+   "tag": "disputed",
+   "sentence": "a 13. percben betalált, de előtte Egri kezét érintette a labda, videózás után érvénytelenítették",
+   "anchor": "article_only",
+   "match": "HONVÉD 0-2 DVSC"
+  },
+  {
+   "player": "Szalai József",
+   "minute": null,
+   "tag": "big_miss",
+   "sentence": "a második félidő elején szöglet utáni fejesét Engedi a lécre tolta",
+   "anchor": "article_only",
+   "match": "VASAS 0-2 PAKS"
+  },
+  {
+   "player": "Vécsei",
+   "minute": 80,
+   "tag": "goal",
+   "sentence": "rögzített helyzet után szerzett góllal dőlt el a meccs",
+   "anchor": "record",
+   "match": "VASAS 0-2 PAKS"
+  },
+  {
+   "player": "Tóth Milán László",
+   "minute": null,
+   "tag": "milestone",
+   "sentence": "az előző fordulóban térdszalag-szakadást szenvedett, az idényben aligha számíthatnak rá",
+   "anchor": "article_only",
+   "match": "VASAS 0-2 PAKS"
+  },
+  {
+   "player": "Osagie Iyinbor Patrick",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "Erős Gábor: Tóth Milán és Iyinbor Patrick hiánya is a szerkezet átgondolására késztetett",
+   "anchor": "article_only",
+   "match": "VASAS 0-2 PAKS"
+  },
+  {
+   "player": "Dárdai P.",
+   "minute": 20,
+   "tag": "goal",
+   "sentence": "parádés egyéni akció végén megszerezte a vezetést",
+   "anchor": "record",
+   "match": "PAFC 1-2 NYÍREGY"
+  },
+  {
+   "player": "Manner Balázs",
+   "minute": 32,
+   "tag": "goal",
+   "sentence": "hamar egyenlítettek a vendégek",
+   "anchor": "event",
+   "match": "PAFC 1-2 NYÍREGY"
+  },
+  {
+   "player": "Kvasina Marko",
+   "minute": 53,
+   "tag": "goal",
+   "sentence": "Kvasina második félidős góljával bravúros győzelmet arattak",
+   "anchor": "event",
+   "match": "PAFC 1-2 NYÍREGY"
+  },
+  {
+   "player": "Hős Zsombor",
+   "minute": 46,
+   "tag": "sub",
+   "sentence": "a szünetben állt be Ingolitsch helyére",
+   "anchor": "event",
+   "match": "PAFC 1-2 NYÍREGY"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "upset",
+   "sentence": "a tabella utolsója nyert a listavezető otthonában",
+   "anchor": "article_only",
+   "match": "PAFC 1-2 NYÍREGY"
+  }
+ ]
+}
