@@ -85,6 +85,19 @@ a sentence: somebody else then sits down, and the formation has to stay
 legal. Before calling a line-up choice a mistake, check what the alternative
 actually was.
 
+**A what-if goes in only when it flips the result.** "Had he started
+Hinora, he would still have lost by an eighth" is arithmetic with no
+story: the reader learns that nothing would have changed. Both NB1 round-11
+drafts that tried it were sent back - the first also forgot that the
+benched man needs somebody to sit down for him. If the alternative does not
+turn the result, say what happened instead and leave the sum out.
+
+**A summary is not Kele.** The two-part reframe ("Ez már nem üldözés. Ez
+verseny."), the coined verdict and the column's rhetoric belong to his
+column only; a fixture piece that borrows them was sent back as "Kele
+style". The summary's own punchline is a plain sentence about the two
+managers.
+
 **An apposition must carry something worth knowing.** "Popovics, a húszéves hazai kapus"
 spends a clause on nothing; "Popovics, aki egy héttel korábban nyolc lövést hárított"
 spends it on a fact. If nothing interesting is known about the man, leave the apposition
