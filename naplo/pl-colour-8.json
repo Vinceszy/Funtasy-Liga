@@ -393,5 +393,57 @@
    "shots": 26
   }
  },
- "claims": []
+ "claims": [
+  {
+   "player": "McGinn",
+   "club": "AVL",
+   "minute": 6,
+   "tag": "assist",
+   "sentence": "ő készítette elő Nicolas Jackson első gólját",
+   "anchor": "event",
+   "match": "Aston Villa - Man City",
+   "source_name": "John McGinn"
+  },
+  {
+   "player": "Ndiaye",
+   "club": "MCI",
+   "minute": 52,
+   "tag": "assist",
+   "sentence": "az ő beadásából fejelt egyenlítő gólt Haaland",
+   "anchor": "event",
+   "match": "Aston Villa - Man City",
+   "source_name": "Iliman Ndiaye"
+  },
+  {
+   "player": "Suzuki",
+   "club": "AVL",
+   "minute": null,
+   "tag": "keeper_save",
+   "sentence": "háromszor védett a City ellen: Cherki, majd kétszer Gvardiol lövését",
+   "anchor": "article_only",
+   "match": "Aston Villa - Man City",
+   "source_name": "Zion Suzuki"
+  },
+  {
+   "player": "Groß",
+   "club": "BHA",
+   "minute": 17,
+   "tag": "goal_manner",
+   "sentence": "öngólt vágott Anfielden",
+   "anchor": "event",
+   "match": "Liverpool - Brighton",
+   "source_name": "Pascal Groß"
+  },
+  {
+   "player": "Mateta",
+   "club": "CRY",
+   "minute": 3,
+   "tag": "big_miss",
+   "sentence": "a harmadik percben kétszer lőtt közelről, mindkétszer Horníček védett",
+   "anchor": "article_only",
+   "match": "Crystal Palace - Newcastle",
+   "source_name": "Jean-Philippe Mateta"
+  }
+ ],
+ "source": "FotMob structured block; Premier League minute-by-minute commentary (run log)"
 }
