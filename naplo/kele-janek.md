@@ -250,6 +250,16 @@ the plainest one and say so, not dress it up as a model.
 Like every device, these are spent for the league whose column used them
 (PL round 8) and are read off the previous piece before the next one.
 
+A third post followed for the NB1 round-12 column ("VONATKOZIK-E EGYÁLTALÁN
+NÉVADÓJÁRA A LEX KUBATOV?"), and its moves are the ones that column used:
+"Talán mondanom sem kell:", the pointed aside "khm, Flexinform, khm", the
+"LOL, jelent ez valamit egyáltalán?", "Nem, nem azt állítom, hogy …,
+mindössze arra próbálok rámutatni", "Ugye senki nem hiszi, hogy …?" and the
+close on "ez lesz az igazi teszt". The editor called the style "nagyon jó"
+after two topics were turned down, so the voice is right; the topic is what
+gets rejected. When a topic is refused twice, offer three short pitches with
+their numbers instead of a third full draft.
+
 ## His readers
 
 The league reads him, and two of its managers have become recurring
