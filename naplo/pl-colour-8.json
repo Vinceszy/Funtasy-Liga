@@ -1,0 +1,397 @@
+{
+ "event": "8",
+ "round": 8,
+ "league": "pl",
+ "created": "2026-10-27T12:01:13Z",
+ "matches": {
+  "Ipswich Town - Nott'm Forest": {
+   "kickoff": "2026-10-23T19:00:00Z",
+   "fotmob": "5795491",
+   "goals": [
+    {
+     "minute": 13,
+     "player": "Neco Williams",
+     "assist": "assist by Daniel Muñoz",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.269
+    },
+    {
+     "minute": 41,
+     "player": "Julio Enciso",
+     "assist": null,
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.175
+    }
+   ],
+   "var": [],
+   "big_chances_missed": [
+    {
+     "minute": 31,
+     "player": "Morgan Gibbs-White",
+     "xG": 0.689,
+     "manner": "LeftFoot",
+     "situation": "FastBreak",
+     "on_target": true
+    }
+   ],
+   "saves_by_keeper": {
+    "512013": 3,
+    "181069": 2,
+    "None": 1
+   },
+   "shots": 24
+  },
+  "Aston Villa - Man City": {
+   "kickoff": "2026-10-24T11:30:00Z",
+   "fotmob": "5795486",
+   "goals": [
+    {
+     "minute": 6,
+     "player": "Nicolas Jackson",
+     "assist": "assist by John McGinn",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.123
+    },
+    {
+     "minute": 52,
+     "player": "Erling Haaland",
+     "assist": "assist by Iliman Ndiaye",
+     "description": "Header",
+     "manner": "Header",
+     "situation": "SetPiece",
+     "own_goal": false,
+     "xG": 0.233
+    },
+    {
+     "minute": 60,
+     "player": "Nicolas Jackson",
+     "assist": "assist by Ibrahim Mbaye",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.17
+    }
+   ],
+   "var": [],
+   "big_chances_missed": [
+    {
+     "minute": 21,
+     "player": "Rayan Cherki",
+     "xG": 0.385,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "on_target": true
+    }
+   ],
+   "saves_by_keeper": {
+    "1053679": 6
+   },
+   "shots": 23
+  },
+  "Arsenal - Everton": {
+   "kickoff": "2026-10-24T14:00:00Z",
+   "fotmob": "5795485",
+   "goals": [
+    {
+     "minute": 7,
+     "player": "Ezri Konsa",
+     "assist": "assist by Viktor Gyökeres",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "FromCorner",
+     "own_goal": false,
+     "xG": 0.28
+    },
+    {
+     "minute": 68,
+     "player": "Gabriel",
+     "assist": "assist by Ben White",
+     "description": "Header",
+     "manner": "Header",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.418
+    }
+   ],
+   "var": [],
+   "big_chances_missed": [
+    {
+     "minute": 44,
+     "player": "Thierno Barry",
+     "xG": 0.322,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": true
+    }
+   ],
+   "saves_by_keeper": {
+    "303919": 2,
+    "562727": 3
+   },
+   "shots": 28
+  },
+  "Coventry City - Fulham": {
+   "kickoff": "2026-10-24T14:00:00Z",
+   "fotmob": "5795488",
+   "goals": [
+    {
+     "minute": 80,
+     "player": "Oscar Bobb",
+     "assist": "assist by Joshua King",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "FromCorner",
+     "own_goal": false,
+     "xG": 0.062
+    }
+   ],
+   "var": [],
+   "big_chances_missed": [],
+   "saves_by_keeper": {
+    "1187236": 2,
+    "215168": 2
+   },
+   "shots": 25
+  },
+  "Chelsea - Spurs": {
+   "kickoff": "2026-10-24T16:30:00Z",
+   "fotmob": "5795487",
+   "goals": [
+    {
+     "minute": 77,
+     "player": "Mike Penders",
+     "assist": null,
+     "description": "Own goal",
+     "manner": "OtherBodyParts",
+     "situation": "FromCorner",
+     "own_goal": true,
+     "xG": null
+    },
+    {
+     "minute": 87,
+     "player": "Mathys Tel",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.042
+    }
+   ],
+   "var": [],
+   "big_chances_missed": [],
+   "saves_by_keeper": {
+    "1341475": 4,
+    "1319972": 3
+   },
+   "shots": 23
+  },
+  "Crystal Palace - Newcastle": {
+   "kickoff": "2026-10-25T14:00:00Z",
+   "fotmob": "5795489",
+   "goals": [
+    {
+     "minute": 47,
+     "player": "William Osula",
+     "assist": "assist by Jacob Murphy",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.482
+    },
+    {
+     "minute": 58,
+     "player": "Harvey Barnes",
+     "assist": "assist by Amar Dedić",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.139
+    }
+   ],
+   "var": [
+    {
+     "minute": 52,
+     "player": "Joseph Willock",
+     "decision": "Joseph Willock"
+    }
+   ],
+   "big_chances_missed": [
+    {
+     "minute": 3,
+     "player": "Jean-Philippe Mateta",
+     "xG": 0.622,
+     "manner": "LeftFoot",
+     "situation": "SetPiece",
+     "on_target": true
+    },
+    {
+     "minute": 3,
+     "player": "Jean-Philippe Mateta",
+     "xG": 0.372,
+     "manner": "LeftFoot",
+     "situation": "SetPiece",
+     "on_target": true
+    }
+   ],
+   "saves_by_keeper": {
+    "1186978": 4
+   },
+   "shots": 27
+  },
+  "Hull City - Brentford": {
+   "kickoff": "2026-10-25T14:00:00Z",
+   "fotmob": "5795490",
+   "goals": [
+    {
+     "minute": 24,
+     "player": "Oli McBurnie",
+     "assist": null,
+     "description": "Penalty",
+     "manner": "RightFoot",
+     "situation": "Penalty",
+     "own_goal": false,
+     "xG": 0.788
+    },
+    {
+     "minute": 63,
+     "player": "Dango Ouattara",
+     "assist": "assist by Igor Thiago",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.807
+    }
+   ],
+   "var": [],
+   "big_chances_missed": [
+    {
+     "minute": 89,
+     "player": "Joe Gelhardt",
+     "xG": 0.319,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "on_target": false
+    }
+   ],
+   "saves_by_keeper": {
+    "1072068": 5,
+    "776689": 1
+   },
+   "shots": 26
+  },
+  "Liverpool - Brighton": {
+   "kickoff": "2026-10-25T14:00:00Z",
+   "fotmob": "5795492",
+   "goals": [
+    {
+     "minute": 17,
+     "player": "Pascal Groß",
+     "assist": null,
+     "description": "Own goal",
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": true,
+     "xG": null
+    },
+    {
+     "minute": 21,
+     "player": "Alexander Isak",
+     "assist": "assist by Bradley Barcola",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.286
+    }
+   ],
+   "var": [],
+   "big_chances_missed": [],
+   "saves_by_keeper": {
+    "1131987": 3,
+    "319784": 1
+   },
+   "shots": 31
+  },
+  "Man Utd - Bournemouth": {
+   "kickoff": "2026-10-25T14:00:00Z",
+   "fotmob": "5795493",
+   "goals": [
+    {
+     "minute": 38,
+     "player": "Rayan",
+     "assist": "assist by Justin Kluivert",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "SetPiece",
+     "own_goal": false,
+     "xG": 0.162
+    },
+    {
+     "minute": 43,
+     "player": "Marcus Tavernier",
+     "assist": "assist by Adrien Truffert",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.72
+    },
+    {
+     "minute": 71,
+     "player": "Evanilson",
+     "assist": "assist by Lewis Cook",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.367
+    }
+   ],
+   "var": [],
+   "big_chances_missed": [
+    {
+     "minute": 66,
+     "player": "Rayan",
+     "xG": 0.349,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": false
+    }
+   ],
+   "saves_by_keeper": {
+    "1067256": 3,
+    "1178602": 1,
+    "None": 2
+   },
+   "shots": 27
+  },
+  "Sunderland - Leeds": {
+   "kickoff": "2026-10-25T16:30:00Z",
+   "fotmob": "5795494",
+   "goals": [],
+   "var": [],
+   "big_chances_missed": [],
+   "saves_by_keeper": {
+    "1187213": 4,
+    "1125720": 3,
+    "None": 1
+   },
+   "shots": 26
+  }
+ },
+ "claims": []
+}
