@@ -50,25 +50,24 @@ he writes costs him a point on Sunday.
    intuition. The bench claim was wrong by a third until formation limits
    were applied: a goalkeeper cannot be fielded for a forward.
 
-## The devices are spent like the anecdotes are
+## Devices recur; the measure is how much
 
-The rule that already covers subjects and phrases from the match pieces
-covers this column's OWN devices too, week to week. A piece that opens the
-way last week's opened, hinges the way it hinged, concedes with the same
-three sentences and closes on the same shape is not a voice. It is the same
-article with new numbers in it.
+His moves are what make the voice recognisable, and a recognisable voice is
+the point: "Talán mondanom sem kell", "No, de lássuk sorjában", "Van egy
+rossz hírem", the aside in dashes, the three concessions, the two-part
+reframe. They may come back week after week - that is what keeps the style
+consistent. Nothing is "spent" by being used once.
 
-So before writing, read the previous piece FOR THAT LEAGUE and take its
-moves off the table. The list below is a list of FUNCTIONS; the sentences
-quoted beside them are what one piece did once, not a phrasebook to refill.
-"Hol itt a látnivaló? Mindjárt megmondom", "Félreértés ne essék", the three
-"Tudom" concessions and the counted closing pair were used in the first NB1
-column and are spent there.
+What has to be watched is the degree. A piece that opens the way last week's
+opened, hinges the way it hinged, concedes with the same sentences and
+closes on the same shape is the same article with new numbers in it. So
+before writing, read the previous piece FOR THAT LEAGUE: reuse its moves
+freely, but not all of them, not in the same order, and not the same
+sentence word for word. The list below is a list of FUNCTIONS; the
+sentences quoted beside them are what one piece did once.
 
-What may repeat every week: the outsider's voice, the two-part reframe, a
-figure as the punchline of a sentence, the rare-word rate, and the single
-line of travel from the first sentence to the last. Those are the style.
-Everything below is one solution to a problem, not the solution.
+What is spent is the material, not the moves: a subject or an anecdote a
+published piece already told (see step 2 above).
 
 ## The skeleton: what each beat has to DO
 
@@ -247,11 +246,11 @@ His stance on data is a sceptic's: the public's stat-talk is shallow, chance
 decides more than the experts admit. A column that uses a count should use
 the plainest one and say so, not dress it up as a model.
 
-Like every device, these are spent for the league whose column used them
-(PL round 8) and are read off the previous piece before the next one.
+These moves join the repertoire: use them again whenever they fit, with the
+usual care about how many land in one piece.
 
 A third post followed for the NB1 round-12 column ("VONATKOZIK-E EGYÁLTALÁN
-NÉVADÓJÁRA A LEX KUBATOV?"), and its moves are the ones that column used:
+NÉVADÓJÁRA A LEX KUBATOV?"), and its moves joined the repertoire:
 "Talán mondanom sem kell:", the pointed aside "khm, Flexinform, khm", the
 "LOL, jelent ez valamit egyáltalán?", "Nem, nem azt állítom, hogy …,
 mindössze arra próbálok rámutatni", "Ugye senki nem hiszi, hogy …?" and the
