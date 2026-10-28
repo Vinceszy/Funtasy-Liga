@@ -443,6 +443,156 @@
    "anchor": "article_only",
    "match": "Crystal Palace - Newcastle",
    "source_name": "Jean-Philippe Mateta"
+  },
+  {
+   "player": "Saka",
+   "club": "ARS",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "a Bayern elleni BL-meccsen megsérült, kihagyta az Evertont; Arteta: hetekig nem játszhat",
+   "anchor": "article_only",
+   "match": "Arsenal - Everton",
+   "source_name": "Bukayo Saka"
+  },
+  {
+   "player": "N.Williams",
+   "club": "NFO",
+   "minute": 13,
+   "tag": "goal",
+   "sentence": "pénteken este betalált Ipswichben",
+   "anchor": "event",
+   "match": "Ipswich Town - Nott'm Forest",
+   "source_name": "Neco Williams"
+  },
+  {
+   "player": "Mbaye",
+   "club": "AVL",
+   "minute": 60,
+   "tag": "assist",
+   "sentence": "ő készítette elő Nicolas Jackson győztes gólját",
+   "anchor": "event",
+   "match": "Aston Villa - Man City",
+   "source_name": "Ibrahim Mbaye"
+  },
+  {
+   "player": "Barnes",
+   "club": "NEW",
+   "minute": 58,
+   "tag": "goal",
+   "sentence": "betalált a Palace otthonában",
+   "anchor": "event",
+   "match": "Crystal Palace - Newcastle",
+   "source_name": "Harvey Barnes"
+  },
+  {
+   "player": "Horníček",
+   "club": "NEW",
+   "minute": null,
+   "tag": "keeper_save",
+   "sentence": "kapott gól nélkül zárt a Palace otthonában",
+   "anchor": "article_only",
+   "match": "Crystal Palace - Newcastle",
+   "source_name": "Lukás Hornícek"
+  },
+  {
+   "player": "Rayan",
+   "club": "BOU",
+   "minute": 38,
+   "tag": "goal",
+   "sentence": "rögzített helyzet után betalált Old Traffordon",
+   "anchor": "event",
+   "match": "Man Utd - Bournemouth",
+   "source_name": "Rayan"
+  },
+  {
+   "player": "Tavernier",
+   "club": "BOU",
+   "minute": 43,
+   "tag": "goal",
+   "sentence": "öt perccel Rayan után ő is betalált",
+   "anchor": "event",
+   "match": "Man Utd - Bournemouth",
+   "source_name": "Marcus Tavernier"
+  },
+  {
+   "player": "Kinsky",
+   "club": "TOT",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "kapott gól nélkül nyert a Spursszel a Stamford Bridge-en",
+   "anchor": "article_only",
+   "match": "Chelsea - Spurs",
+   "source_name": "Antonín Kinsky"
+  },
+  {
+   "player": "N.Jackson",
+   "club": "AVL",
+   "minute": 6,
+   "tag": "goal",
+   "sentence": "a hatodik percben betalált a City ellen",
+   "anchor": "event",
+   "match": "Aston Villa - Man City",
+   "source_name": "Nicolas Jackson"
+  },
+  {
+   "player": "N.Jackson",
+   "club": "AVL",
+   "minute": 60,
+   "tag": "goal",
+   "sentence": "a győztes gólt is ő lőtte",
+   "anchor": "event",
+   "match": "Aston Villa - Man City",
+   "source_name": "Nicolas Jackson"
+  },
+  {
+   "player": "Haaland",
+   "club": "MCI",
+   "minute": 52,
+   "tag": "goal_manner",
+   "sentence": "fejjel egyenlített Ndiaye beadásából",
+   "anchor": "event",
+   "match": "Aston Villa - Man City",
+   "source_name": "Erling Haaland"
+  },
+  {
+   "player": "Cherki",
+   "club": "MCI",
+   "minute": 21,
+   "tag": "big_miss",
+   "sentence": "egyetlen nagy helyzetében Suzuki védte a lövését",
+   "anchor": "event",
+   "match": "Aston Villa - Man City",
+   "source_name": "Rayan Cherki"
+  },
+  {
+   "player": "Konsa",
+   "club": "ARS",
+   "minute": 7,
+   "tag": "goal_manner",
+   "sentence": "a hetedik percben szöglet után közelről talált be",
+   "anchor": "event",
+   "match": "Arsenal - Everton",
+   "source_name": "Ezri Konsa"
+  },
+  {
+   "player": "Penders",
+   "club": "CHE",
+   "minute": 77,
+   "tag": "goal_manner",
+   "sentence": "öngólt vétett a Spurs ellen",
+   "anchor": "event",
+   "match": "Chelsea - Spurs",
+   "source_name": "Mike Penders"
+  },
+  {
+   "player": "Kluivert",
+   "club": "BOU",
+   "minute": 38,
+   "tag": "assist",
+   "sentence": "gólpasszt adott Rayan góljához",
+   "anchor": "event",
+   "match": "Man Utd - Bournemouth",
+   "source_name": "Justin Kluivert"
   }
  ],
  "source": "FotMob structured block; Premier League minute-by-minute commentary (run log)"
