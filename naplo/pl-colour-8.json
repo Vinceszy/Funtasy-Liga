@@ -593,6 +593,66 @@
    "anchor": "event",
    "match": "Man Utd - Bournemouth",
    "source_name": "Justin Kluivert"
+  },
+  {
+   "player": "Gabriel",
+   "club": "ARS",
+   "minute": 68,
+   "tag": "goal_manner",
+   "sentence": "fejjel közelről, Ben White beadásából, VAR-ellenőrzés után adták meg",
+   "anchor": "event",
+   "match": "Arsenal - Everton",
+   "source_name": "Gabriel"
+  },
+  {
+   "player": "White",
+   "club": "ARS",
+   "minute": 68,
+   "tag": "assist",
+   "sentence": "az ő beadásából fejelt gólt Gabriel",
+   "anchor": "event",
+   "match": "Arsenal - Everton",
+   "source_name": "Ben White"
+  },
+  {
+   "player": "João Pedro",
+   "club": "CHE",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "nem lépett pályára a Chelsea Spurs elleni 0–2-es vereségén",
+   "anchor": "article_only",
+   "match": "Chelsea - Spurs",
+   "source_name": "João Pedro"
+  },
+  {
+   "player": "McBurnie",
+   "club": "HUL",
+   "minute": 24,
+   "tag": "goal_manner",
+   "sentence": "tizenegyesből betalált",
+   "anchor": "event",
+   "match": "Hull City - Brentford",
+   "source_name": "Oli McBurnie"
+  },
+  {
+   "player": "Petrović",
+   "club": "BOU",
+   "minute": null,
+   "tag": "keeper_save",
+   "sentence": "kapott gól nélkül zárt a Bournemouth Old Trafford-i 3–0-ján, Mbeumo lövését is védte",
+   "anchor": "article_only",
+   "match": "Man Utd - Bournemouth",
+   "source_name": "Djordje Petrovic"
+  },
+  {
+   "player": "E.Le Fée",
+   "club": "SUN",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "a 0–0-n négy helyzetet készített elő, egyikből sem lett gól",
+   "anchor": "article_only",
+   "match": "Sunderland - Leeds",
+   "source_name": "Enzo Le Fée"
   }
  ],
  "source": "FotMob structured block; Premier League minute-by-minute commentary (run log)"
