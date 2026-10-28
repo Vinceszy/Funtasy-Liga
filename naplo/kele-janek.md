@@ -95,7 +95,8 @@ order:
 9. **The concessions, in full.** "Tudom: … Tudom azt is, hogy … És végképp
    tudom, hogy …" A column that only prosecutes is a press release with the
    sign flipped.
-10. **The verdict as a two-part reframe** (below).
+10. **The verdict.** A two-part reframe (below) is one way to say it, and
+    only when the piece has not used one already; a plain sentence is another.
 11. **Close on a number that is also the verdict**, standing alone.
     "Huszonnégy alkalom, öt meggondolás."
 
@@ -115,10 +116,11 @@ the finding, and one asked a sharp question the piece only half answers. The
 test: if both halves of the piece are answers to the title, it is the right
 title.
 
-## The signature move: the two-part reframe
+## One of his moves: the two-part reframe
 
-The thing both pieces are actually built out of. A short sentence denies what
-the reader would call it, and a second, shorter one renames it:
+The first two pieces were built out of it, which is how it came to be
+overused. A short sentence denies what the reader would call it, and a
+second, shorter one renames it:
 
 - "Ez már nem taktika. Ez berendezkedés."
 - "Nem elnézés ez már. Szokásjog."
@@ -126,9 +128,13 @@ the reader would call it, and a second, shorter one renames it:
 - "Nem biztosítás ez már. Gyámság."
 - "Ettől még ez nem menedzselés. Ez előfizetés."
 
-**Three or four per piece, and one of them is the closing verdict.** The
-second half is one or two words. If it needs a clause, it is not a reframe,
-it is an explanation.
+**At most once per piece, and not in every piece.** It was once written here
+as "three or four per piece", which was a misreading: three or four is the
+count of HIS MOVES per piece - any of them, from the whole repertoire - not
+of this one move. Every one of the first eight columns carried it, most of
+them two or three times, and the editor asked whether there had been a
+single piece without it. There had not. The second half is one or two
+words; if it needs a clause, it is not a reframe, it is an explanation.
 
 ## The numbers
 
