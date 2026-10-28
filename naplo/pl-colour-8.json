@@ -653,6 +653,36 @@
    "anchor": "article_only",
    "match": "Sunderland - Leeds",
    "source_name": "Enzo Le Fée"
+  },
+  {
+   "player": "Osula",
+   "club": "NEW",
+   "minute": 47,
+   "tag": "goal_manner",
+   "sentence": "közelről, Jacob Murphy beadásából, a Palace otthonában",
+   "anchor": "event",
+   "match": "Crystal Palace - Newcastle",
+   "source_name": "William Osula"
+  },
+  {
+   "player": "Hill",
+   "club": "BOU",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "kapott gól nélkül nyert a Bournemouth-szal Old Traffordon, 3–0",
+   "anchor": "article_only",
+   "match": "Man Utd - Bournemouth",
+   "source_name": "James Hill"
+  },
+  {
+   "player": "Lammens",
+   "club": "MUN",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "hármat kapott a Bournemouth-tól",
+   "anchor": "article_only",
+   "match": "Man Utd - Bournemouth",
+   "source_name": "Senne Lammens"
   }
  ],
  "source": "FotMob structured block; Premier League minute-by-minute commentary (run log)"
