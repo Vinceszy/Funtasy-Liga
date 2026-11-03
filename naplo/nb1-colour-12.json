@@ -1,0 +1,367 @@
+{
+ "round": 12,
+ "league": "nb1",
+ "source": "nemzetisport.hu meccsbeszamolok (naplo/nso-content-probe.py, futasi naplo)",
+ "matches": {
+  "HONVÉD 1-0 VÁRDA": {
+   "venue": "Budapest, Bozsik Aréna",
+   "attendance": 500,
+   "referee": "Derdák Marcell",
+   "goals": [
+    {
+     "minute": 3,
+     "player": "Soltész D.",
+     "team": "HONVÉD",
+     "manner": "öngól"
+    }
+   ],
+   "sent_off": [],
+   "note": "csak 14 éven aluliak és a vendégszurkolók lehettek jelen"
+  },
+  "ZTE 3-0 MTK": {
+   "venue": "Zalaegerszeg, ZTE Aréna",
+   "attendance": null,
+   "referee": "Zierkelbach Péter",
+   "goals": [
+    {
+     "minute": 65,
+     "player": "Marlon Santos",
+     "team": "ZTE"
+    },
+    {
+     "minute": 81,
+     "player": "Machado",
+     "team": "ZTE"
+    },
+    {
+     "minute": 89,
+     "player": "Amato",
+     "team": "ZTE"
+    }
+   ],
+   "sent_off": []
+  },
+  "ETO 2-2 VASAS": {
+   "venue": "Győr, ETO Stadion",
+   "attendance": 4776,
+   "referee": "Berke Balázs",
+   "goals": [
+    {
+     "minute": 4,
+     "player": "Urblík J.",
+     "team": "VASAS"
+    },
+    {
+     "minute": 46,
+     "player": "Urblík J.",
+     "team": "VASAS"
+    },
+    {
+     "minute": 60,
+     "player": "Kulenovic",
+     "team": "ETO"
+    },
+    {
+     "minute": 90,
+     "player": "Kulenovic",
+     "team": "ETO"
+    }
+   ],
+   "sent_off": []
+  },
+  "PAFC 1-3 DVSC": {
+   "venue": "Felcsút, Pancho Aréna",
+   "attendance": 1000,
+   "referee": "Csonka Bence",
+   "goals": [
+    {
+     "minute": 7,
+     "player": "Boskovic",
+     "team": "DVSC"
+    },
+    {
+     "minute": 38,
+     "player": "Németh A.",
+     "team": "PAFC"
+    },
+    {
+     "minute": 85,
+     "player": "Batik",
+     "team": "DVSC"
+    },
+    {
+     "minute": "90+1",
+     "player": "Baldoni",
+     "team": "DVSC"
+    }
+   ],
+   "sent_off": [
+    {
+     "minute": 74,
+     "player": "Ormonde-Ottewill",
+     "team": "PAFC"
+    }
+   ]
+  },
+  "FTC 2-0 PAKS": {
+   "venue": "Budapest, Groupama Aréna",
+   "attendance": 8629,
+   "referee": "Bogár Gergő",
+   "goals": [
+    {
+     "minute": 59,
+     "player": "Yusuf",
+     "team": "FTC"
+    },
+    {
+     "minute": "90+4",
+     "player": "Zachariassen",
+     "team": "FTC"
+    }
+   ],
+   "sent_off": []
+  },
+  "ÚJPEST 2-1 NYÍREGY": {
+   "venue": "Budapest, Szusza Ferenc Stadion",
+   "attendance": 4136,
+   "referee": "Hanyecz Bence",
+   "goals": [
+    {
+     "minute": 23,
+     "player": "Katona B.",
+     "team": "NYÍREGY"
+    },
+    {
+     "minute": 39,
+     "player": "Krajcsovics",
+     "team": "ÚJPEST"
+    },
+    {
+     "minute": 58,
+     "player": "Amenyido",
+     "team": "ÚJPEST"
+    }
+   ],
+   "sent_off": []
+  }
+ },
+ "claims": [
+  {
+   "player": "Soltész Dominik István",
+   "minute": 3,
+   "tag": "goal_manner",
+   "sentence": "Pablo García bal oldali beadását Soltész Dominik mellel akarta hazatenni, de a labda a kisvárdai kapus lába között a kapuba gurult",
+   "anchor": "record",
+   "match": "HONVÉD 1-0 VÁRDA",
+   "source_name": "Soltész D."
+  },
+  {
+   "player": "Soltész Dominik István",
+   "minute": 3,
+   "tag": "match_picture",
+   "sentence": "szilveszteri, vicces összeállításokba illő öngóllal szerzett vezetést a Kispest",
+   "anchor": "article_only",
+   "match": "HONVÉD 1-0 VÁRDA"
+  },
+  {
+   "player": "García Ruiz Pablo",
+   "minute": 3,
+   "tag": "match_picture",
+   "sentence": "Pablo García bal oldali beadását Soltész Dominik mellel akarta hazatenni",
+   "anchor": "article_only",
+   "match": "HONVÉD 1-0 VÁRDA"
+  },
+  {
+   "player": "Jurek Gábor",
+   "minute": null,
+   "tag": "big_miss",
+   "sentence": "az első félidő hajrájában villant meg először, azonban hiába cselezte szépen lövőhelyzetbe magát, fölé durrantott",
+   "anchor": "article_only",
+   "match": "ZTE 3-0 MTK"
+  },
+  {
+   "player": "Amato Fabricio",
+   "minute": 89,
+   "tag": "goal",
+   "sentence": "Gólszerző: Marlon Santos (65.), Machado (81.), Amato (89.)",
+   "anchor": "event",
+   "match": "ZTE 3-0 MTK",
+   "source_name": "Amato"
+  },
+  {
+   "player": "Urblík Jozef",
+   "minute": 4,
+   "tag": "goal",
+   "sentence": "Eddigi legnagyobb hibáját nagyszerűen használta ki a Vasas a negyedik percben",
+   "anchor": "event",
+   "match": "ETO 2-2 VASAS",
+   "source_name": "Urblík J."
+  },
+  {
+   "player": "Urblík Jozef",
+   "minute": 4,
+   "tag": "milestone",
+   "sentence": "Urblík József augusztus nyolcadika óta először volt eredményes",
+   "anchor": "article_only",
+   "match": "ETO 2-2 VASAS",
+   "source_name": "Urblík József"
+  },
+  {
+   "player": "Urblík Jozef",
+   "minute": 46,
+   "tag": "goal_manner",
+   "sentence": "laposan Urblík Józsefhez passzolt, aki húsz méterről hatalmas gólt lőtt a bal felső sarokba",
+   "anchor": "event",
+   "match": "ETO 2-2 VASAS",
+   "source_name": "Urblík J."
+  },
+  {
+   "player": "Petráš Samuel",
+   "minute": 30,
+   "tag": "keeper_save",
+   "sentence": "Samuel Petrás nagyszerűen lépett ki a kapujából Molnár Csaba ziccerénél, és hatalmasat védett",
+   "anchor": "article_only",
+   "match": "ETO 2-2 VASAS",
+   "source_name": "Samuel Petrás"
+  },
+  {
+   "player": "Engedi Márk István",
+   "minute": null,
+   "tag": "keeper_save",
+   "sentence": "Nehéz percei következtek Engedi Márknak, de állta a sarat, Huszár és Stefulj helyzeténél is magabiztosan védett",
+   "anchor": "article_only",
+   "match": "ETO 2-2 VASAS"
+  },
+  {
+   "player": "Štefulj Daniel",
+   "minute": 79,
+   "tag": "card",
+   "sentence": "Sárga lap: ... Stefulj (79.)",
+   "anchor": "record",
+   "match": "ETO 2-2 VASAS",
+   "source_name": "Stefulj"
+  },
+  {
+   "player": "Dzsudzsák Balázs",
+   "minute": 7,
+   "tag": "match_picture",
+   "sentence": "Dzsudzsák Balázsnak nem csak a bal lába remek, bedobásból is képes helyzetet teremteni, és még hét perce sem tartott a bajnoki, amikor Blaz Boskovic",
+   "anchor": "article_only",
+   "match": "PAFC 1-3 DVSC"
+  },
+  {
+   "player": "Németh András",
+   "minute": 38,
+   "tag": "goal",
+   "sentence": "Gólszerző: Németh A. (38.)",
+   "anchor": "event",
+   "match": "PAFC 1-3 DVSC",
+   "source_name": "Németh A."
+  },
+  {
+   "player": null,
+   "minute": 74,
+   "tag": "card",
+   "sentence": "A felcsútiak a 74. percben 1–1-es állásnál emberhátrányba kerültek, a vendégek a hajrában ezután két gólt is szereztek",
+   "anchor": "record",
+   "match": "PAFC 1-3 DVSC",
+   "source_name": "Ormonde-Ottewill"
+  },
+  {
+   "player": "Szalai József",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "A Paks támadásban nem mutatott semmit... Szalai József teljesen elszigetelten mozgott",
+   "anchor": "article_only",
+   "match": "FTC 2-0 PAKS"
+  },
+  {
+   "player": "Szalai József",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "a támadójátékáról híres paksi együttese kaput eltaláló lövés nélkül zárta az első 45 percet",
+   "anchor": "article_only",
+   "match": "FTC 2-0 PAKS"
+  },
+  {
+   "player": "Horváth Krisztofer György",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "Szélesi Zoltán vezetőedző Szegeden lecserélte a félidőben Horváth Krisztofert, míg vasárnap este a kispadra ültette",
+   "anchor": "article_only",
+   "match": "ÚJPEST 2-1 NYÍREGY"
+  },
+  {
+   "player": "Horváth Krisztofer György",
+   "minute": 67,
+   "tag": "sub",
+   "sentence": "Amenyido (Horváth K., 67.)",
+   "anchor": "record",
+   "match": "ÚJPEST 2-1 NYÍREGY",
+   "source_name": "Horváth K."
+  },
+  {
+   "player": "Amenyido Etienne",
+   "minute": 58,
+   "tag": "goal",
+   "sentence": "Gólszerző: Krajcsovics (39.), Amenyido (58.)",
+   "anchor": "event",
+   "match": "ÚJPEST 2-1 NYÍREGY",
+   "source_name": "Amenyido"
+  },
+  {
+   "player": "Matko Aljoša",
+   "minute": 6,
+   "tag": "big_miss",
+   "sentence": "Aljosa Matkót viszont nem, így a szlovén próbálkozhatott 16 méterről, a 6. percben, de gyenge, középre tartó lövését Dala Martin magabiztosan védte",
+   "anchor": "article_only",
+   "match": "ÚJPEST 2-1 NYÍREGY",
+   "source_name": "Aljosa Matko"
+  },
+  {
+   "player": "Hasselbaink Vlijter Gleofilo Sabrino Rudewald",
+   "minute": 21,
+   "tag": "big_miss",
+   "sentence": "Gleofilo Vlijter lövése csak centikkel suhant el a jobb oldali kapufa mellett a 21. percben",
+   "anchor": "article_only",
+   "match": "ÚJPEST 2-1 NYÍREGY",
+   "source_name": "Gleofilo Vlijter"
+  },
+  {
+   "player": "Kern Martin",
+   "minute": 53,
+   "tag": "sub",
+   "sentence": "Kern (Nissilä, 53.)",
+   "anchor": "record",
+   "match": "PAFC 1-3 DVSC",
+   "source_name": "Kern"
+  },
+  {
+   "player": "Urblík Norbert",
+   "minute": 26,
+   "tag": "card",
+   "sentence": "Sárga lap: Urblík N. (26.)",
+   "anchor": "record",
+   "match": "ETO 2-2 VASAS",
+   "source_name": "Urblík N."
+  },
+  {
+   "player": "Horváth Krisztofer György",
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "csütörtökön pedig nagyon könnyelműen, már-már flegmán végezte el a Szeged-Csanád Grosics Akadémia elleni Mol Magyar Kupa-mérkőzésen (3-1) az első félidőben megítélt tizenegyest. Mint kiderült, a hazaiak kapusa, Rostislav Prokop törött kézzel védett",
+   "anchor": "article_only",
+   "match": "ÚJPEST 2-1 NYÍREGY",
+   "source_name": "Horváth Krisztofer"
+  },
+  {
+   "player": "Krevsun Danylo",
+   "minute": null,
+   "tag": "luck",
+   "sentence": "Danilo Krevszun távoli lövését követően, a labda a bal oldali kapufáról pattant az alapvonalon túlra",
+   "anchor": "article_only",
+   "match": "ZTE 3-0 MTK",
+   "source_name": "Danilo Krevszun"
+  }
+ ]
+}
