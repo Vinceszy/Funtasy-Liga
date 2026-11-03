@@ -749,8 +749,43 @@ def main():
                          {"updated": stamp(), "rounds": changes})
         print("  draft_keretvaltozasok.json updated (%d rounds)" % len(changes))
 
+    # ---- 5. Is a played round still waiting for its close? The workflow
+    # retries on its own while it is (draft.yml, `retry` job): GitHub skips
+    # scheduled runs, sometimes for a whole morning, and without a run after
+    # the close the results and the final squads would wait for the next one.
+    status, fixtures = fetch("event/%d/fixtures" % int(current))
+    pending = round_pending(data.get("matches") or [], int(current),
+                            fixtures if status == 200 else None, finals)
+    if pending:
+        print("  . round %d is played but not closed yet - the workflow retries" % pending)
+    if os.environ.get("GITHUB_OUTPUT"):
+        with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+            f.write("pending=%s\n" % (pending or ""))
+
     print("Done.")
     return 0
+
+
+def round_pending(matches, current, fixtures, finals):
+    """The round whose close the collector still has to record, or None.
+
+    A round is waiting when its Premier League matches are all played but the
+    league has not recorded it: the head-to-head results are missing from
+    the details answer, or the squads are not yet final (the FPL makes its
+    automatic substitutions at the close, the morning after the last match).
+    An earlier round with a missing result is always waiting. The current
+    round counts only once every fixture is finished (or provisionally
+    finished) - before that there is nothing to close."""
+    unfinished = {int(m.get("event")) for m in matches
+                  if m.get("event") is not None and not m.get("finished")}
+    earlier = sorted(gw for gw in unfinished if gw < current)
+    if earlier:
+        return earlier[0]
+    played = bool(fixtures) and all(
+        f.get("finished") or f.get("finished_provisional") for f in fixtures)
+    if played and (current in unfinished or current not in finals):
+        return current
+    return None
 
 
 if __name__ == "__main__":

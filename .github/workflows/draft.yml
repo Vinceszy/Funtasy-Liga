@@ -11,6 +11,13 @@ name: FPL Draft frissitese
 # collector between 08:52 and 13:01 UTC). With a 3-hour schedule, thinned out
 # further by the runs GitHub skips, the close went unrecorded for hours. The
 # rest of the day has nothing to catch: the browser fetches the live score.
+#
+# And because GitHub drops scheduled runs, sometimes every one of a whole
+# morning, a run that finds a played but unclosed round restarts the
+# workflow itself 20 minutes later (the `retry` job, on the collector's
+# `pending` output): a dispatched run is not skipped. The chain stops when
+# the close is recorded, or after 40 attempts (~13 hours) - a round played
+# on Monday evening closes the next morning, well inside that.
 on:
   schedule:
     - cron: '47 */3 * * *'
@@ -21,9 +28,15 @@ on:
         description: 'A Draft-liga azonositoja (ures = a szkript alapertelmezese)'
         required: false
         default: ''
+      attempt:
+        description: 'Ujraprobalkozas sorszama (a retry job tolti ki)'
+        required: false
+        default: '0'
 
 permissions:
   contents: write
+  # the retry job starts this workflow again (workflow_dispatch)
+  actions: write
 
 concurrency:
   group: funtasy-draft
@@ -34,11 +47,14 @@ jobs:
     runs-on: ubuntu-latest
     # A hanging API must not hold the concurrency group for hours.
     timeout-minutes: 30
+    outputs:
+      pending: ${{ steps.collect.outputs.pending }}
     steps:
       - name: Repo letoltese
         uses: actions/checkout@v4
 
       - name: FPL Draft liga lekerese
+        id: collect
         env:
           DRAFT_LEAGUE_ID: ${{ inputs.league_id }}
         run: |
@@ -70,3 +86,23 @@ jobs:
             done
             exit 1
           fi
+
+  # A played round is not closed yet: try again in 20 minutes. Waiting here
+  # instead of on the schedule, because the schedule is what GitHub skips.
+  retry:
+    needs: draft
+    if: needs.draft.outputs.pending != '' && fromJSON(inputs.attempt || '0') < 40
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Varakozas, majd ujrainditas
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ATTEMPT: ${{ inputs.attempt || '0' }}
+          LEAGUE: ${{ inputs.league_id }}
+          PENDING: ${{ needs.draft.outputs.pending }}
+        run: |
+          echo "Round $PENDING is played but not closed - attempt $((ATTEMPT + 1)) in 20 minutes."
+          sleep 1200
+          gh workflow run draft.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" \
+            -f attempt="$((ATTEMPT + 1))" -f league_id="$LEAGUE"
