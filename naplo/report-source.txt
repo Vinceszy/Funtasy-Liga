@@ -518,3 +518,20 @@ PROBE: 2026-10-26 09:15 UTC | nemzetisport report content
     /labdarugo-nb-i/2026/10/nala-szivbol-jon-mindorokke-fradi-interju-a-75-esztendos-mucha-jozseffel
     /labdarugo-nb-i/2026/10/nem-birt-a-kisvardaval-de-elmozdult-az-osztalyozos-helyrol-a-zte
     /labdarugo-nb-i/2026/10/szelesi-zoltan-szerint-eheztetes-jon-az-ujpestnel-a-kupameccs-elott
+
+======================================================================
+PROBE: 2026-11-03 11:03 UTC | nemzetisport report content
+  sitemapindex: HTTP 200, 305 maps
+  maps matching 202611: 11
+    https://www.nemzetisport.hu/202606_sitemap.xml
+    https://www.nemzetisport.hu/202607_sitemap.xml
+    https://www.nemzetisport.hu/202608_sitemap.xml
+    https://www.nemzetisport.hu/202609_sitemap.xml
+    https://www.nemzetisport.hu/202610_sitemap.xml
+    https://www.nemzetisport.hu/202611_sitemap.xml
+  since 2026-11-01: 22 urls (of 44)
+  of these, report-like: 3
+  labdarugo-nb-i articles in 2026/11: 3
+    /labdarugo-nb-i/2026/11/a-kiallitas-utan-eldolt-a-debrecen-ket-gollal-gyozott-a-puskas-akademia-otth
+    /labdarugo-nb-i/2026/11/forditott-es-nyert-hazai-palyan-az-ujpest-a-nyiregyhaza-ellen
+    /labdarugo-nb-i/2026/11/yusuf-es-zachariassen-golja-dontott-az-ftc-a-paks-legyozesevel-hangolt-a-mil
