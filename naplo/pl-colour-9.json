@@ -452,5 +452,186 @@
    "shots": 33
   }
  },
- "claims": []
+ "claims": [
+  {
+   "player": "Mateta",
+   "club": "CRY",
+   "minute": 13,
+   "tag": "card",
+   "sentence": "VAR-vizsgálat után a játékvezető piros lapra változtatta a lapot",
+   "anchor": "event",
+   "match": "Spurs - Crystal Palace",
+   "source_name": "Jean-Philippe Mateta"
+  },
+  {
+   "player": "Kudus",
+   "club": "TOT",
+   "minute": 25,
+   "tag": "assist",
+   "sentence": "szöglet utáni beadásából fejelt gólt Archie Gray",
+   "anchor": "event",
+   "match": "Spurs - Crystal Palace",
+   "source_name": "Mohammed Kudus"
+  },
+  {
+   "player": "Van Hecke",
+   "club": "TOT",
+   "minute": 73,
+   "tag": "goal",
+   "sentence": "szöglet után közelről fejelt gólt",
+   "anchor": "event",
+   "match": "Spurs - Crystal Palace",
+   "source_name": "Jan Paul van Hecke"
+  },
+  {
+   "player": "Ayari",
+   "club": "BHA",
+   "minute": 11,
+   "tag": "goal",
+   "sentence": "a győztes gólt lőtte a City otthonában, pontrúgás után",
+   "anchor": "event",
+   "match": "Man City - Brighton",
+   "source_name": "Yasin Ayari"
+  },
+  {
+   "player": "De Cuyper",
+   "club": "BHA",
+   "minute": 11,
+   "tag": "assist",
+   "sentence": "pontrúgás után ő adta a gólpasszt Ayarinak",
+   "anchor": "event",
+   "match": "Man City - Brighton",
+   "source_name": "Maxim De Cuyper"
+  },
+  {
+   "player": "Thiago",
+   "club": "BRE",
+   "minute": 76,
+   "tag": "goal",
+   "sentence": "kontratámadás végén talált be",
+   "anchor": "event",
+   "match": "Brentford - Nott'm Forest",
+   "source_name": "Igor Thiago"
+  },
+  {
+   "player": "McGinn",
+   "club": "AVL",
+   "minute": 16,
+   "tag": "big_miss",
+   "sentence": "a VAR által megítélt tizenegyest kihagyta",
+   "anchor": "event",
+   "match": "Aston Villa - Fulham",
+   "source_name": "John McGinn"
+  },
+  {
+   "player": "Rogers",
+   "club": "CHE",
+   "minute": 50,
+   "tag": "goal",
+   "sentence": "bal lábbal lőtt gólt a United ellen",
+   "anchor": "event",
+   "match": "Chelsea - Man Utd",
+   "source_name": "Morgan Rogers"
+  },
+  {
+   "player": "Palmer",
+   "club": "CHE",
+   "minute": 64,
+   "tag": "goal_manner",
+   "sentence": "tizenegyesből talált be",
+   "anchor": "event",
+   "match": "Chelsea - Man Utd",
+   "source_name": "Cole Palmer"
+  },
+  {
+   "player": "N.Jackson",
+   "club": "AVL",
+   "minute": 39,
+   "tag": "goal",
+   "sentence": "Manzambi passzából lőtt gólt",
+   "anchor": "event",
+   "match": "Aston Villa - Fulham",
+   "source_name": "Nicolas Jackson"
+  },
+  {
+   "player": "Manzambi",
+   "club": "AVL",
+   "minute": 39,
+   "tag": "assist",
+   "sentence": "ő készítette elő Nicolas Jackson gólját",
+   "anchor": "event",
+   "match": "Aston Villa - Fulham",
+   "source_name": "Johan Manzambi"
+  },
+  {
+   "player": "Havertz",
+   "club": "ARS",
+   "minute": 16,
+   "tag": "goal",
+   "sentence": "Rice beadásából közelről talált be Anfielden",
+   "anchor": "event",
+   "match": "Liverpool - Arsenal",
+   "source_name": "Kai Havertz"
+  },
+  {
+   "player": "Rice",
+   "club": "ARS",
+   "minute": 16,
+   "tag": "assist",
+   "sentence": "az ő beadásából lőtt gólt Havertz",
+   "anchor": "event",
+   "match": "Liverpool - Arsenal",
+   "source_name": "Declan Rice"
+  },
+  {
+   "player": "Isak",
+   "club": "LIV",
+   "minute": 56,
+   "tag": "match_picture",
+   "sentence": "egyszer lesen ragadt, az 56. percben bal lábbal fölé és mellé lőtt",
+   "anchor": "article_only",
+   "match": "Liverpool - Arsenal",
+   "source_name": "Alexander Isak"
+  },
+  {
+   "player": "Barry",
+   "club": "EVE",
+   "minute": 49,
+   "tag": "goal",
+   "sentence": "pontrúgás után közelről talált be, a VAR megerősítette a gólt",
+   "anchor": "event",
+   "match": "Newcastle - Everton",
+   "source_name": "Thierno Barry"
+  },
+  {
+   "player": "E.Le Fée",
+   "club": "SUN",
+   "minute": 67,
+   "tag": "goal_manner",
+   "sentence": "tizenegyesből szépített",
+   "anchor": "event",
+   "match": "Coventry City - Sunderland",
+   "source_name": "Enzo Le Fée"
+  },
+  {
+   "player": "McBurnie",
+   "club": "HUL",
+   "minute": 68,
+   "tag": "goal_manner",
+   "sentence": "szabadrúgásból talált be, előtte gólpasszt adott Iroegbunamnak",
+   "anchor": "event",
+   "match": "Hull City - Ipswich Town",
+   "source_name": "Oli McBurnie"
+  },
+  {
+   "player": "Evanilson",
+   "club": "BOU",
+   "minute": 31,
+   "tag": "goal",
+   "sentence": "Kluivert passzából talált be",
+   "anchor": "event",
+   "match": "Bournemouth - Leeds",
+   "source_name": "Evanilson"
+  }
+ ]
 }
