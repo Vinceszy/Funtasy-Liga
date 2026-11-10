@@ -578,5 +578,256 @@
    "shots": 38
   }
  },
- "claims": []
+ "claims": [
+  {
+   "player": "Barry",
+   "club": "EVE",
+   "minute": 56,
+   "tag": "goal",
+   "sentence": "Mykolenko beadásából fejelt egyenlítő gólt",
+   "anchor": "event",
+   "match": "Everton - Coventry City",
+   "source_name": "Thierno Barry"
+  },
+  {
+   "player": "Barry",
+   "club": "EVE",
+   "minute": 61,
+   "tag": "goal",
+   "sentence": "közelről a második gólját is megszerezte",
+   "anchor": "event",
+   "match": "Everton - Coventry City",
+   "source_name": "Thierno Barry"
+  },
+  {
+   "player": "Mykolenko",
+   "club": "EVE",
+   "minute": 56,
+   "tag": "assist",
+   "sentence": "az ő beadásából fejelt Barry",
+   "anchor": "event",
+   "match": "Everton - Coventry City",
+   "source_name": "Vitaliy Mykolenko"
+  },
+  {
+   "player": "Dewsbury-Hall",
+   "club": "EVE",
+   "minute": 81,
+   "tag": "goal",
+   "sentence": "Barry kiugratása után éles szögből talált be",
+   "anchor": "event",
+   "match": "Everton - Coventry City",
+   "source_name": "Kiernan Dewsbury-Hall"
+  },
+  {
+   "player": "Ødegaard",
+   "club": "ARS",
+   "minute": 72,
+   "tag": "goal",
+   "sentence": "a hatoson belülről lőtte a győztes gólt a Hull ellen",
+   "anchor": "event",
+   "match": "Arsenal - Hull City",
+   "source_name": "Martin Ødegaard"
+  },
+  {
+   "player": "Delap",
+   "club": "NFO",
+   "minute": 18,
+   "tag": "goal",
+   "sentence": "kontratámadás végén talált be a City ellen",
+   "anchor": "event",
+   "match": "Nott'm Forest - Man City",
+   "source_name": "Liam Delap"
+  },
+  {
+   "player": "Delap",
+   "club": "NFO",
+   "minute": 73,
+   "tag": "goal",
+   "sentence": "Gibbs-White passzából a második gólját is megszerezte",
+   "anchor": "event",
+   "match": "Nott'm Forest - Man City",
+   "source_name": "Liam Delap"
+  },
+  {
+   "player": "Gibbs-White",
+   "club": "NFO",
+   "minute": 73,
+   "tag": "assist",
+   "sentence": "ő adta a gólpasszt Delap második góljához",
+   "anchor": "event",
+   "match": "Nott'm Forest - Man City",
+   "source_name": "Morgan Gibbs-White"
+  },
+  {
+   "player": "Cherki",
+   "club": "MCI",
+   "minute": 52,
+   "tag": "goal",
+   "sentence": "szépített a City-nek",
+   "anchor": "event",
+   "match": "Nott'm Forest - Man City",
+   "source_name": "Rayan Cherki"
+  },
+  {
+   "player": "Haaland",
+   "club": "MCI",
+   "minute": 41,
+   "tag": "big_miss",
+   "sentence": "nagy helyzetet hagyott ki",
+   "anchor": "event",
+   "match": "Nott'm Forest - Man City",
+   "source_name": "Erling Haaland"
+  },
+  {
+   "player": "Thiago",
+   "club": "BRE",
+   "minute": 23,
+   "tag": "card",
+   "sentence": "VAR-vizsgálat után durvaságért piros lapot kapott",
+   "anchor": "event",
+   "match": "Brighton - Brentford",
+   "source_name": "Igor Thiago"
+  },
+  {
+   "player": "Groß",
+   "club": "BHA",
+   "minute": 42,
+   "tag": "goal_manner",
+   "sentence": "tizenegyesből növelte a Brighton előnyét",
+   "anchor": "event",
+   "match": "Brighton - Brentford",
+   "source_name": "Pascal Groß"
+  },
+  {
+   "player": "Gomez",
+   "club": "BHA",
+   "minute": 15,
+   "tag": "goal",
+   "sentence": "kívülről lőtt gólt a jobb felső sarokba",
+   "anchor": "event",
+   "match": "Brighton - Brentford",
+   "source_name": "Diego Gómez"
+  },
+  {
+   "player": "Wirtz",
+   "club": "LIV",
+   "minute": 54,
+   "tag": "goal",
+   "sentence": "Barcola beadásából talált be a Palace otthonában",
+   "anchor": "event",
+   "match": "Crystal Palace - Liverpool",
+   "source_name": "Florian Wirtz"
+  },
+  {
+   "player": "Wirtz",
+   "club": "LIV",
+   "minute": 89,
+   "tag": "assist",
+   "sentence": "kontratámadásból ő adta a gólpasszt Isaknak",
+   "anchor": "event",
+   "match": "Crystal Palace - Liverpool",
+   "source_name": "Florian Wirtz"
+  },
+  {
+   "player": "Isak",
+   "club": "LIV",
+   "minute": 89,
+   "tag": "goal",
+   "sentence": "kontratámadás végén talált be",
+   "anchor": "event",
+   "match": "Crystal Palace - Liverpool",
+   "source_name": "Alexander Isak"
+  },
+  {
+   "player": "Szoboszlai",
+   "club": "LIV",
+   "minute": 40,
+   "tag": "assist",
+   "sentence": "pontrúgásból ő adta a gólpasszt Mac Allisternek",
+   "anchor": "event",
+   "match": "Crystal Palace - Liverpool",
+   "source_name": "Dominik Szoboszlai"
+  },
+  {
+   "player": "Araujo",
+   "club": "LIV",
+   "minute": 45,
+   "tag": "big_miss",
+   "sentence": "szöglet után nagy helyzetet hagyott ki",
+   "anchor": "event",
+   "match": "Crystal Palace - Liverpool",
+   "source_name": "Ronald Araujo"
+  },
+  {
+   "player": "Evanilson",
+   "club": "BOU",
+   "minute": 5,
+   "tag": "goal",
+   "sentence": "az ötödik percben betalált Ipswichben",
+   "anchor": "event",
+   "match": "Ipswich Town - Bournemouth",
+   "source_name": "Evanilson"
+  },
+  {
+   "player": "E.Le Fée",
+   "club": "SUN",
+   "minute": 36,
+   "tag": "goal_manner",
+   "sentence": "tizenegyesből lőtte a győztes gólt a Chelsea ellen",
+   "anchor": "event",
+   "match": "Sunderland - Chelsea",
+   "source_name": "Enzo Le Fée"
+  },
+  {
+   "player": "McGinn",
+   "club": "AVL",
+   "minute": 48,
+   "tag": "goal_manner",
+   "sentence": "tizenegyesből talált be, előtte gólpasszt adott",
+   "anchor": "event",
+   "match": "Man Utd - Aston Villa",
+   "source_name": "John McGinn"
+  },
+  {
+   "player": "N.Jackson",
+   "club": "AVL",
+   "minute": 4,
+   "tag": "goal",
+   "sentence": "pontrúgás után közelről talált be",
+   "anchor": "event",
+   "match": "Man Utd - Aston Villa",
+   "source_name": "Nicolas Jackson"
+  },
+  {
+   "player": "N.Jackson",
+   "club": "AVL",
+   "minute": 53,
+   "tag": "assist",
+   "sentence": "pontrúgás után ő készítette elő Goretzka gólját",
+   "anchor": "event",
+   "match": "Man Utd - Aston Villa",
+   "source_name": "Nicolas Jackson"
+  },
+  {
+   "player": "B.Fernandes",
+   "club": "MUN",
+   "minute": 16,
+   "tag": "goal_manner",
+   "sentence": "tizenegyesből szépített",
+   "anchor": "event",
+   "match": "Man Utd - Aston Villa",
+   "source_name": "Bruno Fernandes"
+  },
+  {
+   "player": "B.Fernandes",
+   "club": "MUN",
+   "minute": "90 + 6",
+   "tag": "assist",
+   "sentence": "szögletből ő adta a gólpasszt Dorgu egyenlítő góljához a hosszabbítás hatodik percében",
+   "anchor": "event",
+   "match": "Man Utd - Aston Villa",
+   "source_name": "Bruno Fernandes"
+  }
+ ]
 }
