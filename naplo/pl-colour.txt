@@ -102,3 +102,9 @@ TEXTSTREAM: 2026-11-03 12:41 UTC | Premier League minute-by-minute commentary, g
   matches of gameweek 9: 10
   pulselive completed matches: 40
   matches matched: 10 / 10
+
+======================================================================
+TEXTSTREAM: 2026-11-10 22:56 UTC | Premier League minute-by-minute commentary, gameweek 10
+  matches of gameweek 10: 10
+  pulselive completed matches: 40
+  matches matched: 10 / 10
