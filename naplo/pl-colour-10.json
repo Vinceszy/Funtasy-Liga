@@ -2,97 +2,580 @@
  "event": "10",
  "round": 10,
  "league": "pl",
- "created": "2026-11-03T13:00:26Z",
+ "created": "2026-11-10T22:56:07Z",
  "matches": {
   "Everton - Coventry City": {
    "kickoff": "2026-11-06T20:00:00Z",
    "fotmob": "5795508",
-   "goals": [],
+   "goals": [
+    {
+     "minute": 52,
+     "player": "Yann Gboho",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.137
+    },
+    {
+     "minute": 56,
+     "player": "Thierno Barry",
+     "assist": "assist by Vitaliy Mykolenko",
+     "description": "Header",
+     "manner": "Header",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.217
+    },
+    {
+     "minute": 61,
+     "player": "Thierno Barry",
+     "assist": null,
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.25
+    },
+    {
+     "minute": 81,
+     "player": "Kiernan Dewsbury-Hall",
+     "assist": "assist by Thierno Barry",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.14
+    }
+   ],
    "var": [],
    "big_chances_missed": [],
-   "saves_by_keeper": {},
-   "shots": 0
+   "saves_by_keeper": {
+    "1187236": 4,
+    "303919": 3
+   },
+   "shots": 30
   },
   "Leeds - Spurs": {
    "kickoff": "2026-11-07T12:30:00Z",
    "fotmob": "5795511",
-   "goals": [],
+   "goals": [
+    {
+     "minute": 79,
+     "player": "Noah Okafor",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "IndividualPlay",
+     "own_goal": false,
+     "xG": 0.531
+    }
+   ],
    "var": [],
-   "big_chances_missed": [],
-   "saves_by_keeper": {},
-   "shots": 0
+   "big_chances_missed": [
+    {
+     "minute": 53,
+     "player": "Ao Tanaka",
+     "xG": 0.317,
+     "manner": "RightFoot",
+     "situation": "FastBreak",
+     "on_target": false
+    },
+    {
+     "minute": 90,
+     "player": "Rodrigo Bentancur",
+     "xG": 0.34,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "on_target": true
+    }
+   ],
+   "saves_by_keeper": {
+    "1187213": 4,
+    "1341475": 2,
+    "None": 1
+   },
+   "shots": 23
   },
   "Arsenal - Hull City": {
    "kickoff": "2026-11-07T15:00:00Z",
    "fotmob": "5795505",
-   "goals": [],
+   "goals": [
+    {
+     "minute": 72,
+     "player": "Martin Ødegaard",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.22
+    }
+   ],
    "var": [],
    "big_chances_missed": [],
-   "saves_by_keeper": {},
-   "shots": 0
+   "saves_by_keeper": {
+    "562727": 2,
+    "1072068": 9
+   },
+   "shots": 28
   },
   "Fulham - Newcastle": {
    "kickoff": "2026-11-07T15:00:00Z",
    "fotmob": "5795509",
-   "goals": [],
+   "goals": [
+    {
+     "minute": 80,
+     "player": "Jacob Murphy",
+     "assist": null,
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.017
+    },
+    {
+     "minute": 83,
+     "player": "Rodrigo Muniz",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.141
+    }
+   ],
    "var": [],
-   "big_chances_missed": [],
-   "saves_by_keeper": {},
-   "shots": 0
+   "big_chances_missed": [
+    {
+     "minute": 32,
+     "player": "Harvey Barnes",
+     "xG": 0.353,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": true
+    }
+   ],
+   "saves_by_keeper": {
+    "1186978": 4,
+    "215168": 4
+   },
+   "shots": 20
   },
   "Nott'm Forest - Man City": {
    "kickoff": "2026-11-07T17:30:00Z",
    "fotmob": "5795513",
-   "goals": [],
+   "goals": [
+    {
+     "minute": 6,
+     "player": "Jair Cunha",
+     "assist": null,
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.304
+    },
+    {
+     "minute": 18,
+     "player": "Liam Delap",
+     "assist": "assist by Xaver Schlager",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "FastBreak",
+     "own_goal": false,
+     "xG": 0.096
+    },
+    {
+     "minute": 52,
+     "player": "Rayan Cherki",
+     "assist": null,
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.158
+    },
+    {
+     "minute": 73,
+     "player": "Liam Delap",
+     "assist": "assist by Morgan Gibbs-White",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "FastBreak",
+     "own_goal": false,
+     "xG": 0.085
+    }
+   ],
    "var": [],
-   "big_chances_missed": [],
-   "saves_by_keeper": {},
-   "shots": 0
+   "big_chances_missed": [
+    {
+     "minute": 24,
+     "player": "Enzo Fernández",
+     "xG": 0.504,
+     "manner": "Header",
+     "situation": "RegularPlay",
+     "on_target": false
+    },
+    {
+     "minute": 41,
+     "player": "Erling Haaland",
+     "xG": 0.336,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "on_target": true
+    }
+   ],
+   "saves_by_keeper": {
+    "618878": 2,
+    "181069": 2,
+    "None": 1
+   },
+   "shots": 23
   },
   "Brighton - Brentford": {
    "kickoff": "2026-11-08T14:00:00Z",
    "fotmob": "5795506",
-   "goals": [],
-   "var": [],
-   "big_chances_missed": [],
-   "saves_by_keeper": {},
-   "shots": 0
+   "goals": [
+    {
+     "minute": 15,
+     "player": "Diego Gómez",
+     "assist": null,
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.027
+    },
+    {
+     "minute": 42,
+     "player": "Pascal Groß",
+     "assist": null,
+     "description": "Penalty",
+     "manner": "RightFoot",
+     "situation": "Penalty",
+     "own_goal": false,
+     "xG": 0.788
+    }
+   ],
+   "var": [
+    {
+     "minute": 21,
+     "player": "Igor Thiago",
+     "decision": "Igor Thiago"
+    }
+   ],
+   "big_chances_missed": [
+    {
+     "minute": 84,
+     "player": "Kevin Schade",
+     "xG": 0.324,
+     "manner": "RightFoot",
+     "situation": "FastBreak",
+     "on_target": false
+    }
+   ],
+   "saves_by_keeper": {
+    "776689": 4
+   },
+   "shots": 25
   },
   "Crystal Palace - Liverpool": {
    "kickoff": "2026-11-08T14:00:00Z",
    "fotmob": "5795507",
-   "goals": [],
+   "goals": [
+    {
+     "minute": 40,
+     "player": "Alexis Mac Allister",
+     "assist": "assist by Dominik Szoboszlai",
+     "description": "Header",
+     "manner": "Header",
+     "situation": "SetPiece",
+     "own_goal": false,
+     "xG": 0.123
+    },
+    {
+     "minute": 54,
+     "player": "Florian Wirtz",
+     "assist": "assist by Bradley Barcola",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.185
+    },
+    {
+     "minute": 89,
+     "player": "Alexander Isak",
+     "assist": "assist by Florian Wirtz",
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "FastBreak",
+     "own_goal": false,
+     "xG": 0.147
+    },
+    {
+     "minute": "90 + 5",
+     "player": "Edward Nketiah",
+     "assist": null,
+     "description": "Penalty",
+     "manner": "RightFoot",
+     "situation": "Penalty",
+     "own_goal": false,
+     "xG": 0.788
+    }
+   ],
    "var": [],
-   "big_chances_missed": [],
-   "saves_by_keeper": {},
-   "shots": 0
+   "big_chances_missed": [
+    {
+     "minute": 45,
+     "player": "Ronald Araujo",
+     "xG": 0.757,
+     "manner": "LeftFoot",
+     "situation": "FromCorner",
+     "on_target": true
+    },
+    {
+     "minute": 77,
+     "player": "Yéremi Pino",
+     "xG": 0.396,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": true
+    },
+    {
+     "minute": 87,
+     "player": "Alexander Isak",
+     "xG": 0.306,
+     "manner": "RightFoot",
+     "situation": "FastBreak",
+     "on_target": true
+    }
+   ],
+   "saves_by_keeper": {
+    "719330": 5,
+    "319784": 6
+   },
+   "shots": 39
   },
   "Ipswich Town - Bournemouth": {
    "kickoff": "2026-11-08T14:00:00Z",
    "fotmob": "5795510",
-   "goals": [],
+   "goals": [
+    {
+     "minute": 5,
+     "player": "Evanilson",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.636
+    },
+    {
+     "minute": 46,
+     "player": "Leif Davis",
+     "assist": null,
+     "description": "Own goal",
+     "manner": "OtherBodyParts",
+     "situation": "RegularPlay",
+     "own_goal": true,
+     "xG": null
+    },
+    {
+     "minute": 73,
+     "player": "Jack Clarke",
+     "assist": null,
+     "description": "Penalty",
+     "manner": "RightFoot",
+     "situation": "Penalty",
+     "own_goal": false,
+     "xG": 0.788
+    }
+   ],
    "var": [],
-   "big_chances_missed": [],
-   "saves_by_keeper": {},
-   "shots": 0
+   "big_chances_missed": [
+    {
+     "minute": 7,
+     "player": "Marcus Tavernier",
+     "xG": 0.5,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "on_target": true
+    },
+    {
+     "minute": 59,
+     "player": "James Hill",
+     "xG": 0.348,
+     "manner": "Header",
+     "situation": "SetPiece",
+     "on_target": false
+    }
+   ],
+   "saves_by_keeper": {
+    "512013": 3,
+    "1067256": 1
+   },
+   "shots": 26
   },
   "Sunderland - Chelsea": {
    "kickoff": "2026-11-08T14:00:00Z",
    "fotmob": "5795514",
-   "goals": [],
+   "goals": [
+    {
+     "minute": 36,
+     "player": "Enzo Le Fée",
+     "assist": null,
+     "description": "Penalty",
+     "manner": "RightFoot",
+     "situation": "Penalty",
+     "own_goal": false,
+     "xG": 0.788
+    }
+   ],
    "var": [],
-   "big_chances_missed": [],
-   "saves_by_keeper": {},
-   "shots": 0
+   "big_chances_missed": [
+    {
+     "minute": 15,
+     "player": "Brian Brobbey",
+     "xG": 0.463,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": false
+    },
+    {
+     "minute": 77,
+     "player": "Wilson Isidor",
+     "xG": 0.467,
+     "manner": "RightFoot",
+     "situation": "RegularPlay",
+     "on_target": true
+    }
+   ],
+   "saves_by_keeper": {
+    "1125720": 4,
+    "1319972": 1
+   },
+   "shots": 19
   },
   "Man Utd - Aston Villa": {
    "kickoff": "2026-11-08T16:30:00Z",
    "fotmob": "5795512",
-   "goals": [],
+   "goals": [
+    {
+     "minute": 1,
+     "player": "Alysson Edward",
+     "assist": "assist by John McGinn",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.04
+    },
+    {
+     "minute": 4,
+     "player": "Nicolas Jackson",
+     "assist": null,
+     "description": null,
+     "manner": "RightFoot",
+     "situation": "SetPiece",
+     "own_goal": false,
+     "xG": 0.883
+    },
+    {
+     "minute": 16,
+     "player": "Bruno Fernandes",
+     "assist": null,
+     "description": "Penalty",
+     "manner": "RightFoot",
+     "situation": "Penalty",
+     "own_goal": false,
+     "xG": 0.788
+    },
+    {
+     "minute": 44,
+     "player": "Youri Tielemans",
+     "assist": "assist by Noussair Mazraoui",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.194
+    },
+    {
+     "minute": 48,
+     "player": "John McGinn",
+     "assist": null,
+     "description": "Penalty",
+     "manner": "LeftFoot",
+     "situation": "Penalty",
+     "own_goal": false,
+     "xG": 0.788
+    },
+    {
+     "minute": 53,
+     "player": "Leon Goretzka",
+     "assist": "assist by Nicolas Jackson",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "SetPiece",
+     "own_goal": false,
+     "xG": 0.266
+    },
+    {
+     "minute": "90 + 2",
+     "player": "Joshua Zirkzee",
+     "assist": "assist by Patrick Dorgu",
+     "description": null,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "own_goal": false,
+     "xG": 0.2
+    },
+    {
+     "minute": "90 + 6",
+     "player": "Patrick Dorgu",
+     "assist": "assist by Bruno Fernandes",
+     "description": "Header",
+     "manner": "Header",
+     "situation": "FromCorner",
+     "own_goal": false,
+     "xG": 0.35
+    }
+   ],
    "var": [],
-   "big_chances_missed": [],
-   "saves_by_keeper": {},
-   "shots": 0
+   "big_chances_missed": [
+    {
+     "minute": 53,
+     "player": "Nicolas Jackson",
+     "xG": 0.413,
+     "manner": "LeftFoot",
+     "situation": "SetPiece",
+     "on_target": false
+    },
+    {
+     "minute": 59,
+     "player": "Bryan Mbeumo",
+     "xG": 0.325,
+     "manner": "LeftFoot",
+     "situation": "RegularPlay",
+     "on_target": true
+    },
+    {
+     "minute": 89,
+     "player": "Mason Mount",
+     "xG": 0.515,
+     "manner": "LeftFoot",
+     "situation": "FastBreak",
+     "on_target": false
+    }
+   ],
+   "saves_by_keeper": {
+    "1178602": 2,
+    "1053679": 5
+   },
+   "shots": 38
   }
  },
  "claims": []
