@@ -1,0 +1,260 @@
+{
+ "round": 13,
+ "league": "nb1",
+ "source": "nemzetisport.hu meccsbeszamolok (naplo/nso-content-probe.py, futasi naplo)",
+ "matches": {
+  "PAKS 2-1 ZTE": {
+   "venue": "Paks",
+   "attendance": null,
+   "referee": null,
+   "goals": [],
+   "sent_off": [],
+   "note": "a formális blokk nem jött le; Pető két szabadrúgásgólja az edzői nyilatkozatokból"
+  },
+  "MTK 2-2 HONVÉD": {
+   "venue": "Budapest, Új Hidegkuti Nándor Stadion",
+   "attendance": 3741,
+   "referee": "Csonka Bence",
+   "goals": [
+    {
+     "minute": 9,
+     "player": "A. Marí",
+     "team": "HONVÉD"
+    },
+    {
+     "minute": 40,
+     "player": "Komáromi",
+     "team": "HONVÉD",
+     "manner": "öngól"
+    },
+    {
+     "minute": 55,
+     "player": "Komáromi",
+     "team": "MTK"
+    },
+    {
+     "minute": 83,
+     "player": "Hinora",
+     "team": "MTK"
+    }
+   ],
+   "sent_off": []
+  },
+  "VÁRDA 0-1 PAFC": {
+   "venue": "Kisvárda, Várkerti Stadion",
+   "attendance": 1107,
+   "referee": "Iványi Gábor",
+   "goals": [
+    {
+     "minute": 66,
+     "player": "Nissilä",
+     "team": "PAFC"
+    }
+   ],
+   "sent_off": []
+  },
+  "NYÍREGY 1-1 ETO": {
+   "venue": "Nyíregyháza, Városi Stadion",
+   "attendance": 4077,
+   "referee": "Kovács Imre",
+   "goals": [
+    {
+     "minute": "45+1",
+     "player": "Hős",
+     "team": "NYÍREGY"
+    },
+    {
+     "minute": 54,
+     "player": "Djukanovics",
+     "team": "ETO"
+    }
+   ],
+   "sent_off": [
+    {
+     "minute": 74,
+     "player": "Gavrics",
+     "team": "ETO"
+    }
+   ]
+  },
+  "DVSC 3-1 ÚJPEST": {
+   "venue": "Debrecen, Nagyerdei Stadion",
+   "attendance": 7854,
+   "referee": "Rúsz Márton",
+   "goals": [
+    {
+     "minute": 39,
+     "player": "Szendrei Á.",
+     "team": "DVSC"
+    },
+    {
+     "minute": 42,
+     "player": "Matko",
+     "team": "ÚJPEST"
+    },
+    {
+     "minute": 49,
+     "player": "Dénes V.",
+     "team": "DVSC"
+    },
+    {
+     "minute": 86,
+     "player": "Cibla",
+     "team": "DVSC"
+    }
+   ],
+   "sent_off": [],
+   "note": "a negyedik percben a füst miatt tíz és fél percre félbeszakadt a játék"
+  },
+  "VASAS 0-2 FTC": {
+   "venue": null,
+   "attendance": null,
+   "referee": null,
+   "goals": [],
+   "sent_off": [],
+   "note": "meccsbeszámoló nem jött le"
+  }
+ },
+ "claims": [
+  {
+   "player": "Pető Milán",
+   "minute": null,
+   "tag": "goal_manner",
+   "sentence": "Pető Milán két szabadrúgásgólt lőtt",
+   "anchor": "article_only",
+   "match": "PAKS 2-1 ZTE"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "quote",
+   "sentence": "Milán másképp rúgja, mint annak idején én rúgtam, nála csapódik a labda, amikor elrúgja",
+   "anchor": "statement",
+   "match": "PAKS 2-1 ZTE",
+   "speaker": "Bognár György",
+   "context": "a Paks vezetőedzője a ZTE elleni győzelem után, Pető két szabadrúgásgóljáról",
+   "target": "Pető Milán"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "history",
+   "sentence": "Csapata három és fél év után győzött a bajnokságban a ZTE ellen",
+   "anchor": "article_only",
+   "match": "PAKS 2-1 ZTE"
+  },
+  {
+   "player": "Hinora Kristóf",
+   "minute": 83,
+   "tag": "goal",
+   "sentence": "Gólszerző: Komáromi (55.), Hinora (83.)",
+   "anchor": "event",
+   "match": "MTK 2-2 HONVÉD",
+   "source_name": "Hinora"
+  },
+  {
+   "player": "Hinora Kristóf",
+   "minute": 79,
+   "tag": "sub",
+   "sentence": "Komáromi (Hinora, 79.)",
+   "anchor": "record",
+   "match": "MTK 2-2 HONVÉD",
+   "source_name": "Hinora"
+  },
+  {
+   "player": null,
+   "minute": 40,
+   "tag": "luck",
+   "sentence": "az MTK-s Komáromi György a saját kapujába csúsztatott",
+   "anchor": "record",
+   "match": "MTK 2-2 HONVÉD",
+   "source_name": "Komáromi"
+  },
+  {
+   "player": "Németh András",
+   "minute": 58,
+   "tag": "sub",
+   "sentence": "Németh A. (Vékony B., 58.)",
+   "anchor": "record",
+   "match": "VÁRDA 0-1 PAFC",
+   "source_name": "Németh A."
+  },
+  {
+   "player": null,
+   "minute": 66,
+   "tag": "goal",
+   "sentence": "Gólszerző: Nissilä (66.)",
+   "anchor": "record",
+   "match": "VÁRDA 0-1 PAFC",
+   "source_name": "Nissilä"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "A gól nélküli első félidő után a vendégek két gólt is szereztek, de ebből csak egy volt érvényes",
+   "anchor": "article_only",
+   "match": "VÁRDA 0-1 PAFC"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "milestone",
+   "sentence": "a tabella élére állt a Puskás Akadémia",
+   "anchor": "article_only",
+   "match": "VÁRDA 0-1 PAFC"
+  },
+  {
+   "player": "Đukanović Viktor",
+   "minute": 54,
+   "tag": "goal",
+   "sentence": "Viktor Djukanovics egyenlített a második játékrész elején",
+   "anchor": "event",
+   "match": "NYÍREGY 1-1 ETO",
+   "source_name": "Djukanovics"
+  },
+  {
+   "player": "Đukanović Viktor",
+   "minute": 41,
+   "tag": "assist",
+   "sentence": "kapu előtt keresztbe passzolt labdája pompásan érkezett Huszár Marcell elé, de a kapus nagyot védett",
+   "anchor": "article_only",
+   "match": "NYÍREGY 1-1 ETO",
+   "source_name": "Viktor Djukanovics"
+  },
+  {
+   "player": "Szendrei Ákos",
+   "minute": 39,
+   "tag": "goal",
+   "sentence": "Gólszerző: Szendrei Á. (39.)",
+   "anchor": "event",
+   "match": "DVSC 3-1 ÚJPEST",
+   "source_name": "Szendrei Á."
+  },
+  {
+   "player": "Matko Aljoša",
+   "minute": 42,
+   "tag": "goal",
+   "sentence": "Gólszerző: ... ill. Matko (42.)",
+   "anchor": "event",
+   "match": "DVSC 3-1 ÚJPEST",
+   "source_name": "Matko"
+  },
+  {
+   "player": null,
+   "minute": 4,
+   "tag": "match_picture",
+   "sentence": "a füst miatt a negyedik perc végén a játékvezető felfüggesztette a játékot, a kényszerszünet tíz és fél percig tartott",
+   "anchor": "article_only",
+   "match": "DVSC 3-1 ÚJPEST"
+  },
+  {
+   "player": "Kinyik Ákos",
+   "minute": null,
+   "tag": "card",
+   "sentence": "Kinyik Ákos piros lapot kapott (saját bontásunk)",
+   "anchor": "article_only",
+   "match": "PAKS 2-1 ZTE"
+  }
+ ]
+}
