@@ -535,3 +535,32 @@ PROBE: 2026-11-03 11:03 UTC | nemzetisport report content
     /labdarugo-nb-i/2026/11/a-kiallitas-utan-eldolt-a-debrecen-ket-gollal-gyozott-a-puskas-akademia-otth
     /labdarugo-nb-i/2026/11/forditott-es-nyert-hazai-palyan-az-ujpest-a-nyiregyhaza-ellen
     /labdarugo-nb-i/2026/11/yusuf-es-zachariassen-golja-dontott-az-ftc-a-paks-legyozesevel-hangolt-a-mil
+
+======================================================================
+PROBE: 2026-11-10 21:35 UTC | nemzetisport report content
+  sitemapindex: HTTP 200, 305 maps
+  maps matching 202611: 11
+    https://www.nemzetisport.hu/202606_sitemap.xml
+    https://www.nemzetisport.hu/202607_sitemap.xml
+    https://www.nemzetisport.hu/202608_sitemap.xml
+    https://www.nemzetisport.hu/202609_sitemap.xml
+    https://www.nemzetisport.hu/202610_sitemap.xml
+    https://www.nemzetisport.hu/202611_sitemap.xml
+  since 2026-11-07: 39 urls (of 85)
+  of these, report-like: 15
+  labdarugo-nb-i articles in 2026/11: 15
+    /labdarugo-nb-i/2026/11/az-edzovaltason-ateso-mtk-ketgolos-hatranybol-mentett-pontot-a-kispest-honve
+    /labdarugo-nb-i/2026/11/az-ujpest-sem-allithatta-meg-a-lenduletben-levo-debrecent
+    /labdarugo-nb-i/2026/11/az-ujpest-tehetsege-a-benficanal-jart-probajatekon
+    /labdarugo-nb-i/2026/11/bejelentette-kuttor-attila-szerzodteteset-a-kisvarda
+    /labdarugo-nb-i/2026/11/bognar-gyorgy-peto-milan-maskepp-rugja-a-szabadokat-mint-en
+    /labdarugo-nb-i/2026/11/dontetlent-jatszott-nyiregyhazan-nem-elozte-vissza-a-puskas-akademiat-az-eto
+    /labdarugo-nb-i/2026/11/egyeves-kihagyas-varhat-az-eto-fc-vedojere
+    /labdarugo-nb-i/2026/11/harom-pontot-szerzett-kisvardan-es-a-tabella-elere-allt-a-puskas-akademia
+    /labdarugo-nb-i/2026/11/het-eve-nem-kapott-ki-a-fradi-idegenben-fovarosi-csapattol-a-vasas-megszakit
+    /labdarugo-nb-i/2026/11/kuttor-attila-delutan-erkezik-kisvardara-kulfoldi-edzokkel-targyal-az-mtk
+    /labdarugo-nb-i/2026/11/noi-nb-i-gyozott-a-videoton-es-az-mtk-is
+    /labdarugo-nb-i/2026/11/ns-info-a-leverkusen-nem-engedte-el-az-mtk-edzokiszemeltjet-spanyol-trener-j
+    /labdarugo-nb-i/2026/11/peto-milan-szabadrugasgoljaival-nyert-a-paks
+    /labdarugo-nb-i/2026/11/varhidi-peter-kicsit-esetleges-az-ujpest-futballja
+    /labdarugo-nb-i/2026/11/vasas-fradi-a-rendorseg-konnygazzal-vetett-veget-a-verekedesnek-tobb-ezren-k
