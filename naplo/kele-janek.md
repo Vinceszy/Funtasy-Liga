@@ -69,6 +69,16 @@ sentences quoted beside them are what one piece did once.
 What is spent is the material, not the moves: a subject or an anecdote a
 published piece already told (see step 2 above).
 
+**Read the previous piece of BOTH leagues, not only the same one.** The
+reader of one league reads the other too, and the two columns of a week sit
+side by side. A PL draft once came out with exactly the move set of the
+previous week's NB1 column, in the same order - the hinge question with
+"Mindjárt megmondom", "Félreértés ne essék", "Sőt, van ennél kellemetlenebb
+is", "A sors furcsa fintora" and the three "Tudom" concessions - and the
+editor asked whether that hinge was in every piece. It was in two of
+twelve; the set as a whole was the copy. Before writing, list the moves of
+the last column of each league, and do not take over either set whole.
+
 ## The skeleton: what each beat has to DO
 
 Thirteen paragraphs, 220-270 characters on average, continuous prose. In
