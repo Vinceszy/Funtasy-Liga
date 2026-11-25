@@ -578,5 +578,236 @@
    "shots": 25
   }
  },
- "claims": []
+ "claims": [
+  {
+   "player": "McBurnie",
+   "club": "HUL",
+   "minute": "90 + 2",
+   "tag": "goal",
+   "sentence": "a hosszabbításban kontratámadásból talált be",
+   "anchor": "event",
+   "match": "Hull City - Brighton",
+   "source_name": "Oli McBurnie"
+  },
+  {
+   "player": "McBurnie",
+   "club": "HUL",
+   "minute": "90 + 5",
+   "tag": "goal",
+   "sentence": "a hosszabbítás ötödik percében a második gólját is megszerezte",
+   "anchor": "event",
+   "match": "Hull City - Brighton",
+   "source_name": "Oli McBurnie"
+  },
+  {
+   "player": "Belloumi",
+   "club": "HUL",
+   "minute": "90 + 5",
+   "tag": "assist",
+   "sentence": "ő adta a gólpasszt McBurnie második góljához",
+   "anchor": "event",
+   "match": "Hull City - Brighton",
+   "source_name": "Mohamed Belloumi"
+  },
+  {
+   "player": "Anderson",
+   "club": "MCI",
+   "minute": 57,
+   "tag": "goal",
+   "sentence": "szöglet után egyenlített a Fulham ellen",
+   "anchor": "event",
+   "match": "Man City - Fulham",
+   "source_name": "Elliot Anderson"
+  },
+  {
+   "player": "Haaland",
+   "club": "MCI",
+   "minute": 24,
+   "tag": "big_miss",
+   "sentence": "nagy helyzetet hagyott ki",
+   "anchor": "event",
+   "match": "Man City - Fulham",
+   "source_name": "Erling Haaland"
+  },
+  {
+   "player": "Calvert-Lewin",
+   "club": "LEE",
+   "minute": 53,
+   "tag": "goal_manner",
+   "sentence": "tizenegyesből talált be a Chelsea otthonában",
+   "anchor": "event",
+   "match": "Chelsea - Leeds",
+   "source_name": "Dominic Calvert-Lewin"
+  },
+  {
+   "player": "Calvert-Lewin",
+   "club": "LEE",
+   "minute": 28,
+   "tag": "assist",
+   "sentence": "ő adta a gólpasszt Okafor első góljához",
+   "anchor": "event",
+   "match": "Chelsea - Leeds",
+   "source_name": "Dominic Calvert-Lewin"
+  },
+  {
+   "player": "Tarkowski",
+   "club": "EVE",
+   "minute": 40,
+   "tag": "card",
+   "sentence": "VAR-vizsgálat után piros lapot kapott",
+   "anchor": "event",
+   "match": "Brentford - Everton",
+   "source_name": "James Tarkowski"
+  },
+  {
+   "player": "Strand Larsen",
+   "club": "CRY",
+   "minute": "45 + 1",
+   "tag": "goal",
+   "sentence": "a félidő ráadásában betalált Coventryben",
+   "anchor": "event",
+   "match": "Coventry City - Crystal Palace",
+   "source_name": "Jørgen Strand Larsen"
+  },
+  {
+   "player": "Strand Larsen",
+   "club": "CRY",
+   "minute": 13,
+   "tag": "assist",
+   "sentence": "bedobás után ő adta a gólpasszt Pinónak",
+   "anchor": "event",
+   "match": "Coventry City - Crystal Palace",
+   "source_name": "Jørgen Strand Larsen"
+  },
+  {
+   "player": "Yeremy",
+   "club": "CRY",
+   "minute": 13,
+   "tag": "goal",
+   "sentence": "bedobás után betalált Coventryben",
+   "anchor": "event",
+   "match": "Coventry City - Crystal Palace",
+   "source_name": "Yéremi Pino"
+  },
+  {
+   "player": "Awoniyi",
+   "club": "COV",
+   "minute": 5,
+   "tag": "goal",
+   "sentence": "az ötödik percben gólt lőtt a Palace ellen",
+   "anchor": "event",
+   "match": "Coventry City - Crystal Palace",
+   "source_name": "Taiwo Awoniyi"
+  },
+  {
+   "player": "Pedro Porro",
+   "club": "TOT",
+   "minute": 15,
+   "tag": "assist",
+   "sentence": "ő készítette elő a Spurs első gólját",
+   "anchor": "event",
+   "match": "Spurs - Ipswich Town",
+   "source_name": "Pedro Porro"
+  },
+  {
+   "player": "Solanke",
+   "club": "TOT",
+   "minute": 51,
+   "tag": "goal",
+   "sentence": "betalált az Ipswich ellen",
+   "anchor": "event",
+   "match": "Spurs - Ipswich Town",
+   "source_name": "Dominic Solanke"
+  },
+  {
+   "player": "Wirtz",
+   "club": "LIV",
+   "minute": 13,
+   "tag": "goal",
+   "sentence": "gólt lőtt a United ellen",
+   "anchor": "event",
+   "match": "Liverpool - Man Utd",
+   "source_name": "Florian Wirtz"
+  },
+  {
+   "player": "Wirtz",
+   "club": "LIV",
+   "minute": 82,
+   "tag": "assist",
+   "sentence": "ő adta a gólpasszt a negyedik gólhoz",
+   "anchor": "event",
+   "match": "Liverpool - Man Utd",
+   "source_name": "Florian Wirtz"
+  },
+  {
+   "player": "Madueke",
+   "club": "ARS",
+   "minute": 78,
+   "tag": "goal",
+   "sentence": "Ødegaard passzából egyenlített Newcastle-ben",
+   "anchor": "event",
+   "match": "Newcastle - Arsenal",
+   "source_name": "Noni Madueke"
+  },
+  {
+   "player": "Ødegaard",
+   "club": "ARS",
+   "minute": 78,
+   "tag": "assist",
+   "sentence": "ő adta a gólpasszt Madueke egyenlítő góljához",
+   "anchor": "event",
+   "match": "Newcastle - Arsenal",
+   "source_name": "Martin Ødegaard"
+  },
+  {
+   "player": "Barnes",
+   "club": "NEW",
+   "minute": 49,
+   "tag": "goal",
+   "sentence": "betalált az Arsenal ellen",
+   "anchor": "event",
+   "match": "Newcastle - Arsenal",
+   "source_name": "Harvey Barnes"
+  },
+  {
+   "player": "Hill",
+   "club": "BOU",
+   "minute": 19,
+   "tag": "assist",
+   "sentence": "ő adta a gólpasszt Evanilson góljához",
+   "anchor": "event",
+   "match": "Bournemouth - Nott'm Forest",
+   "source_name": "James Hill"
+  },
+  {
+   "player": "Evanilson",
+   "club": "BOU",
+   "minute": 19,
+   "tag": "goal",
+   "sentence": "Hill passzából talált be",
+   "anchor": "event",
+   "match": "Bournemouth - Nott'm Forest",
+   "source_name": "Evanilson"
+  },
+  {
+   "player": "Tavernier",
+   "club": "BOU",
+   "minute": "45 + 3",
+   "tag": "assist",
+   "sentence": "kontratámadásból ő adta a gólpasszt Kluivertnek",
+   "anchor": "event",
+   "match": "Bournemouth - Nott'm Forest",
+   "source_name": "Marcus Tavernier"
+  },
+  {
+   "player": "Kluivert",
+   "club": "BOU",
+   "minute": "45 + 3",
+   "tag": "goal",
+   "sentence": "a félidő ráadásában kontratámadásból betalált",
+   "anchor": "event",
+   "match": "Bournemouth - Nott'm Forest",
+   "source_name": "Justin Kluivert"
+  }
+ ]
 }

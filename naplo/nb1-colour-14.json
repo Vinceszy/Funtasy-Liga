@@ -1,0 +1,264 @@
+{
+ "round": 14,
+ "league": "nb1",
+ "source": "nemzetisport.hu meccsbeszamolok (naplo/nso-content-probe.py, futasi naplo)",
+ "matches": {
+  "PAFC 1-2 MTK": {
+   "venue": "Felcsút, Pancho Aréna",
+   "attendance": null,
+   "referee": "Zimmermann Márió",
+   "goals": [
+    {
+     "minute": 21,
+     "player": "Dárdai P.",
+     "team": "PAFC"
+    },
+    {
+     "minute": 55,
+     "player": "Nyers",
+     "team": "MTK"
+    },
+    {
+     "minute": 75,
+     "player": "Jurek",
+     "team": "MTK",
+     "manner": "11-es"
+    }
+   ],
+   "sent_off": [
+    {
+     "minute": 74,
+     "player": "Golla",
+     "team": "PAFC"
+    },
+    {
+     "minute": 88,
+     "player": "Armalas",
+     "team": "MTK"
+    }
+   ]
+  },
+  "ÚJPEST 0-0 VÁRDA": {
+   "venue": "Budapest, Szusza Ferenc Stadion",
+   "attendance": 3224,
+   "referee": "Bogár Gergő",
+   "goals": [],
+   "sent_off": []
+  },
+  "FTC 1-3 ETO": {
+   "venue": "Budapest, Groupama Aréna",
+   "attendance": 11547,
+   "referee": "Csonka Bence",
+   "goals": [
+    {
+     "minute": 1,
+     "player": "Kulenovic",
+     "team": "ETO"
+    },
+    {
+     "minute": 56,
+     "player": "Yusuf",
+     "team": "FTC"
+    },
+    {
+     "minute": 68,
+     "player": "Kulenovic",
+     "team": "ETO"
+    },
+    {
+     "minute": "90+3",
+     "player": "Bennette",
+     "team": "ETO"
+    }
+   ],
+   "sent_off": []
+  },
+  "ZTE 0-0 VASAS": {
+   "venue": "Zalaegerszeg, ZTE Aréna",
+   "attendance": 2563,
+   "referee": "Antal Péter",
+   "goals": [],
+   "sent_off": []
+  },
+  "NYÍREGY 2-6 DVSC": {
+   "venue": "Nyíregyháza, Városi Stadion",
+   "attendance": 6435,
+   "referee": "Berke Balázs",
+   "goals": [
+    {
+     "minute": 31,
+     "player": "Szendrei Á.",
+     "team": "DVSC"
+    },
+    {
+     "minute": 42,
+     "player": "Kocsis D.",
+     "team": "DVSC"
+    },
+    {
+     "minute": 54,
+     "player": "M. Hofmann",
+     "team": "NYÍREGY",
+     "manner": "öngól"
+    },
+    {
+     "minute": 57,
+     "player": "Szendrei Á.",
+     "team": "DVSC"
+    },
+    {
+     "minute": 78,
+     "player": "Kocsis D.",
+     "team": "DVSC"
+    },
+    {
+     "minute": 81,
+     "player": "Szendrei Á.",
+     "team": "DVSC"
+    },
+    {
+     "minute": 87,
+     "player": "Batoum",
+     "team": "NYÍREGY"
+    },
+    {
+     "minute": "90+2",
+     "player": "Baldoni",
+     "team": "DVSC"
+    }
+   ],
+   "sent_off": []
+  },
+  "HONVÉD 2-1 PAKS": {
+   "venue": null,
+   "attendance": null,
+   "referee": null,
+   "goals": [],
+   "sent_off": [],
+   "note": "meccsbeszámoló nem jött le; a címsor szerint Szalai József betalált, de a Honvéd nyert"
+  }
+ },
+ "claims": [
+  {
+   "player": "Szendrei Ákos",
+   "minute": 31,
+   "tag": "goal",
+   "sentence": "Gólszerző: Szendrei Á. (31., 57., 81.)",
+   "anchor": "event",
+   "match": "NYÍREGY 2-6 DVSC",
+   "source_name": "Szendrei Á."
+  },
+  {
+   "player": "Szendrei Ákos",
+   "minute": 57,
+   "tag": "goal",
+   "sentence": "Gólszerző: Szendrei Á. (31., 57., 81.)",
+   "anchor": "event",
+   "match": "NYÍREGY 2-6 DVSC",
+   "source_name": "Szendrei Á."
+  },
+  {
+   "player": "Szendrei Ákos",
+   "minute": 81,
+   "tag": "goal",
+   "sentence": "Gólszerző: Szendrei Á. (31., 57., 81.)",
+   "anchor": "event",
+   "match": "NYÍREGY 2-6 DVSC",
+   "source_name": "Szendrei Á."
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "match_picture",
+   "sentence": "Ide-oda rohangáló fiatalok, szirénázó rendőr- és mentőautók – már délelőtt megkezdődött a vasárnapi Nyíregyháza–Debrecen rangadó",
+   "anchor": "article_only",
+   "match": "NYÍREGY 2-6 DVSC"
+  },
+  {
+   "player": "Jurek Gábor",
+   "minute": 75,
+   "tag": "goal_manner",
+   "sentence": "Jurek Gábor magabiztosan értékesítette az MTK Budapest tizenegyesét",
+   "anchor": "event",
+   "match": "PAFC 1-2 MTK",
+   "source_name": "Jurek"
+  },
+  {
+   "player": "Golla Wojciech",
+   "minute": 74,
+   "tag": "card",
+   "sentence": "Kiállítva: Golla (74.)",
+   "anchor": "record",
+   "match": "PAFC 1-2 MTK",
+   "source_name": "Golla"
+  },
+  {
+   "player": "Németh András",
+   "minute": 56,
+   "tag": "sub",
+   "sentence": "Németh A. (Colley, 56.)",
+   "anchor": "record",
+   "match": "PAFC 1-2 MTK",
+   "source_name": "Németh A."
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "history",
+   "sentence": "a Pancho Arénában sebezhető, hat fellépésen négyszer is pont nélkül maradt. Nem sokkal később pedig az is kiderült, ötödször is",
+   "anchor": "article_only",
+   "match": "PAFC 1-2 MTK"
+  },
+  {
+   "player": null,
+   "minute": 1,
+   "tag": "goal_manner",
+   "sentence": "mindössze 27 másodpercnél járt az óra, amikor Kulenovic éles szögből a kapuba lőtte a labdát",
+   "anchor": "record",
+   "match": "FTC 1-3 ETO",
+   "source_name": "Kulenovic"
+  },
+  {
+   "player": "Đukanović Viktor",
+   "minute": 1,
+   "tag": "match_picture",
+   "sentence": "Viktor Djukanovicsot buktatta Dibusz Dénes a tizenhatoson belül, de a játékvezető előnyszabályt ítélt, és Kulenovic gólt lőtt",
+   "anchor": "article_only",
+   "match": "FTC 1-3 ETO",
+   "source_name": "Viktor Djukanovics"
+  },
+  {
+   "player": null,
+   "minute": null,
+   "tag": "milestone",
+   "sentence": "Legyőzte idegenben a Ferencvárost, és a tabella élére ugrott az ETO",
+   "anchor": "article_only",
+   "match": "FTC 1-3 ETO"
+  },
+  {
+   "player": "Szendrei Norbert",
+   "minute": 2,
+   "tag": "luck",
+   "sentence": "Szendrei Norbert már a második percben a kapufát találta el",
+   "anchor": "article_only",
+   "match": "ÚJPEST 0-0 VÁRDA"
+  },
+  {
+   "player": "Osagie Iyinbor Patrick",
+   "minute": 33,
+   "tag": "card",
+   "sentence": "Sárga lap: ... Iyinbor (33.)",
+   "anchor": "record",
+   "match": "ZTE 0-0 VASAS",
+   "source_name": "Iyinbor"
+  },
+  {
+   "player": "Szalai József",
+   "minute": null,
+   "tag": "goal",
+   "sentence": "Szalai József újra betalált, de nyert a Honvéd",
+   "anchor": "article_only",
+   "match": "HONVÉD 2-1 PAKS"
+  }
+ ]
+}

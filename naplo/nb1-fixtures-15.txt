@@ -1,0 +1,14 @@
+NB I, round 15 (27-29 November 2026) - the real pairings
+Pairings only; kick-off times are not needed.
+
+Source 1 (nb1.hu, the MLSZ autumn schedule, read by naplo/fixtures-probe.py):
+  ETO - DVSC
+  Vasas - Honvéd
+  MTK - Újpest
+  Kisvárda - Nyíregyháza
+  Ferencváros - ZTE
+  Paks - Puskás Akadémia
+
+Source 2 (csakfoci.hu, the full 2026 programme, same probe run): the same six
+pairings, all six agree. Friday: the first; Saturday: the next three;
+Sunday: the last two.
