@@ -564,3 +564,33 @@ PROBE: 2026-11-10 21:35 UTC | nemzetisport report content
     /labdarugo-nb-i/2026/11/peto-milan-szabadrugasgoljaival-nyert-a-paks
     /labdarugo-nb-i/2026/11/varhidi-peter-kicsit-esetleges-az-ujpest-futballja
     /labdarugo-nb-i/2026/11/vasas-fradi-a-rendorseg-konnygazzal-vetett-veget-a-verekedesnek-tobb-ezren-k
+
+======================================================================
+PROBE: 2026-11-25 23:38 UTC | nemzetisport report content
+  sitemapindex: HTTP 200, 305 maps
+  maps matching 202611: 11
+    https://www.nemzetisport.hu/202606_sitemap.xml
+    https://www.nemzetisport.hu/202607_sitemap.xml
+    https://www.nemzetisport.hu/202608_sitemap.xml
+    https://www.nemzetisport.hu/202609_sitemap.xml
+    https://www.nemzetisport.hu/202610_sitemap.xml
+    https://www.nemzetisport.hu/202611_sitemap.xml
+  since 2026-11-21: 38 urls (of 143)
+  of these, report-like: 19
+  labdarugo-nb-i articles in 2026/11: 19
+    /labdarugo-nb-i/2026/11/a-zalaegerszeg-most-is-golkeptelen-maradt-a-vasas-ellen
+    /labdarugo-nb-i/2026/11/az-mtk-koran-hatranyba-kerult-de-forditott-es-nyert-szabics-elso-meccsen
+    /labdarugo-nb-i/2026/11/az-ujpest-tehetsege-torinoban-is-bizonyitott
+    /labdarugo-nb-i/2026/11/baseballcsapat-ajanlatat-utasitotta-vissza-a-dvsc-vedoje-hogy-labdarugo-lehe
+    /labdarugo-nb-i/2026/11/borbely-balazs-sajat-gyori-rekordjat-dontheti-meg-a-fradival-az-eto-ellen
+    /labdarugo-nb-i/2026/11/gerincservvel-bajlodik-a-paks-valogatott-csatara
+    /labdarugo-nb-i/2026/11/hat-golt-szerzett-nyiregyhazan-es-zsinorban-otodik-bajnoki-gyozelmet-aratta-
+    /labdarugo-nb-i/2026/11/kiemelkedo-gyori-es-debreceni-teljesitmenyek-meghozza-idegenben-ime-az-nb-i-
+    /labdarugo-nb-i/2026/11/kuttor-attila-ujpesti-dontetlennel-mutatkozott-be-a-kisvarda-kispadjan
+    /labdarugo-nb-i/2026/11/legyozte-idegenben-a-ferencvarost-es-a-tabella-elere-ugrott-az-eto
+    /labdarugo-nb-i/2026/11/megint-botlott-az-ujpest-novelte-elonyet-a-veszprem-a-futsal-nb-i-ellovasake
+    /labdarugo-nb-i/2026/11/nb-i-mexikoi-klub-figyeli-az-eto-trenert-sajtohir
+    /labdarugo-nb-i/2026/11/nezze-meg-a-dvsc-nyiregyhazi-golparadejanak-legjobb-kepeit
+    /labdarugo-nb-i/2026/11/noi-nb-i-a-puskas-akademia-5-1-re-nyert-a-fradi-ellen
+    /labdarugo-nb-i/2026/11/noi-nb-i-kilenc-golt-szerzett-a-videoton-ellen-az-ellovas-eto-fc
+    /labdarugo-nb-i/2026/11/sander-van-praet-a-ferencvaros-az-eselyes-de-gyozelembe-vetett-hittel-lepunk
